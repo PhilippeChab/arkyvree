@@ -119,7 +119,7 @@ console.log("[worker] Started");
 
 let shuttingDown = false;
 
-const healthPort = Number(process.env.WORKER_PORT || process.env.PORT) || 8001;
+const healthPort = Number(process.env.WORKER_PORT) || 8001;
 const healthServer = Bun.serve({
   port: healthPort,
   hostname: process.env.HOST || "0.0.0.0",
