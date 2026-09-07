@@ -9,7 +9,7 @@
     "react-dom": "^19.2.4"
   },
   "scripts": {
-    "dev:db": "docker compose up postgres-dev -d",
+    "dev:db": "docker compose up postgres-dev --wait",
     "dev:db:stop": "docker compose down postgres-dev",
     "dev:db:reset": "bun --env-file=.env scripts/db/reset.ts --with-test-data",
     "dev:db:studio": "drizzle-kit studio",
@@ -31,7 +31,7 @@
     "build:deploy": "vite build && bun build server/main.ts --compile --outfile server-bin && bun build scripts/db/migrate.ts --compile --outfile migrate-bin",
     "start": "bun server/main.ts",
     "serve": "bun run build && bun start",
-    "test:db": "docker compose up postgres-test -d",
+    "test:db": "docker compose up postgres-test --wait",
     "test:db:stop": "docker compose down postgres-test",
     "test:db:reset": "bun --env-file=.env.test scripts/db/reset.ts --with-test-data",
     "test": "bun --env-file=.env.test scripts/db/provision-test-dbs.ts --workers 6 && bun --env-file=.env.test test --parallel=6 tests/routers tests/services tests/characters tests/seeds tests/cache tests/jobs",
