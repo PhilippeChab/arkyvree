@@ -1,0 +1,346 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.402Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/thief-acrobat/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Fast Acrobatics"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Kip Up"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Steady Stance"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Agile Fighting +1/"
+      },
+      {
+        "levels": [
+          2,
+          4
+        ],
+        "name": "Slow Fall"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Acrobatic Charge"
+      },
+      {
+        "levels": [
+          3,
+          5
+        ],
+        "name": "Defensive Roll"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Agile Fighting +2/"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Skill Mastery"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Improved Evasion"
+      }
+    ],
+    "hd": 6,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.balance.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.climb.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.jump.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.tumble.rank",
+        "value": "8",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Thief-acrobat Class Feature",
+    "features": {
+      "Acrobatic Charge": {
+        "description": "Starting at 3rd level, a thief-acrobat can charge in situations where others cannot. She can charge over difficult terrain that normally slows movement or through allies blocking her path. This ability enables her to charge across a cluttered battlefield, leap down from a ledge, or swing across a chasm to get to her target. Depending on the circumstances, she may still need to make appropriate checks (such as Jump, Tumble, or Use Rope checks) to successfully move over the terrain.",
+        "level": 3,
+        "seedName": "Acrobatic Charge (Thief-acrobat)"
+      },
+      "Agile Fighting": {
+        "description": "A whirling, spinning thief-acrobat is a devilishly difficult target. Starting at 2nd level, a thief-acrobat gains a +1 dodge bonus to Armor Class. When fighting defensively or using total defense, this bonus becomes +2. At 4th level, these bonuses increase by 1 (to +2 and +3, respectively). In addition, a thief-acrobat takes no penalty to her Armor Class or on her melee attack rolls when kneeling, sitting, or prone. This ability works only if a thief-acrobat wears light or no armor and carries no more than a light load.",
+        "level": 2,
+        "seedName": "Agile Fighting (Thief-acrobat)",
+        "stackable": true
+      },
+      "Defensive Roll": {
+        "description": "Beginning at 3rd level, once per day a thief-acrobat can roll with a potentially lethal blow to take less damage from it than she otherwise would. See the rogue class feature of the Player's Handbook. At 5th level, a thief-acrobat can use this ability twice per day.",
+        "level": 3,
+        "seedName": "Defensive Roll (Thief-acrobat)",
+        "stackable": true
+      },
+      "Fast Acrobatics": {
+        "description": "A thief-acrobat can avoid the normal penalties for accelerated movement while using her acrobatic talents. She ignores the normal -5 penalty when making a Balance check while moving at her full normal speed. She can climb at half her speed as a move action without taking a -5 penalty on her Climb check. Finally, she can tumble at her full speed without taking the normal -10 penalty on her Tumble check.",
+        "level": 1,
+        "seedName": "Fast Acrobatics (Thief-acrobat)"
+      },
+      "Improved Evasion": {
+        "description": "A 5th-level thief-acrobat can avoid damage from certain attacks with a successful Reflex save and takes only half damage on a failed save. See the monk class feature of the Player's Handbook.",
+        "level": 5,
+        "seedName": "Improved Evasion (Thief-acrobat)"
+      },
+      "Kip Up": {
+        "description": "A thief-acrobat can stand up from a prone position as a free action that doesn't provoke attacks of opportunity. This ability works only if the thief-acrobat wears light or no armor and carries no more than a light load.",
+        "level": 1,
+        "seedName": "Kip Up (Thief-acrobat)"
+      },
+      "Skill Mastery": {
+        "description": "At 4th level, a thief-acrobat has become so confident in the use of certain skills that she can use them reliably even under adverse conditions. When making a Balance, Climb, Jump, or Tumble check, she can take 10 even if stress and distractions would normally prevent her from doing so.",
+        "level": 4,
+        "seedName": "Skill Mastery (Thief-acrobat)"
+      },
+      "Slow Fall": {
+        "description": "Beginning at 2nd level, a thief-acrobat reduces the effective distance of falls by 20 feet. At 4th level, this improves to reduce the effective distance of falls by 30 feet. See the monk class feature of the Player's Handbook. If a thief-acrobat has this ability from another class, the distances stack to determine the effective reduction of the falling distance.",
+        "level": 2,
+        "seedName": "Slow Fall (Thief-acrobat)",
+        "stackable": true
+      },
+      "Steady Stance": {
+        "description": "A thief-acrobat remains stable on her feet when others have difficulty standing. She is not considered flat-footed while balancing or climbing, and she adds her class level as a bonus on Balance or Climb checks to remain balancing or climbing when she takes damage.",
+        "level": 1,
+        "seedName": "Steady Stance (Thief-acrobat)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Thief-acrobats are proficient with all simple weapons.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Thief-acrobat)"
+      }
+    },
+    "occurrenceMap": {
+      "Acrobatic Charge": "Acrobatic Charge",
+      "Agile Fighting +1/": "Agile Fighting",
+      "Agile Fighting +2/": "Agile Fighting",
+      "Defensive Roll": "Defensive Roll",
+      "Fast Acrobatics": "Fast Acrobatics",
+      "Improved Evasion": "Improved Evasion",
+      "Kip Up": "Kip Up",
+      "Skill Mastery": "Skill Mastery",
+      "Slow Fall": "Slow Fall",
+      "Steady Stance": "Steady Stance"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Thief-acrobats are proficient with all simple weapons.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A thief-acrobat can avoid the normal penalties for accelerated movement while using her acrobatic talents. She ignores the normal -5 penalty when making a Balance check while moving at her full normal speed. She can climb at half her speed as a move action without taking a -5 penalty on her Climb check. Finally, she can tumble at her full speed without taking the normal -10 penalty on her Tumble check.",
+        "name": "Fast Acrobatics",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A thief-acrobat can stand up from a prone position as a free action that doesn't provoke attacks of opportunity. This ability works only if the thief-acrobat wears light or no armor and carries no more than a light load.",
+        "name": "Kip Up",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A thief-acrobat remains stable on her feet when others have difficulty standing. She is not considered flat-footed while balancing or climbing, and she adds her class level as a bonus on Balance or Climb checks to remain balancing or climbing when she takes damage.",
+        "name": "Steady Stance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A whirling, spinning thief-acrobat is a devilishly difficult target. Starting at 2nd level, a thief-acrobat gains a +1 dodge bonus to Armor Class. When fighting defensively or using total defense, this bonus becomes +2. At 4th level, these bonuses increase by 1 (to +2 and +3, respectively). In addition, a thief-acrobat takes no penalty to her Armor Class or on her melee attack rolls when kneeling, sitting, or prone. This ability works only if a thief-acrobat wears light or no armor and carries no more than a light load.",
+        "name": "Agile Fighting",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 2nd level, a thief-acrobat reduces the effective distance of falls by 20 feet. At 4th level, this improves to reduce the effective distance of falls by 30 feet. See the monk class feature of the Player's Handbook. If a thief-acrobat has this ability from another class, the distances stack to determine the effective reduction of the falling distance.",
+        "name": "Slow Fall",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, a thief-acrobat can charge in situations where others cannot. She can charge over difficult terrain that normally slows movement or through allies blocking her path. This ability enables her to charge across a cluttered battlefield, leap down from a ledge, or swing across a chasm to get to her target. Depending on the circumstances, she may still need to make appropriate checks (such as Jump, Tumble, or Use Rope checks) to successfully move over the terrain.",
+        "name": "Acrobatic Charge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, once per day a thief-acrobat can roll with a potentially lethal blow to take less damage from it than she otherwise would. See the rogue class feature of the Player's Handbook. At 5th level, a thief-acrobat can use this ability twice per day.",
+        "name": "Defensive Roll",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level, a thief-acrobat has become so confident in the use of certain skills that she can use them reliably even under adverse conditions. When making a Balance, Climb, Jump, or Tumble check, she can take 10 even if stress and distractions would normally prevent her from doing so.",
+        "name": "Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 5th-level thief-acrobat can avoid damage from certain attacks with a successful Reflex save and takes only half damage on a failed save. See the monk class feature of the Player's Handbook.",
+        "name": "Improved Evasion",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Climb",
+      "Craft",
+      "Disable Device",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Move Silently",
+      "Open Lock",
+      "Perform",
+      "Search",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "A thief-acrobat excels in getting in and getting out.",
+    "hitDie": "d6",
+    "name": "Thief-acrobat",
+    "prerequisites": {
+      "parsed": {
+        "skills": [
+          {
+            "name": "Balance",
+            "ranks": 8
+          },
+          {
+            "name": "Climb",
+            "ranks": 8
+          },
+          {
+            "name": "Jump",
+            "ranks": 8
+          },
+          {
+            "name": "Tumble",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Evasion class feature."
+        ]
+      },
+      "text": "Skills: Balance 8 ranks, Climb 8 ranks, Jump 8 ranks, Tumble 8 ranks Special: Evasion class feature."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Fast acrobatics",
+          "kip up",
+          "steady stance"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Agile fighting +1/+2",
+          "slow fall 20 ft."
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Acrobatic charge",
+          "defensive roll 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Agile fighting +2/+3",
+          "skill mastery",
+          "slow fall 30 ft."
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Defensive roll 2/day",
+          "improved evasion"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

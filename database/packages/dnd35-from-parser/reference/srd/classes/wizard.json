@@ -1,0 +1,955 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-20T23:13:37.520Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/wizard/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          5,
+          10,
+          15,
+          20
+        ],
+        "target": "aptitudes.wizardbonusfeat.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Summon Familiar"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Scribe Scroll"
+      },
+      {
+        "levels": [
+          5,
+          10,
+          15,
+          20
+        ],
+        "name": "Bonus Feat"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 4,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        2,
+        1
+      ],
+      [
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Intelligence",
+    "classFeatureAptitude": "Wizard Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "At 5th, 10th, 15th, and 20th level, a wizard receives an additional bonus feat. Each time, she may select a metamagic feat, an item creation feat, or Spell Mastery. All prerequisites for the chosen feat must still be satisfied, including any caster level requirements. These bonus feats are granted on top of the standard feat every character earns at every third level. When selecting her regular feats (as opposed to these class bonus feats), the wizard is not restricted to metamagic feats, item creation feats, or Spell Mastery.",
+        "level": 5,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.wizardbonusfeat.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Bonus Feat (Wizard)",
+        "stackable": true
+      },
+      "Scribe Scroll": {
+        "description": "Upon reaching 1st level, a wizard receives Scribe Scroll as a bonus feat, allowing her to craft magic scrolls.",
+        "level": 1,
+        "seedName": "Scribe Scroll (Wizard)"
+      },
+      "Spellbooks": {
+        "description": "Each day, a wizard must review her spellbook to prepare spells. No spell can be prepared unless it appears in her spellbook, with the sole exception of read magic, which every wizard can prepare from memory alone. At 1st level, a wizard's spellbook contains every 0-level wizard spell along with three 1st-level spells of the player's choosing. For each point of Intelligence bonus she possesses, one additional 1st-level spell of the player's choice is also included. Upon gaining each new wizard level, she adds two new spells to her spellbook, chosen from any spell level or levels she is now capable of casting. For instance, a wizard reaching 5th level gains access to 3rd-level spells and could add two 3rd-level spells, or one 2nd-level and one 3rd-level spell, or any other combination of two spells from 1st through 3rd level. A wizard may also copy spells from other wizards' spellbooks into her own at any time.",
+        "level": 1,
+        "seedName": "Spellbooks (Wizard)"
+      },
+      "Spells": {
+        "description": "Wizards employ arcane magic of the same variety used by sorcerers and bards, selecting from the sorcerer/wizard spell list. Unlike spontaneous casters, a wizard must select and prepare her spells in advance. Learning, preparing, or casting any spell requires an Intelligence score of at least 10 + the spell's level (Intelligence 10 for 0-level spells, Intelligence 11 for 1st-level spells, and so on). The saving throw DC against a wizard's spell equals 10 + the spell's level + her Intelligence modifier. As with other spellcasting classes, a wizard has a limited number of spell slots at each level per day, as shown in the class table. A high Intelligence score grants her additional bonus spell slots. In contrast to bards and sorcerers, there is no cap on the number of spells a wizard can learn. She must decide which spells to prepare each day after a full night's rest and 1 hour of studying her spellbook.",
+        "level": 1,
+        "seedName": "Spells (Wizard)"
+      },
+      "Summon Familiar": {
+        "description": "",
+        "level": 1,
+        "seedName": "Summon Familiar (Wizard)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Wizards have training with clubs, daggers, heavy crossbows, light crossbows, and quarterstaves. They lack proficiency with all forms of armor and shields. Wearing any armor hampers a wizard's ability to perform the precise movements required for spellcasting, potentially causing spells with somatic components to fail.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyheavycrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencylightcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyquarterstaff.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyclub.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Wizard)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat",
+      "Scribe Scroll": "Scribe Scroll",
+      "Summon Familiar": "Summon Familiar"
+    },
+    "overrides": {
+      "aptitudePicks": [
+        {
+          "levels": [
+            1
+          ],
+          "target": "aptitudes.wizardspecialization.allowed"
+        }
+      ],
+      "description": "Through years of rigorous academic study, wizards unlock the secrets of arcane magic. What appears effortless - a few uttered syllables and a wave of the hand - actually represents countless hours spent poring over ancient texts and preparing each incantation with painstaking precision. Long apprenticeships and tireless research form the foundation of a wizard's power. Unlike those born with innate magical talent, wizards treat spellcraft as a scholarly discipline that demands dedication and intellect. They approach adventuring methodically, planning carefully and leveraging their prepared spells to devastating effect, though they remain vulnerable when caught off guard. Their motivations center on the pursuit of knowledge, arcane power, and the resources needed to further their studies, though personal ambitions vary as widely as any adventurer's. A wizard's primary asset is her spell repertoire; all other abilities take a back seat. As she gains experience and conducts her own magical experiments, she discovers new spells, and can also transcribe them from the spellbooks of fellow practitioners. Over time, she learns to modify her magic - extending its reach, amplifying its potency, or enhancing it in other ways. Some wizards opt to focus on a particular school of magic. This specialization grants greater command within that discipline but restricts access to certain spells outside it. Like sorcerers, wizards can also summon a familiar - a small magical creature that serves as a companion and aide. For some wizards, this familiar is their closest confidant.",
+      "features": {
+        "Bonus Feat": {
+          "description": "At 5th, 10th, 15th, and 20th level, a wizard receives an additional bonus feat. Each time, she may select a metamagic feat, an item creation feat, or Spell Mastery. All prerequisites for the chosen feat must still be satisfied, including any caster level requirements. These bonus feats are granted on top of the standard feat every character earns at every third level. When selecting her regular feats (as opposed to these class bonus feats), the wizard is not restricted to metamagic feats, item creation feats, or Spell Mastery."
+        },
+        "Scribe Scroll": {
+          "description": "Upon reaching 1st level, a wizard receives Scribe Scroll as a bonus feat, allowing her to craft magic scrolls."
+        },
+        "Spellbooks": {
+          "description": "Each day, a wizard must review her spellbook to prepare spells. No spell can be prepared unless it appears in her spellbook, with the sole exception of read magic, which every wizard can prepare from memory alone. At 1st level, a wizard's spellbook contains every 0-level wizard spell along with three 1st-level spells of the player's choosing. For each point of Intelligence bonus she possesses, one additional 1st-level spell of the player's choice is also included. Upon gaining each new wizard level, she adds two new spells to her spellbook, chosen from any spell level or levels she is now capable of casting. For instance, a wizard reaching 5th level gains access to 3rd-level spells and could add two 3rd-level spells, or one 2nd-level and one 3rd-level spell, or any other combination of two spells from 1st through 3rd level. A wizard may also copy spells from other wizards' spellbooks into her own at any time."
+        },
+        "Spells": {
+          "description": "Wizards employ arcane magic of the same variety used by sorcerers and bards, selecting from the sorcerer/wizard spell list. Unlike spontaneous casters, a wizard must select and prepare her spells in advance. Learning, preparing, or casting any spell requires an Intelligence score of at least 10 + the spell's level (Intelligence 10 for 0-level spells, Intelligence 11 for 1st-level spells, and so on). The saving throw DC against a wizard's spell equals 10 + the spell's level + her Intelligence modifier. As with other spellcasting classes, a wizard has a limited number of spell slots at each level per day, as shown in the class table. A high Intelligence score grants her additional bonus spell slots. In contrast to bards and sorcerers, there is no cap on the number of spells a wizard can learn. She must decide which spells to prepare each day after a full night's rest and 1 hour of studying her spellbook."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Wizards have training with clubs, daggers, heavy crossbows, light crossbows, and quarterstaves. They lack proficiency with all forms of armor and shields. Wearing any armor hampers a wizard's ability to perform the precise movements required for spellcasting, potentially causing spells with somatic components to fail."
+        }
+      },
+      "spells": {
+        "known": [
+          [6, 3],
+          [6, 5],
+          [6, 5, 2],
+          [6, 5, 4],
+          [6, 5, 4, 2],
+          [6, 5, 4, 4],
+          [6, 5, 4, 4, 2],
+          [6, 5, 4, 4, 4],
+          [6, 5, 4, 4, 4, 2],
+          [6, 5, 4, 4, 4, 4],
+          [6, 5, 4, 4, 4, 4, 2],
+          [6, 5, 4, 4, 4, 4, 4],
+          [6, 5, 4, 4, 4, 4, 4, 2],
+          [6, 5, 4, 4, 4, 4, 4, 4],
+          [6, 5, 4, 4, 4, 4, 4, 4, 2],
+          [6, 5, 4, 4, 4, 4, 4, 4, 4],
+          [6, 5, 4, 4, 4, 4, 4, 4, 4, 2],
+          [6, 5, 4, 4, 4, 4, 4, 4, 4, 4],
+          [6, 5, 4, 4, 4, 4, 4, 4, 4, 6],
+          [6, 5, 4, 4, 4, 4, 4, 4, 4, 8]
+        ],
+        "perDay": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            2,
+            1
+          ],
+          [
+            4,
+            3,
+            2
+          ],
+          [
+            4,
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            3,
+            3,
+            2
+          ],
+          [
+            4,
+            4,
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            3,
+            3,
+            2
+          ],
+          [
+            4,
+            4,
+            4,
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            4,
+            3,
+            3,
+            2
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            3,
+            3,
+            2
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            3,
+            3,
+            2
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            3,
+            3,
+            2
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            3,
+            3,
+            2
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            3,
+            3
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        ],
+        "slug": "wizardspells"
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "perDay": [
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2,
+          1
+        ],
+        [
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "slug": "wizardspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Intelligence",
+    "classFeatures": [
+      {
+        "description": "Wizards are proficient with the club, dagger, heavy crossbow, light crossbow, and quarterstaff, but not with any type of armor or shield. Armor of any type interferes with a wizard's movements, which can cause her spells with somatic components to fail.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A wizard casts arcane spells (the same type of spells available to sorcerers and bards), which are drawn from the sorcerer/wizard spell list. A wizard must choose and prepare her spells ahead of time. To learn, prepare, or cast a spell, the wizard must have an Intelligence score equal to at least 10 + the spell level (Int 10 for 0-level spells, Int 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a wizard's spell is 10 + the spell level + the wizard's Intelligence modifier. Like other spellcasters, a wizard can cast only a certain number of spells of each spell level per day. Her base daily spell allotment is given in the class table. In addition, she receives bonus spells per day if she has a high Intelligence score. Unlike a bard or sorcerer, a wizard may know any number of spells. She must choose and prepare her spells ahead of time by getting a good night's sleep and spending 1 hour studying her spellbook. While studying, the wizard decides which spells to prepare.",
+        "name": "Spells"
+      },
+      {
+        "description": "A wizard must study her spellbook each day to prepare her spells. She cannot prepare any spell not recorded in her spellbook, except for read magic, which all wizards can prepare from memory. A wizard begins play with a spellbook containing all 0-level wizard spells plus three 1st-level spells of your choice. For each point of Intelligence bonus the wizard has, the spellbook holds one additional 1st-level spell of your choice. At each new wizard level, she gains two new spells of any spell level or levels that she can cast (based on her new wizard level) for her spellbook. For example, when a wizard attains 5th level, she can cast 3rd-level spells. At this point, she can add two new 3rd-level spells to her spellbook, or one 2nd-level spell and one 3rd-level spell, or any combination of two spells between 1st and 3rd level. At any time, a wizard can also add spells found in other wizards' spellbooks to her own.",
+        "name": "Spellbooks"
+      },
+      {
+        "description": "",
+        "name": "Summon Familiar"
+      },
+      {
+        "description": "At 1st level, a wizard gains Scribe Scroll as a bonus feat. This feats enables her to create magic schools.",
+        "name": "Scribe Scroll"
+      },
+      {
+        "description": "At 5th, 10th, 15th, and 20th level, a wizard gains a bonus feat. At each such opportunity, she can choose a metamagic feat, an item creation feat, or Spell Mastery. The wizard must still meet all prerequisites for a bonus feat, including caster level minimums. These bonus feats are in addition to the feat that a character of any class gets every three levels. The wizard is not limited to the categories of item creation feats, metamagic feats, or Spell Mastery when choosing these feats.",
+        "name": "Bonus Feat"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "",
+    "hasCantrips": true,
+    "hitDie": "d4",
+    "name": "Wizard",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Summon familiar",
+          "Scribe scroll"
+        ],
+        "spellsPerDay": "3,1,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "4,2,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "4,2,1,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "4,3,2,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "4,3,2,1,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "4,3,3,2,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "4,4,3,2,1,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "4,4,3,3,2,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "4,4,4,3,2,1,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "4,4,4,3,3,2,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,3,2,1,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,3,3,2,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,3,2,1,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 7,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,3,3,2,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "4,4,4,4,4,4,3,2,1,-",
+        "willSave": 9
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,3,3,2,-",
+        "willSave": 10
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,4,3,2,1",
+        "willSave": 10
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,4,3,3,2",
+        "willSave": 11
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,4,4,3,3",
+        "willSave": 11
+      },
+      {
+        "bab": 10,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "4,4,4,4,4,4,4,4,4,4",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

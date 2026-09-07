@@ -1,0 +1,514 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.323Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/nightsong-infiltrator/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "alertness": "Alertness"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Teamwork Trap Sense"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Trapfinding"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Steady Stance"
+      },
+      {
+        "levels": [
+          2,
+          8
+        ],
+        "name": "Teamwork Infiltration"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Break Away"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Trackless Step (Self)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Detect Magic"
+      },
+      {
+        "levels": [
+          4,
+          8
+        ],
+        "name": "Teamwork Sneak Attack"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Defensive Roll"
+      },
+      {
+        "levels": [
+          5,
+          9
+        ],
+        "name": "Grant Move Action"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Improved Evasion"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Skill Mastery"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Specialized Tools"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Trackless Step (Allies)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Hide In Plain Sight"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.climb.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disabledevice.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.openlock.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.search.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.alertness.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 8
+  },
+  "mapping": {
+    "classFeatureAptitude": "Nightsong Infiltrator Class Feature",
+    "features": {
+      "Break Away": {
+        "description": "Skilled as she is, a nightsong infiltrator knows the sensibility of falling back from an unwinnable fight. Starting at 3rd level, she gains a +4 dodge bonus to Armor Class in any round during which she does nothing but move. A nightsong infiltrator can grant this ability to an ally within 30 feet as a swift action. It lasts for 1 round.",
+        "level": 3,
+        "seedName": "Break Away (Nightsong Infiltrator)"
+      },
+      "Defensive Roll": {
+        "description": "Starting at 5th level, a nightsong infiltrator can attempt to roll with a potentially lethal blow to take less damage from it than she otherwise would. See the rogue class feature of the Player's Handbook.",
+        "level": 5,
+        "seedName": "Defensive Roll (Nightsong Infiltrator)"
+      },
+      "Detect Magic": {
+        "description": "Starting at 4th level, a nightsong infiltrator can use detect magic at will. See the spell of the Player's Handbook.",
+        "level": 4,
+        "seedName": "Detect Magic (Nightsong Infiltrator)"
+      },
+      "Grant Move Action": {
+        "description": "Starting at 5th level, a nightsong infiltrator can direct and motivate her allies to act immediately. Once per day, as a standard action, she can grant an extra move action to any or all of her allies within 30 feet (but not herself). Each of the affected allies takes this extra move action immediately, acting in their current initiative order. This extra action does not affect the allies' initiative count; the round continues normally after the infiltrator's turn is over. Starting at 9th level, a nightsong infiltrator can use this ability twice per day.",
+        "level": 5,
+        "seedName": "Grant Move Action (Nightsong Infiltrator)",
+        "stackable": true
+      },
+      "Hide in Plain Sight": {
+        "description": "A 10th-level nightsong infiltrator can can use the Hide skill in natural terrain even while being observed. See the ranger class feature of the Player's Handbook.",
+        "level": 10,
+        "seedName": "Hide in Plain Sight (Nightsong Infiltrator)"
+      },
+      "Improved Evasion": {
+        "description": "If a nightsong infiltrator of 6th level or higher is exposed to any effect that normally allows her to attempt a Reflex saving throw for half damage, she takes no damage with a successful saving throw and half damage if the saving throw fails.",
+        "level": 6,
+        "seedName": "Improved Evasion (Nightsong Infiltrator)"
+      },
+      "Skill Mastery": {
+        "description": "At 6th level, a nightsong infiltrator has become so confident in the use of certain skills that she can use them reliably even under adverse conditions. When making a Climb, Disable Device, Open Lock, or Search check, she can take 10 even if stress and distractions would normally prevent her from doing so.",
+        "level": 6,
+        "seedName": "Skill Mastery (Nightsong Infiltrator)"
+      },
+      "Specialized Tools": {
+        "description": "After studying an area teamwork infiltration, above), a nightsong infiltrator of 6th level or higher can prepare a special tool for a job. Doing this requires 1 hour, a DC 15 Craft check (the specific type of Craft specialty required is up to the DM; blacksmithing, leatherworking, or woodworking are all likely candidates), and a set of artisan's tools for the Craft skill in question. The tool prepared by the infiltrator grants a +4 circumstance bonus on all checks made with one of the following skills: Climb, Disable Device, Disguise, Escape Artist, Hide, Move Silently, Open Lock, Search, or Sleight of Hand. This bonus doesn't stack with the circumstance bonus granted by any other set of tools (such as a disguise kit or masterwork thieves' tools). The tool works only in the studied area, and it works only for 24 hours (though the infiltrator can rebuild the tool by following the same process).",
+        "level": 6,
+        "seedName": "Specialized Tools (Nightsong Infiltrator)"
+      },
+      "Steady Stance": {
+        "description": "At 2nd level and higher, a nightsong infiltrator remains stable on her feet when others have difficulty standing. She is not considered flat-footed while balancing or climbing, and she adds her class level as a bonus on Balance or Climb checks to remain balancing or climbing when she takes damage.",
+        "level": 2,
+        "seedName": "Steady Stance (Nightsong Infiltrator)"
+      },
+      "Teamwork Infiltration": {
+        "description": "Starting at 2nd level, a nightsong infiltrator can study a small area (typically up to 10 feet square, such as a doorway or guard post) in order to prepare for infiltrating that area. If the infiltrator spends 1 hour studying the area from a distance of no more than 60 feet, she gains a +2 competence bonus on Balance, Climb, Disable Device, Hide, Move Silently, Open Lock, Search, and Tumble checks attempted in that area for the next 24 hours. All allies within 30 feet of the infiltrator gain the same bonus in that area. (The allies need not be present while the infiltrator studies the area.) At 8th level, this bonus increases to +4.",
+        "level": 2,
+        "seedName": "Teamwork Infiltration (Nightsong Infiltrator)",
+        "stackable": true
+      },
+      "Teamwork Sneak Attack": {
+        "description": "Beginning at 4th level, a nightsong infiltrator deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. Any ally of the infiltrator who is also flanking the infiltrator's opponent deals this extra damage as well. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 8th level. See the rogue class feature of the Player's Handbook. If a nightsong infiltrator or her ally gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "level": 4,
+        "seedName": "Teamwork Sneak Attack (Nightsong Infiltrator)",
+        "stackable": true
+      },
+      "Teamwork Trap Sense": {
+        "description": "A nightsong infiltrator has an intuitive sense that alerts her to danger from traps, giving her a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to Armor Class against attacks made by traps. All allies within 30 feet of the infiltrator also gain these bonuses (even if they already have trap sense from another class feature). These bonuses increase to +2 at 4th level, to +3 at 7th level, and to +4 at 10th level.",
+        "level": 1,
+        "seedName": "Teamwork Trap Sense (Nightsong Infiltrator)",
+        "stackable": true
+      },
+      "Trackless Step (Allies)": {
+        "description": "",
+        "level": 7,
+        "seedName": "Trackless Step (Allies) (Nightsong Infiltrator)"
+      },
+      "Trackless Step (Self)": {
+        "description": "Beginning at 3rd level, a nightsong infiltrator cannot be tracked in natural surroundings. See the druid class feature of the Player's Handbook. At 7th level and higher, a nightsong infiltrator can share this ability with up to one additional ally per class level. Designating an ally for trackless step requires a standard action and lasts for 24 hours or until the infiltrator dismisses the effect (a standard action).",
+        "level": 3,
+        "seedName": "Trackless Step (Self) (Nightsong Infiltrator)"
+      },
+      "Trapfinding": {
+        "description": "A nightsong infiltrator can find, disarm, or bypass traps with a DC of 20 or higher. She can use the Search skill to find, and the Disable Device skill to disarm, magic traps (DC 25 + the level of the spell used to create it). If her Disable Device result exceeds the trap's DC by 10 or more, she discovers how to bypass the trap without triggering or disarming it.",
+        "level": 1,
+        "seedName": "Trapfinding (Nightsong Infiltrator)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Nightsong infiltrators gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Nightsong Infiltrator)"
+      }
+    },
+    "occurrenceMap": {
+      "Break Away": "Break Away",
+      "Defensive Roll": "Defensive Roll",
+      "Detect Magic": "Detect Magic",
+      "Grant Move Action": "Grant Move Action",
+      "Hide In Plain Sight": "Hide in Plain Sight",
+      "Improved Evasion": "Improved Evasion",
+      "Skill Mastery": "Skill Mastery",
+      "Specialized Tools": "Specialized Tools",
+      "Steady Stance": "Steady Stance",
+      "Teamwork Infiltration": "Teamwork Infiltration",
+      "Teamwork Sneak Attack": "Teamwork Sneak Attack",
+      "Teamwork Trap Sense": "Teamwork Trap Sense",
+      "Trackless Step (Allies)": "Trackless Step (Allies)",
+      "Trackless Step (Self)": "Trackless Step (Self)",
+      "Trapfinding": "Trapfinding"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Nightsong infiltrators gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A nightsong infiltrator has an intuitive sense that alerts her to danger from traps, giving her a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to Armor Class against attacks made by traps. All allies within 30 feet of the infiltrator also gain these bonuses (even if they already have trap sense from another class feature). These bonuses increase to +2 at 4th level, to +3 at 7th level, and to +4 at 10th level.",
+        "name": "Teamwork Trap Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A nightsong infiltrator can find, disarm, or bypass traps with a DC of 20 or higher. She can use the Search skill to find, and the Disable Device skill to disarm, magic traps (DC 25 + the level of the spell used to create it). If her Disable Device result exceeds the trap's DC by 10 or more, she discovers how to bypass the trap without triggering or disarming it.",
+        "name": "Trapfinding",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level and higher, a nightsong infiltrator remains stable on her feet when others have difficulty standing. She is not considered flat-footed while balancing or climbing, and she adds her class level as a bonus on Balance or Climb checks to remain balancing or climbing when she takes damage.",
+        "name": "Steady Stance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, a nightsong infiltrator can study a small area (typically up to 10 feet square, such as a doorway or guard post) in order to prepare for infiltrating that area. If the infiltrator spends 1 hour studying the area from a distance of no more than 60 feet, she gains a +2 competence bonus on Balance, Climb, Disable Device, Hide, Move Silently, Open Lock, Search, and Tumble checks attempted in that area for the next 24 hours. All allies within 30 feet of the infiltrator gain the same bonus in that area. (The allies need not be present while the infiltrator studies the area.) At 8th level, this bonus increases to +4.",
+        "name": "Teamwork Infiltration",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Skilled as she is, a nightsong infiltrator knows the sensibility of falling back from an unwinnable fight. Starting at 3rd level, she gains a +4 dodge bonus to Armor Class in any round during which she does nothing but move. A nightsong infiltrator can grant this ability to an ally within 30 feet as a swift action. It lasts for 1 round.",
+        "name": "Break Away",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a nightsong infiltrator cannot be tracked in natural surroundings. See the druid class feature of the Player's Handbook. At 7th level and higher, a nightsong infiltrator can share this ability with up to one additional ally per class level. Designating an ally for trackless step requires a standard action and lasts for 24 hours or until the infiltrator dismisses the effect (a standard action).",
+        "name": "Trackless Step (Self)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 4th level, a nightsong infiltrator can use detect magic at will. See the spell of the Player's Handbook.",
+        "name": "Detect Magic",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 4th level, a nightsong infiltrator deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. Any ally of the infiltrator who is also flanking the infiltrator's opponent deals this extra damage as well. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 8th level. See the rogue class feature of the Player's Handbook. If a nightsong infiltrator or her ally gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Teamwork Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 5th level, a nightsong infiltrator can attempt to roll with a potentially lethal blow to take less damage from it than she otherwise would. See the rogue class feature of the Player's Handbook.",
+        "name": "Defensive Roll",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 5th level, a nightsong infiltrator can direct and motivate her allies to act immediately. Once per day, as a standard action, she can grant an extra move action to any or all of her allies within 30 feet (but not herself). Each of the affected allies takes this extra move action immediately, acting in their current initiative order. This extra action does not affect the allies' initiative count; the round continues normally after the infiltrator's turn is over. Starting at 9th level, a nightsong infiltrator can use this ability twice per day.",
+        "name": "Grant Move Action",
+        "type": "(Ex)"
+      },
+      {
+        "description": "If a nightsong infiltrator of 6th level or higher is exposed to any effect that normally allows her to attempt a Reflex saving throw for half damage, she takes no damage with a successful saving throw and half damage if the saving throw fails.",
+        "name": "Improved Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 6th level, a nightsong infiltrator has become so confident in the use of certain skills that she can use them reliably even under adverse conditions. When making a Climb, Disable Device, Open Lock, or Search check, she can take 10 even if stress and distractions would normally prevent her from doing so.",
+        "name": "Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "After studying an area teamwork infiltration, above), a nightsong infiltrator of 6th level or higher can prepare a special tool for a job. Doing this requires 1 hour, a DC 15 Craft check (the specific type of Craft specialty required is up to the DM; blacksmithing, leatherworking, or woodworking are all likely candidates), and a set of artisan's tools for the Craft skill in question. The tool prepared by the infiltrator grants a +4 circumstance bonus on all checks made with one of the following skills: Climb, Disable Device, Disguise, Escape Artist, Hide, Move Silently, Open Lock, Search, or Sleight of Hand. This bonus doesn't stack with the circumstance bonus granted by any other set of tools (such as a disguise kit or masterwork thieves' tools). The tool works only in the studied area, and it works only for 24 hours (though the infiltrator can rebuild the tool by following the same process).",
+        "name": "Specialized Tools",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Trackless Step (Allies)"
+      },
+      {
+        "description": "A 10th-level nightsong infiltrator can can use the Hide skill in natural terrain even while being observed. See the ranger class feature of the Player's Handbook.",
+        "name": "Hide in Plain Sight",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Forgery",
+      "Gather Information",
+      "Hide",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Profession",
+      "Ride",
+      "Search",
+      "Sleight of Hand",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "An expert at breaking into ?secure' areas, a nightsong in?ltrator is the perfect thief and the perfect spy. Whether she is there to steal gold, information, jewels, or secrets, an in?ltrator of the Nightsong Guild is trained to do her job quickly and ef?ciently. She practices extensively with locks and traps, focusing on doing her job under pressure and in unfavorable conditions. For example, nightsong in?ltrators train extensively in climbing, since they often have to scale walls and reach high windows. They have little time to work on combat training and relegate such concerns to their companions, the nightsong enforcers. Rogues most frequently and most easily become nightsong in?ltrators. Bards, urban rangers, and intelligent ?ghters can make good members of the class as well. Rarer, but possible, are spellcasting nightsong in?ltrators who use spells to get in and out of places. Woe to those wishing to protect their valuables from a Nightsong Guild member who can become invisible, walk through walls, or teleport. Members of the Nightsong Guild rarely work alone. Usually they operate in teams, often in pairings of a nightsong in?ltrator and a nightsong enforcer. (For a PC nightsong in?ltrator, the other team member can be an adventuring ally.) When working as part of a team, a nightsong in?ltrator works best as the advance scout and point person, while the other team members take care of threats that she is unable to deal with (guards, mostly).",
+    "hitDie": "d6",
+    "name": "Nightsong Infiltrator",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Alertness"
+        ],
+        "skills": [
+          {
+            "name": "Climb",
+            "ranks": 10
+          },
+          {
+            "name": "Disable Device",
+            "ranks": 5
+          },
+          {
+            "name": "Open Lock",
+            "ranks": 5
+          },
+          {
+            "name": "Search",
+            "ranks": 5
+          }
+        ],
+        "special": [
+          "Evasion class feature.Special: The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
+        ]
+      },
+      "text": "Skills: Climb 10 ranks, Disable Device 5 ranks, Open Lock 5 ranks, Search 5 ranks Feats: Alertness Special: Evasion class feature.Special: The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Teamwork trap sense +1",
+          "trapfinding"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Steady stance",
+          "teamwork infiltration +2"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Break away",
+          "trackless step (self)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Detect magic",
+          "teamwork sneak attack +1d6",
+          "teamwork trap sense +2"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Defensive roll",
+          "grant move action 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Improved evasion",
+          "skill mastery",
+          "specialized tools"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Teamwork trap sense +3",
+          "trackless step (allies)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Teamwork infiltration +4",
+          "teamwork sneak attack +2d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Grant move action 2/day"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Hide in plain sight",
+          "teamwork trap sense +4"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "8 + Int modifier"
+  }
+}

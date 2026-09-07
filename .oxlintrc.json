@@ -1,0 +1,195 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "import", "unicorn"],
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": ["node_modules", "dist", "drizzle/generated"],
+  "rules": {
+    // TypeScript
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": ["error", { "fixStyle": "inline-type-imports" }],
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+
+    // React
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/only-export-components": [
+      "warn",
+      { "allowConstantExport": true, "allowExportNames": ["useTheme", "useSnackbar"] }
+    ],
+
+    // Unicorn
+    "unicorn/no-array-for-each": "error",
+    "unicorn/no-new-array": "off",
+    "unicorn/no-single-promise-in-promise-methods": "off",
+    "unicorn/no-useless-fallback-in-spread": "off",
+    "unicorn/no-useless-spread": "off",
+
+    // General
+    "no-console": "error",
+    // Frontend barrel imports
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@mui/material",
+            "importNames": ["CircularProgress", "Dialog"],
+            "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase."
+          }
+        ],
+        "patterns": [
+          {
+            "group": [
+              "@/client/src/components/*/*.ts",
+              "@/client/src/components/*/*.tsx",
+              "@/client/src/hooks/*.ts",
+              "@/client/src/pages/*/components/*.ts",
+              "@/client/src/pages/*/components/*.tsx",
+              "@/client/src/pages/*/hooks/*.ts",
+              "@/client/src/pages/*/hooks/*.tsx",
+              "@/client/src/pages/*/details/components/*.ts",
+              "@/client/src/pages/*/details/components/*.tsx",
+              "@/client/src/pages/*/details/*/components/*.ts",
+              "@/client/src/pages/*/details/*/components/*.tsx",
+              "!**/index.ts"
+            ],
+            "message": "Import from the barrel index instead."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    // Modal is the single sanctioned wrapper for raw MUI Dialog; the rest of the
+    // codebase must go through Modal/FormDialog/CreateDialog/EditDialog. The
+    // wrappers themselves compose with each other, so they need to import
+    // siblings directly (importing through the barrel would be circular).
+    {
+      "files": [
+        "client/src/components/common/Modal.tsx",
+        "client/src/components/common/FormDialog.tsx",
+        "client/src/components/common/StandardDialogs.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    // No default exports in shared components/hooks/contexts/stores/services
+    {
+      "files": [
+        "client/src/components/**/*.{ts,tsx}",
+        "client/src/hooks/**/*.ts",
+        "client/src/contexts/**/*.{ts,tsx}",
+        "client/src/stores/**/*.ts",
+        "client/src/services/**/*.ts",
+        "client/src/pages/*/components/**/*.{ts,tsx}",
+        "client/src/pages/*/hooks/**/*.ts",
+        "client/src/pages/*/details/components/**/*.{ts,tsx}",
+        "client/src/pages/*/details/*/components/**/*.{ts,tsx}",
+        "client/src/pages/*/details/*/sections/**/*.{ts,tsx}",
+        "client/src/pages/*/details/sections/**/*.{ts,tsx}",
+        "client/src/pages/*/customization/sections/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "import/no-default-export": "error"
+      }
+    },
+    // Server/scripts/tests/database: allow console
+    {
+      "files": ["server/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.ts", "database/**/*.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    // API routers: no direct repo/db access, use service barrel imports
+    {
+      "files": ["server/routers/api/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/server/repositories/index.ts", "@/server/repositories/index"],
+                "message": "API routers must not use repositories directly. Delegate to a service instead."
+              },
+              {
+                "group": ["@/server/database/*"],
+                "message": "API routers must not use the database directly. Delegate to a service instead."
+              },
+              {
+                "group": [
+                  "@/server/services/campaigns/*",
+                  "@/server/services/characters/*",
+                  "@/server/services/rulesets/*",
+                  "!@/server/services/campaigns/index",
+                  "!@/server/services/campaigns/index.ts",
+                  "!@/server/services/characters/index",
+                  "!@/server/services/characters/index.ts",
+                  "!@/server/services/rulesets/index",
+                  "!@/server/services/rulesets/index.ts"
+                ],
+                "message": "Import services from the barrel index (e.g., @/server/services/campaigns/index.ts)."
+              },
+              {
+                "group": [
+                  "@/server/middlewares/*",
+                  "!@/server/middlewares/index",
+                  "!@/server/middlewares/index.ts"
+                ],
+                "message": "Import middlewares from the barrel index (@/server/middlewares/index.ts)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // Services: use shared repo instances from index.ts
+    {
+      "files": ["server/services/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/server/repositories/*",
+                  "!@/server/repositories/index",
+                  "!@/server/repositories/index.ts",
+                  "!@/server/repositories/BaseRepository",
+                  "!@/server/repositories/BaseRepository.ts"
+                ],
+                "message": "Import shared repository instances from @/server/repositories/index.ts instead of individual files."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // Page isolation: each page domain cannot import from other page domains
+    { "files": ["client/src/pages/activities/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/auth/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/campaigns/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/changelog/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/characters/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/contributor-invite/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/dashboard/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/faq/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/invite/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/notifications/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/profile/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/public/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/rulesets/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." }] }] } },
+    { "files": ["client/src/pages/settings/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/changelog/**", "@/client/src/pages/characters/**", "@/client/src/pages/contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/faq/**", "@/client/src/pages/invite/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/public/**", "@/client/src/pages/rulesets/**"], "message": "Pages must not import from other page domains." }] }] } }
+  ]
+}

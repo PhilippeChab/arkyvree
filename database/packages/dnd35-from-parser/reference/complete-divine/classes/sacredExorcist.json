@@ -1,0 +1,447 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:27:28.906Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/sacred-exorcist/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Exorcism"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Turn Undead"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Detect Evil"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Resist Possession"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Chosen Foe"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Dispel Evil 1/Week"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Consecrated Presence"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Dispel Evil 2/Week"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Holy Aura"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Dispel Evil 3/Week"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Sacred Exorcist Class Feature",
+    "features": {
+      "Chosen Foe": {
+        "description": "Starting at 3rd level, the sacred exorcist selects either undead or evil outsiders as a designated enemy. Through dedicated research and specialized combat training against this type of opponent, she gains a +1 competence bonus on Bluff, Intimidate, Listen, Sense Motive, and Spot checks when dealing with the designated enemy, along with a +1 bonus on caster level checks to penetrate that enemy's spell resistance. This bonus improves to +2 at 6th level and +3 at 9th level.",
+        "level": 3,
+        "seedName": "Chosen Foe (Sacred Exorcist)",
+        "stackable": true
+      },
+      "Consecrated Presence": {
+        "description": "Beginning at 5th level, the sacred exorcist radiates a mobile aura of positive energy in a 20-foot radius. This aura functions identically to a consecrate spell but travels with the sacred exorcist. When she enters a zone under the influence of a desecrate spell, both effects cancel each other out for as long as she remains within that zone. If a desecrate spell targets her directly, her aura is suppressed until that spell's duration expires.",
+        "level": 5,
+        "seedName": "Consecrated Presence (Sacred Exorcist)"
+      },
+      "Detect Evil": {
+        "description": "A sacred exorcist who has reached 2nd level or higher may use detect evil at will as a spell-like ability.",
+        "level": 2,
+        "seedName": "Detect Evil (Sacred Exorcist)"
+      },
+      "Dispel Evil": {
+        "description": "Starting at 4th level, the sacred exorcist gains the ability to use dispel evil once per week as a spell-like ability. The frequency increases to twice per week at 7th level and three times per week at 10th level.",
+        "level": 4,
+        "seedName": "Dispel Evil (Sacred Exorcist)",
+        "stackable": true
+      },
+      "Exorcism": {
+        "description": "By spending a full-round action, the sacred exorcist can drive a possessing entity or spirit from the body it occupies. She rolls a class level check, adding her Charisma modifier (if positive), against a DC equal to 10 + the possessing creature's Hit Dice + its Charisma modifier (if any). If her result meets or exceeds this DC, the possessing entity is expelled from the host, with standard consequences based on the method of possession used. A spirit driven out in this way is unable to attempt possession of the same target again for 24 hours.",
+        "level": 1,
+        "seedName": "Exorcism (Sacred Exorcist)"
+      },
+      "Holy Aura": {
+        "description": "Upon reaching 8th level, the sacred exorcist can activate holy aura once per day as a spell-like ability.",
+        "level": 8,
+        "seedName": "Holy Aura (Sacred Exorcist)"
+      },
+      "Resist Possession": {
+        "description": "From 2nd level onward, sacred exorcists gain a +4 sacred bonus on saving throws against magic jar and comparable possession effects (such as a ghost's malevolence ability), plus a +2 sacred bonus on dispel checks to end such effects. Additionally, they receive a +2 sacred bonus on saving throws against charm and compulsion spells and effects originating from evil outsiders or undead.",
+        "level": 2,
+        "seedName": "Resist Possession (Sacred Exorcist)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "The sacred exorcist continues to develop her spellcasting power alongside her exorcism training. Each time she gains a new sacred exorcist level, she receives additional spells per day as though she had also advanced one level in a spellcasting class she belonged to prior to entering this prestige class. She does not, however, receive any other class benefits that would normally accompany that level gain (such as improved undead turning or additional uses of remove disease). In effect, her sacred exorcist level is added to her previous spellcasting class level to calculate spells per day. If she possessed multiple spellcasting classes capable of casting dismissal or dispel evil before becoming a sacred exorcist, the player must choose which class each sacred exorcist level applies to for determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Sacred Exorcist)"
+      },
+      "Turn Undead": {
+        "description": "Sacred exorcists possess the ability to turn undead in the same manner as clerics. If the sacred exorcist already has turning ability from a different class, her sacred exorcist levels stack with those class levels when calculating her effective turning level.",
+        "level": 1,
+        "seedName": "Turn Undead (Sacred Exorcist)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Sacred exorcists have proficiency with all simple weapons. This class does not grant proficiency with any armor or shields, though members typically retain such proficiencies from their prior class.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Sacred Exorcist)"
+      }
+    },
+    "occurrenceMap": {
+      "Chosen Foe": "Chosen Foe",
+      "Consecrated Presence": "Consecrated Presence",
+      "Detect Evil": "Detect Evil",
+      "Dispel Evil 1/Week": "Dispel Evil",
+      "Dispel Evil 2/Week": "Dispel Evil",
+      "Dispel Evil 3/Week": "Dispel Evil",
+      "Exorcism": "Exorcism",
+      "Holy Aura": "Holy Aura",
+      "Resist Possession": "Resist Possession",
+      "Turn Undead": "Turn Undead"
+    },
+    "overrides": {
+      "features": {
+        "Chosen Foe": {
+          "description": "Starting at 3rd level, the sacred exorcist selects either undead or evil outsiders as a designated enemy. Through dedicated research and specialized combat training against this type of opponent, she gains a +1 competence bonus on Bluff, Intimidate, Listen, Sense Motive, and Spot checks when dealing with the designated enemy, along with a +1 bonus on caster level checks to penetrate that enemy's spell resistance. This bonus improves to +2 at 6th level and +3 at 9th level."
+        },
+        "Consecrated Presence": {
+          "description": "Beginning at 5th level, the sacred exorcist radiates a mobile aura of positive energy in a 20-foot radius. This aura functions identically to a consecrate spell but travels with the sacred exorcist. When she enters a zone under the influence of a desecrate spell, both effects cancel each other out for as long as she remains within that zone. If a desecrate spell targets her directly, her aura is suppressed until that spell's duration expires."
+        },
+        "Detect Evil": {
+          "description": "A sacred exorcist who has reached 2nd level or higher may use detect evil at will as a spell-like ability."
+        },
+        "Dispel Evil": {
+          "description": "Starting at 4th level, the sacred exorcist gains the ability to use dispel evil once per week as a spell-like ability. The frequency increases to twice per week at 7th level and three times per week at 10th level."
+        },
+        "Exorcism": {
+          "description": "By spending a full-round action, the sacred exorcist can drive a possessing entity or spirit from the body it occupies. She rolls a class level check, adding her Charisma modifier (if positive), against a DC equal to 10 + the possessing creature's Hit Dice + its Charisma modifier (if any). If her result meets or exceeds this DC, the possessing entity is expelled from the host, with standard consequences based on the method of possession used. A spirit driven out in this way is unable to attempt possession of the same target again for 24 hours."
+        },
+        "Holy Aura": {
+          "description": "Upon reaching 8th level, the sacred exorcist can activate holy aura once per day as a spell-like ability."
+        },
+        "Resist Possession": {
+          "description": "From 2nd level onward, sacred exorcists gain a +4 sacred bonus on saving throws against magic jar and comparable possession effects (such as a ghost's malevolence ability), plus a +2 sacred bonus on dispel checks to end such effects. Additionally, they receive a +2 sacred bonus on saving throws against charm and compulsion spells and effects originating from evil outsiders or undead."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "The sacred exorcist continues to develop her spellcasting power alongside her exorcism training. Each time she gains a new sacred exorcist level, she receives additional spells per day as though she had also advanced one level in a spellcasting class she belonged to prior to entering this prestige class. She does not, however, receive any other class benefits that would normally accompany that level gain (such as improved undead turning or additional uses of remove disease). In effect, her sacred exorcist level is added to her previous spellcasting class level to calculate spells per day. If she possessed multiple spellcasting classes capable of casting dismissal or dispel evil before becoming a sacred exorcist, the player must choose which class each sacred exorcist level applies to for determining spells per day and spells known."
+        },
+        "Turn Undead": {
+          "description": "Sacred exorcists possess the ability to turn undead in the same manner as clerics. If the sacred exorcist already has turning ability from a different class, her sacred exorcist levels stack with those class levels when calculating her effective turning level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Sacred exorcists have proficiency with all simple weapons. This class does not grant proficiency with any armor or shields, though members typically retain such proficiencies from their prior class."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Sacred exorcists are proficient with all simple weapons. They do not gain proficiency with any type of armor or with shields, but usually carry these proficiencies from their previous class.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A sacred exorcist advances in spellcasting ability as well as learning the skills of exorcism. Thus, when a new sacred exorcist level is gained, the character gains new spells per day as if she had also gained a level in whatever spellcasting class she belonged to before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, more frequent remove disease, and so on). This means that she adds the level of sacred exorcist to the level of another spellcasting class the character has, then determines spells per day accordingly. For example, if Delliva, an 8th-level cleric, gains a level as a sacred exorcist, she gains new spells as if she had risen to 9th level as a cleric, but uses the other sacred exorcist aspects of level progression such as base attack bonus and save bonuses. If she next gains a level as a cleric, making her a 9th-level cleric/1st-level sacred exorcist, she gains spells as if she had risen to 10th level as a cleric. If a character had more than one spellcasting class in which she could cast dismissal or dispel evil before she became a sacred exorcist, the player must decide which class to assign each level of sacred exorcist for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "As a full-round action, a sacred exorcist can force a possessing creature or spirit out of the body it inhabits. To exorcise a possessing creature, the exorcist makes a class level check (also adding her Charisma modifier, if any), against a DC of 10 + the possessing creature's HD + its Charisma modifier (if any). If the exorcist's result equals or exceeds the DC, she succeeds in forcing the possessor from the body, with the normal results based on its method of possession. A spirit so exorcised cannot attempt to possess the same victim for 24 hours.",
+        "name": "Exorcism",
+        "type": "(Su)"
+      },
+      {
+        "description": "Sacred exorcists can turn undead as clerics do. If a sacred exorcist has this ability from another class, her class levels stack to determine her effective turning level.",
+        "name": "Turn Undead",
+        "type": "(Su)"
+      },
+      {
+        "description": "At will, a sacred exorcist of at least 2nd level can use detect evil as a spell-like ability.",
+        "name": "Detect Evil",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Sacred exorcists of at least 2nd level receive a +4 sacred bonus on their saving throws against magic jar spells or similar abilities (including a ghost's malevolence ability), and a +2 sacred bonus on dispel checks made to dispel such effects. They also get a +2 sacred bonus on their saving throws against all charm and compulsion spells and effects cast by evil outsiders or undead.",
+        "name": "Resist Possession",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a sacred exorcist designates either undead or evil outsiders as her chosen foe. Extensive study and special training in the proper techniques for combating this foe gives the sacred exorcist a +1 competence bonus on Bluff, Intimidate, Listen, Sense Motive, and Spot checks against the chosen foe, as well as a +1 bonus on caster level checks to overcome any spell resistance of the chosen foe. At 6th level the bonus increases to +2, and at 9th level it increases to +3.",
+        "name": "Chosen Foe",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 4th level, a sacred exorcist can use dispel evil as a spell-like ability once per week. At 7th level, she can use this ability twice per week. At 10th level, she can use it three times per week.",
+        "name": "Dispel Evil",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 5th level and higher, a sacred exorcist is surrounded by an aura of positive energy that extends 20 feet from her presence. This aura duplicates the effects of a consecrate spell, but it moves with the sacred exorcist. If the sacred exorcist enters an area affected by a desecrate spell, both effects are negated while the sacred exorcist remains in the area. If the sacred exorcist is the target of a desecrate spell, her aura is suppressed for the duration of the desecrate spell.",
+        "name": "Consecrated Presence",
+        "type": "(Su)"
+      },
+      {
+        "description": "A sacred exorcist of 8th level or higher can use holy aura once per day as a spell-like ability.",
+        "name": "Holy Aura",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Heal",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "",
+    "hitDie": "d8",
+    "name": "Sacred Exorcist",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any good",
+        "skills": [
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 10
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 7
+          }
+        ],
+        "special": [
+          "Adopting this prestige class requires the sanction of a church or order that ordains sacred exorcists. Only characters judged by their church to be exemplary in faith and devotion, strong of will and upright in morality, are made sacred exorcists."
+        ]
+      },
+      "text": "Skills: Knowledge (the planes) 10 ranks, Knowledge (religion) 7 ranks Alignment: Any good.Spells: Able to cast dismissal or dispel evil.Special: Adopting this prestige class requires the sanction of a church or order that ordains sacred exorcists. Only characters judged by their church to be exemplary in faith and devotion, strong of will and upright in morality, are made sacred exorcists."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Exorcism",
+          "turn undead"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Detect evil",
+          "resist possession"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Chosen foe +1"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Dispel evil 1/week"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Consecrated presence"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Chosen foe +2"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Dispel evil 2/week"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Holy aura 1/day"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Chosen foe +3"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Dispel evil 3/week"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

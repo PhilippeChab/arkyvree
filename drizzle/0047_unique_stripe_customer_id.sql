@@ -1,0 +1,1 @@
+ALTER TABLE "account"."subscriptions" ADD CONSTRAINT "subscriptions_stripe_customer_id_key" UNIQUE("stripe_customer_id");

@@ -1,0 +1,216 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:09:31.432Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/wayfarer-guide/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        3
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Enhanced Capacity"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Improved Range"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Extra Teleportation"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Enhanced Accuracy"
+      }
+    ],
+    "hd": 6,
+    "levels": 3,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgegeography.rank",
+        "value": "10",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Wayfarer Guide Class Feature",
+    "features": {
+      "Enhanced Accuracy": {
+        "description": "At 3rd level and higher, a wayfarer guide becomes more skilled at arriving on target. When casting any spell with the teleportation descriptor that includes a random chance for determining the actual destination (such as teleport), a wayfarer guide can roll twice and choose the result she wants.",
+        "level": 3,
+        "seedName": "Enhanced Accuracy (Wayfarer Guide)"
+      },
+      "Enhanced Capacity": {
+        "description": "A wayfarer guide can transport material more efficiently. When casting any spell with the teleportation descriptor that allows other willing creatures to be brought along, a wayfarer guide can bring along one additional Medium touched willing creature (carrying gear or objects up to its maximum load) per class level, subject to the same restrictions given in the teleport spell description. For example, a 9th-level wizard/2nd-level wayfarer guide can bring up to five other Medium or smaller creatures with her (instead of the normal limit of three creatures for an 11th-level caster).",
+        "level": 1,
+        "seedName": "Enhanced Capacity (Wayfarer Guide)"
+      },
+      "Extra Teleportation": {
+        "description": "Beginning at 2nd level, a wayfarer guide gains an extra 5th-level spell slot, which can be used only for a teleport spell.",
+        "level": 2,
+        "seedName": "Extra Teleportation (Wayfarer Guide)"
+      },
+      "Improved Range": {
+        "description": "A wayfarer guide can travel greater distances when teleporting. When the character casts any spell with the teleportation descriptor, the maximum distance covered by the spell increases by 50%. For example, a 9th-level wizard/1st-level wayfarer guide can teleport up to 1,500 miles with a single teleport spell (instead of the normal limit of 1,000 miles for a 10th-level caster).",
+        "level": 1,
+        "seedName": "Improved Range (Wayfarer Guide)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At 1st and 3rd level, a wayfarer guide gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If she had more than one spellcasting class before becoming a wayfarer guide, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Wayfarer Guide)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Wayfarer guides gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Wayfarer Guide)"
+      }
+    },
+    "occurrenceMap": {
+      "Enhanced Accuracy": "Enhanced Accuracy",
+      "Enhanced Capacity": "Enhanced Capacity",
+      "Extra Teleportation": "Extra Teleportation",
+      "Improved Range": "Improved Range"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Wayfarer guides gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 1st and 3rd level, a wayfarer guide gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If she had more than one spellcasting class before becoming a wayfarer guide, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A wayfarer guide can transport material more efficiently. When casting any spell with the teleportation descriptor that allows other willing creatures to be brought along, a wayfarer guide can bring along one additional Medium touched willing creature (carrying gear or objects up to its maximum load) per class level, subject to the same restrictions given in the teleport spell description. For example, a 9th-level wizard/2nd-level wayfarer guide can bring up to five other Medium or smaller creatures with her (instead of the normal limit of three creatures for an 11th-level caster).",
+        "name": "Enhanced Capacity",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A wayfarer guide can travel greater distances when teleporting. When the character casts any spell with the teleportation descriptor, the maximum distance covered by the spell increases by 50%. For example, a 9th-level wizard/1st-level wayfarer guide can teleport up to 1,500 miles with a single teleport spell (instead of the normal limit of 1,000 miles for a 10th-level caster).",
+        "name": "Improved Range",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 2nd level, a wayfarer guide gains an extra 5th-level spell slot, which can be used only for a teleport spell.",
+        "name": "Extra Teleportation"
+      },
+      {
+        "description": "At 3rd level and higher, a wayfarer guide becomes more skilled at arriving on target. When casting any spell with the teleportation descriptor that includes a random chance for determining the actual destination (such as teleport), a wayfarer guide can roll twice and choose the result she wants.",
+        "name": "Enhanced Accuracy",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Speak Language",
+      "Spellcraft"
+    ],
+    "description": "The wayfarer guide focues on honing her skill at instantaneous magical transportation.",
+    "hitDie": "d6",
+    "name": "Wayfarer Guide",
+    "prerequisites": {
+      "parsed": {
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 10
+          },
+          {
+            "name": "Knowledge (geography)",
+            "ranks": 10
+          }
+        ],
+        "special": [
+          "A prospective wayfarer guide must join the Wayfarers Union (although she can later quit without losing previously acquired levels)."
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 10 ranks, Knowledge (geography) 10 ranks Spell: Able to cast teleport. Special: A prospective wayfarer guide must join the Wayfarers Union (although she can later quit without losing previously acquired levels)."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Enhanced capacity",
+          "improved range"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Extra teleportation"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Enhanced accuracy"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

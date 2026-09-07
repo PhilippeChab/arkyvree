@@ -1,0 +1,506 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-20T23:14:13.935Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/divine-crusader/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Aura"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Resistance To Electricity 5"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Weapon Specialization"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Resistance To Acid 5"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Darkvision"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Resistance To Acid And Electricity 10"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Perfect Self"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        0
+      ],
+      [
+        2,
+        2,
+        1,
+        0
+      ],
+      [
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      [
+        3,
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Divine Crusader Class Feature",
+    "features": {
+      "Aura": {
+        "description": "The strength of a divine crusader's alignment aura equals her divine crusader level combined with levels from any other classes that also produce an alignment aura (for example, cleric or paladin levels).",
+        "level": 1,
+        "seedName": "Aura (Divine Crusader)"
+      },
+      "Darkvision": {
+        "description": "At 7th level, a divine crusader acquires darkvision with a 60-foot range. If she already possesses darkvision, its range extends by an additional 30 feet.",
+        "level": 7,
+        "seedName": "Darkvision (Divine Crusader)"
+      },
+      "Perfect Self": {
+        "description": "Upon reaching 10th level, the divine crusader undergoes a fundamental transformation into a planar being. Her creature type becomes outsider (native). Despite this change, she can still be raised, reincarnated, or resurrected like any other living creature, and she continues to be native to the Material Plane. She also gains damage reduction 10/magic.",
+        "level": 10,
+        "seedName": "Perfect Self (Divine Crusader)"
+      },
+      "Resistance to Acid 5": {
+        "description": "",
+        "level": 6,
+        "seedName": "Resistance to Acid 5 (Divine Crusader)"
+      },
+      "Resistance to Acid and Electricity 10": {
+        "description": "",
+        "level": 9,
+        "seedName": "Resistance to Acid and Electricity 10 (Divine Crusader)"
+      },
+      "Resistance to Electricity 5": {
+        "description": "",
+        "level": 3,
+        "seedName": "Resistance to Electricity 5 (Divine Crusader)"
+      },
+      "Spells per Day": {
+        "description": "The divine crusader is a divine spellcaster whose spell selection is limited to a single chosen domain. In practice, her entire class spell list consists of just nine spells (one at each spell level). Preparing or casting a spell requires a Charisma score of at least 10 + the spell's level. The save DC for her spells is 10 + spell level + her Charisma modifier, and she receives bonus spells for a high Charisma. She prepares and casts spells in the same manner as a cleric, with the exception that she cannot spontaneously convert prepared spells into cure or inflict spells. Electricity Resistance (Ex): Starting at 3rd level, the divine crusader gains electricity resistance 5. This improves to electricity resistance 10 at 9th level.",
+        "level": 1,
+        "seedName": "Spells per Day (Divine Crusader)"
+      },
+      "Weapon Specialization": {
+        "description": "At 5th level, the divine crusader receives Weapon Specialization with her deity's favored weapon as a bonus feat. Acid Resistance (Ex): Beginning at 6th level, the divine crusader gains acid resistance 5. At 9th level, this increases to acid resistance 10.",
+        "level": 5,
+        "seedName": "Weapon Specialization (Divine Crusader)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Divine Crusader)"
+      }
+    },
+    "occurrenceMap": {
+      "Aura": "Aura",
+      "Darkvision": "Darkvision",
+      "Perfect Self": "Perfect Self",
+      "Resistance To Acid 5": "Resistance to Acid 5",
+      "Resistance To Acid And Electricity 10": "Resistance to Acid and Electricity 10",
+      "Resistance To Electricity 5": "Resistance to Electricity 5",
+      "Weapon Specialization": "Weapon Specialization"
+    },
+    "overrides": {
+      "description": "A divine crusader is a holy warrior wholly devoted to a single deity, channeling that god's power through unwavering faith and martial prowess.",
+      "features": {
+        "Aura": {
+          "description": "The strength of a divine crusader's alignment aura equals her divine crusader level combined with levels from any other classes that also produce an alignment aura (for example, cleric or paladin levels)."
+        },
+        "Darkvision": {
+          "description": "At 7th level, a divine crusader acquires darkvision with a 60-foot range. If she already possesses darkvision, its range extends by an additional 30 feet."
+        },
+        "Perfect Self": {
+          "description": "Upon reaching 10th level, the divine crusader undergoes a fundamental transformation into a planar being. Her creature type becomes outsider (native). Despite this change, she can still be raised, reincarnated, or resurrected like any other living creature, and she continues to be native to the Material Plane. She also gains damage reduction 10/magic."
+        },
+        "Spells per Day": {
+          "description": "The divine crusader is a divine spellcaster whose spell selection is limited to a single chosen domain. In practice, her entire class spell list consists of just nine spells (one at each spell level). Preparing or casting a spell requires a Charisma score of at least 10 + the spell's level. The save DC for her spells is 10 + spell level + her Charisma modifier, and she receives bonus spells for a high Charisma. She prepares and casts spells in the same manner as a cleric, with the exception that she cannot spontaneously convert prepared spells into cure or inflict spells. Electricity Resistance (Ex): Starting at 3rd level, the divine crusader gains electricity resistance 5. This improves to electricity resistance 10 at 9th level."
+        },
+        "Weapon Specialization": {
+          "description": "At 5th level, the divine crusader receives Weapon Specialization with her deity's favored weapon as a bonus feat. Acid Resistance (Ex): Beginning at 6th level, the divine crusader gains acid resistance 5. At 9th level, this increases to acid resistance 10."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This class does not grant proficiency with any weapons or armor."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          0
+        ],
+        [
+          2,
+          2,
+          1,
+          0
+        ],
+        [
+          3,
+          2,
+          2,
+          1,
+          0
+        ],
+        [
+          3,
+          3,
+          2,
+          2,
+          1,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "divinecrusaderspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "The divine crusader gains no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A divine crusader casts divine spells. She may only prepare and cast spells from her chosen domain. Effectively, a divine crusader has a class spell list of only nine spells (one per spell level). To prepare or cast a spell, a divine crusader must have a Charisma score equal to at least 10 + the spell level. The difficulty class for a saving throw against a divine crusader's spell is 10 + the spell level + the divine crusader's Cha modifier. The divine crusader also gets bonus spells based on her Charisma. A divine crusader prepares and casts spells as a cleric, except that she cannot spontaneously cast cure or inflict spells. Electricity Resistance (Ex): A divine crusader gains resistance to electricity 5 at 3rd level. At 9th level, this increases to resistance 10.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "The power of a divine crusader's alignment aura is equal to her class level, plus any class levels in other classes that possess such an aura (such as cleric or paladin).",
+        "name": "Aura",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Resistance to Electricity 5"
+      },
+      {
+        "description": "At 5th level, a divine crusader gains Weapon Specialization in her deity's favored weapon as a bonus feat. Acid Resistance (Ex): A divine crusader gains resistance to acid 5 at 6th level. At 9th level, this increases to resistance 10.",
+        "name": "Weapon Specialization"
+      },
+      {
+        "description": "",
+        "name": "Resistance to Acid 5"
+      },
+      {
+        "description": "A 7th-level divine crusader gains darkvision out to 60 feet. If the divine crusader already has darkvision, the radius of her existing darkvision increases by 30 feet.",
+        "name": "Darkvision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Resistance to Acid and Electricity 10"
+      },
+      {
+        "description": "At 10th level, a divine crusader completes her transformation into a creature of the planes. Her type changes to outsider (native). As a native outsider, the character can still be raised, reincarnated, or resurrected just as other living creatures can be, and remains native to the Material Plane. Additionally, the divine crusader gains damage reduction 10/magic.",
+        "name": "Perfect Self"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Religion)",
+      "Ride",
+      "Swim"
+    ],
+    "description": "The divine crusader embodies devotion and dedication to a chosen deity.",
+    "hitDie": "d8",
+    "name": "Divine Crusader",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Must match chosen deity",
+        "bab": 7,
+        "feats": [
+          "Weapon Focus (in chosen deity's favored weapo)"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 2
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +7 Alignment: Must match chosen deity Skills: Knowledge (religion) 2 ranks Feats: Weapon Focus (in chosen deity's favored weapo)"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Aura"
+        ],
+        "spellsPerDay": "0,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "1,0,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Resistance to electricity 5"
+        ],
+        "spellsPerDay": "2,1,0,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "2,2,1,0,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Weapon Specialization"
+        ],
+        "spellsPerDay": "3,2,2,1,0,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Resistance to acid 5"
+        ],
+        "spellsPerDay": "3,3,2,2,1,0,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Darkvision"
+        ],
+        "spellsPerDay": "3,3,3,2,2,1,0,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "3,3,3,3,2,2,1,0,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Resistance to acid and electricity 10"
+        ],
+        "spellsPerDay": "3,3,3,3,3,2,2,1,0",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Perfect self"
+        ],
+        "spellsPerDay": "3,3,3,3,3,3,2,2,1",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

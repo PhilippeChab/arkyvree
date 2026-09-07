@@ -1,0 +1,369 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-03-23T18:43:44.519Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/gray-guard/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Sacrament Of Trust"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Lay On Hands"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Debilitating Touch"
+      },
+      {
+        "levels": [
+          3,
+          8
+        ],
+        "name": "Smite Evil"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Justice Blade (Chaos)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Devastating Touch"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Unbound Justice"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Justice Blade (All Alignments)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Sacrament Of The True Faith"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sensemotive.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.beliefs.alignment",
+        "value": "Lawful Good",
+        "valueType": "string"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.layonhands.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Gray Guard Class Feature",
+    "features": {
+      "Debilitating Touch": {
+        "description": "At 2nd level, you learn to channel your lay on hands ability into a painful touch attack. Many gray guards use debilitating touch during interrogation, since it reduces the target's ability to successfully bluff or resist magical effects. Using debilitating touch does not provoke attacks of opportunity. An opponent hit by this attack is sickened for 5 rounds. Using this ability costs 5 points of your daily healing allotment. A successful Fortitude save (DC 10 + your gray guard level + your Cha modifier) negates the effect.",
+        "level": 2,
+        "seedName": "Debilitating Touch (Gray Guard)"
+      },
+      "Devastating Touch": {
+        "description": "When you attain 5th level, your deity shows its approval of your grim work. From this point on, you can use your lay on hands ability to make a touch attack that harms your enemies. Using devastating touch does not provoke attacks of opportunity. You decide how many points of your daily healing allotment to expend after successfully touching a creature: Each point expended deals 1 point of damage to the target. A nonevil creature is allowed a Will save (DC 10 + your gray guard level + your Cha modifier) to halve the amount of damage dealt.",
+        "level": 5,
+        "seedName": "Devastating Touch (Gray Guard)"
+      },
+      "Justice Blade (All Alignments)": {
+        "description": "",
+        "level": 9,
+        "seedName": "Justice Blade (All Alignments) (Gray Guard)"
+      },
+      "Justice Blade (Chaos)": {
+        "description": "By 4th level, you have learned that suffering and injustice are not the exclusive province of evil. You can use your smite evil ability to instead punish creatures of chaotic alignment. Using this ability expends one daily use of your smite evil class feature and works identically in all other ways, but its effect applies only to chaotic targets. Whenever you choose to smite an opponent, you must declare whether you are using this ability to smite evil or chaos. If you accidentally smite a creature of an alignment other than that declared, the smite has no effect but the ability is still used up. Beginning at 9th level, you can use justice blade to smite creatures of any alignment. You need not declare an alignment before making the smite attack, although if the attack misses, that use of smite is still used up for the day.",
+        "level": 4,
+        "seedName": "Justice Blade (Chaos) (Gray Guard)"
+      },
+      "Lay on Hands": {
+        "description": "This ability is identical to the paladin class feature of the same name (PH 44). Levels of gray guard stack with other class levels that grant lay on hands to determine the ability's total healing capacity.",
+        "level": 1,
+        "seedName": "Lay on Hands (Gray Guard)"
+      },
+      "Sacrament of Trust": {
+        "description": "Upon entering this prestige class, you take a vow of allegiance to your faith beyond that of any ordinary paladin. This vow grants you a measure of freedom to act on your cause's behalf without fear of retribution should your duties require you to break your code of conduct. Dishonorable acts still cause you to lose both gray guard and paladin class features until you atone, but this infraction is considered much less severe than it would be for a paladin. Thus, whenever you seek to atone for deeds that you willingly commit in the name of your faith but that break your code of conduct, a cleric casting an atonement spell on your behalf does not expend 500 XP as is normally required. This reprieve applies only to acts intended to further the cause of righteousness and the gray guard's faith. No XP cost applies to a gray guard atoning after beating a confession from a heretic, for example, but the cost would have to be paid for one who started a barroom brawl.",
+        "level": 1,
+        "seedName": "Sacrament of Trust (Gray Guard)"
+      },
+      "Sacrament of the True Faith": {
+        "description": "At 10th level, you gain your order's full confidence. You are granted the freedom to act on behalf of your faith as you deem necessary. Thus, you never risk losing your class abilities in the pursuit of a just cause and never need to atone for violating your code of conduct. This trust does not grant you the freedom to act as violently or immorally as you wish, however. Release from your code of conduct depends on your acting as an exemplar of your order's ideals. If you violate this trust by habitually acting in an immoral or corrupt manner, the leaders or deity of your faith might revoke their blessing and banish you from the ranks of the faithful.",
+        "level": 10,
+        "seedName": "Sacrament of the True Faith (Gray Guard)"
+      },
+      "Smite Evil": {
+        "description": "Beginning at 3rd level, you can smite evil once per day. See the paladin class feature (PH 44). At 8th level, you can smite evil one additional time per day. Levels of other classes that grant the smite evil class feature stack for the purpose of determining the extra damage dealt. For example, a 5th-level paladin/5th-level gray guard delivering a smite evil attack adds 10 points of damage to the attack.",
+        "level": 3,
+        "seedName": "Smite Evil (Gray Guard)",
+        "stackable": true
+      },
+      "Unbound Justice": {
+        "description": "At 7th level, unrestricted by your code of honor, you can employ unorthodox methods that are all the more effective because they're unexpected. You add half your gray guard level (round down) as a competence bonus on Bluff, Disguise, and Intimidate skill checks.",
+        "level": 7,
+        "seedName": "Unbound Justice (Gray Guard)"
+      }
+    },
+    "occurrenceMap": {
+      "Debilitating Touch": "Debilitating Touch",
+      "Devastating Touch": "Devastating Touch",
+      "Justice Blade (All Alignments)": "Justice Blade (All Alignments)",
+      "Justice Blade (Chaos)": "Justice Blade (Chaos)",
+      "Lay On Hands": "Lay on Hands",
+      "Sacrament Of The True Faith": "Sacrament of the True Faith",
+      "Sacrament Of Trust": "Sacrament of Trust",
+      "Smite Evil": "Smite Evil",
+      "Unbound Justice": "Unbound Justice"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Upon entering this prestige class, you take a vow of allegiance to your faith beyond that of any ordinary paladin. This vow grants you a measure of freedom to act on your cause's behalf without fear of retribution should your duties require you to break your code of conduct. Dishonorable acts still cause you to lose both gray guard and paladin class features until you atone, but this infraction is considered much less severe than it would be for a paladin. Thus, whenever you seek to atone for deeds that you willingly commit in the name of your faith but that break your code of conduct, a cleric casting an atonement spell on your behalf does not expend 500 XP as is normally required. This reprieve applies only to acts intended to further the cause of righteousness and the gray guard's faith. No XP cost applies to a gray guard atoning after beating a confession from a heretic, for example, but the cost would have to be paid for one who started a barroom brawl.",
+        "name": "Sacrament of Trust"
+      },
+      {
+        "description": "This ability is identical to the paladin class feature of the same name (PH 44). Levels of gray guard stack with other class levels that grant lay on hands to determine the ability's total healing capacity.",
+        "name": "Lay on Hands",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level, you learn to channel your lay on hands ability into a painful touch attack. Many gray guards use debilitating touch during interrogation, since it reduces the target's ability to successfully bluff or resist magical effects. Using debilitating touch does not provoke attacks of opportunity. An opponent hit by this attack is sickened for 5 rounds. Using this ability costs 5 points of your daily healing allotment. A successful Fortitude save (DC 10 + your gray guard level + your Cha modifier) negates the effect.",
+        "name": "Debilitating Touch",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, you can smite evil once per day. See the paladin class feature (PH 44). At 8th level, you can smite evil one additional time per day. Levels of other classes that grant the smite evil class feature stack for the purpose of determining the extra damage dealt. For example, a 5th-level paladin/5th-level gray guard delivering a smite evil attack adds 10 points of damage to the attack.",
+        "name": "Smite Evil",
+        "type": "(Su)"
+      },
+      {
+        "description": "By 4th level, you have learned that suffering and injustice are not the exclusive province of evil. You can use your smite evil ability to instead punish creatures of chaotic alignment. Using this ability expends one daily use of your smite evil class feature and works identically in all other ways, but its effect applies only to chaotic targets. Whenever you choose to smite an opponent, you must declare whether you are using this ability to smite evil or chaos. If you accidentally smite a creature of an alignment other than that declared, the smite has no effect but the ability is still used up. Beginning at 9th level, you can use justice blade to smite creatures of any alignment. You need not declare an alignment before making the smite attack, although if the attack misses, that use of smite is still used up for the day.",
+        "name": "Justice Blade (Chaos)",
+        "type": "(Su)"
+      },
+      {
+        "description": "When you attain 5th level, your deity shows its approval of your grim work. From this point on, you can use your lay on hands ability to make a touch attack that harms your enemies. Using devastating touch does not provoke attacks of opportunity. You decide how many points of your daily healing allotment to expend after successfully touching a creature: Each point expended deals 1 point of damage to the target. A nonevil creature is allowed a Will save (DC 10 + your gray guard level + your Cha modifier) to halve the amount of damage dealt.",
+        "name": "Devastating Touch",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 7th level, unrestricted by your code of honor, you can employ unorthodox methods that are all the more effective because they're unexpected. You add half your gray guard level (round down) as a competence bonus on Bluff, Disguise, and Intimidate skill checks.",
+        "name": "Unbound Justice",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Justice Blade (All Alignments)"
+      },
+      {
+        "description": "At 10th level, you gain your order's full confidence. You are granted the freedom to act on behalf of your faith as you deem necessary. Thus, you never risk losing your class abilities in the pursuit of a just cause and never need to atone for violating your code of conduct. This trust does not grant you the freedom to act as violently or immorally as you wish, however. Release from your code of conduct depends on your acting as an exemplar of your order's ideals. If you violate this trust by habitually acting in an immoral or corrupt manner, the leaders or deity of your faith might revoke their blessing and banish you from the ranks of the faithful.",
+        "name": "Sacrament of the True Faith"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Disguise",
+      "Forgery",
+      "Handle Animal",
+      "Heal",
+      "Intimidate",
+      "Knowledge (Local)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Religion)",
+      "Ride",
+      "Sense Motive"
+    ],
+    "description": "Gray guards are less restrained by their knightly vows, doing what must be done, no matter how unpleasant.",
+    "hitDie": "d10",
+    "name": "Gray Guard",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Lawful good",
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 8
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Lay on hands class feature; must adhere to a code of conduct that prevents the character from performing evil acts."
+        ]
+      },
+      "text": "Alignment: Lawful good Skills: Knowledge (religion) 8 ranks, Sense Motive 4 ranks Special: Lay on hands class feature; must adhere to a code of conduct that prevents the character from performing evil acts."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Sacrament of trust",
+          "lay on hands"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Debilitating touch"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Smite evil 1/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Justice blade (chaos)"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Devastating touch"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Unbound justice"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Smite evil 2/day"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Justice blade (all alignments)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Sacrament of the true faith"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

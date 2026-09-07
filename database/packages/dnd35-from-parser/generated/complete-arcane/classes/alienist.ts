@@ -1,0 +1,60 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const ALIENIST: ClassSeed = {
+  name: "Alienist",
+  description: "Alienists deal with powers and entities from terrifyingly remote reaches of space and time. For them, magical power is the triumph of the mind over the rude boundaries of dimension, distance, and often, sanity. With knowledge and determination, they pierce the barrier at the edge of time itself. In the Far Realm, outside time, Herculean minds drift, absorbed in contemplations of madness. Unspeakable beings whisper terrifying secrets to those who dare communication. These secrets were not meant for mortals, but the alienist plunges into abysses of chaos and entropy that would blast a weaker mind. An alienist's mad certainty is sometimes strong enough to sway others to believe in her own future transcendence. Alienists might, on rare occasions, gather in secluded groups to enact some obscure ritual, but more often they are encountered singly. NPC alienists sometimes haunt libraries or specialty bookshops in large cities, skulking and mumbling among stacks of rare (and dangerous) volumes.",
+  hd: 4, levels: 10, skillPoints: 2,
+  bab: "poor",
+  saves: { fortitude: "poor", reflex: "poor", will: "good" },
+  classSkills: [
+    "Concentration",
+    "Gather Information",
+    "Knowledge (Arcana)",
+    "Knowledge (Architecture and Engineering)",
+    "Knowledge (Dungeoneering)",
+    "Knowledge (Geography)",
+    "Knowledge (History)",
+    "Knowledge (Local)",
+    "Knowledge (Nature)",
+    "Knowledge (Nobility and Royalty)",
+    "Knowledge (Psionics)",
+    "Knowledge (Religion)",
+    "Knowledge (The Planes)",
+    "Listen",
+    "Profession",
+    "Spellcraft",
+    "Spot",
+  ],
+  requirements: [
+    gte("skills.knowledgetheplanes.rank", 8),
+    eq("feats.augmentsummoning.possessed"),
+    or(
+      eqStr("identity.beliefs.alignment", "Neutral Good"),
+      eqStr("identity.beliefs.alignment", "True Neutral"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      eqStr("identity.beliefs.alignment", "Chaotic Good"),
+      eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
+  ],
+  casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+  classFeatureAptitude: "Alienist Class Feature",
+  classFeatures: [
+    [1, "Familiar Abilities (Alienist)"],
+    [1, "Spells per Day/Spells Known (Alienist)"],
+    [1, "Summon Alien (Alienist)"],
+    [1, "Weapon and Armor Proficiency (Alienist)"],
+    [2, "Alien Blessing (Alienist)"],
+    [3, "Metamagic Secret (Alienist)"],
+    [4, "Mad Certainty (Alienist)"],
+    [5, "Pseudonatural Familiar (Alienist)"],
+    [6, "Extra Summoning (Alienist)"],
+    [7, "Metamagic Secret (Alienist)"],
+    [8, "Insane Certainty (Alienist)"],
+    [9, "Timeless Body (Alienist)"],
+    [10, "Alien Transcendence (Alienist)"],
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

@@ -1,0 +1,838 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-03-22T16:05:38.788Z",
+    "sourceUrl": "https://dndtools.net/spells/complete-scoundrel--60/",
+    "type": "spell"
+  },
+  "raw": [
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "As you finish intoning this chant, your instrument leaves your hands and floats before you, continuing your song.You imbue your musical instrument with the ability to play at your command.This instrument can play a tune on your behalf even while you are busy with other actions.As long as this spell is in effect, you can cause the instrument to begin playing as a swift action, effectively mimicking and continuing your performance.The instrument uses your Perform modifier for the purpose of bardic music checks.Once the animated instrument picks up the performance, you do not have to concentrate to maintain its effect.Thus, you can continue a performance or bardic music effect that relies on the use of a musical instrument and also cast spells, activate magic items by spell completion or command words, or even use another bardic music ability.You can animate any nonmagical musical instrument, such as a piano, fiddle, or harp.If the instrument must be carried or held while played, it floats in the air in the square in which you cast the spell.The animated instrument cannot move.It continues to play until the spell expires or the instrument is damaged.An animated instrument's AC is 10 + any relevant size modifiers; most handheld instruments are Tiny.Material Component:One working musical instrument.",
+      "descriptors": [],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        }
+      ],
+      "name": "Animate Instrument",
+      "range": "Touch",
+      "savingThrow": "None",
+      "school": "Transmutation",
+      "slug": "animate-instrument",
+      "spellResistance": "No",
+      "target": "Instrument touched"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Your arms and legs fuse with your body as bright silvery scales cover your skin.You take the form of a Diminutive fish.Use the statistics for the toad (MM 282) except for the following changes: Add the aquatic subtype, replace the land speed with a swim speed of 30 feet, remove the amphibious special quality, and replace the toad's skills with Listen +4, Spot +4, and Swim +13.A fish adds its Dexterity modifier, not its Strength modifier, to Swim checks, and gains a +8 racial bonus on Swim checks due to its swim speed.See the polymorph subschool description on for more details.As its name suggests, this spell's most common use is to make a quick getaway in a watery environment, but it also allows a clever druid to overcome a flooded corridor or similar obstacle.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 1
+        }
+      ],
+      "name": "Aquatic Escape",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "aquatic-escape",
+      "spellResistance": "",
+      "subschool": "Polymorph",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "The plates and joints of your opponent's armor become as rigid as stone, encumbering his movement.You cause the target's armor to swell and stiffen, slowing the wearer's movement and trapping him within.The target's land speed is reduced to 10 feet.If the target has a burrow, climb, or swim speed, these are also reduced to 10 feet.The target also loses any Dexterity bonus to AC for the duration of the spell.While affected by this spell, the target cannot remove his armor; its joints are too tight and restrictive to escape from.This spell has no effect on unarmored opponents, creatures with only natural armor or an AC bonus from items other than armor, or those using only shields.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Hexblade",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Armor Lock",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Fortitude negates",
+      "school": "Transmutation",
+      "slug": "armor-lock",
+      "spellResistance": "Yes",
+      "target": "One creature wearing armor"
+    },
+    {
+      "area": "40-ft.-radius spherical emanation",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Covering your eyes and spitting a harsh whisper, you conjure a globe of absolute blackness before you.As you step forward, your sight alone pierces the darkness, showing you your disoriented victims within.You call a globe of absolute darkness into being, which only you can see through.All other creatures within or who enter this spell's area are blinded while they remain in the area.Even creatures that have darkvision cannot see through this magical obscurement, although creatures capable of seeing in magical darkness (such as devils) are not affected by it.While you are outside the sphere, you can see nothing within, and every creature within has total concealment.Upon entering the spell's area, however, you can see as if the area were illuminated by bright light and can interact with those within as normal, even though they cannot see you.",
+      "descriptors": [
+        "Darkness"
+      ],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 4
+        }
+      ],
+      "name": "Assassin's Darkness",
+      "range": "Medium (100 ft. + 10 ft./level)",
+      "savingThrow": "No",
+      "school": "Evocation",
+      "slug": "assassins-darkness",
+      "spellResistance": "No"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You drop a tiny wooden block before you.It rapidly begins growing and hits the ground with a heavy thud, now a perfect 5-foot cube of dense wood.You call a cube of solid wood, 5 feet on a side, into being.The cube must be created upon solid ground in an empty square.If no solid surface exists that is large enough for the cube to fit on, or if no adjacent square is empty, the spell fails.The cube weighs 2,000 pounds.It has a hardness of 5 and 600 hit points, and it completely fills one 5-foot square.Multiple cubes can be stacked.If it is pushed into water, the cube floats.Material Component: A block of wood, less than 3 inches on a side.",
+      "descriptors": [],
+      "duration": "3 rounds",
+      "effect": "5-ft. cube of wood",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 1
+        },
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Blockade",
+      "range": "0 ft.",
+      "savingThrow": "No",
+      "school": "Conjuration",
+      "slug": "blockade",
+      "spellResistance": "None",
+      "subschool": "Creation"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Focusing on the object in your grasp, you abruptly jerk your head in the direction you desire, sending the item flying.You propel a single object out of your hand at fantastic speed.This object can be a weapon designed for throwing, a weapon not meant to be thrown, or another nonliving object.Make a normal ranged attack roll with the affected object, but do not add any ability score modifier to the attack or damage roll.Instead, you gain a competence bonus on the damage roll equal to one-third of your caster level (maximum +5).The range increment for the hurled object is 30 feet, regardless of its normal range increment (if any).If you use catapult to fling an object not meant to be used as a thrown weapon, you take the normal -4 nonproficiency penalty on the attack roll.An item that isn't a weapon deals 1d6 points of base damage if it weighs at least 1 pound.The item catapult is to affect must be in your hands when you cast the spell.If you cast the spell with nothing in your hands to fling, the magic automatically fails.You cannot propel living creatures with catapult, regardless of their size.",
+      "descriptors": [],
+      "duration": "Instantaneous",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Catapult",
+      "range": "Touch",
+      "savingThrow": "No",
+      "school": "Transmutation",
+      "slug": "catapult",
+      "spellResistance": "None",
+      "target": "One held object, weighing up to 5 lb."
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "Plucking out one of your own hairs, you make a beckoning motion.A double of you appears nearby.You create a fetch, a perfect replica of your form at the time you cast this spell.Little more than an animated reproduction, a fetch is mindless but capable of performing simple tasks or imitating you.The creation is the same size as you and occupies space just as a living creature does.You have a mental connection with your fetch and can give it new orders as a standard action.The fetch duplicates your form in every way but texture.You must make a Disguise check when you cast the spell to determine how good the likeness is; this result is opposed by observers' Spot checks as normal.Anyone touching the fetch finds it rubbery and soft, and in so doing immediately realizes its magical nature.The fetch's body includes useless versions of all the equipment you possess: A weapon wielded by the fetch is too flimsy to deal damage, and tools it carries are fragile and imprecise.Items created with a fetch are part of its form and dissipate if separated from it.At your order, the fetch can retrieve things for you, open unstuck doors, hold chairs, and the like, as well as perform menial tasks such as cleaning and mending.The fetch can't perform any task that requires a skill check with a DC higher than 10 or that requires a skill that can't be used untrained.It can perform only one activity at a time, but it repeats the same activity tirelessly if ordered to do so as long as you remain within the spell's range.You can have the fetch imitate you, such as by sitting at a desk and pretending to write, lying in bed and breathing deeply, or skulking with a weapon drawn.It can even imitate tasks it can't actually perform, though it automatically fails any attempt at such performance-for instance, even though a fetch can pretend to decipher an ancient text, it can't actually do it.The fetch weighs roughly the same as you do, so it can trigger any traps you would if you were to pass through the same space, setting off tripwires, pressure plates, some magical forms of detection, and similar devices.Its land speed is normal for a creature of your kind (for example, 30 feet for a human or 20 feet for a halfling).Even if you normally have other modes of movement available (such as a fly or swim speed), the fetch can't use those.The fetch automatically fails any saving throw required of it.If you attempt to send it beyond the spell's range (measured from your current position), it ceases to exist.The fetch has an effective Strength score of 6, so it can lift 60 pounds or drag 300 pounds.Its Dexterity is 10, so it has an AC of 10 (plus size modifier).It gains no AC benefit from any equipment or effect on you when the spell is cast (such as armor you wear, since the armor created for it is part of its form), though it can then wear real armor or other items to increase its Armor Class.It has no Constitution score and 10 hit points; if reduced to 0 hit points, it is destroyed.It can't be healed, nor can it benefit from temporary hit points.The fetch has no Intelligence, Wisdom, or Charisma score.You can command it to make noise, but it can't communicate in any way, nor can it understand instructions other than the simple orders you give it telepathically.The fetch cannot attack in any way; it is never allowed an attack roll.Even if armed, it doesn't threaten an area around it and thus can't flank an enemy, nor can it use the aid another action to improve your Armor Class or attack rolls.The fetch has the same alignment aura as you do.Detect thoughts does not register its existence (since it has no Intelligence), but detect magic reveals it as a magical effect.Material Component:One of your own hairs.",
+      "descriptors": [],
+      "duration": "10 minutes/level",
+      "effect": "A duplicate of yourself",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 3
+        },
+        {
+          "className": "Bard",
+          "level": 3
+        },
+        {
+          "className": "Sorcerer",
+          "level": 4
+        },
+        {
+          "className": "Wizard",
+          "level": 4
+        }
+      ],
+      "name": "Create Fetch",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "None",
+      "school": "Conjuration",
+      "slug": "create-fetch",
+      "spellResistance": "No",
+      "subschool": "Creation"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "A ghostly great helm that only you can see appears around your companion's head, warding her mind against control.You shield your subject against mind-controlling spells and abilities.Disobedience blocks any attempt to exercise mental control over the subject creature, including charm and compulsion effects that grant ongoing control over the subject, such as dominate person or a vampire's dominate ability.The protection does not prevent such effects from targeting a subject affected by disobedience, but it suppresses the effect for the duration of this spell.If disobedience ends before the effect granting mental control does, the would-be controller becomes able to mentally command the targeted creature.In addition to protecting the subject, disobedience sends false information to the creature that is attempting to gain control of the subject.The would-be controller must succeed on a Will save or believe that its spell or ability has taken effect and that the target is now under its control.The spell's subject becomes aware of commands issued by that creature and can choose to act however she pleases, disregarding the would-be controller's orders or going along with them in a pretense of obedience.Material Component: A scrap of tin.",
+      "descriptors": [],
+      "duration": "1 hour/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        },
+        {
+          "className": "Sorcerer",
+          "level": 3
+        },
+        {
+          "className": "Wizard",
+          "level": 3
+        }
+      ],
+      "name": "Disobedience",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates (harmless); see text",
+      "school": "Abjuration",
+      "slug": "disobedience",
+      "spellResistance": "Yes",
+      "target": "One creature"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "With a shriek of warping wood and scraping metal, your weapon grows, becoming far more intimidating.A melee weapon you hold enlarges by one size category (Small weapons become Medium, Medium weapons become Large, and so on).As its size increases, the damage the weapon deals increases as well (PH 114).When your weapon is affected by this spell, you do not take a penalty for wielding an inappropriately sized weapon.If you drop the enlarged weapon, are disarmed, or hand the weapon to another creature, the spell ends.This spell does not grant you the ability to wield any other inappropriately sized weapon without penalty, only the one on which this spell is cast.This spell has no effect on a weapon that is already increased in size by some other effect (such as being held by a creature affected by enlarge person).",
+      "descriptors": [],
+      "duration": "1 round/level",
+      "levelEntries": [
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Enlarge Weapon",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless, object)",
+      "school": "Transmutation",
+      "slug": "enlarge-weapon",
+      "spellResistance": "Yes (harmless, object)",
+      "target": "One touched melee weapon"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "As you finish scribing this bloody rune, the mark flares for an instant and then vanishes.Even though the rune has disappeared, you feel as though you can step back to it simply by willing it.You create a magical mark that you can teleport to at a moment's notice.Upon casting this spell and touching a surface or inanimate object, you create an invisible rune like that created by the spell arcane mark (PH 201).At any point during the spell's duration you can teleport (as the greater teleport spell) back to the mark as a swift action.This ends the spell's duration.After teleporting in this way, you can't take any other actions until your next turn.The mark created by this spell can be detected in the same ways that an invisible arcane mark can be.You are not alerted if the mark is dispelled or the object upon which it is inscribed is destroyed.Any attempt to teleport back to a dispelled or destroyed mark still requires a swift action but fails.If you created the evacuation rune upon a portable object, that object can be moved by another creature.You have no knowledge of whether your mark has been moved or where, and upon teleporting to its location, you are subject to any adverse conditions.If the mark has been moved to another plane, any attempt to teleport to it fails.If the object inscribed with the evacuation rune is moved somewhere too small for you to appear or is otherwise covered by a solid body, you take 1d6 points of damage and are shunted to a random open space on a suitable surface within 100 feet of the intended location.If there is no free space within 100 feet, you take an additional 2d6 points of damage and are shunted to a free space within 1,000 feet.If there is no free space within 1,000 feet, you take an additional 4d6 points of damage, and the teleport attempt simply fails.Material Component: The blood of an owl, hawk, or eagle.",
+      "descriptors": [],
+      "duration": "24 hours",
+      "effect": "One invisible rune",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 5
+        },
+        {
+          "className": "Sorcerer",
+          "level": 5
+        },
+        {
+          "className": "Wizard",
+          "level": 5
+        }
+      ],
+      "name": "Evacuation Rune",
+      "range": "Touch",
+      "savingThrow": "None (harmless)",
+      "school": "Conjuration",
+      "slug": "evacuation-rune",
+      "spellResistance": "No (harmless)",
+      "subschool": "Teleportation"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "A single spark of flame leaps from your finger into the target's body, waiting silently for its death.You place a tiny quantity of pure elemental fire within a creature, which interacts with the energy released by its death to create a small explosion.When the target creature is killed, its body explodes in a burst of flame, dealing fire damage to each adjacent creature equal to twice the target's HD or twice your caster level, whichever is less (maximum 20 points).Treat creatures with less than 1 HD as having 1/2 HD for the purpose of this spell's effect (so the spell deals 1 point of fire damage when triggered).A successful Reflex save halves this damage.Fatal flame has no ill effect on the target's body before its death.The target receives a Will save to negate the spell's effect.Material Component: A splinter of charred bone.",
+      "descriptors": [
+        "Fire"
+      ],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Fatal Flame",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates, Reflex half; see text",
+      "school": "Evocation",
+      "slug": "fatal-flame",
+      "spellResistance": "Yes",
+      "target": "One living creature with 1 or more HD"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "1 round/level) + 3 roundsSaving Throw: Reflex negatesSpell Resistance: NoHundreds of disembodied hands burst from the wall, forming a sea of clutching, probing appendages.You cause hands to sprout from a wall within range.This spell simply adds grasping hands to an existing wall rather than creating a wall of a substance.All opponents adjacent to the wall are entangled unless they succeed on Reflex saves.An opponent must repeat this save each round it remains adjacent to the wall.Allied creatures are not entangled, and in fact can use the hands to gain a +10 competence bonus on Climb checks to scale the wall.If the spell ends while you are climbing, you immediately fall but can make a normal Climb check to catch yourself (PH 69).Any objects on a wall affected by the spell are unharmed; doors, windows, and other apertures in the wall can be opened or closed as normal.Material Component: A handful of fingernails.",
+      "descriptors": [],
+      "duration": "Concentration (max.",
+      "effect": "Hands sprout from a wall in an area of up to four 5-ft. squares (S)",
+      "levelEntries": [
+        {
+          "className": "Sorcerer",
+          "level": 3
+        },
+        {
+          "className": "Wizard",
+          "level": 3
+        }
+      ],
+      "name": "Grasping Wall",
+      "range": "Medium(100 ft. + 10 ft./level)",
+      "savingThrow": "",
+      "school": "Conjuration",
+      "slug": "grasping-wall",
+      "spellResistance": "",
+      "subschool": "Creation"
+    },
+    {
+      "area": "60-ft.-radius spherical emanation, centered on you",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Jarring, discordant noises fill the area, making it difficult for others to concentrate.You create a zone of disruptive arcane harmonies that interfere with spells that have verbal components.Casters within the area find their spells' spoken words warped, twisted, and blurred, disrupting their efforts.Any creature (other than you) that attempts to cast a spell with a verbal component in this area must succeed on a Concentration check (DC 20 + the spell's level).On a failure, the spell fails to function and the caster expends the spell or spell slot as normal.Harmonic void has no effect on supernatural abilities, magicitems, and other magical effects.It affects only spells with verbal components.",
+      "descriptors": [],
+      "duration": "Concentration, up to 1 round/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 5
+        }
+      ],
+      "name": "Harmonic Void",
+      "range": "60 ft.",
+      "savingThrow": "None",
+      "school": "Abjuration",
+      "slug": "harmonic-void",
+      "spellResistance": "No"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Every thrumming vein, every strained muscle, and every pulsing organ of those nearby becomes visible to your eyes, showing you exactly where to place a healing hand.. or a deadly strike.You gain a macabre change to your vision that seemingly peels away skin and sinew to reveal the flesh beneath.You gain a +5 insight bonus on Heal checks, and any cure spell you cast on a living creature heals 1 extra point of damage per level of the spell.You also gain a +2 bonus on attack rolls and damage rolls when making a precision-based attack (such as a sneak attack or a sudden strike) against a living creature, since you are able to pick out your target's most vital points.(This effect makes the spell popular among less benevolent casters).Healer's vision does not grant you the ability to make a precision-based attack if you don't already have that ability, nor does it allow you to make such attacks against creatures normally unaffected by them.This spell does not reveal the true forms of creatures affected by illusions or other magical disguises, so it grants no benefit to Heal checks or attacks against such creatures.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Cleric",
+          "level": 1
+        }
+      ],
+      "name": "Healer's Vision",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "healers-vision",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "A tinkling laugh and a momentary shine surround your ally, leaving him with an aura of confidence and a sly smile.You improve the luck of the subject creature.For the duration of the spell, any reroll the subject makes using a luck feat gains a +2 luck bonus.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Lucky Streak",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Transmutation",
+      "slug": "lucky-streak",
+      "spellResistance": "Yes (harmless)",
+      "target": "One creature"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Sharp ridges, split leather, and cracking patches of rust spread over your enemy's armor like an angry, irritating disease.Jagged edges and rough surfaces break forth all over the target creature's armor and shield.These protrusions deal no damage and are little more than an uncomfortable annoyance.Arcane spellcasters, however, find the effect most distracting, incurring double the normal arcane spell failure chance for armor and shields.In addition, any creature affected by this spell takes a -5 penalty on Concentration checks.The check penalty does not worsen if an affected creature is both wearing armor and using a shield.For example, a wizard wearing chainmail and carrying a light steel shield would normally have a 35% chance of arcane spell failure.That wizard, if targeted by this spell, would incur a 70% chance of arcane spell failure, as well as taking a -5 penalty on Concentration checks.This spell has no effect on unarmored opponents or on creatures with only natural armor or an AC bonus from items other than armor.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Hexblade",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Mage Burr",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Fortitude negates",
+      "school": "Transmutation",
+      "slug": "mage-burr",
+      "spellResistance": "Yes",
+      "target": "One creature wearing armor or using a shield"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "As you invoke the name of your deity, a towering, spectral image of the god appears above you, turning its wrath upon your foes.You summon a looming illusion of the deity you worship, overlaid on your form.The divine manifestation appears ghostly and fearsome, with its favored weapon drawn, and makes threatening overtures (roaring, spouting scripture, making dreadful threats, and the like).The image is transparent enough that you receive no concealment.Any enemy who can see the effect becomes shaken for 1 round.A successful Will save negates the effect, and that creature can no longer be affected by this casting of the spell.No creature can be affected more than once by the same casting of manifestation of the deity.",
+      "descriptors": [
+        "Fear",
+        "Mind-Affecting"
+      ],
+      "duration": "1 round/3 levels (D)",
+      "effect": "An image of the deity you worship",
+      "levelEntries": [
+        {
+          "className": "Cleric",
+          "level": 2
+        }
+      ],
+      "name": "Manifestation of the Deity",
+      "range": "Personal",
+      "savingThrow": "Will negates",
+      "school": "Illusion",
+      "slug": "manifestation-of-the-deity",
+      "spellResistance": "No",
+      "subschool": "Pattern"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V"
+      ],
+      "description": "You feel a brief tingle in your throat.When you open your mouth, your voice is no longer your own.You can perfectly mimic familiar sounds, voices, and accents.These sounds can be any that you've heard before, and must be within the range of noises your voice is capable of creating.For example, a normal human voice could recreate the roar of a lion-being roughly equivalent to a scream-or approximate the sound of shattering glass.It could not reproduce the rumble of a collapsing building or a high-pitched noise audible only to bats.This spell does not allow you to speak languages you can't normally speak.You can duplicate a specific individual's voice by making a Bluff check; a listener familiar with the voice being imitated must succeed on an opposed Sense Motive check to discern that the voice is not genuine.",
+      "descriptors": [],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Bard",
+          "level": 1
+        }
+      ],
+      "name": "Mimicry",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "mimicry",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Uttering a rapid series of words and reaching out your hand, you surround your comrade with a thin, blurry haze.Any time the subject of this spell might provoke attacks of opportunity, he can choose to activate this spell's effect (this does not require an action).Upon doing so, he contorts or moves so swiftly as to deny one opponent one attack of opportunity.Because the opponent never makes its attack of opportunity, its total number of attacks of opportunity per round is not reduced.Once the subject negates an attack of opportunity in this way, the spell ends.It is possible for the subject to provoke an attack of opportunity, activate this spell's effect to cancel it, and then provoke and be susceptible to another attack of opportunity in the same round.The subject does not have to activate the spell's effect to negate the first attack of opportunity he provokes but can save the effect until he chooses to use it or the duration ends.",
+      "descriptors": [],
+      "duration": "1 round/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        }
+      ],
+      "name": "Opportune Dodge",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Abjuration",
+      "slug": "opportune-dodge",
+      "spellResistance": "Yes (harmless)",
+      "target": "Creature touched"
+    },
+    {
+      "castingTime": "1 hour",
+      "components": [
+        "V",
+        "S",
+        "M",
+        "AF",
+        "DF"
+      ],
+      "description": "At the culmination of this long ritual, you gaze into your scrying focus and stretch out your sight.The mists within the reflective surface dissipate, and suddenly you can see and hear a familiar place.You can see and hear what occurs at a location, which can be at any distance on the same plane where you are located.You must make a successful caster level check (1d20 + your caster level) to scry a specific location.The difficulty of this check depends on how familiar you are with that location and what sort of physical connection (if any) you have to that place.Furthermore, the difficulty to scry the desired locale increases if the location is extremely far removed, indoors or underground, or on another plane.The DC of this check is 20 + any modifiers related to your knowledge of the area, your connection to it, and the location's distance, as set out in the following table.If you fail this check, the scrying attempt simply fails.If the caster level check succeeds, you create an invisible magical sensor in any location you desire.Through this sensor you can both see and hear, your vantage and range of vision being the same as if you were actually at that place, allowing you to make Spot and Listen checks as normal.You can rotate the sensor as you wish, seeing in any direction you desire.Once the spell is cast, however, you cannot change the position of the sensor.As with all divination (scrying) spells, the sensor has your full visual acuity, including any magical effects.In addition, the following spells have a 5% chance per caster level of operating through the sensor: detect chaos, detect evil, detect good, detect law, detect magic, and message.If the caster level check fails, you can't attempt to scry on any place within 1 mile of that location until 24 hours have passed.Arcane Material Component: The eye of a mole, a badger, or a xorn, plus nitric acid, copper, and zinc.Wizard, Sorcerer, or Bard Focus: A mirror of finely wrought and highly polished silver costing not less than 1,000 gp.The mirror must be at least 2 feet by 4 feet.Cleric Focus: A holy water font costing not less than 100 gp.Druid Focus: A natural pool of water.",
+      "descriptors": [],
+      "duration": "1 minute/level",
+      "effect": "Magical sensor",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 5
+        },
+        {
+          "className": "Sorcerer",
+          "level": 6
+        },
+        {
+          "className": "Wizard",
+          "level": 6
+        },
+        {
+          "className": "Cleric",
+          "level": 7
+        },
+        {
+          "className": "Druid",
+          "level": 7
+        }
+      ],
+      "name": "Scry Location",
+      "range": "See text",
+      "savingThrow": "No",
+      "school": "Divination",
+      "slug": "scry-location",
+      "spellResistance": "No",
+      "subschool": "Scrying"
+    },
+    {
+      "castingTime": "1 minute",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You leach the power of the wand you hold, causing a ghostly stream of blue mist to rise from the item and enter your body.Slowly, you feel your magical energies being renewed.You drain the charges from a wand or staff you hold to replace spells you have already cast.As long as the wand or staff has at least 5 charges left, you can expend 5 of those charges to replace a cast spell.The spell replaced must be of a level equal to or lower than the highest-level spell the staff or wand holds.If you prepare arcane spells, you can regain any one spell of the affected level that you have already cast that day; if you cast spells spontaneously, you can regain a spell slot of the appropriate level.For example, a wizard who has cast her only fly spell for the day (a 3rd-level spell) can drain 5 charges from her wand of fireball (another 3rd-level spell) to regain fly or any lower-level spell she has cast.If the wand or staff holds enough charges, one casting of this spell can replace multiple spells at once.For example, a sorcerer who has expended three of his 5th-level spell slots can drain 15 charges from his staff of frost to regain all three spell slots.Siphon has no effect on wands or staffs that do not hold enough charges to replenish the desired number of spells.",
+      "descriptors": [],
+      "duration": "Instantaneous",
+      "levelEntries": [
+        {
+          "className": "Sorcerer",
+          "level": 3
+        },
+        {
+          "className": "Wizard",
+          "level": 3
+        }
+      ],
+      "name": "Siphon",
+      "range": "Touch",
+      "savingThrow": "None",
+      "school": "Transmutation",
+      "slug": "siphon",
+      "spellResistance": "No",
+      "target": "One touched wand or staff"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You step into intangible smoke and ascend as nimbly as if it were a flight of steps.You gain the ability to run up columns of smoke as if they were normal stairs.Casting this spell successfully requires smoke from a natural fire large enough to fill a 5-foot square, such as a normal campfire, bonfire, or any significant amount of burning debris (torch f lames or creatures made of fire or smoke do not suffice).After casting this spell, you can move into the column of smoke produced by such fires and can ascend vertically into a square filled with smoke.To your eyes the smoke coalesces into ghostly steps, though other observers see nothing different.When stepping into the column you are considered to be in the smoke above the flame and take no damage from the fire.Every 5 feet of upward movement costs 2 squares of movement.For example, an assassin with a speed of 30 feet casts smoke stairs on himself, then moves 10 feet across the ground to a smoking fire and ascends 10 feet vertically in a single move action.If anything dissipates the column of smoke while you are moving though it using this spell, you lose your footing and fall.Examples include a gust of wind spell and an air elemental's whirlwind form.If the fire creating the smoke is extinguished, the smoke stairs effect lingers for 1 round before dispersing.Material Component: A handful of dried leaves.",
+      "descriptors": [
+        "Air"
+      ],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 2
+        },
+        {
+          "className": "Druid",
+          "level": 2
+        }
+      ],
+      "name": "Smoke Stairs",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "smoke-stairs",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Winding your magical grip around the dweomers that augment your opponent, you rip them away and feel their energy rise around you.You attempt to steal an opponent's beneficial spell effects for yourself.Upon casting this spell, you instantly discern all spells currently affecting the target (including their effects).For each spell so discerned, you can make a dispel check (1d20 + your caster level, maximum +15) against a DC of 11 + the spell's caster level.If the check succeeds, you gain the effect of the spell for the remainder of its duration, as if it had been cast on you instead of the original target, and the opponent loses that effect.Only spells capable of being dispelled can be affected by spell theft.In addition, if you are not a legal target of the spell to be stolen, your dispel check automatically fails.For example, if you cast spell theft on a dire bear affected by bull's strength and animal growth, you could steal only the effect of the first spell unless you were also of the animal type.",
+      "descriptors": [],
+      "duration": "Instantaneous",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 4
+        },
+        {
+          "className": "Hexblade",
+          "level": 4
+        },
+        {
+          "className": "Sorcerer",
+          "level": 5
+        },
+        {
+          "className": "Wizard",
+          "level": 5
+        }
+      ],
+      "name": "Spell Theft",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "None",
+      "school": "Abjuration",
+      "slug": "spell-theft",
+      "spellResistance": "No",
+      "target": "One creature"
+    },
+    {
+      "area": "10-ft.-radius spread",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "The ground at which you point erupts with countless puffball mushrooms.You cause the ground to become thick with spore-ridden fungus.The area affected by this spell becomes difficult terrain.Entering a square of difficult terrain costs 2 squares of movement, and creatures cannot charge or run through such squares (PH 148).The uneven surface created by this spell also increases the DCs of Balance and Tumble checks by 5 and the DC of Move Silently checks by 2.In addition, any creature that enters a square affected by this spell bursts several mushrooms, causing their choking spores to fill the air.The spores render the creature sickened for 1 round (Fortitude negates).Treat the spore cloud as an inhaled poison for the purpose of bonuses on the save or immunity to poison.Entering more than one affected square during a turn doesn't force multiple saves.You can cast spore field on any type of ground or flooring, regardless of the material that comprises it.",
+      "descriptors": [],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 1
+        },
+        {
+          "className": "Ranger",
+          "level": 2
+        }
+      ],
+      "name": "Spore Field",
+      "range": "Medium (100 ft. + 10 ft./level)",
+      "savingThrow": "Fortitude partial; see text",
+      "school": "Transmutation",
+      "slug": "spore-field",
+      "spellResistance": "No"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "AF"
+      ],
+      "description": "You slide your finger over a coin, imbuing it with a tiny fraction of your own senses.You imbue a Fine object (such as a coin, stone, or other innocuous item) with a dormant magical scrying sensor.Anyone attempting to detect its magical aura must succeed on a caster level check (DC 15 + your caster level).At any one time during the spell's duration, as a standard action you can concentrate upon the object, enabling you to hear or see (your choice) as if you were in the object's location.This effect otherwise functions as if you had cast clairaudience/clairvoyance in the object's area.You have no control over the object's movement and gain no special senses.Spymaster's coin functions only on the plane of existence you are currently occupying.You must continue to concentrate to see or hear through the spymaster's coin.If you stop concentrating, the spell's effect ends.Once activated, the scrying effect of the spell lasts for a maximum number of rounds equal to your caster level.Focus:One object of Fine size.",
+      "descriptors": [],
+      "duration": "1 hour/level or until triggered, then 1 round/level",
+      "effect": "Magical sensor",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Spymaster's Coin",
+      "range": "Touch",
+      "savingThrow": "None",
+      "school": "Divination",
+      "slug": "spymasters-coin",
+      "spellResistance": "No",
+      "subschool": "Scrying"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "Exuding the stench of festering carrion, waves upon waves of buzzing, clambering, clicking bugs roil up from beneath the earth.You cause a thick but porous wall, alive with hungry bugs, to buzz and scuttle into existence.It provides concealment in both directions, imposing a 20% miss chance on any attacks passing through it.You cannot conjure the wall so that it occupies the same space as a creature.Any living creature passing through the wall is subjected to hundreds of tiny bites.It takes 2d6 points of damage and must succeed on a Fortitude save or be nauseated for 1 round.Any creature becoming nauseated while moving through the wall can complete itsmove action, but cannot take a standard action in that round.The wall of vermin is immune to weapon damage, though it can be affected by area spells and effects (such as burning hands or cone of cold).It has 20 hit points and automatically fails any save.Disintegrate has no effect on a wall of vermin, since it is not a single physical object, though any wind of 50 mph or greater breaks it up for 1 round.Despite its appearance, a wall of vermin is not made up of natural creatures, and thus is unaffected by spells that affect animals or vermin.",
+      "descriptors": [],
+      "duration": "Concentration + 1 round/level",
+      "effect": "Wall of pests whose area is up to four 5-ft. squares (S)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 3
+        }
+      ],
+      "name": "Wall of Vermin",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Fortitude partial; see text",
+      "school": "Conjuration",
+      "slug": "wall-of-vermin",
+      "spellResistance": "Yes",
+      "subschool": "Creation"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Manipulating the very magic that infuses your wand, you alter that energy, opening the magic item to a new power of your choosing.By casting wand modulation on the target wand you hold, you temporarily alter it to cast a different spell.After casting this spell, the next spell you cast upon the target wand affects the remaining charges, allowing the wand to discharge that spell instead of the one it was created to cast.The spell cast after wand modulation must be of a lower level than the spell the wand normally casts.Replacement spells cast from the affected wand are cast at the minimum caster level.Each use of an affected wand now expends 2 charges from the wand instead of the usual single charge.If the wand holds insufficient charges to invoke the new spell, it cannot be activated.You can't use wand modulation to change a wand's spell to one with a costly material component or focus or with anXP component, even if the original spell has a similar component or focus.For example, a 5th-level wizard facing an angry fire elemental wishes to cast magic missile (a 1st-level spell) from his wand of scorching ray (a 2nd-level spell), which happens to have a caster level of 5th.He casts wand modulation and in the following round casts magic missile.The wand can now cast magic missile as a 1st-level caster (the minimum caster level), but each use expends 2 charges.The wizard can now use the wand to cast magic missile for 5 minutes, after which it reverts back to a normal wand of scorching ray.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Sorcerer",
+          "level": 3
+        },
+        {
+          "className": "Wizard",
+          "level": 3
+        }
+      ],
+      "name": "Wand Modulation",
+      "range": "Touch",
+      "savingThrow": "Yes (harmless, object)",
+      "school": "Transmutation",
+      "slug": "wand-modulation",
+      "spellResistance": "Yes (harmless, object)",
+      "target": "One touched wand"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Your body hunches and shrinks as dusky feathers sprout from your skin.Your arms become wings and your toes sharpen into talons.You take the form of an owl (MM 277) or raven (MM 278), as chosen when you cast the spell.Even though your Intelligence changes to 2, you retain your normal ability to understand your surroundings (unlike a normal animal).See the polymorph subschool description on for more details.As its name suggests, this spell's most common use is for unobtrusive observation, but it also allows a druid to overcome obstacles that hinder overland travel.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 1
+        }
+      ],
+      "name": "Winged Watcher",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "winged-watcher",
+      "spellResistance": "",
+      "subschool": "Polymorph",
+      "target": "You"
+    }
+  ]
+}

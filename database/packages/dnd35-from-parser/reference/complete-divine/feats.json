@@ -1,0 +1,2825 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-31T22:19:26.791Z",
+    "sourceUrl": "https://dndtools.net/feats/complete-divine--56/",
+    "type": "feat"
+  },
+  "detected": {
+    "Arcane Disciple": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.arcane",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Augment Healing": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.heal.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Boar's Ferocity": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Bonus Domain": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "21",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.divine",
+          "value": "9",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Cheetah's Speed": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Consecrate Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Corrupt Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Disciple of the Sun": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Divine Metamagic": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Divine Spell Power": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.divine",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ],
+      "unresolvedModifiers": [
+        "Unresolved bonus: \"You can spend a turn or rebuke attempt as a free action and roll a turning check (with a special +3 bonus, plus any other modifiers you'd normally apply to your turning check)\""
+      ]
+    },
+    "Domain Focus": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "accesstorelevantdomain": "Access To Relevant Domain"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.accesstorelevantdomain.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Domain Spontaneity": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ],
+      "stackable": true
+    },
+    "Eagle's Wings": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Elemental Healing": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Elemental Smiting": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Elephant's Hide": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Empower Turning": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Epic Devotion": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "ironwill": "Iron Will"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "21",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.ironwill.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ],
+      "unresolvedModifiers": [
+        "Unresolved bonus: \"You gain a +4 bonus on saves against spells of the chosen alignment component\""
+      ]
+    },
+    "Extra Wild Shape": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ],
+      "stackable": true
+    },
+    "Fast Wild Shape": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.dexterity.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Glorious Weapons": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Grizzly's Claws": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Holy Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Improved Smiting": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.smiteevilpaladin.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Lion's Pounce": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Magical Beast Wild Shape": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgenature.rank",
+          "value": "27",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Negative Energy Burst": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Oaken Resilience": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ],
+      "unresolvedModifiers": [
+        "Unresolved bonus: \"You also gain great stability, which gives you a +8 bonus on checks to avoid being bull rushed or tripped\""
+      ]
+    },
+    "Pious Defense": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Pious Soul": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Pious Spellsurge": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Positive Energy Aura": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Practiced Spellcaster": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Profane Boost": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Quicken Turning": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Rapid Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Reach Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Sacred Boost": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Sacred Healing": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.heal.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Sanctify Relic": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Item Creation"
+        }
+      ],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.itemcreation.*.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Serpent's Venom": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spectral Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "19",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Spell Focus (Chaos)": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spell Focus (Evil)": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spell Focus (Good)": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spell Focus (Law)": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spontaneous Healer": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Spontaneous Summoner": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgenature.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Spontaneous Wounder": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Swim like a Fish": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ],
+      "unresolvedModifiers": [
+        "Unresolved skill: \"Webbing also grows between your fi ngers and between your toes, granting you a Swim speed of 40 ft. and a +8 bonus on your Swim checks\"",
+        "Unresolved bonus: \"Webbing also grows between your fi ngers and between your toes, granting you a Swim speed of 40 ft. and a +8 bonus on your Swim checks\""
+      ]
+    },
+    "Transdimensional Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "True Believer": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Undead Mastery": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "21",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Unholy Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Wolverine's Rage": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [],
+      "unresolvedModifiers": [
+        "Unresolved bonus: \"While in this rage, you gain a +2 bonus to Strength, a +2 bonus to Constitution, and take a -2 penalty to AC\""
+      ]
+    },
+    "Zone of Animation": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "undeadmastery": "Undead Mastery"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.undeadmastery.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "mapping": {
+    "Arcane Disciple": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You gain access to the spells of your selected domain, adding them to your arcane class spell list. If you possess arcane casting from multiple classes, you must designate which class benefits from this feat; this choice is permanent for that instance of the feat. You learn and prepare these spells normally for your class, but Wisdom (not your usual spellcasting ability) determines the saving throw DC. You also need a Wisdom score of at least 10 + the spell's level to prepare or cast any spell acquired through this feat. Per day, you can prepare (or cast spontaneously, if applicable) no more than one domain spell of each spell level.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.arcane",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Augment Healing": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Whenever you cast a Conjuration [Healing] spell, it restores an additional +2 hit points per level of the spell. For instance, a 1st-level cleric using cure light wounds with this feat heals 1d8+3 hp. An 8th-level cleric who has the Healing domain casting cure moderate wounds would heal 2d8+13 hp (9 from caster level including the Healing domain's +1 bonus, plus 4 from this feat). A 13th-level druid casting heal would restore 144 hp (130 from caster level plus 14 from the feat, as heal is a 7th-level druid spell).",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.heal.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Boar's Ferocity": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When your hit points drop to 0 or below without being killed outright, you may expend one use of wild shape as a free action (usable even outside your turn) to keep fighting as though you were neither disabled nor dying. This benefit persists for 1 minute.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Bonus Domain": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "21",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.divine",
+          "value": "9",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Cheetah's Speed": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By expending one use of wild shape, you increase your base land speed to 50 feet. Additionally, once per hour you can sprint at 10 times your normal speed as part of a charge action. This enhancement lasts for 1 hour.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Consecrate Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "description": "Applying this metamagic feat gives a spell the good descriptor. If the modified spell inflicts damage, half that damage (rounded down) stems from pure divine energy and therefore bypasses resistance or immunity to energy-based attacks. For instance, a consecrated fire storm from a 16th-level cleric inflicts 16d6 damage: half is fire and the other half is untyped divine power, so fire-immune creatures still take the divine portion. The modified spell occupies a slot one level higher than its actual level.",
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Corrupt Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "description": "This metamagic feat applies the evil descriptor to a spell. When the spell inflicts damage, half of it (rounded down) comes from raw divine power and cannot be reduced by energy resistance or immunity. The modified spell requires a spell slot one level above the spell's normal level.",
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Disciple of the Sun": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you use your turn undead ability, you may expend two turn attempts instead of one. Doing so destroys the affected undead outright rather than merely turning them.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Divine Metamagic": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Upon selecting this feat, pick one metamagic feat you already possess. As a free action, you can channel the energy from your turn or rebuke undead ability to fuel that metamagic feat when applied to divine spells you know. The cost is one turn or rebuke attempt plus one additional attempt per spell level increase imposed by the metamagic feat. Since you power the metamagic through channeled energy, the spell does not require a higher-level spell slot.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Divine Spell Power": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a free action, you may expend a turn or rebuke undead attempt and make a turning check (gaining a special +3 bonus along with any other modifiers that normally apply to your turning checks). The turning check result serves as a modifier to your caster level for the next divine spell you cast that round. For example, a turning check result of 16 grants a +2 caster level bonus, while a result of 8 imposes a -1 caster level penalty. If no divine spell is cast before your next turn, the bonus is wasted. This feat does not influence arcane spellcasting.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.divine",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Domain Focus": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Spells you cast from one chosen domain benefit from a +1 caster level increase. This applies to caster level checks for overcoming spell resistance and to level-dependent variables like duration. Casting a domain spell from a non-domain spell slot does not gain this benefit, even if that spell also appears on your domain list.",
+      "featNameMap": {
+        "accesstorelevantdomain": "Access To Relevant Domain"
+      },
+      "modifiers": [],
+      "requirements": []
+    },
+    "Domain Spontaneity": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Choose one domain you have access to each time you take this feat. You can sacrifice a prepared divine spell of equal or higher level, along with one daily turn undead attempt, to spontaneously cast any spell from that domain. This functions like the way good clerics spontaneously convert spells into cure spells.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ],
+      "stackable": true
+    },
+    "Eagle's Wings": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By expending one wild shape use, you sprout feathered wings that grant a fly speed of 60 feet with average maneuverability. The wings persist for 1 hour.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Elemental Healing": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a standard action, you can expend a rebuke attempt to release a 60-foot burst of restorative energy. All creatures with an elemental subtype within range that you could normally rebuke are healed for 1d8 hit points per two cleric levels.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Elemental Smiting": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Once per round as a free action when making a melee attack, you may spend a turn attempt. If your attack hits a creature that you could normally turn due to its elemental subtype, you add your cleric level as bonus damage. A missed attack wastes the turn attempt with no effect.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Elephant's Hide": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By expending one wild shape use, you gain a natural armor bonus of +7 that does not stack with any existing natural armor. This benefit lasts for 10 minutes.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Empower Turning": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your turn or rebuke undead attempts affect more undead than normal. After calculating your turning damage (cleric level + Charisma modifier + roll), multiply the total by 1.5.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Epic Devotion": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You receive a +4 bonus on saving throws against spells that possess the chosen alignment descriptor. You must select an alignment component (chaos, evil, good, or law) that is not part of your own alignment and that your patron deity's clerics do not share.",
+      "featNameMap": {
+        "ironwill": "Iron Will"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "21",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.ironwill.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Extra Wild Shape": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You gain two additional daily uses of wild shape. If you can assume elemental form through wild shape, you also receive one extra elemental wild shape use per day.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ],
+      "stackable": true
+    },
+    "Fast Wild Shape": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can activate wild shape as a move action instead of a standard action.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.dexterity.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Glorious Weapons": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a standard action, you may expend a turn or rebuke attempt to imbue the melee weapons (including natural weapons) of every ally within a 60-foot burst with an alignment. Weapons become good-aligned if you channel positive energy, or evil-aligned if you channel negative energy, allowing them to overcome the corresponding damage reduction. This lasts until the end of your next turn.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Grizzly's Claws": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By expending one wild shape use, you manifest two primary claw attacks, each made at your full base attack bonus and adding your Strength modifier to damage. The claws inflict piercing and slashing damage equivalent to a short sword of your size (1d6 for Medium, 1d4 for Small). The claws last for 1 hour.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Holy Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Every weapon you wield functions as a holy weapon, dealing an extra +2d6 damage to evil-aligned creatures. This does not stack with an already holy weapon or similar effects. The weapon is also treated as blessed, conferring special effects against certain creature types.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Improved Smiting": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your smite attacks bypass damage reduction as though they were aligned, and they inflict an additional +1d6 damage to creatures of a specific opposing alignment. If your smite already has an inherent alignment (such as a paladin's smite evil being good-aligned), it deals the extra damage to foes of that alignment and overcomes DR as the opposite alignment. If your smite lacks an inherent alignment, you select one alignment component (chaotic, evil, good, or lawful) when taking this feat; your smites then overcome DR as that alignment and deal +1d6 extra damage to foes of the opposing alignment. The chosen component must match part of your own alignment, and this selection is permanent. Changing your alignment so the chosen component no longer applies causes you to lose this feat's benefits.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.smiteevilpaladin.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Lion's Pounce": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When making a charge, you may expend one wild shape use as a free action to deliver a full attack at the end of the charge instead of a single attack.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Magical Beast Wild Shape": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your wild shape ability extends to magical beast forms. The size restriction matches your normal animal size limitation. You acquire all supernatural abilities of the magical beast whose shape you assume.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgenature.rank",
+          "value": "27",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Negative Energy Burst": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By expending one rebuke or command undead attempt, you emit a 60-foot burst of negative energy. Make a standard rebuke (or command) check, but the burst targets living creatures instead of undead. Creatures that would be rebuked by the result gain one negative level; those that would be commanded gain two negative levels. The Fortitude DC to remove these negative levels after 24 hours equals 10 + half your effective turning level + your Charisma modifier.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Oaken Resilience": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Expending one wild shape use grants you immunity to critical hits, poison, sleep effects, paralysis, polymorph, and stunning. You also gain exceptional stability, providing a +8 bonus on checks to resist bull rush and trip attempts. These benefits last for 10 minutes.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Pious Defense": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When incoming damage would reduce you to 0 or fewer hit points, you may spend 1 faith point to suffer only half the damage from that attack.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Pious Soul": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You may spend a faith point to add 1d6 to any d20 roll you make for an attack, saving throw, or ability check. This can be done after seeing the d20 result, provided the GM has not yet announced success or failure. Multiple faith points can be spent at once for cumulative dice.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Pious Spellsurge": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When casting a spell, you may expend 2 faith points to gain a +1d6 bonus that applies either to the save DC of that spell or to your effective caster level for it (your choice).",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Positive Energy Aura": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Any undead creature entering within 15 feet of you is automatically subjected to a turning effect at no cost in turning attempts and with no turning damage roll required. However, only undead whose Hit Dice do not exceed your effective cleric level minus 10 are turned, and only those whose Hit Dice do not exceed your effective cleric level minus 20 are destroyed. Undead with total cover relative to you are unaffected, just as with standard turning.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Practiced Spellcaster": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your caster level for one chosen spellcasting class increases by 4, though it cannot exceed your total Hit Dice. If you cannot immediately benefit from the full increase, any remaining bonus applies as you gain additional non-caster Hit Dice later. Characters with multiple spellcasting classes must designate which class receives this benefit. This feat does not grant additional spells per day or spells known; it only raises your effective caster level for purposes such as spell resistance penetration, duration, and other level-dependent effects.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Profane Boost": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a standard action, you can expend a rebuke undead attempt to envelop every creature in a 60-foot burst with an aura of negative energy. Any inflict spell cast on an affected creature before the end of your next turn is automatically maximized, without increasing the spell's level or casting time.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Quicken Turning": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You may perform a turn or rebuke undead attempt as a free action. The limitation of one turning attempt per round still applies.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Rapid Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "description": "This metamagic feat can only be applied to spells whose casting time exceeds 1 standard action. A rapid spell that normally takes 1 full round to cast instead requires only a standard action. Spells measured in rounds become 1 full round, those measured in minutes become 1 minute, and those measured in hours become 1 hour. A rapid spell occupies a spell slot one level higher than normal.",
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Reach Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "description": "A touch-range spell modified by this feat can be delivered at a range of up to 30 feet. The spell functions as a ray, requiring a successful ranged touch attack to affect the target. A reach spell uses a spell slot two levels higher than its actual level.",
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "Sacred Boost": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a standard action, you may spend a turn undead attempt to surround every creature within a 60-foot burst with an aura of positive energy. Any cure spell cast on an affected creature before the end of your next turn is automatically maximized, with no change to the spell's level or casting time.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Sacred Healing": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By spending a turn undead attempt as a full-round action, you grant fast healing 3 to every living creature within a 60-foot burst. This fast healing persists for a number of rounds equal to 1 + your Charisma modifier (minimum 1 round).",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.heal.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Sanctify Relic": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "description": "You can create relics, which are special magic items imbued with divine significance.",
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Item Creation"
+        }
+      ],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.itemcreation.*.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Serpent's Venom": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By expending one wild shape use, you gain a secondary bite attack (made at your base attack bonus -5, adding half your Strength modifier to damage) that deals bludgeoning, piercing, and slashing damage equal to a dagger of your size (1d4 for Medium, 1d3 for Small). The bite also delivers poison (Fortitude DC 10 + half your HD + your Constitution modifier; initial and secondary damage 1d6 Constitution).",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spectral Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your physical attacks deal full damage to incorporeal creatures, ignoring the normal 50% miss chance that typically applies.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "19",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Spell Focus (Chaos)": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spell Focus (Evil)": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spell Focus (Good)": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spell Focus (Law)": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
+      "featNameMap": {
+        "relevantalignment": "Relevant Alignment"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.relevantalignment.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spontaneous Healer": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You gain the ability to spontaneously convert your prepared spells into cure spells from your class spell list, mirroring a cleric's spontaneous casting. You can use this ability a number of times per day equal to your Wisdom modifier.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Spontaneous Summoner": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can spontaneously convert prepared spells into summon nature's ally spells from your class list, in the same manner a druid does. The number of times you may do this per day equals your Wisdom modifier.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgenature.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Spontaneous Wounder": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You gain the ability to spontaneously convert your prepared spells into inflict spells from your class spell list, functioning like a cleric's spontaneous casting of inflict spells. You can use this ability a number of times per day equal to your Wisdom modifier.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.wisdom.total",
+          "value": "13",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgereligion.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Swim like a Fish": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Expending one wild shape use causes you to develop gills for underwater breathing (you retain the ability to breathe air as well). Webbing forms between your fingers and toes, granting a swim speed of 40 feet and a +8 bonus on Swim checks. These effects last for 1 hour.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.wildshapedruid.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Transdimensional Spell": {
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
+      "description": "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal.",
+      "modifiers": [],
+      "properties": [
+        {
+          "type": "FEAT_FAMILY",
+          "value": "Metamagic"
+        }
+      ],
+      "requirements": []
+    },
+    "True Believer": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Once per day, immediately before making a saving throw, you may invoke this feat to gain a +2 insight bonus on that save. This feat also qualifies you to use relics associated with your chosen deity.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Undead Mastery": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "The maximum Hit Dice of undead you can command at one time increases to ten times your character level.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "21",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Unholy Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Every weapon you wield functions as an unholy weapon, inflicting an extra +2d6 damage against good-aligned creatures. This does not stack with an existing unholy property or comparable effects on the weapon.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Wolverine's Rage": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you sustained damage during the previous round, you may expend one wild shape use as a free action on your turn to enter a frenzy. While in this state, you gain +2 to Strength, +2 to Constitution, and suffer a -2 penalty to AC. The frenzy lasts 5 rounds and cannot be ended early.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Zone of Animation": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By expending a rebuke or command undead attempt, you raise corpses within your rebuke/command range as undead. The total HD of undead you animate equals the number of HD that your check result would normally command. You cannot animate more corpses than are available in range, nor can you exceed your total commanded undead limit (accounting for those already under your control) with any single use. Animated undead fall under your command automatically, subject to your normal command cap. Recently deceased corpses rise as zombies; older remains become upgraded.",
+      "featNameMap": {
+        "undeadmastery": "Undead Mastery"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.charisma.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.undeadmastery.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.turnorrebukeundeadcleric.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.turnundeadpaladin.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "overrides": {
+      "Arcane Disciple": {
+        "description": "You gain access to the spells of your selected domain, adding them to your arcane class spell list. If you possess arcane casting from multiple classes, you must designate which class benefits from this feat; this choice is permanent for that instance of the feat. You learn and prepare these spells normally for your class, but Wisdom (not your usual spellcasting ability) determines the saving throw DC. You also need a Wisdom score of at least 10 + the spell's level to prepare or cast any spell acquired through this feat. Per day, you can prepare (or cast spontaneously, if applicable) no more than one domain spell of each spell level."
+      },
+      "Augment Healing": {
+        "description": "Whenever you cast a Conjuration [Healing] spell, it restores an additional +2 hit points per level of the spell. For instance, a 1st-level cleric using cure light wounds with this feat heals 1d8+3 hp. An 8th-level cleric who has the Healing domain casting cure moderate wounds would heal 2d8+13 hp (9 from caster level including the Healing domain's +1 bonus, plus 4 from this feat). A 13th-level druid casting heal would restore 144 hp (130 from caster level plus 14 from the feat, as heal is a 7th-level druid spell)."
+      },
+      "Boar's Ferocity": {
+        "description": "When your hit points drop to 0 or below without being killed outright, you may expend one use of wild shape as a free action (usable even outside your turn) to keep fighting as though you were neither disabled nor dying. This benefit persists for 1 minute."
+      },
+      "Bonus Domain": {
+        "description": "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
+        "skip": false
+      },
+      "Cheetah's Speed": {
+        "description": "By expending one use of wild shape, you increase your base land speed to 50 feet. Additionally, once per hour you can sprint at 10 times your normal speed as part of a charge action. This enhancement lasts for 1 hour."
+      },
+      "Consecrate Spell": {
+        "description": "Applying this metamagic feat gives a spell the good descriptor. If the modified spell inflicts damage, half that damage (rounded down) stems from pure divine energy and therefore bypasses resistance or immunity to energy-based attacks. For instance, a consecrated fire storm from a 16th-level cleric inflicts 16d6 damage: half is fire and the other half is untyped divine power, so fire-immune creatures still take the divine portion. The modified spell occupies a slot one level higher than its actual level."
+      },
+      "Corrupt Spell": {
+        "description": "This metamagic feat applies the evil descriptor to a spell. When the spell inflicts damage, half of it (rounded down) comes from raw divine power and cannot be reduced by energy resistance or immunity. The modified spell requires a spell slot one level above the spell's normal level."
+      },
+      "Disciple of the Sun": {
+        "description": "When you use your turn undead ability, you may expend two turn attempts instead of one. Doing so destroys the affected undead outright rather than merely turning them."
+      },
+      "Divine Metamagic": {
+        "description": "Upon selecting this feat, pick one metamagic feat you already possess. As a free action, you can channel the energy from your turn or rebuke undead ability to fuel that metamagic feat when applied to divine spells you know. The cost is one turn or rebuke attempt plus one additional attempt per spell level increase imposed by the metamagic feat. Since you power the metamagic through channeled energy, the spell does not require a higher-level spell slot."
+      },
+      "Divine Spell Power": {
+        "description": "As a free action, you may expend a turn or rebuke undead attempt and make a turning check (gaining a special +3 bonus along with any other modifiers that normally apply to your turning checks). The turning check result serves as a modifier to your caster level for the next divine spell you cast that round. For example, a turning check result of 16 grants a +2 caster level bonus, while a result of 8 imposes a -1 caster level penalty. If no divine spell is cast before your next turn, the bonus is wasted. This feat does not influence arcane spellcasting."
+      },
+      "Domain Focus": {
+        "description": "Spells you cast from one chosen domain benefit from a +1 caster level increase. This applies to caster level checks for overcoming spell resistance and to level-dependent variables like duration. Casting a domain spell from a non-domain spell slot does not gain this benefit, even if that spell also appears on your domain list.",
+        "requirements": []
+      },
+      "Domain Spontaneity": {
+        "description": "Choose one domain you have access to each time you take this feat. You can sacrifice a prepared divine spell of equal or higher level, along with one daily turn undead attempt, to spontaneously cast any spell from that domain. This functions like the way good clerics spontaneously convert spells into cure spells."
+      },
+      "Eagle's Wings": {
+        "description": "By expending one wild shape use, you sprout feathered wings that grant a fly speed of 60 feet with average maneuverability. The wings persist for 1 hour."
+      },
+      "Elemental Healing": {
+        "description": "As a standard action, you can expend a rebuke attempt to release a 60-foot burst of restorative energy. All creatures with an elemental subtype within range that you could normally rebuke are healed for 1d8 hit points per two cleric levels."
+      },
+      "Elemental Smiting": {
+        "description": "Once per round as a free action when making a melee attack, you may spend a turn attempt. If your attack hits a creature that you could normally turn due to its elemental subtype, you add your cleric level as bonus damage. A missed attack wastes the turn attempt with no effect."
+      },
+      "Elephant's Hide": {
+        "description": "By expending one wild shape use, you gain a natural armor bonus of +7 that does not stack with any existing natural armor. This benefit lasts for 10 minutes."
+      },
+      "Empower Turning": {
+        "description": "Your turn or rebuke undead attempts affect more undead than normal. After calculating your turning damage (cleric level + Charisma modifier + roll), multiply the total by 1.5."
+      },
+      "Epic Devotion": {
+        "description": "You receive a +4 bonus on saving throws against spells that possess the chosen alignment descriptor. You must select an alignment component (chaos, evil, good, or law) that is not part of your own alignment and that your patron deity's clerics do not share."
+      },
+      "Extra Wild Shape": {
+        "description": "You gain two additional daily uses of wild shape. If you can assume elemental form through wild shape, you also receive one extra elemental wild shape use per day."
+      },
+      "Fast Wild Shape": {
+        "description": "You can activate wild shape as a move action instead of a standard action."
+      },
+      "Glorious Weapons": {
+        "description": "As a standard action, you may expend a turn or rebuke attempt to imbue the melee weapons (including natural weapons) of every ally within a 60-foot burst with an alignment. Weapons become good-aligned if you channel positive energy, or evil-aligned if you channel negative energy, allowing them to overcome the corresponding damage reduction. This lasts until the end of your next turn."
+      },
+      "Grizzly's Claws": {
+        "description": "By expending one wild shape use, you manifest two primary claw attacks, each made at your full base attack bonus and adding your Strength modifier to damage. The claws inflict piercing and slashing damage equivalent to a short sword of your size (1d6 for Medium, 1d4 for Small). The claws last for 1 hour."
+      },
+      "Holy Strike": {
+        "description": "Every weapon you wield functions as a holy weapon, dealing an extra +2d6 damage to evil-aligned creatures. This does not stack with an already holy weapon or similar effects. The weapon is also treated as blessed, conferring special effects against certain creature types."
+      },
+      "Improved Smiting": {
+        "description": "Your smite attacks bypass damage reduction as though they were aligned, and they inflict an additional +1d6 damage to creatures of a specific opposing alignment. If your smite already has an inherent alignment (such as a paladin's smite evil being good-aligned), it deals the extra damage to foes of that alignment and overcomes DR as the opposite alignment. If your smite lacks an inherent alignment, you select one alignment component (chaotic, evil, good, or lawful) when taking this feat; your smites then overcome DR as that alignment and deal +1d6 extra damage to foes of the opposing alignment. The chosen component must match part of your own alignment, and this selection is permanent. Changing your alignment so the chosen component no longer applies causes you to lose this feat's benefits."
+      },
+      "Lion's Pounce": {
+        "description": "When making a charge, you may expend one wild shape use as a free action to deliver a full attack at the end of the charge instead of a single attack."
+      },
+      "Magical Beast Wild Shape": {
+        "description": "Your wild shape ability extends to magical beast forms. The size restriction matches your normal animal size limitation. You acquire all supernatural abilities of the magical beast whose shape you assume."
+      },
+      "Negative Energy Burst": {
+        "description": "By expending one rebuke or command undead attempt, you emit a 60-foot burst of negative energy. Make a standard rebuke (or command) check, but the burst targets living creatures instead of undead. Creatures that would be rebuked by the result gain one negative level; those that would be commanded gain two negative levels. The Fortitude DC to remove these negative levels after 24 hours equals 10 + half your effective turning level + your Charisma modifier."
+      },
+      "Oaken Resilience": {
+        "description": "Expending one wild shape use grants you immunity to critical hits, poison, sleep effects, paralysis, polymorph, and stunning. You also gain exceptional stability, providing a +8 bonus on checks to resist bull rush and trip attempts. These benefits last for 10 minutes."
+      },
+      "Pious Defense": {
+        "description": "When incoming damage would reduce you to 0 or fewer hit points, you may spend 1 faith point to suffer only half the damage from that attack."
+      },
+      "Pious Soul": {
+        "description": "You may spend a faith point to add 1d6 to any d20 roll you make for an attack, saving throw, or ability check. This can be done after seeing the d20 result, provided the GM has not yet announced success or failure. Multiple faith points can be spent at once for cumulative dice."
+      },
+      "Pious Spellsurge": {
+        "description": "When casting a spell, you may expend 2 faith points to gain a +1d6 bonus that applies either to the save DC of that spell or to your effective caster level for it (your choice)."
+      },
+      "Positive Energy Aura": {
+        "description": "Any undead creature entering within 15 feet of you is automatically subjected to a turning effect at no cost in turning attempts and with no turning damage roll required. However, only undead whose Hit Dice do not exceed your effective cleric level minus 10 are turned, and only those whose Hit Dice do not exceed your effective cleric level minus 20 are destroyed. Undead with total cover relative to you are unaffected, just as with standard turning."
+      },
+      "Practiced Spellcaster": {
+        "description": "Your caster level for one chosen spellcasting class increases by 4, though it cannot exceed your total Hit Dice. If you cannot immediately benefit from the full increase, any remaining bonus applies as you gain additional non-caster Hit Dice later. Characters with multiple spellcasting classes must designate which class receives this benefit. This feat does not grant additional spells per day or spells known; it only raises your effective caster level for purposes such as spell resistance penetration, duration, and other level-dependent effects."
+      },
+      "Profane Boost": {
+        "description": "As a standard action, you can expend a rebuke undead attempt to envelop every creature in a 60-foot burst with an aura of negative energy. Any inflict spell cast on an affected creature before the end of your next turn is automatically maximized, without increasing the spell's level or casting time."
+      },
+      "Quicken Turning": {
+        "description": "You may perform a turn or rebuke undead attempt as a free action. The limitation of one turning attempt per round still applies."
+      },
+      "Rapid Spell": {
+        "description": "This metamagic feat can only be applied to spells whose casting time exceeds 1 standard action. A rapid spell that normally takes 1 full round to cast instead requires only a standard action. Spells measured in rounds become 1 full round, those measured in minutes become 1 minute, and those measured in hours become 1 hour. A rapid spell occupies a spell slot one level higher than normal."
+      },
+      "Reach Spell": {
+        "description": "A touch-range spell modified by this feat can be delivered at a range of up to 30 feet. The spell functions as a ray, requiring a successful ranged touch attack to affect the target. A reach spell uses a spell slot two levels higher than its actual level."
+      },
+      "Sacred Boost": {
+        "description": "As a standard action, you may spend a turn undead attempt to surround every creature within a 60-foot burst with an aura of positive energy. Any cure spell cast on an affected creature before the end of your next turn is automatically maximized, with no change to the spell's level or casting time."
+      },
+      "Sacred Healing": {
+        "description": "By spending a turn undead attempt as a full-round action, you grant fast healing 3 to every living creature within a 60-foot burst. This fast healing persists for a number of rounds equal to 1 + your Charisma modifier (minimum 1 round)."
+      },
+      "Sanctify Relic": {
+        "description": "You can create relics, which are special magic items imbued with divine significance."
+      },
+      "Serpent's Venom": {
+        "description": "By expending one wild shape use, you gain a secondary bite attack (made at your base attack bonus -5, adding half your Strength modifier to damage) that deals bludgeoning, piercing, and slashing damage equal to a dagger of your size (1d4 for Medium, 1d3 for Small). The bite also delivers poison (Fortitude DC 10 + half your HD + your Constitution modifier; initial and secondary damage 1d6 Constitution)."
+      },
+      "Spectral Strike": {
+        "description": "Your physical attacks deal full damage to incorporeal creatures, ignoring the normal 50% miss chance that typically applies."
+      },
+      "Spell Focus (Chaos)": {
+        "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats."
+      },
+      "Spell Focus (Evil)": {
+        "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats."
+      },
+      "Spell Focus (Good)": {
+        "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats."
+      },
+      "Spell Focus (Law)": {
+        "description": "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats."
+      },
+      "Spontaneous Healer": {
+        "description": "You gain the ability to spontaneously convert your prepared spells into cure spells from your class spell list, mirroring a cleric's spontaneous casting. You can use this ability a number of times per day equal to your Wisdom modifier."
+      },
+      "Spontaneous Summoner": {
+        "description": "You can spontaneously convert prepared spells into summon nature's ally spells from your class list, in the same manner a druid does. The number of times you may do this per day equals your Wisdom modifier."
+      },
+      "Spontaneous Wounder": {
+        "description": "You gain the ability to spontaneously convert your prepared spells into inflict spells from your class spell list, functioning like a cleric's spontaneous casting of inflict spells. You can use this ability a number of times per day equal to your Wisdom modifier."
+      },
+      "Swim like a Fish": {
+        "description": "Expending one wild shape use causes you to develop gills for underwater breathing (you retain the ability to breathe air as well). Webbing forms between your fingers and toes, granting a swim speed of 40 feet and a +8 bonus on Swim checks. These effects last for 1 hour."
+      },
+      "Transdimensional Spell": {
+        "description": "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal."
+      },
+      "True Believer": {
+        "description": "Once per day, immediately before making a saving throw, you may invoke this feat to gain a +2 insight bonus on that save. This feat also qualifies you to use relics associated with your chosen deity."
+      },
+      "Undead Mastery": {
+        "description": "The maximum Hit Dice of undead you can command at one time increases to ten times your character level."
+      },
+      "Unholy Strike": {
+        "description": "Every weapon you wield functions as an unholy weapon, inflicting an extra +2d6 damage against good-aligned creatures. This does not stack with an existing unholy property or comparable effects on the weapon."
+      },
+      "Wolverine's Rage": {
+        "description": "If you sustained damage during the previous round, you may expend one wild shape use as a free action on your turn to enter a frenzy. While in this state, you gain +2 to Strength, +2 to Constitution, and suffer a -2 penalty to AC. The frenzy lasts 5 rounds and cannot be ended early."
+      },
+      "Zone of Animation": {
+        "description": "By expending a rebuke or command undead attempt, you raise corpses within your rebuke/command range as undead. The total HD of undead you animate equals the number of HD that your check result would normally command. You cannot animate more corpses than are available in range, nor can you exceed your total commanded undead limit (accounting for those already under your control) with any single use. Animated undead fall under your command automatically, subject to your normal command cap. Recently deceased corpses rise as zombies; older remains become upgraded."
+      },
+      "reviewed": [
+        "Unresolved bonus: \"You can spend a turn or rebuke attempt as a free action and roll a turning check (with a special +3 bonus, plus any other modifiers you'd normally apply to your turning check)\"",
+        "Unresolved bonus: \"You gain a +4 bonus on saves against spells of the chosen alignment component\"",
+        "Unresolved bonus: \"You also gain great stability, which gives you a +8 bonus on checks to avoid being bull rushed or tripped\"",
+        "Unresolved skill: \"+8 bonus on your Swim checks\"",
+        "Unresolved bonus: \"Webbing also grows between your fi ngers and between your toes, granting you a Swim speed of 40 ft. and a +8 bonus on your Swim checks\"",
+        "Unresolved skill: \"Webbing also grows between your fi ngers and between your toes, granting you a Swim speed of 40 ft. and a +8 bonus on your Swim checks\"",
+        "Unresolved bonus: \"While in this rage, you gain a +2 bonus to Strength, a +2 bonus to Constitution, and take a -2 penalty to AC\""
+      ]
+    }
+  },
+  "raw": [
+    {
+      "benefit": "Add the chosen domain's spells to your class list of arcane spells. If you have arcane spellcasting ability from more than one class, you must pick which arcane spellcasting ability this feat applies to. Once chosen, this decision cannot be changed for that feat. You may learn these spells as normal for your class; however, you use Wisdom (rather than the normal ability for your spellcasting) when determining the save DC for the spell. In addition, you must have a Wisdom score equal to 10 + the spell's level in order to prepare or cast a spell gained from this feat. Each day, you may prepare (or cast, if you cast spells without preparation) a maximum of one of these domains spells of each level.",
+      "featType": "general",
+      "name": "Arcane Disciple",
+      "prerequisiteText": "Knowledge (religion) 4 ranks, Spellcraft 4 ranks, able to cast arcane spells, alignment matches your deity's alignment,",
+      "special": "You can take this feat more than once. Each time, you must select a different domain available to the same deity you chose the fi rst time you selected the feat. For example, a character who chose Heironeous and the Good domain with his fi rst selection could choose Law or War with successive selections of the same feat. He couldn't choose Protection, since that domain isn't available to clerics of Heironeous."
+    },
+    {
+      "benefit": "Add +2 points per spell level to the amount of damage healed by any Conjuration [Healing] spell that you cast. For example, a 1st-level cleric with this feat casting cure light wounds would restore 1d8+3 hp. An 8th-level cleric with the Healing domain and this feat casting cure moderate wounds would restore 2d8+13 hp (9 for his caster level including the +1 caster level bonus for the Healing domain, + 4 for the feat). A 13th-level druid casting heal would restore 144 hp (130 for her caster level + 14 for the feat, since heal is a 7th-level druid spell).",
+      "featType": "general",
+      "name": "Augment Healing",
+      "prerequisiteText": "Heal 4 ranks,"
+    },
+    {
+      "benefit": "If your hit points are reduced to 0 or less (but you aren't killed), you can spend one wild shape as a free action (even if it isn't your turn) to continue acting as if not disabled or dying. The effect lasts for one minute.",
+      "featType": "wild",
+      "name": "Boar's Ferocity",
+      "normal": "When reduced to 0 hp, you are disabled and can take only a single move or standard action each round. When reduced to -1 to -9 hp, you are dying and drop unconscious.",
+      "prerequisiteText": "Ability to wild shape,"
+    },
+    {
+      "benefit": "Choose an additional domain from your deity's domain list. You now have access to that domain's spells and granted powers as normal for your domain spells.",
+      "featType": "epic",
+      "name": "Bonus Domain",
+      "prerequisiteText": "WIS 21, able to cast 9th-level divine spells,",
+      "special": "You can gain this feat multiple times. Each time you take the feat, it applies to a different domain."
+    },
+    {
+      "benefit": "You can spend one wild shape to change your base land speed to 50 feet. You may also sprint as a cheetah: Once per hour you may move 10 times your normal speed as part of a charge. This effect lasts for one hour.",
+      "featType": "wild",
+      "name": "Cheetah's Speed",
+      "prerequisiteText": "Ability to wild shape,"
+    },
+    {
+      "benefit": "A spell you modify with this feat gains the good descriptor. Furthermore, if the spell deals damage, half of the damage (rounded down) results directly from divine power and is therefore not subject to be reduced by resistance or immunity to energy-based attacks. For example, a consecratedfirestorm spell cast by a 16th-level cleric deals 16d6 points of damage, half of which isfiredamage and half of which is sheer divine power. Thus, creatures immune tofirestill take damage. The consecrated spell uses up a spell slot one level higher than the spell's actual level.",
+      "featType": "metamagic",
+      "name": "Consecrate Spell",
+      "prerequisiteText": "Any good alignment,"
+    },
+    {
+      "benefit": "This feat adds the evil descriptor to a spell. Furthermore, if the spell deals damage, half of the damage (rounded down) results directly from divine power and is therefore not subject to be reduced by resistance or immunity to energy-based attacks. The corrupted spell uses up a spell slot one level higher than the spell's actual level.",
+      "featType": "metamagic",
+      "name": "Corrupt Spell",
+      "prerequisiteText": "Any evil alignment,"
+    },
+    {
+      "benefit": "You may spend two turn undead attempts when you turn undead instead of one. If you do then you get destroy the undead instead of turning them.",
+      "featType": "divine",
+      "name": "Disciple of the Sun",
+      "prerequisiteText": "Ability to turn or rebuke undead, good alignment,"
+    },
+    {
+      "benefit": "When you take this feat, choose a metamagic feat that you have. This feat applies only to that metamagic feat. As a free action, you can take the energy from turning or rebuking undead and use it to apply a metamagic feat to divine spells that you know. You must spend one turn or rebuke attempt, plus an additional attempt for each level increase in the metamagic feat you're using. For example, Jozan the cleric could sacrifice three turn attempts to empower a holy smite he's casting. Because you're using positive or negative energy to augment your spells, the spell slot for the spell doesn't change.",
+      "featType": "divine",
+      "name": "Divine Metamagic",
+      "prerequisiteText": "Ability to turn undead or rebuke undead,",
+      "special": "This feat may be taken multiple times. Each time you take this feat choose a different metamagic feat to which to apply it."
+    },
+    {
+      "benefit": "You can spend a turn or rebuke attempt as a free action and roll a turning check (with a special +3 bonus, plus any other modifiers you'd normally apply to your turning check). Treat the result of the turning check as a modifi er to your caster level on the next divine spell you cast in that round. For example, if a cleric used this feat and rolled a 16 on his turning check, he would add a +2 bonus to his caster level for the next divine spell he casts in the round. Had he rolled an 8, he would instead apply a -1 penalty to his caster level for the next divine spell he cast in the round. If you don't cast a divine spell before your next turn, you lose the effect of the check result. This feat has no effect on your arcane spellcasting ability.",
+      "featType": "divine",
+      "name": "Divine Spell Power",
+      "prerequisiteText": "Ability to turn or rebuke undead, able to cast 1st-level divine spells,"
+    },
+    {
+      "benefit": "You can cast spells associated with one of your domains at +1 caster level. This benefit also applies to caster level checks to overcome a target's spell resistance as well as other variables such as spell duration. If you cast a spell from one of your nondomain spell slots, this feat does not help you, even if the spell also happens to appear on your domain list.",
+      "featType": "general",
+      "name": "Domain Focus",
+      "prerequisiteText": "Access to relevant domain,",
+      "special": "You can take Domain Focus multiple times. Its effects do not stack. Each time you take the feat, it applies to a new domain to which you have access."
+    },
+    {
+      "benefit": "Each time you take this feat, choose a domain that you have access to. You may now convert prepared divine spells into any spell from that domain. You expend a spell of equal or higher level, as well as expending one of your daily turn undead attempts. This works just as good clerics spontaneously cast prepared spells as cure spells.",
+      "featType": "divine",
+      "name": "Domain Spontaneity",
+      "prerequisiteText": "Ability to turn or rebuke undead,",
+      "special": "You can take this feat multiple times. Each time you take the feat, it applies to a new domain."
+    },
+    {
+      "benefit": "You can spend one wild shape to grow feathery wings. These allow you to fl y at a speed of 60 feet (average maneuverability). The wings remain for 1 hour.",
+      "featType": "wild",
+      "name": "Eagle's Wings",
+      "prerequisiteText": "Ability to wild shape,"
+    },
+    {
+      "benefit": "You can spend a rebuke attempt as a standard action to send a burst of healing energy in a 60-foot burst. This affects all creatures with an elemental subtype that you could normally rebuke; such creatures are healed of 1d8 points of damage per two cleric levels. For example, a cleric with the Fire domain could use this feat to heal afireelemental or any other creature with thefiresubtype (since he would normally rebuke creatures with thefiresubtype with his domain power).",
+      "featType": "divine",
+      "name": "Elemental Healing",
+      "prerequisiteText": "Ability to rebuke creatures with an elemental subtype,",
+      "special": "You may only activate this feat by spending a rebuke attempt that would normally be used to rebuke creatures with a specifi c elemental subtype (air, earth, fi re, or water). Unlike other divine feats, you can't use a turn or rebuke undead attempt (or other turning attempt) to activate the feat."
+    },
+    {
+      "benefit": "Once per round, you can spend a turn attempt as a free action when making a melee attack. If you successfully strike a creature that you could turn with that turn attempt because of its elemental subtype, you may add a bonus on your damage roll equal to your cleric level. If your attack misses, the turn attempt is lost to no effect. For example, a cleric with the Fire domain could use this feat to smite a water elemental or any other creature with the water subtype (since he would normally turn creatures with the water subtype with his domain power).",
+      "featType": "divine",
+      "name": "Elemental Smiting",
+      "prerequisiteText": "Ability to turn creatures with an elemental subtype,",
+      "special": "You may only activate this feat by spending a turn attempt that would normally be used to turn creatures with a specifi c elemental subtype (air, earth, fi re, or water). Unlike other divine feats, you can't use a turn or rebuke undead attempt (or other turning attempt) to activate the feat."
+    },
+    {
+      "benefit": "You can spend one wild shape to give yourself a natural armor bonus of 7. This does not stack with any natural armor you currently have. The effect lasts for 10 minutes.",
+      "featType": "wild",
+      "name": "Elephant's Hide",
+      "prerequisiteText": "Ability to wild shape into a Large creature,"
+    },
+    {
+      "benefit": "You can turn or rebuke more undead than usual. After adding your cleric level and Charisma modifier to your turning damage roll multiply it by 1.5.",
+      "featType": "general",
+      "name": "Empower Turning",
+      "prerequisiteText": "Ability to turn or rebuke undead,"
+    },
+    {
+      "benefit": "You gain a +4 bonus on saves against spells of the chosen alignment component. For instance, a lawful good paladin of Helm who selected \"chaos\" would gain a +4 bonus on saves against chaotic spells. That paladin could not select \"good\" or \"law\" because they are part of her own alignment, nor could she select \"evil\" because Helm accepts evil clerics.",
+      "featType": "epic",
+      "name": "Epic Devotion",
+      "prerequisiteText": "Iron Will, WIS 21, alignment different from the chosen component, patron deity who does not accept clerics who have the chosen component,",
+      "special": "You can take this feat more than once. Each time you select the feat, select a new alignment component."
+    },
+    {
+      "benefit": "You use your wild shape ability two more times per day than you otherwise could. If you are able to use wild shape to become an elemental, you also gain one additional elemental wild shape use per day.",
+      "featType": "general",
+      "name": "Extra Wild Shape",
+      "prerequisiteText": "Ability to use wild shape,",
+      "special": "You can take this feat multiple times, gaining the same benefit each time."
+    },
+    {
+      "benefit": "You gain the ability to use wild shape as a moveequivalent action.",
+      "featType": "wild",
+      "name": "Fast Wild Shape",
+      "normal": "A druid uses wild shape as a standard action.",
+      "prerequisiteText": "DEX 13, ability to use wild shape,"
+    },
+    {
+      "benefit": "You can spend a turn or rebuke attempt as standard action to align the melee weapons (including natural weapons) of all allies within a 60-ft. burst as good (if you channel positive energy) or evil (if you channel negative energy). Such weapons can overcome damage reduction as if they had the appropriate alignment. The effect lasts until the end of your next turn.",
+      "featType": "divine",
+      "name": "Glorious Weapons",
+      "prerequisiteText": "Ability to turn or rebuke undead,"
+    },
+    {
+      "benefit": "You can spend one wild shape to gain two primary claw attacks (both at your base attack bonus and adding your Strength bonus). The claws deal piercing and slashing damage equal to a short sword appropriate to your size (1d6 for Medium, or 1d4 for Small). The claws remain for 1 hour.",
+      "featType": "wild",
+      "name": "Grizzly's Claws",
+      "prerequisiteText": "Ability to wild shape,",
+      "special": "If you already have a claw attack, this replaces those claws."
+    },
+    {
+      "benefit": "Any weapon you wield is treated as a holy weapon (it deals +2d6 points of damage against creatures of evil alignment). This ability doesn't stack with similar abilities (for instance, if the weapon is already a holy weapon). In addition, the weapon is considered blessed, which means it has special effects on certain creatures.",
+      "featType": "epic",
+      "name": "Holy Strike",
+      "prerequisiteText": "any good alignment, Smite evil class feature,"
+    },
+    {
+      "benefit": "Whenever you make a smite attack, your attack overcomes damage reduction as if had an alignment, and you deal an extra +1d6 points of damage to targets of a specific alignment. If the smite attack has an alignment associated with it, it deals its extra damage to foes of that alignment and it is treated as having the opposite alignment for overcoming damage reduction. For example, a paladin's smite evil attacks are treated as having the good alignment and deal +1d6 damage to evil targets, while a blackguard's smite good attacks are treated as having the evil alignment and deal +1d6 damage to good targets. If the smite attack has no alignment associated with it, you must choose an alignment component (chaotic, evil, good, or lawful) when you select the feat. Your smite attacks overcome damage reduction as if they had that alignment, and deal +1d6 points of damage to foes of the opposite alignment. For example, a lawful neutral cleric of St. Cuthbert with the Destruction domain who selected this feat must choose for his smite attacks to be lawfully aligned (and these attacks would deal +1d6 points of damage to chaotic targets). A lawful evil cleric of Hextor with the Destruction domain could choose to have his smite attacks be lawfully or evilly aligned (and these attacks would deal +1d6 points of damage to chaotic targets or to good targets, respectively). You can't choose an alignment component that isn't part of your alignment, and once this choice is made, it can never be changed. If you later change alignment so that the chosen alignment component is no longer part of your alignment, you lose the BENEFITS: of this feat.",
+      "featType": "general",
+      "name": "Improved Smiting",
+      "prerequisiteText": "CHA 13, smite ability,",
+      "special": "If you have the smite ability from more than one class, the effect of the feat applies to all your smite abilities, and it is possible to select different alignments for each (as long as the alignments chosen are legal selections). For example, a paladin/cleric with the Destruction domain must choose good for his smite good ability, but could choose law for his smite domain power."
+    },
+    {
+      "benefit": "When you charge, you may spend a wild shape as a free action to make a full attack at the end of the charge.",
+      "featType": "wild",
+      "name": "Lion's Pounce",
+      "normal": "Without this feat, you may only make a single attack after a charge.",
+      "prerequisiteText": "Ability to wild shape,"
+    },
+    {
+      "benefit": "You can use your normal wild shape ability to take the form of a magical beast. The size limitation is the same as your limitation on animal size. You gain all supernatural abilities of the magical beast whose form you take.",
+      "featType": "general",
+      "name": "Magical Beast Wild Shape",
+      "prerequisiteText": "Knowledge (nature) 27 ranks, WIS 25, wild shape 6/day,"
+    },
+    {
+      "benefit": "You can use one rebuke or command undead attempt to unleash a wave of negative energy in a 60-footburst. Roll a normal rebuke (or command) check, except that the negative energy burst affects living creatures rather than undead. Any creature that would be rebuked by this result gains one negative level. Any creature that would be commanded by this check gains two negative levels. The Fortitude save DC to remove these levels 24 hours later is equal to 10 + 1/2 your effective turning level + your Charisma modifier.",
+      "featType": "general",
+      "name": "Negative Energy Burst",
+      "prerequisiteText": "CHA 25, ability to rebuke or command undead, able to cast infl ict critical wounds, any evil alignment,"
+    },
+    {
+      "benefit": "You can spend a wild shape to gain immunity to critical hits, poison, sleep, paralysis, polymorph, and stunning. You also gain great stability, which gives you a +8 bonus on checks to avoid being bull rushed or tripped. The effect remains for 10 minutes.",
+      "featType": "wild",
+      "name": "Oaken Resilience",
+      "prerequisiteText": "Ability to wild shape into a plant,"
+    },
+    {
+      "benefit": "When you would be reduced to 0 hit points or less by damage, you can spend 1 faith point to take only half damage.",
+      "featType": "faith",
+      "name": "Pious Defense",
+      "prerequisiteText": "Knowledge (religion) 2 ranks,",
+      "special": "When chosen, this feat gives you 4 faith points, and you may earn additional faith points as outlined in the Faith Feats section."
+    },
+    {
+      "benefit": "You can spend a faith point to add 1d6 to your d20 roll on an attack, save, or check--even after you've seen the d20 roll, as long as the DM hasn't announced whether you've succeeded or failed. You can choose to spend more than one faith point at a time in this way.",
+      "featType": "faith",
+      "name": "Pious Soul",
+      "prerequisiteText": "Knowledge (religion) 2 ranks,",
+      "special": "When chosen, this feat gives you 4 faith points, and you may earn additional faith points as outlined in the Faith Feats section."
+    },
+    {
+      "benefit": "By spending 2 faith points when you cast a spell, you gain a +1d6 bonus to the DC of any save required to resist the spell or to your caster level for that spell.",
+      "featType": "faith",
+      "name": "Pious Spellsurge",
+      "prerequisiteText": "Knowledge (religion) 4 ranks,",
+      "special": "When chosen, this feat gives you 4 faith points, and you may earn additional faith points as outlined in the Faith Feats section."
+    },
+    {
+      "benefit": "Every undead creature that comes within 15 feet of you is automatically affected as if you had turned it. This doesn't cost a turning attempt, and you don't have to roll turning damage (it automatically affects all undead in a 15-foot burst), but it only turns undead with Hit Dice equal to or less than your effective cleric level minus 10 (and automatically destroys undead with Hit Dice equal to or less than your effective cleric level minus 20). For example, a 22nd-level cleric would automatically turn any nearby wights or wraiths and would automatically destroy any Medium skeletons or zombies that came near him, but would have to turn nightshades and the like normally. Just as with normal turning, you can't affect undead that have total cover relative to you.",
+      "featType": "general",
+      "name": "Positive Energy Aura",
+      "prerequisiteText": "CHA 25, ability to turn undead, able to cast dispel evil,"
+    },
+    {
+      "benefit": "Your caster level for the chosen spellcasting class increases by +4. This can't increase your caster level beyond your HD. However, even if you can't benefit from the full bonus immediately, if you later gain noncaster-level HD you may be able to apply the rest of the bonus. For example, a human 5th-level cleric/3rd-level fighter who selects this feat would increase his cleric caster level from 5th to 8th (since he has 8 HD). If he later gained a fighter level, he would gain the remainder of the bonus and his cleric caster level would become 9th (since he now has 9 HD). A character with two or more spellcasting classes (such as a bard/sorcerer or a ranger/druid) must choose which class gains the feat's effect. This does not affect your spells per day or spells known. It only increases your caster level, which would help you penetrate SR and increase the duration and other effects of your spells.",
+      "featType": "general",
+      "name": "Practiced Spellcaster",
+      "prerequisiteText": "Spellcraft 4 ranks,",
+      "special": "You may select this feat multiple times. Each time you choose it, you must apply it to a different spellcasting class. For instance, a 4th-level cleric/5th-level wizard who had selected this feat twice would cast cleric spells as an 8th-level caster and wizard spells as a 9th-level caster."
+    },
+    {
+      "benefit": "You can spend a rebuke attempt as standard action to place an aura of negative energy upon each creature within a 60-ft. burst. Any infl ict spell cast on one of these creatures before the end of your next turn is automatically maximized, with no adjustment to the spell's level or casting time.",
+      "featType": "divine",
+      "name": "Profane Boost",
+      "prerequisiteText": "Ability to rebuke undead,"
+    },
+    {
+      "benefit": "You can turn or rebuke undead as a free action. You may still make only one turning attempt per round.",
+      "featType": "general",
+      "name": "Quicken Turning",
+      "prerequisiteText": "Ability to turn or rebuke undead,"
+    },
+    {
+      "benefit": "Only spells with a casting time greater than 1 standard action can be made rapid. A rapid spell with a casting time of 1 full round can be cast as a standard action. A rapid spell with a casting time measured in rounds can be cast in 1 full round. Rapid spells with casting times measured in minutes can be cast in 1 minute, and rapid spells with casting times measured in hours can be cast in 1 hour. A rapid spell uses up a spell slot one level higher than the spell's actual level.",
+      "featType": "metamagic",
+      "name": "Rapid Spell",
+      "prerequisiteText": "",
+      "special": "A spell can be made rapid and quickened only if its original casting time was 1 full round. This feat can be applied to a spell cast spontaneously as long as its original casting time was longer than 1 full round."
+    },
+    {
+      "benefit": "You may cast a spell that normally has a range of touch at any distance up to 30 feet. The spell effectively becomes a ray, so you must succeed on a ranged touch attack to bestow the spell upon the recipient. A reach spell uses up a spell slot two levels higher than the spell's actual level.",
+      "featType": "metamagic",
+      "name": "Reach Spell",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can spend a turn attempt as standard action to place an aura of positive energy upon each creature within a 60-ft. burst. Any cure spell cast on one of these creatures before the end of your next turn is automatically maximized, with no adjustment to the spell's level or casting time.",
+      "featType": "divine",
+      "name": "Sacred Boost",
+      "prerequisiteText": "Ability to turn undead,"
+    },
+    {
+      "benefit": "You can spend a turn attempt as a full-round action to grant fast healing 3 to all living creatures within a 60-ft. burst. The fast healing lasts for a number of rounds equal to 1 + your Cha modifier (minimum 1 round).",
+      "featType": "divine",
+      "name": "Sacred Healing",
+      "prerequisiteText": "Heal 8 ranks, ability to turn undead,"
+    },
+    {
+      "benefit": "They are described further in Chapter 4.",
+      "featType": "item creation",
+      "name": "Sanctify Relic",
+      "prerequisiteText": "Any other item creation feat,"
+    },
+    {
+      "benefit": "You can spend a usage of wild shape to gain a secondary bite attack (at your base attack bonus -5 and adding 1/2 your Strength bonus) that deals bludgeoning, piercing and slashing damage equal to a dagger appropriate to your size (1d4 for Medium, or 1d3 for Small). In addition, the bite delivers a toxic venom (Fortitude save DC 10+ 1/2 your HD + your Con modifier; 1d6 Con/1d6 Con).",
+      "featType": "wild",
+      "name": "Serpent's Venom",
+      "prerequisiteText": "Ability to wild shape,",
+      "special": "If you already have a bite attack, it just gains the toxic venom part of this feat."
+    },
+    {
+      "benefit": "Your attacks deal damage normally against incorporeal creatures.",
+      "featType": "epic",
+      "name": "Spectral Strike",
+      "normal": "Without this feat, even attacks that can damage an incorporeal creature have a 50% chance to deal no damage.",
+      "prerequisiteText": "WIS 19, ability to turn or rebuke undead,"
+    },
+    {
+      "benefit": "Add +1 to the DC for all saving throws against any of your spells that have an alignment descriptor (chaos, evil, good, or lawful) that matches your alignment. This bonus does not stack with any other bonus from Spell Focus feats.",
+      "featType": "general",
+      "name": "Spell Focus (Chaos)",
+      "prerequisiteText": "Relevant alignment,",
+      "special": "This feat can be taken twice, choosing a different alignment descriptor each time."
+    },
+    {
+      "benefit": "Add +1 to the DC for all saving throws against any of your spells that have an alignment descriptor (chaos, evil, good, or lawful) that matches your alignment. This bonus does not stack with any other bonus from Spell Focus feats.",
+      "featType": "general",
+      "name": "Spell Focus (Evil)",
+      "prerequisiteText": "Relevant alignment,",
+      "special": "This feat can be taken twice, choosing a different alignment descriptor each time."
+    },
+    {
+      "benefit": "Add +1 to the DC for all saving throws against any of your spells that have an alignment descriptor (chaos, evil, good, or lawful) that matches your alignment. This bonus does not stack with any other bonus from Spell Focus feats.",
+      "featType": "general",
+      "name": "Spell Focus (Good)",
+      "prerequisiteText": "Relevant alignment,",
+      "special": "This feat can be taken twice, choosing a different alignment descriptor each time."
+    },
+    {
+      "benefit": "Add +1 to the DC for all saving throws against any of your spells that have an alignment descriptor (chaos, evil, good, or lawful) that matches your alignment. This bonus does not stack with any other bonus from Spell Focus feats.",
+      "featType": "general",
+      "name": "Spell Focus (Law)",
+      "prerequisiteText": "Relevant alignment,",
+      "special": "This feat can be taken twice, choosing a different alignment descriptor each time."
+    },
+    {
+      "benefit": "You can use your spellcasting ability to spontaneously cast cure spells (from your class spell list) just as a cleric can. You may use this ability a total number of times per day equal to your Wisdom modifier.",
+      "featType": "general",
+      "name": "Spontaneous Healer",
+      "prerequisiteText": "Knowledge (religion) 4 ranks, able to cast any cure wounds spell, nonevil alignment,"
+    },
+    {
+      "benefit": "You can spontaneously cast summon nature's ally spells (from your class spell list) just as a druid can. You may use this ability a total number of times per day equal to your Wisdom modifier.",
+      "featType": "general",
+      "name": "Spontaneous Summoner",
+      "prerequisiteText": "Knowledge (nature) 4 ranks, WIS 13, able to cast any summon nature's ally spell, any neutral alignment (NG, LN, N, CN, or NE),"
+    },
+    {
+      "benefit": "You can use your spellcasting ability to spontaneously cast inflict spells (from your class spell list) just as a cleric can. You may use this ability a total number of times per day equal to your Wisdom modifier.",
+      "featType": "general",
+      "name": "Spontaneous Wounder",
+      "prerequisiteText": "Knowledge (religion) 4 ranks, WIS 13, able to cast any infl ict wounds spell, nongood alignment,"
+    },
+    {
+      "benefit": "You can spend one wild shape to grow gills, enabling you to breathe underwater (while retaining your ability to breathe air). Webbing also grows between your fi ngers and between your toes, granting you a Swim speed of 40 ft. and a +8 bonus on your Swim checks. The effect lasts for one hour.",
+      "featType": "wild",
+      "name": "Swim like a Fish",
+      "prerequisiteText": "Ability to wild shape,"
+    },
+    {
+      "benefit": "A transdimensional spell has full, normal effect upon incorporeal creatures, creatures on the Ethereal Plane or Plane of Shadow, and creatures within an extradimensional space in the spell's area. Such creatures include ethereal creatures, creatures that are blinking or shadow walking, manifested ghosts, and creatures within the extradimensional space of a rope trick or portable hole. You must be able to perceive a creature to target it with a spell, but you do not need to perceive a creature to catch it in the area of a burst, cone, emanation, or spread. A transdimensional spell uses up a spell slot one level higher than the spell's actual level.",
+      "featType": "metamagic",
+      "name": "Transdimensional Spell",
+      "normal": "Only force spells and effects can affect ethereal creatures, and no Material Plane attack affects creatures on the Plane of Shadow or in an enclosed extradimensional space. There is a 50% chance that any spell other than a force effect fails against an incorporeal creature. Illus. by J. Pave",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "Once per day when you are about to make a saving throw you may declare that you are using this feat to gain a +2 insight bonus on that saving throw. This feat also allows you to use a relic of the deity you worship.",
+      "featType": "divine",
+      "name": "True Believer",
+      "prerequisiteText": "Must choose a single deity to worship. Must be within one step of that god's alignment,"
+    },
+    {
+      "benefit": "You may command up to ten times your level in HD of undead.",
+      "featType": "epic",
+      "name": "Undead Mastery",
+      "prerequisiteText": "CHA 21, ability to rebuke or command undead,"
+    },
+    {
+      "benefit": "Any weapon you wield is treated as an unholy weapon (it deals +2d6 points of damage against creatures of good alignment). This ability doesn't stack with similar abilities (for instance, if the weapon is already an unholy weapon).",
+      "featType": "epic",
+      "name": "Unholy Strike",
+      "prerequisiteText": "any evil alignment, Smite good class feature,"
+    },
+    {
+      "benefit": "If you have taken damage during the last round, you may spend a wild shape as a free action on your turn to enter a rage. While in this rage, you gain a +2 bonus to Strength, a +2 bonus to Constitution, and take a -2 penalty to AC. This rage lasts for 5 rounds and cannot be ended voluntarily.",
+      "featType": "wild",
+      "name": "Wolverine's Rage",
+      "prerequisiteText": "Wild shape,"
+    },
+    {
+      "benefit": "You can use a rebuke or command undead attempt to animate corpses within range of your rebuke or command attempt. You animate a total number of HD of undead equal to the number of undead that would be commanded by your result (though you can't animate more undead than there are available corpses within range). You can't animate more undead with any single attempt than the maximum number you can command (including any undead already under your command). These undead are automatically under your command, though your normal limit of commanded undead still applies. If the corpses are relatively fresh, the animated undead are zombies. Otherwise, they are skeletons.",
+      "featType": "general",
+      "name": "Zone of Animation",
+      "prerequisiteText": "Undead Mastery, CHA 25, ability to rebuke or command undead,"
+    }
+  ]
+}

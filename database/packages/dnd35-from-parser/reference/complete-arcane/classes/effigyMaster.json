@@ -1,0 +1,368 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:28:17.038Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/effigy-master/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "type": "any"
+    },
+    "featNameMap": {
+      "craftwondrousitem": "Craft Wondrous Item"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Craft Effigy"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Improved Effigy"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Effigy Link"
+      }
+    ],
+    "hd": 4,
+    "levels": 5,
+    "requirements": [
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "skills.craftleatherworking.rank",
+            "value": "10",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "skills.craftmetalworking.rank",
+            "value": "10",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "skills.craftwoodworking.rank",
+            "value": "10",
+            "valueType": "number"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.usemagicdevice.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.craftwondrousitem.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.arcane",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.divine",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.arcane",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.divine",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Effigy Master Class Feature",
+    "features": {
+      "Craft Effigy": {
+        "description": "An effigy master can create constructs known as effigies. Unlike other creators, he need not possess the Craft Construct feat to complete this task, nor does he need the feat or ranks in Knowledge (architecture and engineering) to repair an effigy he creates. An effigy master can add his class level to his caster level to determine the maximum Hit Dice of effigy that he can create. Crafting an effigy requires a body to be built from wood, leather, metal, and wire. This requires a DC 15 Craft (woodworking, leatherworking, or metalworking) check. The gp and XP required to create the effigy depends on its size, as described on.",
+        "level": 1,
+        "seedName": "Craft Effigy (Effigy Master)"
+      },
+      "Effigy Link": {
+        "description": "At 5th level and higher, an effigy master can create a supernatural bond between himself and one of his effigies. This requires a 1-hour ritual. Afterward, the effigy master can sense the effigy's condition (as if he had cast status on the effigy), and can scry on the effigy (as if casting the scrying spell) once per day. Furthermore, an effigy master gains a +1 morale bonus on saving throws and caster level checks as long as he is within 5 feet of his bonded effigy. An effigy master can be linked to only one effigy at any time. If the linked effigy is destroyed, or if the effigy master wants to establish a new link, he can create a link to another effigy (and eliminate the old link) by performing the ritual with the new effigy.",
+        "level": 5,
+        "seedName": "Effigy Link (Effigy Master)"
+      },
+      "Improved Effigy": {
+        "description": "An effigy master of 3rd level or higher can improve upon his creations, granting them a permanent +2 competence bonus on attack rolls, damage, and saves. This requires one day of work and costs 100 gp of supplies per Hit Die of the effigy to be improved, but has no XP cost.",
+        "level": 3,
+        "seedName": "Improved Effigy (Effigy Master)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each class level after 1st, an effigy master gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If he had more than one spellcasting class before becoming an effigy master, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Effigy Master)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Effigy masters gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Effigy Master)"
+      }
+    },
+    "occurrenceMap": {
+      "Craft Effigy": "Craft Effigy",
+      "Effigy Link": "Effigy Link",
+      "Improved Effigy": "Improved Effigy"
+    },
+    "overrides": {
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.craftleatherworking.rank",
+              "value": "10",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.craftmetalworking.rank",
+              "value": "10",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.craftwoodworking.rank",
+              "value": "10",
+              "valueType": "number"
+            }
+          ]
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgearcana.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.usemagicdevice.rank",
+          "value": "2",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.craftwondrousitem.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "greater_than_or_equal",
+              "target": "spellcasting.arcane",
+              "value": "1",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "spellcasting.divine",
+              "value": "1",
+              "valueType": "number"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Effigy masters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each class level after 1st, an effigy master gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If he had more than one spellcasting class before becoming an effigy master, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "An effigy master can create constructs known as effigies. Unlike other creators, he need not possess the Craft Construct feat to complete this task, nor does he need the feat or ranks in Knowledge (architecture and engineering) to repair an effigy he creates. An effigy master can add his class level to his caster level to determine the maximum Hit Dice of effigy that he can create. Crafting an effigy requires a body to be built from wood, leather, metal, and wire. This requires a DC 15 Craft (woodworking, leatherworking, or metalworking) check. The gp and XP required to create the effigy depends on its size, as described on.",
+        "name": "Craft Effigy",
+        "type": "(Su)"
+      },
+      {
+        "description": "An effigy master of 3rd level or higher can improve upon his creations, granting them a permanent +2 competence bonus on attack rolls, damage, and saves. This requires one day of work and costs 100 gp of supplies per Hit Die of the effigy to be improved, but has no XP cost.",
+        "name": "Improved Effigy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level and higher, an effigy master can create a supernatural bond between himself and one of his effigies. This requires a 1-hour ritual. Afterward, the effigy master can sense the effigy's condition (as if he had cast status on the effigy), and can scry on the effigy (as if casting the scrying spell) once per day. Furthermore, an effigy master gains a +1 morale bonus on saving throws and caster level checks as long as he is within 5 feet of his bonded effigy. An effigy master can be linked to only one effigy at any time. If the linked effigy is destroyed, or if the effigy master wants to establish a new link, he can create a link to another effigy (and eliminate the old link) by performing the ritual with the new effigy.",
+        "name": "Effigy Link",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "The effigy master is an expert in the imitation of true life.",
+    "hitDie": "d4",
+    "name": "Effigy Master",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Craft Wondrous Item"
+        ],
+        "skills": [
+          {
+            "name": "Craft (leather, metal, or woodworking)",
+            "ranks": 10
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 5
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 5
+          },
+          {
+            "name": "Use Magic Device",
+            "ranks": 2
+          }
+        ],
+        "special": [
+          "Must have the simulacrum spell on a class spell list, whether or not the character is able to cast it.",
+          "the simulacrum spell on a class spell list, whether or not the character is able to cast it"
+        ]
+      },
+      "text": "Skills: Craft (leather, metal, or woodworking) 10 ranks, Knowledge (arcana) 5 ranks, Spellcraft 5 ranks, Use Magic Device 2 ranks Feats: Craft Wondrous Item Special: Must have the simulacrum spell on a class spell list, whether or not the character is able to cast it."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Craft effigy"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Improved effigy"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Effigy link"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

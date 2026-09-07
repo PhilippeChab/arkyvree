@@ -1,0 +1,566 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-20T23:14:15.517Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/holy-liberator/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterType": "Divine",
+    "featNameMap": {
+      "ironwill": "Iron Will"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Aura Of Good"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Evil"
+      },
+      {
+        "levels": [
+          1,
+          5,
+          10
+        ],
+        "name": "Smite Evil"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Remove Fatigue"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Aura Of Resolve"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Break Enchantment 1/Week"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Divine Grace"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Celestial Companion"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Break Enchantment 2/Week"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.diplomacy.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sensemotive.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ironwill.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.beliefs.alignment",
+        "value": "Chaotic Good",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Holy Liberator Class Feature",
+    "features": {
+      "Aura of Good": {
+        "description": "The strength of a holy liberator's aura of good is equal to his holy liberator level combined with his cleric level, if applicable.",
+        "level": 1,
+        "seedName": "Aura of Good (Holy Liberator)"
+      },
+      "Aura of Resolve": {
+        "description": "From 3rd level onward, the holy liberator becomes completely immune to all charm and compulsion effects. No outside force can dominate or manipulate his will. Every ally standing within 10 feet of him receives a +4 morale bonus on saving throws against charm and compulsion effects. This benefit is only active while the holy liberator remains conscious; it ceases if he falls unconscious or dies.",
+        "level": 3,
+        "seedName": "Aura of Resolve (Holy Liberator)"
+      },
+      "Break Enchantment": {
+        "description": "Starting at 4th level, a holy liberator gains the ability to use break enchantment once per week. At 8th level, he may use this ability a second time each week.",
+        "level": 4,
+        "seedName": "Break Enchantment (Holy Liberator)",
+        "stackable": true
+      },
+      "Celestial Companion": {
+        "description": "A holy liberator's celestial companion surpasses an ordinary animal of the same kind. The companion possesses the celestial template and gains additional Hit Dice and special abilities based on the holy liberator's total character level. Dex Adj.: This value is added to the companion's Dexterity score. Improved Speed (Ex): The companion's movement speed increases by 10 feet when the liberator's character level is 15th or below, or by a total of +20 feet if the liberator's character level is 16th or higher. Blood Bond (Ex): The companion receives a +2 bonus on all attack rolls, checks, and saving throws whenever it sees the holy liberator being threatened or injured. Spell Resistance (Ex): The companion's spell resistance equals the liberator's class level plus 10.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.speed.misc",
+            "value": "20",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Celestial Companion (Holy Liberator)"
+      },
+      "Detect Evil": {
+        "description": "A holy liberator can use detect evil at will as a spell-like ability.",
+        "level": 1,
+        "seedName": "Detect Evil (Holy Liberator)"
+      },
+      "Divine Grace": {
+        "description": "At 4th level and above, a holy liberator adds his Charisma modifier (if positive) as a bonus to all of his saving throws.",
+        "level": 4,
+        "seedName": "Divine Grace (Holy Liberator)"
+      },
+      "Remove Fatigue": {
+        "description": "At 2nd level and beyond, a holy liberator can cure fatigue in any creature he touches. This requires a standard action, and the holy liberator can use it a number of times per day equal to 3 plus his Charisma modifier.",
+        "level": 2,
+        "seedName": "Remove Fatigue (Holy Liberator)"
+      },
+      "Smite Evil": {
+        "description": "Once per day, a holy liberator can attempt to smite an evil creature with a single normal melee attack. He adds his Charisma modifier (if positive) to the attack roll and inflicts 1 additional point of damage per holy liberator class level. If the target turns out not to be evil, the smite deals no extra damage but the daily use is still expended. At 5th level this ability can be used twice per day, and at 10th level it can be used three times per day.",
+        "level": 1,
+        "seedName": "Smite Evil (Holy Liberator)",
+        "stackable": true
+      },
+      "Spells per Day": {
+        "description": "A holy liberator can cast a limited number of divine spells. Casting a spell requires a minimum Wisdom score of 10 + the spell's level, meaning a holy liberator with Wisdom 10 or lower cannot use these spells. Bonus spells and saving throw DCs are based on Wisdom (DC equals 10 + spell level + Wisdom modifier). When the holy liberator has 0 base spells of a given level, he can only cast bonus spells for that level; without a bonus spell available, he cannot yet cast spells of that level. The holy liberator draws from the paladin spell list with modifications: all spells carrying the law descriptor are removed, and the following spells are added: 1st - protection from law; 2nd - heroism; 3rd - magic circle against law; 4th - dispel law, freedom of movement. Spell preparation and casting follow cleric rules, though the liberator cannot spontaneously convert spells into cure or inflict spells.",
+        "level": 1,
+        "seedName": "Spells per Day (Holy Liberator)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Holy liberators have proficiency with all simple and martial weapons, every category of armor, and shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Holy Liberator)"
+      }
+    },
+    "occurrenceMap": {
+      "Aura Of Good": "Aura of Good",
+      "Aura Of Resolve": "Aura of Resolve",
+      "Break Enchantment 1/Week": "Break Enchantment",
+      "Break Enchantment 2/Week": "Break Enchantment",
+      "Celestial Companion": "Celestial Companion",
+      "Detect Evil": "Detect Evil",
+      "Divine Grace": "Divine Grace",
+      "Remove Fatigue": "Remove Fatigue",
+      "Smite Evil": "Smite Evil"
+    },
+    "overrides": {
+      "description": "The holy liberator is a sacred champion dedicated to the cause of freedom, sharing a spiritual kinship with the paladin.",
+      "features": {
+        "Aura of Good": {
+          "description": "The strength of a holy liberator's aura of good is equal to his holy liberator level combined with his cleric level, if applicable."
+        },
+        "Aura of Resolve": {
+          "description": "From 3rd level onward, the holy liberator becomes completely immune to all charm and compulsion effects. No outside force can dominate or manipulate his will. Every ally standing within 10 feet of him receives a +4 morale bonus on saving throws against charm and compulsion effects. This benefit is only active while the holy liberator remains conscious; it ceases if he falls unconscious or dies."
+        },
+        "Break Enchantment": {
+          "description": "Starting at 4th level, a holy liberator gains the ability to use break enchantment once per week. At 8th level, he may use this ability a second time each week."
+        },
+        "Celestial Companion": {
+          "description": "A holy liberator's celestial companion surpasses an ordinary animal of the same kind. The companion possesses the celestial template and gains additional Hit Dice and special abilities based on the holy liberator's total character level. Dex Adj.: This value is added to the companion's Dexterity score. Improved Speed (Ex): The companion's movement speed increases by 10 feet when the liberator's character level is 15th or below, or by a total of +20 feet if the liberator's character level is 16th or higher. Blood Bond (Ex): The companion receives a +2 bonus on all attack rolls, checks, and saving throws whenever it sees the holy liberator being threatened or injured. Spell Resistance (Ex): The companion's spell resistance equals the liberator's class level plus 10."
+        },
+        "Detect Evil": {
+          "description": "A holy liberator can use detect evil at will as a spell-like ability."
+        },
+        "Divine Grace": {
+          "description": "At 4th level and above, a holy liberator adds his Charisma modifier (if positive) as a bonus to all of his saving throws."
+        },
+        "Remove Fatigue": {
+          "description": "At 2nd level and beyond, a holy liberator can cure fatigue in any creature he touches. This requires a standard action, and the holy liberator can use it a number of times per day equal to 3 plus his Charisma modifier."
+        },
+        "Smite Evil": {
+          "description": "Once per day, a holy liberator can attempt to smite an evil creature with a single normal melee attack. He adds his Charisma modifier (if positive) to the attack roll and inflicts 1 additional point of damage per holy liberator class level. If the target turns out not to be evil, the smite deals no extra damage but the daily use is still expended. At 5th level this ability can be used twice per day, and at 10th level it can be used three times per day."
+        },
+        "Spells per Day": {
+          "description": "A holy liberator can cast a limited number of divine spells. Casting a spell requires a minimum Wisdom score of 10 + the spell's level, meaning a holy liberator with Wisdom 10 or lower cannot use these spells. Bonus spells and saving throw DCs are based on Wisdom (DC equals 10 + spell level + Wisdom modifier). When the holy liberator has 0 base spells of a given level, he can only cast bonus spells for that level; without a bonus spell available, he cannot yet cast spells of that level. The holy liberator draws from the paladin spell list with modifications: all spells carrying the law descriptor are removed, and the following spells are added: 1st - protection from law; 2nd - heroism; 3rd - magic circle against law; 4th - dispel law, freedom of movement. Spell preparation and casting follow cleric rules, though the liberator cannot spontaneously convert spells into cure or inflict spells."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Holy liberators have proficiency with all simple and martial weapons, every category of armor, and shields."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "holyliberatorspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Holy liberators are proficient with all simple and martial weapons, with all types of armor, and with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A holy liberator has the ability to cast a small number of divine spells. To cast a spell, the holy liberator must have a Wisdom score of at least 10 + the spell's level, so a holy liberator with a Wisdom of 10 or lower cannot cast these spells. Holy liberator bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + the holy liberator's Wisdom modifier. When the holy liberator gets 0 spells of a given level, such as 0 1st-level spells at 1st level, he gets only bonus spells. (A holy liberator without a bonus spell for that level cannot yet cast a spell of that level.) The holy liberator uses the paladin spell list, with a few changes. The holy liberator's spell list does not include any spells with the law descriptor. The following spells are added to the holy liberator's spell list: 1st - protection from law; 2nd - heroism; 3rd - magic circle against law; 4th - dispel law, freedom of movement. A holy liberator prepares and casts spells just as a cleric does (though the liberator cannot spontaneously cast cure or inflict spells).",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "The power of a holy liberator's aura of good the detect good spell) is equal to his class level plus his cleric level, if any.",
+        "name": "Aura of Good",
+        "type": "(Ex)"
+      },
+      {
+        "description": "The holy liberator can use detect evil as a spell-like ability at will.",
+        "name": "Detect Evil",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Once per day, a holy liberator may attempt to smite evil with one normal melee attack. He adds his Charisma modifier (if positive) to his attack roll and deals 1 extra point of damage per class level. For example, a 9th-level holy liberator armed with a longsword would deal 1d8+9 points of damage, plus any additional bonuses for high Strength or magical effects that normally apply. If the holy liberator accidentally smites a creature that is not evil, the smite has no effect but it is still used up for that day. At 5th level, the holy liberator may smite evil twice per day, and at 10th level three times per day.",
+        "name": "Smite Evil",
+        "type": "(Su)"
+      },
+      {
+        "description": "A holy liberator of 2nd level or higher can eliminate fatigue in any creature he touches. Using this ability is a standard action; the holy liberator may use it a number of times per day equal to 3 + his Charisma modifier.",
+        "name": "Remove Fatigue",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, the holy liberator gains immunity to all charm and compulsion effects. His mind is his own, and no other creature can control his thoughts or actions. Each ally within 10 feet of him gains a +4 morale bonus on saving throws against charm or compulsion effects. This ability functions while the holy liberator is conscious, but not if he is unconscious or dead.",
+        "name": "Aura of Resolve",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 4th level, a holy liberator can use break enchantment once per week. He can use this ability twice per week at 8th level.",
+        "name": "Break Enchantment",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A holy liberator of 4th level or higher applies his Charisma modifier (if positive) as a bonus on all saving throws.",
+        "name": "Divine Grace",
+        "type": "(Su)"
+      },
+      {
+        "description": "The holy liberator's celestial companion is superior to a normal animal of its type. It has the celestial template. It further gains HD and special abilities based on the holy liberator's character level the table). See the Paladin's Mount sidebar in Dex Adj.: Add this figure to the companion's Dexterity score. Improved Speed (Ex): The mount's speed increases by 10 ft. if its liberator's character level is 15th or lower. If the liberator's character level is 16th or higher, the mount's speed increases by a total of +20 feet. Blood Bond (Ex): The companion gains a +2 bonus on all attacks, checks, and saves if it witnesses the holy liberator being threatened or harmed. Spell Resistance (Ex): A companion's spell resistance equals the liberator's class level +10.",
+        "name": "Celestial Companion"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Handle Animal",
+      "Heal",
+      "Intimidate",
+      "Knowledge (Religion)",
+      "Profession",
+      "Ride",
+      "Sense Motive"
+    ],
+    "description": "The holy liberator is a holy warrior, a distant cousin of the paladin.",
+    "hitDie": "d10",
+    "name": "Holy Liberator",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Chaotic Good",
+        "bab": 5,
+        "feats": [
+          "Iron Will"
+        ],
+        "skills": [
+          {
+            "name": "Diplomacy",
+            "ranks": 5
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Chaotic Good Skills: Diplomacy 5 ranks, Sense Motive 5 ranks Feats: Iron Will"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Aura of good",
+          "detect evil",
+          "smite evil 1/day"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Remove fatigue"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Aura of resolve"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Break enchantment 1/week",
+          "divine grace"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Smite evil 2/day"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Celestial companion"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "2,1,1,-",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Break enchantment 2/week"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Smite evil 3/day"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

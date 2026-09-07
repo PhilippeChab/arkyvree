@@ -1,0 +1,246 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-03-23T18:43:44.289Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/combat-trapsmith/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Combat Trapping"
+      },
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "name": "Trap Sense"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Skill Focus (Craft [Trapmaking])"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Improvised Materials"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Expert Trapsetter"
+      }
+    ],
+    "hd": 6,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.craft.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disabledevice.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.search.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.trapfinding.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Combat Trapsmith Class Feature",
+    "features": {
+      "Combat Trapping": {
+        "description": "You know how to create combat traps to aid your allies. At 1st level, you can learn two traps from the list below, provided you meet the prerequisites. At each level thereafter, you add one additional trap to your repertoire, to a maximum of six traps known. Whenever you attain a new level in this class, you can choose to replace any one previously learned trap with a new trap. A combat trap is triggered by any Tiny or larger creature entering the trapped square. Flying or incorporeal creatures don't trigger combat traps. You can build a combat trap only on solid ground - you can't place it on a wall orceiling, in the air, or floating in the water. A combat trap functions only once. Once set, it lasts for 1 hour or until triggered, whichever comes first. Crafting a combat trap requires a full-round action (which provokes attacks of opportunity) and a Craft (trapmaking) check. Each trap's entry lists the required Craft check DC. If the check is successful, you can place the trap in any square adjacent to your space. A failed check means that the action and materials are wasted to no effect, but you can try to set the same trap again later. Some combat traps allow a saving throw, as noted in a trap's entry. The save DC is 10 + your combat trapsmith level + your Int modifier. Locating or disabling a combat trap requires a successful Search or Disable Device check with a DC equal to 20 + your combat trapsmith level + your Int modifier. You can automatically find and disable your own combat traps. Because a combat trap is built quickly and crudely, it is also possible to discern with a successful Spot check (using the same DC as given above), whether or not the observer has the trapfinding class feature. All combat traps produce extraordinary effects, so dispel magic or spell resistance cannot interfere with them. Unless otherwise noted, an ongoing effect from a combat trap lasts for a number of rounds equal to your combattrapsmith level. Multiple effects from the same kind of combat trap don't stack; use only the longer duration. Creating combat traps requires a special kit containing raw materials and tools. A combat trapsmith's kit costs 100 gp, weighs 10 pounds, and provides components sufficient to create ten traps. A combat trap can't be cannibalized for raw materials, nor can its materials be retrieved if the trap isn't triggered.",
+        "level": 1,
+        "seedName": "Combat Trapping (Combat Trapsmith)"
+      },
+      "Expert Trapsetter": {
+        "description": "At 5th level, you can set a combat trap as a standard action without provoking attacks of opportunity.",
+        "level": 5,
+        "seedName": "Expert Trapsetter (Combat Trapsmith)"
+      },
+      "Improvised Materials": {
+        "description": "Beginning at 4th level, you can craft combat traps from raw materials at hand instead of relying on your combat trapsmith's kit. Doing so increases the Craft (trapmaking) check DC by 5 but otherwise has no effect on the trap's potency.",
+        "level": 4,
+        "seedName": "Improvised Materials (Combat Trapsmith)"
+      },
+      "Skill Focus (Craft [trapmaking])": {
+        "description": "At 2nd level, you gain Skill Focus (Craft [trapmaking]) as a bonus feat. If you already have this feat, you can instead select any other feat for which you meet the prerequisite.",
+        "level": 2,
+        "seedName": "Skill Focus (Craft [trapmaking]) (Combat Trapsmith)"
+      },
+      "Trap Sense": {
+        "description": "Beginning at 1st level, you become more adept at evading the effects of traps. See the barbarian class feature, PH 26. If you already have trap sense, this class feature provides no additional benefit.",
+        "level": 1,
+        "seedName": "Trap Sense (Combat Trapsmith)",
+        "stackable": true
+      }
+    },
+    "occurrenceMap": {
+      "Combat Trapping": "Combat Trapping",
+      "Expert Trapsetter": "Expert Trapsetter",
+      "Improvised Materials": "Improvised Materials",
+      "Skill Focus (Craft [Trapmaking])": "Skill Focus (Craft [trapmaking])",
+      "Trap Sense": "Trap Sense"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "You know how to create combat traps to aid your allies. At 1st level, you can learn two traps from the list below, provided you meet the prerequisites. At each level thereafter, you add one additional trap to your repertoire, to a maximum of six traps known. Whenever you attain a new level in this class, you can choose to replace any one previously learned trap with a new trap. A combat trap is triggered by any Tiny or larger creature entering the trapped square. Flying or incorporeal creatures don't trigger combat traps. You can build a combat trap only on solid ground - you can't place it on a wall orceiling, in the air, or floating in the water. A combat trap functions only once. Once set, it lasts for 1 hour or until triggered, whichever comes first. Crafting a combat trap requires a full-round action (which provokes attacks of opportunity) and a Craft (trapmaking) check. Each trap's entry lists the required Craft check DC. If the check is successful, you can place the trap in any square adjacent to your space. A failed check means that the action and materials are wasted to no effect, but you can try to set the same trap again later. Some combat traps allow a saving throw, as noted in a trap's entry. The save DC is 10 + your combat trapsmith level + your Int modifier. Locating or disabling a combat trap requires a successful Search or Disable Device check with a DC equal to 20 + your combat trapsmith level + your Int modifier. You can automatically find and disable your own combat traps. Because a combat trap is built quickly and crudely, it is also possible to discern with a successful Spot check (using the same DC as given above), whether or not the observer has the trapfinding class feature. All combat traps produce extraordinary effects, so dispel magic or spell resistance cannot interfere with them. Unless otherwise noted, an ongoing effect from a combat trap lasts for a number of rounds equal to your combattrapsmith level. Multiple effects from the same kind of combat trap don't stack; use only the longer duration. Creating combat traps requires a special kit containing raw materials and tools. A combat trapsmith's kit costs 100 gp, weighs 10 pounds, and provides components sufficient to create ten traps. A combat trap can't be cannibalized for raw materials, nor can its materials be retrieved if the trap isn't triggered.",
+        "name": "Combat Trapping",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 1st level, you become more adept at evading the effects of traps. See the barbarian class feature, PH 26. If you already have trap sense, this class feature provides no additional benefit.",
+        "name": "Trap Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, you gain Skill Focus (Craft [trapmaking]) as a bonus feat. If you already have this feat, you can instead select any other feat for which you meet the prerequisite.",
+        "name": "Skill Focus (Craft [trapmaking])"
+      },
+      {
+        "description": "Beginning at 4th level, you can craft combat traps from raw materials at hand instead of relying on your combat trapsmith's kit. Doing so increases the Craft (trapmaking) check DC by 5 but otherwise has no effect on the trap's potency.",
+        "name": "Improvised Materials",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, you can set a combat trap as a standard action without provoking attacks of opportunity.",
+        "name": "Expert Trapsetter",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Disable Device",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Architecture and Engineering)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Profession",
+      "Search",
+      "Spot",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Combat trapsmiths can litter a battlefield or dungeon with devices of their own cunning design.",
+    "hitDie": "d6",
+    "name": "Combat Trapsmith",
+    "prerequisites": {
+      "parsed": {
+        "skills": [
+          {
+            "name": "Craft (trapmaking)",
+            "ranks": 8
+          },
+          {
+            "name": "Disable Device",
+            "ranks": 6
+          },
+          {
+            "name": "Search",
+            "ranks": 6
+          }
+        ],
+        "special": [
+          "Trapfinding."
+        ]
+      },
+      "text": "Skills: Craft (trapmaking) 8 ranks, Disable Device 6 ranks, Search 6 ranks Special: Trapfinding."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Combat trapping",
+          "trap sense +1"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Skill Focus (Craft [trapmaking])"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Trap sense +2"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Improvised materials"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Expert trapsetter",
+          "trap sense +3"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

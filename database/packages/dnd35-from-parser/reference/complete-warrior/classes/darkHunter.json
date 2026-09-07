@@ -1,0 +1,296 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:09.445Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/dark-hunter/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "blindfight": "Blind-Fight",
+      "track": "Track"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Improved Stonecunning"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Enhanced Darkvision"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Stone's Hue"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Death Attack"
+      }
+    ],
+    "hd": 8,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.craft.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgedungeoneering.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.blindfight.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.track.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Dark Hunter Class Feature",
+    "features": {
+      "Death Attack": {
+        "description": "After observing a target for 3 consecutive rounds, if the dark hunter then lands a damaging melee sneak attack, the blow can potentially kill or paralyze the victim (the dark hunter chooses which effect to attempt). During the observation period, the dark hunter may perform other actions provided her focus remains on the target and the target neither detects nor identifies the dark hunter as a threat. A victim who fails a Fortitude saving throw (DC 10 + dark hunter class level + dark hunter's Int modifier) against the lethal effect dies instantly. If the save fails against the paralysis effect, the victim's mind and body are sapped of all energy, rendering the target helpless and unable to act for 1d6 rounds + 1 round per dark hunter class level. On a successful save, the attack deals normal sneak attack damage only. The strike must occur within 3 rounds after the observation period concludes. If the attempt fails (the target succeeds on its save) or if the dark hunter does not attack within 3 rounds of completing her study, another full 3 rounds of observation are required before a new death attack can be made.",
+        "level": 5,
+        "seedName": "Death Attack (Dark Hunter)"
+      },
+      "Enhanced Darkvision": {
+        "description": "Through years of dwelling in the deepest underground passages, a dark hunter develops a near-mystical attunement to subterranean environments that hones her innate sight. At 2nd level, a dark hunter who lacks darkvision gains it with a 30-foot range. If she already possesses darkvision, its range extends by 30 feet. Upon reaching 4th level, her darkvision range grows by an additional 30 feet. This improvement stacks with other natural or extraordinary darkvision enhancements but has no effect on darkvision granted through magical means. Any condition that would strip the character of her normal darkvision likewise negates this enhanced version.",
+        "level": 2,
+        "seedName": "Enhanced Darkvision (Dark Hunter)"
+      },
+      "Improved Stonecunning": {
+        "description": "A dark hunter acquires the stonecunning ability as dwarves possess it. If the character already has stonecunning, her bonus improves from +2 to +4 on checks to detect unusual stonework features, including sliding walls, stone-based traps, recent construction, unstable surfaces, and precarious ceilings. This improved bonus extends to Search checks for locating stonework traps as well.",
+        "level": 1,
+        "seedName": "Improved Stonecunning (Dark Hunter)"
+      },
+      "Sneak Attack": {
+        "description": "Whenever a dark hunter catches a foe who cannot effectively defend against her strike, she can target a vulnerable point to inflict additional harm. If the target would be denied its Dexterity bonus to AC (regardless of whether it actually has one), the dark hunter's attack inflicts an extra 1d6 points of damage. This bonus damage is not multiplied on a critical hit. Because striking a vital area demands accuracy and depth of impact, ranged sneak attacks only apply against targets within 30 feet. Using a sap or unarmed strike, the dark hunter may deal nonlethal damage with a sneak attack instead of lethal damage. However, she cannot convert a lethal weapon to nonlethal for a sneak attack, even accepting the standard -4 penalty, since optimal weapon use is required for the precise strike. Only living creatures with identifiable anatomies are susceptible to sneak attacks - undead, constructs, oozes, plants, and incorporeal creatures have no vital areas to exploit. Creatures immune to critical hits are also immune to sneak attacks. The dark hunter must have clear sight of the target's vulnerable spot and be able to physically reach it. Sneak attacks cannot be made against creatures with concealment or against body parts of a creature whose vitals are out of reach. If the dark hunter gains sneak attack damage from another class (such as rogue), the bonus damage stacks.",
+        "level": 3,
+        "seedName": "Sneak Attack (Dark Hunter)"
+      },
+      "Stone's Hue": {
+        "description": "While standing within 5 feet of a wall made of stone or earth, a dark hunter can shift her coloration to match the surrounding surface, appearing to merge with the wall itself. As long as she remains within 5 feet of the wall, she receives a +10 circumstance bonus on Hide checks and can conceal herself in plain sight without requiring any cover or object to hide behind.",
+        "level": 4,
+        "seedName": "Stone's Hue (Dark Hunter)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Dark hunters do not gain proficiency with any additional weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Dark Hunter)"
+      }
+    },
+    "occurrenceMap": {
+      "Death Attack": "Death Attack",
+      "Enhanced Darkvision": "Enhanced Darkvision",
+      "Improved Stonecunning": "Improved Stonecunning",
+      "Sneak Attack": "Sneak Attack",
+      "Stone's Hue": "Stone's Hue"
+    },
+    "overrides": {
+      "description": "Dark hunters are expert trackers and slayers who operate in the lightless depths of underground caverns, specializing in locating and eliminating subterranean threats.",
+      "features": {
+        "Death Attack": {
+          "description": "After observing a target for 3 consecutive rounds, if the dark hunter then lands a damaging melee sneak attack, the blow can potentially kill or paralyze the victim (the dark hunter chooses which effect to attempt). During the observation period, the dark hunter may perform other actions provided her focus remains on the target and the target neither detects nor identifies the dark hunter as a threat. A victim who fails a Fortitude saving throw (DC 10 + dark hunter class level + dark hunter's Int modifier) against the lethal effect dies instantly. If the save fails against the paralysis effect, the victim's mind and body are sapped of all energy, rendering the target helpless and unable to act for 1d6 rounds + 1 round per dark hunter class level. On a successful save, the attack deals normal sneak attack damage only. The strike must occur within 3 rounds after the observation period concludes. If the attempt fails (the target succeeds on its save) or if the dark hunter does not attack within 3 rounds of completing her study, another full 3 rounds of observation are required before a new death attack can be made."
+        },
+        "Enhanced Darkvision": {
+          "description": "Through years of dwelling in the deepest underground passages, a dark hunter develops a near-mystical attunement to subterranean environments that hones her innate sight. At 2nd level, a dark hunter who lacks darkvision gains it with a 30-foot range. If she already possesses darkvision, its range extends by 30 feet. Upon reaching 4th level, her darkvision range grows by an additional 30 feet. This improvement stacks with other natural or extraordinary darkvision enhancements but has no effect on darkvision granted through magical means. Any condition that would strip the character of her normal darkvision likewise negates this enhanced version."
+        },
+        "Improved Stonecunning": {
+          "description": "A dark hunter acquires the stonecunning ability as dwarves possess it. If the character already has stonecunning, her bonus improves from +2 to +4 on checks to detect unusual stonework features, including sliding walls, stone-based traps, recent construction, unstable surfaces, and precarious ceilings. This improved bonus extends to Search checks for locating stonework traps as well."
+        },
+        "Sneak Attack": {
+          "description": "Whenever a dark hunter catches a foe who cannot effectively defend against her strike, she can target a vulnerable point to inflict additional harm. If the target would be denied its Dexterity bonus to AC (regardless of whether it actually has one), the dark hunter's attack inflicts an extra 1d6 points of damage. This bonus damage is not multiplied on a critical hit. Because striking a vital area demands accuracy and depth of impact, ranged sneak attacks only apply against targets within 30 feet. Using a sap or unarmed strike, the dark hunter may deal nonlethal damage with a sneak attack instead of lethal damage. However, she cannot convert a lethal weapon to nonlethal for a sneak attack, even accepting the standard -4 penalty, since optimal weapon use is required for the precise strike. Only living creatures with identifiable anatomies are susceptible to sneak attacks - undead, constructs, oozes, plants, and incorporeal creatures have no vital areas to exploit. Creatures immune to critical hits are also immune to sneak attacks. The dark hunter must have clear sight of the target's vulnerable spot and be able to physically reach it. Sneak attacks cannot be made against creatures with concealment or against body parts of a creature whose vitals are out of reach. If the dark hunter gains sneak attack damage from another class (such as rogue), the bonus damage stacks."
+        },
+        "Stone's Hue": {
+          "description": "While standing within 5 feet of a wall made of stone or earth, a dark hunter can shift her coloration to match the surrounding surface, appearing to merge with the wall itself. As long as she remains within 5 feet of the wall, she receives a +10 circumstance bonus on Hide checks and can conceal herself in plain sight without requiring any cover or object to hide behind."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Dark hunters do not gain proficiency with any additional weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Dark hunters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A dark hunter gains the stonecunning ability possessed by dwarves, or, if the character already has the ability, she increases her bonus from +2 to +4 on checks to notice unusual stonework, such as sliding walls, stonework traps, new construction, unsafe stone surfaces, shaky stone ceilings, and the like. This bonus also applies on Search checks made to detect stonework traps.",
+        "name": "Improved Stonecunning",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Dark hunters spend most of their lives in the darkest caverns they can find. As a dark hunter's skills improve, her almost mystical understanding of the deep caverns sharpens her inborn visual acuity. If a dark hunter does not already have darkvision when she attains 2nd level, she gains it at a range of 30 feet. If she already had darkvision, she adds 30 feet to the range. Once a dark hunter attains 4th level, her darkvision range increases by an extra 30 feet. This bonus stacks with other natural or extraordinary abilities that improve darkvision, but it does nothing to improve magically granted darkvision. Any condition that causes the character to lose her normal darkvision also causes the enhanced darkvision to fail.",
+        "name": "Enhanced Darkvision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "If a dark hunter can catch an opponent when he is unable to defend himself effectively from her attack, she can strike a vital spot for extra damage. Any time the dark hunter's target would be denied his Dexterity bonus to AC (whether the target actually has a Dexterity bonus or not), the dark hunter's attack deals an extra 1d6 points of damage. Should a dark hunter score a critical hit with a sneak attack, this extra damage is not multiplied. It takes precision and penetration to hit a vital spot, so ranged attacks can only count as sneak attacks if the target is within 30 feet. With a sap or an unarmed strike, a dark hunter can make a sneak attack that deals nonlethal damage instead of lethal damage. She cannot use a weapon that deals lethal damage to deal nonlethal damage in a sneak attack, not even with the usual -4 penalty, because she must make optimal use of her weapon in order to execute the sneak attack. A dark hunter can only sneak attack living creatures with discernible anatomies-undead, constructs, oozes, plants, and incorporeal creatures lack vital areas to attack. Any creature that is immune to critical hits is not vulnerable to sneak attacks. The dark hunter must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. A dark hunter cannot sneak attack while striking a creature with concealment or striking the limbs of a creature whose vitals are beyond reach. If a dark hunter gets a sneak attack bonus from another source (such as rogue levels), the extra damage stacks.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When within 5 feet of a stone or earth wall, a dark hunter can take on the coloration of the stone and may seem to blend into the surface of the wall. As long as the dark hunter is within 5 feet of the wall, she gains a +10 circumstance bonus on Hide checks and can successfully hide herself from view in the open without having anything to actually hide behind.",
+        "name": "Stone's Hue",
+        "type": "(Su)"
+      },
+      {
+        "description": "If a dark hunter studies her victim for 3 rounds and then makes a sneak attack with a melee weapon that successfully deals damage, the sneak attack has the additional effect of possibly either paralyzing or killing the target (dark hunter's choice). While studying the target, the dark hunter can undertake other actions as long as her attention stays focused on the target and the target does not detect the dark hunter or recognize the dark hunter as an enemy. If the victim of such an attack fails a Fortitude save (DC 10 + the dark hunter's class level + the dark hunter's Int modifier) against the kill effect, he dies. If the saving throw fails against the paralysis effect, the victim's mind and body become enervated, rendering him helpless and unable to act for 1d6 rounds plus 1 round per level of the dark hunter. If the victim's saving throw succeeds, the attack is just a normal sneak attack. Once the dark hunter has completed the 3 rounds of study, she must make the death attack within the next 3 rounds. If a death attack is attempted and fails (the victim makes his save) or if the dark hunter does not launch the attack within 3 rounds of completing the study, 3 new rounds of study are required before she can attempt another death attack.",
+        "name": "Death Attack",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Disable Device",
+      "Hide",
+      "Knowledge (Dungeoneering)",
+      "Listen",
+      "Move Silently",
+      "Profession",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Use Rope"
+    ],
+    "description": "Dark hunters specialize in hunting down and eliminating creatures in the dark, twisting caves of the Underdark.",
+    "hitDie": "d8",
+    "name": "Dark Hunter",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Blind-Fight",
+          "Track"
+        ],
+        "skills": [
+          {
+            "name": "Craft (trapmaking)",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (dungeoneering)",
+            "ranks": 2
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 2
+          },
+          {
+            "name": "Survival",
+            "ranks": 2
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Craft (trapmaking) 5 ranks, Knowledge (dungeoneering) 2 ranks, Move Silently 2 ranks, Survival 2 ranks Feats: Blind-Fight, Track"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Improved stonecunning"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Enhanced darkvision"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Stone's hue"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Death attack"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

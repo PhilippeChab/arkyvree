@@ -1,0 +1,58 @@
+import type { PowerSeed } from "@/database/packages/dnd35/v1/spells/types.ts";
+
+export const LEVEL_5_SPELLS: PowerSeed[] = [
+  {
+    name: "Evacuation Rune",
+    description: "As you finish scribing this bloody rune, the mark flares for an instant and then vanishes.Even though the rune has disappeared, you feel as though you can step back to it simply by willing it.You create a magical mark that you can teleport to at a moment's notice.Upon casting this spell and touching a surface or inanimate object, you create an invisible rune like that created by the spell arcane mark (PH 201).At any point during the spell's duration you can teleport (as the greater teleport spell) back to the mark as a swift action.This ends the spell's duration.After teleporting in this way, you can't take any other actions until your next turn.The mark created by this spell can be detected in the same ways that an invisible arcane mark can be.You are not alerted if the mark is dispelled or the object upon which it is inscribed is destroyed.Any attempt to teleport back to a dispelled or destroyed mark still requires a swift action but fails.If you created the evacuation rune upon a portable object, that object can be moved by another creature.You have no knowledge of whether your mark has been moved or where, and upon teleporting to its location, you are subject to any adverse conditions.If the mark has been moved to another plane, any attempt to teleport to it fails.If the object inscribed with the evacuation rune is moved somewhere too small for you to appear or is otherwise covered by a solid body, you take 1d6 points of damage and are shunted to a random open space on a suitable surface within 100 feet of the intended location.If there is no free space within 100 feet, you take an additional 2d6 points of damage and are shunted to a free space within 1,000 feet.If there is no free space within 1,000 feet, you take an additional 4d6 points of damage, and the teleport attempt simply fails.Material Component: The blood of an owl, hawk, or eagle.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    savingThrow: "None (harmless)",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Conjuration" },
+      { type: "SPELL_SUBSCHOOL", value: "Teleportation" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_TARGET", value: "One invisible rune" },
+      { type: "SPELL_DURATION", value: "24 hours" },
+      { type: "SPELL_RESISTANCE", value: "No (harmless)" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
+    ],
+  },
+  {
+    name: "Harmonic Void",
+    description: "Jarring, discordant noises fill the area, making it difficult for others to concentrate.You create a zone of disruptive arcane harmonies that interfere with spells that have verbal components.Casters within the area find their spells' spoken words warped, twisted, and blurred, disrupting their efforts.Any creature (other than you) that attempts to cast a spell with a verbal component in this area must succeed on a Concentration check (DC 20 + the spell's level).On a failure, the spell fails to function and the caster expends the spell or spell slot as normal.Harmonic void has no effect on supernatural abilities, magicitems, and other magical effects.It affects only spells with verbal components.",
+    aptitudes: ["Bard Spells"],
+    savingThrow: "None",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Abjuration" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "60 ft." },
+      { type: "SPELL_AREA_OF_EFFECT", value: "60-ft.-radius spherical emanation, centered on you" },
+      { type: "SPELL_DURATION", value: "Concentration, up to 1 round/level" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+  {
+    name: "Scry Location",
+    description: "At the culmination of this long ritual, you gaze into your scrying focus and stretch out your sight.The mists within the reflective surface dissipate, and suddenly you can see and hear a familiar place.You can see and hear what occurs at a location, which can be at any distance on the same plane where you are located.You must make a successful caster level check (1d20 + your caster level) to scry a specific location.The difficulty of this check depends on how familiar you are with that location and what sort of physical connection (if any) you have to that place.Furthermore, the difficulty to scry the desired locale increases if the location is extremely far removed, indoors or underground, or on another plane.The DC of this check is 20 + any modifiers related to your knowledge of the area, your connection to it, and the location's distance, as set out in the following table.If you fail this check, the scrying attempt simply fails.If the caster level check succeeds, you create an invisible magical sensor in any location you desire.Through this sensor you can both see and hear, your vantage and range of vision being the same as if you were actually at that place, allowing you to make Spot and Listen checks as normal.You can rotate the sensor as you wish, seeing in any direction you desire.Once the spell is cast, however, you cannot change the position of the sensor.As with all divination (scrying) spells, the sensor has your full visual acuity, including any magical effects.In addition, the following spells have a 5% chance per caster level of operating through the sensor: detect chaos, detect evil, detect good, detect law, detect magic, and message.If the caster level check fails, you can't attempt to scry on any place within 1 mile of that location until 24 hours have passed.Arcane Material Component: The eye of a mole, a badger, or a xorn, plus nitric acid, copper, and zinc.Wizard, Sorcerer, or Bard Focus: A mirror of finely wrought and highly polished silver c...",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 5, "Cleric Spells": 7, "Druid Spells": 7, "Sorcerer Spells": 6, "Wizard Spells": 6 },
+    savingThrow: "No",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Divination" },
+      { type: "SPELL_SUBSCHOOL", value: "Scrying" },
+      { type: "SPELL_CASTING_TIME", value: "1 hour" },
+      { type: "SPELL_RANGE_TYPE", value: "See text" },
+      { type: "SPELL_TARGET", value: "Magical sensor" },
+      { type: "SPELL_DURATION", value: "1 minute/level" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
+      { type: "SPELL_COMPONENT", value: "Divine Focus" },
+    ],
+  },
+];

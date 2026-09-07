@@ -1,0 +1,1284 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-31T22:19:12.132Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/animal-lord/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Animal Bond"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Animals"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wild Empathy"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "First Totem"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Low-Light Vision"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Wild Aspect"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Speak With Animals"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Summon Animal"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Second Totem"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Animal Growth"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Animal Telepathy"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Third Totem"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.handleanimal.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgenature.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4,
+    "unresolvedAptitudePicks": [
+      "Animal Bond",
+      "Third Totem"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Animal Lord Class Feature",
+    "features": {
+      "Animal Bond": {
+        "description": "An animal lord develops a bond with animals of his selected group. He gains a +4 bonus on Handle Animal and wild empathy checks made to influence animals from his chosen group. If an animal lord has the animal companion class feature, he adds his animal lord level to his effective druid level for the purposes of determining his animal companion's bonus Hit Dice, special abilities, and so forth. The eight groups of animals included here, along with examples taken from the Monster Manual, are as follows. Apelord: ape, baboon, dire ape, monkey.Bearlord: black bear, brown bear, dire bear, polar bear.Birdlord: eagle, giant eagle?, giant owl?, hawk, owl, raven.Catlord: cat, cheetah, dire lion, dire tiger, leopard, lion, tiger.Horselord: horse (all), pony, warpony.Sharklord: dire shark, shark (all).Snakelord: constrictor, giant constrictor, viper (all).Wolflord: dire wolf, wolf.?These creatures are included even though they are not of the animal type.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.animallordanimalbond.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Animal Bond (Animal Lord)"
+      },
+      "Animal Growth": {
+        "description": "Once per day, an animal lord of 7th level or higher can use animal growth on a single animal from his selected group as a swift action as a spellcaster of his class level. This ability otherwise functions just like the spell.",
+        "level": 7,
+        "seedName": "Animal Growth (Animal Lord)"
+      },
+      "Animal Telepathy": {
+        "description": "Beginning at 8th level, an animal lord can converse telepathically with any animal of his selected group that he can see within 100 feet.",
+        "level": 8,
+        "seedName": "Animal Telepathy (Animal Lord)"
+      },
+      "Apelord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Ape, baboon, dire ape, monkey.",
+        "level": 1,
+        "seedName": "Apelord (Animal Lord)"
+      },
+      "Bearlord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Black bear, brown bear, dire bear, polar bear.",
+        "level": 1,
+        "seedName": "Bearlord (Animal Lord)"
+      },
+      "Birdlord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Eagle, giant eagle, giant owl, hawk, owl, raven.",
+        "level": 1,
+        "seedName": "Birdlord (Animal Lord)"
+      },
+      "Catlord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Cat, cheetah, dire lion, dire tiger, leopard, lion, tiger.",
+        "level": 1,
+        "seedName": "Catlord (Animal Lord)"
+      },
+      "Detect Animals": {
+        "description": "Beginning at 1st level, an animal lord can detect the presence of any animals of his selected group at will, as if using detect animals or plants with a caster level equal to his class level.",
+        "level": 1,
+        "seedName": "Detect Animals (Animal Lord)"
+      },
+      "First Totem": {
+        "description": "At 2nd level, an animal lord gains a +4 bonus on checks made with a specific skill, determined by his selected group as follows. Apelord: Climb; Bearlord: Intimidate; Birdlord: Spot; Catlord: Move Silently; Horselord: Jump; Sharklord: Swim; Snakelord: Escape Artist; Wolflord: Survival.",
+        "level": 2,
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.apelordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.climb.misc",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.bearlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.intimidate.misc",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.birdlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.spot.misc",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.catlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.movesilently.misc",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.horselordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.jump.misc",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.sharklordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.swim.misc",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.snakelordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.escapeartist.misc",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.wolflordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "skills.survival.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "First Totem (Animal Lord)"
+      },
+      "Horselord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Horse (all), pony, warpony.",
+        "level": 1,
+        "seedName": "Horselord (Animal Lord)"
+      },
+      "Low-light Vision": {
+        "description": "At 2nd level, an animal lord gains low-light vision, allowing him to see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of shadowy illumination. He retains the ability to distinguish color and detail under these conditions. If an animal lord already has low-light vision from another source (such as his race), his low-light vision improves, allowing him to see three times as far as a human in conditions of shadowy illumination.",
+        "level": 2,
+        "seedName": "Low-light Vision (Animal Lord)"
+      },
+      "Second Totem": {
+        "description": "At 6th level, an animal lord gains a bonus feat related to his selected group, even if he doesn't meet the prerequisites. If the animal lord already has the feat, he can choose any other feat for which he meets the prerequisites. Apelord: Brachiation?; Bearlord: Improved Grapple; Birdlord: Flyby Attack ; Catlord: Lightning Reflexes; Horselord: Trample; Sharklord: Improved Critical (bite); Snakelord: Improved Initiative; Wolflord: Improved Trip.?New feat described on.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.apelordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.brachiation.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.bearlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.improvedgrapple.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.birdlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.flybyattack.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.catlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.lightningreflexes.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.horselordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.trample.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.sharklordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.improvedcriticalbite.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.snakelordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.improvedinitiative.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.wolflordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "feats.improvedtrip.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Second Totem (Animal Lord)"
+      },
+      "Sharklord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Dire shark, shark (all).",
+        "level": 1,
+        "seedName": "Sharklord (Animal Lord)"
+      },
+      "Snakelord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Constrictor, giant constrictor, viper (all).",
+        "level": 1,
+        "seedName": "Snakelord (Animal Lord)"
+      },
+      "Speak With Animals": {
+        "description": "Beginning at 4th level, an animal lord can use speak with animals (as the spell) once per day to converse with animals of his selected group.",
+        "level": 4,
+        "seedName": "Speak With Animals (Animal Lord)"
+      },
+      "Summon Animal": {
+        "description": "Beginning at 5th level, an animal lord can summon one or more animals of his selected group once per day. This ability functions identically to summon nature's ally V, except that an animal lord can summon creatures only from his selected group, as detailed below. The duration of the effect is 1 minute per class level. Apelord: 1d3 dire apes or 1d4+1 apes.Bearlord: 1 polar bear, 1d3 brown bears, or 1d4+1 black bears. Birdlord: 1d4+1 eagles, giant eagles 1, giant owls 1, hawks, ravens, or owls.Catlord: 1 dire lion, 1d3 tigers, or 1d4+1 lions.Horselord: 1d4+1 heavy horses, heavy warhorses, light horses, light warhorses, ponies, or warponies.Sharklord: 1d3 Huge sharks 2 or 1d4+1 Large sharks 2.Snakelord: 1 giant constrictor snake, 1d3 Huge vipers, or 1d4+1 constrictor snakes or Large vipers.Wolflord: 1d4+1 dire wolves or wolves.1 May be summoned only by nonevil birdlords.2 May be summoned only into an aquatic or watery environment.",
+        "level": 5,
+        "seedName": "Summon Animal (Animal Lord)"
+      },
+      "Third Totem": {
+        "description": "At 10th level, an animal lord gains a permanent 2-point increase to one of his ability scores, determined by his chosen animal group as follows. Apelord: +2 Strength; Bearlord: +2 Constitution; Birdlord: +2 Wisdom; Catlord: +2 Dexterity; Horselord: +2 Constitution; Sharklord: +2 Strength; Snakelord: +2 Charisma; Wolflord: +2 Strength",
+        "level": 10,
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.apelordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.strength.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.bearlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.constitution.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.birdlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.wisdom.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.catlordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.dexterity.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.horselordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.constitution.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.sharklordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.strength.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.snakelordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.charisma.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "feats.wolflordanimallord.possessed",
+                "value": "true",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "abilities.strength.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Third Totem (Animal Lord)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Animal lords gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Animal Lord)"
+      },
+      "Wild Aspect": {
+        "description": "At 3rd level and higher, an animal lord can take on an aspect of the animals of his selected group. Assuming a wild aspect is a swift action that does not provoke attacks of opportunity. Unless otherwise noted, the effect lasts for 1 minute per level. An animal lord can use this ability once per day at 3rd level, plus one additional time per day for every three levels gained after 3rd (twice per day at 6th level and three times per day at 9th level). When an animal lord reaches 7th level, his wild aspect becomes more powerful, as described below. If an animal lord has the wild shape ability, he can spend one daily use of wild shape to assume his wild aspect instead (the duration is as normal for the wild aspect). If an animal lord already has a natural attack of the type gained by his wild aspect, use whichever damage figure is superior while the wild aspect is active. If an animal lord wields a weapon while using his wild aspect, he can use the natural attacks gained as natural secondary weapons if he uses his weapon as a primary attack, provided they are still available (an apelord couldn't use a secondary claw attack, for example, if he wields a two-handed weapon). Apelord: An apelord gains two primary claw attacks. Each claw deals 1d4 points of damage (or 1d3 points for Small apelords). If an apelord hits an opponent with both claw attacks, he rends the foe for an additional 2d4 points of damage (or 2d3 points for Small apelords), plus 1-1/2 times his Strength bonus. At 7th level, the claw damage increases to 1d6 points (or 1d4 points for Small apelords) and the rend damage to 2d6 points (or 2d4 points for Small apelords). Bearlord: A bearlord gains two primary claw attacks. Each claw deals 1d4 points of damage (or 1d3 points for Small bearlords). If a bearlord hits with a claw attack, he can attempt to start a grapple as a free action without provoking attacks of opportunity. The bearlord still follows all the other normal grappling rules. At 7th level, the claw damage increases to 1d6 points (or 1d4 points for Small bearlords). Birdlord: A birdlord grows feathery wings, allowing him to fly at his base land speed (average maneuverability). At 7th level, the duration increases to 10 minutes per level. Catlord: A catlord gains two primary claw attacks. Each claw deals 1d4 points of damage (or 1d3 points for Small catlords). If a catlord charges, he can attack with both claws at the end of his charge. At 7th level, the claw damage increases to 1d6 points (or 1d4 points for Small catlords). Horselord: A horselord's speed, as well as the speed of any horse upon which he rides, improves by 10 feet for a duration of 1 hour per level. At 7th level, the speed increase improves to 20 feet. Sharklord: A sharklord gains a devastating bite as a primary natural attack. The bite deals 1d8 points of damage (or 1d6 points for Small sharklords). A sharklord also gains the ability to breathe water while his wild aspect is active. At 7th level, the bite damage increases to 2d6 points (or 1d8 points for Small sharklords). Snakelord: A snakelord gains a poisonous bite as a primary natural attack for 1 round per level. This bite deals 1d4 points of damage (or 1d3 points for Small snakelords). The poison's Fortitude save DC is 10 + animal lord level + Con modifier, and it deals initial and secondary damage of 1d3 points of Constitution. At 7th level, the bite damage increases to 1d6 points (or 1d4 points for Small snakelords), and the initial and secondary poison damage increases to 1d4 points of Constitution. Wolflord: A wolflord gains the scent ability for 10 minutes per level. At 7th level, the duration increases to 1 hour per level.",
+        "level": 3,
+        "seedName": "Wild Aspect (Animal Lord)",
+        "stackable": true
+      },
+      "Wild Empathy": {
+        "description": "An animal lord can improve the attitude of an animal. See the druid class feature of the Player's Handbook. If an animal lord has wild empathy from another class, his level stack for determining the bonus.",
+        "level": 1,
+        "seedName": "Wild Empathy (Animal Lord)"
+      },
+      "Wolflord": {
+        "aptitude": "Animal Lord Animal Bond",
+        "description": "Dire wolf, wolf.",
+        "level": 1,
+        "seedName": "Wolflord (Animal Lord)"
+      }
+    },
+    "occurrenceMap": {
+      "Animal Bond": "Animal Bond",
+      "Animal Growth": "Animal Growth",
+      "Animal Telepathy": "Animal Telepathy",
+      "Detect Animals": "Detect Animals",
+      "First Totem": "First Totem",
+      "Low-Light Vision": "Low-light Vision",
+      "Second Totem": "Second Totem",
+      "Speak With Animals": "Speak With Animals",
+      "Summon Animal": "Summon Animal",
+      "Third Totem": "Third Totem",
+      "Wild Aspect": "Wild Aspect",
+      "Wild Empathy": "Wild Empathy"
+    },
+    "overrides": {
+      "aptitudePicks": [
+        {
+          "levels": [
+            1
+          ],
+          "target": "aptitudes.animallordanimalbond.allowed"
+        }
+      ],
+      "bonusFeatLists": [
+        {
+          "aptitude": "Animal Lord Animal Bond",
+          "feats": [
+            "Apelord (Animal Lord)",
+            "Bearlord (Animal Lord)",
+            "Birdlord (Animal Lord)",
+            "Catlord (Animal Lord)",
+            "Horselord (Animal Lord)",
+            "Sharklord (Animal Lord)",
+            "Snakelord (Animal Lord)",
+            "Wolflord (Animal Lord)"
+          ]
+        }
+      ],
+      "features": {
+        "Animal Bond": {
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "aptitudes.animallordanimalbond.allowed",
+              "value": "1",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Apelord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Ape, baboon, dire ape, monkey.",
+          "level": 1,
+          "seedName": "Apelord (Animal Lord)"
+        },
+        "Bearlord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Black bear, brown bear, dire bear, polar bear.",
+          "level": 1,
+          "seedName": "Bearlord (Animal Lord)"
+        },
+        "Birdlord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Eagle, giant eagle, giant owl, hawk, owl, raven.",
+          "level": 1,
+          "seedName": "Birdlord (Animal Lord)"
+        },
+        "Catlord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Cat, cheetah, dire lion, dire tiger, leopard, lion, tiger.",
+          "level": 1,
+          "seedName": "Catlord (Animal Lord)"
+        },
+        "First Totem": {
+          "modifiers": [
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.apelordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.climb.misc",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.bearlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.intimidate.misc",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.birdlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.spot.misc",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.catlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.movesilently.misc",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.horselordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.jump.misc",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.sharklordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.swim.misc",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.snakelordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.escapeartist.misc",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.wolflordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "skills.survival.misc",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Horselord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Horse (all), pony, warpony.",
+          "level": 1,
+          "seedName": "Horselord (Animal Lord)"
+        },
+        "Second Totem": {
+          "modifiers": [
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.apelordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.brachiation.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.bearlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.improvedgrapple.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.birdlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.flybyattack.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.catlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.lightningreflexes.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.horselordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.trample.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.sharklordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.improvedcriticalbite.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.snakelordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.improvedinitiative.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.wolflordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "feats.improvedtrip.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        },
+        "Sharklord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Dire shark, shark (all).",
+          "level": 1,
+          "seedName": "Sharklord (Animal Lord)"
+        },
+        "Snakelord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Constrictor, giant constrictor, viper (all).",
+          "level": 1,
+          "seedName": "Snakelord (Animal Lord)"
+        },
+        "Third Totem": {
+          "modifiers": [
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.apelordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.strength.misc",
+              "value": "2",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.bearlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.constitution.misc",
+              "value": "2",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.birdlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.wisdom.misc",
+              "value": "2",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.catlordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.dexterity.misc",
+              "value": "2",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.horselordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.constitution.misc",
+              "value": "2",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.sharklordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.strength.misc",
+              "value": "2",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.snakelordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.charisma.misc",
+              "value": "2",
+              "valueType": "number"
+            },
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "feats.wolflordanimallord.possessed",
+                  "value": "true",
+                  "valueType": "boolean"
+                }
+              ],
+              "target": "abilities.strength.misc",
+              "value": "2",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Wolflord": {
+          "aptitude": "Animal Lord Animal Bond",
+          "description": "Dire wolf, wolf.",
+          "level": 1,
+          "seedName": "Wolflord (Animal Lord)"
+        }
+      },
+      "reviewed": [
+        "Animal Bond",
+        "Second Totem",
+        "Third Totem"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Animal lords gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "An animal lord develops a bond with animals of his selected group. He gains a +4 bonus on Handle Animal and wild empathy checks made to influence animals from his chosen group. If an animal lord has the animal companion class feature, he adds his animal lord level to his effective druid level for the purposes of determining his animal companion's bonus Hit Dice, special abilities, and so forth. The eight groups of animals included here, along with examples taken from the Monster Manual, are as follows. Apelord: ape, baboon, dire ape, monkey.Bearlord: black bear, brown bear, dire bear, polar bear.Birdlord: eagle, giant eagle?, giant owl?, hawk, owl, raven.Catlord: cat, cheetah, dire lion, dire tiger, leopard, lion, tiger.Horselord: horse (all), pony, warpony.Sharklord: dire shark, shark (all).Snakelord: constrictor, giant constrictor, viper (all).Wolflord: dire wolf, wolf.?These creatures are included even though they are not of the animal type.",
+        "name": "Animal Bond",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 1st level, an animal lord can detect the presence of any animals of his selected group at will, as if using detect animals or plants with a caster level equal to his class level.",
+        "name": "Detect Animals",
+        "type": "(Sp)"
+      },
+      {
+        "description": "An animal lord can improve the attitude of an animal. See the druid class feature of the Player's Handbook. If an animal lord has wild empathy from another class, his level stack for determining the bonus.",
+        "name": "Wild Empathy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, an animal lord gains a +4 bonus on checks made with a specific skill, determined by his selected group as follows. Apelord: Climb; Bearlord: Intimidate; Birdlord: Spot; Catlord: Move Silently; Horselord: Jump; Sharklord: Swim; Snakelord: Escape Artist; Wolflord: Survival.",
+        "name": "First Totem"
+      },
+      {
+        "description": "At 2nd level, an animal lord gains low-light vision, allowing him to see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of shadowy illumination. He retains the ability to distinguish color and detail under these conditions. If an animal lord already has low-light vision from another source (such as his race), his low-light vision improves, allowing him to see three times as far as a human in conditions of shadowy illumination.",
+        "name": "Low-light Vision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level and higher, an animal lord can take on an aspect of the animals of his selected group. Assuming a wild aspect is a swift action that does not provoke attacks of opportunity. Unless otherwise noted, the effect lasts for 1 minute per level. An animal lord can use this ability once per day at 3rd level, plus one additional time per day for every three levels gained after 3rd (twice per day at 6th level and three times per day at 9th level). When an animal lord reaches 7th level, his wild aspect becomes more powerful, as described below. If an animal lord has the wild shape ability, he can spend one daily use of wild shape to assume his wild aspect instead (the duration is as normal for the wild aspect). If an animal lord already has a natural attack of the type gained by his wild aspect, use whichever damage figure is superior while the wild aspect is active. If an animal lord wields a weapon while using his wild aspect, he can use the natural attacks gained as natural secondary weapons if he uses his weapon as a primary attack, provided they are still available (an apelord couldn't use a secondary claw attack, for example, if he wields a two-handed weapon). Apelord: An apelord gains two primary claw attacks. Each claw deals 1d4 points of damage (or 1d3 points for Small apelords). If an apelord hits an opponent with both claw attacks, he rends the foe for an additional 2d4 points of damage (or 2d3 points for Small apelords), plus 1-1/2 times his Strength bonus. At 7th level, the claw damage increases to 1d6 points (or 1d4 points for Small apelords) and the rend damage to 2d6 points (or 2d4 points for Small apelords). Bearlord: A bearlord gains two primary claw attacks. Each claw deals 1d4 points of damage (or 1d3 points for Small bearlords). If a bearlord hits with a claw attack, he can attempt to start a grapple as a free action without provoking attacks of opportunity. The bearlord still follows all the other normal grappling rules. At 7th level, the claw damage increases to 1d6 points (or 1d4 points for Small bearlords). Birdlord: A birdlord grows feathery wings, allowing him to fly at his base land speed (average maneuverability). At 7th level, the duration increases to 10 minutes per level. Catlord: A catlord gains two primary claw attacks. Each claw deals 1d4 points of damage (or 1d3 points for Small catlords). If a catlord charges, he can attack with both claws at the end of his charge. At 7th level, the claw damage increases to 1d6 points (or 1d4 points for Small catlords). Horselord: A horselord's speed, as well as the speed of any horse upon which he rides, improves by 10 feet for a duration of 1 hour per level. At 7th level, the speed increase improves to 20 feet. Sharklord: A sharklord gains a devastating bite as a primary natural attack. The bite deals 1d8 points of damage (or 1d6 points for Small sharklords). A sharklord also gains the ability to breathe water while his wild aspect is active. At 7th level, the bite damage increases to 2d6 points (or 1d8 points for Small sharklords). Snakelord: A snakelord gains a poisonous bite as a primary natural attack for 1 round per level. This bite deals 1d4 points of damage (or 1d3 points for Small snakelords). The poison's Fortitude save DC is 10 + animal lord level + Con modifier, and it deals initial and secondary damage of 1d3 points of Constitution. At 7th level, the bite damage increases to 1d6 points (or 1d4 points for Small snakelords), and the initial and secondary poison damage increases to 1d4 points of Constitution. Wolflord: A wolflord gains the scent ability for 10 minutes per level. At 7th level, the duration increases to 1 hour per level.",
+        "name": "Wild Aspect",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 4th level, an animal lord can use speak with animals (as the spell) once per day to converse with animals of his selected group.",
+        "name": "Speak With Animals",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 5th level, an animal lord can summon one or more animals of his selected group once per day. This ability functions identically to summon nature's ally V, except that an animal lord can summon creatures only from his selected group, as detailed below. The duration of the effect is 1 minute per class level. Apelord: 1d3 dire apes or 1d4+1 apes.Bearlord: 1 polar bear, 1d3 brown bears, or 1d4+1 black bears. Birdlord: 1d4+1 eagles, giant eagles 1, giant owls 1, hawks, ravens, or owls.Catlord: 1 dire lion, 1d3 tigers, or 1d4+1 lions.Horselord: 1d4+1 heavy horses, heavy warhorses, light horses, light warhorses, ponies, or warponies.Sharklord: 1d3 Huge sharks 2 or 1d4+1 Large sharks 2.Snakelord: 1 giant constrictor snake, 1d3 Huge vipers, or 1d4+1 constrictor snakes or Large vipers.Wolflord: 1d4+1 dire wolves or wolves.1 May be summoned only by nonevil birdlords.2 May be summoned only into an aquatic or watery environment.",
+        "name": "Summon Animal",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 6th level, an animal lord gains a bonus feat related to his selected group, even if he doesn't meet the prerequisites. If the animal lord already has the feat, he can choose any other feat for which he meets the prerequisites. Apelord: Brachiation?; Bearlord: Improved Grapple; Birdlord: Flyby Attack ; Catlord: Lightning Reflexes; Horselord: Trample; Sharklord: Improved Critical (bite); Snakelord: Improved Initiative; Wolflord: Improved Trip.?New feat described on.",
+        "name": "Second Totem"
+      },
+      {
+        "description": "Once per day, an animal lord of 7th level or higher can use animal growth on a single animal from his selected group as a swift action as a spellcaster of his class level. This ability otherwise functions just like the spell.",
+        "name": "Animal Growth",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 8th level, an animal lord can converse telepathically with any animal of his selected group that he can see within 100 feet.",
+        "name": "Animal Telepathy",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 10th level, an animal lord gains a permanent 2-point increase to one of his ability scores, determined by his chosen animal group as follows. Apelord: +2 Strength; Bearlord: +2 Constitution; Birdlord: +2 Wisdom; Catlord: +2 Dexterity; Horselord: +2 Constitution; Sharklord: +2 Strength; Snakelord: +2 Charisma; Wolflord: +2 Strength",
+        "name": "Third Totem"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Escape Artist",
+      "Handle Animal",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Nature)",
+      "Listen",
+      "Move Silently",
+      "Spot",
+      "Survival",
+      "Swim"
+    ],
+    "description": "Each animal lord forms a bond with one group of animals. Apelords, bearlords, birdlords, catlords, horselords, sharklords, snakelords, and wol?ords all exist. Animals in his selected group accept an animal lord as a kindred soul and a leader. They offer him their support, and he watches over them in turn. Barbarians, rangers, and druids are the most likely characters to adopt this class. Barbarians prefer the more physically powerful options, including apelord, bearlord, and horselord. Rangers gravitate toward the stealthier selections, such as catlord and wol?ord. Most birdlords are druids with the ability to use wild shape, but druids are equally likely to select any type of animal to bond with. Some scouts, rogues, and even rare monks ?nd this path rewarding as well. Among the races, elves and half-elves are the most common examples of animal lords due to their close bond to nature. A character can choose this prestige class more than once but must select a different group of associated animals and start at 1st level each time. Levels of different animal lord classes do not stack when determining level-based class features.",
+    "hitDie": "d10",
+    "name": "Animal Lord",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil",
+        "bab": 5,
+        "feats": [
+          "described on page 110.<"
+        ],
+        "skills": [
+          {
+            "name": "Handle Animal",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (nature)",
+            "ranks": 2
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil Skills: Handle Animal 4 ranks, Knowledge (nature) 2 ranks Apelord: Climb 4, ToughnessBearlord: Intimidate 4, EnduranceBirdlord: Spot 4, Improved Flight?Catlord: Move Silently 4, Weapon FinesseHorselord: Jump 4, RunSharklord: Swim 4, Improved Swimming?Snakelord: Escape Artist 4, Combat ReflexesWolflord: Survival 4, Track ?New feat described on.<"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Animal bond",
+          "detect animals",
+          "wild empathy"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "First totem",
+          "low-light vision"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Wild aspect 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Speak with animals"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Summon animal"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Second totem",
+          "wild aspect 2/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Animal growth"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Animal telepathy"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Wild aspect 3/day"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Third totem"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

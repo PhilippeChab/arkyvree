@@ -1,0 +1,321 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:43:25.995Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/ravager/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "improvedsunder": "Improved Sunder",
+      "powerattack": "Power Attack"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          4,
+          7
+        ],
+        "name": "Pain Touch"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Aura Of Fear"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Cruelest Cut"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Visage Of Terror"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.intimidate.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedsunder.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.powerattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Ravager Class Feature",
+    "features": {
+      "Aura of Fear": {
+        "description": "Starting at 2nd level, all enemies within 10 feet of the ravager suffer a -2 morale penalty on saving throws while they remain in range. This ability can be activated a limited number of times per day as indicated by the ravager's level. Each activation persists for a number of rounds equal to 3 + the ravager's Charisma modifier. At 5th level the radius extends to 20 feet, and at 8th level it reaches 30 feet.",
+        "level": 2,
+        "seedName": "Aura of Fear (Ravager)",
+        "stackable": true
+      },
+      "Cruelest Cut": {
+        "description": "At 3rd level, the ravager's intimate knowledge of suffering grants deadly accuracy with melee strikes. Before making a melee attack, the ravager must declare the use of this ability; a missed attack wastes the attempt. On a successful hit, the target takes 1d4 points of Constitution damage in addition to normal weapon damage. The ravager gains one daily use of this ability for every three class levels attained, but can only attempt one cruelest cut per round.",
+        "level": 3,
+        "seedName": "Cruelest Cut (Ravager)",
+        "stackable": true
+      },
+      "Pain Touch": {
+        "description": "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st.",
+        "level": 1,
+        "seedName": "Pain Touch (Ravager)",
+        "stackable": true
+      },
+      "Visage of Terror": {
+        "description": "At 10th level, once per day as a standard action, the ravager can activate a spell-like ability that functions like phantasmal killer (save DC equals 10 + ravager class level + Charisma modifier). The targeted enemy perceives the ravager as an embodiment of its deepest fear.",
+        "level": 10,
+        "seedName": "Visage of Terror (Ravager)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Ravager)"
+      }
+    },
+    "occurrenceMap": {
+      "Aura Of Fear": "Aura of Fear",
+      "Cruelest Cut": "Cruelest Cut",
+      "Pain Touch": "Pain Touch",
+      "Visage Of Terror": "Visage of Terror"
+    },
+    "overrides": {
+      "description": "A ravager is a devoted servant of a god of slaughter, dedicated wholly to spreading carnage and destruction in that deity's name.",
+      "features": {
+        "Aura of Fear": {
+          "description": "Starting at 2nd level, all enemies within 10 feet of the ravager suffer a -2 morale penalty on saving throws while they remain in range. This ability can be activated a limited number of times per day as indicated by the ravager's level. Each activation persists for a number of rounds equal to 3 + the ravager's Charisma modifier. At 5th level the radius extends to 20 feet, and at 8th level it reaches 30 feet."
+        },
+        "Cruelest Cut": {
+          "description": "At 3rd level, the ravager's intimate knowledge of suffering grants deadly accuracy with melee strikes. Before making a melee attack, the ravager must declare the use of this ability; a missed attack wastes the attempt. On a successful hit, the target takes 1d4 points of Constitution damage in addition to normal weapon damage. The ravager gains one daily use of this ability for every three class levels attained, but can only attempt one cruelest cut per round."
+        },
+        "Pain Touch": {
+          "description": "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st."
+        },
+        "Visage of Terror": {
+          "description": "At 10th level, once per day as a standard action, the ravager can activate a spell-like ability that functions like phantasmal killer (save DC equals 10 + ravager class level + Charisma modifier). The targeted enemy perceives the ravager as an embodiment of its deepest fear."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Ravagers gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Erythnul teaches that life is pain, and so is the touch of a ravager. A ravager can make an unarmed touch attack that deals 1d8 points of damage + 1 point per ravager level. Weapon attacks also transmit the pain of Erythnul, but only at the rate of 1d4 extra points of damage + 1 point per ravager level. The ravager can make one additional pain touch attack for every three levels beyond 1st.",
+        "name": "Pain Touch",
+        "type": "(Su)"
+      },
+      {
+        "description": "Enemies within 10 feet of a ravager of 2nd level or higher take a -2 morale penalty on all saving throws for as long as they remain within range. This ability is usable a number of times per day as given on the table. Each use lasts for a number of rounds equal to 3 + the ravagers Charisma modifier. The range of this aura increases at 5th level to 20 feet, and then again at 8th level to 30 feet.",
+        "name": "Aura of Fear",
+        "type": "(Su)"
+      },
+      {
+        "description": "When a ravager reaches 3rd level, his familiarity with pain and fear grant him a cruel precision with his melee attacks. The character must declare he is making a cruelest cut attempt before he makes a melee attack (thus, a failed attack roll ruins the attempt). If he strikes successfully, he deals ld4 points of Constitution damage to the target, in addition to any other damage the attack may cause. A ravager can use cruelest cut once per day for every three levels he has attained, but may only make one cruelest cut attempt per round.",
+        "name": "Cruelest Cut",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level ravager has plumbed the true depths of horror and hopelessness. Once per day, he can trigger a spell-like ability similar to the arcane spell phantasmal killer (save DC 10 + the ravager's class level + the ravager's Cha bonus) as a standard action. To the foe the ravager selects, he seems to take on the visage of what the target fears most.",
+        "name": "Visage of Terror",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Intimidate",
+      "Knowledge (Religion)",
+      "Move Silently",
+      "Profession",
+      "Ride"
+    ],
+    "description": "The infamous ravager has dedicated himself to the service of Erythnul, deity of slaughter.",
+    "hitDie": "d10",
+    "name": "Ravager",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Chaotic evil or neutral evil",
+        "bab": 5,
+        "feats": [
+          "Improved Sunder",
+          "Power Attack"
+        ],
+        "skills": [
+          {
+            "name": "Intimidate",
+            "ranks": 3
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 3
+          },
+          {
+            "name": "Survival",
+            "ranks": 3
+          }
+        ],
+        "special": [
+          "Must survive the ravager initiation rites the sidebar)."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Chaotic evil or neutral evil Skills: Intimidate 3 ranks, Knowledge (religion) 3 ranks, Survival 3 ranks Feats: Improved Sunder, Power Attack Special: Must survive the ravager initiation rites the sidebar)."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Pain touch 1/day"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Aura of fear 10 ft. 1/day"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Cruelest cut 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Pain touch 2/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Aura of fear 20 ft. 2/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Cruelest cut 2/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Pain touch 3/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Aura of fear 30 ft. 3/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Cruelest cut 3/day"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Visage of terror"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

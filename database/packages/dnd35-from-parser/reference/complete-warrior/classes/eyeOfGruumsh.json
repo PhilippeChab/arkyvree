@@ -1,0 +1,400 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:27:12.008Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/eye-of-gruumsh/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "exoticweaponproficiencyorcdoubleaxe": "Exotic Weapon Proficiency (orc double axe)",
+      "weaponfocusorcdoubleaxe": "Weapon Focus (orc double axe)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Blind-Fight"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Command The Horde"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Rage"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Swing Blindly"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Ritual Scarring"
+      },
+      {
+        "levels": [
+          4,
+          7
+        ],
+        "name": "Blinding Spittle"
+      },
+      {
+        "levels": [
+          5,
+          8
+        ],
+        "name": "Blindsight"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Sight Of Gruumsh"
+      }
+    ],
+    "hd": 12,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.exoticweaponproficiencyorcdoubleaxe.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocusorcdoubleaxe.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Half-Orc",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Eye of Gruumsh Class Feature",
+    "features": {
+      "Blind-fight": {
+        "description": "At 1st level, an eye of Gruumsh receives Blind-Fight as a bonus feat. Furthermore, losing one eye imposes no penalties on him.",
+        "level": 1,
+        "seedName": "Blind-fight (Eye of Gruumsh)"
+      },
+      "Blinding Spittle": {
+        "description": "From 4th level onward, an eye of Gruumsh can spit caustic stomach acid at a target within 20 feet. This requires a successful ranged touch attack with a -4 penalty. A target that fails a Reflex save (DC 10 + eye of Gruumsh class level + Constitution modifier) is blinded until the acid is washed from its eyes. Creatures without eyes or that do not rely on sight are immune. This ability can be used twice per day at 4th level and four times per day at 7th level.",
+        "level": 4,
+        "seedName": "Blinding Spittle (Eye of Gruumsh)",
+        "stackable": true
+      },
+      "Blindsight": {
+        "description": "At 5th level, an eye of Gruumsh acquires blindsight with a range of 5 feet. This range extends to 10 feet upon reaching 8th level.",
+        "level": 5,
+        "seedName": "Blindsight (Eye of Gruumsh)",
+        "stackable": true
+      },
+      "Command the Horde": {
+        "description": "An eye of Gruumsh can command any nongood orcs or half-orcs within 30 feet whose Hit Dice are below his character level. Creatures that obey his orders receive a +2 morale bonus on Will saves. If an eligible orc or half-orc deliberately defies the eye of Gruumsh's commands, this bonus is lost immediately.",
+        "level": 1,
+        "seedName": "Command the Horde (Eye of Gruumsh)"
+      },
+      "Rage": {
+        "description": "An eye of Gruumsh gains the ability to rage, functioning identically to the barbarian rage with all associated benefits and penalties. His eye of Gruumsh levels stack with any barbarian levels for the purpose of determining how many times per day he may rage. To calculate daily uses, combine levels from both classes and consult the class table. For instance, a barbarian 6/eye of Gruumsh 2 would rage three times per day (matching a barbarian of 8th level), while an eye of Gruumsh 4 with no barbarian levels would rage twice per day (matching a 4th-level barbarian).",
+        "level": 1,
+        "seedName": "Rage (Eye of Gruumsh)"
+      },
+      "Ritual Scarring": {
+        "description": "By repeatedly scarring his own flesh, an eye of Gruumsh increases his natural armor bonus by +1 at 3rd level (or gains a +1 natural armor bonus if he had none). This bonus improves by an additional +1 for every three eye of Gruumsh levels gained after that.",
+        "level": 3,
+        "seedName": "Ritual Scarring (Eye of Gruumsh)",
+        "stackable": true
+      },
+      "Sight of Gruumsh": {
+        "description": "Upon reaching 10th level, an eye of Gruumsh receives a vision of his own death through his missing eye. This prophetic insight grants him a permanent +2 morale bonus to all saving throws and Armor Class. Additionally, he no longer falls unconscious when reduced to negative hit points, though he still dies at -10 hit points. The mechanical benefit applies regardless of whether the vision ultimately proves accurate, as the character fully believes in what he has seen.",
+        "level": 10,
+        "seedName": "Sight of Gruumsh (Eye of Gruumsh)"
+      },
+      "Swing Blindly": {
+        "description": "Starting at 2nd level, an eye of Gruumsh's rage grows fiercer but leaves him more exposed. While raging, he gains an additional +4 bonus to Strength, but his Armor Class penalty worsens from -2 to -4.",
+        "level": 2,
+        "seedName": "Swing Blindly (Eye of Gruumsh)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Eye of Gruumsh)"
+      }
+    },
+    "occurrenceMap": {
+      "Blind-Fight": "Blind-fight",
+      "Blinding Spittle": "Blinding Spittle",
+      "Blindsight": "Blindsight",
+      "Command The Horde": "Command the Horde",
+      "Rage": "Rage",
+      "Ritual Scarring": "Ritual Scarring",
+      "Sight Of Gruumsh": "Sight of Gruumsh",
+      "Swing Blindly": "Swing Blindly"
+    },
+    "overrides": {
+      "description": "An orc or half-orc called to serve Gruumsh as his living vessel can pursue the path of the eye of Gruumsh, becoming a fearsome war leader devoted to the one-eyed god.",
+      "features": {
+        "Blind-fight": {
+          "description": "At 1st level, an eye of Gruumsh receives Blind-Fight as a bonus feat. Furthermore, losing one eye imposes no penalties on him."
+        },
+        "Blinding Spittle": {
+          "description": "From 4th level onward, an eye of Gruumsh can spit caustic stomach acid at a target within 20 feet. This requires a successful ranged touch attack with a -4 penalty. A target that fails a Reflex save (DC 10 + eye of Gruumsh class level + Constitution modifier) is blinded until the acid is washed from its eyes. Creatures without eyes or that do not rely on sight are immune. This ability can be used twice per day at 4th level and four times per day at 7th level."
+        },
+        "Blindsight": {
+          "description": "At 5th level, an eye of Gruumsh acquires blindsight with a range of 5 feet. This range extends to 10 feet upon reaching 8th level."
+        },
+        "Command the Horde": {
+          "description": "An eye of Gruumsh can command any nongood orcs or half-orcs within 30 feet whose Hit Dice are below his character level. Creatures that obey his orders receive a +2 morale bonus on Will saves. If an eligible orc or half-orc deliberately defies the eye of Gruumsh's commands, this bonus is lost immediately."
+        },
+        "Rage": {
+          "description": "An eye of Gruumsh gains the ability to rage, functioning identically to the barbarian rage with all associated benefits and penalties. His eye of Gruumsh levels stack with any barbarian levels for the purpose of determining how many times per day he may rage. To calculate daily uses, combine levels from both classes and consult the class table. For instance, a barbarian 6/eye of Gruumsh 2 would rage three times per day (matching a barbarian of 8th level), while an eye of Gruumsh 4 with no barbarian levels would rage twice per day (matching a 4th-level barbarian)."
+        },
+        "Ritual Scarring": {
+          "description": "By repeatedly scarring his own flesh, an eye of Gruumsh increases his natural armor bonus by +1 at 3rd level (or gains a +1 natural armor bonus if he had none). This bonus improves by an additional +1 for every three eye of Gruumsh levels gained after that."
+        },
+        "Sight of Gruumsh": {
+          "description": "Upon reaching 10th level, an eye of Gruumsh receives a vision of his own death through his missing eye. This prophetic insight grants him a permanent +2 morale bonus to all saving throws and Armor Class. Additionally, he no longer falls unconscious when reduced to negative hit points, though he still dies at -10 hit points. The mechanical benefit applies regardless of whether the vision ultimately proves accurate, as the character fully believes in what he has seen."
+        },
+        "Swing Blindly": {
+          "description": "Starting at 2nd level, an eye of Gruumsh's rage grows fiercer but leaves him more exposed. While raging, he gains an additional +4 bonus to Strength, but his Armor Class penalty worsens from -2 to -4."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Eyes of Gruumsh gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "An eye of Gruumsh gains Blind-Fight as a bonus feat. In addition, he suffers no adverse effects from the loss of one of his eyes.",
+        "name": "Blind-fight"
+      },
+      {
+        "description": "An eye of Gruumsh can direct the actions of any nongood orcs or half-orcs that are within 30 feet of him and whose Hit Dice are lower than his character level. Those who follow the character's orders gain a +2 morale bonus on Will saves. Any eligible orc or half-orc who willingly goes against the eye of Gruumsh's directions loses this bonus immediately.",
+        "name": "Command the Horde",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An eye of Gruumsh can fly into a rage just as a barbarian can, with all the same benefits and drawbacks. An eye of Gruumsh's class levels stack with his barbarian levels (if any) for determining the number of times per day he can use his rage ability. Add together the character's levels in the eye of Gruumsh and barbarian classes and refer to the class table. For example, a 6th-level barbarian/2nd-level eye ofGruumsh could rage three times per day (the same as an 8thlevelbarbarian), while a 4th-level eye of Gruumsh with no levels in barbarian could rage twice per day (the same as a 4th-level barbarian).",
+        "name": "Rage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An eye of Gruumsh's rage becomes more powerful when he reaches 2nd level, but at the cost of lowered defenses. The character adds an extra +4 to Strength while in a rage, but his Armor Class penalty goes from -2 to -4.",
+        "name": "Swing Blindly",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Through frequent disfiguration of his own skin, an eye of Gruumsh's natural armor bonus improves by +1 at 3rd level (or to +1 if he didn't already have a natural armor bonus). This bonus increases by another +1 for every three eye of Gruumsh levels gained thereafter.",
+        "name": "Ritual Scarring",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An eye of Gruumsh of 4th level or higher can launch blinding spittle at any opponent within 20 feet. With a successful ranged touch attack (at a -4 penalty), he spits his stomach acid into the target's eyes. An opponent who fails a Reflex save (DC 10 + eye of Gruumsh's class level + eye of Gruumsh's Con modifier) is blinded until he or she can rinse away the spittle. This attack has no effect on creatures that don't have eyes or don't depend on vision. Blinding spittle is usable twice per day at 4th level and four times per day at 7th level.",
+        "name": "Blinding Spittle",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, an eye of Gruumsh gains blindsight out to 5 feet. The range increases to 10 feet at 8th level.",
+        "name": "Blindsight",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 10th level, an eye of Gruumsh gains the ability to see the moment of his own death through his missing eye. This foreknowledge gives him a +2 morale bonus on all saving throws and Armor Class from then on. He also does not go unconscious when reduced to negative hit points; however, the character still dies at -10 hit points. (Whether or not the vision is accurate is irrelevant-the character believes it to be true.)",
+        "name": "Sight of Gruumsh",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Intimidate",
+      "Jump",
+      "Ride",
+      "Survival",
+      "Swim"
+    ],
+    "description": "An orc or half-orc who heeds the call to serve Gruumsh in his image can become an eye of Gruumsh.",
+    "hitDie": "d12",
+    "name": "Eye of Gruumsh",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Chaotic evil, chaotic neutral, or neutral evil",
+        "bab": 6,
+        "feats": [
+          "Exotic Weapon Proficiency (orc double axe)",
+          "Weapon Focus (orc double axe)"
+        ],
+        "special": [
+          "Race: Half-Orc",
+          "The character must be a worshiper of Gruumsh and must put out his own right eye in a special ritual. None of the eye of Gruumsh's special abilities function if the character regains sight in both eyes.",
+          "a worshiper of Gruumsh and must put out his own right eye in a special ritual"
+        ]
+      },
+      "text": "Base Attack Bonus: +6 Alignment: Chaotic evil, chaotic neutral, or neutral evil. Race: Half-Orc or Orc Feats: Exotic Weapon Proficiency (orc double axe), Weapon Focus (orc double axe) Special: The character must be a worshiper of Gruumsh and must put out his own right eye in a special ritual. None of the eye of Gruumsh's special abilities function if the character regains sight in both eyes."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Blind-Fight",
+          "command the horde",
+          "rage"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Swing blindly"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Ritual scarring +1"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Blinding spittle 2/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Blindsight 5 ft."
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Ritual scarring +2"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Blinding spittle 4/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Blindsight 10 ft."
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Ritual scarring +3"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Sight of Gruumsh"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

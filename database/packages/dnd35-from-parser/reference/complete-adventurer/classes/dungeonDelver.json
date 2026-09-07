@@ -1,0 +1,506 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.273Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/dungeon-delver/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "alertness": "Alertness",
+      "blindfight": "Blind-Fight"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Darkvision"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Deep Survival"
+      },
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Trap Sense"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Reduce"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Stonecunning"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Augury"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Skill Mastery"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          5,
+          10
+        ],
+        "name": "Blindsense"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Passwall"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Find The Path"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Phase Door"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.climb.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.craft.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disabledevice.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgedungeoneering.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.openlock.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.search.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.alertness.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.blindfight.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.trapfinding.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 8
+  },
+  "mapping": {
+    "classFeatureAptitude": "Dungeon Delver Class Feature",
+    "features": {
+      "Augury": {
+        "description": "Beginning at 3rd level, a dungeon delver can foretell whether a particular action will bring good or bad results for him in the immediate future. Once per day, he can use augury as a free action; his caster level is equal to his class level. He can use this ability one additional time per day for every three additional class levels gained (2/day at 6th level and 3/day at 9th level).",
+        "level": 3,
+        "seedName": "Augury (Dungeon Delver)",
+        "stackable": true
+      },
+      "Blindsense": {
+        "description": "At 5th level, a dungeon delver gains the ability to activate an acute sensitivity to sounds, smells, movement, and other disturbances within 30 feet. This functions as described and lasts for 1 minute per class level. A dungeon delver can use blindsense once per day at 5th level and twice per day at 10th level.",
+        "level": 5,
+        "seedName": "Blindsense (Dungeon Delver)",
+        "stackable": true
+      },
+      "Darkvision": {
+        "description": "A dungeon delver's long exposure to pitch-black subterranean surroundings enables him to develop darkvision out to 60 feet. If the character already has darkvision, the range increases by 30 feet.",
+        "level": 1,
+        "seedName": "Darkvision (Dungeon Delver)"
+      },
+      "Deep Survival": {
+        "description": "A dungeon delver's experience in deep, dark places grants him a great familiarity with that world. He adds his class level to Survival checks made in underground environments.",
+        "level": 1,
+        "seedName": "Deep Survival (Dungeon Delver)"
+      },
+      "Evasion": {
+        "description": "Beginning at 4th level, a dungeon delver can avoid damage from certain attacks with a successful Reflex save. See the monk class feature of the Player's Handbook. If a dungeon delver already has evasion, he gains improved evasion instead, allowing him to avoid damage from certain attacks with a successful Reflex save and take only half damage on a failed save. See the monk class feature of the Player's Handbook.",
+        "level": 4,
+        "seedName": "Evasion (Dungeon Delver)"
+      },
+      "Find the Path": {
+        "description": "Starting at 8th level, a dungeon delver can use find the path twice per day as a caster of his class level. Typically, a delver uses this to find his way into and out of confounding mazes and dungeons. He can target only himself with the ability.",
+        "level": 8,
+        "seedName": "Find the Path (Dungeon Delver)"
+      },
+      "Passwall": {
+        "description": "Starting at 6th level, a dungeon delver can use passwall once per day as a caster of his class level. This ability comes in handy for bypassing small cave-ins or sneaking into vaults.",
+        "level": 6,
+        "seedName": "Passwall (Dungeon Delver)"
+      },
+      "Phase Door": {
+        "description": "At 9th level, a dungeon delver gains the ability to use phase door once per day as an 18th-level caster. This ability enables him to bypass cave-ins, walk through dead ends and immovable obstructions, and make quick escapes through walls.",
+        "level": 9,
+        "seedName": "Phase Door (Dungeon Delver)"
+      },
+      "Reduce": {
+        "description": "A dungeon delver frequently finds it necessary to squeeze through narrow crevices, half-collapsed passages, prison bars, and other tight spots that would normally block a character of his size and bulk. Starting at 2nd level, a dungeon delver can use reduce person on himself three times per day (regardless of his creature type). His caster level is equal to his class level.",
+        "level": 2,
+        "seedName": "Reduce (Dungeon Delver)"
+      },
+      "Skill Mastery": {
+        "description": "At 3rd level, a dungeon delver becomes so confident in the use of certain skills that he can use them reliably even under adverse conditions. The character selects a number of skills equal to 3 + his Intelligence modifier. See the rogue class feature of the Player's Handbook.",
+        "level": 3,
+        "seedName": "Skill Mastery (Dungeon Delver)"
+      },
+      "Stonecunning": {
+        "description": "At 2nd level, a dungeon delver gains the stonecunning ability. This functions exactly as the dwarf racial trait of the same name, except that the check modifiers are competence bonuses rather than racial bonuses. If a dungeon delver already has stonecunning because of his race, both sets of bonuses apply.",
+        "level": 2,
+        "seedName": "Stonecunning (Dungeon Delver)"
+      },
+      "Trap Sense": {
+        "description": "A dungeon delver is adept at evading the effects of traps. See the barbarian class feature of the Player's Handbook. The bonuses rise by 1 for every three additional dungeon delver levels gained (+2 at 4th level, +3 at 7th level, and +4 at 10th level) and stack with similar bonuses granted by other classes.",
+        "level": 1,
+        "seedName": "Trap Sense (Dungeon Delver)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Dungeon delvers gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Dungeon Delver)"
+      }
+    },
+    "occurrenceMap": {
+      "Augury": "Augury",
+      "Blindsense": "Blindsense",
+      "Darkvision": "Darkvision",
+      "Deep Survival": "Deep Survival",
+      "Evasion": "Evasion",
+      "Find The Path": "Find the Path",
+      "Passwall": "Passwall",
+      "Phase Door": "Phase Door",
+      "Reduce": "Reduce",
+      "Skill Mastery": "Skill Mastery",
+      "Stonecunning": "Stonecunning",
+      "Trap Sense": "Trap Sense"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Dungeon delvers gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A dungeon delver's long exposure to pitch-black subterranean surroundings enables him to develop darkvision out to 60 feet. If the character already has darkvision, the range increases by 30 feet.",
+        "name": "Darkvision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dungeon delver's experience in deep, dark places grants him a great familiarity with that world. He adds his class level to Survival checks made in underground environments.",
+        "name": "Deep Survival",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dungeon delver is adept at evading the effects of traps. See the barbarian class feature of the Player's Handbook. The bonuses rise by 1 for every three additional dungeon delver levels gained (+2 at 4th level, +3 at 7th level, and +4 at 10th level) and stack with similar bonuses granted by other classes.",
+        "name": "Trap Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dungeon delver frequently finds it necessary to squeeze through narrow crevices, half-collapsed passages, prison bars, and other tight spots that would normally block a character of his size and bulk. Starting at 2nd level, a dungeon delver can use reduce person on himself three times per day (regardless of his creature type). His caster level is equal to his class level.",
+        "name": "Reduce",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 2nd level, a dungeon delver gains the stonecunning ability. This functions exactly as the dwarf racial trait of the same name, except that the check modifiers are competence bonuses rather than racial bonuses. If a dungeon delver already has stonecunning because of his race, both sets of bonuses apply.",
+        "name": "Stonecunning",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a dungeon delver can foretell whether a particular action will bring good or bad results for him in the immediate future. Once per day, he can use augury as a free action; his caster level is equal to his class level. He can use this ability one additional time per day for every three additional class levels gained (2/day at 6th level and 3/day at 9th level).",
+        "name": "Augury",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 3rd level, a dungeon delver becomes so confident in the use of certain skills that he can use them reliably even under adverse conditions. The character selects a number of skills equal to 3 + his Intelligence modifier. See the rogue class feature of the Player's Handbook.",
+        "name": "Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 4th level, a dungeon delver can avoid damage from certain attacks with a successful Reflex save. See the monk class feature of the Player's Handbook. If a dungeon delver already has evasion, he gains improved evasion instead, allowing him to avoid damage from certain attacks with a successful Reflex save and take only half damage on a failed save. See the monk class feature of the Player's Handbook.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, a dungeon delver gains the ability to activate an acute sensitivity to sounds, smells, movement, and other disturbances within 30 feet. This functions as described and lasts for 1 minute per class level. A dungeon delver can use blindsense once per day at 5th level and twice per day at 10th level.",
+        "name": "Blindsense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 6th level, a dungeon delver can use passwall once per day as a caster of his class level. This ability comes in handy for bypassing small cave-ins or sneaking into vaults.",
+        "name": "Passwall",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Starting at 8th level, a dungeon delver can use find the path twice per day as a caster of his class level. Typically, a delver uses this to find his way into and out of confounding mazes and dungeons. He can target only himself with the ability.",
+        "name": "Find the Path",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 9th level, a dungeon delver gains the ability to use phase door once per day as an 18th-level caster. This ability enables him to bypass cave-ins, walk through dead ends and immovable obstructions, and make quick escapes through walls.",
+        "name": "Phase Door",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Climb",
+      "Craft",
+      "Disable Device",
+      "Hide",
+      "Jump",
+      "Knowledge (Dungeoneering)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Search",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "In many ways, the dungeon delver is the ultimate adventuring rogue. He's skilled at moving stealthily through all types of dungeon terrain, detecting and disarming inconvenient traps, bypassing locks, locating treasure, and ?lching protected items. Since a dungeon delver frequently works alone, he must learn to think and act independently, relying upon no one but himself. Even when exploring a dungeon in the company of other adventurers, he often keeps to himself?scouting ahead, disarming traps a safe distance from the group, or seeking treasure while the others are distracted. The typical dungeon delver has forsaken interaction skills to concentrate on the nuts and bolts of dungeon exploration and treasure retrieval. Rogues and scouts make excellent dungeon delvers, as do the rare few ninjas and spellthieves who choose to pursue this track. Multiclass rogue/rangers who favor the darkness of caverns to the light of the sky also make good dungeon delvers.",
+    "hitDie": "d6",
+    "name": "Dungeon Delver",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Alertness",
+          "Blind-Fight"
+        ],
+        "skills": [
+          {
+            "name": "Climb",
+            "ranks": 10
+          },
+          {
+            "name": "Craft (stonemasonry)",
+            "ranks": 5
+          },
+          {
+            "name": "Disable Device",
+            "ranks": 10
+          },
+          {
+            "name": "Hide",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (dungeoneering)",
+            "ranks": 5
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 5
+          },
+          {
+            "name": "Open Lock",
+            "ranks": 10
+          },
+          {
+            "name": "Search",
+            "ranks": 10
+          }
+        ],
+        "special": [
+          "Trapfinding class feature.Special: The character must survive a great trial underground. This trial usually takes one of three forms:"
+        ]
+      },
+      "text": "Skills: Climb 10 ranks, Craft (stonemasonry) 5 ranks, Disable Device 10 ranks, Hide 5 ranks, Knowledge (dungeoneering) 5 ranks, Move Silently 5 ranks, Open Lock 10 ranks, Search 10 ranks Feats: Alertness, Blind-Fight Special: Trapfinding class feature.Special: The character must survive a great trial underground. This trial usually takes one of three forms: A solo dungeon expedition that earns the character half of the experience points needed for advancement to the next level. (For example, a 7th-level character must earn 3,500 XP on such a solo run.) The character must complete the venture in one week, though he may leave the dungeon and return as often as desired during that time. Survival of a cave-in or other collapse. Living for a year without seeing the light of the sun, usually among underground denizens such as the deep dwarves or drow."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Darkvision",
+          "deep survival",
+          "trap sense +1"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Reduce",
+          "stonecunning"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Augury 1/day",
+          "skill mastery"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Evasion",
+          "trap sense +2"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Blindsense 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Augury 2/day",
+          "passwall"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Trap sense +3"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Find the path"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Augury 3/day",
+          "phase door"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Blindsense 2/day",
+          "trap sense +4"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "8 + Int modifier"
+  }
+}

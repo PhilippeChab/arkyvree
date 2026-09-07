@@ -1,0 +1,1 @@
+ALTER TABLE "rules"."feats" ADD COLUMN "selectable" boolean DEFAULT true NOT NULL;

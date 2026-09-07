@@ -1,0 +1,225 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-26T19:36:49.737Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/wild-plains-outrider/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "mountedcombat": "Mounted Combat",
+      "track": "Track"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Animal Companion/Special Mount"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Ride Bonus"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wild Plains Stalker"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Wild Plains Swiftness"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Wild Plains Offensive"
+      }
+    ],
+    "hd": 8,
+    "levels": 3,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.ride.rank",
+        "value": "9",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mountedcombat.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.track.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4,
+    "unresolvedPrereqs": [
+      "Animal companion large enough to serve as a mount, or a paladin's special mount."
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Wild Plains Outrider Class Feature",
+    "features": {
+      "Animal Companion/special Mount": {
+        "description": "A wild plains outrider adds his outrider class levels to his effective druid level (his actual druid level or one-half his ranger level) to determine the capabilities of his animal companion. Alternatively, he can add his outrider class levels to his effective paladin level to determine the capabilities of his special mount. However, he can only use one of these abilities. The choice must be made when the character enters the wild plains outrider class and can never be changed.",
+        "level": 1,
+        "seedName": "Animal Companion/special Mount (Wild Plains Outrider)"
+      },
+      "Ride Bonus": {
+        "description": "A wild plains outrider gains a competence bonus equal to his class level on all Ride checks, as well as on Handle Animal checks made in conjunction with his animal companion mount or special mount.",
+        "level": 1,
+        "seedName": "Ride Bonus (Wild Plains Outrider)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Wild plains outriders gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Wild Plains Outrider)"
+      },
+      "Wild Plains Offensive": {
+        "description": "Starting at 3rd level, a wild plains outrider can make a full attack with a melee weapon as long as his mount takes only a single move. Multiclassing Note: A paladin can multiclass as a wild plains outrider without losing her ability to take additional levels in paladin.",
+        "level": 3,
+        "seedName": "Wild Plains Offensive (Wild Plains Outrider)"
+      },
+      "Wild Plains Stalker": {
+        "description": "A wild plains outrider knows how to move a mount stealthily through nearly any terrain. His mount uses the outrider's skill ranks, rather than its own, to make Hide and Move Silently checks. The mount still uses its own size, Dexterity, armor check penalty, and other applicable modifiers when making such checks.",
+        "level": 1,
+        "seedName": "Wild Plains Stalker (Wild Plains Outrider)"
+      },
+      "Wild Plains Swiftness": {
+        "description": "A wild plains outrider knows how to draw every bit of speed possible from a mount. At 2nd level and higher, a wild plains outrider (while mounted) increases his mount's base speed by 10 feet. This increase affects every movement mode the mount has, including fly, climb, and swim speeds.",
+        "level": 2,
+        "seedName": "Wild Plains Swiftness (Wild Plains Outrider)"
+      }
+    },
+    "occurrenceMap": {
+      "Animal Companion/Special Mount": "Animal Companion/special Mount",
+      "Ride Bonus": "Ride Bonus",
+      "Wild Plains Offensive": "Wild Plains Offensive",
+      "Wild Plains Stalker": "Wild Plains Stalker",
+      "Wild Plains Swiftness": "Wild Plains Swiftness"
+    },
+    "overrides": {
+      "reviewed": [
+        "Animal companion large enough to serve as a mount, or a paladin's special mount."
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Wild plains outriders gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A wild plains outrider adds his outrider class levels to his effective druid level (his actual druid level or one-half his ranger level) to determine the capabilities of his animal companion. Alternatively, he can add his outrider class levels to his effective paladin level to determine the capabilities of his special mount. However, he can only use one of these abilities. The choice must be made when the character enters the wild plains outrider class and can never be changed.",
+        "name": "Animal Companion/special Mount"
+      },
+      {
+        "description": "A wild plains outrider gains a competence bonus equal to his class level on all Ride checks, as well as on Handle Animal checks made in conjunction with his animal companion mount or special mount.",
+        "name": "Ride Bonus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A wild plains outrider knows how to move a mount stealthily through nearly any terrain. His mount uses the outrider's skill ranks, rather than its own, to make Hide and Move Silently checks. The mount still uses its own size, Dexterity, armor check penalty, and other applicable modifiers when making such checks.",
+        "name": "Wild Plains Stalker",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A wild plains outrider knows how to draw every bit of speed possible from a mount. At 2nd level and higher, a wild plains outrider (while mounted) increases his mount's base speed by 10 feet. This increase affects every movement mode the mount has, including fly, climb, and swim speeds.",
+        "name": "Wild Plains Swiftness",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, a wild plains outrider can make a full attack with a melee weapon as long as his mount takes only a single move. Multiclassing Note: A paladin can multiclass as a wild plains outrider without losing her ability to take additional levels in paladin.",
+        "name": "Wild Plains Offensive",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Handle Animal",
+      "Jump",
+      "Knowledge (Nature)",
+      "Listen",
+      "Move Silently",
+      "Ride",
+      "Spot",
+      "Survival",
+      "Swim"
+    ],
+    "description": "Wild plains outriders work tirelessly to keep the plains as safe as such remote places can be.",
+    "hitDie": "d8",
+    "name": "Wild Plains Outrider",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Mounted Combat",
+          "Track"
+        ],
+        "skills": [
+          {
+            "name": "Ride",
+            "ranks": 9
+          }
+        ],
+        "special": [
+          "Animal companion large enough to serve as a mount, or a paladin's special mount."
+        ]
+      },
+      "text": "Skills: Ride 9 ranks Feats: Mounted Combat, Track Special: Animal companion large enough to serve as a mount, or a paladin's special mount."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Animal companion/special mount",
+          "ride bonus",
+          "wild plains stalker"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Wild plains swiftness"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Wild plains offensive"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

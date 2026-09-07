@@ -1,0 +1,696 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.409Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/vigilante/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Arcane",
+    "featNameMap": {
+      "alertness": "Alertness"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Evil"
+      },
+      {
+        "levels": [
+          1,
+          7
+        ],
+        "name": "Streetwise"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Smite The Guilty"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Quick Search"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Speak With Dead"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Quick Hide"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Dimensional Anchor"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Mettle"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.gatherinformation.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.intimidate.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgelocal.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.search.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sensemotive.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.alertness.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 6,
+    "spellsKnown": [
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        4
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Vigilante Class Feature",
+    "features": {
+      "Detect Evil": {
+        "description": "A vigilante can use detect evil at will. See the spell of the Player's Handbook.",
+        "level": 1,
+        "seedName": "Detect Evil (Vigilante)"
+      },
+      "Dimensional Anchor": {
+        "description": "Starting at 8th level, a vigilante can use dimensional anchor once per day. His caster level equals his class level.",
+        "level": 8,
+        "seedName": "Dimensional Anchor (Vigilante)"
+      },
+      "Mettle": {
+        "description": "Starting at 9th level, a vigilante's grim determination allows him to shrug off magical effects that would otherwise harm him. If a vigilante makes a successful Will or Fortitude saving throw that would normally reduce the spell's effect (such as any spell with a saving throw entry of Will partial or Fortitude half), he instead negates the effect. An unconscious or sleeping vigilante does not gain the benefit of mettle.",
+        "level": 9,
+        "seedName": "Mettle (Vigilante)"
+      },
+      "Quick Hide": {
+        "description": "At 5th level and higher, a vigilante can use Bluff to create a diversion to hide as a move action, rather than as a standard action. He gains a +4 bonus on Bluff checks made for this purpose.",
+        "level": 5,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.bluff.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Quick Hide (Vigilante)"
+      },
+      "Quick Search": {
+        "description": "Starting at 3rd level, a vigilante can search a 5-foot-by-5-foot area or a volume of goods 5 feet on a side as a move action, rather than as a full-round action.",
+        "level": 3,
+        "seedName": "Quick Search (Vigilante)"
+      },
+      "Smite the Guilty": {
+        "description": "Starting at 2nd level, a vigilante can attempt to smite someone whom he has personally witnessed committing a crime in his home city. He can use this ability once per day. He adds his Charisma bonus (if any) to his melee attack roll and deals an extra 1 point of damage per vigilante level. The smite attack must occur within three days of the crime; otherwise, the benefits of this ability no longer apply. A vigilante can use this ability multiple times against the same miscreant and in response to the same incident, so long as all such uses occur within the time limit. Should a vigilante mistakenly try to punish someone who is not guilty of the crime witnessed, the benefits do not apply, but the attempt still counts against the number allowed per day. A vigilante can use this ability twice per day at 6th level and three times per day at 10th level.",
+        "level": 2,
+        "seedName": "Smite the Guilty (Vigilante)",
+        "stackable": true
+      },
+      "Speak With Dead": {
+        "description": "Starting at 4th level, a vigilante can use speak with dead once per day. His caster level equals his class level.",
+        "level": 4,
+        "seedName": "Speak With Dead (Vigilante)"
+      },
+      "Spells per Day": {
+        "description": "A vigilante has the ability to cast a small number of arcane spells. To cast a vigilante spell, a vigilante must have a Charisma score of at least 10 + the spell's level, so if he has a Charisma of 10 or lower, he cannot cast these spells. Bonus spells are based on Charisma, and saving throws against these spells have a DC of 10 + spell level + the vigilante's Cha modifier. When a vigilante gets 0 spells per day of a given level (for instance, 1st-level spells at 1st level), he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. The vigilante spell list appears below. A vigilante casts spells just as a bard does. A vigilante's selection of spells is extremely limited. A vigilante begins play knowing two 1st-level spells of his choice. At most new vigilante levels, he gains one or more new spells known as indicated in the class table. (Unlike spells per day, the number of spells a vigilante knows is not affected by his Charisma score.) Upon reaching 6th level, and at every even-numbered level after that, a vigilante can choose to learn a new spell in place of one he already knows. This works identically to the bard's ability to learn new spells in the place of old ones. A vigilante's spell list includes all spells from the bard spell list that belong to the following schools: abjuration, divination, illusion, necromancy, and transmutation. The spell list below includes all spells from the Player's Handbook and this book that qualify. (Treat 0-level bard spells as 1st-level vigilante spells.)",
+        "level": 1,
+        "seedName": "Spells per Day (Vigilante)"
+      },
+      "Streetwise": {
+        "description": "A vigilante knows how to survive in dangerous urban areas. He gains a +2 competence bonus on Gather Information and Knowledge (local) checks. At 7th level, this bonus improves to +4.",
+        "level": 1,
+        "seedName": "Streetwise (Vigilante)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Vigilantes are proficient with all simple and martial weapons, plus the net. They are not proficient with any type of armor or shields",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencynet.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Vigilante)"
+      }
+    },
+    "occurrenceMap": {
+      "Detect Evil": "Detect Evil",
+      "Dimensional Anchor": "Dimensional Anchor",
+      "Mettle": "Mettle",
+      "Quick Hide": "Quick Hide",
+      "Quick Search": "Quick Search",
+      "Smite The Guilty": "Smite the Guilty",
+      "Speak With Dead": "Speak With Dead",
+      "Streetwise": "Streetwise"
+    },
+    "spells": {
+      "known": [
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "slug": "vigilantespells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Vigilantes are proficient with all simple and martial weapons, plus the net. They are not proficient with any type of armor or shields",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A vigilante has the ability to cast a small number of arcane spells. To cast a vigilante spell, a vigilante must have a Charisma score of at least 10 + the spell's level, so if he has a Charisma of 10 or lower, he cannot cast these spells. Bonus spells are based on Charisma, and saving throws against these spells have a DC of 10 + spell level + the vigilante's Cha modifier. When a vigilante gets 0 spells per day of a given level (for instance, 1st-level spells at 1st level), he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. The vigilante spell list appears below. A vigilante casts spells just as a bard does. A vigilante's selection of spells is extremely limited. A vigilante begins play knowing two 1st-level spells of his choice. At most new vigilante levels, he gains one or more new spells known as indicated in the class table. (Unlike spells per day, the number of spells a vigilante knows is not affected by his Charisma score.) Upon reaching 6th level, and at every even-numbered level after that, a vigilante can choose to learn a new spell in place of one he already knows. This works identically to the bard's ability to learn new spells in the place of old ones. A vigilante's spell list includes all spells from the bard spell list that belong to the following schools: abjuration, divination, illusion, necromancy, and transmutation. The spell list below includes all spells from the Player's Handbook and this book that qualify. (Treat 0-level bard spells as 1st-level vigilante spells.)",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "A vigilante can use detect evil at will. See the spell of the Player's Handbook.",
+        "name": "Detect Evil",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A vigilante knows how to survive in dangerous urban areas. He gains a +2 competence bonus on Gather Information and Knowledge (local) checks. At 7th level, this bonus improves to +4.",
+        "name": "Streetwise",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, a vigilante can attempt to smite someone whom he has personally witnessed committing a crime in his home city. He can use this ability once per day. He adds his Charisma bonus (if any) to his melee attack roll and deals an extra 1 point of damage per vigilante level. The smite attack must occur within three days of the crime; otherwise, the benefits of this ability no longer apply. A vigilante can use this ability multiple times against the same miscreant and in response to the same incident, so long as all such uses occur within the time limit. Should a vigilante mistakenly try to punish someone who is not guilty of the crime witnessed, the benefits do not apply, but the attempt still counts against the number allowed per day. A vigilante can use this ability twice per day at 6th level and three times per day at 10th level.",
+        "name": "Smite the Guilty",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 3rd level, a vigilante can search a 5-foot-by-5-foot area or a volume of goods 5 feet on a side as a move action, rather than as a full-round action.",
+        "name": "Quick Search",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 4th level, a vigilante can use speak with dead once per day. His caster level equals his class level.",
+        "name": "Speak With Dead",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 5th level and higher, a vigilante can use Bluff to create a diversion to hide as a move action, rather than as a standard action. He gains a +4 bonus on Bluff checks made for this purpose.",
+        "name": "Quick Hide",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 8th level, a vigilante can use dimensional anchor once per day. His caster level equals his class level.",
+        "name": "Dimensional Anchor",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Starting at 9th level, a vigilante's grim determination allows him to shrug off magical effects that would otherwise harm him. If a vigilante makes a successful Will or Fortitude saving throw that would normally reduce the spell's effect (such as any spell with a saving throw entry of Will partial or Fortitude half), he instead negates the effect. An unconscious or sleeping vigilante does not gain the benefit of mettle.",
+        "name": "Mettle",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Craft",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Gather Information",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Local)",
+      "Move Silently",
+      "Open Lock",
+      "Perform",
+      "Search",
+      "Sense Motive",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "The vigilante combines magical and mundane investigative techniques to assess a crime scene.",
+    "hitDie": "d8",
+    "name": "Vigilante",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonevil",
+        "bab": 4,
+        "feats": [
+          "Alertness"
+        ],
+        "skills": [
+          {
+            "name": "Gather Information",
+            "ranks": 8
+          },
+          {
+            "name": "Intimidate",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (local)",
+            "ranks": 8
+          },
+          {
+            "name": "Search",
+            "ranks": 4
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 8
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Alignment: Any nonevil Skills: Gather Information 8 ranks, Intimidate 4 ranks, Knowledge (local) 8 ranks, Search 4 ranks, Sense Motive 8 ranks Feats: Alertness"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Detect evil",
+          "streetwise +2"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Smite the guilty 1/day"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Quick search"
+        ],
+        "spellsPerDay": "2,0,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Speak with dead"
+        ],
+        "spellsPerDay": "3,1,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Quick hide"
+        ],
+        "spellsPerDay": "3,2,0,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Smite the guilty 2/day"
+        ],
+        "spellsPerDay": "3,3,1,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Streetwise +4"
+        ],
+        "spellsPerDay": "3,3,2,0",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Dimensional anchor"
+        ],
+        "spellsPerDay": "3,3,3,1",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Mettle"
+        ],
+        "spellsPerDay": "3,3,3,2",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Smite the guilty 3/day"
+        ],
+        "spellsPerDay": "3,3,3,3",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier",
+    "spellsKnown": [
+      "2,-,-,-",
+      "3,-,-,-",
+      "3,2,-,-",
+      "4,3,-,-",
+      "4,3,2,-",
+      "4,4,3,-",
+      "4,4,3,2",
+      "4,4,4,3",
+      "4,4,4,3",
+      "4,4,4,4"
+    ]
+  }
+}

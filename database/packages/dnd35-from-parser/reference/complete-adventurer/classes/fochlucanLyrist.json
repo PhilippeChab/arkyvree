@@ -1,0 +1,357 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.288Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/fochlucan-lyrist/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "dual"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bardic Knowledge"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bardic Music"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Unbound"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.decipherscript.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.diplomacy.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.gatherinformation.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgenature.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "13",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sleightofhand.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Fochlucan Lyrist Class Feature",
+    "features": {
+      "Bardic Knowledge": {
+        "description": "A Fochlucan lyrist can attempt to recall some relevant piece of information about local notable people, legendary items, or noteworthy places. See the bard class feature of the Player's Handbook. She adds her Fochlucan lyrist class level to her bardic knowledge checks, so her bardic knowledge checks have a bonus equal to her bard level + her Fochlucan lyrist level + her Int modifier.",
+        "level": 1,
+        "seedName": "Bardic Knowledge (Fochlucan Lyrist)"
+      },
+      "Bardic Music": {
+        "description": "A Fochlucan lyrist adds her lyrist level to her bard level to determine the number of times per day she can use her bardic music, the bardic music abilities she can employ, and the power of those abilities. For example, a 2nd-level rogue/5th-level bard/4th-level druid/3rd-level Fochlucan lyrist can use her bardic music eight times per day, can use any bardic music ability an 8th-level bard could use (assuming she meets the Perform skill rank requirements), and is treated as an 8th-level bard for adjudicating the effects of those abilities (such as number of targets, save DC, and so forth).",
+        "level": 1,
+        "seedName": "Bardic Music (Fochlucan Lyrist)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level, a Fochlucan lyrist gains new spells per day (and spells known, if applicable) as if she had also gained a level in any one arcane spellcasting class and any one divine spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained. If she had more than one arcane spellcasting class or divine spellcasting class before becoming a Fochlucan lyrist, she must decide to which class to add each Fochlucan lyrist level for the purpose of determining spells per day, spells known, and overall caster level. For example, a 2nd-level rogue/5th-level bard/4th-level druid/3rd-level Fochlucan lyrist can cast arcane spells as an 8th-level bard and divine spells as a 7th-level druid.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Fochlucan Lyrist)"
+      },
+      "Unbound": {
+        "description": "A Fochlucan lyrist's druid oaths are relaxed, allowing her to wear light metal armor with no loss of spellcasting, supernatural, or spell-like abilities. A lyrist also suffers no experience point penalty for multi-classing.",
+        "level": 1,
+        "seedName": "Unbound (Fochlucan Lyrist)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Fochlucan lyrists gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Fochlucan Lyrist)"
+      }
+    },
+    "occurrenceMap": {
+      "Bardic Knowledge": "Bardic Knowledge",
+      "Bardic Music": "Bardic Music",
+      "Unbound": "Unbound"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Fochlucan lyrists gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level, a Fochlucan lyrist gains new spells per day (and spells known, if applicable) as if she had also gained a level in any one arcane spellcasting class and any one divine spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained. If she had more than one arcane spellcasting class or divine spellcasting class before becoming a Fochlucan lyrist, she must decide to which class to add each Fochlucan lyrist level for the purpose of determining spells per day, spells known, and overall caster level. For example, a 2nd-level rogue/5th-level bard/4th-level druid/3rd-level Fochlucan lyrist can cast arcane spells as an 8th-level bard and divine spells as a 7th-level druid.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A Fochlucan lyrist can attempt to recall some relevant piece of information about local notable people, legendary items, or noteworthy places. See the bard class feature of the Player's Handbook. She adds her Fochlucan lyrist class level to her bardic knowledge checks, so her bardic knowledge checks have a bonus equal to her bard level + her Fochlucan lyrist level + her Int modifier.",
+        "name": "Bardic Knowledge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A Fochlucan lyrist adds her lyrist level to her bard level to determine the number of times per day she can use her bardic music, the bardic music abilities she can employ, and the power of those abilities. For example, a 2nd-level rogue/5th-level bard/4th-level druid/3rd-level Fochlucan lyrist can use her bardic music eight times per day, can use any bardic music ability an 8th-level bard could use (assuming she meets the Perform skill rank requirements), and is treated as an 8th-level bard for adjudicating the effects of those abilities (such as number of targets, save DC, and so forth).",
+        "name": "Bardic Music"
+      },
+      {
+        "description": "A Fochlucan lyrist's druid oaths are relaxed, allowing her to wear light metal armor with no loss of spellcasting, supernatural, or spell-like abilities. A lyrist also suffers no experience point penalty for multi-classing.",
+        "name": "Unbound"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disguise",
+      "Gather Information",
+      "Handle Animal",
+      "Heal",
+      "Hide",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Move Silently",
+      "Perform",
+      "Profession",
+      "Ride",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Speak Language",
+      "Spellcraft",
+      "Survival",
+      "Swim",
+      "Use Magic Device"
+    ],
+    "description": "The Fochlucan lyrist is a legendary figure who serves as the herald and teacher to great kings, the champion of the common folk, and the keeper of lore long forgotten elsewhere. Those who aspire to join the Fochlucan College face a long and dif?cult road. The great bards who lead the school choose only individuals who have demonstrated skill at arms and stealth, learning and cleverness, superb talent with the lute and an ear for the stories of old. Finally, all applicants must ?rst study the lore of the druids, learning the ways of growth and the hidden secrets of nature. Few indeed can stand up to the rigorous scrutiny of the Fochlucan masters. Fochlucan lyrists adventure to gain information. They are spies and rumormongers, ever on the watch for news of events that may upset the balance they seek to preserve. A lyrist can serve as a diplomat, messenger, or assassin, as needed. The Fochlucans strongly believe in fostering the careers of other adventurers whose viewpoints align with their own, and many lyrists attach themselves to adventuring companies speci?cally for the purpose of guiding their comrades to oppose the right enemies and advance the interests of the Fochlucan College.",
+    "hitDie": "d6",
+    "name": "Fochlucan Lyrist",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Neutral good, neutral, chaotic neutral, or neutral evil",
+        "skills": [
+          {
+            "name": "Decipher Script",
+            "ranks": 7
+          },
+          {
+            "name": "Diplomacy",
+            "ranks": 7
+          },
+          {
+            "name": "Gather Information",
+            "ranks": 7
+          },
+          {
+            "name": "Knowledge (nature)",
+            "ranks": 7
+          },
+          {
+            "name": "Perform (string instruments)",
+            "ranks": 13
+          },
+          {
+            "name": "Sleight of Hand",
+            "ranks": 7
+          },
+          {
+            "name": "Speak Language (druidic)",
+            "ranks": 1
+          }
+        ],
+        "special": [
+          "Bardic knowledge and evasion abilities."
+        ]
+      },
+      "text": "Alignment: Neutral good, neutral, chaotic neutral, or neutral evil. Skills: Decipher Script 7 ranks, Diplomacy 7 ranks, Gather Information 7 ranks, Knowledge (nature) 7 ranks, Perform (string instruments) 13 ranks, Sleight of Hand 7 ranks, Speak Language (druidic) 1 ranks Spells: Ability to cast 1st-level arcane and divine spells.Special: Bardic knowledge and evasion abilities."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Bardic knowledge",
+          "bardic music",
+          "unbound"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

@@ -1,0 +1,308 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:43:36.222Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/evangelist/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "negotiatoror": "Negotiator (or)",
+      "persuasive": "Persuasive"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Great Orator (Inspire Dread Or Inspire Hope)"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Fast Talk"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Great Orator (Inflame The Righteous)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Skill Mastery"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Great Orator (Convert The Unfaithful)"
+      }
+    ],
+    "hd": 6,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.bluff.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.gatherinformation.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sensemotive.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.negotiatoror.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.persuasive.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 6,
+    "unresolvedAptitudePicks": [
+      "Great Orator (Inspire Dread Or Inspire Hope)"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Evangelist Class Feature",
+    "features": {
+      "Fast Talk": {
+        "description": "Beginning at 2nd level, the evangelist has a gift for saying precisely what needs to be said at the perfect moment. He can attempt a rushed Diplomacy check as a full-round action with only a -5 penalty instead of the normal penalty.",
+        "level": 2,
+        "seedName": "Fast Talk (Evangelist)"
+      },
+      "Great Orator (Convert the Unfaithful)": {
+        "description": "",
+        "level": 5,
+        "seedName": "Great Orator (Convert the Unfaithful) (Evangelist)"
+      },
+      "Great Orator (Inflame the Righteous)": {
+        "description": "",
+        "level": 3,
+        "seedName": "Great Orator (Inflame the Righteous) (Evangelist)"
+      },
+      "Great Orator (Inspire Dread or Inspire Hope)": {
+        "description": "Through the sheer power of spoken word, an evangelist can uplift, shield, and bolster his companions simply by projecting his voice clearly enough to be heard. This capability parallels the bard's bardic music feature, and evangelist levels stack with bard levels when calculating the potency of existing bardic music abilities. However, this stacking only enhances songs the character already qualifies for - it does not unlock new bardic music abilities that require higher bard levels. Evangelist oratory works exactly like bardic music in all respects, except the evangelist must speak loudly and articulately rather than sing or play a musical instrument. Inspire Dread (Su): An evil-aligned evangelist who possesses 9 or more ranks in Perform (oratory) can fill all foes within 30 feet with a crushing sense of despair. Every enemy within that radius suffers a -4 penalty to Will saving throws. Activating this oratory costs a full-round action and demands concentration each round to sustain. The effect persists for as long as the evangelist continues speaking plus 3 additional rounds afterward. This is a mind-affecting effect. Inspire Hope (Su): A good-aligned or neutral evangelist who has at least 9 ranks in Perform (oratory) can strengthen the spiritual resolve of all allies within 30 feet. The evangelist and every ally able to hear the speech receive a +4 sacred bonus on Will saving throws. Activation requires a full-round action and the evangelist must concentrate each round to maintain it. The benefit lasts while the evangelist speaks and for three rounds after he stops. This is a mind-affecting effect. Inflame the Righteous (Su): At 3rd level or higher, an evangelist with 11 or more ranks in Perform (oratory) can envelop himself and all allies within 30 feet in sacred fire. Each affected creature gains the effects of a fire shield spell, using the evangelist's class level plus 5 as the caster level. The damage dealt by this effect is entirely divine in nature and cannot be reduced or negated by fire resistance or fire immunity. This oratory requires a full-round action to begin and concentration each round to maintain. It lasts while the evangelist speaks and for three rounds after he ceases. Convert the Unfaithful (Su): At 5th level, an evangelist with a minimum of 13 ranks in Perform (oratory) can attempt to sway a single foe within 30 feet to his cause. As a full-round action, the evangelist delivers a fervent appeal to one enemy, who must make a Will save (DC = 10 + class level + Charisma modifier). On a successful save, the target is shaken for 1 round. On a failed save, the target is converted. Creatures possessing an alignment subtype (such as celestials and fiends) are unaffected. A converted creature falls under the evangelist's influence as though affected by charm monster. Furthermore, the converted creature temporarily adopts the evangelist's alignment and behaves accordingly. This shift may render some of the creature's class features, spells, or other capabilities unusable for the duration (for instance, a paladin converted away from lawful good would lose her class abilities until the effect ends). Once the effect expires, the creature may choose to either continue following its new alignment or revert to its original one. If it opts to keep the new alignment permanently, the transition takes effect as though an appropriately aligned cleric had cast atonement on it. If it chooses to revert, it must succeed on another Will save at the same DC. Failure on this second save means its alignment does change back, but it requires an atonement spell to recover any class abilities that were lost during the temporary alignment shift.",
+        "level": 1,
+        "seedName": "Great Orator (Inspire Dread or Inspire Hope) (Evangelist)"
+      },
+      "Skill Mastery": {
+        "description": "At 4th level, the evangelist gains such confidence with particular skills that he can perform them dependably even under pressure. When he acquires this ability, he chooses a number of skills equal to 1 + his Intelligence modifier (minimum 1) from the following: Bluff, Diplomacy, Disguise, Intimidate, and Sense Motive. Whenever he makes a check using one of the chosen skills, he may take 10 even when stress or distractions would ordinarily make that impossible.",
+        "level": 4,
+        "seedName": "Skill Mastery (Evangelist)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Evangelist)"
+      }
+    },
+    "occurrenceMap": {
+      "Fast Talk": "Fast Talk",
+      "Great Orator (Convert The Unfaithful)": "Great Orator (Convert the Unfaithful)",
+      "Great Orator (Inflame The Righteous)": "Great Orator (Inflame the Righteous)",
+      "Great Orator (Inspire Dread Or Inspire Hope)": "Great Orator (Inspire Dread or Inspire Hope)",
+      "Skill Mastery": "Skill Mastery"
+    },
+    "overrides": {
+      "aptitudePicks": [],
+      "description": "Wandering preachers devoted to a specific god, pantheon, or religious philosophy, evangelists journey across the land spreading the word of their faith.",
+      "features": {
+        "Fast Talk": {
+          "description": "Beginning at 2nd level, the evangelist has a gift for saying precisely what needs to be said at the perfect moment. He can attempt a rushed Diplomacy check as a full-round action with only a -5 penalty instead of the normal penalty."
+        },
+        "Great Orator (Inspire Dread or Inspire Hope)": {
+          "description": "Through the sheer power of spoken word, an evangelist can uplift, shield, and bolster his companions simply by projecting his voice clearly enough to be heard. This capability parallels the bard's bardic music feature, and evangelist levels stack with bard levels when calculating the potency of existing bardic music abilities. However, this stacking only enhances songs the character already qualifies for - it does not unlock new bardic music abilities that require higher bard levels. Evangelist oratory works exactly like bardic music in all respects, except the evangelist must speak loudly and articulately rather than sing or play a musical instrument. Inspire Dread (Su): An evil-aligned evangelist who possesses 9 or more ranks in Perform (oratory) can fill all foes within 30 feet with a crushing sense of despair. Every enemy within that radius suffers a -4 penalty to Will saving throws. Activating this oratory costs a full-round action and demands concentration each round to sustain. The effect persists for as long as the evangelist continues speaking plus 3 additional rounds afterward. This is a mind-affecting effect. Inspire Hope (Su): A good-aligned or neutral evangelist who has at least 9 ranks in Perform (oratory) can strengthen the spiritual resolve of all allies within 30 feet. The evangelist and every ally able to hear the speech receive a +4 sacred bonus on Will saving throws. Activation requires a full-round action and the evangelist must concentrate each round to maintain it. The benefit lasts while the evangelist speaks and for three rounds after he stops. This is a mind-affecting effect. Inflame the Righteous (Su): At 3rd level or higher, an evangelist with 11 or more ranks in Perform (oratory) can envelop himself and all allies within 30 feet in sacred fire. Each affected creature gains the effects of a fire shield spell, using the evangelist's class level plus 5 as the caster level. The damage dealt by this effect is entirely divine in nature and cannot be reduced or negated by fire resistance or fire immunity. This oratory requires a full-round action to begin and concentration each round to maintain. It lasts while the evangelist speaks and for three rounds after he ceases. Convert the Unfaithful (Su): At 5th level, an evangelist with a minimum of 13 ranks in Perform (oratory) can attempt to sway a single foe within 30 feet to his cause. As a full-round action, the evangelist delivers a fervent appeal to one enemy, who must make a Will save (DC = 10 + class level + Charisma modifier). On a successful save, the target is shaken for 1 round. On a failed save, the target is converted. Creatures possessing an alignment subtype (such as celestials and fiends) are unaffected. A converted creature falls under the evangelist's influence as though affected by charm monster. Furthermore, the converted creature temporarily adopts the evangelist's alignment and behaves accordingly. This shift may render some of the creature's class features, spells, or other capabilities unusable for the duration (for instance, a paladin converted away from lawful good would lose her class abilities until the effect ends). Once the effect expires, the creature may choose to either continue following its new alignment or revert to its original one. If it opts to keep the new alignment permanently, the transition takes effect as though an appropriately aligned cleric had cast atonement on it. If it chooses to revert, it must succeed on another Will save at the same DC. Failure on this second save means its alignment does change back, but it requires an atonement spell to recover any class abilities that were lost during the temporary alignment shift."
+        },
+        "Skill Mastery": {
+          "description": "At 4th level, the evangelist gains such confidence with particular skills that he can perform them dependably even under pressure. When he acquires this ability, he chooses a number of skills equal to 1 + his Intelligence modifier (minimum 1) from the following: Bluff, Diplomacy, Disguise, Intimidate, and Sense Motive. Whenever he makes a check using one of the chosen skills, he may take 10 even when stress or distractions would ordinarily make that impossible."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      },
+      "reviewed": [
+        "Great Orator (Inspire Dread Or Inspire Hope)"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Evangelists gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "An evangelist can inspire, protect, and otherwise improve the situation of his allies simply by speaking clearly and being heard. This ability is similar to the bard's bardic music ability and, indeed, evangelist levels stack with bard levels to determine the strength of known bard songs. For example, a bard 3/evangelist 5 improves his inspire competence ability, but does not gain any new bard abilities. He could use bardic music to convert the unfaithful, countersong, fascinate, inspire the righteous, inspire courage +2, inspire dread or inspire hope, but would not gain the inspire competence, inspire greatness, or suggestion abilities. Alternately, a bard 7/evangelist 1 would be able to use bardic music to countersong, fascinate, inspire competence, inspire courage +2, inspire dread or inspire hope, and suggestion. Evangelist oratory abilities function in exactly the same manner as bardic music except the evangelist must speak loudly and clearly, rather than sing or play an instrument. Inspire Dread (Su): An evil evangelist with 9 or more ranks in Perform (oratory) can inspire hopelessness in all enemies within 30 feet. This ability imposes a -4 penalty on Will saves on all enemies within 30 feet of the evangelist. Delivering this oratory requires a full-round action to activate and requires concentration each round to continue the effect. The effect lasts as long as the evangelist speaks and for 3 rounds thereafter. Inspire dread is a mind-affecting ability. Inspire Hope (Su): A good or neutral evangelist with 9 or more ranks in Perform (oratory) can inspire spiritual resilience in all allies within 30 feet. This ability gives the evangelist and all allies who can hear his oratory a +4 sacred bonus on Will saves. Delivering this oratory requires a full-round action to activate and requires concentration each round to continue the effect. The effect lasts as long as the evangelist speaks and for three rounds thereafter. Inspire hope is a mind-affecting ability. Inflame the Righteous (Su): An evangelist of 3rd level or higher with 11 or more ranks in Perform (oratory) can use this ability to wreath himself and any of his allies within 30 feet in divine flame. Each beneficiary of this ability gains the benefit of a fire shield spell. Use the evangelist's level +5 to determine the caster level of the spell. The damage caused by the spell is, however, purely divine and not subject to a creature's resistance or immunity to fire. This oratory requires a full-round action to perform and requires concentration each round to continue the effect. The effect lasts as long as the evangelist speaks and for threerounds thereafter. Convert the Unfaithful (Su): An evangelist of 5th level with at least 13 ranks in Perform (oratory) may attempt to convert a single enemy within 30 feet. As a full-round action, the evangelist delivers an impassioned speech on the righteousness of his beliefs to a single enemy, who must attempt a Will save (DC = 10 + class level + Cha mod). If the creature succeeds, it is shaken for one round. If the creature fails its saving throw, it converts. Creatures with an alignment subtype (such as angels and devils) are immune to this ability. A converted creature is effectively charmed by the evangelist (similar to a charm monster spell). In addition, a converted creature temporarily assumes the alignment of the evangelist and acts accordingly. This may mean some of the creature's class abilities, spells, or other abilities are unavailable to it for the duration of the spell (a paladin converted to something other than lawful good, for example, loses her class abilities for the duration). When the duration elapses, the creature then has a choice: It can continue to act according to its new alignment, or it can shift back. If the creature chooses to permanently change its alignment to the evangelist's, it acts as if a cleric of the appropriate alignment had cast atonement on it. If the creature chooses to change back, it must make another saving throw (with the same save DC as before). If it fails this saving throw its alignment changes back but it needs an atonement spell to gain back any abilities it lost due to its temporary alignment change.",
+        "name": "Great Orator (Inspire Dread or Inspire Hope)",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level, the evangelist knows the right thing to say at the right time. He may make a rushed Diplomacy check as a full-round action at only a -5 penalty.",
+        "name": "Fast Talk",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Great Orator (Inflame the Righteous)"
+      },
+      {
+        "description": "At 4th level, the evangelist becomes so certain in the use of certain skills that he can use them reliably even under adverse conditions. Upon gaining this ability, the evangelist selects a number of skills equal to 1 + his Intelligence modifier (minimum of 1) from the following list: Bluff, Diplomacy, Disguise, Intimidate, and Sense Motive. When making a skill check with one of the selected skills, he may take 10 even if stress and distractions would normally prevent him from doing so.",
+        "name": "Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Great Orator (Convert the Unfaithful)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Craft",
+      "Diplomacy",
+      "Disguise",
+      "Escape Artist",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Perform",
+      "Profession",
+      "Sense Motive",
+      "Speak Language"
+    ],
+    "description": "Evangelists travel the world proclaiming their devotion to a particular deity, pantheon, or religious doctrine.",
+    "hitDie": "d6",
+    "name": "Evangelist",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "As a cleric of the chosen deity",
+        "feats": [
+          "Negotiator (or)",
+          "Persuasive"
+        ],
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 8
+          },
+          {
+            "name": "Gather Information",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 5
+          },
+          {
+            "name": "Perform (oratory)",
+            "ranks": 6
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Alignment: As a cleric of the chosen deity Skills: Bluff 8 ranks, Gather Information 5 ranks, Knowledge (religion) 5 ranks, Perform (oratory) 6 ranks, Sense Motive 5 ranks Feats: Negotiator (or), Persuasive"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Great orator (inspire dread or inspire hope)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Fast talk"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Great orator (inflame the righteous)"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Skill mastery"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Great orator (convert the unfaithful)"
+        ],
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

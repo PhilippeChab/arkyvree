@@ -1,0 +1,12 @@
+import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+const APT = "Wild Plains Outrider Class Feature";
+
+export const WILD_PLAINS_OUTRIDER_FEATS: FeatSeed[] = [
+  { name: "Animal Companion/special Mount (Wild Plains Outrider)", description: "A wild plains outrider adds his outrider class levels to his effective druid level (his actual druid level or one-half his ranger level) to determine the capabilities of his animal companion. Alternatively, he can add his outrider class levels to his effective paladin level to determine the capabilities of his special mount. However, he can only use one of these abilities. The choice must be made when the character enters the wild plains outrider class and can never be changed.", selectable: false, aptitudes: [APT] },
+  { name: "Ride Bonus (Wild Plains Outrider)", description: "A wild plains outrider gains a competence bonus equal to his class level on all Ride checks, as well as on Handle Animal checks made in conjunction with his animal companion mount or special mount.", selectable: false, aptitudes: [APT] },
+  { name: "Weapon and Armor Proficiency (Wild Plains Outrider)", description: "Wild plains outriders gain no proficiency with any weapon or armor.", selectable: false, aptitudes: [APT] },
+  { name: "Wild Plains Offensive (Wild Plains Outrider)", description: "Starting at 3rd level, a wild plains outrider can make a full attack with a melee weapon as long as his mount takes only a single move. Multiclassing Note: A paladin can multiclass as a wild plains outrider without losing her ability to take additional levels in paladin.", selectable: false, aptitudes: [APT] },
+  { name: "Wild Plains Stalker (Wild Plains Outrider)", description: "A wild plains outrider knows how to move a mount stealthily through nearly any terrain. His mount uses the outrider's skill ranks, rather than its own, to make Hide and Move Silently checks. The mount still uses its own size, Dexterity, armor check penalty, and other applicable modifiers when making such checks.", selectable: false, aptitudes: [APT] },
+  { name: "Wild Plains Swiftness (Wild Plains Outrider)", description: "A wild plains outrider knows how to draw every bit of speed possible from a mount. At 2nd level and higher, a wild plains outrider (while mounted) increases his mount's base speed by 10 feet. This increase affects every movement mode the mount has, including fly, climb, and swim speeds.", selectable: false, aptitudes: [APT] },
+];

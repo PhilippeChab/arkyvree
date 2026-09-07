@@ -1,0 +1,272 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.394Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/streetfighter/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "combatexpertise": "Combat Expertise",
+      "improvedfeint": "Improved Feint"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "name": "Always Ready"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Streetwise"
+      },
+      {
+        "levels": [
+          2,
+          4
+        ],
+        "name": "Stand Tough"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Uncanny Dodge"
+      }
+    ],
+    "hd": 8,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.bluff.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.intimidate.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgelocal.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatexpertise.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedfeint.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Streetfighter Class Feature",
+    "features": {
+      "Always Ready": {
+        "description": "A streetfighter knows that an attack can come from any quarter, and that an innocuous conversation can turn into a deadly fight in an instant. Accordingly, he gains a +1 competence bonus on initiative checks. This bonus increases to +2 at 3rd level and to +3 at 5th level.",
+        "level": 1,
+        "seedName": "Always Ready (Streetfighter)",
+        "stackable": true
+      },
+      "Sneak Attack": {
+        "description": "Beginning at 3rd level, a streetfighter deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. See the rogue class feature of the Player's Handbook. If a streetfighter gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "level": 3,
+        "seedName": "Sneak Attack (Streetfighter)"
+      },
+      "Stand Tough": {
+        "description": "A streetfighter's toughness has been honed by years of hard living and dirty fighting. Starting at 2nd level, a streetfighter can stand tough once per day. When he would be damaged in combat (from a weapon or some other blow, but not from a spell or special ability), he can attempt to shake off the damage. To do this, he must attempt a Fortitude saving throw against a DC equal to the number of points of damage dealt. If the save succeeds, he takes no lethal damage from the blow, instead taking nonlethal damage equal to half the amount of damage the blow would have dealt. If the save fails, he takes damage normally. A streetfighter need not be aware of the impending attack to use this ability. Starting at 4th level, a streetfighter can use this ability twice per day.",
+        "level": 2,
+        "seedName": "Stand Tough (Streetfighter)",
+        "stackable": true
+      },
+      "Streetwise": {
+        "description": "A streetfighter knows how to survive in dangerous urban areas; he gains a +2 competence bonus on Gather Information and Knowledge (local) checks.",
+        "level": 1,
+        "seedName": "Streetwise (Streetfighter)"
+      },
+      "Uncanny Dodge": {
+        "description": "At 5th level, a streetfighter cannot be caught flat-footed and reacts to danger before his senses would normally allow him to do so. Seethe barbarian class feature of the Player's Handbook. If a streetfighter already has uncanny dodge from a different class, he gains improved uncanny dodge instead. See the barbarian class feature of the Player's Handbook.",
+        "level": 5,
+        "seedName": "Uncanny Dodge (Streetfighter)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Streetfighters gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Streetfighter)"
+      }
+    },
+    "occurrenceMap": {
+      "Always Ready": "Always Ready",
+      "Sneak Attack": "Sneak Attack",
+      "Stand Tough": "Stand Tough",
+      "Streetwise": "Streetwise",
+      "Uncanny Dodge": "Uncanny Dodge"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Streetfighters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A streetfighter knows that an attack can come from any quarter, and that an innocuous conversation can turn into a deadly fight in an instant. Accordingly, he gains a +1 competence bonus on initiative checks. This bonus increases to +2 at 3rd level and to +3 at 5th level.",
+        "name": "Always Ready",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A streetfighter knows how to survive in dangerous urban areas; he gains a +2 competence bonus on Gather Information and Knowledge (local) checks.",
+        "name": "Streetwise",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A streetfighter's toughness has been honed by years of hard living and dirty fighting. Starting at 2nd level, a streetfighter can stand tough once per day. When he would be damaged in combat (from a weapon or some other blow, but not from a spell or special ability), he can attempt to shake off the damage. To do this, he must attempt a Fortitude saving throw against a DC equal to the number of points of damage dealt. If the save succeeds, he takes no lethal damage from the blow, instead taking nonlethal damage equal to half the amount of damage the blow would have dealt. If the save fails, he takes damage normally. A streetfighter need not be aware of the impending attack to use this ability. Starting at 4th level, a streetfighter can use this ability twice per day.",
+        "name": "Stand Tough",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a streetfighter deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. See the rogue class feature of the Player's Handbook. If a streetfighter gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, a streetfighter cannot be caught flat-footed and reacts to danger before his senses would normally allow him to do so. Seethe barbarian class feature of the Player's Handbook. If a streetfighter already has uncanny dodge from a different class, he gains improved uncanny dodge instead. See the barbarian class feature of the Player's Handbook.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Disable Device",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Local)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Ride",
+      "Search",
+      "Spot",
+      "Tumble"
+    ],
+    "description": "Streetfighters seek the challenges of the back alleys as a way of testing themselves and their experience in the wilder world.",
+    "hitDie": "d8",
+    "name": "Streetfighter",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Combat Expertise",
+          "Improved Feint"
+        ],
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 5
+          },
+          {
+            "name": "Intimidate",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (local)",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Bluff 5 ranks, Intimidate 5 ranks, Knowledge (local) 5 ranks Feats: Combat Expertise, Improved Feint"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Always ready +1",
+          "streetwise"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Stand tough 1/day"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Always ready +2",
+          "sneak attack +1d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Stand tough 2/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Always ready +3",
+          "uncanny dodge"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

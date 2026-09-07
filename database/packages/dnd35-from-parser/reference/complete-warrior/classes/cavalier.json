@@ -1,0 +1,505 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:11.751Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/cavalier/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "mountedcombat": "Mounted Combat",
+      "ridebyattack": "Ride-By Attack",
+      "spiritedcharge": "Spirited Charge",
+      "weaponfocuslance": "Weapon Focus (lance)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Special Mount"
+      },
+      {
+        "levels": [
+          1,
+          5,
+          9
+        ],
+        "name": "Mounted Weapon Bonus (Lance)"
+      },
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          9
+        ],
+        "name": "Ride Bonus"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Courtly Knowledge"
+      },
+      {
+        "levels": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "name": "Deadly Charge"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Mounted Weapon Bonus (Sword)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Burst Of Speed"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Full Mounted Attack"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Unstoppable Charge"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.handleanimal.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgenobilityandroyalty.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.ride.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.spiritedcharge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocuslance.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mountedcombat.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ridebyattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Cavalier Class Feature",
+    "features": {
+      "Burst of Speed": {
+        "description": "Beginning at 3rd level, a cavalier can push his mount beyond its normal charging speed. This doubles the maximum charging distance the mount can cover, up to four times its base speed. The first use each day imposes no ill effects on the mount. However, every subsequent use on the same day forces the mount to attempt a DC 20 Will save once the charge concludes; on a failure, the mount suffers 2d6 points of damage.",
+        "level": 3,
+        "seedName": "Burst of Speed (Cavalier)"
+      },
+      "Courtly Knowledge": {
+        "description": "A cavalier applies his class level as a competence bonus to all Knowledge (nobility and royalty) checks.",
+        "level": 1,
+        "seedName": "Courtly Knowledge (Cavalier)"
+      },
+      "Deadly Charge": {
+        "description": "Starting at 2nd level, a cavalier who is mounted and performing a charge action can declare a \"deadly charge\" prior to rolling his attack (meaning a missed attack wastes the attempt). On a successful hit, he inflicts triple damage with a melee weapon (or quadruple damage when wielding a lance). This benefit does not combine with the Spirited Charge feat.",
+        "level": 2,
+        "seedName": "Deadly Charge (Cavalier)",
+        "stackable": true
+      },
+      "Full Mounted Attack": {
+        "description": "Starting at 6th level, a cavalier riding a mount that moves more than 5 feet but no further than a single move action allows may execute a full attack. This full attack cannot be used in conjunction with a charge.",
+        "level": 6,
+        "seedName": "Full Mounted Attack (Cavalier)"
+      },
+      "Mounted Weapon Bonus (Lance)": {
+        "description": "While fighting from the saddle, a cavalier receives a competence bonus to attack rolls with the specified weapon. The lance bonus begins at +1 at 1st level and increases by an additional +1 for every four levels gained afterward. The sword bonus starts at +1 at 2nd level and likewise improves by +1 every four levels beyond that.",
+        "level": 1,
+        "seedName": "Mounted Weapon Bonus (Lance) (Cavalier)",
+        "stackable": true
+      },
+      "Mounted Weapon Bonus (Sword)": {
+        "description": "",
+        "level": 2,
+        "seedName": "Mounted Weapon Bonus (Sword) (Cavalier)",
+        "stackable": true
+      },
+      "Ride Bonus": {
+        "description": "A cavalier receives a competence bonus to Ride checks, beginning at +2. This bonus increases to +4 at 4th level, +6 at 7th level, and +8 at 9th level.",
+        "level": 1,
+        "seedName": "Ride Bonus (Cavalier)",
+        "stackable": true
+      },
+      "Special Mount": {
+        "description": "For the purpose of determining a paladin's mount capabilities, a cavalier's levels in this class stack with any paladin levels the character possesses.",
+        "level": 1,
+        "seedName": "Special Mount (Cavalier)"
+      },
+      "Unstoppable Charge": {
+        "description": "At 10th level, when performing a deadly charge, the cavalier inflicts quadruple damage with a melee weapon (or quintuple damage when using a lance).",
+        "level": 10,
+        "seedName": "Unstoppable Charge (Cavalier)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "A cavalier is proficient with all simple weapons, all martial weapons, every category of armor (light, medium, and heavy), and shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Cavalier)"
+      }
+    },
+    "occurrenceMap": {
+      "Burst Of Speed": "Burst of Speed",
+      "Courtly Knowledge": "Courtly Knowledge",
+      "Deadly Charge": "Deadly Charge",
+      "Full Mounted Attack": "Full Mounted Attack",
+      "Mounted Weapon Bonus (Lance)": "Mounted Weapon Bonus (Lance)",
+      "Mounted Weapon Bonus (Sword)": "Mounted Weapon Bonus (Sword)",
+      "Ride Bonus": "Ride Bonus",
+      "Special Mount": "Special Mount",
+      "Unstoppable Charge": "Unstoppable Charge"
+    },
+    "overrides": {
+      "description": "The cavalier embodies the pinnacle of mounted combat, serving as the archetypal armored knight astride a warhorse.",
+      "features": {
+        "Burst of Speed": {
+          "description": "Beginning at 3rd level, a cavalier can push his mount beyond its normal charging speed. This doubles the maximum charging distance the mount can cover, up to four times its base speed. The first use each day imposes no ill effects on the mount. However, every subsequent use on the same day forces the mount to attempt a DC 20 Will save once the charge concludes; on a failure, the mount suffers 2d6 points of damage."
+        },
+        "Courtly Knowledge": {
+          "description": "A cavalier applies his class level as a competence bonus to all Knowledge (nobility and royalty) checks."
+        },
+        "Deadly Charge": {
+          "description": "Starting at 2nd level, a cavalier who is mounted and performing a charge action can declare a \"deadly charge\" prior to rolling his attack (meaning a missed attack wastes the attempt). On a successful hit, he inflicts triple damage with a melee weapon (or quadruple damage when wielding a lance). This benefit does not combine with the Spirited Charge feat."
+        },
+        "Full Mounted Attack": {
+          "description": "Starting at 6th level, a cavalier riding a mount that moves more than 5 feet but no further than a single move action allows may execute a full attack. This full attack cannot be used in conjunction with a charge."
+        },
+        "Mounted Weapon Bonus (Lance)": {
+          "description": "While fighting from the saddle, a cavalier receives a competence bonus to attack rolls with the specified weapon. The lance bonus begins at +1 at 1st level and increases by an additional +1 for every four levels gained afterward. The sword bonus starts at +1 at 2nd level and likewise improves by +1 every four levels beyond that."
+        },
+        "Ride Bonus": {
+          "description": "A cavalier receives a competence bonus to Ride checks, beginning at +2. This bonus increases to +4 at 4th level, +6 at 7th level, and +8 at 9th level."
+        },
+        "Special Mount": {
+          "description": "For the purpose of determining a paladin's mount capabilities, a cavalier's levels in this class stack with any paladin levels the character possesses."
+        },
+        "Unstoppable Charge": {
+          "description": "At 10th level, when performing a deadly charge, the cavalier inflicts quadruple damage with a melee weapon (or quintuple damage when using a lance)."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "A cavalier is proficient with all simple weapons, all martial weapons, every category of armor (light, medium, and heavy), and shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Cavaliers are proficient with all simple and martial weapons, all types of armor, and shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A cavalier's class levels stack with any paladin levels the character might have for determining the characteristics of a paladin's mount.",
+        "name": "Special Mount"
+      },
+      {
+        "description": "A cavalier gains a competence bonus on his attack roll when using the indicated weapon while mounted. For the lance, this bonus starts out at +1 at 1st level and increases by +1 every four levels thereafter. For the sword, this bonus starts out at +1 at 2nd level and increases by +1 every four levels thereafter.",
+        "name": "Mounted Weapon Bonus (Lance)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A cavalier gains a competence bonus on Ride checks. This bonus starts out at +2 and improves to +4 at 4th level, +6 at 7th level, and +8 at 9th level.",
+        "name": "Ride Bonus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A cavalier adds his class level to his Knowledge (nobility and royalty) checks as a competence bonus.",
+        "name": "Courtly Knowledge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When mounted and using the charge action, a cavalier of 2nd level or higher may declare a \"deadly charge\" before making his attack roll (thus, a failed attack ruins the attempt). If he hits, he deals triple damage with a melee weapon (or quadruple damage with a lance). This ability does not stack with the benefit of the Spirited Charge feat.",
+        "name": "Deadly Charge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Mounted Weapon Bonus (Sword)"
+      },
+      {
+        "description": "At 3rd level and higher, a cavalier can urge his mount to greater than normal speed when charging. This ability doubles the maximum distance the mount can travel when making a charge, up to four times its speed. This ability can be used once per day without penalty to the mount. Each additional use of the ability in a single day requires the mount to make a DC 20 Will save immediately after the conclusion of the charge; failure results in the mount taking 2d6 points of damage.",
+        "name": "Burst of Speed",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 6th level and higher, a mounted cavalier can make a full attack when his mount moves more than 5 feet but no farther than a single move action would carry it. The cavalier cannot combine this full attack with a charge.",
+        "name": "Full Mounted Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When making a deadly charge, a 10th-level cavalier deals quadruple damage with a melee weapon (or quintuple damage with a lance).",
+        "name": "Unstoppable Charge",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Diplomacy",
+      "Handle Animal",
+      "Intimidate",
+      "Knowledge (Nobility and Royalty)",
+      "Profession",
+      "Ride"
+    ],
+    "description": "Representing the ultimate in mounted warfare, the cavalier is the quintessential knight in shining armor.",
+    "hitDie": "d10",
+    "name": "Cavalier",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any lawful",
+        "bab": 8,
+        "feats": [
+          "Spirited Charge",
+          "Weapon Focus (lance)",
+          "Mounted Combat",
+          "Ride-By Attack"
+        ],
+        "skills": [
+          {
+            "name": "Handle Animal",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (nobility and royalty)",
+            "ranks": 4
+          },
+          {
+            "name": "Ride",
+            "ranks": 6
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +8 Alignment: Any lawful. Skills: Handle Animal 4 ranks, Knowledge (nobility and royalty) 4 ranks, Ride 6 ranks Feats: Spirited Charge, Weapon Focus (lance), Mounted Combat, Ride-By Attack"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Special mount",
+          "mounted weapon bonus (lance) +1",
+          "Ride bonus +2",
+          "courtly knowledge"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Deadly charge 1/day",
+          "mounted weapon bonus (sword) +1"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Burst of speed"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Deadly charge 2/day",
+          "Ride bonus +4"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Mounted weapon bonus (lance) +2"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Deadly charge 3/day",
+          "full mounted attack",
+          "mounted weapon bonus (sword) +2"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Ride bonus +6"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Deadly charge 4/day"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Mounted weapon bonus (lance) +3",
+          "Ride bonus +8"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Unstoppable charge 5/day",
+          "mounted weapon bonus (sword) +3"
+        ],
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

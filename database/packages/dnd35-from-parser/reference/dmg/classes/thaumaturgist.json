@@ -1,0 +1,271 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-20T23:14:17.506Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/thaumaturgist/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "type": "any"
+    },
+    "featNameMap": {
+      "spellfocusconjuration": "Spell Focus (Conjuration)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Improved Ally"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Augment Summoning"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Extended Summoning"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Contingent Conjuration"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Planar Cohort"
+      }
+    ],
+    "hd": 4,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "equal",
+        "target": "feats.spellfocusconjuration.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Thaumaturgist Class Feature",
+    "features": {
+      "Augment Summoning": {
+        "description": "Upon reaching 2nd level, the character receives the Augment Summoning feat as a bonus.",
+        "level": 2,
+        "seedName": "Augment Summoning (Thaumaturgist)"
+      },
+      "Contingent Conjuration": {
+        "description": "At 4th level, the character gains the ability to pre-cast a summoning or calling spell and set it to activate automatically in response to a specified triggering event. This works like the contingency spell: the summoning or calling spell must be cast in advance, and it triggers instantly when the designated conditions are met. For instance, the character might arrange for a barbed devil to be summoned upon being attacked, or for a ghaele eladrin to appear as a messenger if a ruler becomes ill. The trigger conditions must be stated clearly, though they can be broad in scope. Overly complex or convoluted conditions risk causing the contingent conjuration to fail upon activation. Once triggered, the conjuration occurs automatically based on the stated conditions regardless of the character's wishes at that moment, though most conjured creatures can be dismissed as normal. Only one contingent conjuration may be active at any given time.",
+        "level": 4,
+        "seedName": "Contingent Conjuration (Thaumaturgist)"
+      },
+      "Extended Summoning": {
+        "description": "Starting at 3rd level, any spell the character casts from the summoning subschool has its duration doubled, functioning as though the Extend Spell feat were applied. This does not increase the spell's effective level. The duration increase stacks with the Extend Spell feat itself, which does raise the spell's level when applied normally.",
+        "level": 3,
+        "seedName": "Extended Summoning (Thaumaturgist)"
+      },
+      "Improved Ally": {
+        "description": "The character excels at negotiating with extraplanar entities. Whenever he casts a planar ally spell (including its lesser and greater variants), he can attempt a Diplomacy check to persuade the summoned creature to accept reduced compensation. If the Diplomacy result shifts the creature's attitude to helpful, it agrees to work for half the normal fee, provided the requested task does not conflict with its nature. The character's Diplomacy result of 15, for instance, when bargaining with an initially friendly creature of 6 HD, could reduce the payment from 3,000 gp per hour to 1,500 gp per hour for a 7-hour assignment. This ability only functions when the planar ally shares at least one alignment component with the character. Only one such reduced-cost ally can be maintained at a time, though the character may still negotiate with other planar allies at standard rates.",
+        "level": 1,
+        "seedName": "Improved Ally (Thaumaturgist)"
+      },
+      "Planar Cohort": {
+        "description": "At 5th level, the character may use any version of the planar ally spell to summon a creature that serves as a permanent cohort. The summoned creature remains loyal as long as the character continues to champion a cause that matters to it. To acquire a planar cohort, the character must cast the appropriate spell and pay the normal XP cost. An additional offering of 1,000 gp multiplied by the creature's Hit Dice is required to secure its service as a cohort; the Improved Ally ability cannot reduce or waive this cost. The planar cohort's Hit Dice cannot exceed the character's own, and its ECL must be no greater than the character's total level minus 2. For example, a creature with 6 HD and a +5 level adjustment (ECL 11) could serve as cohort to a character of at least 13th level. Only one planar cohort may be maintained at a time, though the character can still form agreements with other summoned creatures normally. A planar cohort replaces any existing cohort gained through the Leadership feat.",
+        "level": 5,
+        "seedName": "Planar Cohort (Thaumaturgist)"
+      },
+      "Spells per Day": {
+        "description": "Each time the character gains a new level in this prestige class, he receives additional spells per day as though he had also advanced one level in a spellcasting class he belonged to prior to entering this class. He does not, however, receive any other class-specific benefits that would normally accompany such a level gain (such as bonus metamagic or item creation feats, or special class abilities). In effect, the prestige class level is added to the level of the character's previous spellcasting class to determine spells per day and caster level. If the character had multiple spellcasting classes before taking this prestige class, he must choose which class benefits from each new level for the purpose of determining spells per day.",
+        "level": 1,
+        "seedName": "Spells per Day (Thaumaturgist)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Thaumaturgist)"
+      }
+    },
+    "occurrenceMap": {
+      "Augment Summoning": "Augment Summoning",
+      "Contingent Conjuration": "Contingent Conjuration",
+      "Extended Summoning": "Extended Summoning",
+      "Improved Ally": "Improved Ally",
+      "Planar Cohort": "Planar Cohort"
+    },
+    "overrides": {
+      "description": "This prestige class specializes in using divine magic to reach across planar boundaries, summoning and bargaining with extraplanar beings to serve the caster's purposes.",
+      "features": {
+        "Augment Summoning": {
+          "description": "Upon reaching 2nd level, the character receives the Augment Summoning feat as a bonus."
+        },
+        "Contingent Conjuration": {
+          "description": "At 4th level, the character gains the ability to pre-cast a summoning or calling spell and set it to activate automatically in response to a specified triggering event. This works like the contingency spell: the summoning or calling spell must be cast in advance, and it triggers instantly when the designated conditions are met. For instance, the character might arrange for a barbed devil to be summoned upon being attacked, or for a ghaele eladrin to appear as a messenger if a ruler becomes ill. The trigger conditions must be stated clearly, though they can be broad in scope. Overly complex or convoluted conditions risk causing the contingent conjuration to fail upon activation. Once triggered, the conjuration occurs automatically based on the stated conditions regardless of the character's wishes at that moment, though most conjured creatures can be dismissed as normal. Only one contingent conjuration may be active at any given time."
+        },
+        "Extended Summoning": {
+          "description": "Starting at 3rd level, any spell the character casts from the summoning subschool has its duration doubled, functioning as though the Extend Spell feat were applied. This does not increase the spell's effective level. The duration increase stacks with the Extend Spell feat itself, which does raise the spell's level when applied normally."
+        },
+        "Improved Ally": {
+          "description": "The character excels at negotiating with extraplanar entities. Whenever he casts a planar ally spell (including its lesser and greater variants), he can attempt a Diplomacy check to persuade the summoned creature to accept reduced compensation. If the Diplomacy result shifts the creature's attitude to helpful, it agrees to work for half the normal fee, provided the requested task does not conflict with its nature. The character's Diplomacy result of 15, for instance, when bargaining with an initially friendly creature of 6 HD, could reduce the payment from 3,000 gp per hour to 1,500 gp per hour for a 7-hour assignment. This ability only functions when the planar ally shares at least one alignment component with the character. Only one such reduced-cost ally can be maintained at a time, though the character may still negotiate with other planar allies at standard rates."
+        },
+        "Planar Cohort": {
+          "description": "At 5th level, the character may use any version of the planar ally spell to summon a creature that serves as a permanent cohort. The summoned creature remains loyal as long as the character continues to champion a cause that matters to it. To acquire a planar cohort, the character must cast the appropriate spell and pay the normal XP cost. An additional offering of 1,000 gp multiplied by the creature's Hit Dice is required to secure its service as a cohort; the Improved Ally ability cannot reduce or waive this cost. The planar cohort's Hit Dice cannot exceed the character's own, and its ECL must be no greater than the character's total level minus 2. For example, a creature with 6 HD and a +5 level adjustment (ECL 11) could serve as cohort to a character of at least 13th level. Only one planar cohort may be maintained at a time, though the character can still form agreements with other summoned creatures normally. A planar cohort replaces any existing cohort gained through the Leadership feat."
+        },
+        "Spells per Day": {
+          "description": "Each time the character gains a new level in this prestige class, he receives additional spells per day as though he had also advanced one level in a spellcasting class he belonged to prior to entering this class. He does not, however, receive any other class-specific benefits that would normally accompany such a level gain (such as bonus metamagic or item creation feats, or special class abilities). In effect, the prestige class level is added to the level of the character's previous spellcasting class to determine spells per day and caster level. If the character had multiple spellcasting classes before taking this prestige class, he must choose which class benefits from each new level for the purpose of determining spells per day."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This class does not grant proficiency with any weapons or armor."
+        }
+      },
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.spellfocusconjuration.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.divine",
+          "value": "3",
+          "valueType": "number"
+        }
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Thaumaturgists gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new thaumaturgist level is gained, the character gains new spells per day as if he had also gained a level in whatever spellcasting class he belonged to before he added the prestige class. He does not, however, gain any other benefit a character of that class would have gained (bonus metamagic or item creation feats, bard or assassin abilities, and so on). This essentially means that he adds the level of thaumaturgist to the level of whatever other spellcasting class the character has, then determines spells per day and caster level accordingly. If a character had more than one spellcasting class before he became a thaumaturgist, he must decide to which class he adds each level of thaumaturgist for the purpose of determining spells per day.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "A thaumaturgist is adept at convincing creatures from other planes to do his bidding. When a thaumaturgist casts a planar ally spell (including the lesser and greater versions), he makes a Diplomacy check to convince the creature to aid him for a reduced payment. If the thaumaturgist's Diplomacy check adjusts the creature's attitude to helpful, the creature will work for 50% of the standard fee, as long as the task is one that is not against its nature. For example, a 1st-level thaumaturgist negotiating with an initially friendly planar ally that gets a Diplomacy check result of 15 can convince a 6 HD creature to perform a 7-hour task for only 1,500 gp per hour (a 6 HD creature would ordinarily ask for 3,000 gp per hour). The thaumaturgist's improved ally class feature only works when the planar ally shares at least one aspect of alignment with the thaumaturgist. A thaumaturgist can have only one such ally at a time, but he may bargain for tasks from other planar allies normally.",
+        "name": "Improved Ally"
+      },
+      {
+        "description": "At 2nd level, a thaumaturgist gains the Augment Summoning feat.",
+        "name": "Augment Summoning"
+      },
+      {
+        "description": "At 3rd level and higher, all spells from the summoning subschool that the thaumaturgist casts have their durations doubled, as if the Extend Spell feat had been applied to them. The levels of the summoning spells don't change, however. This ability stacks with the effect of the Extend Spell feat, which does change the spell's level.",
+        "name": "Extended Summoning"
+      },
+      {
+        "description": "A 4th-level thaumaturgist can prepare a summoning or calling spell ahead of time to be triggered by some other event. This functions as described for the contingency spell, including having the thaumaturgist cast the summoning or calling spell beforehand. The spell is cast instantly when the trigger event occurs. For example, a thaumaturgist could use the contingent conjuration ability to summon a barbed devil the next time he is attacked, or call a ghaele eladrin to act as messenger if the king falls ill. The conditions needed to bring the spell into effect must be clear, although they can be general. If complicated or convoluted condition as are prescribed, the contingent conjuration may fail when triggered. The conjuration spell occurs based solely on the stated conditions, regardless of whether the thaumaturgist wants it to, although most conjurations can be dismissed normally. A thaumaturgist can have only one contingent conjuration active at a time.",
+        "name": "Contingent Conjuration"
+      },
+      {
+        "description": "A 5th-level thaumaturgist can use any of the planar ally spells to call a creature to act as his cohort. The called creature serves loyally and well as long as the thaumaturgist continues to advance a cause important to the creature. For example, a 5th-level thaumaturgist could use planar ally to call a bralani eladrin to act as his cohort. As long as the thaumaturgist undertakes quests and missions to fight evil and uphold good, the eladrin will loyally serve. To call a planar cohort, the thaumaturgist must cast the relevant spell, paying the XP costs normally. It takes an offering of 1,000 gp Ã- the HD of the creature to convince it to serve as a planar cohort, and the improved ally class feature can't be used to reduce or eliminate this cost. The planar cohort can't have more Hit Dice than the thaumaturgist has, and must have an ECL no higher than the thaumaturgist's character level ?2. A bralani eladrin has an ECL of 11 (6 Hit Dice and +5 level adjustment), so it might serve as a planar cohort to an 8th-level cleric/5th-level thaumaturgist (character level 13th). A thaumaturgist can have only one planar cohort at a time, but he can continue to make agreements with other called creatures normally. A planar cohort replaces a thaumaturgist's existing cohort, if he has one by virtue of the Leadership feat (pa",
+        "name": "Planar Cohort"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Sense Motive",
+      "Speak Language",
+      "Spellcraft"
+    ],
+    "description": "The thaumaturgist reaches out with divine power to other planes of existence, calling creatures there to do his bidding.",
+    "hitDie": "d4",
+    "name": "Thaumaturgist",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Spell Focus (Conjuration)"
+        ]
+      },
+      "text": "Feats: Spell Focus (Conjuration) Spells: Able to cast lesser planar ally."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Improved ally"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Augment Summoning"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Extended summoning"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Contingent conjuration"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Planar cohort"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

@@ -1,0 +1,404 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T14:00:11.050Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/entropomancer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {
+      "greatfortitude": "Great Fortitude",
+      "magicalaptitude": "Magical Aptitude"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5
+        ],
+        "name": "Shard Of Entropy"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Entropic Field"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Entropic Field (Reroll)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Entropic Field (Wounding)"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Shard Of Entropy (7d6, Consuming)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Control Sphere"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.greatfortitude.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.magicalaptitude.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Entropomancer Class Feature",
+    "features": {
+      "Control Sphere": {
+        "description": "Upon reaching 10th level, the entropomancer gains the power to direct a sphere of annihilation as though wielding a talisman of the sphere. Additionally, a sphere of annihilation has no effect on the entropomancer personally, passing harmlessly through the entropomancer's space as though it were empty.",
+        "level": 10,
+        "seedName": "Control Sphere (Entropomancer)"
+      },
+      "Entropic Field": {
+        "description": "By spending a standard action, the entropomancer generates an invisible aura of entropic energy that persists for 1 round per entropomancer level. This aura extends outward in a radius of 5 feet per entropomancer level, centered on the entropomancer. Any magical healing attempted within the field automatically fails. Dismissing the field requires a standard action. Starting at 5th level, the entropic field grows powerful enough to distort probability itself. Once per round as a free action, the entropomancer may compel any creature within the field (including the entropomancer) to reroll a single attack roll, saving throw, or skill check. The entropomancer chooses to impose this reroll after learning whether the original roll succeeded or failed, but before specific results are determined and applied. The reroll's result stands regardless of whether it is better or worse than the original. Beginning at 7th level, wounds inflicted within the entropic field refuse to close, inflicting 1 additional point of damage each round thereafter (at the end of the entropomancer's turn) for as long as the wounded creature remains inside the field. A DC 15 Heal check stanches the bleeding. Creatures suffering from multiple such wounds take 1 point of damage per open wound. The entropomancer is not exempt from this bleeding effect.",
+        "level": 3,
+        "seedName": "Entropic Field (Entropomancer)",
+        "stackable": true
+      },
+      "Entropic Field (Reroll)": {
+        "description": "",
+        "level": 5,
+        "seedName": "Entropic Field (Reroll) (Entropomancer)"
+      },
+      "Entropic Field (Wounding)": {
+        "description": "",
+        "level": 7,
+        "seedName": "Entropic Field (Wounding) (Entropomancer)"
+      },
+      "Shard of Entropy": {
+        "description": "The entropomancer can conjure a small shard of entropy twice per day, lasting up to 1 round per entropomancer level. This shard manifests as a 2-inch sphere of pure blackness and can be directed up to 30 feet as a standard action. When used against objects, it inflicts 3d6 points of damage while ignoring the object's hardness. To strike a creature, the entropomancer makes a ranged touch attack; on a hit, the shard inflicts 3d6 points of damage (Fortitude half, DC 12 + the entropomancer's Wis modifier). The shard initially appears in any square adjacent to the entropomancer and may be used to attack in the same round it is formed. The shard jitters and bounces erratically within its square. Any creature passing through the shard's square suffers damage as though struck (Fortitude half), and any creature occupying the shard's square at the start of the entropomancer's turn takes the same damage. The entropomancer may relocate the shard to a different square with a move action, or direct it at a particular creature (inflicting damage immediately) as a standard action. At 5th level, the shard forges a stronger link to absolute nothingness and its damage increases to 5d6 (Fortitude half, DC 14 + entropomancer's Wis modifier). At 9th level, the shard's damage rises to 7d6 (Fortitude half, DC 16 + entropomancer's Wis modifier). It also generates a powerful gravitational pull on nearby creatures, drawing them toward it. At the end of the entropomancer's turn, the shard attempts to drag all creatures within 15 feet toward itself. This functions as a bull rush with a +11 bonus. If the shard succeeds on the opposed check, it pulls the creature in a straight line toward the shard's square. The entropomancer is not immune to this pulling effect.",
+        "level": 1,
+        "seedName": "Shard of Entropy (Entropomancer)",
+        "stackable": true
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each even-numbered entropomancer level, the character receives additional spells per day (and spells known, if relevant) as though gaining a level in a divine spellcasting class in which the character could cast 4th-level spells prior to taking this prestige class. No other class benefits are gained from this advancement. A character who qualified through multiple divine spellcasting classes capable of 4th-level spells must choose which class benefits from each even-numbered entropomancer level for purposes of spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Entropomancer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class provides no additional proficiency with any weapons, armor, or shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Entropomancer)"
+      }
+    },
+    "occurrenceMap": {
+      "Control Sphere": "Control Sphere",
+      "Entropic Field": "Entropic Field",
+      "Entropic Field (Reroll)": "Entropic Field",
+      "Entropic Field (Wounding)": "Entropic Field",
+      "Shard Of Entropy": "Shard of Entropy",
+      "Shard Of Entropy (7d6, Consuming)": "Shard of Entropy"
+    },
+    "overrides": {
+      "description": "Those who walk this path become attuned to the primordial void that they believe resides at the heart of all existence.",
+      "features": {
+        "Control Sphere": {
+          "description": "Upon reaching 10th level, the entropomancer gains the power to direct a sphere of annihilation as though wielding a talisman of the sphere. Additionally, a sphere of annihilation has no effect on the entropomancer personally, passing harmlessly through the entropomancer's space as though it were empty."
+        },
+        "Entropic Field": {
+          "description": "By spending a standard action, the entropomancer generates an invisible aura of entropic energy that persists for 1 round per entropomancer level. This aura extends outward in a radius of 5 feet per entropomancer level, centered on the entropomancer. Any magical healing attempted within the field automatically fails. Dismissing the field requires a standard action. Starting at 5th level, the entropic field grows powerful enough to distort probability itself. Once per round as a free action, the entropomancer may compel any creature within the field (including the entropomancer) to reroll a single attack roll, saving throw, or skill check. The entropomancer chooses to impose this reroll after learning whether the original roll succeeded or failed, but before specific results are determined and applied. The reroll's result stands regardless of whether it is better or worse than the original. Beginning at 7th level, wounds inflicted within the entropic field refuse to close, inflicting 1 additional point of damage each round thereafter (at the end of the entropomancer's turn) for as long as the wounded creature remains inside the field. A DC 15 Heal check stanches the bleeding. Creatures suffering from multiple such wounds take 1 point of damage per open wound. The entropomancer is not exempt from this bleeding effect."
+        },
+        "Shard of Entropy": {
+          "description": "The entropomancer can conjure a small shard of entropy twice per day, lasting up to 1 round per entropomancer level. This shard manifests as a 2-inch sphere of pure blackness and can be directed up to 30 feet as a standard action. When used against objects, it inflicts 3d6 points of damage while ignoring the object's hardness. To strike a creature, the entropomancer makes a ranged touch attack; on a hit, the shard inflicts 3d6 points of damage (Fortitude half, DC 12 + the entropomancer's Wis modifier). The shard initially appears in any square adjacent to the entropomancer and may be used to attack in the same round it is formed. The shard jitters and bounces erratically within its square. Any creature passing through the shard's square suffers damage as though struck (Fortitude half), and any creature occupying the shard's square at the start of the entropomancer's turn takes the same damage. The entropomancer may relocate the shard to a different square with a move action, or direct it at a particular creature (inflicting damage immediately) as a standard action. At 5th level, the shard forges a stronger link to absolute nothingness and its damage increases to 5d6 (Fortitude half, DC 14 + entropomancer's Wis modifier). At 9th level, the shard's damage rises to 7d6 (Fortitude half, DC 16 + entropomancer's Wis modifier). It also generates a powerful gravitational pull on nearby creatures, drawing them toward it. At the end of the entropomancer's turn, the shard attempts to drag all creatures within 15 feet toward itself. This functions as a bull rush with a +11 bonus. If the shard succeeds on the opposed check, it pulls the creature in a straight line toward the shard's square. The entropomancer is not immune to this pulling effect."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "At each even-numbered entropomancer level, the character receives additional spells per day (and spells known, if relevant) as though gaining a level in a divine spellcasting class in which the character could cast 4th-level spells prior to taking this prestige class. No other class benefits are gained from this advancement. A character who qualified through multiple divine spellcasting classes capable of 4th-level spells must choose which class benefits from each even-numbered entropomancer level for purposes of spells per day and spells known."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class provides no additional proficiency with any weapons, armor, or shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Entropomancers gain no proficiency with weapons, armor, or shields of any type.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Whenever an even-numbered level in the prestige class is gained, the entropomancer gains new spells per day (and spells known, if applicable) as if she had also gained a level in whatever spellcasting class in which he could cast 4th-level divine spells before she added the prestige class level. She does not, however, gain any other benefit a character of that class would have gained. If a character had more than one divine spellcasting class in which she could cast 4th-level spells before she became an entropomancer, she must decide to which class she adds each level of entropomancer for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Twice per day, for a maximum of 1 round per entropomancer level, the character can create a miniature shard of entropy. The shard is a chunk of absolute blackness, 2 inches across, and can be moved up to 30 feet by the entropomancer as a standard action. Against objects, the shard deals 3d6 points of damage, bypassing the object's hardness. Against creatures, the entropomancer must make a ranged touch attack to hit, and if successful the shard deals 3d6 points of damage to the target (Fortitude half, DC 12 + the entropomancer's Wis modifier). The shard appears in any square adjacent to the entropomancer when it is created, and it can be used to attack on the round it is formed. The shard of entropy lurches, jumps, and bounces around the square it's in. Any creature who passes through the shard's square takes damage as if the shard struck him (Fortitude half), as does any creature that's in the same square as the shard at the beginning of the entropomancer's turn. The entropomancer can move the shard into another square with a move action, or aim it at a specific creature (dealing damage immediately) as a standard action. At 5th level, the entropomancer can use the shard to create a deeper connection to absolute nothingness. The shard of entropy deals 5d6 points of damage (Fortitude half, DC 14 + entropomancer's Wis modifier). At 9th level, the shard of entropy becomes even stronger, dealing 7d6 points of damage (Fortitude half, DC 16 + entropomancer's Wis modifier). It also exerts an inexorable tug on creatures nearby, pulling them toward the shard. At the end of the entropomancer's turn, the shard tries to pull creatures within 15 feet closer to it. This is treated as a bull rush attempt, for which the shard has a +11 bonus. If the shard wins the opposed check, it bull rushes creatures in a direct line toward its square. The entropomancer isn't immune to this effect.",
+        "name": "Shard of Entropy",
+        "type": "(Su)"
+      },
+      {
+        "description": "As a standard action, an entropomancer can surround herself with a field of invisible, entropic energy that lasts for 1 round per entropomancer level. The field extends in a 5-foot per entropomancer level radius, centered on the entropomancer. All magical healing automatically fails within the entropic field. It takes the entropomancer a standard action to dismiss the entropic field. At 5th level, the entropic field becomes strong enough to warp the laws of probability. Once per round, as a free action, the entropomancer can force a character within the field (including herself) to reroll an attack, save, or check. The entropomancer demands the reroll after she knows whether the attack, save, or check succeeded or failed, but before the exact consequences have been calculated and applied. The result of the reroll takes precedence, even if it's worse than the original roll. At 7th level, the entropic field causes wounds created within it to continue bleeding, dealing an additional 1 point of damage per round thereafter (at the end of the entropomancer's turn) as long as they remain within the entropic field. A successful Heal check (DC 15) stops the bleeding. If multiple wounds are suffered, then the creature takes 1 point of damage per wound. The entropomancer is subject to the bleeding effect.",
+        "name": "Entropic Field",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Entropic Field (Reroll)"
+      },
+      {
+        "description": "",
+        "name": "Entropic Field (Wounding)"
+      },
+      {
+        "description": "At level 10, the entropomancer has the ability to control a sphere of annihilation as if he were using a talisman of the sphere, and the entropomancer is personally unaffected by a sphere of annihilation, which passes through him as if his square was completely empty. High-level entropomancers are often obsessed with acquiring spheres of anni",
+        "name": "Control Sphere",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Heal",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (Local)",
+      "Knowledge (Religion)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "Entropomancers gain attunement to the great nothingness they say lies at the center of the universe.",
+    "hitDie": "d8",
+    "name": "Entropomancer",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nongood",
+        "casterLevel": [
+          {
+            "level": 4,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Great Fortitude",
+          "Magical Aptitude"
+        ],
+        "skills": [
+          {
+            "name": "Concentration",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Alignment: Any nongood Skills: Concentration 5 ranks, Knowledge (arcana) 5 ranks Feats: Great Fortitude, Magical Aptitude Spells: Able to cast 4th-level divine spells."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Shard of entropy 2/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Entropic field 2/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Entropic field (reroll)",
+          "shard of entropy (5d6)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Entropic field (wounding)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Shard of entropy (7d6, consuming)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Control sphere"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

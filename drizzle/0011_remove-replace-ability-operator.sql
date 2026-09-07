@@ -1,0 +1,3 @@
+DELETE FROM "customization"."modifiers" WHERE "operator" = 'replace_ability';--> statement-breakpoint
+ALTER TABLE "customization"."modifiers" DROP CONSTRAINT "modifiers_operator_check";--> statement-breakpoint
+ALTER TABLE "customization"."modifiers" ADD CONSTRAINT "modifiers_operator_check" CHECK (operator = ANY (ARRAY['add'::text, 'subtract'::text, 'multiply'::text, 'divide'::text, 'set'::text]));

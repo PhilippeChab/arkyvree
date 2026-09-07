@@ -1,0 +1,506 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T14:00:12.057Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/radiant-servant-of-pelor/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {
+      "extraturning": "Extra Turning"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Extra Greater Turning"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Radiance"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Turn Undead"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Divine Health"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Empower Healing"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Aura Of Warding"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Bonus Domain"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Maximize Healing"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Positive Energy Burst"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Supreme Healing"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.heal.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "9",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.extraturning.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.beliefs.alignment",
+        "value": "Neutral Good",
+        "valueType": "string"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "saves.will.base",
+        "value": "5",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "unresolvedAptitudePicks": [
+      "Bonus Domain"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Radiant Servant of Pelor Class Feature",
+    "features": {
+      "Aura of Warding": {
+        "description": "Starting at 3rd level, a radiant servant and all allies within 10 feet of him gain a +2 morale bonus on all Will saving throws.",
+        "level": 3,
+        "seedName": "Aura of Warding (Radiant Servant of Pelor)"
+      },
+      "Bonus Domain": {
+        "description": "A radiant servant who reaches 5th level is granted another of Pelor's domains as a third cleric domain, or he can choose the Glory or Purification domain. He can use the granted power of the new domain, and he can choose from the spell lists of three domains when selecting his domain spells for the day.",
+        "level": 5,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.clericdomain.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Bonus Domain (Radiant Servant of Pelor)"
+      },
+      "Divine Health": {
+        "description": "A radiant servant of Pelor who is at least 2nd level is immune to all diseases, including magical diseases such as mummy rot and lycanthropy.",
+        "level": 2,
+        "seedName": "Divine Health (Radiant Servant of Pelor)"
+      },
+      "Empower Healing": {
+        "description": "When a radiant servant of Pelor of at least 2nd level casts a domain spell from the Healing domain, that spell is affected as though by the Empower Spell feat. This spell does not use up a higher-level slot.",
+        "level": 2,
+        "seedName": "Empower Healing (Radiant Servant of Pelor)"
+      },
+      "Extra Greater Turning": {
+        "description": "The radiant servant of Pelor can perform a greater turning (the granted power of the Sun domain) a number of times per day equal to 3 + her Charisma modifier.",
+        "level": 1,
+        "seedName": "Extra Greater Turning (Radiant Servant of Pelor)"
+      },
+      "Maximize Healing": {
+        "description": "When a radiant servant of Pelor who is at least 6th level casts a domain spell from the Healing domain that spell is affected as though by the Maximize Spell feat. The spell does not use up a higher-level slot. This power supersedes the empower healing ability until the character reaches 10th level.",
+        "level": 6,
+        "seedName": "Maximize Healing (Radiant Servant of Pelor)"
+      },
+      "Positive Energy Burst": {
+        "description": "As a standard action, a radiant servant of Pelor who is at least 8th level can create a positive energy burst that deals 1d6 points of damage per class level to all undead creatures within 100 feet of the character. Undead are allowed a Reflex save (DC equal to 10 + the class level of the radiant servant) to avoid half the damage. This supernatural ability uses up two turning attempts. A radiant servant cannot use this ability if he has fewer than two turning attempts left for the day.",
+        "level": 8,
+        "seedName": "Positive Energy Burst (Radiant Servant of Pelor)"
+      },
+      "Radiance": {
+        "description": "When a radiant servant of Pelor casts any spell with the light descriptor, the radius of illumination is doubled, and the spell is treated as if it were one level higher than it actually is for all purposes, including determining whether it can counter or dispel a spell with the darkness descriptor. Thus, a daylight spell cast by a radiant servant sheds light in a 120-foot radius and is treated as a 4th-level spell, allowing it to counter or dispel any darkness spell of 4th level or lower.",
+        "level": 1,
+        "seedName": "Radiance (Radiant Servant of Pelor)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "When a new radiant servant of Pelor level is gained, the character gains new spells per day (and spells known, if applicable) as if he had also gained a level in whatever spellcasting class he belonged to before he added the prestige class. He does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, wild shape ability, and so on). This essentially means that he adds the level of radiant servant of Pelor to the level of whatever other spellcasting class the character has, then determines spells per day and spells known accordingly. If a character had more than one spellcasting class in which he could cast 1st-level divine spells before he became a radiant servant of Pelor, the player must decide which class to assign each level of radiant servant of Pelor for the purpose of determining spells per day.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Radiant Servant of Pelor)"
+      },
+      "Supreme Healing": {
+        "description": "When a radiant servant of Pelor who is at least 10th level casts a domain spell from the Healing domain, that spell is affected as though by both the Empower Spell and the Maximize Spell feats. The spell does not use up a higher-level slot.",
+        "level": 10,
+        "seedName": "Supreme Healing (Radiant Servant of Pelor)"
+      },
+      "Turn Undead": {
+        "description": "A radiant servant of Pelor adds his radiant servant class levels to his cleric levels for all purposes related to turning undead.",
+        "level": 1,
+        "seedName": "Turn Undead (Radiant Servant of Pelor)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Radiant servants of Pelor are proficient with all simple and martial weapons, with all armor, and with shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Radiant Servant of Pelor)"
+      }
+    },
+    "occurrenceMap": {
+      "Aura Of Warding": "Aura of Warding",
+      "Bonus Domain": "Bonus Domain",
+      "Divine Health": "Divine Health",
+      "Empower Healing": "Empower Healing",
+      "Extra Greater Turning": "Extra Greater Turning",
+      "Maximize Healing": "Maximize Healing",
+      "Positive Energy Burst": "Positive Energy Burst",
+      "Radiance": "Radiance",
+      "Supreme Healing": "Supreme Healing",
+      "Turn Undead": "Turn Undead"
+    },
+    "overrides": {
+      "aptitudePicks": [
+        {
+          "levels": [
+            5
+          ],
+          "target": "aptitudes.clericdomain.allowed"
+        }
+      ],
+      "description": "Radiant servants of Pelor embody their faith's teachings by channeling divine solar power through acts of generosity and humble service.",
+      "features": {
+        "Bonus Domain": {
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "aptitudes.clericdomain.allowed",
+              "value": "1",
+              "valueType": "number"
+            }
+          ]
+        }
+      },
+      "reviewed": [
+        "Bonus Domain"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Radiant servants of Pelor are proficient with all simple and martial weapons, with all armor, and with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new radiant servant of Pelor level is gained, the character gains new spells per day (and spells known, if applicable) as if he had also gained a level in whatever spellcasting class he belonged to before he added the prestige class. He does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, wild shape ability, and so on). This essentially means that he adds the level of radiant servant of Pelor to the level of whatever other spellcasting class the character has, then determines spells per day and spells known accordingly. If a character had more than one spellcasting class in which he could cast 1st-level divine spells before he became a radiant servant of Pelor, the player must decide which class to assign each level of radiant servant of Pelor for the purpose of determining spells per day.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "The radiant servant of Pelor can perform a greater turning (the granted power of the Sun domain) a number of times per day equal to 3 + her Charisma modifier.",
+        "name": "Extra Greater Turning"
+      },
+      {
+        "description": "When a radiant servant of Pelor casts any spell with the light descriptor, the radius of illumination is doubled, and the spell is treated as if it were one level higher than it actually is for all purposes, including determining whether it can counter or dispel a spell with the darkness descriptor. Thus, a daylight spell cast by a radiant servant sheds light in a 120-foot radius and is treated as a 4th-level spell, allowing it to counter or dispel any darkness spell of 4th level or lower.",
+        "name": "Radiance"
+      },
+      {
+        "description": "A radiant servant of Pelor adds his radiant servant class levels to his cleric levels for all purposes related to turning undead.",
+        "name": "Turn Undead"
+      },
+      {
+        "description": "A radiant servant of Pelor who is at least 2nd level is immune to all diseases, including magical diseases such as mummy rot and lycanthropy.",
+        "name": "Divine Health",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a radiant servant of Pelor of at least 2nd level casts a domain spell from the Healing domain, that spell is affected as though by the Empower Spell feat. This spell does not use up a higher-level slot.",
+        "name": "Empower Healing",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, a radiant servant and all allies within 10 feet of him gain a +2 morale bonus on all Will saving throws.",
+        "name": "Aura of Warding",
+        "type": "(Su)"
+      },
+      {
+        "description": "A radiant servant who reaches 5th level is granted another of Pelor's domains as a third cleric domain, or he can choose the Glory or Purification domain. He can use the granted power of the new domain, and he can choose from the spell lists of three domains when selecting his domain spells for the day.",
+        "name": "Bonus Domain"
+      },
+      {
+        "description": "When a radiant servant of Pelor who is at least 6th level casts a domain spell from the Healing domain that spell is affected as though by the Maximize Spell feat. The spell does not use up a higher-level slot. This power supersedes the empower healing ability until the character reaches 10th level.",
+        "name": "Maximize Healing",
+        "type": "(Ex)"
+      },
+      {
+        "description": "As a standard action, a radiant servant of Pelor who is at least 8th level can create a positive energy burst that deals 1d6 points of damage per class level to all undead creatures within 100 feet of the character. Undead are allowed a Reflex save (DC equal to 10 + the class level of the radiant servant) to avoid half the damage. This supernatural ability uses up two turning attempts. A radiant servant cannot use this ability if he has fewer than two turning attempts left for the day.",
+        "name": "Positive Energy Burst",
+        "type": "(Su)"
+      },
+      {
+        "description": "When a radiant servant of Pelor who is at least 10th level casts a domain spell from the Healing domain, that spell is affected as though by both the Empower Spell and the Maximize Spell feats. The spell does not use up a higher-level slot.",
+        "name": "Supreme Healing",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Heal",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "The radiant servants of Pelor put the dogma of demonstrating strength through charity and modesty into living practice.",
+    "hitDie": "d6",
+    "name": "Radiant Servant of Pelor",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Neutral good",
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Extra Turning"
+        ],
+        "saves": [
+          {
+            "base": 5,
+            "name": "will"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Heal",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 9
+          }
+        ],
+        "special": [
+          "Must have Pelor as patron deity. (Adapt as desired for sun god of the setting.)",
+          "Pelor as patron deity"
+        ]
+      },
+      "text": "Alignment: Neutral good Skills: Heal 5 ranks, Knowledge (religion) 9 ranks Feats: Extra Turning Base Save Bonus: Will +5.Spells: Able to cast 1st-level divine spells and access to the Sun domain.Special: Must have Pelor as patron deity. (Adapt as desired for sun god of the setting.)"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Extra greater turning",
+          "radiance",
+          "turn undead"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Divine health",
+          "empower healing"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Aura of warding"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Bonus domain"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Maximize healing"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Positive energy burst"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Supreme healing"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

@@ -1,0 +1,435 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:27:28.333Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/dweomerkeeper/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          4,
+          6,
+          8,
+          10
+        ],
+        "target": "aptitudes.dweomerkeepersupernaturalspell.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Mantle Of Spells 1"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Arcane Sight"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Mantle Of Spells 2"
+      },
+      {
+        "levels": [
+          4,
+          6,
+          8,
+          10
+        ],
+        "name": "Supernatural Spell"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Mantle Of Spells 3"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Mantle Of Spells 4"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Mantle Of Spells 5"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Cloak Of Mysteries"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.itemcreation.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.metamagic.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "unresolvedAptitudePicks": [
+      "Mantle Of Spells 1"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Dweomerkeeper Class Feature",
+    "features": {
+      "Arcane Sight": {
+        "description": "Beginning at 2nd level, the dweomerkeeper gains the ability to use arcane sight at will. This functions identically to the spell of the same name, with the exception that it persists only as long as the dweomerkeeper maintains concentration.",
+        "level": 2,
+        "seedName": "Arcane Sight (Dweomerkeeper)"
+      },
+      "Cloak of Mysteries": {
+        "description": "Upon reaching 10th level, the dweomerkeeper becomes enveloped in a perpetual flow of magical energy, reducing the cost of all metamagic feats she currently possesses or later acquires. The spell slot increase required to apply any metamagic feat is lowered by 1 (to a minimum of +1 level, or +0 if the feat normally has no level adjustment). For instance, a quickened fireball would occupy a 6th-level slot (+3 levels) rather than the standard 7th-level slot (+4 levels), while a silent fireball would still require a 4th-level slot (+1 level). The Heighten Spell feat is not affected by this reduction.",
+        "level": 10,
+        "seedName": "Cloak of Mysteries (Dweomerkeeper)"
+      },
+      "Mantle of Spells 1": {
+        "description": "Starting at 1st level, the dweomerkeeper establishes a personal reservoir of arcane and/or divine magic. She selects one arcane or divine spell from her available spells, and from that point forward she may sacrifice any prepared spell of the same type (arcane or divine) whose level equals or exceeds the chosen spell's level to spontaneously cast the selected spell instead. This works identically to how a good-aligned cleric can spontaneously channel prepared spells into healing magic. At each subsequent odd-numbered dweomerkeeper level, she selects an additional spell to include in her reservoir.",
+        "level": 1,
+        "seedName": "Mantle of Spells 1 (Dweomerkeeper)"
+      },
+      "Mantle of Spells 2": {
+        "description": "",
+        "level": 3,
+        "seedName": "Mantle of Spells 2 (Dweomerkeeper)"
+      },
+      "Mantle of Spells 3": {
+        "description": "",
+        "level": 5,
+        "seedName": "Mantle of Spells 3 (Dweomerkeeper)"
+      },
+      "Mantle of Spells 4": {
+        "description": "",
+        "level": 7,
+        "seedName": "Mantle of Spells 4 (Dweomerkeeper)"
+      },
+      "Mantle of Spells 5": {
+        "description": "",
+        "level": 9,
+        "seedName": "Mantle of Spells 5 (Dweomerkeeper)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Each time the dweomerkeeper advances in level, she gains additional spells per day (and spells known, where applicable) as though she had also gained a level in a spellcasting class she belonged to prior to taking this prestige class. She does not, however, receive any other class benefits that would normally accompany such a level gain (such as improved turning ability, bonus metamagic or item creation feats, and so forth). Her dweomerkeeper level stacks with levels in her previous spellcasting class for determining spells per day, spells known, and caster level. If she had multiple spellcasting classes before becoming a dweomerkeeper, she must choose which class receives each new dweomerkeeper level for the purpose of calculating spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Dweomerkeeper)"
+      },
+      "Supernatural Spell": {
+        "description": "At 4th level, the dweomerkeeper's connection to the essence of magic is so deep that she can channel spell effects with virtually no exertion. Once per day, as a standard action, she may cast any single spell that has a casting time of 1 standard action or less as though it were a supernatural ability. The spell must be one she currently has available (meaning she has it prepared, or she knows it and has an unused spell slot of the proper level), though she can choose to invoke this power at the instant of casting. The spell takes effect and is expended as normal, but the dweomerkeeper needs no components, does not draw attacks of opportunity, and bypasses the target's spell resistance entirely, exactly as if she were activating a supernatural ability rather than casting a spell. She gains one additional daily use of this power at every even-numbered dweomerkeeper level beyond 4th.",
+        "level": 4,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.dweomerkeepersupernaturalspell.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Supernatural Spell (Dweomerkeeper)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons, armor, or shields.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Dweomerkeeper)"
+      }
+    },
+    "occurrenceMap": {
+      "Arcane Sight": "Arcane Sight",
+      "Cloak Of Mysteries": "Cloak of Mysteries",
+      "Mantle Of Spells 1": "Mantle of Spells 1",
+      "Mantle Of Spells 2": "Mantle of Spells 2",
+      "Mantle Of Spells 3": "Mantle of Spells 3",
+      "Mantle Of Spells 4": "Mantle of Spells 4",
+      "Mantle Of Spells 5": "Mantle of Spells 5",
+      "Supernatural Spell": "Supernatural Spell"
+    },
+    "overrides": {
+      "aptitudePicks": [],
+      "description": "Dweomerkeepers serve as guardians devoted to protecting the fabric of magic from those who would damage or corrupt it.",
+      "features": {
+        "Arcane Sight": {
+          "description": "Beginning at 2nd level, the dweomerkeeper gains the ability to use arcane sight at will. This functions identically to the spell of the same name, with the exception that it persists only as long as the dweomerkeeper maintains concentration."
+        },
+        "Cloak of Mysteries": {
+          "description": "Upon reaching 10th level, the dweomerkeeper becomes enveloped in a perpetual flow of magical energy, reducing the cost of all metamagic feats she currently possesses or later acquires. The spell slot increase required to apply any metamagic feat is lowered by 1 (to a minimum of +1 level, or +0 if the feat normally has no level adjustment). For instance, a quickened fireball would occupy a 6th-level slot (+3 levels) rather than the standard 7th-level slot (+4 levels), while a silent fireball would still require a 4th-level slot (+1 level). The Heighten Spell feat is not affected by this reduction."
+        },
+        "Mantle of Spells 1": {
+          "description": "Starting at 1st level, the dweomerkeeper establishes a personal reservoir of arcane and/or divine magic. She selects one arcane or divine spell from her available spells, and from that point forward she may sacrifice any prepared spell of the same type (arcane or divine) whose level equals or exceeds the chosen spell's level to spontaneously cast the selected spell instead. This works identically to how a good-aligned cleric can spontaneously channel prepared spells into healing magic. At each subsequent odd-numbered dweomerkeeper level, she selects an additional spell to include in her reservoir."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "Each time the dweomerkeeper advances in level, she gains additional spells per day (and spells known, where applicable) as though she had also gained a level in a spellcasting class she belonged to prior to taking this prestige class. She does not, however, receive any other class benefits that would normally accompany such a level gain (such as improved turning ability, bonus metamagic or item creation feats, and so forth). Her dweomerkeeper level stacks with levels in her previous spellcasting class for determining spells per day, spells known, and caster level. If she had multiple spellcasting classes before becoming a dweomerkeeper, she must choose which class receives each new dweomerkeeper level for the purpose of calculating spells per day and spells known."
+        },
+        "Supernatural Spell": {
+          "description": "At 4th level, the dweomerkeeper's connection to the essence of magic is so deep that she can channel spell effects with virtually no exertion. Once per day, as a standard action, she may cast any single spell that has a casting time of 1 standard action or less as though it were a supernatural ability. The spell must be one she currently has available (meaning she has it prepared, or she knows it and has an unused spell slot of the proper level), though she can choose to invoke this power at the instant of casting. The spell takes effect and is expended as normal, but the dweomerkeeper needs no components, does not draw attacks of opportunity, and bypasses the target's spell resistance entirely, exactly as if she were activating a supernatural ability rather than casting a spell. She gains one additional daily use of this power at every even-numbered dweomerkeeper level beyond 4th."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons, armor, or shields."
+        }
+      },
+      "reviewed": [
+        "Mantle Of Spells 1"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Dweomerkeepers gain no proficiency with any weapon, armor, or shield.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new level of dweomerkeeper is gained, the character gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or rebuking undead, metamagic or item creation feats, and so on). The level of dweomerkeeper is added to the level of whatever other spellcasting class the character has, then spells per day, spells known, and caster level are determined accordingly. If the character had more than one spellcasting class before she became a dweomerkeeper, the player must decide to which class to add each level of dweomerkeeper for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "At 1st level, a dweomerkeeper creates a personal mantle of arcane and/or divine spells. She chooses one arcane or divine spell that she can cast, and thereafter she can convert prepared spells of that spell's type (arcane or divine) into the chosen spell, so long as the level of the spell to be converted is equal to or greater than that of the chosen spell. This ability functions just like a good cleric's ability to spontaneously convert prepared spells into cure spells. At every odd-numbered dweomerkeeper level after 1st, the character chooses another spell to add to her mantle.",
+        "name": "Mantle of Spells 1"
+      },
+      {
+        "description": "Upon attaining 2nd level, a dweomerkeeper can use arcane sight at will. This ability functions like the spell of the same name, except that its duration is concentration.",
+        "name": "Arcane Sight",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Mantle of Spells 2"
+      },
+      {
+        "description": "At 4th level, the dweomerkeeper is so attuned to the fabric of magic that she can manifest spell effects with almost no effort whatsoever. Once per day as a standard action, she can use any one spell with a casting time of up to 1 standard action as a supernatural ability. The spell chosen must be one that is currently available to the dweomerkeeper (that is, one that she has prepared or that she knows and has a spell slot of the appropriate level available to cast), but she can decide at the moment of casting to use this ability. The spell functions as it normally would and is expended normally, but the dweomerkeeper does not require any components, does not provoke attacks of opportunity, and ignores the target's spell resistance, just as if she were using a supernatural ability instead of a spell. At every even-numbered level after the 4th, the dweomerkeeper gains one additional use of this ability per day.",
+        "name": "Supernatural Spell",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Mantle of Spells 3"
+      },
+      {
+        "description": "",
+        "name": "Mantle of Spells 4"
+      },
+      {
+        "description": "",
+        "name": "Mantle of Spells 5"
+      },
+      {
+        "description": "At 10th level, a dweomerkeeper is wrapped in a mantle of ever-flowing magic, and all metamagic feats that she currently knows or learns in the future become easier to use. The spell level increase for applying a metamagic feat to any spell drops by 1 (minimum +1 level, or +0 level if the feat already has a +0 level adjustment). For example, a quickened fireball uses a 6th-level slot (+3 levels) instead of the usual 7th-level slot (+4 levels), but a silent fireball still uses a 4th-level slot (+1 level). A spell affected by the Heighten Spell feat is unaffected by this ability.",
+        "name": "Cloak of Mysteries",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Heal",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "Dweomerkeepers are Mystra's shepherds, safeguarding the Weave against threats to its integrity.",
+    "hitDie": "d6",
+    "name": "Dweomerkeeper",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Any item creation feat",
+          "any metamagic feat"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 8
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "The candidate must have created at least one magic item, whether of a permanent nature or not.",
+          "created at least one magic item, whether of a permanent nature or not"
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 8 ranks, Spellcraft 8 ranks Feats: Any item creation feat and any metamagic feat.Spells: Ability to cast arcane and divine spells.Domain: Magic.Special: The candidate must have created at least one magic item, whether of a permanent nature or not."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Mantle of spells 1"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Arcane sight"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Mantle of spells 2"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Supernatural spell 1/day"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Mantle of spells 3"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Supernatural spell 2/day"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Mantle of spells 4"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Supernatural spell 3/day"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Mantle of spells 5"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Cloak of mysteries",
+          "supernatural spell 4/day"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

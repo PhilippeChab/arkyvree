@@ -1,0 +1,458 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:56:40.597Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/halfling-outrider/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "mountedarchery": "Mounted Archery",
+      "mountedcombat": "Mounted Combat"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Mount"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Alertness"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Ride Bonus"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Defensive Riding"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Unbroken Charge"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Stand On Mount"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Leap From The Saddle"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Full Mounted Attack"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Quick Turn"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.listen.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.ride.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spot.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mountedcombat.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mountedarchery.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Halfling",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Halfling Outrider Class Feature",
+    "features": {
+      "AC Bonus": {
+        "description": "While mounted, a halfling outrider receives a dodge bonus to Armor Class. This bonus is forfeited whenever the character would normally lose her Dexterity bonus to AC.",
+        "level": 1,
+        "seedName": "AC Bonus (Halfling Outrider)"
+      },
+      "Alertness": {
+        "description": "The halfling outrider receives Alertness as a bonus feat.",
+        "level": 1,
+        "seedName": "Alertness (Halfling Outrider)"
+      },
+      "Defensive Riding": {
+        "description": "Starting at 2nd level, the halfling outrider has mastered techniques of protective horsemanship. When she takes no other actions while mounted (attacking is not permitted during defensive riding), she receives a +2 bonus on Reflex saves and a +4 dodge bonus to AC. Additionally, her mount receives a +20 ft. increase to its speed, a +2 bonus on all Will saves, and a +4 dodge bonus to its AC.",
+        "level": 2,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.will.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "target": "combat.speed.misc",
+            "value": "20",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Defensive Riding (Halfling Outrider)"
+      },
+      "Evasion": {
+        "description": "At 7th level, the halfling outrider gains evasion. When she succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save, she takes no damage instead. This ability only functions while wearing light armor or no armor, and is unavailable while the outrider is helpless (such as when unconscious or paralyzed). While mounted, the outrider extends this benefit to her mount, which may use either the outrider's Reflex save bonus or its own, whichever is better. If the character already possesses evasion, she instead gains improved evasion, though her mount still benefits from standard evasion as described. Improved evasion functions identically to evasion, except that on a failed Reflex save the character takes only half damage rather than full damage.",
+        "level": 7,
+        "seedName": "Evasion (Halfling Outrider)"
+      },
+      "Full Mounted Attack": {
+        "description": "At 8th level, the halfling outrider may execute a full attack action even when her mount moves more than 5 feet, provided the mount moves no more than a single move action. This full attack cannot be combined with a charge.",
+        "level": 8,
+        "seedName": "Full Mounted Attack (Halfling Outrider)"
+      },
+      "Leap From the Saddle": {
+        "description": "Beginning at 5th level, the halfling outrider can leap from her mount and land in an adjacent square as a free action by succeeding on a DC 20 Ride check. If an opponent occupies a square she threatens after landing, she may immediately make a melee attack against that foe with a +2 bonus on the attack roll and a -2 penalty to AC, as though performing a charge. This ability can only be used when the mount is traveling at no more than double its speed.",
+        "level": 5,
+        "seedName": "Leap From the Saddle (Halfling Outrider)"
+      },
+      "Mount": {
+        "description": "Upon joining this prestige class, the halfling outrider receives a mount suited to what her community can provide. Typically, this is a riding dog or warpony, though the outrider is free to seek out, train, or buy a more unusual mount. Basic riding gear is supplied as well, though the character may opt to acquire masterwork or magical equipment. Levels in this class stack with paladin, druid, and ranger levels when calculating the abilities of a paladin's mount or an animal companion.",
+        "level": 1,
+        "seedName": "Mount (Halfling Outrider)"
+      },
+      "Quick Turn": {
+        "description": "At 10th level, the halfling outrider can attempt a DC 25 Ride check as a free action to make her mount execute a single change of direction while running or charging. The turn can be up to 90 degrees, and the mount is limited to one such turn per round. When charging, the mount must still travel at least 10 feet in a straight line after the turn. On a failed check, the mount continues 10 feet forward in a straight line and then loses its remaining actions for the turn.",
+        "level": 10,
+        "seedName": "Quick Turn (Halfling Outrider)"
+      },
+      "Ride Bonus": {
+        "description": "The halfling outrider receives a competence bonus on all Ride checks equal to her class level.",
+        "level": 1,
+        "seedName": "Ride Bonus (Halfling Outrider)"
+      },
+      "Stand on Mount": {
+        "description": "At 4th level, a mounted halfling outrider gains the ability to stand atop her mount even while it moves or during combat, suffering no penalties to her actions, provided she succeeds on a DC 20 Ride check. When standing on her mount, the outrider suffers no penalty for using ranged weapons while the mount takes a double move or runs.",
+        "level": 4,
+        "seedName": "Stand on Mount (Halfling Outrider)"
+      },
+      "Unbroken Charge": {
+        "description": "From 3rd level onward, a mounted halfling outrider may charge through difficult terrain or through squares containing allied creatures by succeeding on a DC 15 Ride check.",
+        "level": 3,
+        "seedName": "Unbroken Charge (Halfling Outrider)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Halfling Outrider)"
+      }
+    },
+    "occurrenceMap": {
+      "Alertness": "Alertness",
+      "Defensive Riding": "Defensive Riding",
+      "Evasion": "Evasion",
+      "Full Mounted Attack": "Full Mounted Attack",
+      "Leap From The Saddle": "Leap From the Saddle",
+      "Mount": "Mount",
+      "Quick Turn": "Quick Turn",
+      "Ride Bonus": "Ride Bonus",
+      "Stand On Mount": "Stand on Mount",
+      "Unbroken Charge": "Unbroken Charge"
+    },
+    "overrides": {
+      "description": "Halfling outriders serve as skilled mounted sentinels, dedicated to alerting and safeguarding their communities against approaching threats.",
+      "features": {
+        "AC Bonus": {
+          "description": "While mounted, a halfling outrider receives a dodge bonus to Armor Class. This bonus is forfeited whenever the character would normally lose her Dexterity bonus to AC."
+        },
+        "Alertness": {
+          "description": "The halfling outrider receives Alertness as a bonus feat."
+        },
+        "Defensive Riding": {
+          "description": "Starting at 2nd level, the halfling outrider has mastered techniques of protective horsemanship. When she takes no other actions while mounted (attacking is not permitted during defensive riding), she receives a +2 bonus on Reflex saves and a +4 dodge bonus to AC. Additionally, her mount receives a +20 ft. increase to its speed, a +2 bonus on all Will saves, and a +4 dodge bonus to its AC."
+        },
+        "Evasion": {
+          "description": "At 7th level, the halfling outrider gains evasion. When she succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save, she takes no damage instead. This ability only functions while wearing light armor or no armor, and is unavailable while the outrider is helpless (such as when unconscious or paralyzed). While mounted, the outrider extends this benefit to her mount, which may use either the outrider's Reflex save bonus or its own, whichever is better. If the character already possesses evasion, she instead gains improved evasion, though her mount still benefits from standard evasion as described. Improved evasion functions identically to evasion, except that on a failed Reflex save the character takes only half damage rather than full damage."
+        },
+        "Full Mounted Attack": {
+          "description": "At 8th level, the halfling outrider may execute a full attack action even when her mount moves more than 5 feet, provided the mount moves no more than a single move action. This full attack cannot be combined with a charge."
+        },
+        "Leap From the Saddle": {
+          "description": "Beginning at 5th level, the halfling outrider can leap from her mount and land in an adjacent square as a free action by succeeding on a DC 20 Ride check. If an opponent occupies a square she threatens after landing, she may immediately make a melee attack against that foe with a +2 bonus on the attack roll and a -2 penalty to AC, as though performing a charge. This ability can only be used when the mount is traveling at no more than double its speed."
+        },
+        "Mount": {
+          "description": "Upon joining this prestige class, the halfling outrider receives a mount suited to what her community can provide. Typically, this is a riding dog or warpony, though the outrider is free to seek out, train, or buy a more unusual mount. Basic riding gear is supplied as well, though the character may opt to acquire masterwork or magical equipment. Levels in this class stack with paladin, druid, and ranger levels when calculating the abilities of a paladin's mount or an animal companion."
+        },
+        "Quick Turn": {
+          "description": "At 10th level, the halfling outrider can attempt a DC 25 Ride check as a free action to make her mount execute a single change of direction while running or charging. The turn can be up to 90 degrees, and the mount is limited to one such turn per round. When charging, the mount must still travel at least 10 feet in a straight line after the turn. On a failed check, the mount continues 10 feet forward in a straight line and then loses its remaining actions for the turn."
+        },
+        "Ride Bonus": {
+          "description": "The halfling outrider receives a competence bonus on all Ride checks equal to her class level."
+        },
+        "Stand on Mount": {
+          "description": "At 4th level, a mounted halfling outrider gains the ability to stand atop her mount even while it moves or during combat, suffering no penalties to her actions, provided she succeeds on a DC 20 Ride check. When standing on her mount, the outrider suffers no penalty for using ranged weapons while the mount takes a double move or runs."
+        },
+        "Unbroken Charge": {
+          "description": "From 3rd level onward, a mounted halfling outrider may charge through difficult terrain or through squares containing allied creatures by succeeding on a DC 15 Ride check."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Halfling outriders gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A halfling outrider gains a dodge bonus to the character's Armor Class when she is mounted. This benefit is lost in any situation in which the character would lose her Dexterity bonus to Armor Class.",
+        "name": "AC Bonus"
+      },
+      {
+        "description": "A halfling outrider gains a mount appropriate to the resources of her halfling community. Most halfling communities attempt to provide an out rider with a riding dog or a warpony. A halfling outrider may, of course, choose to find and train or purchase a more exotic mount. Standard tack and harness is also provided, though, again, the character may wish to purchase masterwork or magic gear. Halfling outrider class levels stack with paladin, druid, and ranger levels for determining the characteristics of a paladin's mount or an animal companion.",
+        "name": "Mount"
+      },
+      {
+        "description": "A halfling outrider gains Alertness as a bonus feat.",
+        "name": "Alertness"
+      },
+      {
+        "description": "A halfling outrider gains a competence bonus equal to her class level on all Ride checks.",
+        "name": "Ride Bonus"
+      },
+      {
+        "description": "A halfling outrider of 2nd level or higher knows the tricks of defensive riding. If she does nothing else while mounted (she cannot attack when riding defensively), she gains a +2 bonus on Refl ex saves and a +4 dodge bonus to Armor Class. In addition, her mount gains a +20 ft. bonus to its speed, a +2 bonus on all Will saves, and a +4 dodge bonus to its Armor Class.",
+        "name": "Defensive Riding",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level and higher, a mounted halfling outrider can charge through difficult terrain or squares occupied by friendly creatures by making a DC 15 Ride check.",
+        "name": "Unbroken Charge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level, a mounted halfling outrider becomes able to stand on her mount's back even during movement or combat, taking no penalties to actions while doing so, by making a DC 20 Ride check. While standing on her mount's back, a halfling outrider does not take any penalty for using a ranged weapon while her mount is taking a double move or running.",
+        "name": "Stand on Mount",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A halfling outrider of 5th level or higher can dismount and land adjacent to her mount as a free action by making a DC 20 Ride check. If an opponent is in a square she threatens (after dismounting), she can make a melee attack against that opponent, taking a +2 bonus on the attack roll and a -2 penalty to Armor Class (just as if the character were making a charge). This ability is usable only if the mount is moving no faster than twice its speed.",
+        "name": "Leap From the Saddle",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 7th level, a halfling outrider gains the evasion ability. If she makes a successful Reflex saving throw against an attack that normally deals half damage on a successful save, she instead takes no damage. Evasion can be used only if the halfling outrider is wearing light armor or no armor. A helpless halfling outrider (such as one who is unconscious or paralyzed) does not gain the benefit of the ability. While the halfling outrider is mounted, she confers this ability to her mount as well, and the mount is able to use the halfling outrider's Reflex save bonus or its own, whichever is higher. If the character already has the evasion ability, she gains improved evasion instead, and her mount still receives the benefit of evasion as described above. Improved evasion works like evasion, except that while the character still takes no damage on a successful Refl ex saving throw, she takes only half damage on a failed save.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 8th level and higher, a halfling outrider may make a full attack when her mount moves more than 5 feet but no more than a single move action. The character cannot combine this full attack with a charge action.",
+        "name": "Full Mounted Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level halfling outrider can make a DC 25 Ride check as a free action to force her mount to execute one change of direction during while running or charging (though the mount must still move at least 10 feet in a straight line after the turn to execute a charge). The turn may be up to 90 degrees, and the mount may make only one such turn per round. If the Ride check fails, the mount moves an extra 10 feet in a straight line and then loses the rest of its actions on this turn.",
+        "name": "Quick Turn",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Handle Animal",
+      "Listen",
+      "Ride",
+      "Spot",
+      "Survival"
+    ],
+    "description": "Halfling outriders are elite champions whose task is to warn their fellows of, and protect them from, danger.",
+    "hitDie": "d8",
+    "name": "Halfling Outrider",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Mounted Combat",
+          "Mounted Archery"
+        ],
+        "skills": [
+          {
+            "name": "Listen",
+            "ranks": 3
+          },
+          {
+            "name": "Ride",
+            "ranks": 6
+          },
+          {
+            "name": "Spot",
+            "ranks": 3
+          }
+        ],
+        "special": [
+          "Race: Halfling"
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Race: Halfling Skills: Listen 3 ranks, Ride 6 ranks, Spot 3 ranks Feats: Mounted Combat, Mounted Archery"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Mount",
+          "Alertness",
+          "Ride bonus"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Defensive riding"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Unbroken charge"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Stand on mount"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Leap from the saddle"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Evasion"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Full mounted attack"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Quick turn"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

@@ -1,0 +1,418 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-04-01T02:22:04.410Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/daggerspell-mage/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "twoweaponfighting": "Two-Weapon Fighting",
+      "weaponfocusdagger": "Weapon Focus (Dagger)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Daggercast"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Invocation Of The Knife"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Double Daggercast"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Arcane Infusion"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Arcane Throw"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Daggerspell Flurry"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocusdagger.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.twoweaponfighting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "feats.sneakattack.count",
+        "value": "1",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 6,
+    "unresolvedAptitudePicks": [
+      "Arcane Infusion"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Daggerspell Mage Class Feature",
+    "features": {
+      "Arcane Infusion": {
+        "description": "At 7th level and higher, a daggerspell mage can infuse arcane spell power into his daggers, temporarily enabling them to deal extra energy damage. To use this ability, a mage must lose a prepared arcane spell from memory (or give up a potential spell slot for the day if he casts spells as a sorcerer). The daggerspell mage chooses one dagger that he is holding and an energy type (fire, cold, or electricity) when this ability is activated. The chosen dagger deals an extra 1d6 points of damage of the chosen energy type. This effect lasts for a number of rounds equal to the spell level sacrificed. Multiple uses of this ability on the same dagger don't stack, even if different energy types are chosen. If the dagger is thrown, the energy damage applies to that attack, but then the effect immediately dissipates. Using this ability is a swift action that does not provoke attacks of opportunity.",
+        "level": 7,
+        "seedName": "Arcane Infusion (Daggerspell Mage)"
+      },
+      "Arcane Throw": {
+        "description": "At 8th level and higher, a daggerspell mage can imbue arcane spell power into his thrown daggers. The mage can deliver a touch spell with a thrown dagger just as if he were making a melee attack. If the dagger hits, the touch spell is discharged against the creature or object struck. If the dagger misses its intended target, the dagger returns to the mage just before his next turn and retains the spell just as if the mage had missed with a melee attack.",
+        "level": 8,
+        "seedName": "Arcane Throw (Daggerspell Mage)"
+      },
+      "Daggercast": {
+        "description": "Daggerspell mages seamlessly blend the use of their twin daggers with powerful spellcasting abilities. A daggerspell mage can cast a spell with somatic and material components even when holding a dagger in each hand. If a daggerspell mage holds anything other than a dagger, he must have at least one hand free to cast a spell with somatic or material components. Casting a spell in this way still provokes attacks of opportunity normally. In addition, a daggerspell mage can deliver a touch spell with a dagger attack (either a melee touch attack or a normal melee attack, but not with a thrown dagger).",
+        "level": 1,
+        "seedName": "Daggercast (Daggerspell Mage)"
+      },
+      "Daggerspell Flurry": {
+        "description": "A 10th-level daggerspell mage can blend spellcasting with a flurry of dagger attacks. When using this ability, a daggerspell mage can quicken one spell as part of a full attack with his daggers. Doing this has no effect on the spell's effective level. A daggerspell mage must make at least one melee attack in any round in which he uses this ability, and he cannot make an attack with anything other than a dagger (although if a spell cast in conjunction with this ability requires an attack roll, he can still make the spell's attack). A daggerspell mage can use this ability a number of times per day equal to his Dexterity modifier (minimum 1).",
+        "level": 10,
+        "seedName": "Daggerspell Flurry (Daggerspell Mage)"
+      },
+      "Double Daggercast": {
+        "description": "As a daggerspell mage advances in level, the connection between his spellcasting abilities and his two-dagger fighting style strengthens. At 5th level and higher, a mage can hold the charge for one touch spell for each dagger that he is holding in his hands. He must designate which dagger holds each touch spell at the time the spell is cast. If one of these daggers leaves the daggerspell mage's hands, the spell immediately discharges harmlessly (unless the dagger is thrown by a mage with the arcane throw ability; see below).",
+        "level": 5,
+        "seedName": "Double Daggercast (Daggerspell Mage)"
+      },
+      "Invocation of the Knife": {
+        "description": "Beginning at 2nd level, daggerspell mages develop a strong mystical connection between their arcane spellcasting abilities and the daggers that they wield. Whenever a daggerspell mage casts an arcane spell that deals energy damage, he can turn half of the damage dealt by the spell into magic slashing damage rather than energy damage. Energy resistance does not apply to this damage, but damage reduction might. This power does not affect a creature's ability to resist the affected spell with a saving throw or spell resistance. Using this ability does not require an action; its use is part of the action required to cast the affected spell. Only spells with a duration of instantaneous can be modified by this ability.",
+        "level": 2,
+        "seedName": "Invocation of the Knife (Daggerspell Mage)"
+      },
+      "Sneak Attack": {
+        "description": "Beginning at 3rd level, a daggerspell mage deals an extra 1d6 points of damage when flanking an opponent or at any time when the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 6th level and 3d6 points at 9th level. See the rogue class feature of the Player's Handbook. If a daggerspell mage gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "level": 3,
+        "seedName": "Sneak Attack (Daggerspell Mage)",
+        "stackable": true
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Beginning at 2nd level, a daggerspell mage gains new spells per day at each level (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained. If he had more than one arcane spellcasting class before becoming a daggerspell mage, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Daggerspell Mage)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Daggerspell mages gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Daggerspell Mage)"
+      }
+    },
+    "occurrenceMap": {
+      "Arcane Infusion": "Arcane Infusion",
+      "Arcane Throw": "Arcane Throw",
+      "Daggercast": "Daggercast",
+      "Daggerspell Flurry": "Daggerspell Flurry",
+      "Double Daggercast": "Double Daggercast",
+      "Invocation Of The Knife": "Invocation of the Knife",
+      "Sneak Attack": "Sneak Attack"
+    },
+    "overrides": {
+      "reviewed": [
+        "Arcane Infusion"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Daggerspell mages gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 2nd level, a daggerspell mage gains new spells per day at each level (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained. If he had more than one arcane spellcasting class before becoming a daggerspell mage, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Daggerspell mages seamlessly blend the use of their twin daggers with powerful spellcasting abilities. A daggerspell mage can cast a spell with somatic and material components even when holding a dagger in each hand. If a daggerspell mage holds anything other than a dagger, he must have at least one hand free to cast a spell with somatic or material components. Casting a spell in this way still provokes attacks of opportunity normally. In addition, a daggerspell mage can deliver a touch spell with a dagger attack (either a melee touch attack or a normal melee attack, but not with a thrown dagger).",
+        "name": "Daggercast",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 2nd level, daggerspell mages develop a strong mystical connection between their arcane spellcasting abilities and the daggers that they wield. Whenever a daggerspell mage casts an arcane spell that deals energy damage, he can turn half of the damage dealt by the spell into magic slashing damage rather than energy damage. Energy resistance does not apply to this damage, but damage reduction might. This power does not affect a creature's ability to resist the affected spell with a saving throw or spell resistance. Using this ability does not require an action; its use is part of the action required to cast the affected spell. Only spells with a duration of instantaneous can be modified by this ability.",
+        "name": "Invocation of the Knife",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, a daggerspell mage deals an extra 1d6 points of damage when flanking an opponent or at any time when the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 6th level and 3d6 points at 9th level. See the rogue class feature of the Player's Handbook. If a daggerspell mage gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "As a daggerspell mage advances in level, the connection between his spellcasting abilities and his two-dagger fighting style strengthens. At 5th level and higher, a mage can hold the charge for one touch spell for each dagger that he is holding in his hands. He must designate which dagger holds each touch spell at the time the spell is cast. If one of these daggers leaves the daggerspell mage's hands, the spell immediately discharges harmlessly (unless the dagger is thrown by a mage with the arcane throw ability; see below).",
+        "name": "Double Daggercast",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 7th level and higher, a daggerspell mage can infuse arcane spell power into his daggers, temporarily enabling them to deal extra energy damage. To use this ability, a mage must lose a prepared arcane spell from memory (or give up a potential spell slot for the day if he casts spells as a sorcerer). The daggerspell mage chooses one dagger that he is holding and an energy type (fire, cold, or electricity) when this ability is activated. The chosen dagger deals an extra 1d6 points of damage of the chosen energy type. This effect lasts for a number of rounds equal to the spell level sacrificed. Multiple uses of this ability on the same dagger don't stack, even if different energy types are chosen. If the dagger is thrown, the energy damage applies to that attack, but then the effect immediately dissipates. Using this ability is a swift action that does not provoke attacks of opportunity.",
+        "name": "Arcane Infusion",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 8th level and higher, a daggerspell mage can imbue arcane spell power into his thrown daggers. The mage can deliver a touch spell with a thrown dagger just as if he were making a melee attack. If the dagger hits, the touch spell is discharged against the creature or object struck. If the dagger misses its intended target, the dagger returns to the mage just before his next turn and retains the spell just as if the mage had missed with a melee attack.",
+        "name": "Arcane Throw",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level daggerspell mage can blend spellcasting with a flurry of dagger attacks. When using this ability, a daggerspell mage can quicken one spell as part of a full attack with his daggers. Doing this has no effect on the spell's effective level. A daggerspell mage must make at least one melee attack in any round in which he uses this ability, and he cannot make an attack with anything other than a dagger (although if a spell cast in conjunction with this ability requires an attack roll, he can still make the spell's attack). A daggerspell mage can use this ability a number of times per day equal to his Dexterity modifier (minimum 1).",
+        "name": "Daggerspell Flurry",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Handle Animal",
+      "Heal",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Listen",
+      "Move Silently",
+      "Profession",
+      "Ride",
+      "Spellcraft",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "Daggerspell mages see the quick movements of their deadly daggers as an attendant part of their spellcasting. These sometimes reclusive ?gures remain spellcasters ?rst and melee combatants second. Daggerspell mages, like their colleagues the daggerspell shapers, seek truth and justice, but they de?ne such concepts in the heat of the moment. Daggerspell mages do not see morality as an absolute, and their ideals are guided by their sense of what is right and fair. Daggerspell mages are closely related to the daggerspell shapers, the other half of the organization known as the Daggerspell Guardians. Both preserve the work of good folk and balance the concerns of civilized communities against the sanctity of nature, but where a shaper is quiet and calculating, a daggerspell mage is wild and impulsive. The two halves of the organization work together amicably, but they have decidedly different approaches to most problems. Almost every daggerspell mage begins his career as a wizard or sorcerer, taking a level or two of rogue after a few successful adventures. Drawn to the exotic ?ghting style and balanced ideas of the Daggerspell Guardian, these individuals enjoy the enigmatic reputation and unorthodox techniques of the guild. Although members of the guild are primarily spellcasters, some follow more complicated multiclass pathways that include ?ghter or paladin levels. These characters follow all precepts of the guild, but they are more likely to defend truth with the sharp points of their daggers than with the arcane power of their spells.",
+    "hitDie": "d6",
+    "name": "Daggerspell Mage",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonevil",
+        "feats": [
+          "Weapon Focus (Dagger)",
+          "Two-Weapon Fighting"
+        ],
+        "skills": [
+          {
+            "name": "Concentration",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Arcane caster level 5th.Special: Sneak attack +1d6."
+        ]
+      },
+      "text": "Alignment: Any nonevil Skills: Concentration 8 ranks Feats: Weapon Focus (Dagger), Two-Weapon Fighting Special: Arcane caster level 5th.Special: Sneak attack +1d6."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Daggercast"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Invocation of the knife"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Double daggercast"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Arcane infusion"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Arcane throw"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Sneak attack +3d6"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Daggerspell flurry"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

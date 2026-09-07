@@ -1,0 +1,8 @@
+import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+const APT = "Mystic Theurge Class Feature";
+
+export const MYSTIC_THEURGE_FEATS: FeatSeed[] = [
+  { name: "Spells per Day (Mystic Theurge)", description: "Each time a mystic theurge advances in level, the character's spellcasting ability improves as though he had also gained a level in one arcane spellcasting class and one divine spellcasting class that he belonged to prior to entering this prestige class. This advancement grants additional spells per day and raises his caster level in both classes accordingly, but does not confer any other class-specific benefits those classes would normally provide (such as bonus metamagic or item creation feats, bard or assassin special abilities, and similar features). In practical terms, the mystic theurge level stacks with the character's existing arcane and divine spellcasting class levels for the purpose of calculating spells per day and caster level. For instance, a 3rd-level cleric/3rd-level wizard who gains a mystic theurge level casts spells as a 4th-level cleric and a 4th-level wizard, but still turns undead as a 3rd-level cleric, and his wizard familiar gains no new abilities. If a character possesses multiple arcane spellcasting classes or multiple divine spellcasting classes before becoming a mystic theurge, he must choose which one arcane class and which one divine class benefits from each mystic theurge level for spells per day purposes.", selectable: false, aptitudes: [APT] },
+  { name: "Weapon and Armor Proficiency (Mystic Theurge)", description: "A mystic theurge does not receive proficiency with any additional weapons or armor.", selectable: false, aptitudes: [APT] },
+];

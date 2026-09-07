@@ -1,0 +1,598 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-18T13:14:19.218Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/barbarian/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Fast Movement"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Illiteracy"
+      },
+      {
+        "levels": [
+          1,
+          4,
+          8,
+          12,
+          16,
+          20
+        ],
+        "name": "Rage"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Uncanny Dodge"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9,
+          12,
+          15,
+          18
+        ],
+        "name": "Trap Sense"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Improved Uncanny Dodge"
+      },
+      {
+        "levels": [
+          7,
+          10,
+          13,
+          16,
+          19
+        ],
+        "name": "Damage Reduction"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Greater Rage"
+      },
+      {
+        "levels": [
+          14
+        ],
+        "name": "Indomitable Will"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Tireless Rage"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Mighty Rage"
+      }
+    ],
+    "hd": 12,
+    "levels": 20,
+    "requirements": [
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Barbarian Class Feature",
+    "features": {
+      "Damage Reduction": {
+        "description": "Starting at 7th level, a barbarian develops the toughness to absorb a portion of incoming harm. Each time the barbarian takes damage from a weapon or natural attack, the damage is reduced by 1. At 10th level and every three barbarian levels thereafter (13th, 16th, and 19th level), this reduction increases by an additional 1 point. Damage reduction can bring damage down to 0, but never below 0.",
+        "level": 7,
+        "seedName": "Damage Reduction (Barbarian)",
+        "stackable": true
+      },
+      "Fast Movement": {
+        "description": "A barbarian moves on foot +10 feet faster than is typical for members of the same race. This enhanced speed only functions when the barbarian wears no armor, light armor, or medium armor, and is not burdened with a heavy load. This bonus should be applied before any adjustments for encumbrance or armor. As an illustration, a human barbarian moves at 40 feet instead of the standard 30 feet while in light or no armor. With medium armor or a medium load, that speed becomes 30 feet. Similarly, a halfling barbarian moves at 30 feet rather than 20 feet without significant armor, dropping to 20 feet when wearing medium armor or carrying a medium load.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.speed.misc",
+            "value": "10",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Fast Movement (Barbarian)"
+      },
+      "Greater Rage": {
+        "description": "Upon reaching 11th level, the barbarian's rage grows more potent. The Strength and Constitution bonuses each rise to +6, and the morale bonus on Will saves increases to +3. The Armor Class penalty remains -2.",
+        "level": 11,
+        "seedName": "Greater Rage (Barbarian)"
+      },
+      "Illiteracy": {
+        "description": "Unlike all other character classes, barbarians do not begin with the ability to read and write. A barbarian can spend 2 skill points to become literate in every language they can speak. If a barbarian later takes a level in any other class, they automatically gain literacy. Conversely, a literate character who takes a level of barbarian does not lose the ability to read and write.",
+        "level": 1,
+        "seedName": "Illiteracy (Barbarian)"
+      },
+      "Improved Uncanny Dodge": {
+        "description": "At 5th level, a barbarian becomes impossible to flank. The barbarian responds to attackers on all sides just as effectively as to a single opponent. This prevents rogues from using flanking to qualify for sneak attacks against the barbarian, unless the rogue's class level exceeds the barbarian's by at least four. If a character already has uncanny dodge from a different class, they gain improved uncanny dodge automatically upon reaching this level, and levels from all classes granting uncanny dodge are combined when determining the minimum rogue level needed to flank the character.",
+        "level": 5,
+        "seedName": "Improved Uncanny Dodge (Barbarian)"
+      },
+      "Indomitable Will": {
+        "description": "Starting at 14th level, a raging barbarian receives a +4 bonus on Will saves against enchantment spells. This bonus is cumulative with all other modifiers, including the morale bonus on Will saves already provided by the rage itself.",
+        "level": 14,
+        "seedName": "Indomitable Will (Barbarian)"
+      },
+      "Mighty Rage": {
+        "description": "At 20th level, the barbarian's rage reaches its peak intensity. The Strength and Constitution bonuses each climb to +8, and the morale bonus on Will saves rises to +4. The Armor Class penalty stays at -2.",
+        "level": 20,
+        "seedName": "Mighty Rage (Barbarian)"
+      },
+      "Rage": {
+        "description": "A barbarian can enter a ferocious battle frenzy a limited number of times each day. While raging, the barbarian gains tremendous power and resilience at the cost of defensive awareness. Specifically, the barbarian receives a +4 bonus to Strength, a +4 bonus to Constitution, and a +2 morale bonus on Will saves, but suffers a -2 penalty to Armor Class. The Constitution increase grants an extra 2 hit points per level, though these temporary hit points disappear once the rage ends and Constitution returns to its normal value. During a rage, the barbarian may use any feats they possess with the exception of Combat Expertise, item creation feats, and metamagic feats. Each episode of rage persists for a number of rounds equal to 3 + the character's improved Constitution modifier. The barbarian can choose to end the rage early at any time. When the rage concludes, the barbarian loses all rage-related bonuses and penalties and becomes fatigued (suffering a -2 penalty to Strength, a -2 penalty to Dexterity, and an inability to charge or run) for the remainder of the encounter (this fatigue no longer applies once the barbarian reaches 17th level). Only one rage can occur per encounter. At 1st level, the barbarian may rage once per day. Starting at 4th level, and at every fourth level after that, one additional daily use is gained, up to a maximum of six times per day at 20th level. Entering a rage is a free action that can only be performed during the barbarian's own turn, not as a reaction to another creature's action. For instance, a barbarian cannot enter a rage after being hit by an arrow to benefit from the extra hit points, though those hit points would apply if the rage had already been activated earlier in that round.",
+        "level": 1,
+        "seedName": "Rage (Barbarian)",
+        "stackable": true
+      },
+      "Tireless Rage": {
+        "description": "From 17th level onward, a barbarian is no longer subject to fatigue when a rage ends.",
+        "level": 17,
+        "seedName": "Tireless Rage (Barbarian)"
+      },
+      "Trap Sense": {
+        "description": "From 3rd level onward, a barbarian develops a heightened instinct for detecting traps. This grants a +1 bonus on Reflex saves to avoid traps and a +1 dodge bonus to AC against trap attacks. Both bonuses increase by +1 at every third barbarian level beyond 3rd (at 6th, 9th, 12th, 15th, and 18th level). Trap sense bonuses from different classes are cumulative.",
+        "level": 3,
+        "seedName": "Trap Sense (Barbarian)",
+        "stackable": true
+      },
+      "Uncanny Dodge": {
+        "description": "Beginning at 2nd level, a barbarian develops the ability to sense threats before consciously perceiving them. The barbarian keeps their Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. This benefit does not apply if the barbarian is immobilized. Should a barbarian already possess uncanny dodge through another class (such as having at least four rogue levels), they instead gain improved uncanny dodge automatically.",
+        "level": 2,
+        "seedName": "Uncanny Dodge (Barbarian)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Barbarians are trained in the use of all simple and martial weapons. They are also proficient with light armor, medium armor, and shields (but not tower shields).",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Barbarian)"
+      }
+    },
+    "occurrenceMap": {
+      "Damage Reduction": "Damage Reduction",
+      "Fast Movement": "Fast Movement",
+      "Greater Rage": "Greater Rage",
+      "Illiteracy": "Illiteracy",
+      "Improved Uncanny Dodge": "Improved Uncanny Dodge",
+      "Indomitable Will": "Indomitable Will",
+      "Mighty Rage": "Mighty Rage",
+      "Rage": "Rage",
+      "Tireless Rage": "Tireless Rage",
+      "Trap Sense": "Trap Sense",
+      "Uncanny Dodge": "Uncanny Dodge"
+    },
+    "overrides": {
+      "alignment": "Any nonlawful",
+      "description": "Fierce and fearless warriors emerge from untamed wilderness regions across the world. Those in settled lands often label them as savages or berserkers, assuming them capable of nothing but violence and destruction. Yet these so-called barbarians have repeatedly demonstrated their worth as allies through their cunning, tenacity, and sheer determination. Against foes foolish enough to dismiss them, they have shown themselves to be resourceful, relentless, and utterly without mercy. For barbarians, a life of adventure offers the best path to acceptance among civilized peoples. Routine duties like standing guard hold no appeal for them. The perils and unpredictability of the adventuring life, however, suit them perfectly. They might seek out adventure to vanquish despised foes, and they harbor a deep-seated revulsion toward anything they view as unnatural, particularly undead creatures, demons, and devils. The barbarian excels as a combatant. Unlike the fighter, whose martial prowess stems from rigorous training and discipline, the barbarian channels a devastating rage in battle. While consumed by this berserk fury, the barbarian grows stronger and more resilient, better equipped to crush enemies and endure their counterattacks. These episodes of rage are exhausting, limiting the barbarian to only a handful of such explosive outbursts each day, but those few are typically more than enough. The barbarian thrives in the wilderness and possesses remarkable speed on foot.",
+      "features": {
+        "Damage Reduction": {
+          "description": "Starting at 7th level, a barbarian develops the toughness to absorb a portion of incoming harm. Each time the barbarian takes damage from a weapon or natural attack, the damage is reduced by 1. At 10th level and every three barbarian levels thereafter (13th, 16th, and 19th level), this reduction increases by an additional 1 point. Damage reduction can bring damage down to 0, but never below 0."
+        },
+        "Fast Movement": {
+          "description": "A barbarian moves on foot +10 feet faster than is typical for members of the same race. This enhanced speed only functions when the barbarian wears no armor, light armor, or medium armor, and is not burdened with a heavy load. This bonus should be applied before any adjustments for encumbrance or armor. As an illustration, a human barbarian moves at 40 feet instead of the standard 30 feet while in light or no armor. With medium armor or a medium load, that speed becomes 30 feet. Similarly, a halfling barbarian moves at 30 feet rather than 20 feet without significant armor, dropping to 20 feet when wearing medium armor or carrying a medium load."
+        },
+        "Greater Rage": {
+          "description": "Upon reaching 11th level, the barbarian's rage grows more potent. The Strength and Constitution bonuses each rise to +6, and the morale bonus on Will saves increases to +3. The Armor Class penalty remains -2."
+        },
+        "Illiteracy": {
+          "description": "Unlike all other character classes, barbarians do not begin with the ability to read and write. A barbarian can spend 2 skill points to become literate in every language they can speak. If a barbarian later takes a level in any other class, they automatically gain literacy. Conversely, a literate character who takes a level of barbarian does not lose the ability to read and write."
+        },
+        "Improved Uncanny Dodge": {
+          "description": "At 5th level, a barbarian becomes impossible to flank. The barbarian responds to attackers on all sides just as effectively as to a single opponent. This prevents rogues from using flanking to qualify for sneak attacks against the barbarian, unless the rogue's class level exceeds the barbarian's by at least four. If a character already has uncanny dodge from a different class, they gain improved uncanny dodge automatically upon reaching this level, and levels from all classes granting uncanny dodge are combined when determining the minimum rogue level needed to flank the character."
+        },
+        "Indomitable Will": {
+          "description": "Starting at 14th level, a raging barbarian receives a +4 bonus on Will saves against enchantment spells. This bonus is cumulative with all other modifiers, including the morale bonus on Will saves already provided by the rage itself."
+        },
+        "Mighty Rage": {
+          "description": "At 20th level, the barbarian's rage reaches its peak intensity. The Strength and Constitution bonuses each climb to +8, and the morale bonus on Will saves rises to +4. The Armor Class penalty stays at -2."
+        },
+        "Rage": {
+          "description": "A barbarian can enter a ferocious battle frenzy a limited number of times each day. While raging, the barbarian gains tremendous power and resilience at the cost of defensive awareness. Specifically, the barbarian receives a +4 bonus to Strength, a +4 bonus to Constitution, and a +2 morale bonus on Will saves, but suffers a -2 penalty to Armor Class. The Constitution increase grants an extra 2 hit points per level, though these temporary hit points disappear once the rage ends and Constitution returns to its normal value. During a rage, the barbarian may use any feats they possess with the exception of Combat Expertise, item creation feats, and metamagic feats. Each episode of rage persists for a number of rounds equal to 3 + the character's improved Constitution modifier. The barbarian can choose to end the rage early at any time. When the rage concludes, the barbarian loses all rage-related bonuses and penalties and becomes fatigued (suffering a -2 penalty to Strength, a -2 penalty to Dexterity, and an inability to charge or run) for the remainder of the encounter (this fatigue no longer applies once the barbarian reaches 17th level). Only one rage can occur per encounter. At 1st level, the barbarian may rage once per day. Starting at 4th level, and at every fourth level after that, one additional daily use is gained, up to a maximum of six times per day at 20th level. Entering a rage is a free action that can only be performed during the barbarian's own turn, not as a reaction to another creature's action. For instance, a barbarian cannot enter a rage after being hit by an arrow to benefit from the extra hit points, though those hit points would apply if the rage had already been activated earlier in that round."
+        },
+        "Tireless Rage": {
+          "description": "From 17th level onward, a barbarian is no longer subject to fatigue when a rage ends."
+        },
+        "Trap Sense": {
+          "description": "From 3rd level onward, a barbarian develops a heightened instinct for detecting traps. This grants a +1 bonus on Reflex saves to avoid traps and a +1 dodge bonus to AC against trap attacks. Both bonuses increase by +1 at every third barbarian level beyond 3rd (at 6th, 9th, 12th, 15th, and 18th level). Trap sense bonuses from different classes are cumulative."
+        },
+        "Uncanny Dodge": {
+          "description": "Beginning at 2nd level, a barbarian develops the ability to sense threats before consciously perceiving them. The barbarian keeps their Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. This benefit does not apply if the barbarian is immobilized. Should a barbarian already possess uncanny dodge through another class (such as having at least four rogue levels), they instead gain improved uncanny dodge automatically."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Barbarians are trained in the use of all simple and martial weapons. They are also proficient with light armor, medium armor, and shields (but not tower shields)."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "A barbarian is proficient with all simple and martial weapons, light armor, medium armor, and shields (except tower shields).",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A barbarian's land speed is faster than the norm for his race by +10 feet. This benefit applies only when he is wearing no armor, light armor, or medium armor and not carrying a heavy load. Apply this bonus before modifying the barbarian's speed because of any load carried or armor worn. For example, a human barbarian has a speed of 40 feet, rather than 30 feet, when wearing light or no armor. When wearing medium armor or carrying a medium load, his speed drops to 30 feet. A halfling barbarian has a speed of 30 feet, rather than 20 feet, in light or no armor. When wearing medium armor or carrying a medium load, his speed drops to 20 feet.",
+        "name": "Fast Movement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Barbarians are the only characters who do not automatically know how to read and write. A barbarian may spend 2 skill points to gain the ability to read and write all languages he is able to speak. A barbarian who gains a level in any other class automatically gains literacy. Any other character who gains a barbarian level does not lose the literacy he or she already had.",
+        "name": "Illiteracy"
+      },
+      {
+        "description": "A barbarian can fly into a screaming blood frenzy a certain number of times per day. In a rage, a barbarian gains phenomenal strength and durability but becomes reckless and less able to defend himself. He temporarily gains a +4 bonus to Strength, a +4 bonus to Constitution, and a +2 morale bonus on Will saves, but he takes a -2 penalty to Armor Class. The increase in Constitution increases the barbarian's hit points by 2 points per level, but these hit points go away at the end of the rage when his Constitution score drops back to normal. He can use any feat he has except Combat Expertise, item creation feats, and metamagic feats. A fit of rage lasts for a number of rounds equal to 3 + the character's (newly improved) Constitution modifier. A barbarian may prematurely end his rage. At the end of the rage, the barbarian loses the rage modifiers and restrictions and becomes fatigued (-2 penalty to Strength, -2 penalty to Dexterity, can't charge or run) for the duration of the current encounter (unless he is a 17th-level barbarian, at which point this limitation no longer applies; see below). A barbarian can fly into a rage only once per encounter. At 1st level he can use his rage ability once per day. At 4th level and every four levels thereafter, he can use it one additional time per day (to a maximum of six times per day at 20th level). Entering a rage takes no time itself, but a barbarian can do it only during his action, not in response to someone else's action. A barbarian can't, for example, fly into a rage when struck down by an arrow in order to get the extra hit points from the increased Constitution, although the extra hit points would be of benefit if he had gone into a rage earlier in the round, before the arrow struck.",
+        "name": "Rage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a barbarian gains the ability to react to danger before his senses would normally allow him to do so. He retains his Dexterity bonus to AC (if any) even if he is caught flat-footed or struck by an invisible attacker. However, he still loses his Dexterity bonus to AC if immobilized. If a barbarian already has uncanny dodge from a different class (a barbarian with at least four levels of rogue, for example), he automatically gains improved uncanny dodge instead.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, a barbarian has an intuitive sense that alerts him to danger from traps, giving him a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to AC against attacks made by traps. These bonuses rise by +1 every three barbarian levels thereafter (6th, 9th, 12th, 15th, and 18th level). Trap sense bonuses gained from multiple classes stack.",
+        "name": "Trap Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level and higher, a barbarian can no longer be flanked; he can react to opponents on opposite sides of him as easily as he can react to a single attacker. This defense denies a rogue the ability to sneak attack the barbarian by flanking him, unless the attacker has at least four more rogue levels than the target has barbarian levels. If a character already has uncanny dodge from a second class, the character automatically gains improved uncanny dodge instead, and the levels from the classes that grant uncanny dodge stack to determine the minimum level a rogue must be to flank the character.",
+        "name": "Improved Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 7th level, a barbarian gains the ability to shrug off some amount of injury from each blow or attack. Subtract 1 from the damage the barbarian takes each time he is dealt damage from a weapon or a natural attack. At 10th level, and every three barbarian levels thereafter (13th, 16th, and 19th level), this damage reduction rises by 1 point. Damage reduction can reduce damage to 0 but not below 0.",
+        "name": "Damage Reduction",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 11th level, a barbarian's bonuses to Strength and Constitution during his rage each increase to +6, and his morale bonus on Will saves increases to +3. The penalty to AC remains at -2.",
+        "name": "Greater Rage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "While in a rage, a barbarian of 14th level or higher gains a +4 bonus on Will saves to resist enchantment spells. This bonus stacks with all other modifiers, including the morale bonus on Will saves he also receives during his rage.",
+        "name": "Indomitable Will",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 17th level and higher, a barbarian no longer becomes fatigued at the end of his rage.",
+        "name": "Tireless Rage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 20th level, a barbarian's bonuses to Strength and Constitution during his rage each increase to +8, and his morale bonus on Will saves increases to +4. The penalty to AC remains at -2.",
+        "name": "Mighty Rage",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Craft",
+      "Handle Animal",
+      "Intimidate",
+      "Jump",
+      "Listen",
+      "Ride",
+      "Survival",
+      "Swim"
+    ],
+    "description": "",
+    "hitDie": "d12",
+    "name": "Barbarian",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonlawful"
+      },
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Fast movement",
+          "illiteracy",
+          "rage 1/day"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Uncanny dodge"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Trap sense +1"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Rage 2/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Improved uncanny dodge"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Trap sense +2"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Damage reduction 1/-"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Rage 3/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Trap sense +3"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Damage reduction 2/-"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 11,
+        "fortSave": 7,
+        "level": 11,
+        "refSave": 3,
+        "special": [
+          "Greater rage"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 12,
+        "fortSave": 8,
+        "level": 12,
+        "refSave": 4,
+        "special": [
+          "Rage 4/day",
+          "trap sense +4"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 13,
+        "fortSave": 8,
+        "level": 13,
+        "refSave": 4,
+        "special": [
+          "Damage reduction 3/-"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 14,
+        "fortSave": 9,
+        "level": 14,
+        "refSave": 4,
+        "special": [
+          "Indomitable will"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 15,
+        "fortSave": 9,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Trap sense +5"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 16,
+        "fortSave": 10,
+        "level": 16,
+        "refSave": 5,
+        "special": [
+          "Damage reduction 4/-",
+          "rage 5/day"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 17,
+        "fortSave": 10,
+        "level": 17,
+        "refSave": 5,
+        "special": [
+          "Tireless rage"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 18,
+        "fortSave": 11,
+        "level": 18,
+        "refSave": 6,
+        "special": [
+          "Trap sense +6"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 19,
+        "fortSave": 11,
+        "level": 19,
+        "refSave": 6,
+        "special": [
+          "Damage reduction 5/-"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 20,
+        "fortSave": 12,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Mighty rage",
+          "rage 6/day"
+        ],
+        "willSave": 6
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

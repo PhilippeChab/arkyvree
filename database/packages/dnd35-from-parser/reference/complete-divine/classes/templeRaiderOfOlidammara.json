@@ -1,0 +1,556 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:43:34.009Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/temple-raider-of-olidammara/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Trapfinding"
+      },
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Trap Sense"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Uncanny Dodge"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Improved Uncanny Dodge"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Skill Mastery"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Luck Domain"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disabledevice.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.openlock.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.search.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Temple Raider of Olidammara Class Feature",
+    "features": {
+      "Improved Uncanny Dodge": {
+        "description": "Starting at 6th level, a temple raider cannot be flanked. He responds to foes on all sides just as effectively as to a single opponent. No enemy can use flanking to deliver a sneak attack against the temple raider unless that enemy has at least four more rogue levels than the temple raider has levels in this class. When a character possesses uncanny dodge from another class as well, all levels from classes granting uncanny dodge are combined to calculate the minimum rogue level needed to flank him. As an example, flanking a character with 7 rogue levels and 6 temple raider levels would require a rogue of at least 17th level.",
+        "level": 6,
+        "seedName": "Improved Uncanny Dodge (Temple Raider of Olidammara)"
+      },
+      "Luck Domain": {
+        "description": "Upon reaching 10th level, Olidammara's fortune begins to favor the temple raider, bestowing access to the Luck domain. The character may employ the domain's granted power and adds its spells to his temple raider spell list (though not to any other spell lists he possesses). Should he already have the Luck domain, he instead gains one extra daily use of its granted power.",
+        "level": 10,
+        "seedName": "Luck Domain (Temple Raider of Olidammara)"
+      },
+      "Skill Mastery": {
+        "description": "At 9th level, the temple raider achieves such proficiency with particular skills that he can perform them dependably even under pressure. He chooses a number of skills equal to 3 + his Intelligence modifier. Whenever he makes a check using one of these chosen skills, he can take 10 even when stress or distractions would ordinarily make that impossible.",
+        "level": 9,
+        "seedName": "Skill Mastery (Temple Raider of Olidammara)"
+      },
+      "Sneak Attack": {
+        "description": "Beginning at 2nd level, the temple raider can perform sneak attacks, functioning in the same way as the rogue ability of the same name. The bonus damage starts at +1d6 at 2nd level and increases by +1d6 for every three additional temple raider levels gained. If the character already possesses sneak attack from a prior class, the extra damage dice stack.",
+        "level": 2,
+        "seedName": "Sneak Attack (Temple Raider of Olidammara)",
+        "stackable": true
+      },
+      "Spells per Day": {
+        "description": "A temple raider can cast a limited number of divine spells. Casting a temple raider spell requires a minimum Wisdom score of 10 + the spell's level; a character whose Wisdom is 10 or lower cannot cast any of these spells. Bonus spells and saving throw DCs are both derived from Wisdom (DC = 10 + spell level + Wisdom modifier). At levels where the character receives 0 base spells of a given level (such as 1st-level spells at temple raider level 1), only Wisdom-based bonus spells are available for that level. The temple raider has access to his entire spell list and freely selects which spells to prepare each day, much like a cleric. Spell preparation and casting also follow cleric conventions, except that the temple raider cannot spontaneously convert prepared spells into cure or inflict spells. To replenish his daily spells, the temple raider must devote 1 hour each night to quiet meditation and prayer to Olidammara. Simply resting does not restore his spells.",
+        "level": 1,
+        "seedName": "Spells per Day (Temple Raider of Olidammara)"
+      },
+      "Trap Sense": {
+        "description": "The temple raider develops a keen instinct for detecting traps, receiving a +1 bonus on Reflex saves against traps and a +1 dodge bonus to AC versus trap attacks. Both bonuses increase by +1 for every three class levels beyond 1st (+2 at 4th, +3 at 7th, and +4 at 10th).",
+        "level": 1,
+        "seedName": "Trap Sense (Temple Raider of Olidammara)",
+        "stackable": true
+      },
+      "Trapfinding": {
+        "description": "Temple raiders, much like rogues, may use the Search skill to detect traps with a DC above 20. They are also able to use Disable Device to neutralize magical traps. If a temple raider exceeds a trap's DC on a Disable Device check by 10 or more, she can analyze the mechanism, understand its workings, and lead her companions past it without actually disabling it.",
+        "level": 1,
+        "seedName": "Trapfinding (Temple Raider of Olidammara)"
+      },
+      "Uncanny Dodge": {
+        "description": "From 3rd level onward, the temple raider can sense threats before his normal perceptions would detect them. He keeps his Dexterity bonus to AC (if any) even when flat-footed or targeted by an unseen attacker. This benefit does not apply while he is immobilized. If the temple raider already possesses uncanny dodge from a different class, he instead receives improved uncanny dodge.",
+        "level": 3,
+        "seedName": "Uncanny Dodge (Temple Raider of Olidammara)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Temple raiders are proficient with all simple weapons as well as the rapier. They also gain proficiency with light and medium armor.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Temple Raider of Olidammara)"
+      }
+    },
+    "occurrenceMap": {
+      "Improved Uncanny Dodge": "Improved Uncanny Dodge",
+      "Luck Domain": "Luck Domain",
+      "Skill Mastery": "Skill Mastery",
+      "Sneak Attack": "Sneak Attack",
+      "Trap Sense": "Trap Sense",
+      "Trapfinding": "Trapfinding",
+      "Uncanny Dodge": "Uncanny Dodge"
+    },
+    "overrides": {
+      "description": "Temple raiders are a select group of devotees of Olidammara who focus on pilfering treasures and hidden knowledge from the sacred sites of rival gods.",
+      "features": {
+        "Improved Uncanny Dodge": {
+          "description": "Starting at 6th level, a temple raider cannot be flanked. He responds to foes on all sides just as effectively as to a single opponent. No enemy can use flanking to deliver a sneak attack against the temple raider unless that enemy has at least four more rogue levels than the temple raider has levels in this class. When a character possesses uncanny dodge from another class as well, all levels from classes granting uncanny dodge are combined to calculate the minimum rogue level needed to flank him. As an example, flanking a character with 7 rogue levels and 6 temple raider levels would require a rogue of at least 17th level."
+        },
+        "Luck Domain": {
+          "description": "Upon reaching 10th level, Olidammara's fortune begins to favor the temple raider, bestowing access to the Luck domain. The character may employ the domain's granted power and adds its spells to his temple raider spell list (though not to any other spell lists he possesses). Should he already have the Luck domain, he instead gains one extra daily use of its granted power."
+        },
+        "Skill Mastery": {
+          "description": "At 9th level, the temple raider achieves such proficiency with particular skills that he can perform them dependably even under pressure. He chooses a number of skills equal to 3 + his Intelligence modifier. Whenever he makes a check using one of these chosen skills, he can take 10 even when stress or distractions would ordinarily make that impossible."
+        },
+        "Sneak Attack": {
+          "description": "Beginning at 2nd level, the temple raider can perform sneak attacks, functioning in the same way as the rogue ability of the same name. The bonus damage starts at +1d6 at 2nd level and increases by +1d6 for every three additional temple raider levels gained. If the character already possesses sneak attack from a prior class, the extra damage dice stack."
+        },
+        "Spells per Day": {
+          "description": "A temple raider can cast a limited number of divine spells. Casting a temple raider spell requires a minimum Wisdom score of 10 + the spell's level; a character whose Wisdom is 10 or lower cannot cast any of these spells. Bonus spells and saving throw DCs are both derived from Wisdom (DC = 10 + spell level + Wisdom modifier). At levels where the character receives 0 base spells of a given level (such as 1st-level spells at temple raider level 1), only Wisdom-based bonus spells are available for that level. The temple raider has access to his entire spell list and freely selects which spells to prepare each day, much like a cleric. Spell preparation and casting also follow cleric conventions, except that the temple raider cannot spontaneously convert prepared spells into cure or inflict spells. To replenish his daily spells, the temple raider must devote 1 hour each night to quiet meditation and prayer to Olidammara. Simply resting does not restore his spells."
+        },
+        "Trap Sense": {
+          "description": "The temple raider develops a keen instinct for detecting traps, receiving a +1 bonus on Reflex saves against traps and a +1 dodge bonus to AC versus trap attacks. Both bonuses increase by +1 for every three class levels beyond 1st (+2 at 4th, +3 at 7th, and +4 at 10th)."
+        },
+        "Trapfinding": {
+          "description": "Temple raiders, much like rogues, may use the Search skill to detect traps with a DC above 20. They are also able to use Disable Device to neutralize magical traps. If a temple raider exceeds a trap's DC on a Disable Device check by 10 or more, she can analyze the mechanism, understand its workings, and lead her companions past it without actually disabling it."
+        },
+        "Uncanny Dodge": {
+          "description": "From 3rd level onward, the temple raider can sense threats before his normal perceptions would detect them. He keeps his Dexterity bonus to AC (if any) even when flat-footed or targeted by an unseen attacker. This benefit does not apply while he is immobilized. If the temple raider already possesses uncanny dodge from a different class, he instead receives improved uncanny dodge."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Temple raiders are proficient with all simple weapons as well as the rapier. They also gain proficiency with light and medium armor."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "templeraiderofolidammaraspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Temple raiders gain proficiency with all simple weapons and with the rapier. In addition, they gain proficiency with light and medium armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A temple raider has the ability to cast a small number of divine spells. To cast a temple raider spell, a temple raider must have a Wisdom score of at least 10 + the spell's level, so a temple raider with a Wisdom of 10 or lower cannot cast these spells. Temple raider bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + the temple raider's Wisdom modifier. When the temple raider gets 0 spells per day of a given level (for instance, 1st-level spells for a 1st-level temple raider), he gains only the bonus spells he would be entitled to based on his Wisdom score for that spell level. The temple raider's spell list appears. A temple raider has access to any spell on the list and can freely choose which to prepare, just as a cleric. A temple raider prepares and casts spells just as a cleric does (though a temple raider cannot spontaneously cast cure or inflict spells). A temple raider must spend 1 hour each night in quiet contemplation and supplication to Olidammara to regain his daily allotment of spells. Time spent resting has no effect on whether he can prepare spells.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "Like rogues, temple raiders can use the Search skill to locate traps when the task has a Difficulty Class higher than 20. They can also use the Disable Device skill to disarm magic traps. A temple raider who beats a trap's DC by 10 or more with a Disable Device check can study a trap, figure out how it works, and bypass it (with her party) without disarming it.",
+        "name": "Trapfinding",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A temple raider has an intuitive sense that alerts him to danger from traps, giving him a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to AC against attacks made by traps. These bonuses rise by an additional +1 every three levels above 1st (to +2 at 4th level, +3 at 7th, and +4 at 10th).",
+        "name": "Trap Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a temple raider gains the ability to sneak attack opponents. This functions identically to the rogue's sneak attack ability. At 2nd level, the temple raider's extra damage on a successful sneak attack is +1d6, and this rises by +1d6 per three temple raider levels thereafter. If he already has the sneak attack ability from a previous class, the damage bonuses stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a temple raider gains the ability to react to danger before his senses would normally allow him to do so. He retains his Dexterity modifier to AC (if any) even if he is caught flat-footed or struck by an invisible attacker. However, he still loses his Dexterity modifier to AC if immobilized. If a temple raider already has uncanny dodge from a different class, he automatically gains improved uncanny dodge instead.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A temple raider of 6th level or higher can no longer be flanked; he can react to opponents on opposite sides of him as easily as he can react to a single attacker. This defense denies an enemy the ability to sneak attack the temple raider by flanking him, unless the attacker has at least four more rogue levels than the target has temple raider levels. If a character already has uncanny dodge from a second class, the levels from the class(es) that grant uncanny dodge stack to determine the minimum rogue level required to flank the temple raider. For example, only a rogue of 17th level or higher could flank a 7th-level rogue/6th-level temple raider.",
+        "name": "Improved Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 9th level, a temple raider becomes so certain in the use of certain skills that he can use them reliably even under adverse conditions. Upon gaining this ability, he selects a number of skills equal to 3 + his Intelligence modifier. When making a skill check with one of these skills, he may take 10 even if stress and distraction would normally prevent him from doing so.",
+        "name": "Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 10th-level, the luck of Olidammara rubs off on a temple raider, granting the character access to the Luck domain. He may use the domain's granted power and adds the domain's spells to his temple raider spell list (but not any other spell lists he might have). If he already has the Luck domain, he can use its granted power one additional time per",
+        "name": "Luck Domain"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Climb",
+      "Craft",
+      "Decipher Script",
+      "Disable Device",
+      "Hide",
+      "Jump",
+      "Knowledge (Religion)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Search",
+      "Spot",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "The temple raiders are an elite cadre of thieves who worship the Laughing Rogue and specialize in stealing valuables and secret lore from the temples of other deities.",
+    "hitDie": "d6",
+    "name": "Temple Raider of Olidammara",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any chaotic",
+        "bab": 5,
+        "skills": [
+          {
+            "name": "Disable Device",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 1
+          },
+          {
+            "name": "Open Lock",
+            "ranks": 4
+          },
+          {
+            "name": "Search",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "The character must worship Olidammara and be invited to join the ranks of the temple raiders by at least three current members of that prestige class."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Any chaotic Skills: Disable Device 4 ranks, Knowledge (religion) 1 ranks, Open Lock 4 ranks, Search 8 ranks Special: The character must worship Olidammara and be invited to join the ranks of the temple raiders by at least three current members of that prestige class."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Trapfinding",
+          "trap sense +1"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Uncanny dodge"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Trap sense +2"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Improved uncanny dodge"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Trap sense +3"
+        ],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Sneak attack +3d6"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Skill mastery"
+        ],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Luck domain",
+          "trap sense +4"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

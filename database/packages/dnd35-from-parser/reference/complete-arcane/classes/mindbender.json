@@ -1,0 +1,476 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:09:31.536Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/mindbender/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "target": "aptitudes.mindbenderpushtheweakmind.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        3,
+        5,
+        7,
+        9
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Telepathy"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Push The Weak Mind"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Skill Boost"
+      },
+      {
+        "levels": [
+          3,
+          7
+        ],
+        "name": "Mindread"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Eternal Charm (1)"
+      },
+      {
+        "levels": [
+          6,
+          10
+        ],
+        "name": "Enchantment Spell Power"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Eternal Charm (2)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Dominate"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Eternal Charm (3)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Eternal Charm (4)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Thrall"
+      }
+    ],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.bluff.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.diplomacy.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.intimidate.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sensemotive.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Mindbender Class Feature",
+    "features": {
+      "Dominate": {
+        "description": "At 7th level, a mindbender becomes able to dominate any single living Large or smaller creature within 100 feet (as dominate monster) once per day. A successful Will save (DC 19 + primary spellcasting ability modifier) negates the effect. The duration is 24 hours.",
+        "level": 7,
+        "seedName": "Dominate (Mindbender)"
+      },
+      "Enchantment Spell Power": {
+        "description": "At 6th level and higher, a mindbender casts more powerful enchantment spells: He adds 2 to his caster level when casting any enchantment spell. This increase improves to 4 at 10th level.",
+        "level": 6,
+        "seedName": "Enchantment Spell Power (Mindbender)",
+        "stackable": true
+      },
+      "Eternal Charm": {
+        "description": "At 4th level and higher, a mindbender can charm any single Large or smaller living creature within 100 feet (as charm monster) once per day. A successful Will save (DC 14 + primary spellcasting ability modifier) negates the effect. The duration is permanent; however, a mindbender can have only one creature so charmed at any given time. If he attempts to use this power on a creature while he has another so charmed, the first charm is automatically broken (regardless of the success of the second attempt). The effect is also broken if a mindbender or one of his allies injures the target. Dispel magic has no effect on an eternal charm, though break enchantment frees the victim (treat the mindbender's caster level as 5 + his class level for this purpose). At 6th level and higher, a mindbender can have up to two creatures affected by this power at any given time; if he attempts to charm a third, the previous victim under his influence the longest is freed. At 8th level, he can control up to three creatures with this ability, and at 10th level up to four creatures.",
+        "level": 4,
+        "seedName": "Eternal Charm (Mindbender)",
+        "stackable": true
+      },
+      "Mindread": {
+        "description": "At 3rd level and higher, a mindbender can read the surface thoughts of a living creature within 100 feet. This is a mind-affecting ability that requires a standard action to use. The mindbender must be able to see the target; a successful Will save (DC 12 + primary spellcasting ability modifier) negates the effect. Creatures of animal intelligence (Int 1 or 2) have only simple, instinctual thoughts. Maintaining the effect requires concentration; the maximum duration is 10 minutes. The ability can penetrate barriers, but 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt blocks it. This effect is the equivalent of a 2nd-level spell. A mindbender can use this ability two times per day at 3rd level and four times per day at 7th level.",
+        "level": 3,
+        "seedName": "Mindread (Mindbender)",
+        "stackable": true
+      },
+      "Push the Weak Mind": {
+        "description": "At 2nd level and higher, a mindbender can influence the actions of a living creature of Large or smaller size once per day. This ability functions like a suggestion spell, except that the range is 100 feet and the duration is 5 hours plus 1 hour per class level. The mindbender can communicate the suggested course of action telepathically if he chooses, which allows him to use the effect regardless of the target's language. A successful Will save (DC 13 + primary spellcasting ability modifier) negates the effect. (Primary spellcasting ability is Intelligence for wizards, Charisma for sorcerers and warlocks, Wisdom for clerics, and so forth.) A mindbender can use this ability one additional time per day per three class levels gained (two times per day at 5th and three times per day at 8th).",
+        "level": 2,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.mindbenderpushtheweakmind.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Push the Weak Mind (Mindbender)",
+        "stackable": true
+      },
+      "Skill Boost": {
+        "description": "A mindbender is a consummate student of manipulation, be it magical or mundane. Beginning at 2nd level, he can add 1/2 his class level as a competence bonus on Bluff, Diplomacy, Intimidate, and Sense Motive checks.",
+        "level": 2,
+        "seedName": "Skill Boost (Mindbender)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each odd-numbered level, a mindbender gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a mindbender, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Mindbender)"
+      },
+      "Telepathy": {
+        "description": "A mindbender unlocks one of the most basic elements of his mental craft at 1st level, gaining the ability to communicate telepathically with any creature within 100 feet that has a language.",
+        "level": 1,
+        "seedName": "Telepathy (Mindbender)"
+      },
+      "Thrall": {
+        "description": "At 10th level, a mindbender's mental mastery reaches its pinnacle. He can choose to make the duration of his dominate ability permanent, but only on one target at a time. If a mindbender chooses to dominate another creature and make that effect permanent, the previous thrall is freed from the effect.<",
+        "level": 10,
+        "seedName": "Thrall (Mindbender)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Mindbenders gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Mindbender)"
+      }
+    },
+    "occurrenceMap": {
+      "Dominate": "Dominate",
+      "Enchantment Spell Power": "Enchantment Spell Power",
+      "Eternal Charm (1)": "Eternal Charm",
+      "Eternal Charm (2)": "Eternal Charm",
+      "Eternal Charm (3)": "Eternal Charm",
+      "Eternal Charm (4)": "Eternal Charm",
+      "Mindread": "Mindread",
+      "Push The Weak Mind": "Push the Weak Mind",
+      "Skill Boost": "Skill Boost",
+      "Telepathy": "Telepathy",
+      "Thrall": "Thrall"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Mindbenders gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each odd-numbered level, a mindbender gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a mindbender, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A mindbender unlocks one of the most basic elements of his mental craft at 1st level, gaining the ability to communicate telepathically with any creature within 100 feet that has a language.",
+        "name": "Telepathy",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level and higher, a mindbender can influence the actions of a living creature of Large or smaller size once per day. This ability functions like a suggestion spell, except that the range is 100 feet and the duration is 5 hours plus 1 hour per class level. The mindbender can communicate the suggested course of action telepathically if he chooses, which allows him to use the effect regardless of the target's language. A successful Will save (DC 13 + primary spellcasting ability modifier) negates the effect. (Primary spellcasting ability is Intelligence for wizards, Charisma for sorcerers and warlocks, Wisdom for clerics, and so forth.) A mindbender can use this ability one additional time per day per three class levels gained (two times per day at 5th and three times per day at 8th).",
+        "name": "Push the Weak Mind",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A mindbender is a consummate student of manipulation, be it magical or mundane. Beginning at 2nd level, he can add 1/2 his class level as a competence bonus on Bluff, Diplomacy, Intimidate, and Sense Motive checks.",
+        "name": "Skill Boost",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level and higher, a mindbender can read the surface thoughts of a living creature within 100 feet. This is a mind-affecting ability that requires a standard action to use. The mindbender must be able to see the target; a successful Will save (DC 12 + primary spellcasting ability modifier) negates the effect. Creatures of animal intelligence (Int 1 or 2) have only simple, instinctual thoughts. Maintaining the effect requires concentration; the maximum duration is 10 minutes. The ability can penetrate barriers, but 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt blocks it. This effect is the equivalent of a 2nd-level spell. A mindbender can use this ability two times per day at 3rd level and four times per day at 7th level.",
+        "name": "Mindread",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 4th level and higher, a mindbender can charm any single Large or smaller living creature within 100 feet (as charm monster) once per day. A successful Will save (DC 14 + primary spellcasting ability modifier) negates the effect. The duration is permanent; however, a mindbender can have only one creature so charmed at any given time. If he attempts to use this power on a creature while he has another so charmed, the first charm is automatically broken (regardless of the success of the second attempt). The effect is also broken if a mindbender or one of his allies injures the target. Dispel magic has no effect on an eternal charm, though break enchantment frees the victim (treat the mindbender's caster level as 5 + his class level for this purpose). At 6th level and higher, a mindbender can have up to two creatures affected by this power at any given time; if he attempts to charm a third, the previous victim under his influence the longest is freed. At 8th level, he can control up to three creatures with this ability, and at 10th level up to four creatures.",
+        "name": "Eternal Charm",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 6th level and higher, a mindbender casts more powerful enchantment spells: He adds 2 to his caster level when casting any enchantment spell. This increase improves to 4 at 10th level.",
+        "name": "Enchantment Spell Power",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 7th level, a mindbender becomes able to dominate any single living Large or smaller creature within 100 feet (as dominate monster) once per day. A successful Will save (DC 19 + primary spellcasting ability modifier) negates the effect. The duration is 24 hours.",
+        "name": "Dominate",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 10th level, a mindbender's mental mastery reaches its pinnacle. He can choose to make the duration of his dominate ability permanent, but only on one target at a time. If a mindbender chooses to dominate another creature and make that effect permanent, the previous thrall is freed from the effect.<",
+        "name": "Thrall",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Diplomacy",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "Mindbenders seek to control the thoughts and dreams of others.",
+    "hitDie": "d4",
+    "name": "Mindbender",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nongood",
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 4
+          },
+          {
+            "name": "Diplomacy",
+            "ranks": 4
+          },
+          {
+            "name": "Intimidate",
+            "ranks": 4
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Alignment: Any nongood Skills: Bluff 4 ranks, Diplomacy 4 ranks, Intimidate 4 ranks, Sense Motive 4 ranks Spells: Able to cast charm person, use charm person as a spell-like ability, or use the charm invocation. Spells or Spell-Like Abilities: Arcane caster level 5th."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Telepathy"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Push the weak mind 1/day",
+          "skill boost"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Mindread 2/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Eternal charm (1)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Push the weak mind 2/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Enchantment spell power +2",
+          "eternal charm (2)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Dominate",
+          "mindread 4/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Eternal charm (3)",
+          "push the weak mind 3/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Enchantment spell power +4",
+          "eternal charm (4)",
+          "thrall"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

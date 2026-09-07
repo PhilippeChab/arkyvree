@@ -1,0 +1,1364 @@
+/**
+ * migrate-packages.ts
+ *
+ * Replaces all content package rulesets with fresh seeds while preserving
+ * user characters, campaigns, rulesets, and all associated data.
+ *
+ * Strategy:
+ *  1. Save every character pick by entity NAME (race, class levels, feats, skills, etc.)
+ *  2. Delete the junction rows, drop FK constraints, delete packages
+ *  3. Run applyPackages() → fresh entities with new IDs
+ *  4. Look up new IDs by name, re-insert character picks
+ *  5. Re-add FK constraints + validate counts
+ *
+ * Only errors on name mismatches for entities characters actually reference.
+ *
+ * Usage: DATABASE_URL=... bun run scripts/migrate-packages.ts
+ */
+
+import * as relations from "@/drizzle/relations.ts";
+import * as schema from "@/drizzle/schema.ts";
+import { applyPackages } from "@/database/packages/runner.ts";
+import {
+  DND35_COMPLETE_ADVENTURER_NAME,
+  DND35_COMPLETE_ARCANE_NAME,
+  DND35_COMPLETE_DIVINE_NAME,
+  DND35_COMPLETE_SCOUNDREL_NAME,
+  DND35_COMPLETE_WARRIOR_NAME,
+  DND35_DMG_NAME,
+  DND35_RULESET_NAME,
+} from "@/database/packages/dnd35/names.ts";
+import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+// ──────────────────────────────────────────────────────────────
+// Types
+// ──────────────────────────────────────────────────────────────
+
+const schemaWithRelations = { ...schema, ...relations };
+type Db = ReturnType<typeof drizzle<typeof schemaWithRelations>>;
+type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+// ──────────────────────────────────────────────────────────────
+// Constants
+// ──────────────────────────────────────────────────────────────
+
+const PACKAGE_RULESET_NAMES = new Set([
+  DND35_RULESET_NAME,
+  DND35_COMPLETE_WARRIOR_NAME,
+  DND35_DMG_NAME,
+  DND35_COMPLETE_DIVINE_NAME,
+  DND35_COMPLETE_SCOUNDREL_NAME,
+  DND35_COMPLETE_ADVENTURER_NAME,
+  DND35_COMPLETE_ARCANE_NAME,
+]);
+
+const PACKAGE_RULESET_NAMES_ARR = [...PACKAGE_RULESET_NAMES];
+
+/**
+ * Rename map for entities whose names changed between old and new seeds.
+ * Key: "EntityType::RulesetName::OldName" → new name
+ *
+ * Run the script to see which names fail, then add the mapping here and re-run.
+ */
+const RENAME_MAP = new Map<string, string>([
+  // CW: Exotic Weapon Master stunts now disambiguated with class name
+  ["feats::Complete Warrior SRD::Show Off", "Show Off (Exotic Weapon Master Exotic Weapon Stunt)"],
+  ["feats::Complete Warrior SRD::Trip Attack", "Trip Attack (Exotic Weapon Master Exotic Weapon Stunt)"],
+  ["feats::Complete Warrior SRD::Uncanny Blow", "Uncanny Blow (Exotic Weapon Master Exotic Weapon Stunt)"],
+  // Old seeds used wrong name — correct SRD name is "Two-Weapon Fighting"
+  ["feats::D&D 3.5e SRD::Two-Weapon Combat", "Two-Weapon Fighting"],
+  // Old single aptitude split by level — characters with this are 2nd-level combat style picks
+  ["aptitudes::D&D 3.5e SRD::Ranger Combat Style", "Ranger Combat Style (2nd)"],
+  // New seeds use "Spell, Greater" format instead of "Greater Spell"
+  ["powers::D&D 3.5e SRD::Greater Invisibility", "Invisibility, Greater"],
+]);
+
+/**
+ * Cross-ruleset reroute map. Use when an entity was removed from one ruleset
+ * entirely (not just renamed) but the equivalent exists in another.
+ * Key: "EntityType::OldRulesetName::OldName" → { type, newRulesetName, newName }
+ *
+ * Example: `Complete Divine SRD::Identify` was a duplicate of SRD's Identify;
+ * the CD copy was removed, character picks should point at SRD's copy.
+ */
+const ENTITY_REROUTE = new Map<string, { type: string; rulesetName: string; name: string }>([
+  ["powers::Complete Divine SRD::Identify", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Identify" }],
+  ["powers::Complete Warrior SRD::Bestow Curse", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Bestow Curse" }],
+  // Old seed cross-linked extension-COW'd spells to base SRD wizard/bard aptitudes.
+  // New seed enforces the invariant that an aptitude's ruleset is on the entity's source chain,
+  // so picks against CD/DMG COW'd copies under Wizard/Bard Spells need to point at SRD's copy.
+  ["powers::Complete Divine SRD::Blur", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Blur" }],
+  ["powers::Complete Divine SRD::Cone of Cold", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Cone of Cold" }],
+  ["powers::Complete Divine SRD::Confusion", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Confusion" }],
+  ["powers::Complete Divine SRD::Confusion, Lesser", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Confusion, Lesser" }],
+  ["powers::Complete Divine SRD::Deep Slumber", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Deep Slumber" }],
+  ["powers::Complete Divine SRD::Disrupt Undead", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Disrupt Undead" }],
+  ["powers::Complete Divine SRD::Expeditious Retreat", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Expeditious Retreat" }],
+  ["powers::Complete Divine SRD::Haste", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Haste" }],
+  ["powers::Complete Divine SRD::Mage Armor", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Mage Armor" }],
+  ["powers::Complete Divine SRD::Otiluke's Resilient Sphere", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Otiluke's Resilient Sphere" }],
+  ["powers::Complete Divine SRD::Wall of Force", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Wall of Force" }],
+  ["powers::DMG SRD::Deep Slumber", { type: "powers", rulesetName: "D&D 3.5e SRD", name: "Deep Slumber" }],
+]);
+
+/**
+ * Entities whose references should be dropped from character data because
+ * the new seed has no equivalent. Inventory rows / feat picks / power picks
+ * pointing at these are skipped silently during resolution.
+ * Key: "EntityType::RulesetName::Name"
+ */
+const ENTITY_DROP = new Set<string>([
+  "items::D&D 3.5e SRD::Backpack",
+  "items::D&D 3.5e SRD::Flint and Steel",
+  "items::D&D 3.5e SRD::Paper",
+  "items::D&D 3.5e SRD::Rations (1 day)",
+  "items::D&D 3.5e SRD::Quill and Ink",
+  "items::D&D 3.5e SRD::Soap",
+  "items::D&D 3.5e SRD::Rope (50 ft)",
+]);
+
+/** Sentinel returned by resolveId when an entity is in ENTITY_DROP. Callers filter these out. */
+const DROP_ID = "__DROP__";
+
+/**
+ * Aptitude override for specific feat picks.
+ * Old seeds stored these feats under the wrong aptitude.
+ * Key: "RulesetName::OldFeatName" → { aptitudeName, aptitudeRulesetName }
+ *
+ * Applied during level_feats resolution: if the resolved feat name matches,
+ * the aptitude is replaced instead of resolved from the saved data.
+ */
+const FEAT_APTITUDE_OVERRIDE = new Map<string, { aptitudeName: string; aptitudeRulesetName: string }>([
+  // EWM stunts were stored under "Exotic Weapon Master Class Feature" but belong in the stunt pool
+  ["Complete Warrior SRD::Show Off", { aptitudeName: "Exotic Weapon Master Exotic Weapon Stunt", aptitudeRulesetName: "Complete Warrior SRD" }],
+  ["Complete Warrior SRD::Trip Attack", { aptitudeName: "Exotic Weapon Master Exotic Weapon Stunt", aptitudeRulesetName: "Complete Warrior SRD" }],
+  ["Complete Warrior SRD::Uncanny Blow", { aptitudeName: "Exotic Weapon Master Exotic Weapon Stunt", aptitudeRulesetName: "Complete Warrior SRD" }],
+]);
+
+// FK constraints are discovered dynamically at runtime — any FK whose
+// referenced table is in the rules schema is considered, then split into
+// two buckets by `shouldDropFk`:
+//
+//   KEEP  — stays active during the migration so PostgreSQL's ON DELETE
+//           CASCADE handles cleanup transitively: DELETE rules.rulesets →
+//           entity rows (via ruleset_id) → junction rows (via entity_id).
+//           Covered: rules.*.ruleset_id FKs (except ruleset_extensions) +
+//           the "primary" FK of each junction table.
+//
+//   DROP  — dropped before the reseed so user-ruleset rows can hold orphan
+//           references to deleted package entities until Step 13 remaps
+//           them to new IDs. Covered: character.* → rules.*, COW parent/
+//           source refs, junction "secondary" FKs (aptitude_id, save_id,
+//           cross-ruleset ones), and campaign/starred ruleset_id (handled
+//           explicitly in Step 8).
+//
+// Every FK dropped in Step 5 is re-added in Step 16 from the same list.
+interface FkConstraint {
+  table: string;       // "schema.table"
+  name: string;        // constraint name
+  definition: string;  // e.g. "FOREIGN KEY (race_id) REFERENCES rules.races(id) ON DELETE CASCADE"
+}
+
+/**
+ * Junction-table primary FKs that MUST stay active so entity deletion
+ * cascades to junction rows. Without these, package junction rows orphan
+ * after reseed and the Step 16 FK re-add fails.
+ *
+ * Format: "schema.table.constraint_name". New junction tables added to
+ * the schema should have their primary FK added here.
+ */
+const FKS_KEPT_FOR_CASCADE = new Set<string>([
+  "rules.feats_aptitudes.feats_aptitudes_feat_id_fkey",
+  "rules.powers_aptitudes.powers_aptitudes_power_id_fkey",
+  "rules.klass_level_feats.klass_level_feats_klass_level_id_fkey",
+  "rules.klass_level_powers.klass_level_powers_klass_level_id_fkey",
+  "rules.klass_level_saves.klass_level_saves_klass_level_id_fkey",
+  "rules.klass_levels.klass_levels_klass_id_fkey",
+  "rules.klass_skills.klass_skills_klass_id_fkey",
+]);
+
+function shouldDropFk(c: FkConstraint): boolean {
+  // Explicit keep list for junction primary FKs.
+  if (FKS_KEPT_FOR_CASCADE.has(`${c.table}.${c.name}`)) return false;
+
+  // Keep rules-schema entity ruleset_id FKs so DELETE rules.rulesets cascades.
+  // Exclude:
+  //   - ruleset_extensions: deleted manually in Step 8 (explicit join cleanup)
+  //   - rulesets self-FK: Step 6 clears user forks' ruleset_id; kept here is
+  //     still fine (no dangling refs), so default to keep
+  const isRulesetIdFk = /REFERENCES rules\.rulesets\(id\)/.test(c.definition);
+  const [schema, table] = c.table.split(".");
+  if (isRulesetIdFk && schema === "rules" && table !== "ruleset_extensions") return false;
+
+  return true;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────
+
+function uuidArr(ids: string[]): string {
+  if (ids.length === 0) return "'{}'::uuid[]";
+  return `ARRAY[${ids.map((id) => `'${id}'::uuid`).join(",")}]`;
+}
+
+async function query<T>(tx: Tx, q: string): Promise<T[]> {
+  const result: unknown = await tx.execute(sql.raw(q));
+  if (result && typeof result === "object" && "rows" in result) {
+    return (result as { rows: T[] }).rows;
+  }
+  return result as T[];
+}
+
+// ──────────────────────────────────────────────────────────────
+// Entity maps (name → id) — only for new package entities
+// ──────────────────────────────────────────────────────────────
+
+type EntityKey = string; // "RulesetName::EntityName"
+type IdMap = Map<EntityKey, string>;
+
+/**
+ * Keyed by rules-schema table name (e.g. "feats", "skills"). Plus the special
+ * "klassLevels" key: composite `RulesetName::KlassName::Level` → id.
+ */
+type EntityMaps = Record<string, IdMap> & { klassLevels: IdMap };
+
+/**
+ * Build name → id maps dynamically from information_schema.
+ *
+ * A table participates if it lives in the `rules` schema and has both `id`
+ * (uuid) and `name` columns. Ruleset scoping: tables with `ruleset_id` are
+ * scoped directly; `klass_levels` is scoped through its klass; `rulesets`
+ * itself is scoped by id. Anything else is skipped.
+ */
+async function buildEntityMaps(tx: Tx, rulesetIds: string[]): Promise<EntityMaps> {
+  const maps: EntityMaps = { klassLevels: new Map() };
+  if (rulesetIds.length === 0) return maps;
+
+  const arr = uuidArr(rulesetIds);
+
+  // Tables in rules schema with both `id` and `name` columns.
+  const candidates = await query<{ table_name: string }>(tx,
+    `SELECT DISTINCT table_name
+       FROM information_schema.columns
+      WHERE table_schema = 'rules'
+        AND column_name IN ('id', 'name')
+      GROUP BY table_name
+     HAVING COUNT(DISTINCT column_name) = 2`);
+
+  // Which of those have a ruleset_id column (for scoping).
+  const scopedRows = await query<{ table_name: string }>(tx,
+    `SELECT table_name FROM information_schema.columns
+      WHERE table_schema = 'rules' AND column_name = 'ruleset_id'`);
+  const scopedTables = new Set(scopedRows.map((r) => r.table_name));
+
+  for (const { table_name } of candidates) {
+    if (table_name === "klass_levels" || table_name === "rulesets") continue;
+    if (!scopedTables.has(table_name)) continue;
+    const rows = await query<{ id: string; name: string; rulesetName: string }>(tx,
+      `SELECT e.id, e.name, r.name AS "rulesetName"
+         FROM rules.${table_name} e
+         JOIN rules.rulesets r ON r.id = e.ruleset_id
+        WHERE e.ruleset_id = ANY(${arr}) AND e.deleted_at IS NULL`);
+    const m: IdMap = new Map();
+    for (const row of rows) m.set(`${row.rulesetName}::${row.name}`, row.id);
+    maps[table_name] = m;
+  }
+
+  // klass_levels: composite key (no ruleset_id directly — scope via klass).
+  const klassLevelRows = await query<{ id: string; klassName: string; level: number; rulesetName: string }>(tx,
+    `SELECT kl.id, k.name AS "klassName", kl.level, r.name AS "rulesetName"
+       FROM rules.klass_levels kl
+       JOIN rules.klasses k ON k.id = kl.klass_id
+       JOIN rules.rulesets r ON r.id = k.ruleset_id
+      WHERE k.ruleset_id = ANY(${arr}) AND k.deleted_at IS NULL AND kl.deleted_at IS NULL`);
+  for (const r of klassLevelRows) maps.klassLevels.set(`${r.rulesetName}::${r.klassName}::${r.level}`, r.id);
+
+  // rulesets themselves — keyed by name alone; stored with a redundant "name::name" to match resolveId's shape.
+  const rulesetRows = await query<{ id: string; name: string }>(tx,
+    `SELECT id, name FROM rules.rulesets WHERE id = ANY(${arr}) AND deleted_at IS NULL`);
+  const rulesetMap: IdMap = new Map();
+  for (const r of rulesetRows) rulesetMap.set(`${r.name}::${r.name}`, r.id);
+  maps.rulesets = rulesetMap;
+
+  return maps;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Resolve: given a name + ruleset, return the new entity ID
+// ──────────────────────────────────────────────────────────────
+
+/** Collects all resolution failures so we can report them all at once. */
+const resolveErrors: string[] = [];
+
+/**
+ * If the entity is from a package ruleset → look up new ID in maps.
+ * If it's from a user/COW ruleset → keep the original ID (it survived deletion).
+ * Checks RENAME_MAP first for entities whose names changed between old/new seeds.
+ *
+ * On failure: records the error and returns a placeholder so we can keep going
+ * and report ALL mismatches, not just the first one.
+ */
+function resolveId(
+  maps: EntityMaps,
+  mapKey: string,
+  name: string,
+  rulesetName: string,
+  oldId: string,
+): string {
+  if (!PACKAGE_RULESET_NAMES.has(rulesetName)) return oldId; // COW entity, unchanged
+
+  const fullKey = `${mapKey}::${rulesetName}::${name}`;
+
+  // Drop: entity removed from new seed with no equivalent — caller filters.
+  if (ENTITY_DROP.has(fullKey)) return DROP_ID;
+
+  // Reroute: entity moved to a different ruleset (and/or renamed).
+  const rerouted = ENTITY_REROUTE.get(fullKey);
+  if (rerouted) {
+    const reroutedId = maps[rerouted.type]?.get(`${rerouted.rulesetName}::${rerouted.name}`);
+    if (!reroutedId) {
+      const entry = `[ENTITY_REROUTE target missing: ${rerouted.type}::${rerouted.rulesetName}::${rerouted.name}]`;
+      if (!resolveErrors.includes(entry)) resolveErrors.push(entry);
+      return oldId;
+    }
+    return reroutedId;
+  }
+
+  // Same-ruleset rename
+  const renamed = RENAME_MAP.get(fullKey);
+  const resolvedName = renamed ?? name;
+
+  const key = `${rulesetName}::${resolvedName}`;
+  const map = maps[mapKey];
+  const newId = map?.get(key);
+
+  if (!newId) {
+    const entry = `["${mapKey}::${rulesetName}::${name}", "???"],`;
+    if (!resolveErrors.includes(entry)) resolveErrors.push(entry);
+    return oldId; // placeholder — tx will roll back anyway
+  }
+  return newId;
+}
+
+function resolveKlassLevelId(
+  maps: EntityMaps,
+  klassName: string,
+  level: number,
+  rulesetName: string,
+  oldId: string,
+): string {
+  if (!PACKAGE_RULESET_NAMES.has(rulesetName)) return oldId;
+
+  const renamedKlass = RENAME_MAP.get(`klasses::${rulesetName}::${klassName}`);
+  const resolvedKlassName = renamedKlass ?? klassName;
+
+  const key = `${rulesetName}::${resolvedKlassName}::${level}`;
+  const newId = maps.klassLevels.get(key);
+  if (!newId) {
+    const entry = `klassLevels: "${key}" (old class: "${klassName}")`;
+    if (!resolveErrors.includes(entry)) resolveErrors.push(entry);
+    return oldId;
+  }
+  return newId;
+}
+
+/** Call after all resolveId/resolveKlassLevelId calls. Throws if any failed. */
+function checkResolveErrors() {
+  if (resolveErrors.length === 0) return;
+  console.error(`\n❌ ${resolveErrors.length} unresolved entity names.`);
+  console.error("Add these to RENAME_MAP and re-run:\n");
+  for (const e of resolveErrors) console.error(`  ${e}`);
+  throw new Error("Unresolved entity names — see above");
+}
+
+// ──────────────────────────────────────────────────────────────
+// Bulk UPDATE / INSERT helpers
+// ──────────────────────────────────────────────────────────────
+
+function valuesClause(remap: Map<string, string>): string {
+  return [...remap.entries()]
+    .map(([o, n]) => `('${o}'::uuid,'${n}'::uuid)`)
+    .join(",");
+}
+
+async function updateColumn(tx: Tx, table: string, col: string, remap: Map<string, string>, extraWhere?: string) {
+  if (remap.size === 0) return 0;
+  const vals = valuesClause(remap);
+  const where = extraWhere ? ` AND ${extraWhere}` : "";
+  const result = await query<{ count: string }>(
+    tx,
+    `WITH updated AS (
+       UPDATE ${table} t SET ${col} = m.new_id
+       FROM (VALUES ${vals}) AS m(old_id, new_id)
+       WHERE t.${col} = m.old_id${where}
+       RETURNING 1
+     ) SELECT count(*)::text as count FROM updated`,
+  );
+  return Number(result[0]?.count ?? 0);
+}
+
+/** Bulk INSERT in batches of BATCH_SIZE */
+async function bulkInsert(tx: Tx, table: string, columns: string[], rows: string[][]) {
+  const BATCH_SIZE = 200;
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const valuesList = batch.map((r) => `(${r.join(",")})`).join(",");
+    await query(tx, `INSERT INTO ${table} (${columns.join(",")}) VALUES ${valuesList}`);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// FK constraint management (dynamic)
+// ──────────────────────────────────────────────────────────────
+
+/**
+ * Discover every FK constraint whose *referenced* table is in the `rules`
+ * schema. Those are the constraints that would block cascade-deletion of
+ * package content or misfire on the new ids we seed in. `pg_get_constraintdef`
+ * returns the full `FOREIGN KEY ... REFERENCES ... ON DELETE ...` clause so we
+ * can round-trip the constraint without hardcoding columns or actions.
+ */
+async function discoverFkConstraints(tx: Tx): Promise<FkConstraint[]> {
+  return await query<FkConstraint>(tx,
+    `SELECT
+        (nc.nspname || '.' || cc.relname) AS "table",
+        c.conname AS "name",
+        pg_get_constraintdef(c.oid) AS "definition"
+       FROM pg_constraint c
+       JOIN pg_class cc ON cc.oid = c.conrelid
+       JOIN pg_namespace nc ON nc.oid = cc.relnamespace
+       JOIN pg_class rc ON rc.oid = c.confrelid
+       JOIN pg_namespace rn ON rn.oid = rc.relnamespace
+      WHERE c.contype = 'f'
+        AND rn.nspname = 'rules'
+      ORDER BY "table", "name"`);
+}
+
+async function dropFkConstraints(tx: Tx, constraints: FkConstraint[]) {
+  for (const c of constraints) {
+    await query(tx, `ALTER TABLE ${c.table} DROP CONSTRAINT IF EXISTS ${c.name}`);
+  }
+}
+
+async function addFkConstraints(tx: Tx, constraints: FkConstraint[]) {
+  for (const c of constraints) {
+    await query(tx, `ALTER TABLE ${c.table} ADD CONSTRAINT ${c.name} ${c.definition}`);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Counting / validation
+// ──────────────────────────────────────────────────────────────
+
+interface Counts {
+  characters: number;
+  levels: number;
+  feats: number;
+  skills: number;
+  powers: number;
+  inventory: number;
+  abilities: number;
+  languages: number;
+}
+
+async function countCharacterData(tx: Tx, characterIds: string[]): Promise<Counts> {
+  if (characterIds.length === 0) {
+    return { characters: 0, levels: 0, feats: 0, skills: 0, powers: 0, inventory: 0, abilities: 0, languages: 0 };
+  }
+  const arr = uuidArr(characterIds);
+  const levelSubq = `(SELECT id FROM character.levels WHERE character_id = ANY(${arr}) AND deleted_at IS NULL)`;
+
+  const [chars, lvls, feats, skills, powers, inv, abs, langs] = await Promise.all([
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.characters WHERE id = ANY(${arr}) AND deleted_at IS NULL`),
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.levels WHERE character_id = ANY(${arr}) AND deleted_at IS NULL`),
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.level_feats WHERE character_level_id IN ${levelSubq} AND deleted_at IS NULL`),
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.level_skills WHERE character_level_id IN ${levelSubq} AND deleted_at IS NULL`),
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.level_powers WHERE character_level_id IN ${levelSubq} AND deleted_at IS NULL`),
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.inventory WHERE character_id = ANY(${arr}) AND deleted_at IS NULL`),
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.character_abilities WHERE character_id = ANY(${arr}) AND deleted_at IS NULL`),
+    query<{ c: string }>(tx, `SELECT count(*)::text as c FROM character.languages WHERE character_id = ANY(${arr}) AND deleted_at IS NULL`),
+  ]);
+
+  return {
+    characters: Number(chars[0].c),
+    levels: Number(lvls[0].c),
+    feats: Number(feats[0].c),
+    skills: Number(skills[0].c),
+    powers: Number(powers[0].c),
+    inventory: Number(inv[0].c),
+    abilities: Number(abs[0].c),
+    languages: Number(langs[0].c),
+  };
+}
+
+// ──────────────────────────────────────────────────────────────
+// Saved character data types
+// ──────────────────────────────────────────────────────────────
+
+interface SavedCrossKlassSkill { klassName: string; klassRulesetName: string; skillId: string; skillName: string; skillRulesetName: string }
+interface SavedRace { characterId: string; raceId: string; raceName: string; rulesetName: string }
+interface SavedLevel { levelId: string; characterId: string; hp: number; klassLevelId: string; klassName: string; level: number; klassRulesetName: string; abilityId: string | null; abilityName: string | null; abilityRulesetName: string | null }
+interface SavedLevelFeat { levelId: string; featId: string; featName: string; featRulesetName: string; aptitudeId: string; aptitudeName: string; aptitudeRulesetName: string }
+interface SavedLevelSkill { levelId: string; skillId: string; skillName: string; skillRulesetName: string; rank: number }
+interface SavedLevelPower { levelId: string; powerId: string; powerName: string; powerRulesetName: string; aptitudeId: string; aptitudeName: string; aptitudeRulesetName: string }
+interface SavedAbility { characterId: string; abilityId: string; abilityName: string; abilityRulesetName: string; score: number }
+interface SavedLanguage { characterId: string; languageId: string; languageName: string; languageRulesetName: string }
+interface SavedInventory { characterId: string; itemId: string; itemName: string; itemRulesetName: string; quantity: number; equipped: boolean; location: string | null; weaponSet: number | null; totalCharges: number | null; remainingCharges: number | null }
+
+// ──────────────────────────────────────────────────────────────
+// Main
+// ──────────────────────────────────────────────────────────────
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("DATABASE_URL is not set");
+  process.exit(1);
+}
+
+const pool = new Pool({ connectionString });
+const db = drizzle(pool, { schema: schemaWithRelations });
+
+try {
+  await db.transaction(async (tx) => {
+    console.log("=== Content Package Migration ===\n");
+
+    // ── Discover package rulesets ──────────────────────────────
+    const pkgRows = await query<{ id: string; name: string }>(
+      tx,
+      `SELECT id, name FROM rules.rulesets
+       WHERE name IN (${PACKAGE_RULESET_NAMES_ARR.map((n) => `'${n}'`).join(",")})
+       AND user_id IS NULL AND deleted_at IS NULL`,
+    );
+    const pkgIds = pkgRows.map((r) => r.id);
+    const pkgIdToName = new Map(pkgRows.map((r) => [r.id, r.name]));
+
+    console.log(`Package rulesets: ${pkgRows.map((r) => `${r.name} (${r.id.slice(0, 8)})`).join(", ")}`);
+    const foundNames = new Set(pkgRows.map((r) => r.name));
+    const missing = PACKAGE_RULESET_NAMES_ARR.filter((n) => !foundNames.has(n));
+    if (missing.length > 0) throw new Error(`Missing expected package rulesets: ${missing.join(", ")}`);
+
+    // ── Discover user rulesets that inherit from packages ──────
+    const userRows = await query<{
+      id: string; name: string; rulesetId: string | null;
+      extensionRulesetIds: string[]; ancestorRulesetIds: string[];
+    }>(
+      tx,
+      `SELECT id, name, ruleset_id as "rulesetId",
+              extension_ruleset_ids as "extensionRulesetIds",
+              ancestor_ruleset_ids as "ancestorRulesetIds"
+       FROM rules.rulesets
+       WHERE user_id IS NOT NULL AND deleted_at IS NULL
+       AND (ruleset_id = ANY(${uuidArr(pkgIds)})
+            OR ancestor_ruleset_ids && ${uuidArr(pkgIds)})`,
+    );
+    const userRulesetIds = userRows.map((r) => r.id);
+    console.log(`User rulesets (${userRows.length}): ${userRows.map((r) => r.name).join(", ")}`);
+
+    // ── Discover characters (including soft-deleted — they still have FK refs) ──
+    const charRows = await query<{ id: string }>(
+      tx,
+      `SELECT id FROM character.characters
+       WHERE ruleset_id = ANY(${uuidArr(userRulesetIds)})`,
+    );
+    const charIds = charRows.map((r) => r.id);
+    console.log(`Characters: ${charIds.length} (including soft-deleted)\n`);
+
+    // ── Preflight: unsaved refs that would be silently dropped ──
+    // rules.contributors has a FK to rulesets. If any exist for package
+    // rulesets we don't currently save/restore them — bail loudly rather
+    // than lose data.
+    const orphanedContributors = await query<{ count: string }>(tx,
+      `SELECT count(*)::text AS count FROM rules.contributors
+        WHERE ruleset_id = ANY(${uuidArr(pkgIds)}) AND deleted_at IS NULL`);
+    if (Number(orphanedContributors[0].count) > 0) {
+      throw new Error(
+        `Refusing to run: ${orphanedContributors[0].count} contributor(s) attached to package rulesets. ` +
+        `Add save/restore handling or reassign them before re-running.`,
+      );
+    }
+
+    // ── Step 1: Pre-migration counts ──────────────────────────
+    console.log("Step 1: Pre-migration counts");
+    const preCounts = await countCharacterData(tx, charIds);
+    for (const [k, v] of Object.entries(preCounts)) console.log(`  ${k}: ${v}`);
+
+    // ── Step 2: Save all character data by name ───────────────
+    console.log("\nStep 2: Saving character data by name...");
+    const charArr = uuidArr(charIds);
+    const levelSubq = `(SELECT id FROM character.levels WHERE character_id = ANY(${charArr}))`;
+
+    const [savedRaces, savedLevels, savedFeats, savedSkills, savedPowers, savedAbilities, savedLanguages, savedInventory] = await Promise.all([
+      // Character races
+      query<SavedRace>(tx,
+        `SELECT c.id as "characterId", c.race_id as "raceId",
+                r.name as "raceName", rs.name as "rulesetName"
+         FROM character.characters c
+         JOIN rules.races r ON r.id = c.race_id
+         JOIN rules.rulesets rs ON rs.id = r.ruleset_id
+         WHERE c.id = ANY(${charArr})`),
+
+      // Character levels
+      query<SavedLevel>(tx,
+        `SELECT l.id as "levelId", l.character_id as "characterId", l.hp,
+                l.klass_level_id as "klassLevelId",
+                k.name as "klassName", kl.level, krs.name as "klassRulesetName",
+                l.ability_id as "abilityId",
+                a.name as "abilityName", ars.name as "abilityRulesetName"
+         FROM character.levels l
+         JOIN rules.klass_levels kl ON kl.id = l.klass_level_id
+         JOIN rules.klasses k ON k.id = kl.klass_id
+         JOIN rules.rulesets krs ON krs.id = k.ruleset_id
+         LEFT JOIN rules.abilities a ON a.id = l.ability_id
+         LEFT JOIN rules.rulesets ars ON ars.id = a.ruleset_id
+         WHERE l.character_id = ANY(${charArr})`),
+
+      // Level feats
+      query<SavedLevelFeat>(tx,
+        `SELECT lf.character_level_id as "levelId",
+                lf.feat_id as "featId", f.name as "featName", frs.name as "featRulesetName",
+                lf.aptitude_id as "aptitudeId", apt.name as "aptitudeName", ars.name as "aptitudeRulesetName"
+         FROM character.level_feats lf
+         JOIN rules.feats f ON f.id = lf.feat_id
+         JOIN rules.rulesets frs ON frs.id = f.ruleset_id
+         JOIN rules.aptitudes apt ON apt.id = lf.aptitude_id
+         JOIN rules.rulesets ars ON ars.id = apt.ruleset_id
+         WHERE lf.character_level_id IN ${levelSubq} AND lf.deleted_at IS NULL`),
+
+      // Level skills
+      query<SavedLevelSkill>(tx,
+        `SELECT ls.character_level_id as "levelId",
+                ls.skill_id as "skillId", s.name as "skillName", srs.name as "skillRulesetName",
+                ls.rank
+         FROM character.level_skills ls
+         JOIN rules.skills s ON s.id = ls.skill_id
+         JOIN rules.rulesets srs ON srs.id = s.ruleset_id
+         WHERE ls.character_level_id IN ${levelSubq} AND ls.deleted_at IS NULL`),
+
+      // Level powers
+      query<SavedLevelPower>(tx,
+        `SELECT lp.character_level_id as "levelId",
+                lp.power_id as "powerId", p.name as "powerName", prs.name as "powerRulesetName",
+                lp.aptitude_id as "aptitudeId", apt.name as "aptitudeName", ars.name as "aptitudeRulesetName"
+         FROM character.level_powers lp
+         JOIN rules.powers p ON p.id = lp.power_id
+         JOIN rules.rulesets prs ON prs.id = p.ruleset_id
+         JOIN rules.aptitudes apt ON apt.id = lp.aptitude_id
+         JOIN rules.rulesets ars ON ars.id = apt.ruleset_id
+         WHERE lp.character_level_id IN ${levelSubq} AND lp.deleted_at IS NULL`),
+
+      // Character abilities
+      query<SavedAbility>(tx,
+        `SELECT ca.character_id as "characterId",
+                ca.ability_id as "abilityId", a.name as "abilityName", ars.name as "abilityRulesetName",
+                ca.score
+         FROM character.character_abilities ca
+         JOIN rules.abilities a ON a.id = ca.ability_id
+         JOIN rules.rulesets ars ON ars.id = a.ruleset_id
+         WHERE ca.character_id = ANY(${charArr}) AND ca.deleted_at IS NULL`),
+
+      // Character languages
+      query<SavedLanguage>(tx,
+        `SELECT cl.character_id as "characterId",
+                cl.language_id as "languageId", l.name as "languageName", lrs.name as "languageRulesetName"
+         FROM character.languages cl
+         JOIN rules.languages l ON l.id = cl.language_id
+         JOIN rules.rulesets lrs ON lrs.id = l.ruleset_id
+         WHERE cl.character_id = ANY(${charArr}) AND cl.deleted_at IS NULL`),
+
+      // Inventory
+      query<SavedInventory>(tx,
+        `SELECT inv.character_id as "characterId",
+                inv.item_id as "itemId", i.name as "itemName", irs.name as "itemRulesetName",
+                inv.quantity, inv.equipped,
+                inv.location, inv.weapon_set as "weaponSet",
+                inv.total_charges as "totalCharges", inv.remaining_charges as "remainingCharges"
+         FROM character.inventory inv
+         JOIN rules.items i ON i.id = inv.item_id
+         JOIN rules.rulesets irs ON irs.id = i.ruleset_id
+         WHERE inv.character_id = ANY(${charArr}) AND inv.deleted_at IS NULL`),
+    ]);
+
+    // Also save cross-ruleset klass_skills (package class → user skill)
+    const savedCrossKlassSkills = await query<SavedCrossKlassSkill>(tx,
+      `SELECT k.name as "klassName", krs.name as "klassRulesetName",
+              ks.skill_id as "skillId", s.name as "skillName", srs.name as "skillRulesetName"
+       FROM rules.klass_skills ks
+       JOIN rules.klasses k ON k.id = ks.klass_id
+       JOIN rules.skills s ON s.id = ks.skill_id
+       JOIN rules.rulesets krs ON krs.id = k.ruleset_id
+       JOIN rules.rulesets srs ON srs.id = s.ruleset_id
+       WHERE krs.user_id IS NULL AND srs.user_id IS NOT NULL`);
+
+    console.log(`  races: ${savedRaces.length}, levels: ${savedLevels.length}, feats: ${savedFeats.length}`);
+    console.log(`  skills: ${savedSkills.length}, powers: ${savedPowers.length}, inventory: ${savedInventory.length}`);
+    console.log(`  abilities: ${savedAbilities.length}, languages: ${savedLanguages.length}`);
+    console.log(`  cross-ruleset klass_skills: ${savedCrossKlassSkills.length}`);
+
+    // Save campaigns and starred_rulesets that reference package rulesets
+    const savedCampaigns = await query<{ id: string; rulesetName: string }>(tx,
+      `SELECT c.id, rs.name as "rulesetName"
+       FROM campaign.campaigns c
+       JOIN rules.rulesets rs ON rs.id = c.ruleset_id
+       WHERE rs.user_id IS NULL`);
+    const savedStars = await query<{ userId: string; rulesetName: string }>(tx,
+      `SELECT sr.user_id as "userId", rs.name as "rulesetName"
+       FROM account.starred_rulesets sr
+       JOIN rules.rulesets rs ON rs.id = sr.ruleset_id
+       WHERE rs.user_id IS NULL`);
+    console.log(`  campaigns on package rulesets: ${savedCampaigns.length}`);
+    console.log(`  starred package rulesets: ${savedStars.length}`);
+
+    // ── Step 3: Delete demo characters in package rulesets ─────
+    console.log("\nStep 3: Deleting demo characters in package rulesets...");
+    const demoDeleted = await query<{ count: string }>(tx,
+      `WITH deleted AS (
+         DELETE FROM character.characters WHERE ruleset_id = ANY(${uuidArr(pkgIds)}) RETURNING 1
+       ) SELECT count(*)::text as count FROM deleted`);
+    console.log(`  ${demoDeleted[0].count} demo characters deleted`);
+
+    // ── Step 3b: Delete junction rows for user characters ─────
+    // Deletes ALL rows (including soft-deleted). Step 2 only saved non-deleted rows,
+    // so soft-deleted junction rows are intentionally dropped — they're dead data and
+    // removing them avoids dangling FK references when constraints are re-added.
+    // Parent rows (characters, levels) are kept including soft-deleted because their
+    // FK columns (race_id, klass_level_id) must point to valid entities.
+    console.log("\nStep 3b: Deleting character junction rows...");
+    if (charIds.length > 0) {
+      await query(tx, `DELETE FROM character.level_feats WHERE character_level_id IN ${levelSubq}`);
+      await query(tx, `DELETE FROM character.level_skills WHERE character_level_id IN ${levelSubq}`);
+      await query(tx, `DELETE FROM character.level_powers WHERE character_level_id IN ${levelSubq}`);
+      await query(tx, `DELETE FROM character.character_abilities WHERE character_id = ANY(${charArr})`);
+      await query(tx, `DELETE FROM character.languages WHERE character_id = ANY(${charArr})`);
+      await query(tx, `DELETE FROM character.inventory WHERE character_id = ANY(${charArr})`);
+    }
+
+    // ── Step 4: Build old→new remap for COW updates ───────────
+    // We need old entity maps for: COW cross-refs + customization cleanup
+    console.log("\nStep 4: Building old entity maps for COW + cleanup...");
+    const oldMaps = await buildEntityMaps(tx, pkgIds);
+    let totalOldIds = 0;
+    const allOldEntityIds: string[] = [];
+    for (const m of Object.values(oldMaps)) {
+      totalOldIds += m.size;
+      for (const id of m.values()) allOldEntityIds.push(id);
+    }
+    console.log(`  ${totalOldIds} package entity IDs`);
+
+    // ── Step 5: Drop FK constraints ───────────────────────────
+    console.log("\nStep 5: Discovering + selectively dropping FK constraints...");
+    const allFkConstraints = await discoverFkConstraints(tx);
+    const fkConstraintsToDrop = allFkConstraints.filter(shouldDropFk);
+    const fkConstraintsToKeep = allFkConstraints.filter((c) => !shouldDropFk(c));
+    await dropFkConstraints(tx, fkConstraintsToDrop);
+    console.log(`  dropped: ${fkConstraintsToDrop.length}, kept for cascade: ${fkConstraintsToKeep.length}`);
+    console.log(`  kept (cascade path):`);
+    for (const c of fkConstraintsToKeep) console.log(`    ${c.table}.${c.name}`);
+
+    // ── Step 6: Disconnect user rulesets ───────────────────────
+    console.log("\nStep 6: Disconnecting user rulesets from base...");
+    if (userRulesetIds.length > 0) {
+      await query(tx,
+        `UPDATE rules.rulesets
+         SET ruleset_id = NULL, ancestor_ruleset_ids = '{}', extension_ruleset_ids = '{}'
+         WHERE id = ANY(${uuidArr(userRulesetIds)})`);
+    }
+
+    // ── Step 7: Clean up orphaned customization data ──────────
+    // Query the customization tables for the distinct types actually in use,
+    // then for each type collect all package-ruleset entity ids and delete
+    // matching customization rows. This covers klass_levels, rulesets, and
+    // any future entity types without needing to hardcode a list.
+    console.log("\nStep 7: Cleaning up orphaned data...");
+
+    // Find which customization types correspond to rules-schema tables that
+    // own an entity directly. Character-scoped types (`characters`, `levels`,
+    // etc.) live in a different schema and must not be touched. Junction
+    // tables (feats_aptitudes, klass_level_*) live in `rules` but don't
+    // directly own an entity — they're scoped through their parents.
+    // Filter to tables that have a `ruleset_id` column; add klass_levels
+    // (scoped via klass) and rulesets (scoped by id) as explicit cases.
+    const scopedTables = (await query<{ table_name: string }>(tx,
+      `SELECT table_name FROM information_schema.columns
+        WHERE table_schema = 'rules' AND column_name = 'ruleset_id'`))
+      .map((r) => r.table_name);
+    const scopedSet = new Set<string>([...scopedTables, "klass_levels", "rulesets"]);
+
+    const types = (await query<{ t: string }>(tx,
+      `SELECT DISTINCT source_type AS t FROM customization.modifiers  WHERE deleted_at IS NULL
+       UNION
+       SELECT DISTINCT entity_type AS t FROM customization.requirements WHERE deleted_at IS NULL
+       UNION
+       SELECT DISTINCT entity_type AS t FROM customization.properties   WHERE deleted_at IS NULL`))
+      .filter((r) => scopedSet.has(r.t));
+
+    const pkgArr = uuidArr(pkgIds);
+    const pkgScopedIds: string[] = [];
+    for (const { t } of types) {
+      const sub = t === "klass_levels"
+        ? `SELECT kl.id FROM rules.klass_levels kl JOIN rules.klasses k ON k.id = kl.klass_id WHERE k.ruleset_id = ANY(${pkgArr})`
+        : t === "rulesets"
+          ? `SELECT id FROM rules.rulesets WHERE id = ANY(${pkgArr})`
+          : `SELECT id FROM rules.${t} WHERE ruleset_id = ANY(${pkgArr})`;
+      const rows = await query<{ id: string }>(tx, sub);
+      for (const r of rows) pkgScopedIds.push(r.id);
+    }
+
+    const BATCH = 500;
+    let chainDeletedRequirements = 0;
+    for (let i = 0; i < pkgScopedIds.length; i += BATCH) {
+      const batch = uuidArr(pkgScopedIds.slice(i, i + BATCH));
+
+      // Chain-clean requirements that attach to pkg-scoped modifiers (via
+      // entity_type='modifiers'). These rows have no FK into customization,
+      // so deleting the parent modifier leaves them as orphans. Collect the
+      // pkg modifier IDs first, drop their requirements, then drop the
+      // modifiers themselves.
+      const pkgModifierIds = (await query<{ id: string }>(tx,
+        `SELECT id FROM customization.modifiers WHERE source_id = ANY(${batch})`))
+        .map((r) => r.id);
+      if (pkgModifierIds.length > 0) {
+        const modArr = uuidArr(pkgModifierIds);
+        const deleted = await query<{ count: string }>(tx,
+          `WITH del AS (DELETE FROM customization.requirements
+                        WHERE entity_type = 'modifiers' AND entity_id = ANY(${modArr})
+                        RETURNING 1)
+           SELECT count(*)::text AS count FROM del`);
+        chainDeletedRequirements += Number(deleted[0].count);
+      }
+
+      await query(tx, `DELETE FROM customization.modifiers WHERE source_id = ANY(${batch})`);
+      await query(tx, `DELETE FROM customization.requirements WHERE entity_id = ANY(${batch})`);
+      await query(tx, `DELETE FROM customization.properties WHERE entity_id = ANY(${batch})`);
+      await query(tx, `DELETE FROM account.activities WHERE target_id = ANY(${batch})`);
+    }
+    if (chainDeletedRequirements > 0) {
+      console.log(`  chain-deleted ${chainDeletedRequirements} requirements attached to pkg modifiers`);
+    }
+    // Also clean activities referencing package ruleset IDs directly
+    await query(tx, `DELETE FROM account.activities WHERE target_id = ANY(${pkgArr})`);
+    console.log(`  ${pkgScopedIds.length} package entity ids scanned across ${types.length} customization types`);
+
+    // ── Step 8: Delete package data ───────────────────────────
+    // The DELETE on rules.rulesets cascades through the kept FKs (see Step 5)
+    // to wipe package-scoped entity rows, junction rows, and entity_snapshots.
+    console.log("\nStep 8: Deleting package rulesets + entities...");
+    await query(tx, `DELETE FROM rules.content_packages`);
+    await query(tx,
+      `DELETE FROM rules.ruleset_extensions
+       WHERE ruleset_id = ANY(${uuidArr(pkgIds)}) OR extension_id = ANY(${uuidArr(pkgIds)})`);
+    // starred_rulesets FK was dropped (campaigns are preserved with the same
+    // FK drop), so we clean up pkg-scoped stars explicitly here. Campaigns are
+    // updated with new ruleset IDs in Step 15b instead of being deleted.
+    await query(tx, `DELETE FROM account.starred_rulesets WHERE ruleset_id = ANY(${uuidArr(pkgIds)})`);
+    await query(tx, `DELETE FROM rules.rulesets WHERE id = ANY(${uuidArr(pkgIds)})`);
+
+    // ── Step 9: Reinstall packages ────────────────────────────
+    console.log("\nStep 9: Running applyPackages()...");
+    await applyPackages(tx);
+
+    // ── Step 10: Build new entity maps ────────────────────────
+    console.log("\nStep 10: Building new entity maps...");
+    const newPkgRows = await query<{ id: string; name: string }>(
+      tx,
+      `SELECT id, name FROM rules.rulesets
+       WHERE name IN (${PACKAGE_RULESET_NAMES_ARR.map((n) => `'${n}'`).join(",")})
+       AND user_id IS NULL AND deleted_at IS NULL`,
+    );
+    const newPkgIds = newPkgRows.map((r) => r.id);
+    const newFoundNames = new Set(newPkgRows.map((r) => r.name));
+    const newMissing = PACKAGE_RULESET_NAMES_ARR.filter((n) => !newFoundNames.has(n));
+    if (newMissing.length > 0) throw new Error(`Missing package rulesets after reseed: ${newMissing.join(", ")}`);
+
+    const newMaps = await buildEntityMaps(tx, newPkgIds);
+    const newRulesetByName = new Map(newPkgRows.map((r) => [r.name, r.id]));
+
+    for (const [type, map] of Object.entries(newMaps)) {
+      console.log(`  ${type}: ${map.size}`);
+    }
+
+    // ── Step 11: Remap and update characters + levels ─────────
+    console.log("\nStep 11: Updating characters and levels...");
+
+    // Update character race_id
+    for (const sr of savedRaces) {
+      const newRaceId = resolveId(newMaps, "races", sr.raceName, sr.rulesetName, sr.raceId);
+      await query(tx, `UPDATE character.characters SET race_id = '${newRaceId}' WHERE id = '${sr.characterId}'`);
+    }
+    console.log(`  character races: ${savedRaces.length}`);
+
+    // Update level klass_level_id and ability_id
+    for (const sl of savedLevels) {
+      const newKlId = resolveKlassLevelId(newMaps, sl.klassName, sl.level, sl.klassRulesetName, sl.klassLevelId);
+      const newAbId = sl.abilityId && sl.abilityName && sl.abilityRulesetName
+        ? resolveId(newMaps, "abilities", sl.abilityName, sl.abilityRulesetName, sl.abilityId)
+        : null;
+      const abilitySql = newAbId ? `'${newAbId}'` : "NULL";
+      await query(tx,
+        `UPDATE character.levels SET klass_level_id = '${newKlId}', ability_id = ${abilitySql}
+         WHERE id = '${sl.levelId}'`);
+    }
+    console.log(`  levels: ${savedLevels.length}`);
+
+    // Bail early if characters/levels had unresolvable refs
+    checkResolveErrors();
+
+    // ── Step 12: Re-insert junction rows with new IDs ─────────
+    console.log("\nStep 12: Resolving junction row IDs...");
+
+    // Resolve all names first — collect errors without inserting anything
+    // Track resolved feat+aptitude pairs for validation
+    const resolvedFeatPairs: { featId: string; aptitudeId: string; featName: string; aptName: string }[] = [];
+    const featRows = savedFeats.map((sf) => {
+      const newFeatId = resolveId(newMaps, "feats", sf.featName, sf.featRulesetName, sf.featId);
+      // Check if this feat needs its aptitude overridden
+      const aptOverride = FEAT_APTITUDE_OVERRIDE.get(`${sf.featRulesetName}::${sf.featName}`);
+      const resolvedAptName = aptOverride ? aptOverride.aptitudeName : sf.aptitudeName;
+      const resolvedAptRuleset = aptOverride ? aptOverride.aptitudeRulesetName : sf.aptitudeRulesetName;
+      const newAptId = resolveId(newMaps, "aptitudes", resolvedAptName, resolvedAptRuleset, sf.aptitudeId);
+      // Only validate package feats (COW feats won't be in feats_aptitudes of new packages)
+      if (PACKAGE_RULESET_NAMES.has(sf.featRulesetName)) {
+        resolvedFeatPairs.push({ featId: newFeatId, aptitudeId: newAptId, featName: sf.featName, aptName: resolvedAptName });
+      }
+      return [`'${sf.levelId}'::uuid`, `'${newFeatId}'::uuid`, `'${newAptId}'::uuid`];
+    });
+
+    const skillRows = savedSkills.map((ss) => {
+      const newSkillId = resolveId(newMaps, "skills", ss.skillName, ss.skillRulesetName, ss.skillId);
+      return [`'${ss.levelId}'::uuid`, `'${newSkillId}'::uuid`, `${ss.rank}`];
+    });
+
+    const resolvedPowerPairs: { powerId: string; aptitudeId: string; powerName: string; aptName: string }[] = [];
+    const powerRows = savedPowers.map((sp) => {
+      const newPowerId = resolveId(newMaps, "powers", sp.powerName, sp.powerRulesetName, sp.powerId);
+      const newAptId = resolveId(newMaps, "aptitudes", sp.aptitudeName, sp.aptitudeRulesetName, sp.aptitudeId);
+      if (PACKAGE_RULESET_NAMES.has(sp.powerRulesetName)) {
+        resolvedPowerPairs.push({ powerId: newPowerId, aptitudeId: newAptId, powerName: sp.powerName, aptName: sp.aptitudeName });
+      }
+      return [`'${sp.levelId}'::uuid`, `'${newPowerId}'::uuid`, `'${newAptId}'::uuid`];
+    });
+
+    const abilityRows = savedAbilities.map((sa) => {
+      const newAbId = resolveId(newMaps, "abilities", sa.abilityName, sa.abilityRulesetName, sa.abilityId);
+      return [`'${sa.characterId}'::uuid`, `'${newAbId}'::uuid`, `${sa.score}`];
+    });
+
+    const langRows = savedLanguages.map((sl) => {
+      const newLangId = resolveId(newMaps, "languages", sl.languageName, sl.languageRulesetName, sl.languageId);
+      return [`'${sl.characterId}'::uuid`, `'${newLangId}'::uuid`];
+    });
+
+    let droppedInventoryCount = 0;
+    const invRows = savedInventory.flatMap((si) => {
+      const newItemId = resolveId(newMaps, "items", si.itemName, si.itemRulesetName, si.itemId);
+      if (newItemId === DROP_ID) {
+        console.log(`  dropped inventory: ${si.itemName} (${si.itemRulesetName})`);
+        droppedInventoryCount++;
+        return [];
+      }
+      return [[
+        `'${si.characterId}'::uuid`, `'${newItemId}'::uuid`, `${si.quantity}`,
+        `${si.equipped}`,
+        si.location ? `'${si.location}'::location` : "NULL",
+        si.weaponSet !== null ? `${si.weaponSet}` : "NULL",
+        si.totalCharges !== null ? `${si.totalCharges}` : "NULL",
+        si.remainingCharges !== null ? `${si.remainingCharges}` : "NULL",
+      ]];
+    });
+
+    // Bail if ANY name failed to resolve — before we touch the DB
+    checkResolveErrors();
+
+    // Validate feat+aptitude combos against feats_aptitudes in new seeds
+    if (resolvedFeatPairs.length > 0) {
+      console.log("  Validating feat+aptitude combos...");
+      const validFeatPairs = new Set(
+        (await query<{ featId: string; aptitudeId: string }>(tx,
+          `SELECT feat_id as "featId", aptitude_id as "aptitudeId" FROM rules.feats_aptitudes`
+        )).map((r) => `${r.featId}::${r.aptitudeId}`),
+      );
+      const badPairs: string[] = [];
+      for (const p of resolvedFeatPairs) {
+        if (!validFeatPairs.has(`${p.featId}::${p.aptitudeId}`)) {
+          const entry = `feat "${p.featName}" + aptitude "${p.aptName}" — add to FEAT_APTITUDE_OVERRIDE`;
+          if (!badPairs.includes(entry)) badPairs.push(entry);
+        }
+      }
+      if (badPairs.length > 0) {
+        console.error(`\n❌ ${badPairs.length} feat+aptitude mismatches:`);
+        for (const b of badPairs) console.error(`  ${b}`);
+        throw new Error("Feat+aptitude validation failed — see above");
+      }
+      console.log(`  ✓ ${resolvedFeatPairs.length} feat+aptitude combos valid`);
+    }
+
+    // Validate power+aptitude combos against powers_aptitudes in new seeds
+    if (resolvedPowerPairs.length > 0) {
+      console.log("  Validating power+aptitude combos...");
+      const validPowerPairs = new Set(
+        (await query<{ powerId: string; aptitudeId: string }>(tx,
+          `SELECT power_id as "powerId", aptitude_id as "aptitudeId" FROM rules.powers_aptitudes`
+        )).map((r) => `${r.powerId}::${r.aptitudeId}`),
+      );
+      const badPairs: string[] = [];
+      for (const p of resolvedPowerPairs) {
+        if (!validPowerPairs.has(`${p.powerId}::${p.aptitudeId}`)) {
+          const entry = `power "${p.powerName}" + aptitude "${p.aptName}"`;
+          if (!badPairs.includes(entry)) badPairs.push(entry);
+        }
+      }
+      if (badPairs.length > 0) {
+        console.error(`\n❌ ${badPairs.length} power+aptitude mismatches:`);
+        for (const b of badPairs) console.error(`  ${b}`);
+        throw new Error("Power+aptitude validation failed — see above");
+      }
+      console.log(`  ✓ ${resolvedPowerPairs.length} power+aptitude combos valid`);
+    }
+
+    // All names resolved — now insert
+    console.log("  All names resolved. Inserting...");
+
+    if (featRows.length > 0) {
+      await bulkInsert(tx, "character.level_feats", ["character_level_id", "feat_id", "aptitude_id"], featRows);
+      console.log(`  level_feats: ${featRows.length}`);
+    }
+    if (skillRows.length > 0) {
+      await bulkInsert(tx, "character.level_skills", ["character_level_id", "skill_id", "rank"], skillRows);
+      console.log(`  level_skills: ${skillRows.length}`);
+    }
+    if (powerRows.length > 0) {
+      await bulkInsert(tx, "character.level_powers", ["character_level_id", "power_id", "aptitude_id"], powerRows);
+      console.log(`  level_powers: ${powerRows.length}`);
+    }
+    if (abilityRows.length > 0) {
+      await bulkInsert(tx, "character.character_abilities", ["character_id", "ability_id", "score"], abilityRows);
+      console.log(`  character_abilities: ${abilityRows.length}`);
+    }
+    if (langRows.length > 0) {
+      await bulkInsert(tx, "character.languages", ["character_id", "language_id"], langRows);
+      console.log(`  languages: ${langRows.length}`);
+    }
+    if (invRows.length > 0) {
+      await bulkInsert(tx, "character.inventory",
+        ["character_id", "item_id", "quantity", "equipped", "location", "weapon_set", "total_charges", "remaining_charges"],
+        invRows);
+      console.log(`  inventory: ${invRows.length}`);
+    }
+
+    // ── Step 12b: Restore cross-ruleset klass_skills ────────────
+    if (savedCrossKlassSkills.length > 0) {
+      console.log("\n  Restoring cross-ruleset klass_skills...");
+      const crossRows = savedCrossKlassSkills.map((cs) => {
+        const newKlassId = resolveId(newMaps, "klasses", cs.klassName, cs.klassRulesetName, "");
+        // Skill is in user ruleset — keep original ID
+        return [`'${newKlassId}'::uuid`, `'${cs.skillId}'::uuid`];
+      });
+      checkResolveErrors();
+      await bulkInsert(tx, "rules.klass_skills", ["klass_id", "skill_id"], crossRows);
+      console.log(`  cross-ruleset klass_skills: ${crossRows.length}`);
+    }
+
+    // ── Step 13: Update COW entity cross-references ───────────
+    console.log("\nStep 13: Updating COW entity references...");
+    // Build partial old→new remaps (only for matched entities, skip unmatched)
+    const partialRemaps: Record<string, Map<string, string>> = {};
+    for (const entityType of Object.keys(oldMaps) as (keyof EntityMaps)[]) {
+      const oldMap = oldMaps[entityType];
+      const newMap = newMaps[entityType];
+      const remap = new Map<string, string>();
+    for (const [key, oldId] of oldMap) {
+        const newId = newMap.get(key);
+        if (newId) remap.set(oldId, newId);
+      }
+      partialRemaps[entityType] = remap;
+    }
+
+    if (userRulesetIds.length > 0) {
+      const userWhere = `t.ruleset_id = ANY(${uuidArr(userRulesetIds)})`;
+
+      const cowUpdates: [string, string, Map<string, string>, string][] = [
+        ["rules.races", "parent_id", partialRemaps.races, `${userWhere} AND t.parent_id IS NOT NULL`],
+        ["rules.klasses", "parent_id", partialRemaps.klasses, `${userWhere} AND t.parent_id IS NOT NULL`],
+        ["rules.skills", "primary_ability_id", partialRemaps.abilities, userWhere],
+        ["rules.saves", "ability_id", partialRemaps.abilities, userWhere],
+        ["rules.powers", "save_id", partialRemaps.saves, `${userWhere} AND t.save_id IS NOT NULL`],
+        ["rules.items", "source_item_id", partialRemaps.items, `${userWhere} AND t.source_item_id IS NOT NULL`],
+      ];
+      for (const [tbl, col, remap, where] of cowUpdates) {
+        const n = await updateColumn(tx, tbl, col, remap, where);
+        if (n > 0) console.log(`  ${tbl}.${col}: ${n} rows`);
+      }
+
+      // feats_aptitudes for COW feats
+      const userFeatIds = (await query<{ id: string }>(tx,
+        `SELECT id FROM rules.feats WHERE ruleset_id = ANY(${uuidArr(userRulesetIds)}) AND deleted_at IS NULL`
+      )).map((r) => r.id);
+      if (userFeatIds.length > 0) {
+        const n = await updateColumn(tx, "rules.feats_aptitudes", "aptitude_id", partialRemaps.aptitudes, `t.feat_id = ANY(${uuidArr(userFeatIds)})`);
+        if (n > 0) console.log(`  feats_aptitudes (COW): ${n} rows`);
+      }
+
+      // Junction tables for COW classes
+      const userKlassIds = (await query<{ id: string }>(tx,
+        `SELECT id FROM rules.klasses WHERE ruleset_id = ANY(${uuidArr(userRulesetIds)}) AND deleted_at IS NULL`
+      )).map((r) => r.id);
+      if (userKlassIds.length > 0) {
+        const n1 = await updateColumn(tx, "rules.klass_skills", "skill_id", partialRemaps.skills, `t.klass_id = ANY(${uuidArr(userKlassIds)})`);
+        if (n1 > 0) console.log(`  klass_skills (COW): ${n1} rows`);
+
+        const userKlIds = (await query<{ id: string }>(tx,
+          `SELECT id FROM rules.klass_levels WHERE klass_id = ANY(${uuidArr(userKlassIds)}) AND deleted_at IS NULL`
+        )).map((r) => r.id);
+        if (userKlIds.length > 0) {
+          const klWhere = `t.klass_level_id = ANY(${uuidArr(userKlIds)})`;
+          for (const [tbl, col, remap] of [
+            ["rules.klass_level_feats", "feat_id", partialRemaps.feats],
+            ["rules.klass_level_feats", "aptitude_id", partialRemaps.aptitudes],
+            ["rules.klass_level_powers", "power_id", partialRemaps.powers],
+            ["rules.klass_level_powers", "aptitude_id", partialRemaps.aptitudes],
+            ["rules.klass_level_saves", "save_id", partialRemaps.saves],
+          ] as const) {
+            const n = await updateColumn(tx, tbl, col, remap as Map<string, string>, klWhere);
+            if (n > 0) console.log(`  ${tbl}.${col} (COW): ${n} rows`);
+          }
+        }
+      }
+
+      // powers_aptitudes for COW powers
+      const userPowerIds = (await query<{ id: string }>(tx,
+        `SELECT id FROM rules.powers WHERE ruleset_id = ANY(${uuidArr(userRulesetIds)}) AND deleted_at IS NULL`
+      )).map((r) => r.id);
+      if (userPowerIds.length > 0) {
+        const pwWhere = `t.power_id = ANY(${uuidArr(userPowerIds)})`;
+        const n1 = await updateColumn(tx, "rules.powers_aptitudes", "aptitude_id", partialRemaps.aptitudes, pwWhere);
+        if (n1 > 0) console.log(`  powers_aptitudes.aptitude_id (COW): ${n1} rows`);
+        const n2 = await updateColumn(tx, "rules.powers_aptitudes", "ability_dc_id", partialRemaps.abilities, `${pwWhere} AND t.ability_dc_id IS NOT NULL`);
+        if (n2 > 0) console.log(`  powers_aptitudes.ability_dc_id (COW): ${n2} rows`);
+      }
+    }
+
+    // ── Step 14: Update entity snapshots ──────────────────────
+    // ── Step 13b: Remap entity IDs stored as property VALUES ──
+    // Properties on user rulesets can store package entity IDs as values
+    // (e.g., RULESET_SKILL_POINT_ABILITY_ID stores an ability UUID)
+    console.log("\nStep 13b: Remapping property values...");
+    const allPartialIds = new Map<string, string>();
+    for (const remap of Object.values(partialRemaps)) {
+      for (const [oldId, newId] of remap) allPartialIds.set(oldId, newId);
+    }
+    if (allPartialIds.size > 0) {
+      const vals = [...allPartialIds.entries()].map(([o, n]) => `('${o}','${n}')`).join(",");
+      const n = await query<{ count: string }>(tx,
+        `WITH updated AS (
+           UPDATE customization.properties p SET value = m.new_id
+           FROM (VALUES ${vals}) AS m(old_id, new_id)
+           WHERE p.value = m.old_id
+           RETURNING 1
+         ) SELECT count(*)::text as count FROM updated`);
+      console.log(`  properties: ${n[0].count} values remapped`);
+
+      // Also remap modifier values that store entity IDs
+      const n2 = await query<{ count: string }>(tx,
+        `WITH updated AS (
+           UPDATE customization.modifiers m2 SET value = m.new_id
+           FROM (VALUES ${vals}) AS m(old_id, new_id)
+           WHERE m2.value = m.old_id
+           RETURNING 1
+         ) SELECT count(*)::text as count FROM updated`);
+      console.log(`  modifiers: ${n2[0].count} values remapped`);
+    }
+
+    console.log("\nStep 14: Updating entity snapshots...");
+    // Query the distinct entity types actually present in entity_snapshots
+    // so we don't miss mechanics, klass_levels, rulesets, or any type added
+    // in the future. mapKey in partialRemaps uses the same rules-schema table
+    // name (feats, klasses, …) as entity_snapshots.entity_type.
+    const snapshotTypes = await query<{ entity_type: string }>(tx,
+      `SELECT DISTINCT entity_type FROM rules.entity_snapshots`);
+    for (const { entity_type } of snapshotTypes) {
+      const remap = partialRemaps[entity_type];
+      if (remap && remap.size > 0) {
+        const n = await updateColumn(tx, "rules.entity_snapshots", "source_entity_id", remap, `t.entity_type = '${entity_type}'`);
+        if (n > 0) console.log(`  entity_snapshots (${entity_type}): ${n} rows`);
+      }
+    }
+
+    // ── Step 15: Reconnect user rulesets ──────────────────────
+    console.log("\nStep 15: Reconnecting user rulesets...");
+    const newBaseId = newRulesetByName.get(DND35_RULESET_NAME);
+    if (!newBaseId) throw new Error("New base ruleset not found");
+
+    const rulesetRemap = new Map<string, string>();
+    for (const [oldId, name] of pkgIdToName) {
+      const newId = newRulesetByName.get(name);
+      if (!newId) throw new Error(`New ruleset not found for "${name}"`);
+      rulesetRemap.set(oldId, newId);
+    }
+
+    for (const ur of userRows) {
+      const newAncestors = ur.ancestorRulesetIds
+        .map((oldId) => rulesetRemap.get(oldId))
+        .filter((id): id is string => !!id);
+      const newExtensions = ur.extensionRulesetIds
+        .map((oldId) => rulesetRemap.get(oldId))
+        .filter((id): id is string => !!id);
+
+      await query(tx,
+        `UPDATE rules.rulesets
+         SET ruleset_id = '${newBaseId}',
+             ancestor_ruleset_ids = ${uuidArr(newAncestors)},
+             extension_ruleset_ids = ${uuidArr(newExtensions)}
+         WHERE id = '${ur.id}'`);
+
+      // Re-create ruleset_extensions rows for user → package extension subscriptions
+      for (const extId of newExtensions) {
+        await query(tx,
+          `INSERT INTO rules.ruleset_extensions (ruleset_id, extension_id)
+           VALUES ('${ur.id}', '${extId}')
+           ON CONFLICT DO NOTHING`);
+      }
+      console.log(`  ${ur.name}: ancestors=[${newAncestors.length}], extensions=[${newExtensions.length}]`);
+    }
+
+    // ── Step 15b: Restore campaigns and stars on package rulesets ──
+    if (savedCampaigns.length > 0) {
+      console.log("\nStep 15b: Restoring campaigns and stars...");
+      for (const sc of savedCampaigns) {
+        const newRsId = newRulesetByName.get(sc.rulesetName);
+        if (!newRsId) { console.warn(`  ⚠ No new ruleset for campaign's "${sc.rulesetName}"`); continue; }
+        await query(tx, `UPDATE campaign.campaigns SET ruleset_id = '${newRsId}' WHERE id = '${sc.id}'`);
+      }
+      console.log(`  campaigns: ${savedCampaigns.length}`);
+    }
+    if (savedStars.length > 0) {
+      for (const ss of savedStars) {
+        const newRsId = newRulesetByName.get(ss.rulesetName);
+        if (!newRsId) { console.warn(`  ⚠ No new ruleset for star "${ss.rulesetName}"`); continue; }
+        await query(tx,
+          `INSERT INTO account.starred_rulesets (user_id, ruleset_id)
+           VALUES ('${ss.userId}', '${newRsId}')
+           ON CONFLICT DO NOTHING`);
+      }
+      console.log(`  stars: ${savedStars.length}`);
+    }
+
+    // ── Step 15c: Remap ruleset UUIDs in activity JSON payloads ──
+    // account.activities.data stores pkg ruleset UUIDs for forkRuleset and
+    // subscribeExtension events. After reseed those UUIDs are dead; remap
+    // them to the new pkg ruleset IDs via rulesetRemap so the activity feed
+    // still links to real rulesets.
+    console.log("\nStep 15c: Remapping activity JSON payloads...");
+    const activitiesToRemap = await query<{ id: string; type: string; data: string }>(tx,
+      `SELECT id, type, data::text AS data FROM account.activities
+        WHERE type IN ('forkRuleset', 'subscribeExtension') AND data IS NOT NULL`);
+    let remappedActivities = 0;
+    for (const a of activitiesToRemap) {
+      const data = JSON.parse(a.data) as { sourceRulesetId?: string; extensionIds?: string[] };
+      let changed = false;
+      if (a.type === "forkRuleset" && data.sourceRulesetId && rulesetRemap.has(data.sourceRulesetId)) {
+        data.sourceRulesetId = rulesetRemap.get(data.sourceRulesetId)!;
+        changed = true;
+      }
+      if (a.type === "subscribeExtension" && Array.isArray(data.extensionIds)) {
+        const newIds = data.extensionIds.map((id) => rulesetRemap.get(id) ?? id);
+        if (newIds.some((id, i) => id !== data.extensionIds![i])) {
+          data.extensionIds = newIds;
+          changed = true;
+        }
+      }
+      if (changed) {
+        await query(tx, `UPDATE account.activities SET data = '${JSON.stringify(data).replace(/'/g, "''")}'::json WHERE id = '${a.id}'`);
+        remappedActivities++;
+      }
+    }
+    console.log(`  activities remapped: ${remappedActivities} / ${activitiesToRemap.length} scanned`);
+
+    // ── Step 16: Re-add FK constraints ────────────────────────
+    console.log("\nStep 16: Re-adding FK constraints...");
+    await addFkConstraints(tx, fkConstraintsToDrop);
+    console.log(`  ${fkConstraintsToDrop.length} constraints restored`);
+
+    // ── Step 17: Validate ─────────────────────────────────────
+    // Expected deltas subtract rows intentionally dropped during migration
+    // (e.g. ENTITY_DROP entries with no replacement in the new seed).
+    console.log("\nStep 17: Validating counts...");
+    const postCounts = await countCharacterData(tx, charIds);
+    const expectedDeltas: Partial<Record<keyof Counts, number>> = {
+      inventory: -droppedInventoryCount,
+    };
+    const mismatches: string[] = [];
+    for (const key of Object.keys(preCounts) as (keyof Counts)[]) {
+      const pre = preCounts[key];
+      const post = postCounts[key];
+      const expected = pre + (expectedDeltas[key] ?? 0);
+      const status = expected === post ? "✓" : "✗";
+      const deltaNote = expectedDeltas[key] ? ` (expected ${expected}, Δ=${expectedDeltas[key]})` : "";
+      console.log(`  ${status} ${key}: ${pre} → ${post}${deltaNote}`);
+      if (expected !== post) mismatches.push(`${key}: ${pre} → ${post} (expected ${expected})`);
+    }
+
+    if (mismatches.length > 0) {
+      throw new Error(`Count validation failed: ${mismatches.join(", ")}`);
+    }
+
+    // ── Step 18: Recreate demo characters ───────────────────
+    console.log("\nStep 18: Recreating demo characters...");
+    const demoCharacterSeeds = (await import("@/database/seeds/characters.ts")).default;
+    for (const seed of demoCharacterSeeds) {
+      await seed(tx);
+    }
+    console.log(`  ${demoCharacterSeeds.length} demo characters created`);
+
+    console.log("\n✅ Migration transaction committed!");
+  });
+
+  // ── Step 19: Validate all characters (outside tx — build() uses global db) ──
+  console.log("\nStep 19: Validating all characters...");
+  const { default: DetailedCharacter } = await import("@/server/rulesets/dnd3.5/DetailedCharacter.ts");
+  const { Characters } = await import("@/server/repositories/index.ts");
+
+  const allChars = await query<{ id: string; name: string; rulesetName: string }>(db as unknown as Tx,
+    `SELECT c.id, c.name, rs.name as "rulesetName"
+     FROM character.characters c
+     JOIN rules.rulesets rs ON rs.id = c.ruleset_id
+     WHERE c.deleted_at IS NULL
+     ORDER BY rs.name, c.name`);
+
+  const charIssues: string[] = [];
+  for (const row of allChars) {
+    try {
+      const character = await Characters.findOne(db as unknown as Tx, { id: row.id });
+      if (!character) continue;
+
+      const dc = new DetailedCharacter(character);
+      await dc.build();
+      const validation = dc.validate();
+
+      if (!validation.valid) {
+        const issues = validation.issues.map((i: { message: string }) => i.message).join("; ");
+        charIssues.push(`${row.name} (${row.rulesetName}): ${issues}`);
+      } else {
+        console.log(`  ✓ ${row.name}`);
+      }
+    } catch (e) {
+      charIssues.push(`${row.name} (${row.rulesetName}): BUILD ERROR — ${e}`);
+    }
+  }
+
+  if (charIssues.length > 0) {
+    console.warn(`\n⚠ ${charIssues.length} characters with issues:`);
+    for (const issue of charIssues) console.warn(`  ${issue}`);
+  } else {
+    console.log(`  All ${allChars.length} characters valid`);
+  }
+
+  console.log("\n✅ Migration completed successfully!");
+} catch (error) {
+  console.error("\n❌ Migration failed — transaction rolled back.");
+  console.error(error);
+  process.exit(1);
+} finally {
+  await pool.end();
+}

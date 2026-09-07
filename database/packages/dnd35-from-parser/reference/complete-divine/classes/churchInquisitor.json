@@ -1,0 +1,477 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:27:27.809Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/church-inquisitor/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Evil"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Inquisition Domain"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Immune To Charms"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Pierce Illusion"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Pierce Disguise"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Immune To Compulsions"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Force Shapechange"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Immunity To Possession"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Discern Lies"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Learn The Truth"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "saves.will.base",
+        "value": "3",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "unresolvedAptitudePicks": [
+      "Inquisition Domain"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Church Inquisitor Class Feature",
+    "features": {
+      "Detect Evil": {
+        "description": "A church inquisitor gains the ability to use detect evil at will as a spell-like ability.",
+        "level": 1,
+        "seedName": "Detect Evil (Church Inquisitor)"
+      },
+      "Discern Lies": {
+        "description": "At 9th level, a church inquisitor can use discern lies as a spell-like ability up to three times per day.",
+        "level": 9,
+        "seedName": "Discern Lies (Church Inquisitor)"
+      },
+      "Force Shapechange": {
+        "description": "Beginning at 6th level, a church inquisitor can compel a creature to revert to its true form. The inquisitor must succeed on a melee touch attack against the target. On a successful touch, the inquisitor makes a caster level check as though casting dispel magic against the shapechanging effect. The +4 bonus on dispel checks from the Inquisition domain granted power applies to this check. This ability can reverse the effects of alter self, polymorph, shapechange, and alternate form abilities, regardless of whether they are extraordinary, spell-like, or supernatural in nature. Once reverted, the affected creature is unable to change shape again for 1d6 rounds. The church inquisitor may use this ability at will.",
+        "level": 6,
+        "seedName": "Force Shapechange (Church Inquisitor)"
+      },
+      "Immune to Charms": {
+        "description": "Starting at 2nd level, a church inquisitor becomes completely immune to all enchantment (charm) spells and effects.",
+        "level": 2,
+        "seedName": "Immune to Charms (Church Inquisitor)"
+      },
+      "Immune to Compulsions": {
+        "description": "At 5th level, a church inquisitor gains complete immunity to all compulsion spells and effects.",
+        "level": 5,
+        "seedName": "Immune to Compulsions (Church Inquisitor)"
+      },
+      "Immunity to Possession": {
+        "description": "At 8th level, a church inquisitor becomes immune to magic jar, soul bind, trap the soul, a ghost's malevolence ability, and all other spells or effects that would displace or supplant the character's life force. The character may still willingly travel to other planes through astral projection.",
+        "level": 8,
+        "seedName": "Immunity to Possession (Church Inquisitor)"
+      },
+      "Inquisition Domain": {
+        "description": "When a character enters this prestige class, he gains access to the Inquisition domain. He receives the domain's granted power (a +4 bonus on dispel checks) and may select spells from that domain as his daily domain spell choices.",
+        "level": 1,
+        "seedName": "Inquisition Domain (Church Inquisitor)"
+      },
+      "Learn the Truth": {
+        "description": "At 10th level, a church inquisitor can compel honesty by touching a creature that has lied to him. The target may attempt a Will save (DC 10 + the inquisitor's class level + his Charisma modifier) to resist this mind-affecting compulsion. On a failed save, the creature must speak the truthful version of the lie it told. This ability can be used 3 times per day.",
+        "level": 10,
+        "seedName": "Learn the Truth (Church Inquisitor)"
+      },
+      "Pierce Disguise": {
+        "description": "The church inquisitor receives a +4 competence bonus on Spot checks made to see through mundane disguises created with the Disguise skill.",
+        "level": 4,
+        "seedName": "Pierce Disguise (Church Inquisitor)"
+      },
+      "Pierce Illusion": {
+        "description": "At 3rd level, the church inquisitor gains a supernatural ability that allows him to see through illusions and magical disguises at will. Whenever the inquisitor observes any illusion or disguise spell, he immediately receives a Will saving throw to penetrate it. He does not need to touch or otherwise interact with the illusion; merely seeing it is sufficient to trigger the save.",
+        "level": 3,
+        "seedName": "Pierce Illusion (Church Inquisitor)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "The church inquisitor continues to develop divine spellcasting alongside inquisitorial training. Each time the character gains a new level in this prestige class, he receives additional divine spells per day (and spells known, where applicable) as though he had also advanced one level in a divine spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other class benefits that would normally accompany such a level increase (such as improved undead turning or additional uses of special abilities). Effectively, the character adds his church inquisitor level to his existing divine caster level when calculating spells per day. If the character had multiple divine casting classes prior to becoming a church inquisitor, he must select which class benefits from the advancement at each new level.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Church Inquisitor)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant any additional weapon or armor proficiencies.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Church Inquisitor)"
+      }
+    },
+    "occurrenceMap": {
+      "Detect Evil": "Detect Evil",
+      "Discern Lies": "Discern Lies",
+      "Force Shapechange": "Force Shapechange",
+      "Immune To Charms": "Immune to Charms",
+      "Immune To Compulsions": "Immune to Compulsions",
+      "Immunity To Possession": "Immunity to Possession",
+      "Inquisition Domain": "Inquisition Domain",
+      "Learn The Truth": "Learn the Truth",
+      "Pierce Disguise": "Pierce Disguise",
+      "Pierce Illusion": "Pierce Illusion"
+    },
+    "overrides": {
+      "aptitudePicks": [],
+      "description": "The church inquisitor roots out corruption lurking within religious institutions and excises it.",
+      "features": {
+        "Detect Evil": {
+          "description": "A church inquisitor gains the ability to use detect evil at will as a spell-like ability."
+        },
+        "Discern Lies": {
+          "description": "At 9th level, a church inquisitor can use discern lies as a spell-like ability up to three times per day."
+        },
+        "Force Shapechange": {
+          "description": "Beginning at 6th level, a church inquisitor can compel a creature to revert to its true form. The inquisitor must succeed on a melee touch attack against the target. On a successful touch, the inquisitor makes a caster level check as though casting dispel magic against the shapechanging effect. The +4 bonus on dispel checks from the Inquisition domain granted power applies to this check. This ability can reverse the effects of alter self, polymorph, shapechange, and alternate form abilities, regardless of whether they are extraordinary, spell-like, or supernatural in nature. Once reverted, the affected creature is unable to change shape again for 1d6 rounds. The church inquisitor may use this ability at will."
+        },
+        "Immune to Charms": {
+          "description": "Starting at 2nd level, a church inquisitor becomes completely immune to all enchantment (charm) spells and effects."
+        },
+        "Immune to Compulsions": {
+          "description": "At 5th level, a church inquisitor gains complete immunity to all compulsion spells and effects."
+        },
+        "Immunity to Possession": {
+          "description": "At 8th level, a church inquisitor becomes immune to magic jar, soul bind, trap the soul, a ghost's malevolence ability, and all other spells or effects that would displace or supplant the character's life force. The character may still willingly travel to other planes through astral projection."
+        },
+        "Inquisition Domain": {
+          "description": "When a character enters this prestige class, he gains access to the Inquisition domain. He receives the domain's granted power (a +4 bonus on dispel checks) and may select spells from that domain as his daily domain spell choices."
+        },
+        "Learn the Truth": {
+          "description": "At 10th level, a church inquisitor can compel honesty by touching a creature that has lied to him. The target may attempt a Will save (DC 10 + the inquisitor's class level + his Charisma modifier) to resist this mind-affecting compulsion. On a failed save, the creature must speak the truthful version of the lie it told. This ability can be used 3 times per day."
+        },
+        "Pierce Disguise": {
+          "description": "The church inquisitor receives a +4 competence bonus on Spot checks made to see through mundane disguises created with the Disguise skill."
+        },
+        "Pierce Illusion": {
+          "description": "At 3rd level, the church inquisitor gains a supernatural ability that allows him to see through illusions and magical disguises at will. Whenever the inquisitor observes any illusion or disguise spell, he immediately receives a Will saving throw to penetrate it. He does not need to touch or otherwise interact with the illusion; merely seeing it is sufficient to trigger the save."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "The church inquisitor continues to develop divine spellcasting alongside inquisitorial training. Each time the character gains a new level in this prestige class, he receives additional divine spells per day (and spells known, where applicable) as though he had also advanced one level in a divine spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other class benefits that would normally accompany such a level increase (such as improved undead turning or additional uses of special abilities). Effectively, the character adds his church inquisitor level to his existing divine caster level when calculating spells per day. If the character had multiple divine casting classes prior to becoming a church inquisitor, he must select which class benefits from the advancement at each new level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant any additional weapon or armor proficiencies."
+        }
+      },
+      "freeFeats": [
+        [
+          1,
+          "Inquisition Domain",
+          "Cleric Domain"
+        ]
+      ],
+      "reviewed": [
+        "Inquisition Domain"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Church inquisitors gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A church inquisitor continues advancing in divine spellcasting ability as well as learning the skills of inquisition. Thus, when a new church inquisitor level is gained, the character gains new divine spells per day (and spells known, if applicable) as if he had also gained a level in whatever divine spellcasting class he belonged to before he added the prestige class. He does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, more frequent remove disease, and so on). This means that he adds the level of church inquisitor to the level of another divine spellcasting class the character has, then determines spells per day accordingly. If a character had more than one divine spellcasting class before he became a church inquisitor, the player must decide which class to assign each level of church inquisitor for the purpose of determining divine spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A church inquisitor can use detect evil at will as a spell-like ability.",
+        "name": "Detect Evil",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Upon adopting the church inquisitor class, a character gains access to the Inquisition domain, described in Chapter 7: Domains and Spells. The character gains the granted power associated with the domain (a +4 bonus on dispel checks) and can choose the spells in that domain as his daily domain spells.",
+        "name": "Inquisition Domain"
+      },
+      {
+        "description": "A church inquisitor of 2nd level or higher is immune to all enchantment (charm) spells and effects.",
+        "name": "Immune to Charms",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, the church inquisitor gains the supernatural ability to penetrate illusions and disguises at will. Whenever an inquisitor sees an illusion or disguise spell of any sort, he immediately makes a Will save to see through it. The inquisitor need not interact with or touch the illusion, visual contact is enough to give the Will save.",
+        "name": "Pierce Illusion",
+        "type": "(Su)"
+      },
+      {
+        "description": "The inquisitor has a +4 competence bonus on Spot checks against the Disguise skill.",
+        "name": "Pierce Disguise",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A church inquisitor of 5th level or higher is immune to all compulsion spells and effects.",
+        "name": "Immune to Compulsions",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A church inquisitor of 6th level or higher can force a creature into its natural form. The church inquisitor must make a successful melee touch attack against the creature. If the attack is successful, the church inquisitor makes a caster level check as if casting dispel magic against the shapechanging effect. The church inquisitor's +4 bonus on dispel checks (the Inquisition domain granted power) applies to this check. This ability undoes the effect of alter self, polymorph, shapechange, and alternate form abilities, whether exceptional, spell-like, or supernatural in nature. The affected creature cannot change its shape again for 1d6 rounds. The church inquisitor can use this ability at will.",
+        "name": "Force Shapechange",
+        "type": "(Su)"
+      },
+      {
+        "description": "A church inquisitor of 8th level or higher has immunity to magic jar, soul bind, trap the soul, a ghost's malevolence ability, and all other spells or effects that displace or replace a character's life force. The character can still travel to the planes via astral projection, if so desired.",
+        "name": "Immunity to Possession",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A church inquisitor of 9th level or higher can use discern lies as a spelllike ability three times per day.",
+        "name": "Discern Lies",
+        "type": "(Sp)"
+      },
+      {
+        "description": "By touching a creature that has lied to him, a church inquisitor of 10th level or higher can force the creature to tell the truth. The creature can make a Will save (DC 10 + the church inquisitor's level + the church inquisitor's Cha modifier) to resist this mind-affecting compulsion effect. If the saving throw fails, the creature must speak the true version of the lie it uttered. The church inquisitor can use this ability 3 times/day",
+        "name": "Learn the Truth",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Decipher Script",
+      "Diplomacy",
+      "Gather Information",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (Local)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Search",
+      "Sense Motive",
+      "Spellcraft",
+      "Spot"
+    ],
+    "description": "The church inquisitor uncovers taint within the church and cuts it away.",
+    "hitDie": "d8",
+    "name": "Church Inquisitor",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Lawful good or lawful neutral",
+        "saves": [
+          {
+            "base": 3,
+            "name": "will"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 4
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Must be a member of a lawful good church or religious order, and must have already uncovered some corruption within that organization.",
+          "a member of a lawful good church or religious order, and must have already uncovered some corruption within that organization"
+        ]
+      },
+      "text": "Alignment: Lawful good or lawful neutral Skills: Knowledge (arcana) 4 ranks, Knowledge (religion) 4 ranks, Spellcraft 4 ranks Base Save Bonus: Will +3.Spells: Able to cast zone of truth as a divine spell.Special: Must be a member of a lawful good church or religious order, and must have already uncovered some corruption within that organization."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Detect evil",
+          "Inquisition domain"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Immune to charms +2"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Pierce illusion"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Pierce disguise"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Immune to compulsions"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Force shapechange"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Immunity to possession"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Discern lies"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Learn the truth"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

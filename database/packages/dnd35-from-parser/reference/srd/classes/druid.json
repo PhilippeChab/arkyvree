@@ -1,0 +1,1061 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-23T02:03:59.763Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/druid/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Animal Companion"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Nature Sense"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wild Empathy"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Woodland Stride"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Trackless Step"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Resist Nature's Lure"
+      },
+      {
+        "levels": [
+          5,
+          6,
+          7,
+          10,
+          14
+        ],
+        "name": "Wild Shape"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Wild Shape (Large)"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Venom Immunity"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Wild Shape (Tiny)"
+      },
+      {
+        "levels": [
+          12
+        ],
+        "name": "Wild Shape (Plant)"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "A Thousand Faces"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Timeless Body"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Wild Shape (Huge)"
+      },
+      {
+        "levels": [
+          16
+        ],
+        "name": "Wild Shape (Elemental"
+      },
+      {
+        "levels": [
+          18
+        ],
+        "name": "Wild Shape (6/Day, Elemental"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Wild Shape (Elemental 3/Day, Huge Elemental)"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 20,
+    "requirements": [
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "spellsPerDay": [
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        2,
+        1
+      ],
+      [
+        5,
+        3,
+        2
+      ],
+      [
+        5,
+        3,
+        2,
+        1
+      ],
+      [
+        5,
+        3,
+        3,
+        2
+      ],
+      [
+        6,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        6,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        6,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        6,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        6,
+        5,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        6,
+        5,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        6,
+        5,
+        5,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        6,
+        5,
+        5,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        5,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        5,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        5,
+        5,
+        4,
+        4,
+        3,
+        3
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        5,
+        5,
+        4,
+        4,
+        4,
+        4
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Druid Class Feature",
+    "features": {
+      "A Thousand Faces": {
+        "description": "At 13th level, a druid gains the power to alter her physical appearance at will, producing an effect equivalent to the disguise self spell. This transformation modifies the druid's body only, not her gear or possessions. Unlike an illusion, this is an actual minor physical reshaping of the druid's features, constrained by the same limitations as the spell.",
+        "level": 13,
+        "seedName": "A Thousand Faces (Druid)"
+      },
+      "Animal Companion": {
+        "description": "At 1st level, a druid may choose an animal companion from the following options: badger, camel, dire rat, dog, riding dog, eagle, hawk, horse (light or heavy), owl, pony, snake (Small or Medium viper), or wolf. In campaigns set partly or entirely in aquatic settings, the GM may expand the available choices to include crocodile, porpoise, Medium shark, and squid. This animal serves as a faithful companion that travels with the druid on her journeys, behaving as is natural for its species. At 1st level, the companion uses standard statistics for its kind, with certain modifications. As the druid gains levels, her companion grows more powerful accordingly. If a druid dismisses her current companion, she can acquire a replacement through a ritual that demands 24 uninterrupted hours of prayer. The same ritual can be used to replace a companion that has died. Beginning at 4th level, a druid gains access to expanded lists of potential animal companions. Selecting a companion from one of these advanced lists means the creature's abilities are calculated as though the druid were lower in level than she actually is. The druid subtracts the adjustment value specified for that list from her druid level to determine the companion's effective power. If this reduction would bring the effective level to 0 or below, that creature cannot serve as her companion. For example, a 6th-level druid who chose a leopard would calculate its abilities as if she were 3rd level (accounting for a -3 level adjustment) rather than 6th level.",
+        "level": 1,
+        "seedName": "Animal Companion (Druid)"
+      },
+      "Chaotic, Evil, Good, and Lawful Spells": {
+        "description": "Druids are unable to cast spells whose alignment directly opposes their own alignment or that of their deity (if they worship one). For instance, a neutral good druid is barred from casting evil spells. A spell's alignment association is determined by the chaos, evil, good, and law descriptors listed in its spell description.",
+        "level": 1,
+        "seedName": "Chaotic, Evil, Good, and Lawful Spells (Druid)"
+      },
+      "Nature Sense": {
+        "description": "A druid receives a +2 bonus to Knowledge (nature) checks and Survival checks.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.knowledgenature.misc",
+            "value": "2",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "target": "skills.survival.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Nature Sense (Druid)"
+      },
+      "Resist Nature's Lure": {
+        "description": "Upon reaching 4th level, a druid receives a +4 bonus on saving throws made to resist the spell-like abilities of fey creatures (including dryads, pixies, and sprites).",
+        "level": 4,
+        "seedName": "Resist Nature's Lure (Druid)"
+      },
+      "Spells": {
+        "description": "Druids cast divine spells (the same category available to clerics, paladins, and rangers), selected from the druid spell list. A druid's alignment may prevent her from casting spells that conflict with her moral or ethical principles; see Chaotic, Evil, Good, and Lawful Spells, below. Druids must select and prepare their spells ahead of time. Preparing or casting any spell requires the druid to possess a Wisdom score of at least 10 + the spell's level (Wisdom 10 for 0-level spells, Wisdom 11 for 1st-level spells, and so on). The save DC against a druid's spell equals 10 + the spell's level + the druid's Wisdom modifier. As with other spellcasting classes, a druid has a limited number of spell slots at each level per day. Her base daily allotment appears in the class table, and a high Wisdom score grants additional bonus spells per day. Unlike a cleric, a druid has no access to domain spells or domain granted powers. Druids prepare and cast spells in the same manner as clerics, except that they cannot sacrifice a prepared spell to spontaneously cast a cure spell (though see Spontaneous Casting, below). A druid can prepare and cast any spell from the druid spell list as long as she is capable of casting spells of that level, but she must decide which spells to prepare during her daily meditation.",
+        "level": 1,
+        "seedName": "Spells (Druid)"
+      },
+      "Spontaneous Casting": {
+        "description": "A druid has the ability to convert prepared spell energy into summoning magic she did not specifically prepare. She may expend any prepared spell to cast a summon nature's ally spell of equal or lower level in its place. As an example, a druid with repel vermin prepared (a 4th-level spell) could sacrifice it to instead cast summon nature's ally IV (also 4th level).",
+        "level": 1,
+        "seedName": "Spontaneous Casting (Druid)"
+      },
+      "Timeless Body": {
+        "description": "Once a druid reaches 15th level, she no longer suffers ability score penalties from the effects of aging and is immune to magical aging effects. Any aging penalties she accumulated before gaining this ability still apply. She continues to gain age-related bonuses normally, and she will still eventually die of old age when her natural lifespan expires.",
+        "level": 15,
+        "seedName": "Timeless Body (Druid)"
+      },
+      "Trackless Step": {
+        "description": "Beginning at 3rd level, a druid passes through natural environments without leaving any trace and cannot be followed by tracking. She retains the option to intentionally leave a trail if she wishes.",
+        "level": 3,
+        "seedName": "Trackless Step (Druid)"
+      },
+      "Venom Immunity": {
+        "description": "Upon reaching 9th level, a druid becomes completely immune to all forms of poison.",
+        "level": 9,
+        "seedName": "Venom Immunity (Druid)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Druids are trained in the use of these weapons: club, dagger, dart, quarterstaff, scimitar, sickle, shortspear, sling, and spear. They also gain proficiency with every natural attack form (such as claw, bite, and similar) available to any shape they adopt through wild shape. Druids can wear light and medium armor, but metallic armor is forbidden to them; this limits their choices to padded, leather, or hide armor. They may use shields (excluding tower shields), though only those crafted from wood. Any druid who dons prohibited armor or wields a prohibited shield loses the ability to cast druid spells and cannot use any supernatural or spell-like class abilities for the duration and for an additional 24 hours after removing the offending equipment.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyquarterstaff.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyshortspear.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyscimitar.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencysickle.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyspear.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencysling.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyclub.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydart.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Druid)"
+      },
+      "Wild Empathy": {
+        "description": "Through gestures, vocal tones, and general bearing, a druid can shift the disposition of an animal (such as a bear or monitor lizard) in a more favorable direction. This works identically to making a Diplomacy check to improve a person's attitude. The druid rolls 1d20 and adds both her druid level and her Charisma modifier to get the wild empathy check result. Domesticated animals typically begin with an indifferent attitude, whereas wild creatures are generally unfriendly. Both the druid and the target animal must be able to observe one another to use this ability, meaning they need to be within 30 feet under ordinary circumstances. Swaying an animal's attitude normally requires about 1 minute, though it can take more or less time depending on the situation, much like influencing a person. This ability can also be directed at magical beasts that have an Intelligence score of 1 or 2 (such as a basilisk or girallon), but the druid suffers a -4 penalty on the check when doing so.",
+        "level": 1,
+        "seedName": "Wild Empathy (Druid)"
+      },
+      "Wild Shape": {
+        "description": "Starting at 5th level, a druid can transform into any Small or Medium animal and revert to her natural form once per day. She may assume the shape of any creature possessing the animal type. This ability operates similarly to the alternate form special ability, with the exceptions described here. The transformation persists for 1 hour per druid level, or until she chooses to change back. Shifting between forms (whether to animal or back) requires a standard action and does not provoke attacks of opportunity. Each use of wild shape restores lost hit points as though the druid had enjoyed a full night's rest. Upon returning to her original form, previously merged items reappear in their former positions and resume functioning normally. Any items acquired while transformed drop to the ground at the druid's feet. The chosen animal must be one the druid has personally encountered; a druid who has spent her entire life in temperate woodlands, for instance, could not assume the form of a polar bear. While transformed, the druid cannot speak, as she can only produce sounds typical of an ordinary, untrained specimen of that animal, but she can freely communicate with other animals belonging to the same broad category as her current form. (Since a wild parrot's natural vocalization is a squawk, adopting parrot form does not grant speech.) Additional daily uses of wild shape become available at 6th, 7th, 10th, 14th, and 18th level, as indicated in the class table. Furthermore, the druid unlocks the ability to assume Large animal forms at 8th level, Tiny animal forms at 11th level, and Huge animal forms at 15th level. The Hit Dice of the chosen form cannot exceed the druid's class level. A druid cannot, for example, become a dire bear (a Large creature with a minimum of 12 HD) until reaching 12th level, despite gaining access to Large forms at 8th level. At 12th level, the druid can also use wild shape to become a plant creature, such as a shambling mound, subject to the same size limitations that apply to animal forms. (This does not allow transformation into non-creature plants like trees or rose bushes.) At 16th level, wild shape expands to include Small, Medium, or Large elemental forms (air, earth, fire, or water) once per day. Elemental transformations are separate from and in addition to the druid's regular wild shape uses. Beyond the standard wild shape effects, the druid gains access to all of the elemental's extraordinary, supernatural, and spell-like abilities, as well as its feats, for as long as the elemental form is maintained. The druid keeps her own creature type (typically humanoid) throughout. At 18th level, elemental wild shape can be used twice per day, and at 20th level, three times per day. Additionally, at 20th level, the druid may adopt the form of a Huge elemental.",
+        "level": 5,
+        "seedName": "Wild Shape (Druid)",
+        "stackable": true
+      },
+      "Woodland Stride": {
+        "description": "From 2nd level onward, a druid can pass through natural undergrowth of any kind - including thorns, briars, dense vegetation, and similar overgrowth - moving at full speed without sustaining damage or any other hindrance. This benefit does not apply to undergrowth that has been magically altered to obstruct movement, which still impedes the druid normally.",
+        "level": 2,
+        "seedName": "Woodland Stride (Druid)"
+      }
+    },
+    "occurrenceMap": {
+      "A Thousand Faces": "A Thousand Faces",
+      "Animal Companion": "Animal Companion",
+      "Nature Sense": "Nature Sense",
+      "Resist Nature's Lure": "Resist Nature's Lure",
+      "Timeless Body": "Timeless Body",
+      "Trackless Step": "Trackless Step",
+      "Venom Immunity": "Venom Immunity",
+      "Wild Empathy": "Wild Empathy",
+      "Wild Shape": "Wild Shape",
+      "Wild Shape (6/Day, Elemental": "Wild Shape",
+      "Wild Shape (Elemental": "Wild Shape",
+      "Wild Shape (Elemental 3/Day, Huge Elemental)": "Wild Shape",
+      "Wild Shape (Huge)": "Wild Shape",
+      "Wild Shape (Large)": "Wild Shape",
+      "Wild Shape (Plant)": "Wild Shape",
+      "Wild Shape (Tiny)": "Wild Shape",
+      "Woodland Stride": "Woodland Stride"
+    },
+    "overrides": {
+      "alignment": "Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil",
+      "description": "Storm's wrath, the warm glow of dawn, a fox's cleverness, a bear's raw might - the druid commands all of these forces and countless others. Yet no druid would claim dominion over the natural world. Such boasts, she insists, belong to those who dwell behind city walls. A druid draws power not from controlling nature but from existing in harmony with it. To those who trespass in her sacred groves or provoke her anger, this distinction hardly matters. Druids set out on adventures to expand their understanding of the natural world - particularly unfamiliar flora and fauna - and to grow in power. On occasion, their elders may summon them for specific missions. Druids also wield their abilities to defend the wild places they cherish, whether ancient forests or remote mountain ranges, often prioritizing these over civilized settlements. Although druids accept nature's brutality and harshness as part of its cycle, they despise anything that defies the natural order, such as aberrations (like beholders and carrion crawlers) and undead (like zombies and vampires). Druids frequently organize strikes against such abominations, especially when they intrude upon druidic lands. Like clerics, druids channel divine magic, though most draw their spells from the essence of nature itself rather than from specific deities. Their spell selection centers on the natural world and its creatures. As druids advance in level, they also unlock a growing repertoire of supernatural abilities, including the power to physically transform into animals.",
+      "features": {
+        "A Thousand Faces": {
+          "description": "At 13th level, a druid gains the power to alter her physical appearance at will, producing an effect equivalent to the disguise self spell. This transformation modifies the druid's body only, not her gear or possessions. Unlike an illusion, this is an actual minor physical reshaping of the druid's features, constrained by the same limitations as the spell."
+        },
+        "Animal Companion": {
+          "description": "At 1st level, a druid may choose an animal companion from the following options: badger, camel, dire rat, dog, riding dog, eagle, hawk, horse (light or heavy), owl, pony, snake (Small or Medium viper), or wolf. In campaigns set partly or entirely in aquatic settings, the GM may expand the available choices to include crocodile, porpoise, Medium shark, and squid. This animal serves as a faithful companion that travels with the druid on her journeys, behaving as is natural for its species. At 1st level, the companion uses standard statistics for its kind, with certain modifications. As the druid gains levels, her companion grows more powerful accordingly. If a druid dismisses her current companion, she can acquire a replacement through a ritual that demands 24 uninterrupted hours of prayer. The same ritual can be used to replace a companion that has died. Beginning at 4th level, a druid gains access to expanded lists of potential animal companions. Selecting a companion from one of these advanced lists means the creature's abilities are calculated as though the druid were lower in level than she actually is. The druid subtracts the adjustment value specified for that list from her druid level to determine the companion's effective power. If this reduction would bring the effective level to 0 or below, that creature cannot serve as her companion. For example, a 6th-level druid who chose a leopard would calculate its abilities as if she were 3rd level (accounting for a -3 level adjustment) rather than 6th level."
+        },
+        "Chaotic, Evil, Good, and Lawful Spells": {
+          "description": "Druids are unable to cast spells whose alignment directly opposes their own alignment or that of their deity (if they worship one). For instance, a neutral good druid is barred from casting evil spells. A spell's alignment association is determined by the chaos, evil, good, and law descriptors listed in its spell description."
+        },
+        "Nature Sense": {
+          "description": "A druid receives a +2 bonus to Knowledge (nature) checks and Survival checks."
+        },
+        "Resist Nature's Lure": {
+          "description": "Upon reaching 4th level, a druid receives a +4 bonus on saving throws made to resist the spell-like abilities of fey creatures (including dryads, pixies, and sprites)."
+        },
+        "Spells": {
+          "description": "Druids cast divine spells (the same category available to clerics, paladins, and rangers), selected from the druid spell list. A druid's alignment may prevent her from casting spells that conflict with her moral or ethical principles; see Chaotic, Evil, Good, and Lawful Spells, below. Druids must select and prepare their spells ahead of time. Preparing or casting any spell requires the druid to possess a Wisdom score of at least 10 + the spell's level (Wisdom 10 for 0-level spells, Wisdom 11 for 1st-level spells, and so on). The save DC against a druid's spell equals 10 + the spell's level + the druid's Wisdom modifier. As with other spellcasting classes, a druid has a limited number of spell slots at each level per day. Her base daily allotment appears in the class table, and a high Wisdom score grants additional bonus spells per day. Unlike a cleric, a druid has no access to domain spells or domain granted powers. Druids prepare and cast spells in the same manner as clerics, except that they cannot sacrifice a prepared spell to spontaneously cast a cure spell (though see Spontaneous Casting, below). A druid can prepare and cast any spell from the druid spell list as long as she is capable of casting spells of that level, but she must decide which spells to prepare during her daily meditation."
+        },
+        "Spontaneous Casting": {
+          "description": "A druid has the ability to convert prepared spell energy into summoning magic she did not specifically prepare. She may expend any prepared spell to cast a summon nature's ally spell of equal or lower level in its place. As an example, a druid with repel vermin prepared (a 4th-level spell) could sacrifice it to instead cast summon nature's ally IV (also 4th level)."
+        },
+        "Timeless Body": {
+          "description": "Once a druid reaches 15th level, she no longer suffers ability score penalties from the effects of aging and is immune to magical aging effects. Any aging penalties she accumulated before gaining this ability still apply. She continues to gain age-related bonuses normally, and she will still eventually die of old age when her natural lifespan expires."
+        },
+        "Trackless Step": {
+          "description": "Beginning at 3rd level, a druid passes through natural environments without leaving any trace and cannot be followed by tracking. She retains the option to intentionally leave a trail if she wishes."
+        },
+        "Venom Immunity": {
+          "description": "Upon reaching 9th level, a druid becomes completely immune to all forms of poison."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Druids are trained in the use of these weapons: club, dagger, dart, quarterstaff, scimitar, sickle, shortspear, sling, and spear. They also gain proficiency with every natural attack form (such as claw, bite, and similar) available to any shape they adopt through wild shape. Druids can wear light and medium armor, but metallic armor is forbidden to them; this limits their choices to padded, leather, or hide armor. They may use shields (excluding tower shields), though only those crafted from wood. Any druid who dons prohibited armor or wields a prohibited shield loses the ability to cast druid spells and cannot use any supernatural or spell-like class abilities for the duration and for an additional 24 hours after removing the offending equipment."
+        },
+        "Wild Empathy": {
+          "description": "Through gestures, vocal tones, and general bearing, a druid can shift the disposition of an animal (such as a bear or monitor lizard) in a more favorable direction. This works identically to making a Diplomacy check to improve a person's attitude. The druid rolls 1d20 and adds both her druid level and her Charisma modifier to get the wild empathy check result. Domesticated animals typically begin with an indifferent attitude, whereas wild creatures are generally unfriendly. Both the druid and the target animal must be able to observe one another to use this ability, meaning they need to be within 30 feet under ordinary circumstances. Swaying an animal's attitude normally requires about 1 minute, though it can take more or less time depending on the situation, much like influencing a person. This ability can also be directed at magical beasts that have an Intelligence score of 1 or 2 (such as a basilisk or girallon), but the druid suffers a -4 penalty on the check when doing so."
+        },
+        "Wild Shape": {
+          "description": "Starting at 5th level, a druid can transform into any Small or Medium animal and revert to her natural form once per day. She may assume the shape of any creature possessing the animal type. This ability operates similarly to the alternate form special ability, with the exceptions described here. The transformation persists for 1 hour per druid level, or until she chooses to change back. Shifting between forms (whether to animal or back) requires a standard action and does not provoke attacks of opportunity. Each use of wild shape restores lost hit points as though the druid had enjoyed a full night's rest. Upon returning to her original form, previously merged items reappear in their former positions and resume functioning normally. Any items acquired while transformed drop to the ground at the druid's feet. The chosen animal must be one the druid has personally encountered; a druid who has spent her entire life in temperate woodlands, for instance, could not assume the form of a polar bear. While transformed, the druid cannot speak, as she can only produce sounds typical of an ordinary, untrained specimen of that animal, but she can freely communicate with other animals belonging to the same broad category as her current form. (Since a wild parrot's natural vocalization is a squawk, adopting parrot form does not grant speech.) Additional daily uses of wild shape become available at 6th, 7th, 10th, 14th, and 18th level, as indicated in the class table. Furthermore, the druid unlocks the ability to assume Large animal forms at 8th level, Tiny animal forms at 11th level, and Huge animal forms at 15th level. The Hit Dice of the chosen form cannot exceed the druid's class level. A druid cannot, for example, become a dire bear (a Large creature with a minimum of 12 HD) until reaching 12th level, despite gaining access to Large forms at 8th level. At 12th level, the druid can also use wild shape to become a plant creature, such as a shambling mound, subject to the same size limitations that apply to animal forms. (This does not allow transformation into non-creature plants like trees or rose bushes.) At 16th level, wild shape expands to include Small, Medium, or Large elemental forms (air, earth, fire, or water) once per day. Elemental transformations are separate from and in addition to the druid's regular wild shape uses. Beyond the standard wild shape effects, the druid gains access to all of the elemental's extraordinary, supernatural, and spell-like abilities, as well as its feats, for as long as the elemental form is maintained. The druid keeps her own creature type (typically humanoid) throughout. At 18th level, elemental wild shape can be used twice per day, and at 20th level, three times per day. Additionally, at 20th level, the druid may adopt the form of a Huge elemental."
+        },
+        "Woodland Stride": {
+          "description": "From 2nd level onward, a druid can pass through natural undergrowth of any kind - including thorns, briars, dense vegetation, and similar overgrowth - moving at full speed without sustaining damage or any other hindrance. This benefit does not apply to undergrowth that has been magically altered to obstruct movement, which still impedes the druid normally."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "perDay": [
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2,
+          1
+        ],
+        [
+          5,
+          3,
+          2
+        ],
+        [
+          5,
+          3,
+          2,
+          1
+        ],
+        [
+          5,
+          3,
+          3,
+          2
+        ],
+        [
+          6,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          6,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          6,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          6,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          6,
+          5,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          6,
+          5,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          6,
+          5,
+          5,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          6,
+          5,
+          5,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          5,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          5,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          5,
+          5,
+          4,
+          4,
+          3,
+          3
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          5,
+          5,
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "slug": "druidspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Druids are proficient with the following weapons: club, dagger, dart, quarterstaff, scimitar, sickle, shortspear, sling, and spear. They are also proficient with all natural attacks (claw, bite, and so forth) of any form they assume with wild shape. Druids are proficient with light and medium armor but are prohibited from wearing metal armor; thus, they may wear only padded, leather, or hide armor. Druids are proficient with shields (except tower shields) but must use only wooden ones. A druid who wears prohibited armor or carries a prohibited shield is unable to cast druid spells or use any of her supernatural or spell-like class abilities while doing so and for 24 hours thereafter.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A druid casts divine spells (the same type of spells available to the cleric, paladin, and ranger), which are drawn from the druid spell list. Her alignment may restrict her from casting certain spells opposed to her moral or ethical beliefs; see Chaotic, Evil, Good, and Lawful Spells, below. A druid must choose and prepare her spells in advance. To prepare or cast a spell, the druid must have a Wisdom score equal to at least 10 + the spell level (Wis 10 for 0-level spells, Wis 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a druid's spell is 10 + the spell level + the druid's Wisdom modifier. Like other spellcasters, a druid can cast only a certain number of spells of each spell level per day. Her base daily spell allotment is given in the class table. In addition, she receives bonus spells per day if she has a high Wisdom score. She does not have access to any domain spells or granted powers, as a cleric does. A druid prepares and casts spells the way a cleric does, though she cannot lose a prepared spell to cast a cure spell in its place (but see Spontaneous Casting, below). A druid may prepare and cast any spell on the druid spell list, provided that she can cast spells of that level, but she must choose which spells to prepare during her daily meditation.",
+        "name": "Spells"
+      },
+      {
+        "description": "A druid can channel stored spell energy into summoning spells that she hasn't prepared ahead of time. She can ?lose' a prepared spell in order to cast any summon nature's ally spell of the same level or lower. For example, a druid who has prepared repel vermin (a 4th-level spell) may lose repel vermin in order to cast summon nature's ally IV (also a 4th-level spell).",
+        "name": "Spontaneous Casting"
+      },
+      {
+        "description": "A druid can't cast spells of an alignment opposed to her own or her deity's (if she has one). For example, a neutral good druid cannot cast evil spells. Spells associated with particular alignments are indicated by the chaos, evil, good, and law descriptors in their spell descriptions.",
+        "name": "Chaotic, Evil, Good, and Lawful Spells"
+      },
+      {
+        "description": "A druid may begin play with an animal companion selected from the following list: badger, camel, dire rat, dog, riding dog, eagle, hawk, horse (light or heavy), owl, pony, snake (Small or Medium viper), or wolf. If the DM's campaign takes place wholly or partly in an aquatic environment, the DM may add the following creatures to the druid's list of options: crocodile, porpoise, Medium shark, and squid. This animal is a loyal companion that accompanies the druid on her adventures as appropriate for its kind. A 1st-level druid's companion is completely typical for its kind except as noted in the sidebar on. As a druid advances in level, the animal's power increases as shown on the table in the sidebar. If a druid releases her companion from service, she may gain a new one by performing a ceremony requiring 24 uninterrupted hours of prayer. This ceremony can also replace an animal companion that has perished. A druid of 4th level or higher may select from alternative lists of animals the sidebar). Should she select an animal companion from one of these alternative lists, the creature gains abilities as if the character's druid level were lower than it actually is. Subtract the value indicated in the appropriate list header from the character's druid level and compare the result with the druid level entry on the table in the sidebar to determine the animal companion's powers. (If this adjustment would reduce the druid's effective level to 0 or lower, she can't have that animal as a companion.) For example, a 6th-level druid could select a leopard as an animal companion. The leopard would have characteristics and special abilities as if the druid were 3rd level (taking into account the ?3 adjustment) instead of 6th level.",
+        "name": "Animal Companion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A druid gains a +2 bonus on Knowledge (nature) and Survival checks.",
+        "name": "Nature Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A druid can use body language, vocalizations, and demeanor to improve the attitude of an animal (such as a bear or a monitor lizard). This ability functions just like a Diplomacy check made to improve the attitude of a person. The druid rolls 1d20 and adds her druid level and her Charisma modifier to determine the wild empathy check result. The typical domestic animal has a starting attitude of indifferent, while wild animals are usually unfriendly. To use wild empathy, the druid and the animal must be able to study each other, which means that they must be within 30 feet of one another under normal conditions. Generally, influencing an animal in this way takes 1 minute but, as with influencing people, it might take more or less time. A druid can also use this ability to influence a magical beast with an Intelligence score of 1 or 2 (such as a basilisk or a girallon), but she takes a ?4 penalty on the check.",
+        "name": "Wild Empathy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, a druid may move through any sort of undergrowth (such as natural thorns, briars, overgrown areas, and similar terrain) at her normal speed and without taking damage or suffering any other impairment. However, thorns, briars, and overgrown areas that have been magically manipulated to impede motion still affect her.",
+        "name": "Woodland Stride",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, a druid leaves no trail in natural surroundings and cannot be tracked. She may choose to leave a trail if so desired.",
+        "name": "Trackless Step",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 4th level, a druid gains a +4 bonus on saving throws against the spell-like abilities of fey (such as dryads, pixies, and sprites).",
+        "name": "Resist Nature's Lure",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, a druid gains the ability to turn herself into any Small or Medium animal and back again once per day. Her options for new forms include all creatures with the animal type. This ability functions like the alternate form special ability, except as noted here. Effect lasts for 1 hour per druid level, or until she changes back. Changing form (to animal or back) is a standard action and doesn't provoke an attack of opportunity. Each time you use wild shape, you regain lost hit points as if you had rested for a night. Any gear worn or carried by the druid melds into the new form and becomes nonfunctional. When the druid reverts to her true form, any objects previously melded into the new form reappear in the same location on her body that they previously occupied and are once again functional. Any new items worn in the assumed form fall off and land at the druid's feet. The form chosen must be that of an animal the druid is familiar with. For example, a druid who has never been outside a temperate forest could not become a polar bear. A druid loses her ability to speak while in animal form because she is limited to the sounds that a normal, untrained animal can make, but she can communicate normally with other animals of the same general grouping as her new form. (The normal sound a wild parrot makes is a squawk, so changing to this form does not permit speech.) A druid can use this ability more times per day at 6th, 7th, 10th, 14th, and 18th level, as noted in the class table. In addition, she gains the ability to take the shape of a Large animal at 8th level, a Tiny animal at 11th level, and a Huge animal at 15th level. The new form's Hit Dice can't exceed the character's druid level. For instance, a druid can't take the form of a dire bear (a Large creature that always has at least 12 HD) until 12th level, even though she can begin taking Large forms at 8th level. At 12th level, a druid becomes able to use wild shape to change into a plant creature, such as a shambling mound, with the same size restrictions as for animal forms. (A druid can't use this ability to take the form of a plant that isn't a creature, such as a tree or a rose bush.) At 16th level, a druid becomes able to use wild shape to change into a Small, Medium, or Large elemental (air, earth, fire, or water) once per day. These elemental forms are in addition to her normal wild shape usage. In addition to the normal effects of wild shape, the druid gains all the elemental's extraordinary, supernatural, and spell-like abilities. She also gains the elemental's feats for as long as she maintains the wild shape, but she retains her own creature type (humanoid, in most cases). At 18th level, a druid becomes able to assume elemental form twice per day, and at 20th level she can do so three times per day. At 20th level, a druid may use this wild shape ability to change into a Huge elemental.",
+        "name": "Wild Shape",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 9th level, a druid gains immunity to all poisons.",
+        "name": "Venom Immunity",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 13th level, a druid gains the ability to change her appearance at will, as if using the disguise self spell. This affects the druid's body but not her possessions. It is not an illusory effect, but a minor physical alteration of the druid's appearance, within the limits described for the spell.",
+        "name": "A Thousand Faces",
+        "type": "(Su)"
+      },
+      {
+        "description": "After attaining 15th level, a druid no longer takes ability score penalties for aging and cannot be magically aged. Any penalties she may have already incurred, however, remain in place. Bonuses still accrue, and the druid still dies of old age when her time is up.",
+        "name": "Timeless Body",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Handle Animal",
+      "Heal",
+      "Knowledge (Nature)",
+      "Listen",
+      "Profession",
+      "Ride",
+      "Spellcraft",
+      "Spot",
+      "Survival",
+      "Swim"
+    ],
+    "description": "",
+    "hasCantrips": true,
+    "hitDie": "d8",
+    "name": "Druid",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil"
+      },
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Animal companion",
+          "nature sense",
+          "wild empathy"
+        ],
+        "spellsPerDay": "3,1,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Woodland stride"
+        ],
+        "spellsPerDay": "4,2,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Trackless step"
+        ],
+        "spellsPerDay": "4,2,1,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Resist nature's lure"
+        ],
+        "spellsPerDay": "5,3,2,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Wild shape (1/day)"
+        ],
+        "spellsPerDay": "5,3,2,1,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Wild shape (2/day)"
+        ],
+        "spellsPerDay": "5,3,3,2,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Wild shape (3/day)"
+        ],
+        "spellsPerDay": "6,4,3,2,1,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Wild shape (Large)"
+        ],
+        "spellsPerDay": "6,4,3,3,2,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Venom immunity"
+        ],
+        "spellsPerDay": "6,4,4,3,2,1,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Wild shape (4/day)"
+        ],
+        "spellsPerDay": "6,4,4,3,3,2,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 8,
+        "fortSave": 7,
+        "level": 11,
+        "refSave": 3,
+        "special": [
+          "Wild shape (Tiny)"
+        ],
+        "spellsPerDay": "6,5,4,4,3,2,1,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 12,
+        "refSave": 4,
+        "special": [
+          "Wild shape (plant)"
+        ],
+        "spellsPerDay": "6,5,4,4,3,3,2,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 13,
+        "refSave": 4,
+        "special": [
+          "A thousand faces"
+        ],
+        "spellsPerDay": "6,5,5,4,4,3,2,1,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 10,
+        "fortSave": 9,
+        "level": 14,
+        "refSave": 4,
+        "special": [
+          "Wild shape (5/day)"
+        ],
+        "spellsPerDay": "6,5,5,4,4,3,3,2,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 11,
+        "fortSave": 9,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Timeless body",
+          "wild shape (Huge)"
+        ],
+        "spellsPerDay": "6,5,5,5,4,4,3,2,1,-",
+        "willSave": 9
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 16,
+        "refSave": 5,
+        "special": [
+          "Wild shape (elemental 1/day)"
+        ],
+        "spellsPerDay": "6,5,5,5,4,4,3,3,2,-",
+        "willSave": 10
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 17,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "6,5,5,5,5,4,4,3,2,1",
+        "willSave": 10
+      },
+      {
+        "bab": 13,
+        "fortSave": 11,
+        "level": 18,
+        "refSave": 6,
+        "special": [
+          "Wild shape (6/day, elemental 2/day)"
+        ],
+        "spellsPerDay": "6,5,5,5,5,4,4,3,3,2",
+        "willSave": 11
+      },
+      {
+        "bab": 14,
+        "fortSave": 11,
+        "level": 19,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,5,5,5,5,5,4,4,3,3",
+        "willSave": 11
+      },
+      {
+        "bab": 15,
+        "fortSave": 12,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Wild shape (elemental 3/day, Huge elemental)"
+        ],
+        "spellsPerDay": "6,5,5,5,5,5,4,4,4,4",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

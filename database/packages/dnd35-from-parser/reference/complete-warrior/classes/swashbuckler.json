@@ -1,0 +1,512 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-18T13:17:09.862Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/swashbuckler/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Weapon Finesse"
+      },
+      {
+        "levels": [
+          2,
+          11,
+          20
+        ],
+        "name": "Grace"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Insightful Strike"
+      },
+      {
+        "levels": [
+          5,
+          10,
+          15,
+          20
+        ],
+        "name": "Dodge Bonus"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Acrobatic Charge"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Improved Flanking"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Lucky"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "Acrobatic Skill Mastery"
+      },
+      {
+        "levels": [
+          14
+        ],
+        "name": "Weakening Critical"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Slippery Mind"
+      },
+      {
+        "levels": [
+          19
+        ],
+        "name": "Wounding Critical"
+      }
+    ],
+    "hd": 10,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Swashbuckler Class Feature",
+    "features": {
+      "Acrobatic Charge": {
+        "description": "Starting at 7th level, a swashbuckler can perform charges under circumstances that would prevent other characters from doing so. She is able to charge across difficult terrain that would normally impede movement, or through spaces occupied by allies. This lets her dash down steep staircases, vault from elevated positions, or weave around obstacles to reach her foe. She may still need to succeed on relevant checks (particularly Jump or Tumble) depending on the terrain involved.",
+        "level": 7,
+        "seedName": "Acrobatic Charge (Swashbuckler)"
+      },
+      "Acrobatic Skill Mastery": {
+        "description": "By 13th level, a swashbuckler has honed her acrobatic talents to the point where she can perform them dependably regardless of the situation. Whenever she attempts a Jump or Tumble check, she may take 10 even when stress or other distractions would ordinarily make that impossible.",
+        "level": 13,
+        "seedName": "Acrobatic Skill Mastery (Swashbuckler)"
+      },
+      "Dodge Bonus": {
+        "description": "A swashbuckler learns to concentrate her defensive efforts against a single melee opponent. On her turn, she may choose one foe and gain a +1 dodge bonus to AC against that foe's melee attacks. She may switch to a different opponent on any subsequent turn. This bonus improves by +1 for every five levels beyond 5th (+2 at 10th, +3 at 15th, +4 at 20th). Wearing medium or heavy armor, or carrying a medium or heavy load, causes her to lose this bonus. If the swashbuckler also possesses the Dodge feat, she is not required to pick the same target for both this ability and the feat. (Choosing the same target for both causes the bonuses to stack.)",
+        "level": 5,
+        "seedName": "Dodge Bonus (Swashbuckler)",
+        "stackable": true
+      },
+      "Grace": {
+        "description": "At 2nd level, a swashbuckler receives a +1 competence bonus to Reflex saves. This bonus rises to +2 at 11th level and +3 at 20th level. She forfeits this bonus while wearing medium or heavy armor or carrying a medium or heavy load.",
+        "level": 2,
+        "seedName": "Grace (Swashbuckler)",
+        "stackable": true
+      },
+      "Improved Flanking": {
+        "description": "When a swashbuckler of 8th level or higher flanks an opponent, she gains a +4 bonus on attack rolls rather than the standard +2. (Allies who flank alongside her do not benefit from this improved bonus.)",
+        "level": 8,
+        "seedName": "Improved Flanking (Swashbuckler)"
+      },
+      "Insightful Strike": {
+        "description": "Beginning at 3rd level, a swashbuckler learns to direct her precise attacks at vulnerable points for increased effect. She adds her Intelligence modifier (if positive) as a bonus to damage rolls with any light weapon or any other weapon eligible for Weapon Finesse, such as a rapier, whip, or spiked chain. This damage bonus is in addition to any Strength bonus she already applies. Creatures that are immune to sneak attacks or critical hits are also immune to this extra damage. This ability cannot be used while wearing medium or heavy armor or while carrying a medium or heavy load.",
+        "level": 3,
+        "seedName": "Insightful Strike (Swashbuckler)"
+      },
+      "Lucky": {
+        "description": "Once per day, a swashbuckler of 11th level or higher may reroll a single failed attack roll, skill check, ability check, or saving throw. She must accept the new result, even if it is lower than the original.",
+        "level": 11,
+        "seedName": "Lucky (Swashbuckler)"
+      },
+      "Slippery Mind": {
+        "description": "At 17th level, a swashbuckler develops greater resistance to mental manipulation. If she fails a saving throw against an enchantment spell or effect, she may attempt the save once more 1 round later at the same DC, provided she is still alive. She receives only this single additional attempt per failed save.",
+        "level": 17,
+        "seedName": "Slippery Mind (Swashbuckler)"
+      },
+      "Weakening Critical": {
+        "description": "When a swashbuckler of 14th level or higher lands a critical hit on a creature, the target also suffers 2 points of Strength damage. Creatures that are immune to critical hits are unaffected by this ability.",
+        "level": 14,
+        "seedName": "Weakening Critical (Swashbuckler)"
+      },
+      "Weapon Finesse": {
+        "description": "At 1st level, a swashbuckler receives Weapon Finesse as a bonus feat, even if she does not meet its normal prerequisites.",
+        "level": 1,
+        "seedName": "Weapon Finesse (Swashbuckler)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Swashbucklers have proficiency with all simple and martial weapons as well as light armor. Several of this class's abilities require the swashbuckler to wear no more than light armor and remain unencumbered.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Swashbuckler)"
+      },
+      "Wounding Critical": {
+        "description": "When a swashbuckler of 19th level or higher lands a critical hit on a creature, the target also suffers 2 points of Constitution damage. (This is in addition to the Strength damage from the weakening critical ability.) Creatures that are immune to critical hits are unaffected by this ability.",
+        "level": 19,
+        "seedName": "Wounding Critical (Swashbuckler)"
+      }
+    },
+    "occurrenceMap": {
+      "Acrobatic Charge": "Acrobatic Charge",
+      "Acrobatic Skill Mastery": "Acrobatic Skill Mastery",
+      "Dodge Bonus": "Dodge Bonus",
+      "Grace": "Grace",
+      "Improved Flanking": "Improved Flanking",
+      "Insightful Strike": "Insightful Strike",
+      "Lucky": "Lucky",
+      "Slippery Mind": "Slippery Mind",
+      "Weakening Critical": "Weakening Critical",
+      "Weapon Finesse": "Weapon Finesse",
+      "Wounding Critical": "Wounding Critical"
+    },
+    "overrides": {
+      "description": "The swashbuckler represents the ideal of boldness and flair in combat.",
+      "features": {
+        "Acrobatic Charge": {
+          "description": "Starting at 7th level, a swashbuckler can perform charges under circumstances that would prevent other characters from doing so. She is able to charge across difficult terrain that would normally impede movement, or through spaces occupied by allies. This lets her dash down steep staircases, vault from elevated positions, or weave around obstacles to reach her foe. She may still need to succeed on relevant checks (particularly Jump or Tumble) depending on the terrain involved."
+        },
+        "Acrobatic Skill Mastery": {
+          "description": "By 13th level, a swashbuckler has honed her acrobatic talents to the point where she can perform them dependably regardless of the situation. Whenever she attempts a Jump or Tumble check, she may take 10 even when stress or other distractions would ordinarily make that impossible."
+        },
+        "Dodge Bonus": {
+          "description": "A swashbuckler learns to concentrate her defensive efforts against a single melee opponent. On her turn, she may choose one foe and gain a +1 dodge bonus to AC against that foe's melee attacks. She may switch to a different opponent on any subsequent turn. This bonus improves by +1 for every five levels beyond 5th (+2 at 10th, +3 at 15th, +4 at 20th). Wearing medium or heavy armor, or carrying a medium or heavy load, causes her to lose this bonus. If the swashbuckler also possesses the Dodge feat, she is not required to pick the same target for both this ability and the feat. (Choosing the same target for both causes the bonuses to stack.)"
+        },
+        "Grace": {
+          "description": "At 2nd level, a swashbuckler receives a +1 competence bonus to Reflex saves. This bonus rises to +2 at 11th level and +3 at 20th level. She forfeits this bonus while wearing medium or heavy armor or carrying a medium or heavy load."
+        },
+        "Improved Flanking": {
+          "description": "When a swashbuckler of 8th level or higher flanks an opponent, she gains a +4 bonus on attack rolls rather than the standard +2. (Allies who flank alongside her do not benefit from this improved bonus.)"
+        },
+        "Insightful Strike": {
+          "description": "Beginning at 3rd level, a swashbuckler learns to direct her precise attacks at vulnerable points for increased effect. She adds her Intelligence modifier (if positive) as a bonus to damage rolls with any light weapon or any other weapon eligible for Weapon Finesse, such as a rapier, whip, or spiked chain. This damage bonus is in addition to any Strength bonus she already applies. Creatures that are immune to sneak attacks or critical hits are also immune to this extra damage. This ability cannot be used while wearing medium or heavy armor or while carrying a medium or heavy load."
+        },
+        "Lucky": {
+          "description": "Once per day, a swashbuckler of 11th level or higher may reroll a single failed attack roll, skill check, ability check, or saving throw. She must accept the new result, even if it is lower than the original."
+        },
+        "Slippery Mind": {
+          "description": "At 17th level, a swashbuckler develops greater resistance to mental manipulation. If she fails a saving throw against an enchantment spell or effect, she may attempt the save once more 1 round later at the same DC, provided she is still alive. She receives only this single additional attempt per failed save."
+        },
+        "Weakening Critical": {
+          "description": "When a swashbuckler of 14th level or higher lands a critical hit on a creature, the target also suffers 2 points of Strength damage. Creatures that are immune to critical hits are unaffected by this ability."
+        },
+        "Weapon Finesse": {
+          "description": "At 1st level, a swashbuckler receives Weapon Finesse as a bonus feat, even if she does not meet its normal prerequisites."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Swashbucklers have proficiency with all simple and martial weapons as well as light armor. Several of this class's abilities require the swashbuckler to wear no more than light armor and remain unencumbered."
+        },
+        "Wounding Critical": {
+          "description": "When a swashbuckler of 19th level or higher lands a critical hit on a creature, the target also suffers 2 points of Constitution damage. (This is in addition to the Strength damage from the weakening critical ability.) Creatures that are immune to critical hits are unaffected by this ability."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Swashbucklers are proficient with all simple and martial weapons, and with light armor. Some of the swashbuckler's class features, as noted below, rely on her being no more than lightly armored and unencumbered.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A swashbuckler gains Weapon Finesse as a bonus feat at 1st level even if she does not qualify for the feat.",
+        "name": "Weapon Finesse",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A swashbuckler gains a +1 competence bonus on Reflex saves at 2nd level. This bonus increases to +2 at 11th level and to +3 at 20th level. A swashbuckler loses this bonus when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "name": "Grace",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a swashbuckler becomes able to place her finesse attacks where they deal greater damage. She applies her Intelligence bonus (if any) as a bonus on damage rolls (in addition to any Strength bonus she may have) with any light weapon, as well as any other weapon that can be used with Weapon Finesse, such as a rapier, whip, or spiked chain. Targets immune to sneak attacks or critical hits are immune to the swashbuckler's insightful strike. A swashbuckler cannot use this ability when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "name": "Insightful Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A swashbuckler is trained at focusing her defenses on a single opponent in melee. During her action, she may designate an opponent and receive a +1 dodge bonus to Armor Class against melee attacks from that opponent. She can select a new opponent on any action. This bonus increases by +1 at every five levels after 5th (+2 at 10th level, +3 at 15th, and +4 at 20th). A swashbuckler loses this bonus when wearing medium or heavy armor or when carrying a medium or heavy load. If the swashbuckler also has the Dodge feat, she need not designate the same target for this ability as for the Dodge feat. (If she designates the same target, the bonuses stack.)",
+        "name": "Dodge Bonus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A swashbuckler of 7th level or higher can charge in situations where others cannot. She may charge over difficult terrain that normally slows movement or allies blocking her path. This ability enables her to run down steep stairs, leap down from a balcony, or to tumble over tables to get to her target. Depending on the circumstance, she may still need to make appropriate checks (Jump or Tumble checks, in particular) to successfully move over the terrain.",
+        "name": "Acrobatic Charge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A swashbuckler of 8th level or higher who is flanking an opponent gains a +4 bonus on attacks instead of a +2 bonus on attacks. (Other characters flanking with the swashbuckler don't gain this increased bonus.)",
+        "name": "Improved Flanking",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Many swashbucklers live by the credo \"Better lucky than good.\" Once per day, a swashbuckler of 11th level or higher may re-roll any failed attack roll, skill check, ability check, or saving throw. The character must take the result of the re-roll, even if it's worse than the original roll.",
+        "name": "Lucky",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 13th level, a swashbuckler becomes so certain in the use of her acrobatic skills that she can use them reliably even under adverse conditions. When making a Jump or Tumble check, a swashbuckler may take 10 even if stress and distractions would normally prevent her from doing so.",
+        "name": "Acrobatic Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A swashbuckler of 14th level or higher who scores a critical hit against a creature also deals 2 points of Strength damage to the creature. Creatures immune to critical hits are immune to this effect.",
+        "name": "Weakening Critical",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a swashbuckler reaches 17th level, her mind becomes more difficult to control. If the swashbuckler fails her save against an enchantment spell or effect, she can attempt the save again 1 round later at the same DC (assuming she is still alive). She gets only this one extra chance to succeed at a certain saving throw.",
+        "name": "Slippery Mind",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A swashbuckler of 19th level or higher who scores a critical hit against a creature also deals 2 points of Constitution damage to the creature. (This damage is in addition to the Strength damage dealt by the swashbuckler's weakening critical class feature.) Creatures immune to critical hits are immune to this effect.",
+        "name": "Wounding Critical",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Diplomacy",
+      "Escape Artist",
+      "Jump",
+      "Profession",
+      "Sense Motive",
+      "Swim",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "The swashbuckler embodies the concepts of daring and panache.",
+    "hitDie": "d10",
+    "name": "Swashbuckler",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Weapon Finesse"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Grace +1"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Insightful strike"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Dodge bonus +1"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Acrobatic charge"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Improved flanking"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Dodge bonus +2"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 11,
+        "fortSave": 7,
+        "level": 11,
+        "refSave": 3,
+        "special": [
+          "Grace +2",
+          "lucky"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 12,
+        "fortSave": 8,
+        "level": 12,
+        "refSave": 4,
+        "special": [],
+        "willSave": 4
+      },
+      {
+        "bab": 13,
+        "fortSave": 8,
+        "level": 13,
+        "refSave": 4,
+        "special": [
+          "Acrobatic skill mastery"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 14,
+        "fortSave": 9,
+        "level": 14,
+        "refSave": 4,
+        "special": [
+          "Weakening critical"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 15,
+        "fortSave": 9,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Dodge bonus +3"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 16,
+        "fortSave": 10,
+        "level": 16,
+        "refSave": 5,
+        "special": [],
+        "willSave": 5
+      },
+      {
+        "bab": 17,
+        "fortSave": 10,
+        "level": 17,
+        "refSave": 5,
+        "special": [
+          "Slippery mind"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 18,
+        "fortSave": 11,
+        "level": 18,
+        "refSave": 6,
+        "special": [],
+        "willSave": 6
+      },
+      {
+        "bab": 19,
+        "fortSave": 11,
+        "level": 19,
+        "refSave": 6,
+        "special": [
+          "Wounding critical"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 20,
+        "fortSave": 12,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Dodge bonus +4",
+          "grace +3"
+        ],
+        "willSave": 6
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

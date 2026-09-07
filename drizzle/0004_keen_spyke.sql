@@ -1,0 +1,1 @@
+ALTER TABLE "account"."sessions" ADD COLUMN "expires_at" timestamp NOT NULL DEFAULT now() + interval '7 days';

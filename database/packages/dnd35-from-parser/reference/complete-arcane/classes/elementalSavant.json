@@ -1,0 +1,509 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:16:30.917Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/elemental-savant/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
+      ],
+      "type": "any"
+    },
+    "featNameMap": {
+      "cold": "cold",
+      "electricity": "electricity",
+      "energysubstitutionacid": "Energy Substitution (acid",
+      "orfire": "or fire)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Elemental Specialty"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Resistance To Energy 5"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Immunity To Sleep"
+      },
+      {
+        "levels": [
+          3,
+          8
+        ],
+        "name": "Energy Penetration"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Resistance To Energy 10"
+      },
+      {
+        "levels": [
+          5,
+          10
+        ],
+        "name": "Energy Focus"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Darkvision"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Resistance To Energy 20"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Immunity To Paralysis And Poison"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Elemental Perfection"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Energy Immunity"
+      }
+    ],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.energysubstitutionacid.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.cold.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.electricity.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.orfire.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Elemental Savant Class Feature",
+    "features": {
+      "Darkvision": {
+        "description": "At 6th level, an elemental savant gains darkvision out to 60 feet.",
+        "level": 6,
+        "seedName": "Darkvision (Elemental Savant)"
+      },
+      "Elemental Perfection": {
+        "description": "At 10th level, an elemental savant, through long association with elemental entities and extensive study of their secrets, completely transcends her mortal form to become an elemental creature. Her type changes to elemental. She no longer needs to eat, sleep, or breathe (though she must still rest to regain spells). She gains an elemental creature's immunity to stunning, and she is no longer subject to extra damage from critical hits or fl anking. An elemental savant gains the speed and movement modes, natural attacks, special attacks, and special qualities of a Medium elemental of the type appropriate to her elemental specialty, as noted ) is 20 + her Con modifier. Upon achieving this state, an elemental savant's appearance undergoes a minor physical change, usually to the skin or eyes. An earth elemental savant, for example, might acquire gemlike eyes and hard, pebbly skin. Anyone who shares the elemental savant's predilection for study of her chosen plane immediately recognizes her transcendent nature. She gains a +2 circumstance bonus on all Charisma-based skill and ability checks when interacting with creatures that share her elemental subtype (air, earth, fire, or water) and with other elemental savants who have chosen her element. Unlike a normal elemental, an elemental savant retains a soul separate from her body. She can be raised from the dead as normal for a creature of her previous type.",
+        "level": 10,
+        "seedName": "Elemental Perfection (Elemental Savant)"
+      },
+      "Elemental Specialty": {
+        "description": "The first step toward transcending mortal form requires an elemental savant to choose her elemental specialty. Upon entering the class, she must select an element and its associated energy type (air = electricity, earth = acid, fire = fire, or water = cold). This choice must match the Energy Substitution feat that the savant selected to gain entry to the prestige class. When the savant casts a spell that normally deals energy damage, its energy descriptor changes to the savant's chosen energy type, and it deals damage of that energy type instead of its normal energy type. For example, an elemental savant choosing to specialize in fire could still cast meld into stone, and its descriptor would not change because it does not deal energy damage. However, if she casts Melf's acid arrow, the spell would deal fire damage and have the fire descriptor instead of dealing acid damage and having the acid descriptor.",
+        "level": 1,
+        "seedName": "Elemental Specialty (Elemental Savant)"
+      },
+      "Energy Focus": {
+        "description": "From 5th level on, an elemental savant is better able to manipulate energy associated with her chosen element. The save DC for any spell with that energy descriptor increases by 1. At 10th level, these save DCs increase by 1 again (total increase of 2). These increases are cumulative with those granted by the Spell Focus and Greater Spell Focus feats.",
+        "level": 5,
+        "seedName": "Energy Focus (Elemental Savant)",
+        "stackable": true
+      },
+      "Energy Immunity": {
+        "description": "From 10th level on, an elemental savant gains immunity to the type of energy associated with her chosen elemen",
+        "level": 10,
+        "seedName": "Energy Immunity (Elemental Savant)"
+      },
+      "Energy Penetration": {
+        "description": "Beginning at 3rd level, an elemental savant further refines her ability to wield energy associated with her chosen element. When she casts a spell using that type of energy, she gains a +2 competence bonus on caster level checks (1d20 + caster level) to overcome a creature's spell resistance. At 8th level, this bonus increases to +4. These bonuses stack with those granted by the Spell Penetration and Greater Spell Penetration feats.",
+        "level": 3,
+        "seedName": "Energy Penetration (Elemental Savant)",
+        "stackable": true
+      },
+      "Immunity to Paralysis and Poison": {
+        "description": "As an elemental savant approaches elemental perfection, she gains immunity to paralysis and poison at 9th level.",
+        "level": 9,
+        "seedName": "Immunity to Paralysis and Poison (Elemental Savant)"
+      },
+      "Immunity to Sleep": {
+        "description": "At 2nd level, as an elemental savant continues to transcend her mortal form, she gains immunity to sleep effects.",
+        "level": 2,
+        "seedName": "Immunity to Sleep (Elemental Savant)"
+      },
+      "Resistance to Energy 10": {
+        "description": "",
+        "level": 4,
+        "seedName": "Resistance to Energy 10 (Elemental Savant)"
+      },
+      "Resistance to Energy 20": {
+        "description": "",
+        "level": 7,
+        "seedName": "Resistance to Energy 20 (Elemental Savant)"
+      },
+      "Resistance to Energy 5": {
+        "description": "As an elemental savant gains levels in this prestige class, she becomes more resistant to the type of energy allied with her chosen element. At 1st level, she gains resistance 5 against this energy type. This resistance rises to 10 at 4th level and 20 at 7th level.",
+        "level": 1,
+        "seedName": "Resistance to Energy 5 (Elemental Savant)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level except 5th and 10th, an elemental savant gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If she had more than one spellcasting class before becoming an elemental savant, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Elemental Savant)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Elemental savants gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Elemental Savant)"
+      }
+    },
+    "occurrenceMap": {
+      "Darkvision": "Darkvision",
+      "Elemental Perfection": "Elemental Perfection",
+      "Elemental Specialty": "Elemental Specialty",
+      "Energy Focus": "Energy Focus",
+      "Energy Immunity": "Energy Immunity",
+      "Energy Penetration": "Energy Penetration",
+      "Immunity To Paralysis And Poison": "Immunity to Paralysis and Poison",
+      "Immunity To Sleep": "Immunity to Sleep",
+      "Resistance To Energy 10": "Resistance to Energy 10",
+      "Resistance To Energy 20": "Resistance to Energy 20",
+      "Resistance To Energy 5": "Resistance to Energy 5"
+    },
+    "overrides": {
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgearcana.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgetheplanes.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.energysubstitutionacid.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.energysubstitutioncold.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.energysubstitutionelectricity.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.energysubstitutionfire.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "greater_than_or_equal",
+              "target": "spellcasting.arcane",
+              "value": "3",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "spellcasting.divine",
+              "value": "3",
+              "valueType": "number"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Elemental savants gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level except 5th and 10th, an elemental savant gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If she had more than one spellcasting class before becoming an elemental savant, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "The first step toward transcending mortal form requires an elemental savant to choose her elemental specialty. Upon entering the class, she must select an element and its associated energy type (air = electricity, earth = acid, fire = fire, or water = cold). This choice must match the Energy Substitution feat that the savant selected to gain entry to the prestige class. When the savant casts a spell that normally deals energy damage, its energy descriptor changes to the savant's chosen energy type, and it deals damage of that energy type instead of its normal energy type. For example, an elemental savant choosing to specialize in fire could still cast meld into stone, and its descriptor would not change because it does not deal energy damage. However, if she casts Melf's acid arrow, the spell would deal fire damage and have the fire descriptor instead of dealing acid damage and having the acid descriptor.",
+        "name": "Elemental Specialty",
+        "type": "(Ex)"
+      },
+      {
+        "description": "As an elemental savant gains levels in this prestige class, she becomes more resistant to the type of energy allied with her chosen element. At 1st level, she gains resistance 5 against this energy type. This resistance rises to 10 at 4th level and 20 at 7th level.",
+        "name": "Resistance to Energy 5",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, as an elemental savant continues to transcend her mortal form, she gains immunity to sleep effects.",
+        "name": "Immunity to Sleep",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, an elemental savant further refines her ability to wield energy associated with her chosen element. When she casts a spell using that type of energy, she gains a +2 competence bonus on caster level checks (1d20 + caster level) to overcome a creature's spell resistance. At 8th level, this bonus increases to +4. These bonuses stack with those granted by the Spell Penetration and Greater Spell Penetration feats.",
+        "name": "Energy Penetration",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Resistance to Energy 10"
+      },
+      {
+        "description": "From 5th level on, an elemental savant is better able to manipulate energy associated with her chosen element. The save DC for any spell with that energy descriptor increases by 1. At 10th level, these save DCs increase by 1 again (total increase of 2). These increases are cumulative with those granted by the Spell Focus and Greater Spell Focus feats.",
+        "name": "Energy Focus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 6th level, an elemental savant gains darkvision out to 60 feet.",
+        "name": "Darkvision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Resistance to Energy 20"
+      },
+      {
+        "description": "As an elemental savant approaches elemental perfection, she gains immunity to paralysis and poison at 9th level.",
+        "name": "Immunity to Paralysis and Poison",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 10th level, an elemental savant, through long association with elemental entities and extensive study of their secrets, completely transcends her mortal form to become an elemental creature. Her type changes to elemental. She no longer needs to eat, sleep, or breathe (though she must still rest to regain spells). She gains an elemental creature's immunity to stunning, and she is no longer subject to extra damage from critical hits or fl anking. An elemental savant gains the speed and movement modes, natural attacks, special attacks, and special qualities of a Medium elemental of the type appropriate to her elemental specialty, as noted ) is 20 + her Con modifier. Upon achieving this state, an elemental savant's appearance undergoes a minor physical change, usually to the skin or eyes. An earth elemental savant, for example, might acquire gemlike eyes and hard, pebbly skin. Anyone who shares the elemental savant's predilection for study of her chosen plane immediately recognizes her transcendent nature. She gains a +2 circumstance bonus on all Charisma-based skill and ability checks when interacting with creatures that share her elemental subtype (air, earth, fire, or water) and with other elemental savants who have chosen her element. Unlike a normal elemental, an elemental savant retains a soul separate from her body. She can be raised from the dead as normal for a creature of her previous type.",
+        "name": "Elemental Perfection"
+      },
+      {
+        "description": "From 10th level on, an elemental savant gains immunity to the type of energy associated with her chosen elemen",
+        "name": "Energy Immunity",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Knowledge (Arcana)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "Elemental savants study the basic building blocks of existence - air, earth, fire, and water - learning to harness their powers.",
+    "hitDie": "d4",
+    "name": "Elemental Savant",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Energy Substitution (acid",
+          "cold",
+          "electricity",
+          "or fire)"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 8
+          },
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Must have made peaceful contact with an elemental or outsider that has an elemental subtype (air, earth, fire, or water).",
+          "at least 3rd level",
+          "made peaceful contact with an elemental or outsider that has an elemental subtype (air, earth, fire, or water)"
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 8 ranks, Knowledge (the planes) 4 ranks Feats: Energy Substitution (acid, cold, electricity, or fire) Spells: Able to cast at least three spells that have one of the following descriptors in common: acid, cold, electricity, or fire. One of the spells must be at least 3rd level. Special: Must have made peaceful contact with an elemental or outsider that has an elemental subtype (air, earth, fire, or water)."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Elemental specialty",
+          "resistance to energy 5"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Immunity to sleep"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Energy penetration +2"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Resistance to energy 10"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Energy focus +1"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Darkvision"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Resistance to energy 20"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Energy penetration +4"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Immunity to paralysis and poison"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Elemental perfection",
+          "energy focus +2",
+          "energy immunity"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

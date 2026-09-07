@@ -1,0 +1,6419 @@
+{
+  "_meta": {
+    "book": "all-domains",
+    "filter": "all",
+    "scrapedAt": "2026-03-24T20:14:44.683Z",
+    "sourceUrl": "https://srd.dndtools.org/srd/magic/spells/classSpellLists/domains.html",
+    "type": "domain"
+  },
+  "detected": {
+    "Air": {
+      "modifiers": []
+    },
+    "Animal": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.knowledgenature.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Arborea": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.survival.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Artifice": {
+      "modifiers": []
+    },
+    "Baator": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.bluff.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Blackwater": {
+      "modifiers": []
+    },
+    "Celerity": {
+      "modifiers": []
+    },
+    "Celestia": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.sensemotive.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Celestial": {
+      "modifiers": []
+    },
+    "Chaos": {
+      "modifiers": []
+    },
+    "Charm": {
+      "modifiers": []
+    },
+    "City": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.gatherinformation.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgelocal.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Cold": {
+      "modifiers": []
+    },
+    "Community": {
+      "modifiers": []
+    },
+    "Competition": {
+      "modifiers": []
+    },
+    "Corruption": {
+      "modifiers": []
+    },
+    "Courage": {
+      "modifiers": []
+    },
+    "Creation": {
+      "modifiers": []
+    },
+    "Darkness": {
+      "modifiers": []
+    },
+    "Death": {
+      "modifiers": []
+    },
+    "Deathbound": {
+      "modifiers": []
+    },
+    "Demonic": {
+      "modifiers": []
+    },
+    "Destiny": {
+      "modifiers": []
+    },
+    "Destruction": {
+      "modifiers": []
+    },
+    "Diabolic": {
+      "modifiers": []
+    },
+    "Domination": {
+      "modifiers": []
+    },
+    "Dragon": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.bluff.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.intimidate.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Dream": {
+      "modifiers": []
+    },
+    "Earth": {
+      "modifiers": []
+    },
+    "Elysium": {
+      "modifiers": []
+    },
+    "Endurance": {
+      "modifiers": []
+    },
+    "Entropy": {
+      "modifiers": []
+    },
+    "Evil": {
+      "modifiers": []
+    },
+    "Fate": {
+      "modifiers": []
+    },
+    "Fey": {
+      "modifiers": []
+    },
+    "Fire": {
+      "modifiers": []
+    },
+    "Force": {
+      "modifiers": []
+    },
+    "Fury": {
+      "modifiers": []
+    },
+    "Glory": {
+      "modifiers": []
+    },
+    "Glory (BoED)": {
+      "modifiers": []
+    },
+    "Good": {
+      "modifiers": []
+    },
+    "Greed": {
+      "modifiers": []
+    },
+    "Hades": {
+      "modifiers": []
+    },
+    "Hatred": {
+      "modifiers": []
+    },
+    "Healing": {
+      "modifiers": []
+    },
+    "Herald": {
+      "modifiers": []
+    },
+    "Hunger": {
+      "modifiers": []
+    },
+    "Incarnum": {
+      "modifiers": []
+    },
+    "Inquisition": {
+      "modifiers": []
+    },
+    "Joy": {
+      "modifiers": []
+    },
+    "Knowledge": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.knowledgearcana.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgearchitectureandengineering.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgedungeoneering.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgegeography.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgehistory.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgelocal.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgenature.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgenobilityandroyalty.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgepsionics.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgereligion.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgetheplanes.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Law": {
+      "modifiers": []
+    },
+    "Liberation": {
+      "modifiers": []
+    },
+    "Limbo": {
+      "modifiers": []
+    },
+    "Luck": {
+      "modifiers": []
+    },
+    "Madness": {
+      "modifiers": []
+    },
+    "Magic": {
+      "modifiers": []
+    },
+    "Mechanus": {
+      "modifiers": []
+    },
+    "Mind": {
+      "modifiers": []
+    },
+    "Mysticism": {
+      "modifiers": []
+    },
+    "Nobility": {
+      "modifiers": []
+    },
+    "Ocean": {
+      "modifiers": []
+    },
+    "Ooze": {
+      "modifiers": []
+    },
+    "Oracle": {
+      "modifiers": []
+    },
+    "Pact": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.appraise.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.intimidate.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.sensemotive.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Pestilence": {
+      "modifiers": []
+    },
+    "Planning": {
+      "modifiers": []
+    },
+    "Plant": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.knowledgenature.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Pleasure": {
+      "modifiers": []
+    },
+    "Protection": {
+      "modifiers": []
+    },
+    "Purification": {
+      "modifiers": []
+    },
+    "Repose": {
+      "modifiers": []
+    },
+    "Rune": {
+      "modifiers": []
+    },
+    "Seafolk": {
+      "modifiers": []
+    },
+    "Skalykind": {
+      "modifiers": []
+    },
+    "Sky": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.spot.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spite": {
+      "modifiers": []
+    },
+    "Storm": {
+      "modifiers": []
+    },
+    "Strength": {
+      "modifiers": []
+    },
+    "Summer": {
+      "modifiers": []
+    },
+    "Summoner": {
+      "modifiers": []
+    },
+    "Sun": {
+      "modifiers": []
+    },
+    "Temptation": {
+      "modifiers": []
+    },
+    "The Abyss": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.intimidate.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Thirst": {
+      "modifiers": []
+    },
+    "Travel": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.survival.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Trickery": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.bluff.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.disguise.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.hide.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Tyranny": {
+      "modifiers": []
+    },
+    "Undeath": {
+      "modifiers": []
+    },
+    "Vile Darkness": {
+      "modifiers": []
+    },
+    "War": {
+      "modifiers": []
+    },
+    "Water": {
+      "modifiers": []
+    },
+    "Wealth": {
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.appraise.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Weather": {
+      "modifiers": []
+    },
+    "Winter": {
+      "modifiers": []
+    },
+    "Wrath": {
+      "modifiers": []
+    }
+  },
+  "mapping": {
+    "Air": {
+      "description": "You can turn or destroy earth creatures in the same manner that a good cleric turns undead. Likewise, you can rebuke, command, or bolster air creatures just as an evil cleric rebukes undead. You may use these abilities a number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Animal": {
+      "description": "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.knowledgenature.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Arborea": {
+      "description": "Requirement: Must be chaotic good. Deities: Corellon Larethian. Once per day as a free action, you can channel the glory of the eladrin to grant yourself a morale bonus on weapon damage rolls and saves against charm and fear effects. This bonus is equal to your Charisma bonus (if any) and lasts for 1 minute. This is a supernatural ability. Add Survival to your list of cleric class skills.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.survival.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Artifice": {
+      "description": ""
+    },
+    "Baator": {
+      "description": "Requirement: Must be lawful evil. Deities: Kurtulmak (kobolds), Sekolah (sahuagin), Tiamat (evil dragons). You have the supernatural ability to see perfectly in darkness of any kind, even that created by a deeper darkness spell. Add Bluff to your list of cleric class skills.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.bluff.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Blackwater": {
+      "description": "You are immune to pressure damage from descending into even the greatest of oceanic depths."
+    },
+    "Celerity": {
+      "description": "You move faster on foot than others of your race, gaining a +10 foot enhancement to your base land speed. This bonus does not apply while you wear medium or heavy armor or carry a medium or heavy load."
+    },
+    "Celestia": {
+      "description": "Requirement: Must be lawful good. Deities: Bahamut (good dragons), Heironeous, Moradin, Yondalla. Once per day, as a free action, you can generate an aura of menace similar to that of the archons. The aura lasts for 1 minute. Any hostile enemy within a 20foot radius of you must succeed on a Will save (DC 10 + 1/2 your cleric level + your Cha modifier) to resist its effects. Those who fail take a -2 penalty on attack rolls, Armor Class, and saves for 24 hours or until they successfully hit you. A creature that has resisted or broken the effect cannot be affected again by your aura for 24 hours. This is a supernatural ability. Add Sense Motive to your list of cleric class skills.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.sensemotive.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Celestial": {
+      "description": "You gain the supernatural ability to smite evil once per day. Add a +4 bonus to your melee attack roll and your cleric level to your damage. You must declare the smite before making the attack, and the attempt is wasted if the target is not evil."
+    },
+    "Chaos": {
+      "description": "Spells with the chaos descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Charm": {
+      "description": ""
+    },
+    "City": {
+      "description": "Add Gather Information and Knowledge (local) to your list of cleric class skills.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.gatherinformation.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgelocal.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Cold": {
+      "description": "You have the ability to turn or destroy fire creatures in the same manner that a good cleric turns undead. Additionally, you can rebuke or command cold creatures just as an evil cleric rebukes undead. The total number of times you may use these abilities each day equals 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Community": {
+      "description": "Once per day, you can use calm emotions as a spell-like ability. You also receive a +2 competence bonus to Diplomacy checks."
+    },
+    "Competition": {
+      "description": "You thrive on challenges and direct confrontation. As an extraordinary ability, you receive a +1 bonus to every opposed check you attempt."
+    },
+    "Corruption": {
+      "description": "Once per day, you can attack an object and ignore its hardness."
+    },
+    "Courage": {
+      "description": "You continuously emit a supernatural aura of bravery that provides you and all allies within 10 feet a +4 morale bonus on saving throws made to resist fear effects. This aura operates whenever you are conscious but ceases to function if you fall unconscious or die."
+    },
+    "Creation": {
+      "description": ""
+    },
+    "Darkness": {
+      "description": ""
+    },
+    "Death": {
+      "description": "Once per day, you can employ a death touch, which is a supernatural ability producing a death effect. To use it, you must make a successful melee touch attack against a living creature, following the standard touch spell rules. Upon a successful touch, roll 1d6 for each cleric level you have. If the result equals or exceeds the target's current hit points, the creature dies with no saving throw allowed."
+    },
+    "Deathbound": {
+      "description": "Your limit for controlling undead animated with spells increases to three times your caster level instead of the normal two times caster level."
+    },
+    "Demonic": {
+      "description": "You gain a +1 profane bonus on attack and damage rolls for unarmed strikes and attacks with natural weapons."
+    },
+    "Destiny": {
+      "description": "Once per day as an immediate action, you can grant a willing creature within 30 feet the ability to reroll an attack, save, ability check, or skill check. You must be able to see the creature to be affected. You cannot use this power on yourself. This is a supernatural ability."
+    },
+    "Destruction": {
+      "description": "You receive the smite ability, a supernatural power allowing you to make one melee attack with a +4 attack roll bonus and a damage bonus equal to your cleric level on a successful hit. The smite must be declared prior to the attack roll. This power can be used once per day."
+    },
+    "Diabolic": {
+      "description": "Once per day, as an immediate action, add your class level as a bonus on a single Bluff, Diplomacy, Intimidate, or Sense Motive check."
+    },
+    "Domination": {
+      "description": "You receive Spell Focus (Enchantment) as a bonus feat."
+    },
+    "Dragon": {
+      "description": "Add Bluff and Intimidate to your list of cleric class skills.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.bluff.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.intimidate.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Dream": {
+      "description": "Your extensive exploration of the realm of dreams and nightmares has rendered you completely immune to all fear effects."
+    },
+    "Earth": {
+      "description": "You can turn or destroy air creatures in the same way a good cleric turns undead. You can also rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. These abilities can be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Elysium": {
+      "description": "Requirement: Must be neutral good. Deities: Pelor. You gain the supernatural ability to smite evil with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as good-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
+    },
+    "Endurance": {
+      "description": "You can perform a feat of endurance, which is the supernatural ability to gain an enhancement bonus to Constitution equal to one-half your level. Activating the power is a free action, the power lasts 1 minute, and it is usable once per day."
+    },
+    "Entropy": {
+      "description": "Once per day as a standard action, you can channel a bolt of Abyssal entropy as a ranged touch attack, dealing 1d8 points of damage per cleric level you possess. Half the damage is sonic damage, and half is unholy damage that cannot be reduced by sonic resistance or immunity."
+    },
+    "Evil": {
+      "description": "Spells with the evil descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Fate": {
+      "description": "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge."
+    },
+    "Fey": {
+      "description": "Gain a +4 bonus on saving throws against the spell-like abilities of feys (such as dryads, nymphs, and sprites)."
+    },
+    "Fire": {
+      "description": "You can turn or destroy water creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Force": {
+      "description": "Through mastery over fundamental forces of motion and energy, once per day you may reroll any single damage roll - whether from a weapon attack, a spell, or a special ability - and keep whichever result is higher. This granted power is a supernatural ability."
+    },
+    "Fury": {
+      "description": "Once per day as a free action, you can designate a single creature or object as the target of your fury. You gain a +2 profane bonus on attack rolls against the designated creature or object and deal an extra 2 points of damage with each successful strike upon it. These bonuses persist until you select a new target for your attacks."
+    },
+    "Glory": {
+      "description": "When you turn undead, you receive a +2 bonus to your turning check and deal an additional +1d6 turning damage."
+    },
+    "Glory (BoED)": {
+      "description": "Turn undead with a +2 bonus on the turning check and +1d6 to the turning damage roll."
+    },
+    "Good": {
+      "description": "Spells with the good descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Greed": {
+      "description": "You gain a +2 competence bonus on Appraise, Open Lock, and Slight of Hand checks."
+    },
+    "Hades": {
+      "description": "Requirement: Must be neutral evil. Deities: None. You gain the supernatural ability to smite good with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as evil-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
+    },
+    "Hatred": {
+      "description": "Choose one opponent. Against that opponent you gain a +2 profane bonus on attack rolls, saving throws, and Armor Class for 1 minute. This supernatural ability is usable once per day as a free action."
+    },
+    "Healing": {
+      "description": "Spells from the healing subschool that you cast gain a +1 bonus to caster level."
+    },
+    "Herald": {
+      "description": "Intimidate is a class skill. You gain a +4 sacred bonus on Diplomacy and Intimidate checks."
+    },
+    "Hunger": {
+      "description": "You gain a bite attack. If you are Small, your bite attack deals 1d4 points of damage; Medium, 1d6; or Large, 1d8. You are proficient with your bite, and considered armed. If you already have a natural bite attack, use the higher of the two damage values. This is considered a secondary natural attack."
+    },
+    "Incarnum": {
+      "description": "You gain Incarnum Spellshaping as a bonus feat. Special: Neutral clerics - those without an alignment component of chaotic, evil, good, or lawful - may not choose this domain."
+    },
+    "Inquisition": {
+      "description": "You receive a +4 bonus to all dispel checks you make."
+    },
+    "Joy": {
+      "description": "You gain a +4 sacred bonus on Diplomacy checks."
+    },
+    "Knowledge": {
+      "description": "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.knowledgearcana.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgearchitectureandengineering.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgedungeoneering.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgegeography.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgehistory.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgelocal.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgenature.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgenobilityandroyalty.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgepsionics.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgereligion.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.knowledgetheplanes.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Law": {
+      "description": "Spells with the law descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Liberation": {
+      "description": ""
+    },
+    "Limbo": {
+      "description": "Requirement: Must be chaotic neutral. Deities: None. You gain the supernatural ability to smite law with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as chaotic-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
+    },
+    "Luck": {
+      "description": "Once per day, you gain the extraordinary ability of good fortune. This lets you reroll a single roll you just made, provided the GM has not yet announced whether the result is a success or failure. You must accept the reroll result, even if it is lower than your original roll."
+    },
+    "Madness": {
+      "description": "Your fractured mind grants you flashes of brilliance. You take a -1 penalty on all Wisdom-based skill checks and Will saving throws. However, once per day you may tap into the clarity that comes from true madness, adding half your character level to a single Wisdom-based skill check or Will save. You must decide to use this ability before making the roll."
+    },
+    "Magic": {
+      "description": "You can activate scrolls, wands, and other spell completion or spell trigger items as though you were a wizard of half your cleric level (minimum 1st level). If you also have actual wizard levels, those levels stack with this effective wizard level for the purpose of activating such magic items."
+    },
+    "Mechanus": {
+      "description": "Requirement: Must be lawful neutral. Deities: None. You gain the supernatural ability to smite chaos with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as lawful-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
+    },
+    "Mind": {
+      "description": "You receive a +2 bonus to Bluff, Diplomacy, and Sense Motive checks."
+    },
+    "Mysticism": {
+      "description": "Deities who are Neutral, Lawful Neutral, or Chaotic Neutral never grant this domain. Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round."
+    },
+    "Nobility": {
+      "description": "Once per day as a standard action, you can use a spell-like ability to rally your allies, granting them a +2 morale bonus on saving throws, attack rolls, damage rolls, ability checks, and skill checks. Affected allies must be able to hear you speak for 1 round to receive this benefit. The effect persists for a number of rounds equal to your Charisma bonus."
+    },
+    "Ocean": {
+      "description": "You have the supernatural ability to breathe water as if under the effect of a water breathing spell, for up to 10 rounds per level. This effect occurs automatically as soon as it becomes applicable and lasts until the duration expires or the effect is no longer needed. This duration need not be consecutive; it can be used in increments as small as 1 round."
+    },
+    "Ooze": {
+      "description": "You can rebuke or command oozes as an evil cleric rebukes or commands undead. This ability is usable a number of times per day equal to 3 + your Charisma modifier."
+    },
+    "Oracle": {
+      "description": "Whenever you cast a divination spell, your effective caster level is increased by +2."
+    },
+    "Pact": {
+      "description": "Appraise, Intimidate, and Sense Motive are added to your cleric class skill list.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.appraise.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.intimidate.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.sensemotive.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Pestilence": {
+      "description": "You are completely immune to the effects of any disease. Despite this immunity, you can still serve as a carrier for infectious diseases."
+    },
+    "Planning": {
+      "description": "You receive Extend Spell as a bonus feat."
+    },
+    "Plant": {
+      "description": "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.knowledgenature.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Pleasure": {
+      "description": "You are immune to any effect that damages or drains your Charisma."
+    },
+    "Protection": {
+      "description": "As a supernatural ability, you can create a protective ward. By touching a creature as a standard action, you grant it a resistance bonus on its next saving throw equal to your cleric level. This abjuration effect lasts for 1 hour and may be used once per day."
+    },
+    "Purification": {
+      "description": "Whenever you cast an abjuration spell, your effective caster level is increased by +1."
+    },
+    "Repose": {
+      "description": "The character may use a death touch once per day. The death touch is a spell-like ability that is a death effect. The character must succeed at a melee touch attack against a living creature (using the rules for touch spells). When the character touches, roll 1d6 per his or her cleric level. If the total at least equals the creature's current hit points, it dies."
+    },
+    "Rune": {
+      "description": ""
+    },
+    "Seafolk": {
+      "description": "You gain Expert Swimmer or Rapid Swimming (your choice) as a bonus feat."
+    },
+    "Skalykind": {
+      "description": ""
+    },
+    "Sky": {
+      "description": "Your fly speed (or glide speed) improves by 5 feet. Add Spot to your list of cleric class skills.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.spot.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Spite": {
+      "description": "Sympathetic strike. You can force opponents to take damage they have dealt you. Once per day, you can make a melee touch attack on the target, and deal damage equal to the damage the target dealt to you in the last round, to a maximum of 5 hp per divine caster level you possess."
+    },
+    "Storm": {
+      "description": "You gain resistance to electricity 5."
+    },
+    "Strength": {
+      "description": "As a supernatural ability, you can perform a feat of great strength. You receive an enhancement bonus to Strength equal to your cleric level. Activating this power is a free action, it persists for 1 round, and it can be used once per day."
+    },
+    "Summer": {
+      "description": "You are considered a native of the waste for purposes of heat resistance (you have 1 level of protection). During the summer season, you gain a +2 bonus on all Wisdom-based skill checks."
+    },
+    "Summoner": {
+      "description": "Add +2 to your caster level for all Conjuration (summoning) or Conjuration (calling) spells."
+    },
+    "Sun": {
+      "description": "Once per day, you may perform a greater turning against undead instead of a normal turning attempt. A greater turning functions identically to a regular turning, except that any undead that would normally be turned are instead destroyed."
+    },
+    "Temptation": {
+      "description": "Select a gender. As long as you wear no armor, you gain a +2 competence bonus on Charisma-based checks opposed by creatures of this gender. Furthermore, each save DC for any mind-affecting spells or abilities you use against this gender increases by 1."
+    },
+    "The Abyss": {
+      "description": "Requirement: Must be chaotic evil. Deities: Blibdoolpoolp (kuo-toa), Diirinka (derro), Great Mother (beholders), Hruggek (bugbears), Lolth (drow), Merrshaulk (yuan-ti). Once per day as a free action, you may channel the furious power of the demons. This power grants you a +4 bonus to Strength but also gives you a -2 penalty to Armor Class. The effect lasts for 5 rounds and cannot be ended prematurely. This is a supernatural ability. Add Intimidate to your list of cleric class skills.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.intimidate.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Thirst": {
+      "description": "Rebuke or command oozes as an evil cleric rebukes or commands undead. Use this ability a total number of times per day equal to 3 + your Charisma modifier. You also gain a +2 bonus on Constitution checks to resist dehydration."
+    },
+    "Travel": {
+      "description": "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.survival.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Trickery": {
+      "description": "Bluff, Disguise, and Hide are added to your cleric class skill list.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.bluff.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.disguise.innate",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "set",
+          "target": "skills.hide.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Tyranny": {
+      "description": "The saving throw DC of any compulsion spell you cast increases by +1."
+    },
+    "Undeath": {
+      "description": "You gain Extra Turning as a bonus feat."
+    },
+    "Vile Darkness": {
+      "description": "You gain the Blind-fight feat."
+    },
+    "War": {
+      "description": "You gain Martial Weapon Proficiency with your deity's favored weapon at no cost (if you do not already have it), as well as Weapon Focus with that same weapon.",
+      "featPool": {
+        "aptitude": "War Domain Weapon",
+        "description": "You gain proficiency with ${w} and Weapon Focus with ${w} as granted by the War domain.",
+        "grants": [
+          "Weapon Focus",
+          "Martial Weapon Proficiency"
+        ],
+        "items": "martial",
+        "namePrefix": "War Domain Weapon"
+      },
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "aptitudes.wardomainweapon.allowed",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Water": {
+      "description": "You can turn or destroy fire creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster water creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Wealth": {
+      "description": "Add Appraise to your list of cleric class skills. You gain Skill Focus (Appraise) as a bonus feat.",
+      "modifiers": [
+        {
+          "operator": "set",
+          "target": "skills.appraise.innate",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Weather": {
+      "description": "Harsh weather conditions affect you less than normal. Neither rain nor snow imposes penalties on your Spot or Search checks. You traverse snow-covered ground and icy surfaces at your full movement speed. Both natural and magical wind effects treat you as though you were one size category larger than your actual size."
+    },
+    "Winter": {
+      "description": "During the winter season, you gain a +2 sacred bonus on all Wisdom-based skill checks."
+    },
+    "Wrath": {
+      "description": "Once per day, you may make a free attack of opportunity against any opponent that damages you with a melee attack. This ability does not allow you to make more than one attack of opportunity in a round."
+    },
+    "overrides": {
+      "Air": {
+        "description": "You can turn or destroy earth creatures in the same manner that a good cleric turns undead. Likewise, you can rebuke, command, or bolster air creatures just as an evil cleric rebukes undead. You may use these abilities a number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+      },
+      "Animal": {
+        "description": "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list."
+      },
+      "Celerity": {
+        "description": "You move faster on foot than others of your race, gaining a +10 foot enhancement to your base land speed. This bonus does not apply while you wear medium or heavy armor or carry a medium or heavy load."
+      },
+      "Chaos": {
+        "description": "Spells with the chaos descriptor that you cast gain a +1 bonus to caster level."
+      },
+      "Cold": {
+        "description": "You have the ability to turn or destroy fire creatures in the same manner that a good cleric turns undead. Additionally, you can rebuke or command cold creatures just as an evil cleric rebukes undead. The total number of times you may use these abilities each day equals 3 + your Charisma modifier. This granted power is supernatural in nature."
+      },
+      "Community": {
+        "description": "Once per day, you can use calm emotions as a spell-like ability. You also receive a +2 competence bonus to Diplomacy checks."
+      },
+      "Competition": {
+        "description": "You thrive on challenges and direct confrontation. As an extraordinary ability, you receive a +1 bonus to every opposed check you attempt."
+      },
+      "Courage": {
+        "description": "You continuously emit a supernatural aura of bravery that provides you and all allies within 10 feet a +4 morale bonus on saving throws made to resist fear effects. This aura operates whenever you are conscious but ceases to function if you fall unconscious or die."
+      },
+      "Creation": {
+        "description": ""
+      },
+      "Death": {
+        "description": "Once per day, you can employ a death touch, which is a supernatural ability producing a death effect. To use it, you must make a successful melee touch attack against a living creature, following the standard touch spell rules. Upon a successful touch, roll 1d6 for each cleric level you have. If the result equals or exceeds the target's current hit points, the creature dies with no saving throw allowed."
+      },
+      "Destruction": {
+        "description": "You receive the smite ability, a supernatural power allowing you to make one melee attack with a +4 attack roll bonus and a damage bonus equal to your cleric level on a successful hit. The smite must be declared prior to the attack roll. This power can be used once per day."
+      },
+      "Domination": {
+        "description": "You receive Spell Focus (Enchantment) as a bonus feat."
+      },
+      "Dream": {
+        "description": "Your extensive exploration of the realm of dreams and nightmares has rendered you completely immune to all fear effects."
+      },
+      "Earth": {
+        "description": "You can turn or destroy air creatures in the same way a good cleric turns undead. You can also rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. These abilities can be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+      },
+      "Evil": {
+        "description": "Spells with the evil descriptor that you cast gain a +1 bonus to caster level."
+      },
+      "Fate": {
+        "description": "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge."
+      },
+      "Fire": {
+        "description": "You can turn or destroy water creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+      },
+      "Force": {
+        "description": "Through mastery over fundamental forces of motion and energy, once per day you may reroll any single damage roll - whether from a weapon attack, a spell, or a special ability - and keep whichever result is higher. This granted power is a supernatural ability."
+      },
+      "Glory": {
+        "description": "When you turn undead, you receive a +2 bonus to your turning check and deal an additional +1d6 turning damage."
+      },
+      "Good": {
+        "description": "Spells with the good descriptor that you cast gain a +1 bonus to caster level."
+      },
+      "Healing": {
+        "description": "Spells from the healing subschool that you cast gain a +1 bonus to caster level."
+      },
+      "Inquisition": {
+        "description": "You receive a +4 bonus to all dispel checks you make."
+      },
+      "Knowledge": {
+        "description": "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level."
+      },
+      "Law": {
+        "description": "Spells with the law descriptor that you cast gain a +1 bonus to caster level."
+      },
+      "Liberation": {
+        "description": ""
+      },
+      "Luck": {
+        "description": "Once per day, you gain the extraordinary ability of good fortune. This lets you reroll a single roll you just made, provided the GM has not yet announced whether the result is a success or failure. You must accept the reroll result, even if it is lower than your original roll."
+      },
+      "Madness": {
+        "description": "Your fractured mind grants you flashes of brilliance. You take a -1 penalty on all Wisdom-based skill checks and Will saving throws. However, once per day you may tap into the clarity that comes from true madness, adding half your character level to a single Wisdom-based skill check or Will save. You must decide to use this ability before making the roll."
+      },
+      "Magic": {
+        "description": "You can activate scrolls, wands, and other spell completion or spell trigger items as though you were a wizard of half your cleric level (minimum 1st level). If you also have actual wizard levels, those levels stack with this effective wizard level for the purpose of activating such magic items."
+      },
+      "Mind": {
+        "description": "You receive a +2 bonus to Bluff, Diplomacy, and Sense Motive checks."
+      },
+      "Mysticism": {
+        "description": "Deities who are Neutral, Lawful Neutral, or Chaotic Neutral never grant this domain. Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round.",
+        "spells": [
+          {
+            "name": "Visage of the Deity, Lesser",
+            "level": 3
+          },
+          {
+            "name": "Weapon of the Deity",
+            "level": 4
+          },
+          {
+            "name": "Righteous Might",
+            "level": 5
+          },
+          {
+            "name": "Visage of the Deity",
+            "level": 6
+          },
+          {
+            "name": "Blasphemy",
+            "level": 7
+          },
+          {
+            "name": "Holy Word",
+            "level": 7
+          },
+          {
+            "name": "Holy Aura",
+            "level": 8
+          },
+          {
+            "name": "Unholy Aura",
+            "level": 8
+          },
+          {
+            "name": "Visage of the Deity, Greater",
+            "level": 9
+          }
+        ]
+      },
+      "Nobility": {
+        "description": "Once per day as a standard action, you can use a spell-like ability to rally your allies, granting them a +2 morale bonus on saving throws, attack rolls, damage rolls, ability checks, and skill checks. Affected allies must be able to hear you speak for 1 round to receive this benefit. The effect persists for a number of rounds equal to your Charisma bonus."
+      },
+      "Oracle": {
+        "description": "Whenever you cast a divination spell, your effective caster level is increased by +2."
+      },
+      "Pact": {
+        "description": "Appraise, Intimidate, and Sense Motive are added to your cleric class skill list."
+      },
+      "Pestilence": {
+        "description": "You are completely immune to the effects of any disease. Despite this immunity, you can still serve as a carrier for infectious diseases."
+      },
+      "Planning": {
+        "description": "You receive Extend Spell as a bonus feat."
+      },
+      "Plant": {
+        "description": "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list."
+      },
+      "Protection": {
+        "description": "As a supernatural ability, you can create a protective ward. By touching a creature as a standard action, you grant it a resistance bonus on its next saving throw equal to your cleric level. This abjuration effect lasts for 1 hour and may be used once per day."
+      },
+      "Purification": {
+        "description": "Whenever you cast an abjuration spell, your effective caster level is increased by +1."
+      },
+      "Strength": {
+        "description": "As a supernatural ability, you can perform a feat of great strength. You receive an enhancement bonus to Strength equal to your cleric level. Activating this power is a free action, it persists for 1 round, and it can be used once per day."
+      },
+      "Sun": {
+        "description": "Once per day, you may perform a greater turning against undead instead of a normal turning attempt. A greater turning functions identically to a regular turning, except that any undead that would normally be turned are instead destroyed."
+      },
+      "Travel": {
+        "description": "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list."
+      },
+      "Trickery": {
+        "description": "Bluff, Disguise, and Hide are added to your cleric class skill list."
+      },
+      "Tyranny": {
+        "description": "The saving throw DC of any compulsion spell you cast increases by +1."
+      },
+      "War": {
+        "description": "You gain Martial Weapon Proficiency with your deity's favored weapon at no cost (if you do not already have it), as well as Weapon Focus with that same weapon.",
+        "featPool": {
+          "aptitude": "War Domain Weapon",
+          "description": "You gain proficiency with ${w} and Weapon Focus with ${w} as granted by the War domain.",
+          "grants": [
+            "Weapon Focus",
+            "Martial Weapon Proficiency"
+          ],
+          "items": "martial",
+          "namePrefix": "War Domain Weapon"
+        },
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.wardomainweapon.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Water": {
+        "description": "You can turn or destroy fire creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster water creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+      },
+      "Weather": {
+        "description": "Harsh weather conditions affect you less than normal. Neither rain nor snow imposes penalties on your Spot or Search checks. You traverse snow-covered ground and icy surfaces at your full movement speed. Both natural and magical wind effects treat you as though you were one size category larger than your actual size."
+      },
+      "Skalykind": {
+        "name": "Scalykind"
+      }
+    }
+  },
+  "raw": [
+    {
+      "description": "Turn or destroy earth creatures as a good cleric turns undead. Rebuke, command, or bolster air creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability.",
+      "name": "Air",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Obscuring Mist",
+          "slug": "obscuring-mist"
+        },
+        {
+          "level": 2,
+          "name": "Wind Wall",
+          "slug": "wind-wall"
+        },
+        {
+          "level": 3,
+          "name": "Gaseous Form",
+          "slug": "gaseous-form"
+        },
+        {
+          "level": 4,
+          "name": "Air Walk",
+          "slug": "air-walk"
+        },
+        {
+          "level": 5,
+          "name": "Control Winds",
+          "slug": "control-winds"
+        },
+        {
+          "level": 6,
+          "name": "Chain Lightning",
+          "slug": "chain-lightning"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather",
+          "slug": "control-weather"
+        },
+        {
+          "level": 8,
+          "name": "Whirlwind",
+          "slug": "whirlwind"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm",
+          "slug": "elemental-swarm"
+        }
+      ]
+    },
+    {
+      "description": "You can use speak with animals once per day as a spell-like ability. Add Knowledge (nature) to your list of cleric class skills.",
+      "name": "Animal",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Calm Animals",
+          "slug": "calm-animals"
+        },
+        {
+          "level": 2,
+          "name": "Hold Animal",
+          "slug": "hold-animal"
+        },
+        {
+          "level": 3,
+          "name": "Dominate Animal",
+          "slug": "dominate-animal"
+        },
+        {
+          "level": 4,
+          "name": "Summon Nature's Ally IV",
+          "slug": "summon-natures-ally-iv"
+        },
+        {
+          "level": 5,
+          "name": "Commune with Nature",
+          "slug": "commune-with-nature"
+        },
+        {
+          "level": 6,
+          "name": "Antilife Shell",
+          "slug": "antilife-shell"
+        },
+        {
+          "level": 7,
+          "name": "Animal Shapes",
+          "slug": "animal-shapes"
+        },
+        {
+          "level": 8,
+          "name": "Summon Nature's Ally VIII",
+          "slug": "summon-natures-ally-viii"
+        },
+        {
+          "level": 9,
+          "name": "Shapechange",
+          "slug": "shapechange"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Artifice",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Animate Rope",
+          "slug": "animate-rope"
+        },
+        {
+          "level": 2,
+          "name": "Wood Shape",
+          "slug": "wood-shape"
+        },
+        {
+          "level": 3,
+          "name": "Stone Shape",
+          "slug": "stone-shape"
+        },
+        {
+          "level": 4,
+          "name": "Minor Creation",
+          "slug": "minor-creation"
+        },
+        {
+          "level": 5,
+          "name": "Fabricate",
+          "slug": "fabricate"
+        },
+        {
+          "level": 6,
+          "name": "Major Creation",
+          "slug": "major-creation"
+        },
+        {
+          "level": 7,
+          "name": "Hardening",
+          "slug": "hardening"
+        },
+        {
+          "level": 8,
+          "name": "True Creation",
+          "slug": "true-creation"
+        },
+        {
+          "level": 9,
+          "name": "Prismatic sphere",
+          "slug": "prismatic-sphere"
+        }
+      ]
+    },
+    {
+      "description": "You are immune to pressure damage from descending into even the greatest of oceanic depths.",
+      "name": "Blackwater",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Cause Fear",
+          "slug": "cause-fear"
+        },
+        {
+          "level": 2,
+          "name": "Pressure Sphere",
+          "slug": "PRESSURE SPHERE"
+        },
+        {
+          "level": 3,
+          "name": "Evard's Black Tentacles",
+          "slug": "black-tentacle"
+        },
+        {
+          "level": 4,
+          "name": "Transformation of the Deeps",
+          "slug": "TRANSFORMATION OF THE DEEPS"
+        },
+        {
+          "level": 5,
+          "name": "Blackwater Tentacle",
+          "slug": "BLACKWATER TENTACLE"
+        },
+        {
+          "level": 6,
+          "name": "Blackwater Taint",
+          "slug": "BLACKWATER TAINT"
+        },
+        {
+          "level": 7,
+          "name": "Dark Tide",
+          "slug": "DARK TIDE"
+        },
+        {
+          "level": 8,
+          "name": "Maelstrom",
+          "slug": "MAELSTROM"
+        },
+        {
+          "level": 9,
+          "name": "Doom of the Seas",
+          "slug": "DOOM OF THE SEAS"
+        }
+      ]
+    },
+    {
+      "description": "Your land speed is faster than the normal for your race by +10 feet. This benefit is lost if you are wearing medium or heavy armor or carrying a medium or heavy load.",
+      "name": "Celerity",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Expeditious Retreat",
+          "slug": "expeditious-retreat"
+        },
+        {
+          "level": 2,
+          "name": "Cat's Grace",
+          "slug": "cats-grace"
+        },
+        {
+          "level": 3,
+          "name": "Blur",
+          "slug": "blur"
+        },
+        {
+          "level": 4,
+          "name": "Haste",
+          "slug": "haste"
+        },
+        {
+          "level": 5,
+          "name": "Tree Stride",
+          "slug": "tree-stride"
+        },
+        {
+          "level": 6,
+          "name": "Wind Walk",
+          "slug": "wind-walk"
+        },
+        {
+          "level": 7,
+          "name": "Cat's Grace, Mass",
+          "slug": "mass-cats-grace"
+        },
+        {
+          "level": 8,
+          "name": "Blink, Improved",
+          "slug": "Blink, Improved"
+        },
+        {
+          "level": 9,
+          "name": "Time Stop",
+          "slug": "time-stop"
+        }
+      ]
+    },
+    {
+      "description": "You gain the supernatural ability to smite evil once per day. Add a +4 bonus to your melee attack roll and your cleric level to your damage. You must declare the smite before making the attack, and the attempt is wasted if the target is not evil.",
+      "name": "Celestial",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Vision of Heaven",
+          "slug": "VISION OF HEAVEN"
+        },
+        {
+          "level": 2,
+          "name": "Consecrate",
+          "slug": "consecrate"
+        },
+        {
+          "level": 3,
+          "name": "Blessed Sight",
+          "slug": "BLESSED SIGHT"
+        },
+        {
+          "level": 4,
+          "name": "Planar Ally, Lesser",
+          "slug": "lesser-planar-ally"
+        },
+        {
+          "level": 5,
+          "name": "Heavenly Lightning",
+          "slug": "HEAVENLY LIGHTNING"
+        },
+        {
+          "level": 6,
+          "name": "Call Faithful Servants",
+          "slug": "CALL FAITHFUL SERVANTS"
+        },
+        {
+          "level": 7,
+          "name": "Heavenly Lightning Storm",
+          "slug": "HEAVENLY LIGHTNING STORM"
+        },
+        {
+          "level": 8,
+          "name": "Holy Aura",
+          "slug": "holy-aura"
+        },
+        {
+          "level": 9,
+          "name": "Gate",
+          "slug": "gate"
+        }
+      ]
+    },
+    {
+      "description": "You cast chaos spells at +1 caster level.",
+      "name": "Chaos",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Law",
+          "slug": "protection-from-law"
+        },
+        {
+          "level": 2,
+          "name": "Shatter",
+          "slug": "shatter"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Law",
+          "slug": "magic-circle-against-law"
+        },
+        {
+          "level": 4,
+          "name": "Chaos Hammer",
+          "slug": "chaos-hammer"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Law",
+          "slug": "dispel-law"
+        },
+        {
+          "level": 6,
+          "name": "Animate Objects",
+          "slug": "animate-objects"
+        },
+        {
+          "level": 7,
+          "name": "Word of Chaos",
+          "slug": "word-of-chaos"
+        },
+        {
+          "level": 8,
+          "name": "Cloak of Chaos",
+          "slug": "cloak-of-chaos"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "summon-monster-ix"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Charm",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Charm Person",
+          "slug": "charm-person"
+        },
+        {
+          "level": 2,
+          "name": "Calm Emotions",
+          "slug": "calm-emotions"
+        },
+        {
+          "level": 3,
+          "name": "Suggestion",
+          "slug": "suggestion"
+        },
+        {
+          "level": 4,
+          "name": "Heroism",
+          "slug": "heroism"
+        },
+        {
+          "level": 5,
+          "name": "Charm Monster",
+          "slug": "charm-monster"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest",
+          "slug": "geas-quest"
+        },
+        {
+          "level": 7,
+          "name": "Insanity",
+          "slug": "insanity"
+        },
+        {
+          "level": 8,
+          "name": "Demand",
+          "slug": "demand"
+        },
+        {
+          "level": 9,
+          "name": "Dominate Monster",
+          "slug": "dominate-monster"
+        }
+      ]
+    },
+    {
+      "description": "Add Gather Information and Knowledge (local) to your list of cleric class skills.",
+      "name": "City",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Rooftop Strider",
+          "slug": "ROOFTOP STRIDER"
+        },
+        {
+          "level": 2,
+          "name": "City Lights",
+          "slug": "CITY LIGHTS"
+        },
+        {
+          "level": 3,
+          "name": "Winding Alleys",
+          "slug": "WINDING ALLEYS"
+        },
+        {
+          "level": 4,
+          "name": "Commune with City",
+          "slug": "COMMUNE WITH CITY"
+        },
+        {
+          "level": 5,
+          "name": "Skyline Runner",
+          "slug": "SKYLINE RUNNER"
+        },
+        {
+          "level": 6,
+          "name": "City Stride",
+          "slug": "CITY STRIDE"
+        },
+        {
+          "level": 7,
+          "name": "Urban Shield",
+          "slug": "URBAN SHIELD"
+        },
+        {
+          "level": 8,
+          "name": "City's Might",
+          "slug": "CITY'S MIGHT"
+        },
+        {
+          "level": 9,
+          "name": "Animate City",
+          "slug": "ANIMATE CITY"
+        }
+      ]
+    },
+    {
+      "description": "You can turn or destroy fire creatures as a good cleric turns undead. You can also rebuke or command cold creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability",
+      "name": "Cold",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Chill Touch"
+        },
+        {
+          "level": 2,
+          "name": "Chill Metal",
+          "slug": "chill-metal"
+        },
+        {
+          "level": 3,
+          "name": "Sleet Storm",
+          "slug": "sleet-storm"
+        },
+        {
+          "level": 4,
+          "name": "Ice Storm",
+          "slug": "ice-storm"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Ice",
+          "slug": "wall-of-ice"
+        },
+        {
+          "level": 6,
+          "name": "Cone of Cold",
+          "slug": "cone-of-cold"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather",
+          "slug": "control-weather"
+        },
+        {
+          "level": 8,
+          "name": "Polar Ray",
+          "slug": "polar-ray"
+        },
+        {
+          "level": 9,
+          "name": "Obedient Avalanche",
+          "slug": "Obedient Avalanche"
+        }
+      ]
+    },
+    {
+      "description": "Use calm emotions as a spell-like ability once per day. Gain a +2 competence bonus on Diplomacy checks.",
+      "name": "Community",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Bless",
+          "slug": "bless"
+        },
+        {
+          "level": 2,
+          "name": "Status",
+          "slug": "status"
+        },
+        {
+          "level": 3,
+          "name": "Prayer",
+          "slug": "prayer"
+        },
+        {
+          "level": 4,
+          "name": "Tongues",
+          "slug": "tongues"
+        },
+        {
+          "level": 5,
+          "name": "Rary's Telepathic Bond",
+          "slug": "telepathic-bond"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast",
+          "slug": "heroes-feast"
+        },
+        {
+          "level": 7,
+          "name": "Refuge",
+          "slug": "refuge"
+        },
+        {
+          "level": 9,
+          "name": "Heal, Mass",
+          "slug": "mass-heal"
+        }
+      ]
+    },
+    {
+      "description": "You relish the chance to prove yourself against your foes. As an extraordinary ability, you gain a +1 bonus on all opposed checks you make.",
+      "name": "Competition",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Remove Fear"
+        },
+        {
+          "level": 2,
+          "name": "Zeal",
+          "slug": "Zeal"
+        },
+        {
+          "level": 3,
+          "name": "Prayer",
+          "slug": "prayer"
+        },
+        {
+          "level": 4,
+          "name": "Divine Power",
+          "slug": "divine-power"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might",
+          "slug": "righteous-might"
+        },
+        {
+          "level": 6,
+          "name": "Zealot Pact",
+          "slug": "Zealot Pact"
+        },
+        {
+          "level": 7,
+          "name": "Regenerate",
+          "slug": "regenerate"
+        },
+        {
+          "level": 8,
+          "name": "Moment of Prescience",
+          "slug": "moment-of-prescience"
+        }
+      ]
+    },
+    {
+      "description": "Once per day, you can attack an object and ignore its hardness.",
+      "name": "Corruption",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Doom",
+          "slug": "DOOM"
+        },
+        {
+          "level": 2,
+          "name": "Blindness/Deafness",
+          "slug": "blindness-deafness"
+        },
+        {
+          "level": 3,
+          "name": "Contagion",
+          "slug": "contagion"
+        },
+        {
+          "level": 4,
+          "name": "Morality Undone",
+          "slug": "MORALITY UNDONE"
+        },
+        {
+          "level": 5,
+          "name": "Feeblemind",
+          "slug": "feeblemind"
+        },
+        {
+          "level": 6,
+          "name": "Pox",
+          "slug": "POX"
+        },
+        {
+          "level": 7,
+          "name": "Insanity",
+          "slug": "insanity"
+        },
+        {
+          "level": 8,
+          "name": "Befoul",
+          "slug": "BEFOUL"
+        },
+        {
+          "level": 9,
+          "name": "Despoil",
+          "slug": "DESPOIL"
+        }
+      ]
+    },
+    {
+      "description": "You radiate an aura of courage that grants all allies within 10 feet (including yourself) a +4 morale bonus on saving throws against fear effects. This supernatural ability functions while you are conscious, but not if you are unconscious or dead.",
+      "name": "Courage",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Remove Fear",
+          "slug": "remove-fear"
+        },
+        {
+          "level": 2,
+          "name": "Aid",
+          "slug": "aid"
+        },
+        {
+          "level": 3,
+          "name": "Cloak of Bravery",
+          "slug": "CLOAK OF BRAVERY"
+        },
+        {
+          "level": 4,
+          "name": "Heroism",
+          "slug": "heroism"
+        },
+        {
+          "level": 5,
+          "name": "Valiant Fury",
+          "slug": "VALIANT FURY"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast",
+          "slug": "heroes-feast"
+        },
+        {
+          "level": 7,
+          "name": "Heroism, Greater",
+          "slug": "greater-heroism"
+        },
+        {
+          "level": 8,
+          "name": "Lion's Roar",
+          "slug": "LION'S ROAR"
+        },
+        {
+          "level": 9,
+          "name": "Cloak of Bravery, Greater",
+          "slug": "CLOAK OF BRAVERY, GREATER"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Creation",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Create Water",
+          "slug": "create-water"
+        },
+        {
+          "level": 2,
+          "name": "Minor Image",
+          "slug": "minor-image"
+        },
+        {
+          "level": 3,
+          "name": "Create Food and Water",
+          "slug": "create-food-and-water"
+        },
+        {
+          "level": 4,
+          "name": "Minor Creation",
+          "slug": "minor-creation"
+        },
+        {
+          "level": 5,
+          "name": "Major Creation",
+          "slug": "major-creation"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast",
+          "slug": "heroes-feast"
+        },
+        {
+          "level": 7,
+          "name": "Permanent Image",
+          "slug": "permanent-image"
+        },
+        {
+          "level": 8,
+          "name": "True Creation",
+          "slug": "true-creation"
+        },
+        {
+          "level": 9,
+          "name": "Genesis",
+          "slug": "genesis"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Darkness",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Obscuring Mist",
+          "slug": "obscuring-mist"
+        },
+        {
+          "level": 2,
+          "name": "Blindness",
+          "slug": "blindness"
+        },
+        {
+          "level": 3,
+          "name": "Blacklight",
+          "slug": "blacklight"
+        },
+        {
+          "level": 4,
+          "name": "Armor of Darkness",
+          "slug": "armor-of-darkness"
+        },
+        {
+          "level": 5,
+          "name": "Summon monster V",
+          "slug": "summon-monster-v"
+        },
+        {
+          "level": 6,
+          "name": "Prying Eyes",
+          "slug": "prying-eyes"
+        },
+        {
+          "level": 7,
+          "name": "Nightmare",
+          "slug": "nightmare"
+        },
+        {
+          "level": 8,
+          "name": "Power Word Blind",
+          "slug": "power-word-blind"
+        },
+        {
+          "level": 9,
+          "name": "Power Word Kill",
+          "slug": "power-word-kill"
+        }
+      ]
+    },
+    {
+      "description": "You may use a death touch once per day. Your death touch is a supernatural ability that produces a death effect. You must succeed on a melee touch attack against a living creature (using the rules for touch spells). When you touch, roll 1d6 per cleric level you possess. If the total at least equals the creature's current hit points, it dies (no save).",
+      "name": "Death",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Cause Fear",
+          "slug": "cause-fear"
+        },
+        {
+          "level": 2,
+          "name": "Death Knell",
+          "slug": "death-knell"
+        },
+        {
+          "level": 3,
+          "name": "Animate Dead",
+          "slug": "animate-dead"
+        },
+        {
+          "level": 4,
+          "name": "Death Ward",
+          "slug": "death-ward"
+        },
+        {
+          "level": 5,
+          "name": "Slay Living",
+          "slug": "slay-living"
+        },
+        {
+          "level": 6,
+          "name": "Create Undead",
+          "slug": "create-undead"
+        },
+        {
+          "level": 7,
+          "name": "Destruction",
+          "slug": "destruction"
+        },
+        {
+          "level": 8,
+          "name": "Create Greater Undead",
+          "slug": "create-greater-undead"
+        },
+        {
+          "level": 9,
+          "name": "Wail of the Banshee",
+          "slug": "wail-of-the-banshee"
+        }
+      ]
+    },
+    {
+      "description": "Your limit for controlling undead animated with spells increases to three times your caster level instead of the normal two times caster level.",
+      "name": "Deathbound",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Chill of the Grave",
+          "slug": "CHILL OF THE GRAVE"
+        },
+        {
+          "level": 2,
+          "name": "Blade of Pain and Fear",
+          "slug": "BLADE OF PAIN AND FEAR"
+        },
+        {
+          "level": 3,
+          "name": "Fangs of the Vampire King",
+          "slug": "FANGS OF THE VAMPIRE KING"
+        },
+        {
+          "level": 4,
+          "name": "Wither Limb",
+          "slug": "WITHER LIMB"
+        },
+        {
+          "level": 5,
+          "name": "Revive Undead",
+          "slug": "REVIVE UNDEAD"
+        },
+        {
+          "level": 6,
+          "name": "Awaken Undead",
+          "slug": "AWAKEN UNDEAD"
+        },
+        {
+          "level": 7,
+          "name": "Avasculate",
+          "slug": "AVASCULATE"
+        },
+        {
+          "level": 8,
+          "name": "Avascular Mass",
+          "slug": "AVASCULAR MASS"
+        },
+        {
+          "level": 9,
+          "name": "Wail of the Banshee",
+          "slug": "wail-of-the-banshee*"
+        }
+      ]
+    },
+    {
+      "description": "You gain a +1 profane bonus on attack and damage rolls for unarmed strikes and attacks with natural weapons.",
+      "name": "Demonic",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Demonflesh",
+          "slug": "DEMONFLESH"
+        },
+        {
+          "level": 2,
+          "name": "Demoncall",
+          "slug": "DEMONCALL"
+        },
+        {
+          "level": 3,
+          "name": "Demon Wings",
+          "slug": "DEMON WINGS"
+        },
+        {
+          "level": 4,
+          "name": "Dimensional Anchor",
+          "slug": "dimensional-anchor"
+        },
+        {
+          "level": 5,
+          "name": "Planar Binding, Lesser",
+          "slug": "lesser-planar-binding"
+        },
+        {
+          "level": 6,
+          "name": "Planar Binding",
+          "slug": "planar-binding"
+        },
+        {
+          "level": 7,
+          "name": "Fiendish Clarity",
+          "slug": "FIENDISH CLARITY"
+        },
+        {
+          "level": 8,
+          "name": "Planar Binding, Greater",
+          "slug": "greater-planar-binding"
+        },
+        {
+          "level": 9,
+          "name": "Gate",
+          "slug": "gate"
+        }
+      ]
+    },
+    {
+      "description": "Once per day as an immediate action, you can grant a willing creature within 30 feet the ability to reroll an attack, save, ability check, or skill check. You must be able to see the creature to be affected. You cannot use this power on yourself. This is a supernatural ability.",
+      "name": "Destiny",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Omen of Peril",
+          "slug": "OMEN OF PERIL"
+        },
+        {
+          "level": 2,
+          "name": "Augury",
+          "slug": "augury"
+        },
+        {
+          "level": 3,
+          "name": "Delay Death",
+          "slug": "DELAY DEATH"
+        },
+        {
+          "level": 4,
+          "name": "Bestow Curse",
+          "slug": "bestow-curse"
+        },
+        {
+          "level": 5,
+          "name": "Stalwart Pact",
+          "slug": "STALWART PACT"
+        },
+        {
+          "level": 6,
+          "name": "Warp Destiny",
+          "slug": "WARP DESTINY"
+        },
+        {
+          "level": 7,
+          "name": "Bestow Curse, Greater",
+          "slug": "greater-bestow-curse"
+        },
+        {
+          "level": 8,
+          "name": "Moment of Prescience",
+          "slug": "moment-of-prescience"
+        },
+        {
+          "level": 9,
+          "name": "Choose Destiny",
+          "slug": "CHOOSE DESTINY"
+        }
+      ]
+    },
+    {
+      "description": "You gain the smite power, the supernatural ability to make a single melee attack with a +4 bonus on attack rolls and a bonus on damage rolls equal to your cleric level (if you hit). You must declare the smite before making the attack. This ability is usable once per day.",
+      "name": "Destruction",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Inflict Light Wounds",
+          "slug": "inflict-light-wounds"
+        },
+        {
+          "level": 2,
+          "name": "Shatter",
+          "slug": "shatter"
+        },
+        {
+          "level": 3,
+          "name": "Contagion",
+          "slug": "contagion"
+        },
+        {
+          "level": 4,
+          "name": "Inflict Critical Wounds",
+          "slug": "inflict-critical-wounds"
+        },
+        {
+          "level": 5,
+          "name": "Inflict Light Wounds, Mass",
+          "slug": "mass-inflict-light-wounds"
+        },
+        {
+          "level": 6,
+          "name": "Harm",
+          "slug": "harm"
+        },
+        {
+          "level": 7,
+          "name": "Disintegrate",
+          "slug": "disintegrate"
+        },
+        {
+          "level": 8,
+          "name": "Earthquake",
+          "slug": "earthquake"
+        },
+        {
+          "level": 9,
+          "name": "Implosion",
+          "slug": "implosion"
+        }
+      ]
+    },
+    {
+      "description": "Once per day, as an immediate action, add your class level as a bonus on a single Bluff, Diplomacy, Intimidate, or Sense Motive check.",
+      "name": "Diabolic",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Good",
+          "slug": "protection-from-good"
+        },
+        {
+          "level": 2,
+          "name": "Devil's Eye",
+          "slug": "DEVIL'S EYE"
+        },
+        {
+          "level": 3,
+          "name": "Devil's Ego",
+          "slug": "DEVIL'S EGO"
+        },
+        {
+          "level": 4,
+          "name": "Hellfire",
+          "slug": "HELLFIRE"
+        },
+        {
+          "level": 5,
+          "name": "Planar Binding, Lesser",
+          "slug": "lesser-planar-binding"
+        },
+        {
+          "level": 6,
+          "name": "Planar Binding",
+          "slug": "planar-binding"
+        },
+        {
+          "level": 7,
+          "name": "Hellfire Storm",
+          "slug": "HELLFIRE STORM"
+        },
+        {
+          "level": 8,
+          "name": "Demand",
+          "slug": "demand"
+        }
+      ]
+    },
+    {
+      "description": "You gain the Spell Focus (Enchantment) feat.",
+      "name": "Domination",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Command",
+          "slug": "command"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall",
+          "slug": "enthrall"
+        },
+        {
+          "level": 3,
+          "name": "Suggestion",
+          "slug": "suggestion"
+        },
+        {
+          "level": 4,
+          "name": "Dominate Person",
+          "slug": "dominate-person"
+        },
+        {
+          "level": 5,
+          "name": "Command, Greater",
+          "slug": "greater-command"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest",
+          "slug": "geas-quest"
+        },
+        {
+          "level": 7,
+          "name": "Suggestion, Mass",
+          "slug": "mass-suggestion"
+        },
+        {
+          "level": 8,
+          "name": "True Domination",
+          "slug": "True Domination"
+        },
+        {
+          "level": 9,
+          "name": "Monstrous Thrall",
+          "slug": "Monstrous Thrall"
+        }
+      ]
+    },
+    {
+      "description": "Add Bluff and Intimidate to your list of cleric class skills.",
+      "name": "Dragon",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Magic Fang",
+          "slug": "magic-fang"
+        },
+        {
+          "level": 2,
+          "name": "Resist Energy",
+          "slug": "resist-energy"
+        },
+        {
+          "level": 3,
+          "name": "Magic Fang, Greater",
+          "slug": "greater-magic-fang"
+        },
+        {
+          "level": 4,
+          "name": "Voice of the Dragon",
+          "slug": "VOICE OF THE DRAGON"
+        },
+        {
+          "level": 5,
+          "name": "True Seeing",
+          "slug": "true-seeing"
+        },
+        {
+          "level": 6,
+          "name": "Stoneskin",
+          "slug": "stoneskin"
+        },
+        {
+          "level": 7,
+          "name": "Dragon Ally",
+          "slug": "DRAGON ALLY"
+        },
+        {
+          "level": 8,
+          "name": "Suggestion, Mass",
+          "slug": "mass-suggestion"
+        },
+        {
+          "level": 9,
+          "name": "Dominate Monster",
+          "slug": "dominate-monster"
+        }
+      ]
+    },
+    {
+      "description": "Because you have long delved into dreams and nightmares, you are immune to fear effects.",
+      "name": "Dream",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Sleep",
+          "slug": "sleep"
+        },
+        {
+          "level": 2,
+          "name": "Augury",
+          "slug": "augury"
+        },
+        {
+          "level": 3,
+          "name": "Deep Slumber",
+          "slug": "deep-slumber"
+        },
+        {
+          "level": 4,
+          "name": "Phantasmal Killer",
+          "slug": "phantasmal-killer"
+        },
+        {
+          "level": 5,
+          "name": "Nightmare",
+          "slug": "nightmare"
+        },
+        {
+          "level": 6,
+          "name": "Dream Sight",
+          "slug": "Dream Sight"
+        },
+        {
+          "level": 7,
+          "name": "Scrying, Greater",
+          "slug": "greater-scrying"
+        },
+        {
+          "level": 8,
+          "name": "Power Word Stun",
+          "slug": "power-word-stun"
+        },
+        {
+          "level": 9,
+          "name": "Weird",
+          "slug": "weird"
+        }
+      ]
+    },
+    {
+      "description": "Turn or destroy air creatures as a good cleric turns undead. Rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability.",
+      "name": "Earth",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Magic Stone",
+          "slug": "magic-stone"
+        },
+        {
+          "level": 2,
+          "name": "Soften Earth and Stone",
+          "slug": "soften-earth-and-stone"
+        },
+        {
+          "level": 3,
+          "name": "Stone Shape",
+          "slug": "stone-shape"
+        },
+        {
+          "level": 4,
+          "name": "Spike Stones",
+          "slug": "spike-stones"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Stone",
+          "slug": "wall-of-stone"
+        },
+        {
+          "level": 6,
+          "name": "Stoneskin",
+          "slug": "stoneskin"
+        },
+        {
+          "level": 7,
+          "name": "Earthquake",
+          "slug": "earthquake"
+        },
+        {
+          "level": 8,
+          "name": "Iron Body",
+          "slug": "iron-body"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm",
+          "slug": "elemental-swarm"
+        }
+      ]
+    },
+    {
+      "description": "You can perform a feat of endurance, which is the supernatural ability to gain an enhancement bonus to Constitution equal to one-half your level. Activating the power is a free action, the power lasts 1 minute, and it is usable once per day.",
+      "name": "Endurance",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Endure Elements",
+          "slug": "endure-elements"
+        },
+        {
+          "level": 2,
+          "name": "Bear's Endurance",
+          "slug": "bears-endurance"
+        },
+        {
+          "level": 3,
+          "name": "Refreshment",
+          "slug": "REFRESHMENT"
+        },
+        {
+          "level": 4,
+          "name": "Sustain",
+          "slug": "SUSTAIN"
+        },
+        {
+          "level": 5,
+          "name": "Stoneskin",
+          "slug": "stoneskin"
+        },
+        {
+          "level": 6,
+          "name": "Bear's Endurance, Mass",
+          "slug": "mass-bears-endurance"
+        },
+        {
+          "level": 7,
+          "name": "Globe of Invulnerability",
+          "slug": "globe-of-invulnerability"
+        },
+        {
+          "level": 8,
+          "name": "Spell Turning",
+          "slug": "spell-turning"
+        },
+        {
+          "level": 9,
+          "name": "Iron Body",
+          "slug": "IRON BODY"
+        }
+      ]
+    },
+    {
+      "description": "Once per day as a standard action, you can channel a bolt of Abyssal entropy as a ranged touch attack, dealing 1d8 points of damage per cleric level you possess. Half the damage is sonic damage, and half is unholy damage that cannot be reduced by sonic resistance or immunity.",
+      "name": "Entropy",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Cause Fear",
+          "slug": "cause-fear"
+        },
+        {
+          "level": 2,
+          "name": "Vision of Entropy",
+          "slug": "VISION OF ENTROPY"
+        },
+        {
+          "level": 3,
+          "name": "Ray of Exhaustion",
+          "slug": "ray-of-exhaustion"
+        },
+        {
+          "level": 4,
+          "name": "Fear",
+          "slug": "fear"
+        },
+        {
+          "level": 5,
+          "name": "Waves of Fatigue",
+          "slug": "waves-of-fatigue"
+        },
+        {
+          "level": 6,
+          "name": "Disintegrate",
+          "slug": "disintegrate"
+        },
+        {
+          "level": 7,
+          "name": "Insanity",
+          "slug": "insanity"
+        },
+        {
+          "level": 8,
+          "name": "Scintillating Pattern",
+          "slug": "scintillating-pattern"
+        },
+        {
+          "level": 9,
+          "name": "Abyssal Rift",
+          "slug": "ABYSSAL RIFT"
+        }
+      ]
+    },
+    {
+      "description": "You cast evil spells at +1 caster level.",
+      "name": "Evil",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Good",
+          "slug": "protection-from-good"
+        },
+        {
+          "level": 2,
+          "name": "Desecrate",
+          "slug": "desecrate"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Good",
+          "slug": "magic-circle-against-good"
+        },
+        {
+          "level": 4,
+          "name": "Unholy Blight",
+          "slug": "unholy-blight"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Good",
+          "slug": "dispel-good"
+        },
+        {
+          "level": 6,
+          "name": "Create Undead",
+          "slug": "create-undead"
+        },
+        {
+          "level": 7,
+          "name": "Blasphemy",
+          "slug": "blasphemy"
+        },
+        {
+          "level": 8,
+          "name": "Unholy Aura",
+          "slug": "unholy-aura"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "summon-monster-ix"
+        }
+      ]
+    },
+    {
+      "description": "You gain the uncanny dodge ability, allowing you to retain your Dexterity bonus to AC (if any) even if caught flat-footed or struck by an invisible attacker. However, you still lose your Dexterity bonus to AC if immobilized. If you have another class that gives you uncanny dodge, your cleric levels add to that class's level for determining when you gain the improved uncanny dodge class feature.",
+      "name": "Fate",
+      "spells": [
+        {
+          "level": 1,
+          "name": "True Strike",
+          "slug": "true-strike"
+        },
+        {
+          "level": 2,
+          "name": "Augury",
+          "slug": "augury"
+        },
+        {
+          "level": 3,
+          "name": "Bestow Curse",
+          "slug": "bestow-curse"
+        },
+        {
+          "level": 4,
+          "name": "Status",
+          "slug": "status"
+        },
+        {
+          "level": 5,
+          "name": "Mark of Justice",
+          "slug": "mark-of-justice"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest",
+          "slug": "geas-quest"
+        },
+        {
+          "level": 7,
+          "name": "Vision",
+          "slug": "vision"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank",
+          "slug": "mind-blank"
+        },
+        {
+          "level": 9,
+          "name": "Foresight",
+          "slug": "foresight"
+        }
+      ]
+    },
+    {
+      "description": "Gain a +4 bonus on saving throws against the spell-like abilities of feys (such as dryads, nymphs, and sprites).",
+      "name": "Fey",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Faerie Fire",
+          "slug": "FAERIE FIRE"
+        },
+        {
+          "level": 2,
+          "name": "Charm Person",
+          "slug": "charm-person"
+        },
+        {
+          "level": 3,
+          "name": "Inspired Aim",
+          "slug": "INSPIRED AIM"
+        },
+        {
+          "level": 4,
+          "name": "Blinding Beauty",
+          "slug": "BLINDING BEAUTY"
+        },
+        {
+          "level": 5,
+          "name": "Tree Stride",
+          "slug": "tree-stride"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast",
+          "slug": "heroes-feast"
+        },
+        {
+          "level": 7,
+          "name": "Liveoak",
+          "slug": "liveoak"
+        },
+        {
+          "level": 8,
+          "name": "Unearthly Beauty",
+          "slug": "UNEARTHLY BEAUTY"
+        },
+        {
+          "level": 9,
+          "name": "Summon Nature's Ally IX",
+          "slug": "summon-natures- ally-ix"
+        }
+      ]
+    },
+    {
+      "description": "Turn or destroy water creatures as a good cleric turns undead. Rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability.",
+      "name": "Fire",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Burning Hands",
+          "slug": "burning-hands"
+        },
+        {
+          "level": 2,
+          "name": "Produce Flame",
+          "slug": "produce-flame"
+        },
+        {
+          "level": 3,
+          "name": "Resist Energy",
+          "slug": "resist-energy"
+        },
+        {
+          "level": 4,
+          "name": "Wall of Fire",
+          "slug": "wall-of-fire"
+        },
+        {
+          "level": 5,
+          "name": "Fire Shield",
+          "slug": "fire-shield"
+        },
+        {
+          "level": 6,
+          "name": "Fire Seeds",
+          "slug": "fire-seeds"
+        },
+        {
+          "level": 7,
+          "name": "Fire Storm",
+          "slug": "fire-storm"
+        },
+        {
+          "level": 8,
+          "name": "Incendiary Cloud",
+          "slug": "incendiary-cloud"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm",
+          "slug": "elemental-swarm"
+        }
+      ]
+    },
+    {
+      "description": "By manipulating cosmic forces of inertia and force, once per day the cleric can reroll any damage roll (for a weapon, a spell, or an ability) and take the better of the two rolls. This granted power is considered a supernatural ability.",
+      "name": "Force",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Mage Armor",
+          "slug": "mage-armor"
+        },
+        {
+          "level": 2,
+          "name": "Magic Missile",
+          "slug": "magic-missile"
+        },
+        {
+          "level": 3,
+          "name": "Blast of Force",
+          "slug": "Blast of Force"
+        },
+        {
+          "level": 4,
+          "name": "Otiluke's Resilient Sphere",
+          "slug": "resilient-sphere"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Force",
+          "slug": "wall-of-force"
+        },
+        {
+          "level": 6,
+          "name": "Repulsion",
+          "slug": "repulsion"
+        },
+        {
+          "level": 7,
+          "name": "Forcecage",
+          "slug": "forcecage"
+        },
+        {
+          "level": 8,
+          "name": "Otiluke's Telekinetic Sphere",
+          "slug": "telekinetic-sphere"
+        },
+        {
+          "level": 9,
+          "name": "Bigby's Crushing Hand",
+          "slug": "crushing-hand"
+        }
+      ]
+    },
+    {
+      "description": "Once per day as a free action, you can designate a single creature or object as the target of your fury. You gain a +2 profane bonus on attack rolls against the designated creature or object and deal an extra 2 points of damage with each successful strike upon it. These bonuses persist until you select a new target for your attacks.",
+      "name": "Fury",
+      "spells": [
+        {
+          "level": 1,
+          "name": "True Strike",
+          "slug": "true-strike"
+        },
+        {
+          "level": 2,
+          "name": "Bull's Strength",
+          "slug": "bull's-strength"
+        },
+        {
+          "level": 3,
+          "name": "Rage",
+          "slug": "rage"
+        },
+        {
+          "level": 4,
+          "name": "Divine Power",
+          "slug": "divine-power"
+        },
+        {
+          "level": 5,
+          "name": "Shout",
+          "slug": "shout"
+        },
+        {
+          "level": 6,
+          "name": "Song of Discord",
+          "slug": "song-of-discord"
+        },
+        {
+          "level": 7,
+          "name": "Abyssal Frenzy",
+          "slug": "ABYSSAL FRENZY"
+        },
+        {
+          "level": 8,
+          "name": "Shout, Greater",
+          "slug": "greater-shout"
+        },
+        {
+          "level": 9,
+          "name": "Abyssal Frenzy, Mass",
+          "slug": "ABYSSAL FRENZY, MASS"
+        }
+      ]
+    },
+    {
+      "description": "Turn undead with a +2 bonus on the turning check and +1d6 to the turning damage roll.",
+      "name": "Glory",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Disrupt Undead",
+          "slug": "disrupt-undead"
+        },
+        {
+          "level": 2,
+          "name": "Bless Weapon",
+          "slug": "bless-weapon"
+        },
+        {
+          "level": 3,
+          "name": "Searing Light",
+          "slug": "searing-light"
+        },
+        {
+          "level": 4,
+          "name": "Holy Smite",
+          "slug": "holy-smite"
+        },
+        {
+          "level": 5,
+          "name": "Holy Sword",
+          "slug": "holy-sword"
+        },
+        {
+          "level": 6,
+          "name": "Bolt of Glory",
+          "slug": "bolt-of-glory"
+        },
+        {
+          "level": 7,
+          "name": "Sunbeam",
+          "slug": "sunbeam"
+        },
+        {
+          "level": 8,
+          "name": "Crown of Glory",
+          "slug": "crown-of-glory"
+        },
+        {
+          "level": 9,
+          "name": "Gate",
+          "slug": "gate"
+        }
+      ]
+    },
+    {
+      "description": "Turn undead with a +2 bonus on the turning check and +1d6 to the turning damage roll.",
+      "name": "Glory (BoED)",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Disrupt Undead",
+          "slug": "disrupt-undead"
+        },
+        {
+          "level": 2,
+          "name": "Glorious Raiment",
+          "slug": "GLORIOUS RAIMENT"
+        },
+        {
+          "level": 3,
+          "name": "Searing Light",
+          "slug": "searing-light"
+        },
+        {
+          "level": 4,
+          "name": "Celestial Brilliance",
+          "slug": "CELESTIAL BRILLIANCE"
+        },
+        {
+          "level": 5,
+          "name": "Crown of Flame",
+          "slug": "CROWN OF FLAME"
+        },
+        {
+          "level": 6,
+          "name": "Bolt of Glory",
+          "slug": "BOLT OF GLORY"
+        },
+        {
+          "level": 7,
+          "name": "Sunbeam",
+          "slug": "sunbeam"
+        },
+        {
+          "level": 8,
+          "name": "Crown of Glory",
+          "slug": "CROWN OF GLORY"
+        },
+        {
+          "level": 9,
+          "name": "Blinding Glory",
+          "slug": "BLINDING GLORY"
+        }
+      ]
+    },
+    {
+      "description": "You cast good spells at +1 caster level.",
+      "name": "Good",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Evil",
+          "slug": "protection-from-evil"
+        },
+        {
+          "level": 2,
+          "name": "Aid",
+          "slug": "aid"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Evil",
+          "slug": "magic-circle-against-evil"
+        },
+        {
+          "level": 4,
+          "name": "Holy Smite",
+          "slug": "holy-smite"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Evil",
+          "slug": "dispel-evil"
+        },
+        {
+          "level": 6,
+          "name": "Blade Barrier",
+          "slug": "blade-barrier"
+        },
+        {
+          "level": 7,
+          "name": "Holy Word",
+          "slug": "holy-word"
+        },
+        {
+          "level": 8,
+          "name": "Holy Aura",
+          "slug": "holy-aura"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "summon-monster-ix"
+        }
+      ]
+    },
+    {
+      "description": "You gain a +2 competence bonus on Appraise, Open Lock, and Slight of Hand checks.",
+      "name": "Greed",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Cheat",
+          "slug": "CHEAT"
+        },
+        {
+          "level": 2,
+          "name": "Entice Gift",
+          "slug": "ENTICE GIFT"
+        },
+        {
+          "level": 3,
+          "name": "Knock",
+          "slug": "knock"
+        },
+        {
+          "level": 4,
+          "name": "Fire Trap",
+          "slug": "fire-trap"
+        },
+        {
+          "level": 5,
+          "name": "Fabricate",
+          "slug": "fabricate"
+        },
+        {
+          "level": 6,
+          "name": "Guards and Wards",
+          "slug": "GUARDS AND WARDS"
+        },
+        {
+          "level": 7,
+          "name": "Teleport Object",
+          "slug": "teleport-object"
+        },
+        {
+          "level": 8,
+          "name": "Phantasmal Thief",
+          "slug": "PHANTASMAL THIEF"
+        },
+        {
+          "level": 9,
+          "name": "Sympathy",
+          "slug": "sympathy"
+        }
+      ]
+    },
+    {
+      "description": "Choose one opponent. Against that opponent you gain a +2 profane bonus on attack rolls, saving throws, and Armor Class for 1 minute. This supernatural ability is usable once per day as a free action.",
+      "name": "Hatred",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Doom",
+          "slug": "doom"
+        },
+        {
+          "level": 2,
+          "name": "Scare",
+          "slug": "scare"
+        },
+        {
+          "level": 3,
+          "name": "Bestow Curse",
+          "slug": "bestow-curse"
+        },
+        {
+          "level": 4,
+          "name": "Song of Discord",
+          "slug": "song-of-discord"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might",
+          "slug": "righteous-might"
+        },
+        {
+          "level": 6,
+          "name": "Forbiddance",
+          "slug": "forbiddance"
+        },
+        {
+          "level": 7,
+          "name": "Blasphemy",
+          "slug": "blasphemy"
+        },
+        {
+          "level": 8,
+          "name": "Antipathy",
+          "slug": "antipathy"
+        },
+        {
+          "level": 9,
+          "name": "Wail of the Banshee",
+          "slug": "wail-of-the-banshee"
+        }
+      ]
+    },
+    {
+      "description": "You cast healing spells at +1 caster level.",
+      "name": "Healing",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Cure Light Wounds",
+          "slug": "cure-light-wounds"
+        },
+        {
+          "level": 2,
+          "name": "Cure Moderate Wounds",
+          "slug": "cure-moderate-wounds"
+        },
+        {
+          "level": 3,
+          "name": "Cure Serious Wounds",
+          "slug": "cure-serious-wounds"
+        },
+        {
+          "level": 4,
+          "name": "Cure Critical Wounds",
+          "slug": "cure-critical-wounds"
+        },
+        {
+          "level": 5,
+          "name": "Cure Light Wounds, Mass",
+          "slug": "mass-cure-light-wounds"
+        },
+        {
+          "level": 6,
+          "name": "Heal",
+          "slug": "heal"
+        },
+        {
+          "level": 7,
+          "name": "Regenerate",
+          "slug": "regenerate"
+        },
+        {
+          "level": 8,
+          "name": "Cure Critical Wounds, Mass",
+          "slug": "mass-cure-critical-wounds"
+        },
+        {
+          "level": 9,
+          "name": "Heal, Mass",
+          "slug": "mass-heal"
+        }
+      ]
+    },
+    {
+      "description": "Intimidate is a class skill. You gain a +4 sacred bonus on Diplomacy and Intimidate checks.",
+      "name": "Herald",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Comprehend Languages",
+          "slug": "comprehend-languages"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall",
+          "slug": "enthrall"
+        },
+        {
+          "level": 3,
+          "name": "Tongues",
+          "slug": "tongues"
+        },
+        {
+          "level": 4,
+          "name": "Sending",
+          "slug": "sending"
+        },
+        {
+          "level": 5,
+          "name": "Command, Greater",
+          "slug": "greater-command"
+        },
+        {
+          "level": 6,
+          "name": "Dream",
+          "slug": "dream"
+        },
+        {
+          "level": 7,
+          "name": "Aspect of the Deity",
+          "slug": "ASPECT OF THE DEITY"
+        },
+        {
+          "level": 8,
+          "name": "Crown of Glory",
+          "slug": "CROWN OF GLORY"
+        },
+        {
+          "level": 9,
+          "name": "Aspect of the Deity, Greater",
+          "slug": "GREATER ASPECT OF THE DEITY"
+        }
+      ]
+    },
+    {
+      "description": "You gain a bite attack. If you are Small, your bite attack deals 1d4 points of damage; Medium, 1d6; or Large, 1d8. You are proficient with your bite, and considered armed. If you already have a natural bite attack, use the higher of the two damage values. This is considered a secondary natural attack.",
+      "name": "Hunger",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Ghoul Light",
+          "slug": "GHOUL LIGHT"
+        },
+        {
+          "level": 2,
+          "name": "Ghoul Glyph",
+          "slug": "GHOUL GLYPH"
+        },
+        {
+          "level": 3,
+          "name": "Ghoul Gesture",
+          "slug": "GHOUL GESTURE"
+        },
+        {
+          "level": 4,
+          "name": "Enervation",
+          "slug": "enervation"
+        },
+        {
+          "level": 5,
+          "name": "Ghoul Gauntlet",
+          "slug": "GHOUL GAUNTLET"
+        },
+        {
+          "level": 6,
+          "name": "Eyes of the King",
+          "slug": "EYES OF THE KING"
+        },
+        {
+          "level": 7,
+          "name": "Field of Ghouls",
+          "slug": "FIELD OF GHOULS"
+        },
+        {
+          "level": 8,
+          "name": "Bite of the King",
+          "slug": "BITE OF THE KING"
+        },
+        {
+          "level": 9,
+          "name": "Energy Drain",
+          "slug": "energy-drain"
+        }
+      ]
+    },
+    {
+      "description": "You gain Incarnum Spellshaping as a bonus feat. Special: Neutral clerics - those without an alignment component of chaotic, evil, good, or lawful - may not choose this domain.",
+      "name": "Incarnum",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Detect Incarnum",
+          "slug": "DETECT INCARNUM"
+        },
+        {
+          "level": 2,
+          "name": "Soul Boon",
+          "slug": "SOUL BOON"
+        },
+        {
+          "level": 3,
+          "name": "Wall of Incarnum",
+          "slug": "WALL OF INCARNUM"
+        },
+        {
+          "level": 4,
+          "name": "Essentia Lock",
+          "slug": "ESSENTIA LOCK"
+        },
+        {
+          "level": 5,
+          "name": "Incarnum Weapon",
+          "slug": "INCARNUM WEAPON"
+        },
+        {
+          "level": 6,
+          "name": "Incarnum Vigor",
+          "slug": "INCARNUM VIGOR"
+        },
+        {
+          "level": 7,
+          "name": "Incarnum Bladestorm",
+          "slug": "INCARNUM BLADESTORM"
+        },
+        {
+          "level": 8,
+          "name": "Incarnum Apotheosis",
+          "slug": "INCARNUM APOTHEOSIS"
+        },
+        {
+          "level": 9,
+          "name": "Soulmeld Disjunction",
+          "slug": "SOULMELD DISJUNCTION"
+        }
+      ]
+    },
+    {
+      "description": "Gain a +4 bonus on all dispel checks.",
+      "name": "Inquisition",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Detect Chaos",
+          "slug": "detect-chaos"
+        },
+        {
+          "level": 2,
+          "name": "Zone of Truth",
+          "slug": "zone-of-truth"
+        },
+        {
+          "level": 3,
+          "name": "Detect Thoughts",
+          "slug": "detect-thoughts"
+        },
+        {
+          "level": 4,
+          "name": "Discern Lies",
+          "slug": "discern-lies"
+        },
+        {
+          "level": 5,
+          "name": "True Seeing",
+          "slug": "true-seeing"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest",
+          "slug": "geas-quest"
+        },
+        {
+          "level": 7,
+          "name": "Dictum",
+          "slug": "dictum"
+        },
+        {
+          "level": 8,
+          "name": "Shield of Law",
+          "slug": "shield-of-law"
+        },
+        {
+          "level": 9,
+          "name": "Imprisonment",
+          "slug": "imprisonment"
+        }
+      ]
+    },
+    {
+      "description": "You gain a +4 sacred bonus on Diplomacy checks.",
+      "name": "Joy",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Vision of Heaven",
+          "slug": "VISION OF HEAVEN"
+        },
+        {
+          "level": 2,
+          "name": "Elation",
+          "slug": "ELATION"
+        },
+        {
+          "level": 3,
+          "name": "Distilled Joy",
+          "slug": "DISTILLED JOY"
+        },
+        {
+          "level": 4,
+          "name": "Good Hope",
+          "slug": "GOOD HOPE"
+        },
+        {
+          "level": 5,
+          "name": "Chaav's Laugh",
+          "slug": "CHAAV'S LAUGH"
+        },
+        {
+          "level": 6,
+          "name": "Heroism, Greater",
+          "slug": "greater-heroism"
+        },
+        {
+          "level": 7,
+          "name": "Starmantle",
+          "slug": "STARMANTLE"
+        },
+        {
+          "level": 8,
+          "name": "Sympathy",
+          "slug": "sympathy"
+        },
+        {
+          "level": 9,
+          "name": "Otto's Irresistible Dance",
+          "slug": "irresistible-dance"
+        }
+      ]
+    },
+    {
+      "description": "Add all Knowledge skills to your list of cleric class skills. You cast divination spells at +1 caster level.",
+      "name": "Knowledge",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Detect Secret Doors",
+          "slug": "detect-secret-doors"
+        },
+        {
+          "level": 2,
+          "name": "Detect Thoughts",
+          "slug": "detect-thoughts"
+        },
+        {
+          "level": 3,
+          "name": "Clairaudience/Clairvoyance",
+          "slug": "clairaudience/clairvoyance"
+        },
+        {
+          "level": 4,
+          "name": "Divination",
+          "slug": "divination"
+        },
+        {
+          "level": 5,
+          "name": "True Seeing",
+          "slug": "true-seeing"
+        },
+        {
+          "level": 6,
+          "name": "Find the Path",
+          "slug": "find-the-path"
+        },
+        {
+          "level": 7,
+          "name": "Legend Lore",
+          "slug": "legend-lore"
+        },
+        {
+          "level": 8,
+          "name": "Discern Location",
+          "slug": "discern-location"
+        },
+        {
+          "level": 9,
+          "name": "Foresight",
+          "slug": "foresight"
+        }
+      ]
+    },
+    {
+      "description": "You cast law spells at +1 caster level.",
+      "name": "Law",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Chaos",
+          "slug": "protection-from-chaos"
+        },
+        {
+          "level": 2,
+          "name": "Calm Emotions",
+          "slug": "calm-emotions"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Chaos",
+          "slug": "magic-circle-against-chaos"
+        },
+        {
+          "level": 4,
+          "name": "Order's Wrath",
+          "slug": "orders-wrath"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Chaos",
+          "slug": "dispel-chaos"
+        },
+        {
+          "level": 6,
+          "name": "Hold Monster",
+          "slug": "hold-monster"
+        },
+        {
+          "level": 7,
+          "name": "Dictum",
+          "slug": "dictum"
+        },
+        {
+          "level": 8,
+          "name": "Shield of Law",
+          "slug": "shield-of-law"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "summon-monster-ix"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Liberation",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Remove Fear",
+          "slug": "remove-fear"
+        },
+        {
+          "level": 2,
+          "name": "Remove Paralysis",
+          "slug": "remove-paralysis"
+        },
+        {
+          "level": 3,
+          "name": "Remove Curse",
+          "slug": "remove-curse"
+        },
+        {
+          "level": 4,
+          "name": "Freedom of Movement",
+          "slug": "freedom-of-movement"
+        },
+        {
+          "level": 5,
+          "name": "Break Enchantment",
+          "slug": "break-enchantment"
+        },
+        {
+          "level": 6,
+          "name": "Dispel Magic, Greater",
+          "slug": "greater-dispel-magic"
+        },
+        {
+          "level": 7,
+          "name": "Refuge",
+          "slug": "refuge"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank",
+          "slug": "mind-blank"
+        },
+        {
+          "level": 9,
+          "name": "Freedom",
+          "slug": "freedom"
+        }
+      ]
+    },
+    {
+      "description": "You gain the power of good fortune, which is usable once per day. This extraordinary ability allows you to reroll one roll that you have just made before the DM declares whether the roll results in success or failure. You must take the result of the reroll, even if it's worse than the original roll.",
+      "name": "Luck",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Entropic Shield",
+          "slug": "entropic-shield"
+        },
+        {
+          "level": 2,
+          "name": "Aid",
+          "slug": "aid"
+        },
+        {
+          "level": 3,
+          "name": "Protection from Energy",
+          "slug": "protection-from-energy"
+        },
+        {
+          "level": 4,
+          "name": "Freedom of Movement",
+          "slug": "freedom-of-movement"
+        },
+        {
+          "level": 5,
+          "name": "Break Enchantment",
+          "slug": "break-enchantment"
+        },
+        {
+          "level": 6,
+          "name": "Mislead",
+          "slug": "mislead"
+        },
+        {
+          "level": 7,
+          "name": "Spell Turning",
+          "slug": "spell-turning"
+        },
+        {
+          "level": 8,
+          "name": "Moment of Prescience",
+          "slug": "moment-of-prescience"
+        },
+        {
+          "level": 9,
+          "name": "Miracle",
+          "slug": "miracle"
+        }
+      ]
+    },
+    {
+      "description": "Your insanity gives you insight. You subtract 1 from all Wisdom-based skill checks and all Will saves. However, once per day, you can see and act with the clarity of true madness: Add one-half your level to a single Wisdom-based skill check or Will save. You must choose to use this benefit before the check or save is rolled.",
+      "name": "Madness",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Confusion, Lesser",
+          "slug": "lesser-confusion"
+        },
+        {
+          "level": 2,
+          "name": "Touch of Madness",
+          "slug": "touch-of-madness"
+        },
+        {
+          "level": 3,
+          "name": "Rage",
+          "slug": "rage"
+        },
+        {
+          "level": 4,
+          "name": "Confusion",
+          "slug": "confusion"
+        },
+        {
+          "level": 5,
+          "name": "Bolts of Bedevilment",
+          "slug": "bolts-of-bedevilment"
+        },
+        {
+          "level": 6,
+          "name": "Phantasmal Killer",
+          "slug": "phantasmal-killer"
+        },
+        {
+          "level": 7,
+          "name": "Insanity",
+          "slug": "insanity"
+        },
+        {
+          "level": 8,
+          "name": "Maddening Scream",
+          "slug": "maddening-scream"
+        },
+        {
+          "level": 9,
+          "name": "Weird",
+          "slug": "weird"
+        }
+      ]
+    },
+    {
+      "description": "Use scrolls, wands, and other devices with spell completion or spell trigger activation as a wizard of one-half your cleric level (at least 1st level). For the purpose of using a scroll or other magic device, if you are also a wizard, actual wizard levels and these effective wizard levels stack.",
+      "name": "Magic",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Nystul's Magic Aura",
+          "slug": "magic-aura"
+        },
+        {
+          "level": 2,
+          "name": "Identify",
+          "slug": "identify"
+        },
+        {
+          "level": 3,
+          "name": "Dispel Magic",
+          "slug": "dispel-magic"
+        },
+        {
+          "level": 4,
+          "name": "Imbue with Spell Ability",
+          "slug": "imbue-with-spell-ability"
+        },
+        {
+          "level": 5,
+          "name": "Spell Resistance",
+          "slug": "spell-resistance"
+        },
+        {
+          "level": 6,
+          "name": "Antimagic Field",
+          "slug": "antimagic-field"
+        },
+        {
+          "level": 7,
+          "name": "Spell Turning",
+          "slug": "spell-turning"
+        },
+        {
+          "level": 8,
+          "name": "Protection from Spells",
+          "slug": "protection-from-spells"
+        },
+        {
+          "level": 9,
+          "name": "Mordenkainen's Disjunction",
+          "slug": "mages-disjunction"
+        }
+      ]
+    },
+    {
+      "description": "Gain a +2 bonus on Bluff, Diplomacy, and Sense Motive checks.",
+      "name": "Mind",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Comprehend Languages",
+          "slug": "comprehend-languages"
+        },
+        {
+          "level": 2,
+          "name": "Detect Thoughts",
+          "slug": "detect-thoughts"
+        },
+        {
+          "level": 3,
+          "name": "Telepathic Bond, Lesser",
+          "slug": "Telepathic Bond, Lesser"
+        },
+        {
+          "level": 4,
+          "name": "Discern Lies",
+          "slug": "discern-lies"
+        },
+        {
+          "level": 5,
+          "name": "Rary's Telepathic Bond",
+          "slug": "telepathic-bond"
+        },
+        {
+          "level": 6,
+          "name": "Probe Thoughts",
+          "slug": "Probe Thoughts"
+        },
+        {
+          "level": 7,
+          "name": "Brain Spider",
+          "slug": "Brain Spider"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank",
+          "slug": "mind-blank"
+        },
+        {
+          "level": 9,
+          "name": "Weird",
+          "slug": "weird"
+        }
+      ]
+    },
+    {
+      "description": "Neutral, Lawful Neutral, and Chaotic Neutral deities would never have this domain. Once per day, you may use a free action to channel your deity's power to grant yourself a luck bonus on your saving throws equal to your Charisma modifier (minimum +1). This is a supernatural ability and its effects last for 1 round",
+      "name": "Mysticism",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Divine Favor",
+          "slug": "divine-favor"
+        },
+        {
+          "level": 2,
+          "name": "Spiritual Weapon",
+          "slug": "spiritual-weapon"
+        },
+        {
+          "level": 3,
+          "name": "Visage of the Deity, Lesser",
+          "slug": "Visage of the Deity, Lesser"
+        },
+        {
+          "level": 4,
+          "name": "Weapon of the Deity",
+          "slug": "Weapon of the Deity"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might",
+          "slug": "righteous-might"
+        },
+        {
+          "level": 6,
+          "name": "Visage of the Deity",
+          "slug": "Visage of the Deity"
+        },
+        {
+          "level": 7,
+          "name": "Blasphemy/Holy Word",
+          "slug": "blasphemy"
+        },
+        {
+          "level": 8,
+          "name": "Holy Aura/Unholy Aura",
+          "slug": "holy-aura"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Nobility",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Divine Favor",
+          "slug": "divine-favor"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall",
+          "slug": "enthrall"
+        },
+        {
+          "level": 3,
+          "name": "Magic Vestment",
+          "slug": "magic-vestment"
+        },
+        {
+          "level": 4,
+          "name": "Discern Lies",
+          "slug": "discern-lies"
+        },
+        {
+          "level": 5,
+          "name": "Command, Greater",
+          "slug": "greater-command"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest",
+          "slug": "geas-quest"
+        },
+        {
+          "level": 7,
+          "name": "Repulsion",
+          "slug": "repulsion"
+        },
+        {
+          "level": 8,
+          "name": "Demand",
+          "slug": "demand"
+        },
+        {
+          "level": 9,
+          "name": "Storm of Vengeance",
+          "slug": "storm-of-vengeance"
+        }
+      ]
+    },
+    {
+      "description": "You have the supernatural ability to breathe water as if under the effect of a water breathing spell, for up to 10 rounds per level. This effect occurs automatically as soon as it becomes applicable and lasts until the duration expires or the effect is no longer needed. This duration need not be consecutive; it can be used in increments as small as 1 round.",
+      "name": "Ocean",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Endure Elements",
+          "slug": "endure-elements"
+        },
+        {
+          "level": 2,
+          "name": "Sound Burst",
+          "slug": "sound-burst"
+        },
+        {
+          "level": 3,
+          "name": "Water Breathing",
+          "slug": "water-breathing"
+        },
+        {
+          "level": 4,
+          "name": "Freedom of Movement",
+          "slug": "freedom-of-movement"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Ice",
+          "slug": "wall-of-ice"
+        },
+        {
+          "level": 6,
+          "name": "Otiluke's Freezing Sphere",
+          "slug": "freezing-sphere"
+        },
+        {
+          "level": 7,
+          "name": "Waterspout",
+          "slug": "WATERSPOUT"
+        },
+        {
+          "level": 8,
+          "name": "Maelstrom",
+          "slug": "MAELSTROM"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm",
+          "slug": "elemental-swarm"
+        }
+      ]
+    },
+    {
+      "description": "You can rebuke or command oozes as an evil cleric rebukes or commands undead. This ability is usable a number of times per day equal to 3 + your Charisma modifier.",
+      "name": "Ooze",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Grease",
+          "slug": "grease"
+        },
+        {
+          "level": 2,
+          "name": "Web",
+          "slug": "web"
+        },
+        {
+          "level": 3,
+          "name": "Poison",
+          "slug": "poison"
+        },
+        {
+          "level": 4,
+          "name": "Rusting Grasp",
+          "slug": "rusting-grasp"
+        },
+        {
+          "level": 5,
+          "name": "Oozepuppet",
+          "slug": "OOZEPUPPET"
+        },
+        {
+          "level": 6,
+          "name": "Transmute Rock to Mud",
+          "slug": "transmute-rock-to-mud"
+        },
+        {
+          "level": 7,
+          "name": "Slime Wave",
+          "slug": "SLIME WAVE"
+        },
+        {
+          "level": 8,
+          "name": "Befoul",
+          "slug": "BEFOUL"
+        },
+        {
+          "level": 9,
+          "name": "Implosion",
+          "slug": "implosion"
+        }
+      ]
+    },
+    {
+      "description": "You cast divination spells at +2 caster levels.",
+      "name": "Oracle",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Identify",
+          "slug": "identify"
+        },
+        {
+          "level": 2,
+          "name": "Augury",
+          "slug": "augury"
+        },
+        {
+          "level": 3,
+          "name": "Divination",
+          "slug": "divination"
+        },
+        {
+          "level": 4,
+          "name": "Scrying",
+          "slug": "scrying"
+        },
+        {
+          "level": 5,
+          "name": "Commune",
+          "slug": "commune"
+        },
+        {
+          "level": 6,
+          "name": "Legend Lore",
+          "slug": "legend-lore"
+        },
+        {
+          "level": 7,
+          "name": "Scrying, Greater",
+          "slug": "greater-scrying"
+        },
+        {
+          "level": 8,
+          "name": "Discern Location",
+          "slug": "discern-location"
+        },
+        {
+          "level": 9,
+          "name": "Foresight",
+          "slug": "foresight"
+        }
+      ]
+    },
+    {
+      "description": "Add Appraise, Intimidate, and Sense Motive to your list of cleric class skills.",
+      "name": "Pact",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Command",
+          "slug": "command"
+        },
+        {
+          "level": 2,
+          "name": "Shield Other",
+          "slug": "shield-other"
+        },
+        {
+          "level": 3,
+          "name": "Speak With Dead",
+          "slug": "speak-with-dead"
+        },
+        {
+          "level": 4,
+          "name": "Divination",
+          "slug": "divination"
+        },
+        {
+          "level": 5,
+          "name": "Stalwart Pact",
+          "slug": "Stalwart Pact"
+        },
+        {
+          "level": 6,
+          "name": "Zealot Pact",
+          "slug": "Zealot Pact"
+        },
+        {
+          "level": 7,
+          "name": "Renewal Pact",
+          "slug": "Renewal Pact"
+        },
+        {
+          "level": 8,
+          "name": "Death Pact",
+          "slug": "Death Pact"
+        },
+        {
+          "level": 9,
+          "name": "Gate",
+          "slug": "gate"
+        }
+      ]
+    },
+    {
+      "description": "You gain Extend Spell as a bonus feat.",
+      "name": "Planning",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Deathwatch",
+          "slug": "deathwatch"
+        },
+        {
+          "level": 2,
+          "name": "Augury",
+          "slug": "augury"
+        },
+        {
+          "level": 3,
+          "name": "Clairaudience/Clairvoyance",
+          "slug": "clairaudience-clairvoyance"
+        },
+        {
+          "level": 4,
+          "name": "Status",
+          "slug": "status"
+        },
+        {
+          "level": 5,
+          "name": "Detect Scrying",
+          "slug": "detect-scrying"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast",
+          "slug": "heroes-feast"
+        },
+        {
+          "level": 7,
+          "name": "Scrying, Greater",
+          "slug": "greater-scrying"
+        },
+        {
+          "level": 8,
+          "name": "Discern Location",
+          "slug": "discern-location"
+        },
+        {
+          "level": 9,
+          "name": "Time Stop",
+          "slug": "time-stop"
+        }
+      ]
+    },
+    {
+      "description": "Rebuke or command plant creatures as an evil cleric rebukes or commands undead. Use this ability a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability. Add Knowledge (nature) to your list of cleric class skills.",
+      "name": "Plant",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Entangle",
+          "slug": "entangle"
+        },
+        {
+          "level": 2,
+          "name": "Barkskin",
+          "slug": "barkskin"
+        },
+        {
+          "level": 3,
+          "name": "Plant Growth",
+          "slug": "plant-growth"
+        },
+        {
+          "level": 4,
+          "name": "Command Plants",
+          "slug": "command-plants"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Thorns",
+          "slug": "wall-of-thorns"
+        },
+        {
+          "level": 6,
+          "name": "Repel Wood",
+          "slug": "repel-wood"
+        },
+        {
+          "level": 7,
+          "name": "Animate Plants",
+          "slug": "animate-plants"
+        },
+        {
+          "level": 8,
+          "name": "Control Plants",
+          "slug": "control-plants"
+        },
+        {
+          "level": 9,
+          "name": "Shambler",
+          "slug": "shambler"
+        }
+      ]
+    },
+    {
+      "description": "You are immune to any effect that damages or drains your Charisma.",
+      "name": "Pleasure",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Remove Fear",
+          "slug": "remove-fear"
+        },
+        {
+          "level": 2,
+          "name": "Lastai's Caress",
+          "slug": "LASTAI'S CARESS"
+        },
+        {
+          "level": 3,
+          "name": "Heart's Ease",
+          "slug": "HEART'S EASE"
+        },
+        {
+          "level": 4,
+          "name": "Remove Fatigue",
+          "slug": "remove-fatigue"
+        },
+        {
+          "level": 5,
+          "name": "Eagle's Splendor, Mass",
+          "slug": "mass-eagles-splendor"
+        },
+        {
+          "level": 6,
+          "name": "Celestial Blood",
+          "slug": "CELESTIAL BLOOD"
+        },
+        {
+          "level": 7,
+          "name": "Empyreal Ecstasy",
+          "slug": "EMPYREAL ECSTASY"
+        },
+        {
+          "level": 8,
+          "name": "Spread of Contentment",
+          "slug": "SPREAD OF CONTENTMENT"
+        },
+        {
+          "level": 9,
+          "name": "Sublime Revelry",
+          "slug": "SUBLIME REVELRY"
+        }
+      ]
+    },
+    {
+      "description": "Immunity to the effects of all diseases, though clerics with this power can still carry infectious diseases.",
+      "name": "Pestilence",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Doom",
+          "slug": "doom"
+        },
+        {
+          "level": 2,
+          "name": "Summon Swarm",
+          "slug": "summon-swarm"
+        },
+        {
+          "level": 3,
+          "name": "Contagion",
+          "slug": "contagion"
+        },
+        {
+          "level": 4,
+          "name": "Poison",
+          "slug": "poison"
+        },
+        {
+          "level": 5,
+          "name": "Plague of Rats",
+          "slug": "Plague of Rats"
+        },
+        {
+          "level": 6,
+          "name": "Curse of Lycanthropy",
+          "slug": "Curse of Lycanthropy"
+        },
+        {
+          "level": 7,
+          "name": "Scourge",
+          "slug": "Scourge"
+        },
+        {
+          "level": 8,
+          "name": "Create Greater Undead",
+          "slug": "create-greater-undead"
+        },
+        {
+          "level": 9,
+          "name": "Otyugh Swarm",
+          "slug": "Otyugh Swarm"
+        }
+      ]
+    },
+    {
+      "description": "You can generate a protective ward as a supernatural ability. Grant someone you touch a resistance bonus equal to your cleric level on his or her next saving throw. Activating this power is a standard action. The protective ward is an abjuration effect with a duration of 1 hour that is usable once per day.",
+      "name": "Protection",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Sanctuary",
+          "slug": "sanctuary"
+        },
+        {
+          "level": 2,
+          "name": "Shield Other",
+          "slug": "shield-other"
+        },
+        {
+          "level": 3,
+          "name": "Protection from Energy",
+          "slug": "protection-from-energy"
+        },
+        {
+          "level": 4,
+          "name": "Spell Immunity",
+          "slug": "spell-immunity"
+        },
+        {
+          "level": 5,
+          "name": "Spell Resistance",
+          "slug": "spell-resistance"
+        },
+        {
+          "level": 6,
+          "name": "Antimagic Field",
+          "slug": "antimagic-field"
+        },
+        {
+          "level": 7,
+          "name": "Repulsion",
+          "slug": "repulsion"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank",
+          "slug": "mind-blank"
+        },
+        {
+          "level": 9,
+          "name": "Prismatic Sphere",
+          "slug": "prismatic-sphere"
+        }
+      ]
+    },
+    {
+      "description": "You cast abjuration spells at +1 caster level.",
+      "name": "Purification",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Nimbus of Light",
+          "slug": "Nimbus of Light"
+        },
+        {
+          "level": 2,
+          "name": "Deific Vengeance",
+          "slug": "Deific Vengeance"
+        },
+        {
+          "level": 3,
+          "name": "Recitation",
+          "slug": "Recitation"
+        },
+        {
+          "level": 4,
+          "name": "Castigate",
+          "slug": "Castigate"
+        },
+        {
+          "level": 5,
+          "name": "Dance of the Unicorn",
+          "slug": "Dance of the Unicorn"
+        },
+        {
+          "level": 6,
+          "name": "Fires of Purity",
+          "slug": "Fires of Purity"
+        },
+        {
+          "level": 8,
+          "name": "Sunburst",
+          "slug": "sunburst"
+        }
+      ]
+    },
+    {
+      "description": "The character may use a death touch once per day. The death touch is a spell-like ability that is a death effect. The character must succeed at a melee touch attack against a living creature (using the rules for touch spells). When the character touches, roll 1d6 per his or her cleric level. If the total at least equals the creature's current hit points, it dies.",
+      "name": "Repose",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Deathwatch",
+          "slug": "deathwatch"
+        },
+        {
+          "level": 2,
+          "name": "Gentle Repose",
+          "slug": "gentle-repose"
+        },
+        {
+          "level": 3,
+          "name": "Speak with Dead",
+          "slug": "speak-with-dead"
+        },
+        {
+          "level": 4,
+          "name": "Death Ward",
+          "slug": "death-ward"
+        },
+        {
+          "level": 5,
+          "name": "Slay Living",
+          "slug": "slay-living"
+        },
+        {
+          "level": 6,
+          "name": "Undeath to Death",
+          "slug": "undeath-to-death"
+        },
+        {
+          "level": 7,
+          "name": "Destruction",
+          "slug": "destruction"
+        },
+        {
+          "level": 8,
+          "name": "Surelife",
+          "slug": "surelife"
+        },
+        {
+          "level": 9,
+          "name": "Wail of the Banshee",
+          "slug": "wail-of-the-banshee"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Rune",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Erase",
+          "slug": "erase"
+        },
+        {
+          "level": 2,
+          "name": "Secret Page",
+          "slug": "secret-page"
+        },
+        {
+          "level": 3,
+          "name": "Glyph of Warding",
+          "slug": "glyph-of-warding"
+        },
+        {
+          "level": 4,
+          "name": "Explosive Runes",
+          "slug": "explosive-runes"
+        },
+        {
+          "level": 5,
+          "name": "Planar Binding, Lesser",
+          "slug": "lesser-planar-binding"
+        },
+        {
+          "level": 6,
+          "name": "Glyph of Warding, Greater",
+          "slug": "greater-glyph-of-warding"
+        },
+        {
+          "level": 7,
+          "name": "Drawmij's Instant Summons",
+          "slug": "instant-summons"
+        },
+        {
+          "level": 8,
+          "name": "Symbol of Death",
+          "slug": "symbol-of-death"
+        },
+        {
+          "level": 9,
+          "name": "Teleportation Circle",
+          "slug": "teleportation-circle"
+        }
+      ]
+    },
+    {
+      "description": "You gain Expert Swimmer or Rapid Swimming (your choice) as a bonus feat.",
+      "name": "Seafolk",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Quickswim",
+          "slug": "QUICKSWIM"
+        },
+        {
+          "level": 2,
+          "name": "Fins to Feet",
+          "slug": "FINS TO FEET"
+        },
+        {
+          "level": 3,
+          "name": "Scales of the Sealord",
+          "slug": "SCALES OF THE SEALORD"
+        },
+        {
+          "level": 4,
+          "name": "Siren's Call",
+          "slug": "SIREN'S CALL"
+        },
+        {
+          "level": 5,
+          "name": "Commune with Nature",
+          "slug": "commune-with-nature"
+        },
+        {
+          "level": 6,
+          "name": "Airy Water",
+          "slug": "AIRY WATER"
+        },
+        {
+          "level": 7,
+          "name": "Megalodon Empowerment",
+          "slug": "MEGALODON EMPOWERMENT"
+        },
+        {
+          "level": 8,
+          "name": "Depthsurge",
+          "slug": "DEPTHSURGE"
+        },
+        {
+          "level": 9,
+          "name": "Foresight",
+          "slug": "foresight"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Skalykind",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Magic Fang",
+          "slug": "magic-fang"
+        },
+        {
+          "level": 2,
+          "name": "Animal Trance",
+          "slug": "animal-trance"
+        },
+        {
+          "level": 3,
+          "name": "Magic Fang, Greater",
+          "slug": "greater-magic-fang"
+        },
+        {
+          "level": 4,
+          "name": "Poison",
+          "slug": "poison"
+        },
+        {
+          "level": 5,
+          "name": "Animal Growth",
+          "slug": "animal-growth"
+        },
+        {
+          "level": 6,
+          "name": "Eyebite",
+          "slug": "eyebite"
+        },
+        {
+          "level": 7,
+          "name": "Creeping Doom",
+          "slug": "creeping-doom"
+        },
+        {
+          "level": 8,
+          "name": "Animal Shapes",
+          "slug": "animal-shapes"
+        },
+        {
+          "level": 9,
+          "name": "Shapechange",
+          "slug": "shapechange"
+        }
+      ]
+    },
+    {
+      "description": "Your fly speed (or glide speed) improves by 5 feet. Add Spot to your list of cleric class skills.",
+      "name": "Sky",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Raptor's Sight",
+          "slug": "RAPTOR'S SIGHT"
+        },
+        {
+          "level": 2,
+          "name": "Summon Dire Hawk",
+          "slug": "SUMMON DIRE HAWK"
+        },
+        {
+          "level": 3,
+          "name": "Enduring Flight",
+          "slug": "ENDURING FLIGHT"
+        },
+        {
+          "level": 4,
+          "name": "Aerial Alacrity",
+          "slug": "AERIAL ALACRITY"
+        },
+        {
+          "level": 5,
+          "name": "Control Winds",
+          "slug": "control-winds"
+        },
+        {
+          "level": 6,
+          "name": "Wind Walk",
+          "slug": "wind-walk"
+        },
+        {
+          "level": 7,
+          "name": "Reverse Gravity",
+          "slug": "reverse-gravity"
+        },
+        {
+          "level": 8,
+          "name": "Mastery of the Sky",
+          "slug": "MASTERY OF THE SKY"
+        },
+        {
+          "level": 9,
+          "name": "Summon Devoted Roc",
+          "slug": "SUMMON DEVOTED ROC"
+        }
+      ]
+    },
+    {
+      "description": "Sympathetic strike. You can force opponents to take damage they have dealt you. Once per day, you can make a melee touch attack on the target, and deal damage equal to the damage the target dealt to you in the last round, to a maximum of 5 hp per divine caster level you possess.",
+      "name": "Spite",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Bestow Wound",
+          "slug": "BESTOW WOUND"
+        },
+        {
+          "level": 2,
+          "name": "Rage",
+          "slug": "rage"
+        },
+        {
+          "level": 3,
+          "name": "Vampiric Touch",
+          "slug": "vampiric-touch"
+        },
+        {
+          "level": 4,
+          "name": "Pronouncement of Fate",
+          "slug": "PRONOUNCEMENT OF FATE"
+        },
+        {
+          "level": 5,
+          "name": "Fire in the Blood",
+          "slug": "FIRE IN THE BLOOD"
+        },
+        {
+          "level": 6,
+          "name": "Cloak of Hate",
+          "slug": "CLOAK OF HATE"
+        },
+        {
+          "level": 7,
+          "name": "Pact of Return",
+          "slug": "PACT OF RETURN"
+        },
+        {
+          "level": 8,
+          "name": "Mantle of Pure Spite",
+          "slug": "MANTLE OF PURE SPITE"
+        },
+        {
+          "level": 9,
+          "name": "Imprison Soul",
+          "slug": "IMPRISON SOUL"
+        }
+      ]
+    },
+    {
+      "description": "You gain resistance to electricity 5.",
+      "name": "Storm",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Entropic Shield",
+          "slug": "entropic-shield"
+        },
+        {
+          "level": 2,
+          "name": "Gust of Wind",
+          "slug": "gust-of-wind"
+        },
+        {
+          "level": 3,
+          "name": "Call Lightning",
+          "slug": "call-lightning"
+        },
+        {
+          "level": 4,
+          "name": "Sleet Storm",
+          "slug": "sleet-storm"
+        },
+        {
+          "level": 5,
+          "name": "Ice Storm",
+          "slug": "ice-storm"
+        },
+        {
+          "level": 6,
+          "name": "Call Lightning Storm",
+          "slug": "call-lightning-storm"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather",
+          "slug": "control-weather"
+        },
+        {
+          "level": 8,
+          "name": "Whirlwind",
+          "slug": "whirlwind"
+        },
+        {
+          "level": 9,
+          "name": "Storm of Vengeance",
+          "slug": "storm-of-vengeance"
+        }
+      ]
+    },
+    {
+      "description": "You can perform a feat of strength as a supernatural ability. You gain an enhancement bonus to Strength equal to your cleric level. Activating the power is a free action, the power lasts 1 round, and it is usable once per day.",
+      "name": "Strength",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Enlarge Person",
+          "slug": "enlarge-person"
+        },
+        {
+          "level": 2,
+          "name": "Bull's Strength",
+          "slug": "bulls-strength"
+        },
+        {
+          "level": 3,
+          "name": "Magic Vestment",
+          "slug": "magic-vestment"
+        },
+        {
+          "level": 4,
+          "name": "Spell Immunity",
+          "slug": "spell-immunity"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might",
+          "slug": "righteous-might"
+        },
+        {
+          "level": 6,
+          "name": "Stoneskin",
+          "slug": "stoneskin"
+        },
+        {
+          "level": 7,
+          "name": "Bigby's Grasping Hand",
+          "slug": "grasping-hand"
+        },
+        {
+          "level": 8,
+          "name": "Bigby's Clenched Fist",
+          "slug": "clenched-fist"
+        },
+        {
+          "level": 9,
+          "name": "Bigby's Crushing Hand",
+          "slug": "crushing-hand"
+        }
+      ]
+    },
+    {
+      "description": "You are considered a native of the waste for purposes of heat resistance (you have 1 level of protection). During the summer season, you gain a +2 bonus on all Wisdom-based skill checks.",
+      "name": "Summer",
+      "spells": [
+        {
+          "level": 2,
+          "name": "Sunstroke",
+          "slug": "SUNSTROKE"
+        },
+        {
+          "level": 3,
+          "name": "Protection from Dessication",
+          "slug": "PROTECTION FROM DESSICATION"
+        },
+        {
+          "level": 4,
+          "name": "Skin of the Cactus",
+          "slug": "SKIN OF THE CACTUS"
+        },
+        {
+          "level": 5,
+          "name": "Unearthly Heat",
+          "slug": "UNEARTHLY HEAT"
+        },
+        {
+          "level": 6,
+          "name": "Sunbeam",
+          "slug": "sunbeam"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather",
+          "slug": "control-weather"
+        },
+        {
+          "level": 8,
+          "name": "Sunburst",
+          "slug": "sunburst"
+        },
+        {
+          "level": 9,
+          "name": "Storm of Vengeance",
+          "slug": "storm-of-vengeance"
+        }
+      ]
+    },
+    {
+      "description": "Add +2 to your caster level for all Conjuration (summoning) or Conjuration (calling) spells.",
+      "name": "Summoner",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Summon Monster I",
+          "slug": "summon-monster-i"
+        },
+        {
+          "level": 2,
+          "name": "Summon Monster II",
+          "slug": "summon-monster-ii"
+        },
+        {
+          "level": 3,
+          "name": "Summon Monster III",
+          "slug": "summon-monster-iii"
+        },
+        {
+          "level": 4,
+          "name": "Planar Ally, Lesser",
+          "slug": "lesser-planar-ally"
+        },
+        {
+          "level": 5,
+          "name": "Summon Monster V",
+          "slug": "summon-monster-v"
+        },
+        {
+          "level": 6,
+          "name": "Planar Ally",
+          "slug": "planar-ally"
+        },
+        {
+          "level": 7,
+          "name": "Summon Monster VII",
+          "slug": "summon-monster-vii"
+        },
+        {
+          "level": 8,
+          "name": "Planar Ally, Greater",
+          "slug": "greater-planar-ally"
+        },
+        {
+          "level": 9,
+          "name": "Gate",
+          "slug": "gate"
+        }
+      ]
+    },
+    {
+      "description": "Once per day, you can perform a greater turning against undead in place of a regular turning. The greater turning is like a normal turning except that the undead creatures that would be turned are destroyed instead.",
+      "name": "Sun",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Endure Elements",
+          "slug": "endure-elements"
+        },
+        {
+          "level": 2,
+          "name": "Heat Metal",
+          "slug": "heat-metal"
+        },
+        {
+          "level": 3,
+          "name": "Searing Light",
+          "slug": "searing-light"
+        },
+        {
+          "level": 4,
+          "name": "Fire Shield",
+          "slug": "fire-shield"
+        },
+        {
+          "level": 5,
+          "name": "Flame Strike",
+          "slug": "flame-strike"
+        },
+        {
+          "level": 6,
+          "name": "Fire Seeds",
+          "slug": "fire-seeds"
+        },
+        {
+          "level": 7,
+          "name": "Sunbeam",
+          "slug": "sunbeam"
+        },
+        {
+          "level": 8,
+          "name": "Sunburst",
+          "slug": "sunburst"
+        },
+        {
+          "level": 9,
+          "name": "Prismatic Sphere",
+          "slug": "prismatic-sphere"
+        }
+      ]
+    },
+    {
+      "description": "Select a gender. As long as you wear no armor, you gain a +2 competence bonus on Charisma-based checks opposed by creatures of this gender. Furthermore, each save DC for any mind-affecting spells or abilities you use against this gender increases by 1.",
+      "name": "Temptation",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Charm Person",
+          "slug": "charm-person"
+        },
+        {
+          "level": 2,
+          "name": "Beckoning Call",
+          "slug": "BECKONING CALL"
+        },
+        {
+          "level": 3,
+          "name": "Suggestion",
+          "slug": "suggestion"
+        },
+        {
+          "level": 4,
+          "name": "Charm Monster",
+          "slug": "charm-monster"
+        },
+        {
+          "level": 5,
+          "name": "Dominate Person",
+          "slug": "dominate-person"
+        },
+        {
+          "level": 6,
+          "name": "Suggestion, Mass",
+          "slug": "mass-suggestion"
+        },
+        {
+          "level": 7,
+          "name": "Soul Link",
+          "slug": "SOUL LINK"
+        },
+        {
+          "level": 8,
+          "name": "Sympathy",
+          "slug": "sympathy"
+        },
+        {
+          "level": 9,
+          "name": "Dominate Monster",
+          "slug": "dominate-monster"
+        }
+      ]
+    },
+    {
+      "description": "Rebuke or command oozes as an evil cleric rebukes or commands undead. Use this ability a total number of times per day equal to 3 + your Charisma modifier. You also gain a +2 bonus on Constitution checks to resist dehydration.",
+      "name": "Thirst",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Parching Touch",
+          "slug": "PARCHING TOUCH"
+        },
+        {
+          "level": 2,
+          "name": "Desiccate",
+          "slug": "DESICCATE"
+        },
+        {
+          "level": 3,
+          "name": "Tormenting Thirst",
+          "slug": "TORMENTING THIRST"
+        },
+        {
+          "level": 4,
+          "name": "Dispel Water",
+          "slug": "DISPEL WATER"
+        },
+        {
+          "level": 5,
+          "name": "Desiccate, Mass",
+          "slug": "DESICCATE, MASS"
+        },
+        {
+          "level": 6,
+          "name": "Symbol of Thirst",
+          "slug": "SYMBOL OF THIRST"
+        },
+        {
+          "level": 7,
+          "name": "Mephit Mob",
+          "slug": "MEPHIT MOB"
+        },
+        {
+          "level": 8,
+          "name": "Horrid Wilting",
+          "slug": "HORRID WILTING"
+        },
+        {
+          "level": 9,
+          "name": "Energy Drain",
+          "slug": "energy-drain"
+        }
+      ]
+    },
+    {
+      "description": "For a total time per day of 1 round per cleric level you possess, you can act normally regardless of magical effects that impede movement as if you were affected by the spell freedom of movement. This effect occurs automatically as soon as it applies, lasts until it runs out or is no longer needed, and can operate multiple times per day (up to the total daily limit of rounds). This granted power is a supernatural ability. Add Survival to your list of cleric class skills.",
+      "name": "Travel",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Longstrider",
+          "slug": "longstrider"
+        },
+        {
+          "level": 2,
+          "name": "Locate Object",
+          "slug": "locate-object"
+        },
+        {
+          "level": 3,
+          "name": "Fly",
+          "slug": "fly"
+        },
+        {
+          "level": 4,
+          "name": "Dimension Door",
+          "slug": "dimension-door"
+        },
+        {
+          "level": 5,
+          "name": "Teleport",
+          "slug": "teleport"
+        },
+        {
+          "level": 6,
+          "name": "Find the Path",
+          "slug": "find-the-path"
+        },
+        {
+          "level": 7,
+          "name": "Teleport, Greater",
+          "slug": "greater-teleport"
+        },
+        {
+          "level": 8,
+          "name": "Phase Door",
+          "slug": "phase-door"
+        },
+        {
+          "level": 9,
+          "name": "Astral Projection",
+          "slug": "astral-projection"
+        }
+      ]
+    },
+    {
+      "description": "Add Bluff, Disguise, and Hide to your list of cleric class skills.",
+      "name": "Trickery",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Disguise Self",
+          "slug": "disguise-self"
+        },
+        {
+          "level": 2,
+          "name": "Invisibility",
+          "slug": "invisibility"
+        },
+        {
+          "level": 3,
+          "name": "Nondetection",
+          "slug": "nondetection"
+        },
+        {
+          "level": 4,
+          "name": "Confusion",
+          "slug": "confusion"
+        },
+        {
+          "level": 5,
+          "name": "False Vision",
+          "slug": "false-vision"
+        },
+        {
+          "level": 6,
+          "name": "Mislead",
+          "slug": "mislead"
+        },
+        {
+          "level": 7,
+          "name": "Screen",
+          "slug": "screen"
+        },
+        {
+          "level": 8,
+          "name": "Polymorph Any Object",
+          "slug": "polymorph-any-object"
+        },
+        {
+          "level": 9,
+          "name": "Time Stop",
+          "slug": "time-stop"
+        }
+      ]
+    },
+    {
+      "description": "Add +1 to the save DC of any compulsion spell you cast.",
+      "name": "Tyranny",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Command",
+          "slug": "command"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall",
+          "slug": "enthrall"
+        },
+        {
+          "level": 3,
+          "name": "Discern Lies",
+          "slug": "discern-lies"
+        },
+        {
+          "level": 4,
+          "name": "Fear",
+          "slug": "fear"
+        },
+        {
+          "level": 5,
+          "name": "Command, Greater",
+          "slug": "greater-command"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest",
+          "slug": "geas-quest"
+        },
+        {
+          "level": 7,
+          "name": "Bigby's Grasping Hand",
+          "slug": "grasping-hand"
+        },
+        {
+          "level": 8,
+          "name": "Charm Monster, Mass",
+          "slug": "mass-charm-monster"
+        },
+        {
+          "level": 9,
+          "name": "Dominate Monster",
+          "slug": "dominate-monster"
+        }
+      ]
+    },
+    {
+      "description": "You gain Extra Turning as a bonus feat.",
+      "name": "Undeath",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Detect Undead",
+          "slug": "detect-undead"
+        },
+        {
+          "level": 2,
+          "name": "Desecrate",
+          "slug": "desecrate"
+        },
+        {
+          "level": 3,
+          "name": "Animate Dead",
+          "slug": "animate-dead"
+        },
+        {
+          "level": 4,
+          "name": "Death Ward",
+          "slug": "death-ward"
+        },
+        {
+          "level": 5,
+          "name": "Circle of Death",
+          "slug": "circle-of-death"
+        },
+        {
+          "level": 6,
+          "name": "Create Undead",
+          "slug": "create-undead"
+        },
+        {
+          "level": 7,
+          "name": "Control Undead",
+          "slug": "control-undead"
+        },
+        {
+          "level": 8,
+          "name": "Create Greater Undead",
+          "slug": "create-greater-undead"
+        },
+        {
+          "level": 9,
+          "name": "Energy Drain",
+          "slug": "energy-drain"
+        }
+      ]
+    },
+    {
+      "description": "You gain the Blind-fight feat.",
+      "name": "Vile Darkness",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Darkvision",
+          "slug": "darkvision"
+        },
+        {
+          "level": 2,
+          "name": "Darkbolt",
+          "slug": "DARKBOLT"
+        },
+        {
+          "level": 3,
+          "name": "Deeper Darkness",
+          "slug": "deeper-darkness"
+        },
+        {
+          "level": 4,
+          "name": "Damning Darkness",
+          "slug": "DAMNING DARKNESS"
+        },
+        {
+          "level": 6,
+          "name": "Wall of Force",
+          "slug": "wall-of-force"
+        },
+        {
+          "level": 7,
+          "name": "Shadow Walk",
+          "slug": "shadow-walk"
+        },
+        {
+          "level": 8,
+          "name": "Utterdark",
+          "slug": "UTTERDARK"
+        },
+        {
+          "level": 9,
+          "name": "Screen",
+          "slug": "screen"
+        }
+      ]
+    },
+    {
+      "description": "Free Martial Weapon Proficiency with deity's favored weapon (if necessary) and Weapon Focus with the deity's favored weapon.",
+      "name": "War",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Magic Weapon",
+          "slug": "magic-weapon"
+        },
+        {
+          "level": 2,
+          "name": "Spiritual Weapon",
+          "slug": "spiritual-weapon"
+        },
+        {
+          "level": 3,
+          "name": "Magic Vestment",
+          "slug": "magic-vestment"
+        },
+        {
+          "level": 4,
+          "name": "Divine Power",
+          "slug": "divine-power"
+        },
+        {
+          "level": 5,
+          "name": "Flame Strike",
+          "slug": "flame-strike"
+        },
+        {
+          "level": 6,
+          "name": "Blade Barrier",
+          "slug": "blade-barrier"
+        },
+        {
+          "level": 7,
+          "name": "Power Word Blind",
+          "slug": "power-word-blind"
+        },
+        {
+          "level": 8,
+          "name": "Power Word Stun",
+          "slug": "power-word-stun"
+        },
+        {
+          "level": 9,
+          "name": "Power Word Kill",
+          "slug": "power-word-kill"
+        }
+      ]
+    },
+    {
+      "description": "Turn or destroy fire creatures as a good cleric turns undead. Rebuke, command, or bolster water creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability.",
+      "name": "Water",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Obscuring Mist",
+          "slug": "obscuring-mist"
+        },
+        {
+          "level": 2,
+          "name": "Fog Cloud",
+          "slug": "fog-cloud"
+        },
+        {
+          "level": 3,
+          "name": "Water Breathing",
+          "slug": "water-breathing"
+        },
+        {
+          "level": 4,
+          "name": "Control Water",
+          "slug": "control-water"
+        },
+        {
+          "level": 5,
+          "name": "Ice Storm",
+          "slug": "ice-storm"
+        },
+        {
+          "level": 6,
+          "name": "Cone of Cold",
+          "slug": "cone-of-cold"
+        },
+        {
+          "level": 7,
+          "name": "Acid Fog",
+          "slug": "acid-fog"
+        },
+        {
+          "level": 8,
+          "name": "Horrid Wilting",
+          "slug": "horrid-wilting"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm",
+          "slug": "elemental-swarm"
+        }
+      ]
+    },
+    {
+      "description": "Add Appraise to your list of cleric class skills. You gain Skill Focus (Appraise) as a bonus feat.",
+      "name": "Wealth",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Alarm",
+          "slug": "alarm"
+        },
+        {
+          "level": 2,
+          "name": "Obscure Object",
+          "slug": "obscure-object"
+        },
+        {
+          "level": 3,
+          "name": "Glyph of Warding",
+          "slug": "glyph-of-warding"
+        },
+        {
+          "level": 4,
+          "name": "Detect Scrying",
+          "slug": "detect-scrying"
+        },
+        {
+          "level": 5,
+          "name": "Leomund's Secret Chest",
+          "slug": "secret-chest"
+        },
+        {
+          "level": 6,
+          "name": "Forbiddance",
+          "slug": "forbiddance"
+        },
+        {
+          "level": 7,
+          "name": "Sequester",
+          "slug": "sequester"
+        },
+        {
+          "level": 8,
+          "name": "Discern Location",
+          "slug": "discern-location"
+        },
+        {
+          "level": 9,
+          "name": "Antipathy",
+          "slug": "antipathy"
+        }
+      ]
+    },
+    {
+      "description": "Inclement weather has less of an effect on you. Rain and snow don't penalize your Spot and Search checks. You can move through snow-covered and icy terrain at your normal movement. Wind effects, whether natural or magical, affect you as if you were one size category larger.",
+      "name": "Weather",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Obscuring Mist",
+          "slug": "obscuring-mist"
+        },
+        {
+          "level": 2,
+          "name": "Fog Cloud",
+          "slug": "fog-cloud"
+        },
+        {
+          "level": 3,
+          "name": "Call Lightning",
+          "slug": "call-lightning"
+        },
+        {
+          "level": 4,
+          "name": "Sleet Storm",
+          "slug": "sleet-storm"
+        },
+        {
+          "level": 5,
+          "name": "Call Lightning Storm",
+          "slug": "call-lightning-storm"
+        },
+        {
+          "level": 6,
+          "name": "Control Winds",
+          "slug": "control-winds"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather",
+          "slug": "control-weather"
+        },
+        {
+          "level": 8,
+          "name": "Whirlwind",
+          "slug": "whirlwind"
+        },
+        {
+          "level": 9,
+          "name": "Storm of Vengeance",
+          "slug": "storm-of-vengeance"
+        }
+      ]
+    },
+    {
+      "description": "During the winter season, you gain a +2 sacred bonus on all Wisdom-based skill checks.",
+      "name": "Winter",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Snowsight",
+          "slug": "SNOWSIGHT"
+        },
+        {
+          "level": 2,
+          "name": "Snow Walk",
+          "slug": "SNOW WALK"
+        },
+        {
+          "level": 3,
+          "name": "Winter's Embrace",
+          "slug": "WINTER'S EMBRACE"
+        },
+        {
+          "level": 4,
+          "name": "Ice Storm",
+          "slug": "ice-storm"
+        },
+        {
+          "level": 5,
+          "name": "Blizzard",
+          "slug": "BLIZZARD"
+        },
+        {
+          "level": 6,
+          "name": "Death Hail",
+          "slug": "DEATH HAIL"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather",
+          "slug": "control-weather"
+        },
+        {
+          "level": 8,
+          "name": "Summon Giants (Frost Giants Only)",
+          "slug": "SUMMON GIANTS"
+        },
+        {
+          "level": 9,
+          "name": "Fimbulwinter",
+          "slug": "FIMBULWINTER"
+        }
+      ]
+    },
+    {
+      "description": "Once per day, you may make a free attack of opportunity against any opponent that damages you with a melee attack. This ability does not allow you to make more than one attack of opportunity in a round.",
+      "name": "Wrath",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Doom",
+          "slug": "doom"
+        },
+        {
+          "level": 2,
+          "name": "Energize Potion",
+          "slug": "ENERGIZE POTION"
+        },
+        {
+          "level": 3,
+          "name": "Affliction",
+          "slug": "AFFLICTION"
+        },
+        {
+          "level": 4,
+          "name": "Radiant Shield",
+          "slug": "RADIANT SHIELD"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might",
+          "slug": "righteous-might"
+        },
+        {
+          "level": 6,
+          "name": "Vengeance Halo",
+          "slug": "VENGEANCE HALO"
+        },
+        {
+          "level": 7,
+          "name": "Righteous Smite",
+          "slug": "RIGHTEOUS SMITE"
+        },
+        {
+          "level": 8,
+          "name": "Last Judgment",
+          "slug": "LAST JUDGMENT"
+        },
+        {
+          "level": 9,
+          "name": "Storm of Vengeance",
+          "slug": "storm-of-vengeance"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be chaotic evil. Deities: Blibdoolpoolp (kuo-toa), Diirinka (derro), Great Mother (beholders), Hruggek (bugbears), Lolth (drow), Merrshaulk (yuan-ti). Once per day as a free action, you may channel the furious power of the demons. This power grants you a +4 bonus to Strength but also gives you a -2 penalty to Armor Class. The effect lasts for 5 rounds and cannot be ended prematurely. This is a supernatural ability. Add Intimidate to your list of cleric class skills.",
+      "name": "The Abyss",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Align Weapon",
+          "slug": "Align Weapon"
+        },
+        {
+          "level": 1,
+          "name": "Cause Fear",
+          "slug": "Cause Fear"
+        },
+        {
+          "level": 2,
+          "name": "Bull's Strength",
+          "slug": "Bull's Strength"
+        },
+        {
+          "level": 2,
+          "name": "Death Knell",
+          "slug": "Death Knell"
+        },
+        {
+          "level": 3,
+          "name": "Babau Slime",
+          "slug": "Babau Slime"
+        },
+        {
+          "level": 3,
+          "name": "Summon Monster III",
+          "slug": "Summon Monster III"
+        },
+        {
+          "level": 4,
+          "name": "Balor Nimbus",
+          "slug": "Balor Nimbus"
+        },
+        {
+          "level": 4,
+          "name": "Poison",
+          "slug": "Poison"
+        },
+        {
+          "level": 5,
+          "name": "Slay Living",
+          "slug": "Slay Living"
+        },
+        {
+          "level": 5,
+          "name": "Summon Monster V",
+          "slug": "Summon Monster V"
+        },
+        {
+          "level": 6,
+          "name": "Bull's Strength, Mass",
+          "slug": "Bull's Strength, Mass"
+        },
+        {
+          "level": 6,
+          "name": "Harm",
+          "slug": "Harm"
+        },
+        {
+          "level": 7,
+          "name": "Destruction",
+          "slug": "Destruction"
+        },
+        {
+          "level": 7,
+          "name": "Summon Monster VII",
+          "slug": "Summon Monster VII"
+        },
+        {
+          "level": 8,
+          "name": "Finger of Death",
+          "slug": "Finger of Death"
+        },
+        {
+          "level": 8,
+          "name": "Bodak's Glare",
+          "slug": "Bodak's Glare"
+        },
+        {
+          "level": 9,
+          "name": "Implosion",
+          "slug": "Implosion"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be chaotic good. Deities: Corellon Larethian. Once per day as a free action, you can channel the glory of the eladrin to grant yourself a morale bonus on weapon damage rolls and saves against charm and fear effects. This bonus is equal to your Charisma bonus (if any) and lasts for 1 minute. This is a supernatural ability. Add Survival to your list of cleric class skills.",
+      "name": "Arborea",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Endure Elements",
+          "slug": "Endure Elements"
+        },
+        {
+          "level": 1,
+          "name": "Longstrider",
+          "slug": "Longstrider"
+        },
+        {
+          "level": 2,
+          "name": "Aid",
+          "slug": "Aid"
+        },
+        {
+          "level": 2,
+          "name": "Eagle's Splendor",
+          "slug": "Eagle's Splendor"
+        },
+        {
+          "level": 3,
+          "name": "Heroism",
+          "slug": "Heroism"
+        },
+        {
+          "level": 3,
+          "name": "Summon Monster III",
+          "slug": "Summon Monster III"
+        },
+        {
+          "level": 4,
+          "name": "Neutralize Poison",
+          "slug": "Neutralize Poison"
+        },
+        {
+          "level": 4,
+          "name": "Opalescent Glare",
+          "slug": "Opalescent Glare"
+        },
+        {
+          "level": 5,
+          "name": "Break Enchantment",
+          "slug": "Break Enchantment"
+        },
+        {
+          "level": 5,
+          "name": "Summon Monster V",
+          "slug": "Summon Monster V"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast",
+          "slug": "Heroes' Feast"
+        },
+        {
+          "level": 6,
+          "name": "Eagle's Splendor, Mass",
+          "slug": "Eagle's Splendor, Mass"
+        },
+        {
+          "level": 7,
+          "name": "Spell Turning",
+          "slug": "Spell Turning"
+        },
+        {
+          "level": 7,
+          "name": "Summon Monster VII",
+          "slug": "Summon Monster VII"
+        },
+        {
+          "level": 8,
+          "name": "Heroism, Greater",
+          "slug": "Heroism, Greater"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank",
+          "slug": "Mind Blank"
+        },
+        {
+          "level": 9,
+          "name": "Freedom",
+          "slug": "Freedom"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be lawful evil. Deities: Kurtulmak (kobolds), Sekolah (sahuagin), Tiamat (evil dragons). You have the supernatural ability to see perfectly in darkness of any kind, even that created by a deeper darkness spell. Add Bluff to your list of cleric class skills.",
+      "name": "Baator",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Bane",
+          "slug": "Bane"
+        },
+        {
+          "level": 1,
+          "name": "Disguise Self",
+          "slug": "Disguise Self"
+        },
+        {
+          "level": 2,
+          "name": "Darkness",
+          "slug": "Darkness"
+        },
+        {
+          "level": 2,
+          "name": "Fox's Cunning",
+          "slug": "Fox's Cunning"
+        },
+        {
+          "level": 3,
+          "name": "Detect Thoughts",
+          "slug": "Detect Thoughts"
+        },
+        {
+          "level": 3,
+          "name": "Summon Monster III",
+          "slug": "Summon Monster III"
+        },
+        {
+          "level": 4,
+          "name": "Deeper Darkness",
+          "slug": "Deeper Darkness"
+        },
+        {
+          "level": 4,
+          "name": "Suggestion",
+          "slug": "Suggestion"
+        },
+        {
+          "level": 5,
+          "name": "Spell Resistance",
+          "slug": "Spell Resistance"
+        },
+        {
+          "level": 5,
+          "name": "Summon Monster V",
+          "slug": "Summon Monster V"
+        },
+        {
+          "level": 6,
+          "name": "Dominate Person",
+          "slug": "Dominate Person"
+        },
+        {
+          "level": 6,
+          "name": "Fox's Cunning, Mass",
+          "slug": "Fox's Cunning, Mass"
+        },
+        {
+          "level": 7,
+          "name": "Repulsion",
+          "slug": "Repulsion"
+        },
+        {
+          "level": 7,
+          "name": "Summon Monster VII",
+          "slug": "Summon Monster VII"
+        },
+        {
+          "level": 8,
+          "name": "Demand",
+          "slug": "Demand"
+        },
+        {
+          "level": 8,
+          "name": "Spell Turning",
+          "slug": "Spell Turning"
+        },
+        {
+          "level": 9,
+          "name": "Imprisonment",
+          "slug": "Imprisonment"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be lawful good. Deities: Bahamut (good dragons), Heironeous, Moradin, Yondalla. Once per day, as a free action, you can generate an aura of menace similar to that of the archons. The aura lasts for 1 minute. Any hostile enemy within a 20foot radius of you must succeed on a Will save (DC 10 + 1/2 your cleric level + your Cha modifier) to resist its effects. Those who fail take a -2 penalty on attack rolls, Armor Class, and saves for 24 hours or until they successfully hit you. A creature that has resisted or broken the effect cannot be affected again by your aura for 24 hours. This is a supernatural ability. Add Sense Motive to your list of cleric class skills.",
+      "name": "Celestia",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Light of Lunia",
+          "slug": "Light of Lunia"
+        },
+        {
+          "level": 1,
+          "name": "Shield of Faith",
+          "slug": "Shield of Faith"
+        },
+        {
+          "level": 2,
+          "name": "Bear's Endurance",
+          "slug": "Bear's Endurance"
+        },
+        {
+          "level": 2,
+          "name": "Shield Other",
+          "slug": "Shield Other"
+        },
+        {
+          "level": 3,
+          "name": "Magic Vestment",
+          "slug": "Magic Vestment"
+        },
+        {
+          "level": 3,
+          "name": "Summon Monster III",
+          "slug": "Summon Monster III"
+        },
+        {
+          "level": 4,
+          "name": "Divine Power",
+          "slug": "Divine Power"
+        },
+        {
+          "level": 4,
+          "name": "Magic Weapon, Greater",
+          "slug": "Magic Weapon, Greater"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might",
+          "slug": "Righteous Might"
+        },
+        {
+          "level": 5,
+          "name": "Summon Monster V",
+          "slug": "Summon Monster V"
+        },
+        {
+          "level": 6,
+          "name": "Blade Barrier",
+          "slug": "Blade Barrier"
+        },
+        {
+          "level": 6,
+          "name": "Bear's Endurance, Mass",
+          "slug": "Bear's Endurance, Mass"
+        },
+        {
+          "level": 7,
+          "name": "Regenerate",
+          "slug": "Regenerate"
+        },
+        {
+          "level": 7,
+          "name": "Summon Monster VII",
+          "slug": "Summon Monster VII"
+        },
+        {
+          "level": 8,
+          "name": "Power Word Stun",
+          "slug": "Power Word Stun"
+        },
+        {
+          "level": 8,
+          "name": "Shield of Law",
+          "slug": "Shield of Law"
+        },
+        {
+          "level": 9,
+          "name": "Foresight",
+          "slug": "Foresight"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX",
+          "slug": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be neutral good. Deities: Pelor. You gain the supernatural ability to smite evil with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as good-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day.",
+      "name": "Elysium",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Charm Person",
+          "slug": "Charm Person"
+        },
+        {
+          "level": 1,
+          "name": "Protection from Evil",
+          "slug": "Protection from Evil"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall",
+          "slug": "Enthrall"
+        },
+        {
+          "level": 2,
+          "name": "Planar Tolerance",
+          "slug": "Planar Tolerance"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Evil",
+          "slug": "Magic Circle against Evil"
+        },
+        {
+          "level": 3,
+          "name": "Mantle of Good",
+          "slug": "Mantle of Good"
+        },
+        {
+          "level": 4,
+          "name": "Charm Monster",
+          "slug": "Charm Monster"
+        },
+        {
+          "level": 4,
+          "name": "Holy Smite",
+          "slug": "Holy Smite"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Evil",
+          "slug": "Dispel Evil"
+        },
+        {
+          "level": 5,
+          "name": "Cure Light Wounds, Mass",
+          "slug": "Cure Light Wounds, Mass"
+        },
+        {
+          "level": 6,
+          "name": "Find the Path",
+          "slug": "Find the Path"
+        },
+        {
+          "level": 6,
+          "name": "Mind Fog",
+          "slug": "Mind Fog"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather",
+          "slug": "Control Weather"
+        },
+        {
+          "level": 7,
+          "name": "Holy Word",
+          "slug": "Holy Word"
+        },
+        {
+          "level": 8,
+          "name": "Holy Aura",
+          "slug": "Holy Aura"
+        },
+        {
+          "level": 8,
+          "name": "Sunburst",
+          "slug": "Sunburst"
+        },
+        {
+          "level": 9,
+          "name": "Heal, Mass",
+          "slug": "Heal, Mass"
+        },
+        {
+          "level": 9,
+          "name": "Moment of Prescience",
+          "slug": "Moment of Prescience"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be neutral evil. Deities: None. You gain the supernatural ability to smite good with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as evil-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day.",
+      "name": "Hades",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Doom",
+          "slug": "Doom"
+        },
+        {
+          "level": 1,
+          "name": "Protection from Good",
+          "slug": "Protection from Good"
+        },
+        {
+          "level": 2,
+          "name": "Resist Planar Alignment",
+          "slug": "Resist Planar Alignment"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Good",
+          "slug": "Magic Circle against Good"
+        },
+        {
+          "level": 3,
+          "name": "Mantle of Evil",
+          "slug": "Mantle of Evil"
+        },
+        {
+          "level": 4,
+          "name": "Contagion",
+          "slug": "Contagion"
+        },
+        {
+          "level": 4,
+          "name": "Unholy Blight",
+          "slug": "Unholy Blight"
+        },
+        {
+          "level": 5,
+          "name": "Crushing Despair",
+          "slug": "Crushing Despair"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Good",
+          "slug": "Dispel Good"
+        },
+        {
+          "level": 6,
+          "name": "Mind Fog",
+          "slug": "Mind Fog"
+        },
+        {
+          "level": 6,
+          "name": "Waves of Fatigue",
+          "slug": "Waves of Fatigue"
+        },
+        {
+          "level": 7,
+          "name": "Blasphemy",
+          "slug": "Blasphemy"
+        },
+        {
+          "level": 7,
+          "name": "Plane Shift",
+          "slug": "Plane Shift"
+        },
+        {
+          "level": 8,
+          "name": "Unholy Aura",
+          "slug": "Unholy Aura"
+        },
+        {
+          "level": 8,
+          "name": "Waves of Exhaustion",
+          "slug": "Waves of Exhaustion"
+        },
+        {
+          "level": 9,
+          "name": "Energy Drain",
+          "slug": "Energy Drain"
+        },
+        {
+          "level": 9,
+          "name": "Gate",
+          "slug": "Gate"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be chaotic neutral. Deities: None. You gain the supernatural ability to smite law with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as chaotic-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day.",
+      "name": "Limbo",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Confusion, Lesser",
+          "slug": "Lesser Confusion"
+        },
+        {
+          "level": 1,
+          "name": "Protection from Law",
+          "slug": "Protection from Law"
+        },
+        {
+          "level": 2,
+          "name": "Entropic Shield",
+          "slug": "Entropic Shield"
+        },
+        {
+          "level": 2,
+          "name": "Resist Planar Alignment",
+          "slug": "Resist Planar Alignment"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Law",
+          "slug": "Magic Circle against Law"
+        },
+        {
+          "level": 3,
+          "name": "Mantle of Chaos",
+          "slug": "Mantle of Chaos"
+        },
+        {
+          "level": 4,
+          "name": "Chaos Hammer",
+          "slug": "Chaos Hammer"
+        },
+        {
+          "level": 4,
+          "name": "Perinarch",
+          "slug": "Perinarch"
+        },
+        {
+          "level": 5,
+          "name": "Baleful Polymorph",
+          "slug": "Baleful Polymorph"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Law",
+          "slug": "Dispel Law"
+        },
+        {
+          "level": 6,
+          "name": "Animate Objects",
+          "slug": "Animate Objects"
+        },
+        {
+          "level": 6,
+          "name": "Insanity",
+          "slug": "Insanity"
+        },
+        {
+          "level": 7,
+          "name": "Song of Discord",
+          "slug": "Song of Discord"
+        },
+        {
+          "level": 7,
+          "name": "Word of Chaos",
+          "slug": "Word of Chaos"
+        },
+        {
+          "level": 8,
+          "name": "Cloak of Chaos",
+          "slug": "Cloak of Chaos"
+        },
+        {
+          "level": 8,
+          "name": "Otto's Irresistible Dance",
+          "slug": "Otto's Irresistible Dance"
+        },
+        {
+          "level": 9,
+          "name": "Perinarch, Planar",
+          "slug": "Perinarch, Planar"
+        },
+        {
+          "level": 9,
+          "name": "Shapechange",
+          "slug": "Shapechange"
+        }
+      ]
+    },
+    {
+      "description": "Requirement: Must be lawful neutral. Deities: None. You gain the supernatural ability to smite chaos with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as lawful-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day.",
+      "name": "Mechanus",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Command",
+          "slug": "Command"
+        },
+        {
+          "level": 1,
+          "name": "Protection from Chaos",
+          "slug": "Protection from Chaos"
+        },
+        {
+          "level": 2,
+          "name": "Calm Emotions",
+          "slug": "Calm Emotions"
+        },
+        {
+          "level": 2,
+          "name": "Mechanus Mind",
+          "slug": "Mechanus Mind"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle against Chaos",
+          "slug": "Magic Circle against Chaos"
+        },
+        {
+          "level": 3,
+          "name": "Mantle of Law",
+          "slug": "Mantle of Law"
+        },
+        {
+          "level": 4,
+          "name": "Discern Lies",
+          "slug": "Discern Lies"
+        },
+        {
+          "level": 4,
+          "name": "Order's Wrath",
+          "slug": "Order's Wrath"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Chaos",
+          "slug": "Dispel Chaos"
+        },
+        {
+          "level": 5,
+          "name": "Mark of Justice",
+          "slug": "Mark of Justice"
+        },
+        {
+          "level": 6,
+          "name": "Hold Monster",
+          "slug": "Hold Monster"
+        },
+        {
+          "level": 6,
+          "name": "Wall of Gears",
+          "slug": "Wall of Gears"
+        },
+        {
+          "level": 7,
+          "name": "Dictum",
+          "slug": "Dictum"
+        },
+        {
+          "level": 7,
+          "name": "Hold Person, Mass",
+          "slug": "Hold Person, Mass"
+        },
+        {
+          "level": 8,
+          "name": "Iron Body",
+          "slug": "Iron Body"
+        },
+        {
+          "level": 8,
+          "name": "Shield of Law",
+          "slug": "Shield of Law"
+        },
+        {
+          "level": 9,
+          "name": "Call Marut",
+          "slug": "Call Marut"
+        },
+        {
+          "level": 9,
+          "name": "Mordenkainen's Disjunction",
+          "slug": "Mordenkainen's Disjunction"
+        }
+      ]
+    }
+  ]
+}

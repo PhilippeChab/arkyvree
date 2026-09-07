@@ -1,0 +1,373 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:27:08.057Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/thayan-knight/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          3
+        ],
+        "target": "aptitudes.fighterbonusfeat.allowed"
+      }
+    ],
+    "bab": "good",
+    "featNameMap": {
+      "ironwill": "Iron Will",
+      "weaponfocuslongsword": "Weapon Focus (longsword)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Horrors Of Thay (+2 Fear, +1 Charm)"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Zulkir's Favor"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Zulkir's Defender"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Fighter Feat"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Horrors Of Thay (+4 Fear, +2 Charm)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Final Stand"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Zulkir's Champion"
+      }
+    ],
+    "hd": 10,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.intimidate.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ironwill.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocuslongsword.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Human",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Thayan Knight Class Feature",
+    "features": {
+      "Fighter Feat": {
+        "description": "Upon reaching 3rd level, the knight selects a single feat from the fighter bonus feat list, with the exception of Weapon Specialization.",
+        "level": 3,
+        "seedName": "Fighter Feat (Thayan Knight)"
+      },
+      "Final Stand": {
+        "description": "Starting at 4th level, once per day as a standard action, the knight can rally nearby allies. All allies within 10 feet receive 2d10 temporary hit points. The total number of creatures that can benefit equals the knight's class level plus her Charisma modifier, and the effect lasts for the same number of rounds.",
+        "level": 4,
+        "seedName": "Final Stand (Thayan Knight)"
+      },
+      "Horrors of Thay": {
+        "description": "Years of witnessing the brutality prevalent in her homeland grant the knight a +2 morale bonus on saves against fear and a +1 morale bonus on saves against charm effects. These bonuses rise to +4 and +2, respectively, at 4th level. However, these bonuses do not function against effects originating from Red Wizards.",
+        "level": 1,
+        "seedName": "Horrors of Thay (Thayan Knight)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Thayan knights become proficient with tower shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.towershieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Thayan Knight)"
+      },
+      "Zulkir's Champion": {
+        "description": "At 5th level, the knight receives a prominent magical tattoo across her face as a symbol of her dedication to safeguarding the Red Wizards. Once per day, she may apply a +2 luck bonus to a single saving throw, even after the die has been rolled and all other modifiers have been calculated. While the tattoo is exposed, the knight receives a +4 morale bonus on Intimidate checks as an extraordinary ability.",
+        "level": 5,
+        "seedName": "Zulkir's Champion (Thayan Knight)"
+      },
+      "Zulkir's Defender": {
+        "description": "From 2nd level onward, the knight gains a +2 morale bonus on attack rolls and damage rolls against any creature that has attacked her or that she has witnessed attacking a Red Wizard.",
+        "level": 2,
+        "seedName": "Zulkir's Defender (Thayan Knight)"
+      },
+      "Zulkir's Favor": {
+        "description": "At 1st level, the knight endures an extensive and agonizing tattooing ceremony. The resulting magical tattoo, inscribed on either the back or forehead, grants a +2 resistance bonus on Reflex saves. This tattoo also identifies the knight as a sworn servant of the Red Wizards. The knight automatically fails any saving throw against mind-affecting spells cast by a Red Wizard. Whenever the tattoo is visible, the knight gains a +2 morale bonus on Intimidate checks as an extraordinary ability.",
+        "level": 1,
+        "seedName": "Zulkir's Favor (Thayan Knight)"
+      }
+    },
+    "occurrenceMap": {
+      "Fighter Feat": "Fighter Feat",
+      "Final Stand": "Final Stand",
+      "Horrors Of Thay (+2 Fear, +1 Charm)": "Horrors of Thay",
+      "Horrors Of Thay (+4 Fear, +2 Charm)": "Horrors of Thay",
+      "Zulkir's Champion": "Zulkir's Champion",
+      "Zulkir's Defender": "Zulkir's Defender",
+      "Zulkir's Favor": "Zulkir's Favor"
+    },
+    "overrides": {
+      "description": "Thayan knights are skilled swordfighters with knowledge of the arcane arts who serve as devoted protectors of the Red Wizards.",
+      "features": {
+        "Fighter Feat": {
+          "description": "Upon reaching 3rd level, the knight selects a single feat from the fighter bonus feat list, with the exception of Weapon Specialization."
+        },
+        "Final Stand": {
+          "description": "Starting at 4th level, once per day as a standard action, the knight can rally nearby allies. All allies within 10 feet receive 2d10 temporary hit points. The total number of creatures that can benefit equals the knight's class level plus her Charisma modifier, and the effect lasts for the same number of rounds."
+        },
+        "Horrors of Thay": {
+          "description": "Years of witnessing the brutality prevalent in her homeland grant the knight a +2 morale bonus on saves against fear and a +1 morale bonus on saves against charm effects. These bonuses rise to +4 and +2, respectively, at 4th level. However, these bonuses do not function against effects originating from Red Wizards."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Thayan knights become proficient with tower shields."
+        },
+        "Zulkir's Champion": {
+          "description": "At 5th level, the knight receives a prominent magical tattoo across her face as a symbol of her dedication to safeguarding the Red Wizards. Once per day, she may apply a +2 luck bonus to a single saving throw, even after the die has been rolled and all other modifiers have been calculated. While the tattoo is exposed, the knight receives a +4 morale bonus on Intimidate checks as an extraordinary ability."
+        },
+        "Zulkir's Defender": {
+          "description": "From 2nd level onward, the knight gains a +2 morale bonus on attack rolls and damage rolls against any creature that has attacked her or that she has witnessed attacking a Red Wizard."
+        },
+        "Zulkir's Favor": {
+          "description": "At 1st level, the knight endures an extensive and agonizing tattooing ceremony. The resulting magical tattoo, inscribed on either the back or forehead, grants a +2 resistance bonus on Reflex saves. This tattoo also identifies the knight as a sworn servant of the Red Wizards. The knight automatically fails any saving throw against mind-affecting spells cast by a Red Wizard. Whenever the tattoo is visible, the knight gains a +2 morale bonus on Intimidate checks as an extraordinary ability."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Thayan knights gain proficiency with tower shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Because of long exposure to the cruelty of her homeland, a Thayan knight gains a +2 morale bonus on saving throws against fear effects and a +1 morale bonus on saving throws against charm effects. At 4th level, these bonuses increase to +4 and +2, respectively. None of these bonuses apply against attacks from Red Wizards.",
+        "name": "Horrors of Thay",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 1st level, a Thayan knight undergoes a long and painful tattooing ritual. A magic tattoo, placed either on the back or the forehead, provides a +2 resistance bonus on Reflex saves. The tattoo also marks the knight as someone loyal to the Red Wizards. The knight automatically fails any saving throw against a mind-affecting spell cast by a Red Wizard. When the tattoo is visible, the knight gains a +2 morale bonus on Intimidate checks as an extraordinary ability.",
+        "name": "Zulkir's Favor",
+        "type": "(Su)"
+      },
+      {
+        "description": "A Thayan knight of 2nd level or higher gains a +2 morale bonus on attack rolls and damage rolls against any creature that attacks her or that she has previously seen attack a Red Wizard.",
+        "name": "Zulkir's Defender",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a Thayan knight may choose any one feat except Weapon Specialization from the fighter bonus feat list.",
+        "name": "Fighter Feat"
+      },
+      {
+        "description": "Once per day as a standard action, a Thayan knight of 4th level or higher can inspire her troops. Allies within 10 feet of the knight gain 2d10 temporary hit points. This ability affects a number of creatures equal to the knight's class level + the knight's Charisma modifier and lasts the same number of rounds.",
+        "name": "Final Stand",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 5th-level Thayan knight receives a large magic tattoo across her face, signifying her devotion to the protection of the Red Wizards. Once per day, she can add a +2 luck bonus on a single saving throw. This bonus can be taken after the die is rolled and after other modifiers have been applied to the roll. When the tattoo is visible, the knight gains a +4 morale bonus on Intimidate checks as an extraordinary ability.",
+        "name": "Zulkir's Champion",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Gather Information",
+      "Handle Animal",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Local)",
+      "Profession",
+      "Ride",
+      "Spot",
+      "Swim"
+    ],
+    "description": "Thayan knights have mastered the art of swordplay, are familiar with magic, and are loyal to none but the tattooed mages.",
+    "hitDie": "d10",
+    "name": "Thayan Knight",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nongood",
+        "bab": 5,
+        "feats": [
+          "Iron Will",
+          "Weapon Focus (longsword)"
+        ],
+        "skills": [
+          {
+            "name": "Intimidate",
+            "ranks": 2
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 2
+          }
+        ],
+        "special": [
+          "Race: Human",
+          "Sworn allegiance to the Red Wizards of Thay"
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Any nongood Race: Human Skills: Intimidate 2 ranks, Knowledge (arcana) 2 ranks, Knowledge (local) (Thay) 2 ranks Feats: Iron Will, Weapon Focus (longsword) Special: Sworn allegiance to the Red Wizards of Thay"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Horrors of Thay (+2 fear, +1 charm)",
+          "zulkir's favor"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Zulkir's defender"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Fighter feat"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Horrors of Thay (+4 fear, +2 charm)",
+          "final stand"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Zulkir's champion"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

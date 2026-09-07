@@ -1,0 +1,403 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T18:43:38.361Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/war-chanter/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "combatexpertise": "Combat Expertise",
+      "weaponfocus": "Weapon Focus"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Inspire Toughness"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "War Chanter Music"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Inspire Recklessness"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Combine Songs"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Inspire Awe"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Singing Shout"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Inspire Legion"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatexpertise.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "equal",
+        "target": "feats.inspirecourage.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "War Chanter Class Feature",
+    "features": {
+      "Combine Songs": {
+        "description": "Starting at 5th level, a war chanter who has at least 12 ranks in any Perform skill can maintain two bardic music or war chanter music effects simultaneously, granting the advantages of both at once. Standard bonus type stacking limitations still apply.",
+        "level": 5,
+        "seedName": "Combine Songs (War Chanter)"
+      },
+      "Inspire Awe": {
+        "description": "At 7th level or higher, a war chanter who possesses 15 or more ranks in any Perform skill can fill enemies with dread through her performance. Each foe within 60 feet who can hear the war chanter must succeed on a Will save (DC 10 + the war chanter's class level + her Charisma modifier) or be affected. The intensity of the fear effect is determined by comparing the war chanter's Hit Dice (character level) to the target's Hit Dice; the greater the gap, the more severe the result. This effect persists for as long as the enemy can hear the performance and continues for 1 additional round after it ends. If a foe's ability to hear the song is broken and then restored, that foe must attempt a new saving throw.",
+        "level": 7,
+        "seedName": "Inspire Awe (War Chanter)"
+      },
+      "Inspire Legion": {
+        "description": "Upon reaching 10th level, a war chanter with 18 or more ranks in any Perform skill can rally her companions into a unified fighting force. Each ally within 60 feet who can hear the war chanter at the moment the song begins is affected; anyone whose hearing is subsequently interrupted or who moves beyond 60 feet cannot rejoin the effect during that performance. The effect continues as long as affected allies remain in range and can hear the war chanter. When the song starts, the highest base attack bonus among all affected characters is identified. Every affected character uses either that base attack bonus or the war chanter's character level, whichever applies, as their own base attack bonus for the duration. Additionally, all affected characters receive a +2 competence bonus on damage rolls.",
+        "level": 10,
+        "seedName": "Inspire Legion (War Chanter)"
+      },
+      "Inspire Recklessness": {
+        "description": "Beginning at 3rd level, a war chanter with 12 or more ranks in any Perform skill can use song or spoken verse to instill a fierce but risky aggression in a single ally within 60 feet, or in herself. The effect lasts while the target can hear the war chanter and persists for 5 rounds afterward. The affected character gains the option to voluntarily reduce her Armor Class by any amount up to her base attack bonus and apply that same value as a morale bonus to all melee attack rolls. This choice must be made at the start of her turn each round, before rolling any attacks, and the chosen amount can be zero. Both the AC reduction and the attack bonus remain in effect until the start of her next turn.",
+        "level": 3,
+        "seedName": "Inspire Recklessness (War Chanter)"
+      },
+      "Inspire Toughness": {
+        "description": "A war chanter who has 9 or more ranks in Perform (sing) or Perform (oratory) can bolster her allies with fierce resilience through song or spoken verse. Any ally who can hear the performance is affected for as long as the war chanter continues and for 5 rounds after she stops. Each affected ally gains +2 temporary hit points per class level of the war chanter. From 6th level onward, this ability also confers the benefits of the Diehard feat to all affected allies.",
+        "level": 1,
+        "seedName": "Inspire Toughness (War Chanter)"
+      },
+      "Singing Shout": {
+        "description": "At 8th level or above, a war chanter can unleash a powerful battle cry as a standard action. Every ally within a 60-foot radius who can hear the war chanter, including the war chanter herself, receives a +4 enhancement bonus to Strength. This bonus lasts for a number of rounds equal to half the war chanter's class level.",
+        "level": 8,
+        "seedName": "Singing Shout (War Chanter)"
+      },
+      "War Chanter Music": {
+        "description": "War chanter music operates under the same rules as bardic music. Levels in this class stack with bard levels when calculating the total number of daily uses of either war chanter music or bardic music. However, war chanter levels do not count toward determining which bard songs are available.",
+        "level": 1,
+        "seedName": "War Chanter Music (War Chanter)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (War Chanter)"
+      }
+    },
+    "occurrenceMap": {
+      "Combine Songs": "Combine Songs",
+      "Inspire Awe": "Inspire Awe",
+      "Inspire Legion": "Inspire Legion",
+      "Inspire Recklessness": "Inspire Recklessness",
+      "Inspire Toughness": "Inspire Toughness",
+      "Singing Shout": "Singing Shout",
+      "War Chanter Music": "War Chanter Music"
+    },
+    "overrides": {
+      "description": "The war chanter wields musical power as a weapon on the battlefield, sweeping up allies and enemies alike in the surge of her performance.",
+      "features": {
+        "Combine Songs": {
+          "description": "Starting at 5th level, a war chanter who has at least 12 ranks in any Perform skill can maintain two bardic music or war chanter music effects simultaneously, granting the advantages of both at once. Standard bonus type stacking limitations still apply."
+        },
+        "Inspire Awe": {
+          "description": "At 7th level or higher, a war chanter who possesses 15 or more ranks in any Perform skill can fill enemies with dread through her performance. Each foe within 60 feet who can hear the war chanter must succeed on a Will save (DC 10 + the war chanter's class level + her Charisma modifier) or be affected. The intensity of the fear effect is determined by comparing the war chanter's Hit Dice (character level) to the target's Hit Dice; the greater the gap, the more severe the result. This effect persists for as long as the enemy can hear the performance and continues for 1 additional round after it ends. If a foe's ability to hear the song is broken and then restored, that foe must attempt a new saving throw."
+        },
+        "Inspire Legion": {
+          "description": "Upon reaching 10th level, a war chanter with 18 or more ranks in any Perform skill can rally her companions into a unified fighting force. Each ally within 60 feet who can hear the war chanter at the moment the song begins is affected; anyone whose hearing is subsequently interrupted or who moves beyond 60 feet cannot rejoin the effect during that performance. The effect continues as long as affected allies remain in range and can hear the war chanter. When the song starts, the highest base attack bonus among all affected characters is identified. Every affected character uses either that base attack bonus or the war chanter's character level, whichever applies, as their own base attack bonus for the duration. Additionally, all affected characters receive a +2 competence bonus on damage rolls."
+        },
+        "Inspire Recklessness": {
+          "description": "Beginning at 3rd level, a war chanter with 12 or more ranks in any Perform skill can use song or spoken verse to instill a fierce but risky aggression in a single ally within 60 feet, or in herself. The effect lasts while the target can hear the war chanter and persists for 5 rounds afterward. The affected character gains the option to voluntarily reduce her Armor Class by any amount up to her base attack bonus and apply that same value as a morale bonus to all melee attack rolls. This choice must be made at the start of her turn each round, before rolling any attacks, and the chosen amount can be zero. Both the AC reduction and the attack bonus remain in effect until the start of her next turn."
+        },
+        "Inspire Toughness": {
+          "description": "A war chanter who has 9 or more ranks in Perform (sing) or Perform (oratory) can bolster her allies with fierce resilience through song or spoken verse. Any ally who can hear the performance is affected for as long as the war chanter continues and for 5 rounds after she stops. Each affected ally gains +2 temporary hit points per class level of the war chanter. From 6th level onward, this ability also confers the benefits of the Diehard feat to all affected allies."
+        },
+        "Singing Shout": {
+          "description": "At 8th level or above, a war chanter can unleash a powerful battle cry as a standard action. Every ally within a 60-foot radius who can hear the war chanter, including the war chanter herself, receives a +4 enhancement bonus to Strength. This bonus lasts for a number of rounds equal to half the war chanter's class level."
+        },
+        "War Chanter Music": {
+          "description": "War chanter music operates under the same rules as bardic music. Levels in this class stack with bard levels when calculating the total number of daily uses of either war chanter music or bardic music. However, war chanter levels do not count toward determining which bard songs are available."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "War chanters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A war chanter with 9 or more ranks in Perform (sing) or Perform (oratory) can use her song or poetics to impart a kind of berserk resiliency on her allies (including himself). To be affected, an ally must be able to hear the war chanter sing (or speak). The effect lasts for as long as the ally hears the war chanter sing and for 5 rounds thereafter. An affected ally receives +2 temporary hit points for every class level of the war chanter. At 6th level and higher, a war chanter also grants affected allies the benefit of the Diehard feat when using this ability.",
+        "name": "Inspire Toughness",
+        "type": "(Su)"
+      },
+      {
+        "description": "War chanter music follows the same rules as bardic music. War chanter levels stack with bard levels for the purpose of determining how often a character can use war chanter music or bardic music. War chanter levels do not stack with bard levels for determining which songs a bard has access to.",
+        "name": "War Chanter Music"
+      },
+      {
+        "description": "A War chanter of 3rd level or higher with 12 or more ranks in any Perform skill can use her song or poetics to inspire an often dangerous, but very effective, ferocity in one of her allies within 60 feet (or in himself). The effect lasts for as long as the ally hears the war chanter sing and for 5 rounds thereafter. An affected ally (or the war chanter herself) is inspired to recklessness, gaining the ability to decrease her Armor Class by a number less than or equal to her base attack bonus and add the same number to her melee attack rolls as a morale bonus. On her action, before making any attack rolls in a round, the affected character must choose to subtract a number from her Armor Class and add the same number to all melee attack rolls (this number may be 0). The penalty to Armor Class and the bonus on attack rolls apply until the character's next action.",
+        "name": "Inspire Recklessness",
+        "type": "(Su)"
+      },
+      {
+        "description": "A war chanter of 5th level or higher with 12 or more ranks in any Perform skill can combine two types of bardic music or war chanter music to provide the benefits of both (normal stacking rules for bonus types apply).",
+        "name": "Combine Songs",
+        "type": "(Su)"
+      },
+      {
+        "description": "A war chanter of 7th level or higher with 15 or more ranks in any Perform skill can inspire uneasiness, fear, or even terror in her foes. To be affected, a foe must be within 60 feet of the war chanter and must be able to hear the war chanter. Foes get a Will save (DC 10 + war chanter's class level + war chanter's Cha modifier) to resist the effect. The severity of the effect depends on the difference between the foe's Hit Dice and the war chanter's Hit Dice (character level). Subtract the foe's HD from the war chanter's HD and consult the following table. The effect lasts for as long as the foe can hear the war chanter and 1 round thereafter. If a foe's hearing of the war chanter's song is interrupted, the foe needs to make another saving throw when he hears the war chanter's song again.",
+        "name": "Inspire Awe",
+        "type": "(Su)"
+      },
+      {
+        "description": "When a war chanter of 8th level or higher engages in battle, he often lets out a singing shout as a standard action. All allies (including herself) within a 60-foot radius who can hear the war chanter gain a +4 enhancement bonus to Strength for a number of rounds equal to one-half the class level of the war chanter.",
+        "name": "Singing Shout",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 10th-level war chanter with 18 or more ranks in any Perform skill can unite her allies and make them fight better together. To be affected, an ally must be within 60 feet of the war chanter and must be able to hear the war chanter. Only allies who meet these requirements at the beginning of the song are affected, and an ally whose hearing is interrupted or who moves more than 60 feet away from the war chanter cannot rejoin the same song. The effect lasts as long as the affected characters can hear the war chanter and stay within range. When the war chanter begins singing, determine the best base attack bonus among all the affected characters. All affected characters use this base attack bonus or the war chanter's character level as their base attack bonus for the duration of the effect. All affected characters gain a +2 competence bonus on damage rolls as well.",
+        "name": "Inspire Legion",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Escape Artist",
+      "Gather Information",
+      "Intimidate",
+      "Jump",
+      "Perform",
+      "Profession",
+      "Sense Motive",
+      "Swim"
+    ],
+    "description": "A war chanter's music flows across the battlefield like a raging torrent, catching friends and foes alike in its wake.",
+    "hitDie": "d8",
+    "name": "War Chanter",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonlawful",
+        "bab": 4,
+        "feats": [
+          "Combat Expertise",
+          "Weapon Focus"
+        ],
+        "skills": [
+          {
+            "name": "Perform (sing)",
+            "ranks": 6
+          },
+          {
+            "name": "or Perform (oratory)",
+            "ranks": 6
+          }
+        ],
+        "special": [
+          "Able to use the inspire courage bardic music ability."
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Alignment: Any nonlawful Skills: Perform (sing) 6 ranks or Perform (oratory) 6 ranks Feats: Combat Expertise, Weapon Focus Special: Able to use the inspire courage bardic music ability."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Inspire toughness",
+          "war chanter music"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Inspire recklessness"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Combine songs"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Inspire awe"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Singing shout"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Inspire legion"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

@@ -1,0 +1,407 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:15:55.990Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/mage-of-the-arcane-order/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          5,
+          8
+        ],
+        "target": "aptitudes.mageofthearcaneordernewspell.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "cooperativespell": "Cooperative Spell"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Guild Member"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Spellpool I"
+      },
+      {
+        "levels": [
+          2,
+          9
+        ],
+        "name": "Free Metamagic Feat"
+      },
+      {
+        "levels": [
+          3,
+          6
+        ],
+        "name": "Bonus Language"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Spellpool II"
+      },
+      {
+        "levels": [
+          5,
+          8
+        ],
+        "name": "New Spell"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Spellpool III"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Regent"
+      }
+    ],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.cooperativespell.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.metamagic.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "2",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Mage of the Arcane Order Class Feature",
+    "features": {
+      "Bonus Language": {
+        "description": "At 3rd level and again at 6th level, a guildmage's access to the Order's superb library and resources allows him to learn a new language.",
+        "level": 3,
+        "seedName": "Bonus Language (Mage of the Arcane Order)",
+        "stackable": true
+      },
+      "Free Metamagic Feat": {
+        "description": "",
+        "level": 2,
+        "seedName": "Free Metamagic Feat (Mage of the Arcane Order)",
+        "stackable": true
+      },
+      "Guild Member": {
+        "description": "A ?guild-level' mage of the Arcane Order pays monetary dues and accepts various duties in return for member benefits. The dues are 30 gp per month. Duties include putting in an appearance on campus at least once every six months and accepting any special commissions handed down by senior members. A guildmage who falls into arrears on his dues by more than three months has his membership revoked and loses access to the Spellpool. Reinstating membership is difficult. However, ex-members do not lose any spells or metamagic feats they had gained while in good standing. A member in good standing can board at the Arcane Order campus between adventures, paying only 5 sp per day for common-quality meals and lodging. At his leisure, he can browse the Order's well-respected library, which is stocked with tomes on both mundane and arcane lore (though no spellbooks are kept here). Likewise, he can use the Order's common laboratory facilities when creating magic items (although material costs remain out-of-pocket). Furthermore, he is free to read and post notices to the ?job board,? a mundane medium whereby fellow members of the Order pass information, advertise their interest in a research topic or adventure, or attempt to sell an interesting oddity, magical or otherwise. Last but not least, members form professional ties with their fellow wizards, possibly leading to lasting friendships or alliances.",
+        "level": 1,
+        "seedName": "Guild Member (Mage of the Arcane Order)"
+      },
+      "New Spell": {
+        "description": "When a mage of the Arcane Order reaches 5th level, and again at 8th level, a fellow wizard allows the character to copy a spell from his or her spellbook (chosen by the player, subject to the DM's approval). He does not need to make a Spellcraft check to copy the spell into his own spellbook, although specialist wizards still cannot learn spells from prohibited schools. Spellcasters who do not use spellbooks gain no benefit from this ability.",
+        "level": 5,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.mageofthearcaneordernewspell.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "New Spell (Mage of the Arcane Order)",
+        "stackable": true
+      },
+      "Regent": {
+        "description": "A 10th-level mage of the Arcane Order is awarded the status of regent. A regent gains a +2 competence bonus on all Charisma-based interaction checks when dealing with lower-level members of the Order. The regents set the Arcane Order's rules and policies, meeting each month in the Council of Regents. A regent must attend six council meetings in one year or be removed from the council and lose his regent status (he loses no other benefits of guild membership, nor does he lose his level in the prestige class). Enacting new policies or eradicating old ones requires a three-fifths majority vote to pass. Generally, the council hands out commissions for lower level mages of the Arcane Order to perform on behalf of the guild. An individual regent might also head up a special group of lower-level members to accomplish a specific goal, such as investigating a crime committed using magic, undertaking an archeological dig of an ancient site of wizardry, or some other important task.",
+        "level": 10,
+        "seedName": "Regent (Mage of the Arcane Order)"
+      },
+      "Spellpool I": {
+        "description": "Mages of the Arcane Order can call spells from a common source: the Spellpool. New members receive a special focus (a trinket chosen by the spellcaster, such as a ring, brooch, scarf, or other portable item) at the time of their initiation. The focus allows access to the Spellpool and works only for its owner. If a mage of the Arcane Order loses his focus, he must undergo another initiation. The range of available spells increases at 4th and 7th levels. See the sidebar below for details.",
+        "level": 1,
+        "seedName": "Spellpool I (Mage of the Arcane Order)"
+      },
+      "Spellpool Ii": {
+        "description": "",
+        "level": 4,
+        "seedName": "Spellpool Ii (Mage of the Arcane Order)"
+      },
+      "Spellpool Iii": {
+        "description": "",
+        "level": 7,
+        "seedName": "Spellpool Iii (Mage of the Arcane Order)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level, a mage of the Arcane Order gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a mage of the Arcane Order, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Mage of the Arcane Order)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Mages of the Arcane Order gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Mage of the Arcane Order)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Language": "Bonus Language",
+      "Free Metamagic Feat": "Free Metamagic Feat",
+      "Guild Member": "Guild Member",
+      "New Spell": "New Spell",
+      "Regent": "Regent",
+      "Spellpool I": "Spellpool I",
+      "Spellpool II": "Spellpool Ii",
+      "Spellpool III": "Spellpool Iii"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Mages of the Arcane Order gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level, a mage of the Arcane Order gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a mage of the Arcane Order, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A ?guild-level' mage of the Arcane Order pays monetary dues and accepts various duties in return for member benefits. The dues are 30 gp per month. Duties include putting in an appearance on campus at least once every six months and accepting any special commissions handed down by senior members. A guildmage who falls into arrears on his dues by more than three months has his membership revoked and loses access to the Spellpool. Reinstating membership is difficult. However, ex-members do not lose any spells or metamagic feats they had gained while in good standing. A member in good standing can board at the Arcane Order campus between adventures, paying only 5 sp per day for common-quality meals and lodging. At his leisure, he can browse the Order's well-respected library, which is stocked with tomes on both mundane and arcane lore (though no spellbooks are kept here). Likewise, he can use the Order's common laboratory facilities when creating magic items (although material costs remain out-of-pocket). Furthermore, he is free to read and post notices to the ?job board,? a mundane medium whereby fellow members of the Order pass information, advertise their interest in a research topic or adventure, or attempt to sell an interesting oddity, magical or otherwise. Last but not least, members form professional ties with their fellow wizards, possibly leading to lasting friendships or alliances.",
+        "name": "Guild Member"
+      },
+      {
+        "description": "Mages of the Arcane Order can call spells from a common source: the Spellpool. New members receive a special focus (a trinket chosen by the spellcaster, such as a ring, brooch, scarf, or other portable item) at the time of their initiation. The focus allows access to the Spellpool and works only for its owner. If a mage of the Arcane Order loses his focus, he must undergo another initiation. The range of available spells increases at 4th and 7th levels. See the sidebar below for details.",
+        "name": "Spellpool I",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Free Metamagic Feat"
+      },
+      {
+        "description": "At 3rd level and again at 6th level, a guildmage's access to the Order's superb library and resources allows him to learn a new language.",
+        "name": "Bonus Language"
+      },
+      {
+        "description": "",
+        "name": "Spellpool Ii"
+      },
+      {
+        "description": "When a mage of the Arcane Order reaches 5th level, and again at 8th level, a fellow wizard allows the character to copy a spell from his or her spellbook (chosen by the player, subject to the DM's approval). He does not need to make a Spellcraft check to copy the spell into his own spellbook, although specialist wizards still cannot learn spells from prohibited schools. Spellcasters who do not use spellbooks gain no benefit from this ability.",
+        "name": "New Spell"
+      },
+      {
+        "description": "",
+        "name": "Spellpool Iii"
+      },
+      {
+        "description": "A 10th-level mage of the Arcane Order is awarded the status of regent. A regent gains a +2 competence bonus on all Charisma-based interaction checks when dealing with lower-level members of the Order. The regents set the Arcane Order's rules and policies, meeting each month in the Council of Regents. A regent must attend six council meetings in one year or be removed from the council and lose his regent status (he loses no other benefits of guild membership, nor does he lose his level in the prestige class). Enacting new policies or eradicating old ones requires a three-fifths majority vote to pass. Generally, the council hands out commissions for lower level mages of the Arcane Order to perform on behalf of the guild. An individual regent might also head up a special group of lower-level members to accomplish a specific goal, such as investigating a crime committed using magic, undertaking an archeological dig of an ancient site of wizardry, or some other important task.",
+        "name": "Regent"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Speak Language",
+      "Spellcraft"
+    ],
+    "description": "Also called a \"guildmage,\" a member of this prestige class is a spellcaster who belongs to an academy and guild known as the Arcane Order.",
+    "hitDie": "d4",
+    "name": "Mage of the Arcane Order",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 2,
+            "type": "arcane"
+          }
+        ],
+        "feats": [
+          "Cooperative Spell",
+          "any metamagic feat"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Prospective members must pay an initiation fee of 750 gp."
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 8 ranks Feats: Cooperative Spell, Metamagic School Focus (or any other metamagic feat) Spells: Able to prepare and cast 2nd-level arcane spells. Special: Prospective members must pay an initiation fee of 750 gp."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Guild member",
+          "Spellpool I"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Free metamagic feat"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Bonus language"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Spellpool II"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "New spell"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Bonus language"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Spellpool III"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "New spell"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Free metamagic feat"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Regent"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

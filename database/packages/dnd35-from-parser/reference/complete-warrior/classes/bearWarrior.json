@@ -1,0 +1,263 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T18:43:38.679Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/bear-warrior/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "powerattack": "Power Attack"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bear Form (Black)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Scent"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Bear Form (Brown)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Rage +"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Bear Form (Dire)"
+      }
+    ],
+    "hd": 12,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.powerattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.rage.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Bear Warrior Class Feature",
+    "features": {
+      "Bear Form": {
+        "description": "While raging or in a frenzy, a bear warrior can shift into bear shape, functioning similarly to polymorph. The number of daily transformations is limited by how many times per day he can rage or enter a frenzy, and he reverts to his normal shape when the rage or frenzy concludes. He keeps the standard +2 bonus to Will saves and -2 penalty to Armor Class from raging, but the usual ability score bonuses from rage or frenzy are replaced by Strength, Dexterity, and Constitution bonuses determined by the chosen bear shape. As with polymorph, the bear warrior acquires the physical characteristics of the bear form (size, speed, natural armor bonus, natural weapons, space, and reach) along with any extraordinary special attacks that form possesses (for example, improved grab when in brown bear or dire bear shape). The transformation persists for as long as the rage or frenzy lasts. Unlike polymorph, the bear warrior does not adopt the bear's actual Strength, Dexterity, or Constitution scores, nor does he recover hit points upon transforming. His current hit points do increase from the new Constitution bonus, following the standard rules for rage. Starting at 1st level, a bear warrior can take black bear form once per day, gaining a +8 bonus to Strength, +2 bonus to Dexterity, and +4 bonus to Constitution. Upon reaching 5th level, he can transform twice daily and may select either black or brown bear shape. In brown bear form, he receives a +16 bonus to Strength, +2 bonus to Dexterity, and +8 bonus to Constitution. At 10th level, he can transform three times per day and may choose from black, brown, or dire bear forms. Dire bear form grants a +20 bonus to Strength, +2 bonus to Dexterity, and +8 bonus to Constitution.",
+        "level": 1,
+        "seedName": "Bear Form (Bear Warrior)",
+        "stackable": true
+      },
+      "Rage": {
+        "description": "At 7th level, a bear warrior gains one additional use per day of his rage or frenzy ability. For instance, a character with 7 levels of barbarian and 7 levels of bear warrior would have three daily uses of rage. If that character then gained another barbarian level, the total would increase to four uses per day.",
+        "level": 7,
+        "seedName": "Rage (Bear Warrior)"
+      },
+      "Scent": {
+        "description": "Beginning at 3rd level, a bear warrior permanently gains the scent special ability, which functions in both his natural form and any bear shape he assumes.",
+        "level": 3,
+        "seedName": "Scent (Bear Warrior)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Bear Warrior)"
+      }
+    },
+    "occurrenceMap": {
+      "Bear Form (Black)": "Bear Form",
+      "Bear Form (Brown)": "Bear Form",
+      "Bear Form (Dire)": "Bear Form",
+      "Rage +": "Rage",
+      "Scent": "Scent"
+    },
+    "overrides": {
+      "description": "Bear warriors forge a spiritual bond with bear totems, channeling ursine ferocity in combat. When they enter a battle fury, they physically transform into bears, gaining the raw power and resilience of these mighty creatures.",
+      "features": {
+        "Bear Form": {
+          "description": "While raging or in a frenzy, a bear warrior can shift into bear shape, functioning similarly to polymorph. The number of daily transformations is limited by how many times per day he can rage or enter a frenzy, and he reverts to his normal shape when the rage or frenzy concludes. He keeps the standard +2 bonus to Will saves and -2 penalty to Armor Class from raging, but the usual ability score bonuses from rage or frenzy are replaced by Strength, Dexterity, and Constitution bonuses determined by the chosen bear shape. As with polymorph, the bear warrior acquires the physical characteristics of the bear form (size, speed, natural armor bonus, natural weapons, space, and reach) along with any extraordinary special attacks that form possesses (for example, improved grab when in brown bear or dire bear shape). The transformation persists for as long as the rage or frenzy lasts. Unlike polymorph, the bear warrior does not adopt the bear's actual Strength, Dexterity, or Constitution scores, nor does he recover hit points upon transforming. His current hit points do increase from the new Constitution bonus, following the standard rules for rage. Starting at 1st level, a bear warrior can take black bear form once per day, gaining a +8 bonus to Strength, +2 bonus to Dexterity, and +4 bonus to Constitution. Upon reaching 5th level, he can transform twice daily and may select either black or brown bear shape. In brown bear form, he receives a +16 bonus to Strength, +2 bonus to Dexterity, and +8 bonus to Constitution. At 10th level, he can transform three times per day and may choose from black, brown, or dire bear forms. Dire bear form grants a +20 bonus to Strength, +2 bonus to Dexterity, and +8 bonus to Constitution."
+        },
+        "Rage": {
+          "description": "At 7th level, a bear warrior gains one additional use per day of his rage or frenzy ability. For instance, a character with 7 levels of barbarian and 7 levels of bear warrior would have three daily uses of rage. If that character then gained another barbarian level, the total would increase to four uses per day."
+        },
+        "Scent": {
+          "description": "Beginning at 3rd level, a bear warrior permanently gains the scent special ability, which functions in both his natural form and any bear shape he assumes."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Bear warriors gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A bear warrior can transform into a bear (similar to the polymorph spell) while in a rage or frenzy. His only limit on the number of times per day he can assume a bear form is the number of times per day he enters a rage or frenzy, and the bear warrior returns to his own form once the rage or frenzy ends. The bear warrior retains the normal +2 bonus on Will saves and ?2 penalty to Armor Class while raging, but the ability score bonuses granted by rage or frenzy are replaced by Strength, Dexterity, and Constitution bonuses appropriate to the bear form taken. As normal for polymorph, the bear warrior gains the bear form's physical qualities (including size, movement, natural armor bonus, natural weapons, space, and reach), as well as any extra ordinary special attacks possessed by the form (such as improved grab in the brown bear or dire bear form). The transformation lasts for the duration of the rage or frenzy. Unlike with the polymorph spell, a bear warrior doesn't gain the bear's Strength, Dexterity, and Constitution scores when he takes bear form, nor does he regain any hit points when he transforms. However, his current hit points increase due to his new Constitution, as normal for a rage ability. Any bear warrior can assume the form of a black bear once per day. While in black bear form, he gains a +8 bonus to Strength, a +2 bonus to Dexterity, and a +4 bonus to Constitution. At 5th level, a bear warrior can assume bear form twice per day and can choose between black and brown bear forms. While in brown bear form, he gains a +16 bonus to Strength, a +2 bonus to Dexterity, and a +8 bonus to Constitution. At 10th level, a bear warrior can assume bear form three times per day and can choose between black, brown, and dire bear forms. While in dire bear form, he gains a +20 bonus to Strength, a +2 bonus to Dexterity, and a +8 bonus to Constitution.",
+        "name": "Bear Form",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 3rd level, a bear warrior gains the scent special ability while in bear or nonbear form.",
+        "name": "Scent",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a bear warrior attains 7th level, the number of times per day that he can enter a state of rage or frenzy increases by one. For example, a 7th-level barbarian/7th-level bear warrior can rage three times per day. If that character were to gain one more barbarian level, he could rage four times per day.",
+        "name": "Rage",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Handle Animal",
+      "Intimidate",
+      "Ride",
+      "Survival",
+      "Swim"
+    ],
+    "description": "Bear warriors, through a special relationship with bear spirits, literally adopt a bear's strength in the rage of battle, actually transforming into bears while they fight.",
+    "hitDie": "d12",
+    "name": "Bear Warrior",
+    "prerequisites": {
+      "parsed": {
+        "bab": 7,
+        "feats": [
+          "Power Attack"
+        ],
+        "special": [
+          "Rage or frenzy ability."
+        ]
+      },
+      "text": "Base Attack Bonus: +7 Feats: Power Attack Special: Rage or frenzy ability."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bear form (black)"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Scent"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Bear form (brown)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Rage +1/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Bear form (dire)"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

@@ -1,0 +1,535 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T19:42:12.121Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/green-star-adept/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Damage Reduction"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Improved Caster Level"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Starmetal Dependency"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Starmetal Rigor 1"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Natural Attack"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Unnatural Metabolism"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Fortification (25%)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Otherworldly Vision"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Starmetal Rigor 2"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Fortification (50%)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Null Metabolism"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Starmetal Rigor 4"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Fortification (75%)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Emerald Perfection"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Rapid Repair"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Starmetal Rigor 6"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.decipherscript.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearchitectureandengineering.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgegeography.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgehistory.rank",
+        "value": "2",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Green Star Adept Class Feature",
+    "features": {
+      "Damage Reduction": {
+        "description": "The starmetal infusion reinforces the flesh of a Green Star adept, making him resistant to physical blows. He gains damage reduction 1/adamantine. Each level thereafter, his damage reduction improves by 1, until by 10th level, he has damage reduction 10/adamantine.",
+        "level": 1,
+        "seedName": "Damage Reduction (Green Star Adept)"
+      },
+      "Emerald Perfection": {
+        "description": "At 10th level, a Green Star adept completes his transformation. He resembles a perfectly sculpted statue of himself, forged from green starmetal. His type changes to construct, which brings about the following alterations to his basic nature:?An adept loses his Constitution score and any hit point adjustment for Constitution. However, he gains bonus hit points based on his size: +10 hit points for Small, +20 hit points for Medium, or +30 hit points for Large.?Unlike other constructs, a Green Star adept has no special immunity to mind-affecting effects. He is essentially a human mind in a magically animated body.?He gains immunity to poison, paralysis, stunning, disease, extra damage from sneak attacks, death effects, and necromancy effects.?He no longer heals damage on his own, and receives no benefit from spells or effects that heal living creatures. However, he can repair himself by means of repair damage spells or his rapid repair ability.?He is no longer subject to critical hits, nonlethal damage, ability damage, ability drain, or energy drain.?He gains immunity to any effect that requires a Fortitude save unless it also works on objects, or is harmless.?He is no longer at risk of death from massive damage, but he is immediately destroyed if reduced to 0 hit points. However, unlike other constructs, a Green Star adept can be returned from the dead by any means that would have worked on him before his final transformation.?He no longer takes ability score penalties for aging and cannot be magically aged. He cannot die of old age and might exist in this form for eons.",
+        "level": 10,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.hp.misc",
+            "value": "10",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Emerald Perfection (Green Star Adept)"
+      },
+      "Fortification": {
+        "description": "At 3rd level and higher, a Green Star adept has resistance to attacks that affect other living creatures. When a critical hit or sneak attack is scored on the character, there is a 25% chance that the critical hit or sneak attack is negated and the damage is instead rolled normally. When an adept reaches 6th level, this ability improves, increasing the chance of negating a critical hit or sneak attack to 50%. At 9th level, a Green Star adept has a 75% chance to negate a critical hit or sneak attack.",
+        "level": 3,
+        "seedName": "Fortification (Green Star Adept)",
+        "stackable": true
+      },
+      "Improved Caster Level": {
+        "description": "A Green Star adept adds his class level to his caster level in another arcane spellcasting class to determine his effective spellcaster level. If the character had more than one arcane spellcasting class before becoming a Green Star adept, the player must decide to which class to add each adept level for this purpose. For example, a 5th-level wizard/4th-level Green Star adept's caster level would be 9th, due to this ability, but he would only have access to 4th-level spells (5th-level wizard plus two arcane spellcasting class levels from being a 4th-level Green Star adept).",
+        "level": 1,
+        "seedName": "Improved Caster Level (Green Star Adept)"
+      },
+      "Natural Attack": {
+        "description": "Beginning at 2nd level, a Green Star adept has flesh so dense that his unarmed strikes deal substantial damage. He gains a slam attack that deals bludgeoning damage equal to a club sized for the character (1d4 for Small adepts, 1d6 for Medium adepts, or 1d8 for Large adepts), plus 1-1/2 times his Strength modifier.",
+        "level": 2,
+        "seedName": "Natural Attack (Green Star Adept)"
+      },
+      "Null Metabolism": {
+        "description": "When a Green Star adept reaches 7th level, his transformation approaches completion. He no longer needs to breathe, eat, or sleep. He has immunity to inhaled poisons, drowning, suffocation, and sleep effects (although he still must rest 8 hours in order to regain spells). In addition, an adept of 7th level or higher is no longer subject to fatigue or exhaustion and ignores the effects of these conditions.",
+        "level": 7,
+        "seedName": "Null Metabolism (Green Star Adept)"
+      },
+      "Otherworldly Vision": {
+        "description": "At 4th level, a Green Star adept gains darkvision out to 60 feet and low-light vision.",
+        "level": 4,
+        "seedName": "Otherworldly Vision (Green Star Adept)"
+      },
+      "Rapid Repair": {
+        "description": "A 10th-level Green Star adept repairs 1 point of damage per hour of rest, as long he has at least 1 hit point. Rapid repair does not allow a Green Star adept to regrow or reattach los",
+        "level": 10,
+        "seedName": "Rapid Repair (Green Star Adept)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At every even-numbered level, a Green Star adept gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a Green Star adept, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Green Star Adept)"
+      },
+      "Starmetal Dependency": {
+        "description": "A Green Star adept must consume more starmetal to continue his transformation. When he gains a level in this class beyond 1st, he does not gain any of the class features for that level until he performs a special ritual that requires 24 hours, 1 pound of starmetal, and other arcane reagents and materials costing 1,000 gp. A Green Star adept's base attack bonus, saving throws, skills, and feats or ability score increases are not dependent on this ritual?he fails to gain the special class abilities only until he completes the ritual. See for a description of starmetal as a new special material.",
+        "level": 1,
+        "seedName": "Starmetal Dependency (Green Star Adept)"
+      },
+      "Starmetal Rigor 1": {
+        "description": "At 1st level, a Green Star adept's process of transformation has already begun. His flesh takes on a faint emerald hue, and it becomes denser and stronger as the starmetal infusion takes hold. A 1st-level adept's Strength score increases by 1, but his Dexterity score drops by 1 (to a minimum of 3). His natural armor bonus also improves by 1. When an adept reaches 4th level, his Strength and his natural armor bonus improve by an additional 1 point. At 7th level, an adept's Strength increases by 2 more, for a total increase of +4, while his Dexterity is reduced by 1 (to a minimum of 3). His natural armor bonus improves by another 2 points, for a total bonus of +4. At 10th level, an adept's Strength score increases by 2 more points (total increase of +6) and his Dexterity is reduced by 1 (total reduction of ?3, to a minimum of 3). His natural armor bonus improves by another 2 points, for a total bonus of +6.",
+        "level": 1,
+        "seedName": "Starmetal Rigor 1 (Green Star Adept)"
+      },
+      "Starmetal Rigor 2": {
+        "description": "",
+        "level": 4,
+        "seedName": "Starmetal Rigor 2 (Green Star Adept)"
+      },
+      "Starmetal Rigor 4": {
+        "description": "",
+        "level": 7,
+        "seedName": "Starmetal Rigor 4 (Green Star Adept)"
+      },
+      "Starmetal Rigor 6": {
+        "description": "",
+        "level": 10,
+        "seedName": "Starmetal Rigor 6 (Green Star Adept)"
+      },
+      "Unnatural Metabolism": {
+        "description": "When an adept reaches 2nd level, his starmetal infusion begins to radically alter his metabolism. He gains a +2 bonus on saving throws against poison, sleep effects, paralysis, stunning, disease, death effects, and necromancy effects. At 5th level, a Green Star adept's bonus on saving throws against the attack forms listed above increases to +4. At 8th level, the save bonus increases to +6.",
+        "level": 2,
+        "seedName": "Unnatural Metabolism (Green Star Adept)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Green Star adepts gain proficiency with simple weapons. They gain no proficiency with armor or shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Green Star Adept)"
+      }
+    },
+    "occurrenceMap": {
+      "Damage Reduction": "Damage Reduction",
+      "Emerald Perfection": "Emerald Perfection",
+      "Fortification (25%)": "Fortification",
+      "Fortification (50%)": "Fortification",
+      "Fortification (75%)": "Fortification",
+      "Improved Caster Level": "Improved Caster Level",
+      "Natural Attack": "Natural Attack",
+      "Null Metabolism": "Null Metabolism",
+      "Otherworldly Vision": "Otherworldly Vision",
+      "Rapid Repair": "Rapid Repair",
+      "Starmetal Dependency": "Starmetal Dependency",
+      "Starmetal Rigor 1": "Starmetal Rigor 1",
+      "Starmetal Rigor 2": "Starmetal Rigor 2",
+      "Starmetal Rigor 4": "Starmetal Rigor 4",
+      "Starmetal Rigor 6": "Starmetal Rigor 6",
+      "Unnatural Metabolism": "Unnatural Metabolism"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Green Star adepts gain proficiency with simple weapons. They gain no proficiency with armor or shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At every even-numbered level, a Green Star adept gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a Green Star adept, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "The starmetal infusion reinforces the flesh of a Green Star adept, making him resistant to physical blows. He gains damage reduction 1/adamantine. Each level thereafter, his damage reduction improves by 1, until by 10th level, he has damage reduction 10/adamantine.",
+        "name": "Damage Reduction",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A Green Star adept adds his class level to his caster level in another arcane spellcasting class to determine his effective spellcaster level. If the character had more than one arcane spellcasting class before becoming a Green Star adept, the player must decide to which class to add each adept level for this purpose. For example, a 5th-level wizard/4th-level Green Star adept's caster level would be 9th, due to this ability, but he would only have access to 4th-level spells (5th-level wizard plus two arcane spellcasting class levels from being a 4th-level Green Star adept).",
+        "name": "Improved Caster Level",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A Green Star adept must consume more starmetal to continue his transformation. When he gains a level in this class beyond 1st, he does not gain any of the class features for that level until he performs a special ritual that requires 24 hours, 1 pound of starmetal, and other arcane reagents and materials costing 1,000 gp. A Green Star adept's base attack bonus, saving throws, skills, and feats or ability score increases are not dependent on this ritual?he fails to gain the special class abilities only until he completes the ritual. See for a description of starmetal as a new special material.",
+        "name": "Starmetal Dependency",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 1st level, a Green Star adept's process of transformation has already begun. His flesh takes on a faint emerald hue, and it becomes denser and stronger as the starmetal infusion takes hold. A 1st-level adept's Strength score increases by 1, but his Dexterity score drops by 1 (to a minimum of 3). His natural armor bonus also improves by 1. When an adept reaches 4th level, his Strength and his natural armor bonus improve by an additional 1 point. At 7th level, an adept's Strength increases by 2 more, for a total increase of +4, while his Dexterity is reduced by 1 (to a minimum of 3). His natural armor bonus improves by another 2 points, for a total bonus of +4. At 10th level, an adept's Strength score increases by 2 more points (total increase of +6) and his Dexterity is reduced by 1 (total reduction of ?3, to a minimum of 3). His natural armor bonus improves by another 2 points, for a total bonus of +6.",
+        "name": "Starmetal Rigor 1",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 2nd level, a Green Star adept has flesh so dense that his unarmed strikes deal substantial damage. He gains a slam attack that deals bludgeoning damage equal to a club sized for the character (1d4 for Small adepts, 1d6 for Medium adepts, or 1d8 for Large adepts), plus 1-1/2 times his Strength modifier.",
+        "name": "Natural Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When an adept reaches 2nd level, his starmetal infusion begins to radically alter his metabolism. He gains a +2 bonus on saving throws against poison, sleep effects, paralysis, stunning, disease, death effects, and necromancy effects. At 5th level, a Green Star adept's bonus on saving throws against the attack forms listed above increases to +4. At 8th level, the save bonus increases to +6.",
+        "name": "Unnatural Metabolism",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level and higher, a Green Star adept has resistance to attacks that affect other living creatures. When a critical hit or sneak attack is scored on the character, there is a 25% chance that the critical hit or sneak attack is negated and the damage is instead rolled normally. When an adept reaches 6th level, this ability improves, increasing the chance of negating a critical hit or sneak attack to 50%. At 9th level, a Green Star adept has a 75% chance to negate a critical hit or sneak attack.",
+        "name": "Fortification",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level, a Green Star adept gains darkvision out to 60 feet and low-light vision.",
+        "name": "Otherworldly Vision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Starmetal Rigor 2"
+      },
+      {
+        "description": "When a Green Star adept reaches 7th level, his transformation approaches completion. He no longer needs to breathe, eat, or sleep. He has immunity to inhaled poisons, drowning, suffocation, and sleep effects (although he still must rest 8 hours in order to regain spells). In addition, an adept of 7th level or higher is no longer subject to fatigue or exhaustion and ignores the effects of these conditions.",
+        "name": "Null Metabolism",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Starmetal Rigor 4"
+      },
+      {
+        "description": "At 10th level, a Green Star adept completes his transformation. He resembles a perfectly sculpted statue of himself, forged from green starmetal. His type changes to construct, which brings about the following alterations to his basic nature:?An adept loses his Constitution score and any hit point adjustment for Constitution. However, he gains bonus hit points based on his size: +10 hit points for Small, +20 hit points for Medium, or +30 hit points for Large.?Unlike other constructs, a Green Star adept has no special immunity to mind-affecting effects. He is essentially a human mind in a magically animated body.?He gains immunity to poison, paralysis, stunning, disease, extra damage from sneak attacks, death effects, and necromancy effects.?He no longer heals damage on his own, and receives no benefit from spells or effects that heal living creatures. However, he can repair himself by means of repair damage spells or his rapid repair ability.?He is no longer subject to critical hits, nonlethal damage, ability damage, ability drain, or energy drain.?He gains immunity to any effect that requires a Fortitude save unless it also works on objects, or is harmless.?He is no longer at risk of death from massive damage, but he is immediately destroyed if reduced to 0 hit points. However, unlike other constructs, a Green Star adept can be returned from the dead by any means that would have worked on him before his final transformation.?He no longer takes ability score penalties for aging and cannot be magically aged. He cannot die of old age and might exist in this form for eons.",
+        "name": "Emerald Perfection",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level Green Star adept repairs 1 point of damage per hour of rest, as long he has at least 1 hit point. Rapid repair does not allow a Green Star adept to regrow or reattach los",
+        "name": "Rapid Repair",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Starmetal Rigor 6"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "A Green Star adept is the master of the strange and powerful magic derived from Alhazarde's glittering green starmetal.",
+    "hitDie": "d8",
+    "name": "Green Star Adept",
+    "prerequisites": {
+      "parsed": {
+        "bab": 4,
+        "skills": [
+          {
+            "name": "Decipher Script",
+            "ranks": 2
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 8
+          },
+          {
+            "name": "Knowledge (architecture and engineering)",
+            "ranks": 2
+          },
+          {
+            "name": "Knowledge (geography)",
+            "ranks": 2
+          },
+          {
+            "name": "Knowledge (history)",
+            "ranks": 2
+          }
+        ],
+        "special": [
+          "Must acquire a piece of starmetal weighing at least 2 ounces, powder it, and consume it by drinking it in a specially prepared infusion. This infusion requires arcane reagents costing 1,000 gp and takes one week to prepare."
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Skills: Decipher Script 2 ranks, Knowledge (arcana) 8 ranks, Knowledge (architecture and engineering) 2 ranks, Knowledge (geography) 2 ranks, Knowledge (history) 2 ranks Feats: Combat Casting Spells or Spell-Like Abilities: Arcane caster level 1st. Special: Must acquire a piece of starmetal weighing at least 2 ounces, powder it, and consume it by drinking it in a specially prepared infusion. This infusion requires arcane reagents costing 1,000 gp and takes one week to prepare."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Damage reduction",
+          "improved caster level",
+          "starmetal dependency",
+          "starmetal rigor 1"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Natural attack",
+          "unnatural metabolism +2"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Fortification (25%)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Otherworldly vision",
+          "starmetal rigor 2"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Unnatural metabolism +4"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Fortification (50%)"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Null metabolism",
+          "starmetal rigor 4"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Unnatural metabolism +6"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Fortification (75%)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Emerald perfection",
+          "rapid repair",
+          "starmetal rigor 6"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

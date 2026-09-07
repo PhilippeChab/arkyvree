@@ -1,0 +1,1 @@
+ALTER TABLE "storage"."attachments" DROP COLUMN "position";

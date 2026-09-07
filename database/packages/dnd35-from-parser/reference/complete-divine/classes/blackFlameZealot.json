@@ -1,0 +1,470 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-04-01T02:22:15.935Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/black-flame-zealot/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {
+      "exoticweaponproficiencykukri": "Exotic Weapon Proficiency (kukri)",
+      "ironwill": "Iron Will"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Death Attack"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Zealous Heart"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Poison Use"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Fateful Stride"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Sacred Flame"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Unholy Immolation"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.exoticweaponproficiencykukri.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ironwill.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "feats.sneakattack.count",
+        "value": "1",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Black Flame Zealot Class Feature",
+    "features": {
+      "Death Attack": {
+        "description": "This functions identically to the assassin's death attack ability, with the exception that the black flame zealot cannot choose to paralyze a target. If the zealot possesses the death attack feature from a different class (such as assassin), he may combine his black flame zealot levels with those other class levels when determining the saving throw DC of his death attack.",
+        "level": 1,
+        "seedName": "Death Attack (Black Flame Zealot)"
+      },
+      "Fateful Stride": {
+        "description": "Starting at 5th level, once per day a black flame zealot may take a single step to teleport through barriers or across distances, functioning as dimension door. His caster level for this effect equals one-half his total character level.",
+        "level": 5,
+        "seedName": "Fateful Stride (Black Flame Zealot)"
+      },
+      "Poison Use": {
+        "description": "Upon reaching 2nd level, a black flame zealot learns to handle poisons without risk of accidentally poisoning himself, identical to the assassin's poison use ability.",
+        "level": 2,
+        "seedName": "Poison Use (Black Flame Zealot)"
+      },
+      "Sacred Flame": {
+        "description": "At 7th level and beyond, a black flame zealot can at will cause any single melee weapon he holds to ignite with dark, lethal flames. This grants the weapon the flaming property, adding 1d6 fire damage on each successful hit on top of its normal damage. Additionally, once per day as a free action, the zealot may instead grant a held weapon the flaming burst property for a duration of 1 minute.",
+        "level": 7,
+        "seedName": "Sacred Flame (Black Flame Zealot)"
+      },
+      "Sneak Attack": {
+        "description": "At 3rd, 6th, and 9th level, the black flame zealot gains additional sneak attack damage, functioning as the rogue class feature. Because the zealot already possesses sneak attack from another source (such as rogue levels), the extra damage dice stack with existing sneak attack dice.",
+        "level": 3,
+        "seedName": "Sneak Attack (Black Flame Zealot)",
+        "stackable": true
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At every even-numbered level in this prestige class, the character receives additional spells per day (and spells known, where applicable) as though he had gained a level in a divine spellcasting class he belonged to before taking this prestige class. He does not, however, receive any other benefits that class would normally grant (such as improved turning or rebuking undead, bonus metamagic feats, item creation feats, or similar abilities). If the character had multiple divine spellcasting classes prior to entering this prestige class, he must choose which class receives the benefit of each even-numbered level for purposes of spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Black Flame Zealot)"
+      },
+      "Unholy Immolation": {
+        "description": "At 10th level, whenever a creature is slain by the black flame zealot's death attack or sneak attack, its body is instantly and completely consumed by profane fire. Restoring such a creature to life requires true resurrection, a precisely worded wish followed by resurrection, or miracle.",
+        "level": 10,
+        "seedName": "Unholy Immolation (Black Flame Zealot)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Black Flame Zealot)"
+      },
+      "Zealous Heart": {
+        "description": "A black flame zealot possesses complete immunity to all fear effects, whether mundane or magical in origin. This immunity applies solely to the zealot himself and does not extend any protective benefit to nearby allies.",
+        "level": 1,
+        "seedName": "Zealous Heart (Black Flame Zealot)"
+      }
+    },
+    "occurrenceMap": {
+      "Death Attack": "Death Attack",
+      "Fateful Stride": "Fateful Stride",
+      "Poison Use": "Poison Use",
+      "Sacred Flame": "Sacred Flame",
+      "Sneak Attack": "Sneak Attack",
+      "Unholy Immolation": "Unholy Immolation",
+      "Zealous Heart": "Zealous Heart"
+    },
+    "overrides": {
+      "description": "Practitioners of dark sacred rituals, black flame zealots combine stealth, divine spellcasting, and fanatical devotion to eliminate those who have offended their deity.",
+      "features": {
+        "Death Attack": {
+          "description": "This functions identically to the assassin's death attack ability, with the exception that the black flame zealot cannot choose to paralyze a target. If the zealot possesses the death attack feature from a different class (such as assassin), he may combine his black flame zealot levels with those other class levels when determining the saving throw DC of his death attack."
+        },
+        "Fateful Stride": {
+          "description": "Starting at 5th level, once per day a black flame zealot may take a single step to teleport through barriers or across distances, functioning as dimension door. His caster level for this effect equals one-half his total character level."
+        },
+        "Poison Use": {
+          "description": "Upon reaching 2nd level, a black flame zealot learns to handle poisons without risk of accidentally poisoning himself, identical to the assassin's poison use ability."
+        },
+        "Sacred Flame": {
+          "description": "At 7th level and beyond, a black flame zealot can at will cause any single melee weapon he holds to ignite with dark, lethal flames. This grants the weapon the flaming property, adding 1d6 fire damage on each successful hit on top of its normal damage. Additionally, once per day as a free action, the zealot may instead grant a held weapon the flaming burst property for a duration of 1 minute."
+        },
+        "Sneak Attack": {
+          "description": "At 3rd, 6th, and 9th level, the black flame zealot gains additional sneak attack damage, functioning as the rogue class feature. Because the zealot already possesses sneak attack from another source (such as rogue levels), the extra damage dice stack with existing sneak attack dice."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "At every even-numbered level in this prestige class, the character receives additional spells per day (and spells known, where applicable) as though he had gained a level in a divine spellcasting class he belonged to before taking this prestige class. He does not, however, receive any other benefits that class would normally grant (such as improved turning or rebuking undead, bonus metamagic feats, item creation feats, or similar abilities). If the character had multiple divine spellcasting classes prior to entering this prestige class, he must choose which class receives the benefit of each even-numbered level for purposes of spells per day and spells known."
+        },
+        "Unholy Immolation": {
+          "description": "At 10th level, whenever a creature is slain by the black flame zealot's death attack or sneak attack, its body is instantly and completely consumed by profane fire. Restoring such a creature to life requires true resurrection, a precisely worded wish followed by resurrection, or miracle."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        },
+        "Zealous Heart": {
+          "description": "A black flame zealot possesses complete immunity to all fear effects, whether mundane or magical in origin. This immunity applies solely to the zealot himself and does not extend any protective benefit to nearby allies."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Black flame zealots gain no proficiency in any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each even-numbered black flame zealot level, the character gains new spells per day (and spells known, if applicable) as if he had also gained a level in a divine spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, metamagic or item creation feats, and so on). If the character had more than one divine spellcasting class before becoming a black flame zealot, the player must decide to which class to add each black flame zealot level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "As the assassin ability described, except that black flame zealots do not have the option of paralyzing their targets. If a black flame zealot has this class feature from another class (such as assassin), he may add black flame zealot class levels together with the class levels of such other classes to calculate the save DC of his death attack.",
+        "name": "Death Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A black flame zealot is immune to fear, magical or otherwise. Unlike a paladin's aura of courage, this confers no special benefits on his companions.",
+        "name": "Zealous Heart",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level, a black flame zealot gains the ability to use poison safely, as the assassin ability.",
+        "name": "Poison Use",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When he reaches 3rd, 6th, and 9th level, a black flame zealot deals additional sneak attack damage, as the rogue ability. Since the black flame zealot gets a sneak attack bonus from another source (such as rogue levels), the bonuses to damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Once per day at 5th level and higher, a black flame zealot can take a single step and pass through obstacles or distance as the spell dimension door. The zealot's caster level is equal to half his character level.",
+        "name": "Fateful Stride",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 6th level, at will, a black flame zealot can command a single melee weapon in his possession to burn with a black, deadly fire. The weapon gains the flaming ability, dealing 1d6 points of fire damage per successful attack in addition to its normal weapon damage. Once per day, as a free action the black flame zealot can instead bestow the flaming burst property on a weapon in his possession for 1 minute.",
+        "name": "Sacred Flame",
+        "type": "(Su)"
+      },
+      {
+        "description": "When a black flame zealot reaches 10th level, any creature killed by his death attack or sneak attack is immediately and utterly consumed by unholy fire. The only way to restore life to a being slain in this manner is to use true resurrection, or a carefully worded wish spell followed by resurrection, or miracle.<",
+        "name": "Unholy Immolation",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Religion)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Profession",
+      "Search",
+      "Sleight of Hand",
+      "Spellcraft",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Trained in unholy rites, the black flame zealots use stealth, divine magic, and the zeal of fanaticism to destroy those who have given offense to their god.",
+    "hitDie": "d6",
+    "name": "Black Flame Zealot",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nongood",
+        "casterLevel": [
+          {
+            "level": 2,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Exotic Weapon Proficiency (kukri)",
+          "Iron Will"
+        ],
+        "skills": [
+          {
+            "name": "Hide",
+            "ranks": 8
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 8
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Able to cast 2nd-level divine spells, Sneak attack damage +1d6, The character must worship the deity to whom the order is dedicated, and the character must slay an enemy of the faith for no other reason than to join the Order of the Black Flame."
+        ]
+      },
+      "text": "Alignment: Any nongood Skills: Hide 8 ranks, Knowledge (religion) 8 ranks, Move Silently 8 ranks Feats: Exotic Weapon Proficiency (kukri), Iron Will Special: Able to cast 2nd-level divine spells, Sneak attack damage +1d6, The character must worship the deity to whom the order is dedicated, and the character must slay an enemy of the faith for no other reason than to join the Order of the Black Flame."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Death attack",
+          "zealous heart"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Poison use"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Fateful stride"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Sacred flame"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Sneak attack +3d6"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Unholy immolation"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

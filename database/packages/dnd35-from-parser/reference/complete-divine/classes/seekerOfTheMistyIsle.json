@@ -1,0 +1,426 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T14:00:11.863Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/seeker-of-the-misty-isle/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Extra Domain (Travel)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Swiftfooted"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Corellon's Perception"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Surefooted"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Find The Path"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Extra Domain (Magic)"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Arcane Sight"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Discern Location"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Elf",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Seeker of the Misty Isle Class Feature",
+    "features": {
+      "Arcane Sight": {
+        "description": "At 9th level, the seeker gains the ability to use arcane sight as a spell-like ability three times per day. When activated, her eyes emit a blue glow. The caster level for this effect equals her highest divine caster level.",
+        "level": 9,
+        "seedName": "Arcane Sight (Seeker of the Misty Isle)"
+      },
+      "Corellon's Perception": {
+        "description": "Upon reaching 5th level, the seeker develops extraordinary visual and auditory acuity that surpasses even typical elven senses, having trained herself to continuously scan her surroundings. She receives a +5 racial bonus on Listen, Search, and Spot checks. In addition, she may retry a failed Listen, Search, or Spot check once per round as a free action, rather than requiring the usual move action.",
+        "level": 5,
+        "seedName": "Corellon's Perception (Seeker of the Misty Isle)"
+      },
+      "Discern Location": {
+        "description": "At 10th level, the seeker can use discern location as a spell-like ability once per week. Her caster level for this ability equals her class level.",
+        "level": 10,
+        "seedName": "Discern Location (Seeker of the Misty Isle)"
+      },
+      "Extra Domain": {
+        "description": "The seeker receives the granted power and access to spells from the Travel domain at 1st level, and later gains the same benefits for the Magic domain at 7th level.",
+        "level": 1,
+        "seedName": "Extra Domain (Seeker of the Misty Isle)",
+        "stackable": true
+      },
+      "Extra Domain (Travel)": {
+        "description": "",
+        "level": 1,
+        "seedName": "Extra Domain (Travel) (Seeker of the Misty Isle)"
+      },
+      "Find the Path": {
+        "description": "At 6th level, the seeker gains the ability to use find the path on herself once per day as a spell-like ability. Her caster level for this effect equals her class level.",
+        "level": 6,
+        "seedName": "Find the Path (Seeker of the Misty Isle)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Each time the seeker gains a new class level (at the levels indicated), she also gains additional spells per day and spells known (if applicable) as though she had gained a level in a divine spellcasting class in which she could cast 2nd-level spells prior to entering this prestige class. She does not, however, receive any other benefits that class would normally grant, such as improved undead turning, wild shape, or similar abilities. In effect, her seeker levels are added to her existing divine spellcasting class levels for purposes of determining spells per day. If she had multiple qualifying divine spellcasting classes before becoming a seeker, she must choose which class receives the benefit each time she gains a new seeker level.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Seeker of the Misty Isle)"
+      },
+      "Surefooted": {
+        "description": "As a result of her heightened awareness, the seeker constantly monitors the ground and terrain around her. This gives her an instinctive understanding of subtle environmental details she can exploit. She ignores any DC modifiers on Balance, Move Silently, and Tumble checks that are imposed by surface conditions or terrain type.",
+        "level": 5,
+        "seedName": "Surefooted (Seeker of the Misty Isle)"
+      },
+      "Swiftfooted": {
+        "description": "Beginning at 4th level, the seeker no longer suffers the standard -5 penalty for accelerated movement when using the following skills: Balance, Climb, Hide, Move Silently, and Survival (when tracking). Additionally, her penalty for accelerated tumbling is reduced from -10 to -5.",
+        "level": 4,
+        "seedName": "Swiftfooted (Seeker of the Misty Isle)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Members of this prestige class gain proficiency with all martial weapons as well as light and medium armor.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Seeker of the Misty Isle)"
+      }
+    },
+    "occurrenceMap": {
+      "Arcane Sight": "Arcane Sight",
+      "Corellon's Perception": "Corellon's Perception",
+      "Discern Location": "Discern Location",
+      "Extra Domain (Magic)": "Extra Domain",
+      "Extra Domain (Travel)": "Extra Domain (Travel)",
+      "Find The Path": "Find the Path",
+      "Surefooted": "Surefooted",
+      "Swiftfooted": "Swiftfooted"
+    },
+    "overrides": {
+      "description": "These devoted elven questers dedicate themselves to finding the lost elves rumored to dwell on the legendary Misty Isle.",
+      "features": {
+        "Arcane Sight": {
+          "description": "At 9th level, the seeker gains the ability to use arcane sight as a spell-like ability three times per day. When activated, her eyes emit a blue glow. The caster level for this effect equals her highest divine caster level."
+        },
+        "Corellon's Perception": {
+          "description": "Upon reaching 5th level, the seeker develops extraordinary visual and auditory acuity that surpasses even typical elven senses, having trained herself to continuously scan her surroundings. She receives a +5 racial bonus on Listen, Search, and Spot checks. In addition, she may retry a failed Listen, Search, or Spot check once per round as a free action, rather than requiring the usual move action."
+        },
+        "Discern Location": {
+          "description": "At 10th level, the seeker can use discern location as a spell-like ability once per week. Her caster level for this ability equals her class level."
+        },
+        "Extra Domain": {
+          "description": "The seeker receives the granted power and access to spells from the Travel domain at 1st level, and later gains the same benefits for the Magic domain at 7th level."
+        },
+        "Find the Path": {
+          "description": "At 6th level, the seeker gains the ability to use find the path on herself once per day as a spell-like ability. Her caster level for this effect equals her class level."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "Each time the seeker gains a new class level (at the levels indicated), she also gains additional spells per day and spells known (if applicable) as though she had gained a level in a divine spellcasting class in which she could cast 2nd-level spells prior to entering this prestige class. She does not, however, receive any other benefits that class would normally grant, such as improved undead turning, wild shape, or similar abilities. In effect, her seeker levels are added to her existing divine spellcasting class levels for purposes of determining spells per day. If she had multiple qualifying divine spellcasting classes before becoming a seeker, she must choose which class receives the benefit each time she gains a new seeker level."
+        },
+        "Surefooted": {
+          "description": "As a result of her heightened awareness, the seeker constantly monitors the ground and terrain around her. This gives her an instinctive understanding of subtle environmental details she can exploit. She ignores any DC modifiers on Balance, Move Silently, and Tumble checks that are imposed by surface conditions or terrain type."
+        },
+        "Swiftfooted": {
+          "description": "Beginning at 4th level, the seeker no longer suffers the standard -5 penalty for accelerated movement when using the following skills: Balance, Climb, Hide, Move Silently, and Survival (when tracking). Additionally, her penalty for accelerated tumbling is reduced from -10 to -5."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Members of this prestige class gain proficiency with all martial weapons as well as light and medium armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Seekers of the Misty Isle are proficient with all martial weapons and with all light and medium armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new seeker of the Misty Isle level is gained, the character gains new spells per day (and spells known, if applicable) as if she had also gained a level in whatever spellcasting class in which she could cast 2nd-level divine spells before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, wild shape ability, and so on). This essentially means that she adds the level of seeker of the Misty Isle to the level of whatever other spellcasting class the character has, then determines spells per day accordingly. If a character had more than one spellcasting class in which she could cast 2nd-level divine spells before she became a seeker of the Misty Isle, the player must decide which class to assign each level of seeker of the Misty Isle for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "",
+        "name": "Extra Domain (Travel)"
+      },
+      {
+        "description": "At 4th level, the seeker can ignore the normal -5 penalty for accelerated movement when she uses the following skills: Balance, Climb, Hide, Move Silently, and Survival (for following tracks). Her penalty for accelerated tumbling is reduced from -10 to -5.",
+        "name": "Swiftfooted",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 5th-level seeker of the Misty Isles has sight and hearing far beyond a normal elf's, and she has attuned her senses to repetitively sweep her immediate area. She gains a +5 racial bonus on Listen, Search, and Spot checks. Furthermore, she can attempt to spot or hear something she failed to notice previously once per round per skill as a free action (such attempts are ordinarily move actions).",
+        "name": "Corellon's Perception",
+        "type": "(Ex)"
+      },
+      {
+        "description": "As a side effect of the seeker of the Misty Isle's keen senses, she is always searching the terrain around her. Accordingly, she has a preternatural sense of minute details in the landscape she can use to her advantage. She can ignore DC modifiers on Balance, Move Silently, and Tumble checks derived from the surface or terrain.",
+        "name": "Surefooted",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 6th-level seeker can use find the path on herself once per day as a spell-like ability. Her caster level is equal to her class level.",
+        "name": "Find the Path",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A seeker of the Misty Isle gains the granted power and spell access of the Travel domain at 1st level and the Magic domain at 7th level.",
+        "name": "Extra Domain"
+      },
+      {
+        "description": "Three times per day, a 9th-level seeker of the Misty Isle's eyes glow blue, enabling her to use arcane sight, as the spell from a caster of the seeker's highest divine caster level.",
+        "name": "Arcane Sight",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 10th-level seeker can use discern location once per week as a spell-like ability. Her caster level is equal to her class level.",
+        "name": "Discern Location",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Hide",
+      "Jump",
+      "Knowledge (Geography)",
+      "Knowledge (Religion)",
+      "Listen",
+      "Move Silently",
+      "Ride",
+      "Speak Language",
+      "Spellcraft",
+      "Spot",
+      "Survival"
+    ],
+    "description": "Seekers search for the lost elves of Misty Isle.",
+    "hitDie": "d8",
+    "name": "Seeker of the Misty Isle",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 2,
+            "type": "divine"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 4
+          },
+          {
+            "name": "Survival",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Race: Elf",
+          "Must be inducted into the order by another member.",
+          "inducted into the order by another member"
+        ]
+      },
+      "text": "Race: Elf or Half-elf Skills: Knowledge (religion) 4 ranks, Survival 8 ranks Spells: Able to cast 2nd-level divine spells.Special: Must be inducted into the order by another member."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Extra domain (Travel)"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Swiftfooted"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Corellon's perception",
+          "surefooted"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Find the path"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Extra domain (Magic)"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Arcane sight"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Discern location"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

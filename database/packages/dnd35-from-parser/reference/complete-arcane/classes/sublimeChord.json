@@ -1,0 +1,605 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T19:42:14.126Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/sublime-chord/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bardic Lore"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bardic Music"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Song Of Arcane Power"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Song Of Timelessness"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Song Of Cosmic Fire"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "13",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.listen.rank",
+        "value": "13",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.profession.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "3",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "spellsKnown": [
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        2,
+        1
+      ],
+      [
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        3,
+        2
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        3,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        5,
+        4,
+        4,
+        3,
+        3,
+        2
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Sublime Chord Class Feature",
+    "features": {
+      "Bardic Lore": {
+        "description": "",
+        "level": 1,
+        "seedName": "Bardic Lore (Sublime Chord)"
+      },
+      "Bardic Music": {
+        "description": "A sublime chord expands her repertoire of bardic music to encompass new songs or poetics of strange and wondrous power. These effects function just as the bardic music effects. Each use of a sublime chord song expends one daily use of the character's bardic music ability. A sublime chord adds one-half her class level (rounded down) to her bard level to determine her number of daily uses of bardic music.",
+        "level": 1,
+        "seedName": "Bardic Music (Sublime Chord)"
+      },
+      "Song of Arcane Power": {
+        "description": "A sublime chord of 2nd level or higher with 12 or more ranks in a Perform skill learns how to use her bardic music to assist her spellcasting. As a move action, she can prepare to cast a spell by giving voice to the song of power. The next spell she casts gains a bonus to its caster level based on the result of the sublime chord's Perform check: The spell to be enhanced by the song of arcane power must be cast by the end of the sublime chord's next turn, or else the song fades with no effect (other than consuming a bardic music use).",
+        "level": 2,
+        "seedName": "Song of Arcane Power (Sublime Chord)"
+      },
+      "Song of Cosmic Fire": {
+        "description": "A 10th-level sublime chord with 20 or more ranks in a Perform skill learns the song of cosmic fire. Using this ability costs a sublime chord two of her daily uses of bardic music. The song of cosmic fire creates a 20-foot-radius spread of fire anywhere within 100 feet of the sublime chord (provided she has line of effect to the fire's point of origin). Creatures in the area take damage equal to the sublime Chord's Perform check result. All affected creatures are entitled to a Reflex save (DC 10 + sublime chord level + Cha modifier) for half",
+        "level": 10,
+        "seedName": "Song of Cosmic Fire (Sublime Chord)"
+      },
+      "Song of Timelessness": {
+        "description": "A sublime chord of 6th level or higher with 16 or more ranks in a Perform skill knows the song of timelessness. As a standard action, she can envelop a single creature within 60 feet in a field of timelessness, provided she has line of effect to the target. The subject is entitled to a Will save (DC 10 + sublime chord level + Cha modifier) to negate the effect. If the subject fails its save, it is frozen in a shimmering aura of timelessness and can take no actions. However, no force can affect it?weapons cannot reach it, spells that target it automatically fail, and if the ground it is standing on is somehow taken away, it would not even begin to fall. A sublime chord can keep her target frozen in time for as long as she maintains the power by continuing to perform, up to a maximum of 1 minute per level. When she stops performing, the subject immediately returns to normal. As far as the creature is concerned, no time seemsto have passed.",
+        "level": 6,
+        "seedName": "Song of Timelessness (Sublime Chord)"
+      },
+      "Spells per Day": {
+        "description": "A sublime chord has the ability to cast a small number of arcane spells, all of 4th level or higher. To cast a sublime chord spell, a character must have a Charisma score of at least 10 + the spell's level, so if she has a Charisma of 13 or lower, she cannot cast any sublime chord spells. Bonus spells are based on Charisma, and saving throws against these spells have a DC of 10 + spell level + the sublime chord's Cha modifier. A sublime chord can choose spells from the sorcerer/wizard spell list or the bard spell list; if a spell appears on both lists at different levels, she uses the bard version of the spell. A sublime chord's caster level for both her sublime chord spells and the spells she gains from other arcane spellcasting classes is determined by adding her sublime chord level to her level in another arcane spellcasting class. If she had more than one arcane spellcasting class before becoming a sublime chord, she must choose to which class to add her sublime chord levels for the purpose of determining her sublime chord spellcaster level. A sublime chord prepares and casts spells just as a sorcerer does, including the ability to replace a known sublime chord spell with a new spell at every even-numbered class levelbeginning at 4th.",
+        "level": 1,
+        "seedName": "Spells per Day (Sublime Chord)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Sublime chords gain no proficiency with any weapon or armor. As with bard spells, the somatic components for a sublime chord's spells do not incur an arcane spell failure chance as normal for arcane spells if the sublime chord is wearing light armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Sublime Chord)"
+      }
+    },
+    "occurrenceMap": {
+      "Bardic Lore": "Bardic Lore",
+      "Bardic Music": "Bardic Music",
+      "Song Of Arcane Power": "Song of Arcane Power",
+      "Song Of Cosmic Fire": "Song of Cosmic Fire",
+      "Song Of Timelessness": "Song of Timelessness"
+    },
+    "spells": {
+      "known": [
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2,
+          1
+        ],
+        [
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          3,
+          2
+        ]
+      ],
+      "noCantrips": true,
+      "perDay": [
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          5,
+          4,
+          4,
+          3,
+          3,
+          2
+        ]
+      ],
+      "slug": "sublimechordspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Sublime chords gain no proficiency with any weapon or armor. As with bard spells, the somatic components for a sublime chord's spells do not incur an arcane spell failure chance as normal for arcane spells if the sublime chord is wearing light armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A sublime chord has the ability to cast a small number of arcane spells, all of 4th level or higher. To cast a sublime chord spell, a character must have a Charisma score of at least 10 + the spell's level, so if she has a Charisma of 13 or lower, she cannot cast any sublime chord spells. Bonus spells are based on Charisma, and saving throws against these spells have a DC of 10 + spell level + the sublime chord's Cha modifier. A sublime chord can choose spells from the sorcerer/wizard spell list or the bard spell list; if a spell appears on both lists at different levels, she uses the bard version of the spell. A sublime chord's caster level for both her sublime chord spells and the spells she gains from other arcane spellcasting classes is determined by adding her sublime chord level to her level in another arcane spellcasting class. If she had more than one arcane spellcasting class before becoming a sublime chord, she must choose to which class to add her sublime chord levels for the purpose of determining her sublime chord spellcaster level. A sublime chord prepares and casts spells just as a sorcerer does, including the ability to replace a known sublime chord spell with a new spell at every even-numbered class levelbeginning at 4th.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "",
+        "name": "Bardic Lore"
+      },
+      {
+        "description": "A sublime chord expands her repertoire of bardic music to encompass new songs or poetics of strange and wondrous power. These effects function just as the bardic music effects. Each use of a sublime chord song expends one daily use of the character's bardic music ability. A sublime chord adds one-half her class level (rounded down) to her bard level to determine her number of daily uses of bardic music.",
+        "name": "Bardic Music"
+      },
+      {
+        "description": "A sublime chord of 2nd level or higher with 12 or more ranks in a Perform skill learns how to use her bardic music to assist her spellcasting. As a move action, she can prepare to cast a spell by giving voice to the song of power. The next spell she casts gains a bonus to its caster level based on the result of the sublime chord's Perform check: The spell to be enhanced by the song of arcane power must be cast by the end of the sublime chord's next turn, or else the song fades with no effect (other than consuming a bardic music use).",
+        "name": "Song of Arcane Power",
+        "type": "(Su)"
+      },
+      {
+        "description": "A sublime chord of 6th level or higher with 16 or more ranks in a Perform skill knows the song of timelessness. As a standard action, she can envelop a single creature within 60 feet in a field of timelessness, provided she has line of effect to the target. The subject is entitled to a Will save (DC 10 + sublime chord level + Cha modifier) to negate the effect. If the subject fails its save, it is frozen in a shimmering aura of timelessness and can take no actions. However, no force can affect it?weapons cannot reach it, spells that target it automatically fail, and if the ground it is standing on is somehow taken away, it would not even begin to fall. A sublime chord can keep her target frozen in time for as long as she maintains the power by continuing to perform, up to a maximum of 1 minute per level. When she stops performing, the subject immediately returns to normal. As far as the creature is concerned, no time seemsto have passed.",
+        "name": "Song of Timelessness",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 10th-level sublime chord with 20 or more ranks in a Perform skill learns the song of cosmic fire. Using this ability costs a sublime chord two of her daily uses of bardic music. The song of cosmic fire creates a 20-foot-radius spread of fire anywhere within 100 feet of the sublime chord (provided she has line of effect to the fire's point of origin). Creatures in the area take damage equal to the sublime Chord's Perform check result. All affected creatures are entitled to a Reflex save (DC 10 + sublime chord level + Cha modifier) for half",
+        "name": "Song of Cosmic Fire",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Perform",
+      "Profession",
+      "Search",
+      "Speak Language",
+      "Spellcraft",
+      "Spot"
+    ],
+    "description": "In return for abandoning her continuing study of bardic music, a sublime chord instead masters a number of spells more powerful than most bards can ever use.",
+    "hitDie": "d6",
+    "name": "Sublime Chord",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "arcane"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 13
+          },
+          {
+            "name": "Listen",
+            "ranks": 13
+          },
+          {
+            "name": "Perform",
+            "ranks": 10
+          },
+          {
+            "name": "Profession (astrologer)",
+            "ranks": 6
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 6
+          }
+        ],
+        "special": [
+          "Bardic music ability."
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 13 ranks, Listen 13 ranks, Perform 10 ranks, Profession (astrologer) 6 ranks, Spellcraft 6 ranks Spells: Able to cast 3rd-level arcane spells. Special: Bardic music ability."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bardic lore",
+          "bardic music"
+        ],
+        "spellsPerDay": "2,1,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Song of arcane power"
+        ],
+        "spellsPerDay": "2,2,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "3,2,1,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "3,3,2,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "3,3,2,1,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Song of timelessness"
+        ],
+        "spellsPerDay": "4,3,3,2,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "4,4,3,2,1,-",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "4,4,3,3,2,-",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "4,4,4,3,2,1",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Song of cosmic fire"
+        ],
+        "spellsPerDay": "5,4,4,3,3,2",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier",
+    "spellsKnown": [
+      "3,1,-,-,-,-",
+      "4,2,-,-,-,-",
+      "4,2,1,-,-,-",
+      "4,3,2,-,-,-",
+      "4,3,2,1,-,-",
+      "4,4,3,2,-,-",
+      "4,4,3,2,1,-",
+      "4,4,4,3,2,-",
+      "4,4,4,3,2,1",
+      "4,4,4,4,3,2"
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, gte } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const FORTUNES_FRIEND: ClassSeed = {
+  name: "Fortune's Friend",
+  description: "The fortune's friend lives by his luck.",
+  hd: 6, levels: 5, skillPoints: 6,
+  bab: "poor",
+  saves: { fortitude: "poor", reflex: "good", will: "poor" },
+  classSkills: [
+    "Balance",
+    "Bluff",
+    "Climb",
+    "Craft",
+    "Decipher Script",
+    "Diplomacy",
+    "Disable Device",
+    "Disguise",
+    "Escape Artist",
+    "Gather Information",
+    "Hide",
+    "Jump",
+    "Listen",
+    "Move Silently",
+    "Open Lock",
+    "Perform",
+    "Profession",
+    "Search",
+    "Sleight of Hand",
+    "Spot",
+    "Swim",
+    "Tumble",
+    "Use Magic Device",
+    "Use Rope",
+  ],
+  requirements: [
+    gte("combat.bab", 3),
+    eq("feats.luck.possessed"),
+  ],
+  casterLevelAdvancement: { type: "any", levels: [2, 4] },
+  classFeatureAptitude: "Fortune's Friend Class Feature",
+  classFeatures: [
+    [1, "Easy Luck (Fortune's Friend)"],
+    [1, "Extra Fortune (Fortune's Friend)"],
+    [1, "More Luck Than Skill (Fortune's Friend)"],
+    [2, "Bonus Luck Feat (Fortune's Friend)"],
+    [3, "Extra Fortune (Fortune's Friend)"],
+    [3, "Fortune's Favorite (Fortune's Friend)"],
+    [4, "Bonus Luck Feat (Fortune's Friend)"],
+    [5, "Extra Fortune (Fortune's Friend)"],
+    [5, "Lucky Strike (Fortune's Friend)"],
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

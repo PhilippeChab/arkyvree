@@ -1,0 +1,57 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const TATTOOED_MONK: ClassSeed = {
+  name: "Tattooed Monk",
+  description: "Some monastic traditions grant their members supernatural and spell-like abilities through the application of magical tattoos inscribed upon their bodies. These monks adopt ascetic practices such as shaving their heads and speaking in enigmatic sayings, and many wander the land seeking spiritual growth by confronting and overcoming worldly temptations.",
+  hd: 8, levels: 10, skillPoints: 4,
+  bab: "medium",
+  saves: { fortitude: "good", reflex: "good", will: "good" },
+  classSkills: [
+    "Balance",
+    "Climb",
+    "Concentration",
+    "Craft",
+    "Diplomacy",
+    "Escape Artist",
+    "Hide",
+    "Jump",
+    "Knowledge (Arcana)",
+    "Knowledge (Architecture and Engineering)",
+    "Knowledge (Dungeoneering)",
+    "Knowledge (Geography)",
+    "Knowledge (History)",
+    "Knowledge (Local)",
+    "Knowledge (Nature)",
+    "Knowledge (Nobility and Royalty)",
+    "Knowledge (Psionics)",
+    "Knowledge (Religion)",
+    "Knowledge (The Planes)",
+    "Listen",
+    "Move Silently",
+    "Perform",
+    "Profession",
+    "Swim",
+    "Tumble",
+  ],
+  requirements: [
+    gte("combat.bab", 3),
+    gte("skills.knowledgereligion.rank", 8),
+    eq("feats.endurance.possessed"),
+    eq("feats.improvedgrapple.possessed"),
+    eq("feats.improvedunarmedstrike.possessed"),
+    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+  ],
+  classFeatureAptitude: "Tattooed Monk Class Feature",
+  classFeatures: [
+    [1, "Monk Abilities (Tattooed Monk)"],
+    [1, "Tattoo (Tattooed Monk)"],
+    [1, "Weapon and Armor Proficiency (Tattooed Monk)"],
+    [3, "Tattoo (Tattooed Monk)"],
+    [5, "Tattoo (Tattooed Monk)"],
+    [7, "Tattoo (Tattooed Monk)"],
+    [9, "Tattoo (Tattooed Monk)"],
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

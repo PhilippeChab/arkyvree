@@ -1,0 +1,66 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const CONSECRATED_HARRIER: ClassSeed = {
+  name: "Consecrated Harrier",
+  description: "A consecrated harrier serves as a sanctioned hunter on behalf of her faith or religious institution, tracking down designated enemies.",
+  hd: 10, levels: 10, skillPoints: 4,
+  bab: "good",
+  saves: { fortitude: "poor", reflex: "poor", will: "good" },
+  classSkills: [
+    "Bluff",
+    "Climb",
+    "Diplomacy",
+    "Disguise",
+    "Gather Information",
+    "Intimidate",
+    "Knowledge (Local)",
+    "Profession",
+    "Ride",
+    "Search",
+    "Use Rope",
+  ],
+  requirements: [
+    gte("combat.bab", 5),
+    gte("skills.disguise.rank", 5),
+    gte("skills.gatherinformation.rank", 5),
+    eq("feats.track.possessed"),
+    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+  ],
+  classFeatureAptitude: "Consecrated Harrier Class Feature",
+  classFeatures: [
+    [1, "Blessing of Scripture (Consecrated Harrier)"],
+    [1, "Detect Chaos (Consecrated Harrier)"],
+    [1, "Spells per Day (Consecrated Harrier)"],
+    [1, "Weapon and Armor Proficiency (Consecrated Harrier)"],
+    [2, "Sanctified Sight (Consecrated Harrier)"],
+    [3, "Dispel Magic (Consecrated Harrier)"],
+    [4, "Crushing Despair (Consecrated Harrier)"],
+    [5, "Blessing of Scripture (Consecrated Harrier)"],
+    [6, "False Vision (Consecrated Harrier)"],
+    [8, "Implacable Hunt (Consecrated Harrier)"],
+    [10, "Blessing of Scripture (Consecrated Harrier)"],
+    [10, "Faultless Hunt (Consecrated Harrier)"],
+  ],
+  bonusSpellAbility: "Wisdom",
+  casterType: "Divine",
+  spells: {
+    slug: "consecratedharrierspells",
+    perDay: [
+      [0],
+      [1],
+      [1, 0],
+      [1, 1],
+      [1, 1, 0],
+      [1, 1, 1],
+      [2, 1, 1, 0],
+      [2, 1, 1, 1],
+      [2, 2, 1, 1],
+      [2, 2, 2, 1],
+    ],
+    knowAll: true,
+    noCantrips: true,
+  },
+};
+
+// TODO: No modifiers defined — review if this class needs any

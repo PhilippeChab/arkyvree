@@ -1,0 +1,767 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:09:32.303Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/warmage/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Armored Mage (Light)"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Warmage Edge"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          11,
+          16
+        ],
+        "name": "Advanced Learning"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Sudden Empower"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Armored Mage (Medium)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Sudden Enlarge"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Sudden Widen"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Sudden Maximize"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 6,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        5,
+        3
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        6,
+        3
+      ],
+      [
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Warmage Class Feature",
+    "features": {
+      "Advanced Learning": {
+        "description": "At 3rd, 6th, 11th, and 16th level, a warmage can add a new spell to his list, representing the result of personal study and experimentation. The spell must be a wizard spell of the evocation school, and of a level no higher than that of the highest-level spell the warmage already knows. Once a new spell is selected, it is forever added to that warmage's spell list and can be cast just like any other spell on the warmage's list.",
+        "level": 3,
+        "seedName": "Advanced Learning (Warmage)",
+        "stackable": true
+      },
+      "Armored Mage (Light)": {
+        "description": "Normally, armor of any type interferes with an arcane spellcaster's gestures, which can cause his spells to fail (if those spells have somatic components). A warmage's limited focus and specialized training, however, allows him to avoid arcane spell failure as long as he sticks to light armor and light shields. This training does not extend to medium or heavier armors, nor to heavy shields. Nor does this ability apply to spells gained from a different spellcasting class. At 8th level, a warmage learns to use medium armor with no chance of arcane spell failure.",
+        "level": 1,
+        "seedName": "Armored Mage (Light) (Warmage)"
+      },
+      "Armored Mage (Medium)": {
+        "description": "",
+        "level": 8,
+        "seedName": "Armored Mage (Medium) (Warmage)"
+      },
+      "Spells": {
+        "description": "A warmage casts arcane spells (the same type of spells available to sorcerers and wizards), which are drawn from the warmage spell list given below. He can cast any spell he knows without preparing it ahead of time the way a cleric or wizard must. When a warmage gains access to a new level of spells, he automatically knows all the spells for that level listed on the warmage's spell list. Essentially, his spell list is the same as his spells known list. Warmages also have the option of adding to their existing spell list through their advanced learning ability as they increase in level. See for the warmage's spell list. To cast a spell, a warmage must have a Charisma score of 10 + the spell's level (Cha 10 for 0-level spells, Cha 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a warmage's spell is 10 + the spell's level + the warmage's Charisma modifier. Like other spellcasters, a warmage can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given in the class table. In addition, he receives bonus spells for a high Charisma score. Unlike a cleric or a wizard, a warmage need not prepare his spells in advance. He can cast any spell he knows at any time, assuming he has not yet used up his spells per day for that spell level.",
+        "level": 1,
+        "seedName": "Spells (Warmage)"
+      },
+      "Sudden Empower": {
+        "description": "At 7th level, a warmage gains Sudden Empower (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "level": 7,
+        "seedName": "Sudden Empower (Warmage)"
+      },
+      "Sudden Enlarge": {
+        "description": "At 10th level, a warmage gains Sudden Enlarge (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "level": 10,
+        "seedName": "Sudden Enlarge (Warmage)"
+      },
+      "Sudden Maximize": {
+        "description": "At 20th level, a warmage gains Sudden Maximize (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "level": 20,
+        "seedName": "Sudden Maximize (Warmage)"
+      },
+      "Sudden Widen": {
+        "description": "At 15th level, a warmage gains Sudden Widen (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "level": 15,
+        "seedName": "Sudden Widen (Warmage)"
+      },
+      "Warmage Edge": {
+        "description": "A warmage is specialized in dealing damage with his spells. Whenever a warmage casts a spell that deals hit point damage, he adds his Intelligence bonus (if any) to the amount of damage dealt. For instance, if a 1st-level warmage with 17 Intelligence casts magic missile, he deals1d4+1 points of damage normally, plus an extra 3 points of damage due to his Intelligence bonus. The bonus from the warmage edge special ability applies only to spells that he casts as a warmage, not to those he might have by virtue of levels in another class. A single spell can never gain this extra damage more than once per casting. For instance, a fireball deals the extra damage to all creatures in the area it affects. However, if a 3rd-level warmage casts magic missile and produces two missiles, only one of them (of the warmage's choice) gains the extra damage, even if both missiles are directed at the same target. If a spell deals damage for more than 1 round, it deals this extra damage in each round. Scrolls scribed by a warmage do not gain any benefit from warmage edge. Scrolls activated by a warmage also gain no benefit from warmage edge. The same is true for most other magic items, such as wands and potions. However, staffs activated by a warmage use not only the warmage's caster level but also gain the benefits of the warmage edge, if applicable.",
+        "level": 1,
+        "seedName": "Warmage Edge (Warmage)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Warmages are proficient with all simple weapons, light armor, and light shields. At 8th level, a warmage gains proficiency with medium armor Armored Mage, below).",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Warmage)"
+      }
+    },
+    "occurrenceMap": {
+      "Advanced Learning": "Advanced Learning",
+      "Armored Mage (Light)": "Armored Mage (Light)",
+      "Armored Mage (Medium)": "Armored Mage (Medium)",
+      "Sudden Empower": "Sudden Empower",
+      "Sudden Enlarge": "Sudden Enlarge",
+      "Sudden Maximize": "Sudden Maximize",
+      "Sudden Widen": "Sudden Widen",
+      "Warmage Edge": "Warmage Edge"
+    },
+    "overrides": {},
+    "spells": {
+      "knowAll": true,
+      "perDay": [
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6,
+          3
+        ],
+        [
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5
+        ]
+      ],
+      "slug": "warmagespells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Warmages are proficient with all simple weapons, light armor, and light shields. At 8th level, a warmage gains proficiency with medium armor Armored Mage, below).",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A warmage casts arcane spells (the same type of spells available to sorcerers and wizards), which are drawn from the warmage spell list given below. He can cast any spell he knows without preparing it ahead of time the way a cleric or wizard must. When a warmage gains access to a new level of spells, he automatically knows all the spells for that level listed on the warmage's spell list. Essentially, his spell list is the same as his spells known list. Warmages also have the option of adding to their existing spell list through their advanced learning ability as they increase in level. See for the warmage's spell list. To cast a spell, a warmage must have a Charisma score of 10 + the spell's level (Cha 10 for 0-level spells, Cha 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a warmage's spell is 10 + the spell's level + the warmage's Charisma modifier. Like other spellcasters, a warmage can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given in the class table. In addition, he receives bonus spells for a high Charisma score. Unlike a cleric or a wizard, a warmage need not prepare his spells in advance. He can cast any spell he knows at any time, assuming he has not yet used up his spells per day for that spell level.",
+        "name": "Spells"
+      },
+      {
+        "description": "Normally, armor of any type interferes with an arcane spellcaster's gestures, which can cause his spells to fail (if those spells have somatic components). A warmage's limited focus and specialized training, however, allows him to avoid arcane spell failure as long as he sticks to light armor and light shields. This training does not extend to medium or heavier armors, nor to heavy shields. Nor does this ability apply to spells gained from a different spellcasting class. At 8th level, a warmage learns to use medium armor with no chance of arcane spell failure.",
+        "name": "Armored Mage (Light)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A warmage is specialized in dealing damage with his spells. Whenever a warmage casts a spell that deals hit point damage, he adds his Intelligence bonus (if any) to the amount of damage dealt. For instance, if a 1st-level warmage with 17 Intelligence casts magic missile, he deals1d4+1 points of damage normally, plus an extra 3 points of damage due to his Intelligence bonus. The bonus from the warmage edge special ability applies only to spells that he casts as a warmage, not to those he might have by virtue of levels in another class. A single spell can never gain this extra damage more than once per casting. For instance, a fireball deals the extra damage to all creatures in the area it affects. However, if a 3rd-level warmage casts magic missile and produces two missiles, only one of them (of the warmage's choice) gains the extra damage, even if both missiles are directed at the same target. If a spell deals damage for more than 1 round, it deals this extra damage in each round. Scrolls scribed by a warmage do not gain any benefit from warmage edge. Scrolls activated by a warmage also gain no benefit from warmage edge. The same is true for most other magic items, such as wands and potions. However, staffs activated by a warmage use not only the warmage's caster level but also gain the benefits of the warmage edge, if applicable.",
+        "name": "Warmage Edge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd, 6th, 11th, and 16th level, a warmage can add a new spell to his list, representing the result of personal study and experimentation. The spell must be a wizard spell of the evocation school, and of a level no higher than that of the highest-level spell the warmage already knows. Once a new spell is selected, it is forever added to that warmage's spell list and can be cast just like any other spell on the warmage's list.",
+        "name": "Advanced Learning",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 7th level, a warmage gains Sudden Empower (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "name": "Sudden Empower"
+      },
+      {
+        "description": "",
+        "name": "Armored Mage (Medium)"
+      },
+      {
+        "description": "At 10th level, a warmage gains Sudden Enlarge (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "name": "Sudden Enlarge"
+      },
+      {
+        "description": "At 15th level, a warmage gains Sudden Widen (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "name": "Sudden Widen"
+      },
+      {
+        "description": "At 20th level, a warmage gains Sudden Maximize (described in Chapter 3) as a bonus feat. If he already has the feat, he can choose a different metamagic feat.",
+        "name": "Sudden Maximize"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (History)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "A militant spellcaster whose training focuses on battlefield magic.",
+    "hasCantrips": true,
+    "hitDie": "d6",
+    "name": "Warmage",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Armored mage (light)",
+          "warmage edge"
+        ],
+        "spellsPerDay": "5,3,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "6,4,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Advanced learning"
+        ],
+        "spellsPerDay": "6,5,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "6,6,3,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "6,6,4,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Advanced learning"
+        ],
+        "spellsPerDay": "6,6,5,3,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Sudden Empower"
+        ],
+        "spellsPerDay": "6,6,6,4,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Armored mage (medium)"
+        ],
+        "spellsPerDay": "6,6,6,5,3,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,4,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Sudden Enlarge"
+        ],
+        "spellsPerDay": "6,6,6,6,5,3,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 3,
+        "special": [
+          "Advanced learning"
+        ],
+        "spellsPerDay": "6,6,6,6,6,4,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,5,3,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,4,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 7,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,5,3,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Sudden Widen"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,4,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 5,
+        "special": [
+          "Advanced learning"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,5,3,-",
+        "willSave": 10
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,4,-",
+        "willSave": 10
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,5,3",
+        "willSave": 11
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,4",
+        "willSave": 11
+      },
+      {
+        "bab": 10,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Sudden Maximize"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,5",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

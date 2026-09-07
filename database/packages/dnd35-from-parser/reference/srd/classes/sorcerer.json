@@ -1,0 +1,965 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-20T23:13:38.145Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/sorcerer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Summon Familiar"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 4,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsKnown": [
+      [
+        4,
+        2
+      ],
+      [
+        5,
+        2
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        6,
+        3,
+        1
+      ],
+      [
+        6,
+        4,
+        2
+      ],
+      [
+        7,
+        4,
+        2,
+        1
+      ],
+      [
+        7,
+        5,
+        3,
+        2
+      ],
+      [
+        8,
+        5,
+        3,
+        2,
+        1
+      ],
+      [
+        8,
+        5,
+        4,
+        3,
+        2
+      ],
+      [
+        9,
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        3,
+        2
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2,
+        1
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        9,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        5,
+        3
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        6,
+        3
+      ],
+      [
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Sorcerer Class Feature",
+    "features": {
+      "Spells": {
+        "description": "A sorcerer draws upon arcane magic - the same tradition used by bards and wizards - primarily selecting from the sorcerer/wizard spell list. Unlike wizards or clerics, a sorcerer can cast any spell in their repertoire spontaneously, without needing to prepare it beforehand. To learn or cast a given spell, the sorcerer's Charisma score must be at least 10 + the spell's level (for example, Charisma 10 for 0-level spells, Charisma 11 for 1st-level spells, and so on). The saving throw DC against a sorcerer's spell equals 10 + the spell level + the sorcerer's Charisma modifier. As with other spellcasting classes, a sorcerer has a limited number of spell slots per day for each spell level, determined by the class table. A high Charisma score grants additional bonus spell slots per day. A sorcerer's spell repertoire is highly restricted. At 1st level, a sorcerer knows four 0-level spells (cantrips) and two 1st-level spells chosen by the player. With each new sorcerer level gained, the character learns one or more additional spells as shown in the class table. (The total number of spells known is fixed by the class table and is not modified by Charisma.) Newly learned spells may be standard selections from the sorcerer/wizard spell list or uncommon spells the sorcerer has encountered through study. For instance, a sorcerer who has examined a scroll or spellbook containing a rare sorcerer/wizard spell not on the standard list may choose that spell when gaining a level, as long as it is of an appropriate spell level. However, this does not allow the sorcerer to learn spells any faster than normal. Starting at 4th level, and again at every even-numbered level thereafter (6th, 8th, and so on), a sorcerer may exchange one known spell for a different spell of the same level. The replacement spell must be at least two spell levels lower than the highest-level sorcerer spell the character can cast. For example, at 4th level a sorcerer could swap a single 0-level spell (which is two levels below 2nd, the highest level available at that point) for a different 0-level spell. At 6th level, the sorcerer could trade a 0-level or 1st-level spell (since 3rd-level spells are now accessible) for another spell of the same level. Only one spell may be exchanged per level, and the decision must be made at the same time new spells known are selected. A sorcerer never needs to prepare spells ahead of time. Any known spell can be cast at any moment, provided the sorcerer still has unused spell slots of the appropriate level for that day.",
+        "level": 1,
+        "seedName": "Spells (Sorcerer)"
+      },
+      "Summon Familiar": {
+        "description": "",
+        "level": 1,
+        "seedName": "Summon Familiar (Sorcerer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "A sorcerer is trained in the use of all simple weapons but has no proficiency with any armor or shield. Wearing any type of armor disrupts the somatic gestures required for a sorcerer's arcane casting, potentially causing spells with somatic components to fail.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Sorcerer)"
+      }
+    },
+    "occurrenceMap": {
+      "Summon Familiar": "Summon Familiar"
+    },
+    "overrides": {
+      "description": "Sorcerers wield magic through innate gift rather than scholarly discipline. They carry no tomes, follow no formal instruction, and rely on no theoretical framework - only a natural wellspring of arcane power shaped through practice. Some sorcerers believe draconic blood flows in their lineage, and there may be truth to it: powerful dragons are known to assume humanoid guise and take mortal partners, making such ancestry difficult to disprove. Sorcerers frequently possess striking, somewhat exotic features that suggest an unusual heritage. Others dismiss these claims as boastful self-mythologizing or jealous speculation from those who lack such gifts. Most sorcerers take up adventuring to push the boundaries of their abilities. Since a sorcerer's power is woven into the very fabric of their being, cultivating it becomes a personal quest regardless of how they intend to apply it. Good-aligned sorcerers often feel driven to earn acceptance and demonstrate their worth to a society that views them as outsiders. Evil sorcerers, meanwhile, see their separation from ordinary folk as evidence of superiority and seek power over those they consider beneath them. Rather than learning magic through careful study, sorcerers channel spells instinctively. Their repertoire is narrower than a wizard's, and they gain access to higher-level spells at a slower pace, but they can cast more frequently each day and never need to prepare spells in advance. Sorcerers cannot specialize in particular schools of magic the way wizards sometimes do. Because they bypass the years of rigorous academic training that wizards undergo, sorcerers lack the deep arcane scholarship most wizards possess. On the other hand, their freer schedule allows more time to develop combat skills, granting them proficiency with simple weapons.",
+      "features": {
+        "Spells": {
+          "description": "A sorcerer draws upon arcane magic - the same tradition used by bards and wizards - primarily selecting from the sorcerer/wizard spell list. Unlike wizards or clerics, a sorcerer can cast any spell in their repertoire spontaneously, without needing to prepare it beforehand. To learn or cast a given spell, the sorcerer's Charisma score must be at least 10 + the spell's level (for example, Charisma 10 for 0-level spells, Charisma 11 for 1st-level spells, and so on). The saving throw DC against a sorcerer's spell equals 10 + the spell level + the sorcerer's Charisma modifier. As with other spellcasting classes, a sorcerer has a limited number of spell slots per day for each spell level, determined by the class table. A high Charisma score grants additional bonus spell slots per day. A sorcerer's spell repertoire is highly restricted. At 1st level, a sorcerer knows four 0-level spells (cantrips) and two 1st-level spells chosen by the player. With each new sorcerer level gained, the character learns one or more additional spells as shown in the class table. (The total number of spells known is fixed by the class table and is not modified by Charisma.) Newly learned spells may be standard selections from the sorcerer/wizard spell list or uncommon spells the sorcerer has encountered through study. For instance, a sorcerer who has examined a scroll or spellbook containing a rare sorcerer/wizard spell not on the standard list may choose that spell when gaining a level, as long as it is of an appropriate spell level. However, this does not allow the sorcerer to learn spells any faster than normal. Starting at 4th level, and again at every even-numbered level thereafter (6th, 8th, and so on), a sorcerer may exchange one known spell for a different spell of the same level. The replacement spell must be at least two spell levels lower than the highest-level sorcerer spell the character can cast. For example, at 4th level a sorcerer could swap a single 0-level spell (which is two levels below 2nd, the highest level available at that point) for a different 0-level spell. At 6th level, the sorcerer could trade a 0-level or 1st-level spell (since 3rd-level spells are now accessible) for another spell of the same level. Only one spell may be exchanged per level, and the decision must be made at the same time new spells known are selected. A sorcerer never needs to prepare spells ahead of time. Any known spell can be cast at any moment, provided the sorcerer still has unused spell slots of the appropriate level for that day."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "A sorcerer is trained in the use of all simple weapons but has no proficiency with any armor or shield. Wearing any type of armor disrupts the somatic gestures required for a sorcerer's arcane casting, potentially causing spells with somatic components to fail."
+        }
+      }
+    },
+    "spells": {
+      "known": [
+        [
+          4,
+          2
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3,
+          1
+        ],
+        [
+          6,
+          4,
+          2
+        ],
+        [
+          7,
+          4,
+          2,
+          1
+        ],
+        [
+          7,
+          5,
+          3,
+          2
+        ],
+        [
+          8,
+          5,
+          3,
+          2,
+          1
+        ],
+        [
+          8,
+          5,
+          4,
+          3,
+          2
+        ],
+        [
+          9,
+          5,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          3,
+          2
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2,
+          1
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          9,
+          5,
+          5,
+          4,
+          4,
+          4,
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "perDay": [
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6,
+          3
+        ],
+        [
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ]
+      ],
+      "slug": "sorcererspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Sorcerers are proficient with all simple weapons. They are not proficient with any type of armor or shield. Armor of any type interferes with a sorcerer's arcane gestures, which can cause his spells with somatic components to fail.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A sorcerer casts arcane spells (the same type of spells available to bards and wizards), which are drawn primarily from the sorcerer/wizard spell list. He can cast any spell he knows without preparing it ahead of time, the way a wizard or a cleric must. To learn or cast a spell, a sorcerer must have a Charisma score equal to at least 10 + the spell level (Cha 10 for 0-level spells, Cha 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a sorcerer's spell is 10 + the spell level + the sorcerer's Charisma modifier. Like other spellcasters, a sorcerer can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given in the class table. In addition, he receives bonus spells per day if he has a high Charisma score. A sorcerer's selection of spells is extremely limited. A sorcerer begins play knowing four 0-level spells (also called cantrips) and two 1st-level spells of your choice. At each new sorcerer level, he gains one or more new spells, as indicated in the class table. (Unlike spells per day, the number of spells a sorcerer knows is not affected by his Charisma score; the numbers in the class table.) These new spells can be common spells chosen from the sorcerer/wizard spell list, or they can be unusual spells that the sorcerer has gained some understanding of by study. For example, a sorcerer with a scroll or spellbook detailing an unusual sorcerer/wizard spell (one not on the sorcerer/wizard spell list in this book) could select that spell as one of his new spells for attaining a new level, provided that it is of the right spell level. The sorcerer can't use this method of spell acquisition to learn spells at a faster rate, however. Upon reaching 4th level, and at every even-numbered sorcerer level after that (6th, 8th, and so on), a sorcerer can choose to learn a new spell in place of one he already knows. In effect, the sorcerer \"loses\" the old spell in exchange for the new one. The new spell's level must be the same as that of the spell being exchanged, and it must be at least two levels lower than the highest-level sorcerer spell the sorcerer can cast. For instance, upon reaching 4th-level, a sorcerer could trade in a single 0-level spell (two spell levels below the highest-level sorcerer spell he can cast, which is 2nd) for a different 0-level spell. At 6th level, he could trade in a single 0-level or 1st-level spell (since he now can cast 3rd-level sorcerer spells) for a different spell of the same level. A sorcerer may swap only a single spell at any given level, and must choose whether or not to swap the spell at the same time that he gains new spells known for the level. Unlike a wizard or a cleric, a sorcerer need not prepare his spells in advance. He can cast any spell he knows at any time, assuming he has not yet used up his spells per day for that spell level. For example, at 1st level, the sorcerer Hennet can cast four 1st-level spells per day-three for being 1st level (, plus one thanks to his Charisma score of 15. However, he knows only two 1st-level spells: magic missile and sleep (. Thus, on any given day, he can cast some combination of the two spells a total of four times. He does not have to decide ahead of time which spells he'll cast.",
+        "name": "Spells"
+      },
+      {
+        "description": "",
+        "name": "Summon Familiar"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Knowledge (Arcana)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "",
+    "hasCantrips": true,
+    "hitDie": "d4",
+    "name": "Sorcerer",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Summon Familiar"
+        ],
+        "spellsPerDay": "5,3,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "6,4,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "6,5,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "6,6,3,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "6,6,4,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "6,6,5,3,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "6,6,6,4,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "6,6,6,5,3,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,4,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,5,3,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,4,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,5,3,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,4,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 7,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,5,3,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,4,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,5,3,-",
+        "willSave": 10
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,4,-",
+        "willSave": 10
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,5,3",
+        "willSave": 11
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,4",
+        "willSave": 11
+      },
+      {
+        "bab": 10,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,6",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier",
+    "spellsKnown": [
+      "4,2,-,-,-,-,-,-,-,-",
+      "5,2,-,-,-,-,-,-,-,-",
+      "5,3,-,-,-,-,-,-,-,-",
+      "6,3,1,-,-,-,-,-,-,-",
+      "6,4,2,-,-,-,-,-,-,-",
+      "7,4,2,1,-,-,-,-,-,-",
+      "7,5,3,2,-,-,-,-,-,-",
+      "8,5,3,2,1,-,-,-,-,-",
+      "8,5,4,3,2,-,-,-,-,-",
+      "9,5,4,3,2,1,-,-,-,-",
+      "9,5,5,4,3,2,-,-,-,-",
+      "9,5,5,4,3,2,1,-,-,-",
+      "9,5,5,4,4,3,2,-,-,-",
+      "9,5,5,4,4,3,2,1,-,-",
+      "9,5,5,4,4,4,3,2,-,-",
+      "9,5,5,4,4,4,3,2,1,-",
+      "9,5,5,4,4,4,3,3,2,-",
+      "9,5,5,4,4,4,3,3,2,1",
+      "9,5,5,4,4,4,3,3,3,2",
+      "9,5,5,4,4,4,3,3,3,3"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+export { SIMPLE_WEAPONS } from "@/database/packages/dnd35-from-parser/generated/srd/items/weapons.ts";
+export { MARTIAL_WEAPONS } from "@/database/packages/dnd35-from-parser/generated/srd/items/martial.ts";
+export { EXOTIC_WEAPONS } from "@/database/packages/dnd35-from-parser/generated/srd/items/exotic.ts";
+export { ARMOR } from "@/database/packages/dnd35-from-parser/generated/srd/items/armor.ts";
+export { SHIELDS } from "@/database/packages/dnd35-from-parser/generated/srd/items/shields.ts";
+export { GOODS } from "@/database/packages/dnd35-from-parser/generated/srd/items/goods.ts";
+export { MAGIC_ARMOR } from "@/database/packages/dnd35-from-parser/generated/srd/items/magic-armor.ts";
+export { MAGIC_SHIELDS } from "@/database/packages/dnd35-from-parser/generated/srd/items/magic-shields.ts";
+export { MAGIC_WEAPONS } from "@/database/packages/dnd35-from-parser/generated/srd/items/magic-weapons.ts";
+export { WONDROUS_ITEMS } from "@/database/packages/dnd35-from-parser/generated/srd/items/wondrous-items.ts";
+export { RINGS } from "@/database/packages/dnd35-from-parser/generated/srd/items/rings.ts";
+export { RODS } from "@/database/packages/dnd35-from-parser/generated/srd/items/rods.ts";
+export { STAFFS } from "@/database/packages/dnd35-from-parser/generated/srd/items/staffs.ts";

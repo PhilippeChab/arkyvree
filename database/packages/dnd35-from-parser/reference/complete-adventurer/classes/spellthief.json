@@ -1,0 +1,1032 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-31T22:19:11.228Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/spellthief/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5,
+          9,
+          13,
+          17
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Steal Spell (0 Or 1st)"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Trapfinding"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Detect Magic"
+      },
+      {
+        "levels": [
+          2,
+          11,
+          20
+        ],
+        "name": "Spellgrace"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Steal Spell Effect"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Steal Energy Resistance 10"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Steal Spell (2nd)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Steal Spell-Like Ability"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Steal Spell (3rd)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Absorb Spell"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Steal Spell (4th)"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Arcane Sight"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Steal Spell (5th)"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Steal Energy Resistance 20"
+      },
+      {
+        "levels": [
+          12
+        ],
+        "name": "Steal Spell (6th)"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "Discover Spells"
+      },
+      {
+        "levels": [
+          14
+        ],
+        "name": "Steal Spell (7th)"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Steal Spell Resistance"
+      },
+      {
+        "levels": [
+          16
+        ],
+        "name": "Steal Spell (8th)"
+      },
+      {
+        "levels": [
+          18
+        ],
+        "name": "Steal Spell (9th)"
+      },
+      {
+        "levels": [
+          19
+        ],
+        "name": "Steal Energy Resistance 30"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Absorb Spell (Immediate Casting)"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 6,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 6,
+    "spellsKnown": [
+      [],
+      [],
+      [],
+      [
+        2
+      ],
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        3
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        5,
+        4,
+        4,
+        4
+      ],
+      [
+        5,
+        5,
+        4,
+        4
+      ],
+      [
+        5,
+        5,
+        5,
+        4
+      ],
+      [
+        5,
+        5,
+        5,
+        5
+      ]
+    ],
+    "spellsPerDay": [
+      [],
+      [],
+      [],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3
+      ]
+    ],
+    "unresolvedAptitudePicks": [
+      "Absorb Spell",
+      "Discover Spells"
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Spellthief Class Feature",
+    "features": {
+      "Absorb Spell": {
+        "description": "Beginning at 7th level, if a spellthief makes a successful save against a spell that targets him, he can attempt to absorb the spell energy for later use. This ability affects only spells that have the spellthief asa target, not effect or area spells. A spellthief can't absorb a spell of a higher spell level than he could steal with his steal spell ability. To absorb a spell that targets him, a spellthief must succeed on a level check (1d20 + spellthief class level) against a DC of 10 + the spell's caster level. Failure indicates that the spell has its normal effect. Success means that the spellthief suffers no effect from the spell and can cast the spell later (or use its energy to cast one of his own spells known) as if he had stolen the spell with his steal spell ability. His normal limit of total spell levels stolen still applies. At 20th level or higher, a spellthief can choose to use the stolen spell energy as an immediate action, either to recast the original spell or to cast one of his own spells known using the stolen spell energy.",
+        "level": 7,
+        "seedName": "Absorb Spell (Spellthief)",
+        "stackable": true
+      },
+      "Absorb Spell (Immediate Casting)": {
+        "description": "",
+        "level": 20,
+        "seedName": "Absorb Spell (Immediate Casting) (Spellthief)"
+      },
+      "Arcane Sight": {
+        "description": "Beginning at 9th level, a spellthief can use arcane sight as a swift action a number of times per day equal to his Charisma modifier (minimum 1). His caster level is equal to his spellthief class level.",
+        "level": 9,
+        "seedName": "Arcane Sight (Spellthief)"
+      },
+      "Detect Magic": {
+        "description": "A spellthief of 2nd level or higher can use detect magic a number of times per day equal to his Charisma bonus, if any (minimum 1). His caster level is equal to his spellthief class level.",
+        "level": 2,
+        "seedName": "Detect Magic (Spellthief)"
+      },
+      "Discover Spells": {
+        "description": "A spellthief of 13th level or higher who steals a spell from a spellcaster with his steal spell ability automatically learns the names of all other spells prepared or known by the spellcaster that are of the same spell level as the stolen spell. This knowledge allows the spellthief to better choose which spells to steal on subsequent attacks. For example, a 13th-level spellthief who steals disintegrate from an enemy sorcerer would also discover the names of all other 6th-level spells known by that sorcerer.",
+        "level": 13,
+        "seedName": "Discover Spells (Spellthief)"
+      },
+      "Sneak Attack": {
+        "description": "A spellthief deals an extra 1d6 points of damage when flanking an opponent or at any time when the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 5th level, 3d6 points at 9th level, 4d6 points at 13th level, and 5d6 points at 17th level. See the rogue class feature of the Player's Handbook. If a spellthief gets a sneak attack bonus from another source (such as rogue levels), the bonuses on damage stack.",
+        "level": 1,
+        "seedName": "Sneak Attack (Spellthief)",
+        "stackable": true
+      },
+      "Spellgrace": {
+        "description": "A spellthief of 2nd level or higher gains a +1 competence bonus on his saves against spells. This bonus improves to +2 at 11th level and to +3 at 20th level.",
+        "level": 2,
+        "seedName": "Spellgrace (Spellthief)",
+        "stackable": true
+      },
+      "Spells": {
+        "description": "Beginning at 4th level, a spellthief gains the ability to cast a small number of arcane spells, which are drawn from a subset of the sorcerer/wizard spell list. He can cast any spell he knows without preparing it ahead of time, just as a sorcerer can. To learn or cast a spell, a spellthief must have a Charisma score equal to at least 10 + the spell level (Cha 11 for 1st-level spells, Cha 12 for 2nd-level spells, and so on). The DC for a saving throw against a spellthief's spell is 10 + spell level + spellthief's Cha modifier. Like other spellcasters, a spellthief can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given in the class table. In addition, he receives bonus spells per day if he has a high Charisma score. When the class table, 1st-level spells for a 4th-level spellthief), he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. A spellthief's selection of spells is extremely limited. A spellthief begins play knowing no spells but gains one or more new spells at certain levels, as indicated in the class table. Unlike spells per day, his Charisma does not affect the number of spells he knows; the numbers in the class table.) A spellthief can learn any sorcerer/wizard spell from the following schools: abjuration, divination, enchantment, illusion, and transmutation. No other sorcerer/wizard spells are on the spellthief's class spell list. Upon reaching 12th level, and at every third spellthief level after that (15th and 18th), a spellthief can choose to learn a new spell in place of one he already knows. In effect, the spellthief \"loses\" the old spell in exchange for the new one. The new spell's level must be the same as that of the spell being exchanged, and it must be at least two levels lower than the highest-level spellthief spell that the spellthief can cast. For instance, upon reaching 12th level, a spellthief could trade in a single 1st-level spell for a different 1st-level spell. A spellthief can swap only a single spell at any given level, and he must choose whether or not to swap the spell at the same time that he gains new spells known for the level. At 4th level and higher, a spellthief's level for spells is one-half his spellthief level.",
+        "level": 13,
+        "seedName": "Spells (Spellthief)"
+      },
+      "Steal Energy Resistance 10": {
+        "description": "Beginning at 3rd level, a spellthief can siphon off some or all of a target's resistance to an energy type (acid, cold, electricity, fire, or sonic). A spellthief who hits an opponent with a successful sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead temporarily gain resistance 10 to an energy type to which his target is resistant or immune). If the target is willing, a spellthief can steal energy resistance with a touch as a standard action. Simultaneously, the target creature's resistance to that energy type is reduced by 10 (to a minimum of 0). A creature with immunity to an energy type retains that immunity. If his target has more than one type of resistance to energy, a spellthief can choose which kind to steal; otherwise, the DM determines the stolen resistance randomly from among those possessed by the target. If a spellthief chooses to steal a type of resistance that the target doesn't possess, the stolen type of resistance is determined randomly from those possessed by the target. The resistance a spellthief gains from using this ability lasts for 1 minute. If the resistance is derived from a temporary effect (such as a spell), the stolen resistance disappears when the effect expires. A spellthief can use this ability multiple times, but its effects do not stack unless they apply to different types of energy. For example, throughout a long combat, a spellthief might use this ability to gain resistance to fire and resistance to cold, but he could not use it twice on a creature that is resistant to fire to gain twice as much resistance to fire (nor to reduce the creature's resistance to fire by twice as much). At 11th level, a spellthief can steal resistance 20 to an energy type by using this ability, and at 19th level he can steal resistance 30 to an energy type.",
+        "level": 3,
+        "seedName": "Steal Energy Resistance 10 (Spellthief)"
+      },
+      "Steal Energy Resistance 20": {
+        "description": "",
+        "level": 11,
+        "seedName": "Steal Energy Resistance 20 (Spellthief)"
+      },
+      "Steal Energy Resistance 30": {
+        "description": "",
+        "level": 19,
+        "seedName": "Steal Energy Resistance 30 (Spellthief)"
+      },
+      "Steal Spell": {
+        "description": "A spellthief can siphon spell energy away from his target and use it himself. A spellthief who hits an opponent with a successful sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead steal a spell, or the potential to cast a specific known spell, from his target. If the target is willing, a spellthief can steal a spell with a touch as a standard action. The target of a steal spell attack loses one 0-level or 1st-level spell from memory if she prepares spells ahead of time, or one 0-level or 1st-level spell slot if she is a spontaneous caster. A spontaneous caster also loses the ability to cast the stolen spell for 1 minute. If the target has no spells prepared (or has no remaining spell slots, if she is a spontaneous caster), this ability has no effect. A spellthief can choose which spell to steal; otherwise, the DM determines the stolen spell randomly. If a spellthief tries to steal a spell that isn't available, the stolen spell (or spell slot) is determined randomly from among those the target has available. For example, a 1st-level spellthief who uses this ability against a 1st-level sorcerer could choose to steal magic missile. Assuming the sorcerer knew that spell, a successful steal spell attack would eliminate one 1st-level spell slot and temporarily prevent her from casting magic missile. If the same spellthief stole magic missile from a wizard who had it prepared, the wizard would lose one prepared magic missile spell (but wouldn't lose any other magic missile spells she might also have prepared). After stealing a spell, a spellthief can cast the spell imself on a subsequent turn. Treat the spell as if it were cast by the original owner of the spell for the purpose of determining caster level, save DC, and so forth. A spellthief can cast this spell even if he doesn't have the minimum ability score normally required to cast a spell of that level. The spellthief must supply the same components (including verbal, somatic, material, XP, and any focus) required for the stolen spell. Alternatively, a spellthief of 4th level or higher can use the stolen spell power to cast any spellthief spell that he knows of the same level or lower (effectively, this gives the spellthief one free casting of a known spell). A spellthief must cast a stolen spell (or use its energy to cast one of his own spells) within 1 hour of stealing it; otherwise, the extra spell energy fades harmlessly away. As a spellthief gains levels, he can choose to steal higher-level spells. At 4th level, he can steal spells of up to 2nd level, and for every two levels gained after 4th, the maximum spell level stolen increases by one (up to a maximum of 9th-level spells at 18th level). At any one time, a spellthief can possess a maximum number of stolen spell levels equal to his class level (treat 0-level spells as 1/2 level for this purpose). For instance, a 4th-level spellthief can have two stolen 2nd-level spells, or one 2nd-level spell and two 1st-level spells, or any other combination of 0-level, 1st-level, and 2nd-level spells totaling four levels. If he steals a spell that would cause him to exceed this limit, he must choose to lose stolen spells sufficient to reduce his total number of stolen spell levels to no more than his maximum. A spellthief can't apply metamagic feats or other effects to the stolen spell unless the specific spell stolen was prepared with such an effect. For example, a spellthief of 6th level or higher could steal a wizard's empowered magic missile, but only if he specifically chose to steal empowered magic missile. If he chose to steal an unmodified magic missile, he couldn't steal an empowered magic missile, a silent magic missile, or any other metamagic form of the spell. A spellthief couldn't steal an empowered magic missile from a sorcerer, since the sorcerer applies metamagic effects upon casting and thus has no prepared empowered magic missile spell. This ability works only against spells. It has no effect on psionic powers or spell-like abilities (but see the steal spell-like ability class feature, below).",
+        "level": 1,
+        "seedName": "Steal Spell (Spellthief)",
+        "stackable": true
+      },
+      "Steal Spell Effect": {
+        "description": "Beginning at 2nd level, a spellthief can siphon an active spell effect from another creature. A spellthief who hits an opponent with a sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead gain the effect of a single spell affecting the target. If the target is willing, a spellthief can steal a spell effect with a touch as a standard action. The spellthief can choose which spell effect to steal; otherwise, the DM determines the stolen spell effect randomly. If a spellthief tries to steal a spell effect that isn't present, the stolen spell effect is determined randomly from among those currently in effect on the target. A spellthief can't steal a spell effect if its caster level exceeds his class level + his Charisma modifier. Upon stealing a spell effect, a spellthief gains the stolen effect (and the original creature loses that effect) for 1 minute per class level (or until the spell's duration expires, whichever comes first). If the spell effect's duration hasn't expired by this time, the spell effect returns to the creature that originally benefited from it. A spellthief can steal the effect of a spell only if the spell could be cast on him by the original caster. For example, a spellthief couldn't gain the effect of an animal growth spell (unless the spellthief is of the animal type) or the effect of a shield spell (since that spell's range is personal). If a spellthief tries to steal the effect of a spell not allowed to him, the effect is still suppressed on the original target of the spell for 1 minute per spellthief class level. This ability does not work on spell effects that are immune to dispel magic (such as bestow curse).",
+        "level": 2,
+        "seedName": "Steal Spell Effect (Spellthief)"
+      },
+      "Steal Spell Resistance": {
+        "description": "Beginning at 15th level, a spellthief can use a sneak attack to temporarily steal some or all of a creature's spell resistance. A spellthief who hits an opponent with a sneak attack can choose to forgo 3d6 points of sneak attack damage and instead reduce the target's spell resistance by 5. The spellthief also gains spell resistance equal to 5 + his class level (up to a maximum value equal to the original spell resistance of the target). If the target is willing, a spellthief can steal spell resistance with a touch as a standard action. The stolen spell resistance benefits the spellthief for a number of rounds equal to the spellthief's Charisma modifier (minimum 1 round) and then returns to the target creature. If the spell resistance is derived from a temporary effect (such as a spell), the stolen spell resistance disappears when the effect elapses. A spellthief can't use this ability on the same creature again until the creature's stolen spell resistance returns.",
+        "level": 15,
+        "seedName": "Steal Spell Resistance (Spellthief)"
+      },
+      "Steal Spell-like Ability": {
+        "description": "At 5th level and higher, a spellthief can use a sneak attack to temporarily steal a creature's spell-like ability. A spellthief who hits an opponent with a sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead gain one use of one of the target's spell-like abilities. If the target is willing, a spellthief can steal a spell-like ability with a touch as a standard action. This spell-like ability can originate from the target's class, race, template, or any other source, and can be of any level up to a maximum of one-third the spellthief's class level. A spellthief can select a specific spell-like ability to steal; otherwise, the DM chooses the ability at random. If the ability has a limited number of uses per day, the target must have at least one such use left, or the spellthief can't steal the ability. If the target can't use its ability at the present time (such as a summoned demon's summon ability), the spellthief can't steal it. A spellthief can use a stolen spell-like ability once. For all purposes (caster level, save DC, and so on), treat the spell-like ability as if it were being used by the original possessor of the ability. A spellthief must use the stolen spell-like ability within 1 minute of acquiring it, or it is lost harmlessly. Until the spellthief uses the ability (or until the minute elapses), the target cannot use the stolen ability.",
+        "level": 5,
+        "seedName": "Steal Spell-like Ability (Spellthief)"
+      },
+      "Trapfinding": {
+        "description": "A spellthief can use the Search skill to locate traps with a DC higher than 20, and he can use Disable Device to bypass a trap or disarm magic traps. See the rogue class feature of the Player's Handbook.",
+        "level": 1,
+        "seedName": "Trapfinding (Spellthief)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Spellthieves are proficient with all simple weapons and with light armor but not with shields. Because the somatic components required for spellthief spells are simple, a spellthief can cast spellthief spells while wearing light armor without incurring the normal arcane spell failure chance. However, a spellthief wearing medium or heavy armor or using a shield incurs a chance of arcane spell failure if the spell in question has a somatic component (most do). A multiclass spellthief still incurs the normal arcane spell failure chance for arcane spells received from other classes, including those stolen from arcane casters the steal spell ability, below).",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Spellthief)"
+      }
+    },
+    "occurrenceMap": {
+      "Absorb Spell": "Absorb Spell",
+      "Absorb Spell (Immediate Casting)": "Absorb Spell",
+      "Arcane Sight": "Arcane Sight",
+      "Detect Magic": "Detect Magic",
+      "Discover Spells": "Discover Spells",
+      "Sneak Attack": "Sneak Attack",
+      "Spellgrace": "Spellgrace",
+      "Steal Energy Resistance 10": "Steal Energy Resistance 10",
+      "Steal Energy Resistance 20": "Steal Energy Resistance 20",
+      "Steal Energy Resistance 30": "Steal Energy Resistance 30",
+      "Steal Spell (0 Or 1st)": "Steal Spell",
+      "Steal Spell (2nd)": "Steal Spell",
+      "Steal Spell (3rd)": "Steal Spell",
+      "Steal Spell (4th)": "Steal Spell",
+      "Steal Spell (5th)": "Steal Spell",
+      "Steal Spell (6th)": "Steal Spell",
+      "Steal Spell (7th)": "Steal Spell",
+      "Steal Spell (8th)": "Steal Spell",
+      "Steal Spell (9th)": "Steal Spell",
+      "Steal Spell Effect": "Steal Spell",
+      "Steal Spell Resistance": "Steal Spell",
+      "Steal Spell-Like Ability": "Steal Spell-like Ability",
+      "Trapfinding": "Trapfinding"
+    },
+    "overrides": {
+      "reviewed": [
+        "Steal Energy Resistance 10",
+        "Absorb Spell",
+        "Discover Spells"
+      ]
+    },
+    "spells": {
+      "known": [
+        [],
+        [],
+        [],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          5,
+          4,
+          4,
+          4
+        ],
+        [
+          5,
+          5,
+          4,
+          4
+        ],
+        [
+          5,
+          5,
+          5,
+          4
+        ],
+        [
+          5,
+          5,
+          5,
+          5
+        ]
+      ],
+      "noCantrips": true,
+      "perDay": [
+        [],
+        [],
+        [],
+        [
+          0
+        ],
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "slug": "spellthiefspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Spellthieves are proficient with all simple weapons and with light armor but not with shields. Because the somatic components required for spellthief spells are simple, a spellthief can cast spellthief spells while wearing light armor without incurring the normal arcane spell failure chance. However, a spellthief wearing medium or heavy armor or using a shield incurs a chance of arcane spell failure if the spell in question has a somatic component (most do). A multiclass spellthief still incurs the normal arcane spell failure chance for arcane spells received from other classes, including those stolen from arcane casters the steal spell ability, below).",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 4th level, a spellthief gains the ability to cast a small number of arcane spells, which are drawn from a subset of the sorcerer/wizard spell list. He can cast any spell he knows without preparing it ahead of time, just as a sorcerer can. To learn or cast a spell, a spellthief must have a Charisma score equal to at least 10 + the spell level (Cha 11 for 1st-level spells, Cha 12 for 2nd-level spells, and so on). The DC for a saving throw against a spellthief's spell is 10 + spell level + spellthief's Cha modifier. Like other spellcasters, a spellthief can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given in the class table. In addition, he receives bonus spells per day if he has a high Charisma score. When the class table, 1st-level spells for a 4th-level spellthief), he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. A spellthief's selection of spells is extremely limited. A spellthief begins play knowing no spells but gains one or more new spells at certain levels, as indicated in the class table. Unlike spells per day, his Charisma does not affect the number of spells he knows; the numbers in the class table.) A spellthief can learn any sorcerer/wizard spell from the following schools: abjuration, divination, enchantment, illusion, and transmutation. No other sorcerer/wizard spells are on the spellthief's class spell list. Upon reaching 12th level, and at every third spellthief level after that (15th and 18th), a spellthief can choose to learn a new spell in place of one he already knows. In effect, the spellthief \"loses\" the old spell in exchange for the new one. The new spell's level must be the same as that of the spell being exchanged, and it must be at least two levels lower than the highest-level spellthief spell that the spellthief can cast. For instance, upon reaching 12th level, a spellthief could trade in a single 1st-level spell for a different 1st-level spell. A spellthief can swap only a single spell at any given level, and he must choose whether or not to swap the spell at the same time that he gains new spells known for the level. At 4th level and higher, a spellthief's level for spells is one-half his spellthief level.",
+        "name": "Spells"
+      },
+      {
+        "description": "A spellthief deals an extra 1d6 points of damage when flanking an opponent or at any time when the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 5th level, 3d6 points at 9th level, 4d6 points at 13th level, and 5d6 points at 17th level. See the rogue class feature of the Player's Handbook. If a spellthief gets a sneak attack bonus from another source (such as rogue levels), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A spellthief can siphon spell energy away from his target and use it himself. A spellthief who hits an opponent with a successful sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead steal a spell, or the potential to cast a specific known spell, from his target. If the target is willing, a spellthief can steal a spell with a touch as a standard action. The target of a steal spell attack loses one 0-level or 1st-level spell from memory if she prepares spells ahead of time, or one 0-level or 1st-level spell slot if she is a spontaneous caster. A spontaneous caster also loses the ability to cast the stolen spell for 1 minute. If the target has no spells prepared (or has no remaining spell slots, if she is a spontaneous caster), this ability has no effect. A spellthief can choose which spell to steal; otherwise, the DM determines the stolen spell randomly. If a spellthief tries to steal a spell that isn't available, the stolen spell (or spell slot) is determined randomly from among those the target has available. For example, a 1st-level spellthief who uses this ability against a 1st-level sorcerer could choose to steal magic missile. Assuming the sorcerer knew that spell, a successful steal spell attack would eliminate one 1st-level spell slot and temporarily prevent her from casting magic missile. If the same spellthief stole magic missile from a wizard who had it prepared, the wizard would lose one prepared magic missile spell (but wouldn't lose any other magic missile spells she might also have prepared). After stealing a spell, a spellthief can cast the spell imself on a subsequent turn. Treat the spell as if it were cast by the original owner of the spell for the purpose of determining caster level, save DC, and so forth. A spellthief can cast this spell even if he doesn't have the minimum ability score normally required to cast a spell of that level. The spellthief must supply the same components (including verbal, somatic, material, XP, and any focus) required for the stolen spell. Alternatively, a spellthief of 4th level or higher can use the stolen spell power to cast any spellthief spell that he knows of the same level or lower (effectively, this gives the spellthief one free casting of a known spell). A spellthief must cast a stolen spell (or use its energy to cast one of his own spells) within 1 hour of stealing it; otherwise, the extra spell energy fades harmlessly away. As a spellthief gains levels, he can choose to steal higher-level spells. At 4th level, he can steal spells of up to 2nd level, and for every two levels gained after 4th, the maximum spell level stolen increases by one (up to a maximum of 9th-level spells at 18th level). At any one time, a spellthief can possess a maximum number of stolen spell levels equal to his class level (treat 0-level spells as 1/2 level for this purpose). For instance, a 4th-level spellthief can have two stolen 2nd-level spells, or one 2nd-level spell and two 1st-level spells, or any other combination of 0-level, 1st-level, and 2nd-level spells totaling four levels. If he steals a spell that would cause him to exceed this limit, he must choose to lose stolen spells sufficient to reduce his total number of stolen spell levels to no more than his maximum. A spellthief can't apply metamagic feats or other effects to the stolen spell unless the specific spell stolen was prepared with such an effect. For example, a spellthief of 6th level or higher could steal a wizard's empowered magic missile, but only if he specifically chose to steal empowered magic missile. If he chose to steal an unmodified magic missile, he couldn't steal an empowered magic missile, a silent magic missile, or any other metamagic form of the spell. A spellthief couldn't steal an empowered magic missile from a sorcerer, since the sorcerer applies metamagic effects upon casting and thus has no prepared empowered magic missile spell. This ability works only against spells. It has no effect on psionic powers or spell-like abilities (but see the steal spell-like ability class feature, below).",
+        "name": "Steal Spell",
+        "type": "(Su)"
+      },
+      {
+        "description": "A spellthief can use the Search skill to locate traps with a DC higher than 20, and he can use Disable Device to bypass a trap or disarm magic traps. See the rogue class feature of the Player's Handbook.",
+        "name": "Trapfinding",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A spellthief of 2nd level or higher can use detect magic a number of times per day equal to his Charisma bonus, if any (minimum 1). His caster level is equal to his spellthief class level.",
+        "name": "Detect Magic",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A spellthief of 2nd level or higher gains a +1 competence bonus on his saves against spells. This bonus improves to +2 at 11th level and to +3 at 20th level.",
+        "name": "Spellgrace",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 2nd level, a spellthief can siphon an active spell effect from another creature. A spellthief who hits an opponent with a sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead gain the effect of a single spell affecting the target. If the target is willing, a spellthief can steal a spell effect with a touch as a standard action. The spellthief can choose which spell effect to steal; otherwise, the DM determines the stolen spell effect randomly. If a spellthief tries to steal a spell effect that isn't present, the stolen spell effect is determined randomly from among those currently in effect on the target. A spellthief can't steal a spell effect if its caster level exceeds his class level + his Charisma modifier. Upon stealing a spell effect, a spellthief gains the stolen effect (and the original creature loses that effect) for 1 minute per class level (or until the spell's duration expires, whichever comes first). If the spell effect's duration hasn't expired by this time, the spell effect returns to the creature that originally benefited from it. A spellthief can steal the effect of a spell only if the spell could be cast on him by the original caster. For example, a spellthief couldn't gain the effect of an animal growth spell (unless the spellthief is of the animal type) or the effect of a shield spell (since that spell's range is personal). If a spellthief tries to steal the effect of a spell not allowed to him, the effect is still suppressed on the original target of the spell for 1 minute per spellthief class level. This ability does not work on spell effects that are immune to dispel magic (such as bestow curse).",
+        "name": "Steal Spell Effect",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, a spellthief can siphon off some or all of a target's resistance to an energy type (acid, cold, electricity, fire, or sonic). A spellthief who hits an opponent with a successful sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead temporarily gain resistance 10 to an energy type to which his target is resistant or immune). If the target is willing, a spellthief can steal energy resistance with a touch as a standard action. Simultaneously, the target creature's resistance to that energy type is reduced by 10 (to a minimum of 0). A creature with immunity to an energy type retains that immunity. If his target has more than one type of resistance to energy, a spellthief can choose which kind to steal; otherwise, the DM determines the stolen resistance randomly from among those possessed by the target. If a spellthief chooses to steal a type of resistance that the target doesn't possess, the stolen type of resistance is determined randomly from those possessed by the target. The resistance a spellthief gains from using this ability lasts for 1 minute. If the resistance is derived from a temporary effect (such as a spell), the stolen resistance disappears when the effect expires. A spellthief can use this ability multiple times, but its effects do not stack unless they apply to different types of energy. For example, throughout a long combat, a spellthief might use this ability to gain resistance to fire and resistance to cold, but he could not use it twice on a creature that is resistant to fire to gain twice as much resistance to fire (nor to reduce the creature's resistance to fire by twice as much). At 11th level, a spellthief can steal resistance 20 to an energy type by using this ability, and at 19th level he can steal resistance 30 to an energy type.",
+        "name": "Steal Energy Resistance 10",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 5th level and higher, a spellthief can use a sneak attack to temporarily steal a creature's spell-like ability. A spellthief who hits an opponent with a sneak attack can choose to forgo dealing 1d6 points of sneak attack damage and instead gain one use of one of the target's spell-like abilities. If the target is willing, a spellthief can steal a spell-like ability with a touch as a standard action. This spell-like ability can originate from the target's class, race, template, or any other source, and can be of any level up to a maximum of one-third the spellthief's class level. A spellthief can select a specific spell-like ability to steal; otherwise, the DM chooses the ability at random. If the ability has a limited number of uses per day, the target must have at least one such use left, or the spellthief can't steal the ability. If the target can't use its ability at the present time (such as a summoned demon's summon ability), the spellthief can't steal it. A spellthief can use a stolen spell-like ability once. For all purposes (caster level, save DC, and so on), treat the spell-like ability as if it were being used by the original possessor of the ability. A spellthief must use the stolen spell-like ability within 1 minute of acquiring it, or it is lost harmlessly. Until the spellthief uses the ability (or until the minute elapses), the target cannot use the stolen ability.",
+        "name": "Steal Spell-like Ability",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 7th level, if a spellthief makes a successful save against a spell that targets him, he can attempt to absorb the spell energy for later use. This ability affects only spells that have the spellthief asa target, not effect or area spells. A spellthief can't absorb a spell of a higher spell level than he could steal with his steal spell ability. To absorb a spell that targets him, a spellthief must succeed on a level check (1d20 + spellthief class level) against a DC of 10 + the spell's caster level. Failure indicates that the spell has its normal effect. Success means that the spellthief suffers no effect from the spell and can cast the spell later (or use its energy to cast one of his own spells known) as if he had stolen the spell with his steal spell ability. His normal limit of total spell levels stolen still applies. At 20th level or higher, a spellthief can choose to use the stolen spell energy as an immediate action, either to recast the original spell or to cast one of his own spells known using the stolen spell energy.",
+        "name": "Absorb Spell",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 9th level, a spellthief can use arcane sight as a swift action a number of times per day equal to his Charisma modifier (minimum 1). His caster level is equal to his spellthief class level.",
+        "name": "Arcane Sight",
+        "type": "(Sp)"
+      },
+      {
+        "description": "",
+        "name": "Steal Energy Resistance 20"
+      },
+      {
+        "description": "A spellthief of 13th level or higher who steals a spell from a spellcaster with his steal spell ability automatically learns the names of all other spells prepared or known by the spellcaster that are of the same spell level as the stolen spell. This knowledge allows the spellthief to better choose which spells to steal on subsequent attacks. For example, a 13th-level spellthief who steals disintegrate from an enemy sorcerer would also discover the names of all other 6th-level spells known by that sorcerer.",
+        "name": "Discover Spells",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 15th level, a spellthief can use a sneak attack to temporarily steal some or all of a creature's spell resistance. A spellthief who hits an opponent with a sneak attack can choose to forgo 3d6 points of sneak attack damage and instead reduce the target's spell resistance by 5. The spellthief also gains spell resistance equal to 5 + his class level (up to a maximum value equal to the original spell resistance of the target). If the target is willing, a spellthief can steal spell resistance with a touch as a standard action. The stolen spell resistance benefits the spellthief for a number of rounds equal to the spellthief's Charisma modifier (minimum 1 round) and then returns to the target creature. If the spell resistance is derived from a temporary effect (such as a spell), the stolen spell resistance disappears when the effect elapses. A spellthief can't use this ability on the same creature again until the creature's stolen spell resistance returns.",
+        "name": "Steal Spell Resistance",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Steal Energy Resistance 30"
+      },
+      {
+        "description": "",
+        "name": "Absorb Spell (Immediate Casting)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Disable Device",
+      "Escape Artist",
+      "Gather Information",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Local)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Search",
+      "Speak Language",
+      "Spellcraft",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Magic Device"
+    ],
+    "description": "Spellthieves use skill and arcane magic to drain the abilities of their opponents and turn their foes' own powers against them. Spellthieves love the challenges that adventure brings, and they relish finding unique and inventive ways to use their abilities. Because they have such a wide variety of abilities, spellthieves can adapt themselves to overcome nearly any challenge, but they have neither the overpowering arcane might of wizards nor the brute force of fighters. Spellthieves never cast two spells when one will do, and they excel at using misdirection and deception to overcome seemingly stronger opponents. Good spellthieves use their skills and magic to entertain themselves, protect those less gifted than themselves, and occasionally serve a cause or nation as a spy. Evil spellthieves use their versatile skills to trick and deceive, or plague large cities as daring cat burglars.",
+    "hitDie": "d6",
+    "name": "Spellthief",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Sneak attack +1d6",
+          "steal spell (0 or 1st)",
+          "trapfinding"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Detect magic",
+          "spellgrace +1",
+          "steal spell effect"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Steal energy resistance 10"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Steal spell (2nd)"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Sneak attack +2d6",
+          "steal spell-like ability"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Steal spell (3rd)"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Absorb spell"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Steal spell (4th)"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Arcane sight",
+          "sneak attack +3d6"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Steal spell (5th)"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 8,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 3,
+        "special": [
+          "Spellgrace +2",
+          "steal energy resistance 20"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 7
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 4,
+        "special": [
+          "Steal spell (6th)"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 8
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 4,
+        "special": [
+          "Discover spells",
+          "sneak attack +4d6"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 8
+      },
+      {
+        "bab": 10,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 4,
+        "special": [
+          "Steal spell (7th)"
+        ],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 9
+      },
+      {
+        "bab": 11,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Steal spell resistance"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 9
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 5,
+        "special": [
+          "Steal spell (8th)"
+        ],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 10
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +5d6"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 10
+      },
+      {
+        "bab": 13,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 6,
+        "special": [
+          "Steal spell (9th)"
+        ],
+        "spellsPerDay": "3,2,2,1",
+        "willSave": 11
+      },
+      {
+        "bab": 14,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 6,
+        "special": [
+          "Steal energy resistance 30"
+        ],
+        "spellsPerDay": "3,3,3,2",
+        "willSave": 11
+      },
+      {
+        "bab": 15,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Absorb spell (immediate casting)",
+          "spellgrace +3"
+        ],
+        "spellsPerDay": "3,3,3,3",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier",
+    "spellsKnown": [
+      "-,-,-,-",
+      "-,-,-,-",
+      "-,-,-,-",
+      "2,-,-,-",
+      "2,-,-,-",
+      "3,-,-,-",
+      "3,-,-,-",
+      "4,2,-,-",
+      "4,2,-,-",
+      "4,3,-,-",
+      "4,3,2,-",
+      "4,4,3,-",
+      "4,4,3,-",
+      "4,4,4,2",
+      "4,4,4,3",
+      "4,4,4,3",
+      "5,4,4,4",
+      "5,5,4,4",
+      "5,5,5,4",
+      "5,5,5,5"
+    ]
+  }
+}

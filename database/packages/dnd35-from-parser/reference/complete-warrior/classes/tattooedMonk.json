@@ -1,0 +1,582 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:10.896Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/tattooed-monk/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        "target": "aptitudes.tattooedmonktattoo.allowed"
+      }
+    ],
+    "bab": "medium",
+    "featNameMap": {
+      "endurance": "Endurance",
+      "improvedgrapple": "Improved Grapple",
+      "improvedunarmedstrike": "Improved Unarmed Strike"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Monk Abilities"
+      },
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        "name": "Tattoo"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.endurance.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedgrapple.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedunarmedstrike.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Tattooed Monk Class Feature",
+    "features": {
+      "Arrowroot": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer of this tattoo can restore hit points to another creature through physical contact. The total amount of healing available each day equals the bearer's Wisdom modifier multiplied by his class level. This healing cannot be applied to the bearer himself, but it can be split among multiple recipients and need not be expended all at once.",
+        "level": 1,
+        "selectable": true
+      },
+      "Bamboo": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he may grant himself an enhancement bonus to Constitution equal to the number of tattoos he has. The duration of this effect is 1 round per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Bat": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he may grant himself an enhancement bonus to Dexterity equal to the number of tattoos he has. The duration of this effect is 1 round per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Bellflower": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he may apply his Charisma modifier as an enhancement bonus to any one of his ability scores, including Charisma itself. The duration of this effect is 1 round per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Butterfly": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he may grant himself an enhancement bonus to Wisdom equal to the number of tattoos he has. The duration of this effect is 1 round per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Centipede": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "Once per week, the bearer may produce a shadow walk effect, enabling rapid travel across vast distances. The journey must conclude on the Material Plane. This tattoo requires a minimum class level of 5th.",
+        "level": 1,
+        "selectable": true
+      },
+      "Chameleon": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer may produce an alter self effect a number of times per day equal to the total tattoos he possesses. Each use persists for 1 hour per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Chrysanthemum": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "For each hour the bearer spends under actual sunlight, he recovers a number of hit points equal to his level. Magical light sources such as a daylight spell do not trigger this recovery; genuine sunlight is required.",
+        "level": 1,
+        "selectable": true
+      },
+      "Crab": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer receives damage reduction 2/magic. This damage reduction increases by 2 for every additional tattoo he possesses beyond this one.",
+        "level": 1,
+        "selectable": true
+      },
+      "Crane": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "This tattoo confers progressively increasing resistance to physical deterioration. Upon first receiving it, the bearer becomes immune to nonmagical diseases. When he next acquires any tattoo, he also gains immunity to poison. Upon gaining yet another tattoo, he ceases to suffer ability score penalties from aging and becomes immune to magical aging effects. Previously accumulated aging penalties remain in effect. Age-related bonuses continue to accrue normally, and the bearer still dies of natural causes at the end of his lifespan.",
+        "level": 1,
+        "selectable": true
+      },
+      "Dragon": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he can exhale a gout of flame as though he had consumed an elixir of fire breath.",
+        "level": 1,
+        "selectable": true
+      },
+      "Dragonfly": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "Once per day, the bearer gains a dodge bonus to AC equal to the number of tattoos he possesses. This benefit persists for 1 round per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Falcon": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer becomes completely immune to all fear effects, whether magical or mundane. Additionally, all allies within 10 feet receive a morale bonus on saving throws against fear equal to the bearer's Charisma bonus (if any) plus the total number of tattoos he possesses.",
+        "level": 1,
+        "selectable": true
+      },
+      "Lion": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he can deliver a devastating strike against a single foe in melee. This grants a +4 bonus on the attack roll and adds his class level as a bonus to damage. The bearer must declare the smite before rolling the attack. A failed attack still expends the use.",
+        "level": 1,
+        "selectable": true
+      },
+      "Monk Abilities": {
+        "description": "Levels in this prestige class stack with monk levels when calculating unarmed strike damage, the monk AC bonus, and the unarmored speed bonus.",
+        "level": 1,
+        "seedName": "Monk Abilities (Tattooed Monk)"
+      },
+      "Monkey": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer gains a +1 competence bonus per tattoo he possesses on Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Open Lock, Sleight of Hand, and Tumble checks.",
+        "level": 1,
+        "selectable": true
+      },
+      "Mountain": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer can activate this tattoo to root himself in place with extraordinary resilience for up to 1 round per class level. While anchored, he gains a +4 bonus to both Constitution and Wisdom. The Constitution increase raises his hit points by 2 per level, but these additional hit points vanish when the effect ends or the bearer dismisses it as a free action. Unlike temporary hit points, these are not lost preferentially. During this state, the bearer suffers a -20 penalty on all Dexterity-based skill checks and becomes immune to bull rush and trip attempts. This ability can be used a number of times per day equal to the total tattoos the bearer possesses.",
+        "level": 1,
+        "selectable": true
+      },
+      "Nightingale": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer can mend injuries on himself or others, restoring a total number of hit points per day equal to twice his current class level. This healing pool may be divided across multiple uses.",
+        "level": 1,
+        "selectable": true
+      },
+      "Ocean": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer no longer requires food, water, or sleep.",
+        "level": 1,
+        "selectable": true
+      },
+      "Phoenix": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer gains spell resistance equal to his class level + 15. This tattoo requires a minimum class level of 7th.",
+        "level": 1,
+        "selectable": true
+      },
+      "Pine": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer gains the Remain Conscious feat.",
+        "level": 1,
+        "selectable": true
+      },
+      "Scorpion": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he can compel an attacker to substitute his lowest ability score modifier in place of the normal Strength or Dexterity modifier on an attack roll. This ability is activated on the opponent's turn and must be declared before the outcome of the attack is known. The bearer must be aware of the incoming attack and cannot be flat-footed to use this ability.",
+        "level": 1,
+        "selectable": true
+      },
+      "Spider": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "This tattoo requires the Stunning Fist feat. In place of a stunning fist attempt, the bearer can deliver a contact poison through an unarmed strike. The poison's save DC equals 10 + the bearer's class level + his Constitution modifier. Both initial and secondary damage deal 2 points of Constitution damage. Each use of this ability counts against the bearer's daily stunning fist attempts.",
+        "level": 1,
+        "selectable": true
+      },
+      "Sun": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he can invoke the power of the sun to gain a +2 luck bonus on a single attack roll, skill check, or ability check. This ability is only available during daytime hours.",
+        "level": 1,
+        "selectable": true
+      },
+      "Tattoo": {
+        "description": "The bearer draws his abilities from mystical tattoos that gradually spread across his body. He begins with one tattoo at 1st level and receives an additional tattoo at each odd-numbered class level. Tattoos are chosen from the options listed below. Three of the available tattoos (centipede, crescent moon, and phoenix) have minimum class level prerequisites. All tattoos are magical in nature and their granted abilities are supernatural, with the exception of the crescent moon tattoo. Within an antimagic field, all tattoo benefits are suppressed. Unless a tattoo provides a continuous passive effect, activating it requires a move action that does not provoke attacks of opportunity.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.tattooedmonktattoo.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Tattoo (Tattooed Monk)",
+        "stackable": true
+      },
+      "Tiger": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he can enter a state of heightened unarmed combat prowess, gaining a +1 bonus on all attack rolls and dealing an additional 1d6 points of damage on each successful unarmed strike. This effect lasts for 1 round per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Tortoise": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he may treat his class level as the number of ranks in any skill he does not actually possess for the purpose of a single skill check. The appropriate ability modifier is applied to the check as normal.",
+        "level": 1,
+        "selectable": true
+      },
+      "Unicorn": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "Once per day, the bearer may reroll any single d20 roll he has just made. He must accept the new result even if it is worse. The decision to reroll must be made before the outcome of the original roll is determined.",
+        "level": 1,
+        "selectable": true
+      },
+      "Wasp": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "A number of times per day equal to the total tattoos the bearer possesses, he can apply a haste effect to himself. The duration is 1 round per class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Tattooed Monk)"
+      },
+      "White Mask": {
+        "aptitude": "Tattooed Monk Tattoo",
+        "description": "The bearer becomes immune to detect thoughts, discern lies, and any magical means of determining his alignment. He also receives a +10 bonus on all Bluff checks.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.bluff.misc",
+            "value": "10",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      }
+    },
+    "occurrenceMap": {
+      "Monk Abilities": "Monk Abilities",
+      "Tattoo": "Tattoo"
+    },
+    "overrides": {
+      "description": "Some monastic traditions grant their members supernatural and spell-like abilities through the application of magical tattoos inscribed upon their bodies. These monks adopt ascetic practices such as shaving their heads and speaking in enigmatic sayings, and many wander the land seeking spiritual growth by confronting and overcoming worldly temptations.",
+      "features": {
+        "Arrowroot": {
+          "description": "The bearer of this tattoo can restore hit points to another creature through physical contact. The total amount of healing available each day equals the bearer's Wisdom modifier multiplied by his class level. This healing cannot be applied to the bearer himself, but it can be split among multiple recipients and need not be expended all at once."
+        },
+        "Bamboo": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he may grant himself an enhancement bonus to Constitution equal to the number of tattoos he has. The duration of this effect is 1 round per class level."
+        },
+        "Bat": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he may grant himself an enhancement bonus to Dexterity equal to the number of tattoos he has. The duration of this effect is 1 round per class level."
+        },
+        "Bellflower": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he may apply his Charisma modifier as an enhancement bonus to any one of his ability scores, including Charisma itself. The duration of this effect is 1 round per class level."
+        },
+        "Butterfly": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he may grant himself an enhancement bonus to Wisdom equal to the number of tattoos he has. The duration of this effect is 1 round per class level."
+        },
+        "Centipede": {
+          "description": "Once per week, the bearer may produce a shadow walk effect, enabling rapid travel across vast distances. The journey must conclude on the Material Plane. This tattoo requires a minimum class level of 5th."
+        },
+        "Chameleon": {
+          "description": "The bearer may produce an alter self effect a number of times per day equal to the total tattoos he possesses. Each use persists for 1 hour per class level."
+        },
+        "Chrysanthemum": {
+          "description": "For each hour the bearer spends under actual sunlight, he recovers a number of hit points equal to his level. Magical light sources such as a daylight spell do not trigger this recovery; genuine sunlight is required."
+        },
+        "Crab": {
+          "description": "The bearer receives damage reduction 2/magic. This damage reduction increases by 2 for every additional tattoo he possesses beyond this one."
+        },
+        "Crane": {
+          "description": "This tattoo confers progressively increasing resistance to physical deterioration. Upon first receiving it, the bearer becomes immune to nonmagical diseases. When he next acquires any tattoo, he also gains immunity to poison. Upon gaining yet another tattoo, he ceases to suffer ability score penalties from aging and becomes immune to magical aging effects. Previously accumulated aging penalties remain in effect. Age-related bonuses continue to accrue normally, and the bearer still dies of natural causes at the end of his lifespan."
+        },
+        "Dragon": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he can exhale a gout of flame as though he had consumed an elixir of fire breath."
+        },
+        "Dragonfly": {
+          "description": "Once per day, the bearer gains a dodge bonus to AC equal to the number of tattoos he possesses. This benefit persists for 1 round per class level."
+        },
+        "Falcon": {
+          "description": "The bearer becomes completely immune to all fear effects, whether magical or mundane. Additionally, all allies within 10 feet receive a morale bonus on saving throws against fear equal to the bearer's Charisma bonus (if any) plus the total number of tattoos he possesses."
+        },
+        "Lion": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he can deliver a devastating strike against a single foe in melee. This grants a +4 bonus on the attack roll and adds his class level as a bonus to damage. The bearer must declare the smite before rolling the attack. A failed attack still expends the use."
+        },
+        "Monk Abilities": {
+          "description": "Levels in this prestige class stack with monk levels when calculating unarmed strike damage, the monk AC bonus, and the unarmored speed bonus."
+        },
+        "Monkey": {
+          "description": "The bearer gains a +1 competence bonus per tattoo he possesses on Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Open Lock, Sleight of Hand, and Tumble checks."
+        },
+        "Mountain": {
+          "description": "The bearer can activate this tattoo to root himself in place with extraordinary resilience for up to 1 round per class level. While anchored, he gains a +4 bonus to both Constitution and Wisdom. The Constitution increase raises his hit points by 2 per level, but these additional hit points vanish when the effect ends or the bearer dismisses it as a free action. Unlike temporary hit points, these are not lost preferentially. During this state, the bearer suffers a -20 penalty on all Dexterity-based skill checks and becomes immune to bull rush and trip attempts. This ability can be used a number of times per day equal to the total tattoos the bearer possesses."
+        },
+        "Nightingale": {
+          "description": "The bearer can mend injuries on himself or others, restoring a total number of hit points per day equal to twice his current class level. This healing pool may be divided across multiple uses."
+        },
+        "Ocean": {
+          "description": "The bearer no longer requires food, water, or sleep."
+        },
+        "Phoenix": {
+          "description": "The bearer gains spell resistance equal to his class level + 15. This tattoo requires a minimum class level of 7th."
+        },
+        "Pine": {
+          "description": "The bearer gains the Remain Conscious feat."
+        },
+        "Scorpion": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he can compel an attacker to substitute his lowest ability score modifier in place of the normal Strength or Dexterity modifier on an attack roll. This ability is activated on the opponent's turn and must be declared before the outcome of the attack is known. The bearer must be aware of the incoming attack and cannot be flat-footed to use this ability."
+        },
+        "Spider": {
+          "description": "This tattoo requires the Stunning Fist feat. In place of a stunning fist attempt, the bearer can deliver a contact poison through an unarmed strike. The poison's save DC equals 10 + the bearer's class level + his Constitution modifier. Both initial and secondary damage deal 2 points of Constitution damage. Each use of this ability counts against the bearer's daily stunning fist attempts."
+        },
+        "Sun": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he can invoke the power of the sun to gain a +2 luck bonus on a single attack roll, skill check, or ability check. This ability is only available during daytime hours."
+        },
+        "Tattoo": {
+          "description": "The bearer draws his abilities from mystical tattoos that gradually spread across his body. He begins with one tattoo at 1st level and receives an additional tattoo at each odd-numbered class level. Tattoos are chosen from the options listed below. Three of the available tattoos (centipede, crescent moon, and phoenix) have minimum class level prerequisites. All tattoos are magical in nature and their granted abilities are supernatural, with the exception of the crescent moon tattoo. Within an antimagic field, all tattoo benefits are suppressed. Unless a tattoo provides a continuous passive effect, activating it requires a move action that does not provoke attacks of opportunity."
+        },
+        "Tiger": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he can enter a state of heightened unarmed combat prowess, gaining a +1 bonus on all attack rolls and dealing an additional 1d6 points of damage on each successful unarmed strike. This effect lasts for 1 round per class level."
+        },
+        "Tortoise": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he may treat his class level as the number of ranks in any skill he does not actually possess for the purpose of a single skill check. The appropriate ability modifier is applied to the check as normal."
+        },
+        "Unicorn": {
+          "description": "Once per day, the bearer may reroll any single d20 roll he has just made. He must accept the new result even if it is worse. The decision to reroll must be made before the outcome of the original roll is determined."
+        },
+        "Wasp": {
+          "description": "A number of times per day equal to the total tattoos the bearer possesses, he can apply a haste effect to himself. The duration is 1 round per class level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        },
+        "White Mask": {
+          "description": "The bearer becomes immune to detect thoughts, discern lies, and any magical means of determining his alignment. He also receives a +10 bonus on all Bluff checks.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "skills.bluff.misc",
+              "value": "10",
+              "valueType": "number"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Tattooed monks gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A tattooed monk's class levels stack with his monk levels for determining his unarmed damage, AC bonus, and unarmored speed bonus.",
+        "name": "Monk Abilities"
+      },
+      {
+        "description": "Tattooed monks gain their powers from the magic tattoos that eventually cover their bodies. A 1stlevel tattooed monk has one tattoo and gains another tattoo at every odd-numbered level. A tattooed monk can choose his tattoos from among those described below. Note that three of the tattoos (centipede, crescent moon, and phoenix) have minimum class level requirements. All tattoos are magical, and the abilities they bestow are supernatural (except for the crescent moon). A tattooed monk in an antimagic field loses all benefits of his tattoos. Unless the effect of a tattoo is continuous, activating a tattoo is a move action that does not provoke an attack of opportunity. Arrowroot: A character with this tattoo can heal wounds in another character by touch. Each day he can cure a total number of hit points equal to his Wisdom bonus Ã- his class level. A tattooed monk cannot heal himself, but he may divide the curing among multiple recipients, and he doesn't have to use it all at once. Bamboo: Once per day per tattoo he possesses, a character with this tattoo can add the number of tattoos he possesses as an enhancement bonus to his Constitution score. This benefit lasts for 1 round per class level. Bat: Once per day per tattoo he possesses, a character with this tattoo can add the number of tattoos he possesses as an enhancement bonus to his Dexterity score. This benefit lasts for 1 round per class level. Bellflower: Once per day per tattoo he possesses, a character with this tattoo can add his Charisma modifier as an enhancement bonus to any of his ability scores (including Charisma). This benefit lasts for 1 round per class level. Butterfly: Once per day per tattoo he possesses, a character with this tattoo can add the number of tattoos he possesses as an enhancement bonus to his Wisdom score. This benefit lasts for 1 round per class level. Centipede: Once per week, a character with this tattoo can use a shadow walk effect. This ability allows the tattooed monk to cross great distances, but he must end his journey on the Material Plane. A tattooed monk must be at least 5th level to gain this tattoo. Chameleon: A character with this tattoo can use an alter self effect once per day per tattoo he possesses. This benefit lasts for 1 hour per class level. Crab: A character with this tattoo gains damage reduction 2/magic. This damage reduction improves by 2 for each additional tattoo he possesses. Crane: A character with this tattoo gains a gradual immunity to bodily decay. When a tattooed monk first gains this tattoo, he gains immunity to nonmagical diseases. When he gains his next tattoo (whatever it may be), he acquires immunity to poison as well. When he gains his next tattoo, he no longer takes ability score penalties for aging, and he cannot be magically aged. (Any aging penalties he may already have incurred remain in place.) Bonuses still accrue, and the tattooed monk still dies of old age when his time is up. Chrysanthemum: Every hour that a character with this tattoo is in direct sunlight, he heals a number of hit points equal to his level. A daylight spell does not provoke this fast healing; the character must be exposed to real sunlight. Dragon: Once per day per tattoo he possesses, a character with this tattoo can use fire breath as if he had drunk an elixir of fire breath. Dragonfly: Once per day, a character with this tattoo gains a dodge bonus to his AC equal to the number of tattoos he possesses. This benefit lasts for 1 round per class level. Falcon: A character with this tattoo is immune to fear (magical or otherwise). Allies within 10 feet of his gain a morale bonus on their saving throws against fear effects equal to the tattooed monk's Charisma bonus (if any) plus the number of tattoos he possesses. Lion: Once per day per tattoo he possesses, a character with this tattoo can smite a foe, gaining a +4 bonus on the attack roll and a bonus on the damage roll equal to his class level on a single melee attack. The tattooed monk must declare the smite before making the attack. A missed attack uses up the attempt. Monkey: A character with this tattoo gains a +1 competence bonus per tattoo he possesses on all Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Open Lock, Sleight of Hand, and Tumble checks. Moon, Crescent: Once per day, a character with this tattoo can use ethereal jaunt as a spell-like ability. A tattooed monk must be at least 9th level to gain this tattoo. Moon, Full: Once per day per tattoo he possesses, a character with this tattoo can gain a +2 luck bonus on a single attack roll, skill check, or ability check, as he calls on the power of the full moon. This ability cannot be used during daylight hours. Mountain: A character with this tattoo can activate it to take on the immovability of a mountain for as much as 1 round per class level, gaining phenomenal durability though he cannot move from the spot where he stands. He gains a +4 bonus to his Constitution and Wisdom scores. The increase in Constitution increases the tattooed monk's hit points by 2 points per level, but these hit points go away when the ability's duration expires or when the character chooses to end it (a free action). These extra hit points are not lost first the way temporary hit points are. While using this ability, the tattooed monk takes a -20 penalty on any Dexterity-based skill checks. He is immune to bull rush and trip attacks. The tattooed monk may use this ability once per day per tattoo he possesses. Nightingale: A character with this tattoo can heal wounds, either his own or others'. He can heal a number of hit points of damage equal to twice his current class level each day, and he can spread this healing out among several uses. Ocean: A character with this tattoo never needs to eat, sleep, or drink. Phoenix: A character with this tattoo gains spell resistance equal to his class level + 15. A tattooed monk must be at least 7th level to gain this tattoo. Pine: A character with this tattoo gains the Remain Conscious feat. Scorpion: Once per day per tattoo he possesses, a character with this tattoo can force an opponent attacking him to use his lowest ability score modifier instead of his Strength or Dexterity score modifier when making his attack roll. The character can activate this tattoo on his opponent's turn, but he must declare it before the success or failure of the attack is determined. The tattooed monk must be aware of the attack and not flat-footed in order to use this ability. Spider: To use this tattoo, a character must have the Stunning Fist feat. Instead of a stunning fist attack, a character with this tattoo can make an attack that delivers a contact poison. The poison's save DC is equal to 10 + the tattooed monk's class level + his Con modifier. The poison's initial and secondary damage is 2 points of Constitution damage. Using this tattoo counts as one of the character's stunningfist attacks for that day. Sun: Once per day per tattoo he possesses, a character with this tattoo can gain a +2 luck bonus on a single attack roll, skill check, or ability check, as he calls on the full power of the sun. This ability can only be used during daylight hours. Tiger: Once per day per tattoo he possesses, a character with this tattoo can fight unarmed with a +1 bonus on all attack rolls and deal an extra 1d6 points of damage with a successful attack. This burst of martial arts ferocity lasts for 1 round per class level. Tortoise: Once per day per tattoo he possesses, a character with this tattoo can use his class level as the number of ranks in a skill he does not possess for the purpose of one skill check. For example, a 4th-level tattooed monk with two tattoos can make up to two Use Magic Device checks as if he had 4 ranks in that skill. He adds his Charisma modifier to the skill check as usual. Unicorn: A character with this tattoo gains the power of good fortune, usable once per day. This ability allows the tattooed monk to reroll one d20 roll that he has just made. The character must take the result of the reroll, even if it's worse than the original roll. The character must declare the reroll before the result of the original roll has been determined. Wasp: Once per day per tattoo he possesses, a character with this tattoo can use haste on herself. The benefit lasts for 1 round per class level. White Mask: A character with this tattoo is immune to detect thoughts, detect lies, and any attempt to magically discern his alignment. He gains a +10 bonus on all Bluff checks.",
+        "name": "Tattoo"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Move Silently",
+      "Perform",
+      "Profession",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "Certain monastic orders bestow supernatural or spell-like powers on their members by inscribing magic tattoos on their skin. These tattooed monks shave their heads, speak in cryptic riddles and maxims, and-in many cases-travel the countryside furthering their quest for enlightenment by facing and conquering temptation.",
+    "hitDie": "d8",
+    "name": "Tattooed Monk",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any lawful",
+        "bab": 3,
+        "feats": [
+          "Endurance",
+          "Improved Grapple",
+          "Improved Unarmed Strike"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 8
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +3 Alignment: Any lawful Skills: Knowledge (religion) 8 ranks Feats: Endurance, Improved Grapple, Improved Unarmed Strike"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Monk abilities",
+          "tattoo"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Tattoo"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Tattoo"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [],
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Tattoo"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [],
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Tattoo"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [],
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

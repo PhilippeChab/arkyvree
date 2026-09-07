@@ -1,0 +1,463 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-03-23T18:43:44.401Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/mountebank/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "deceitful": "Deceitful"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Tongue Of The Devil"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Alter Ego"
+      },
+      {
+        "levels": [
+          4,
+          6,
+          8,
+          10
+        ],
+        "name": "Sideslip"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Slippery Mind"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Sudden Escape"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.bluff.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "skills.knowledgearcana.rank",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "skills.knowledgelocal.rank",
+            "value": "4",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "skills.knowledgepsionics.rank",
+            "value": "4",
+            "valueType": "number"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.deceitful.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Mountebank Class Feature",
+    "features": {
+      "Alter Ego": {
+        "description": "Starting at 3rd level, you establish an alternate identity. This alter ego has its own distinct physical characteristics, quirks, preferred clothing, and so on. At will, you can switch your form between that of your normal identity and that of your alter ego. This ability works like the alter self spell, except that you can assume only the appearance of your alternate identity. Your caster level for this ability is equal to your mountebank class level. As you advance in this prestige class, you develop additional alter egos, gaining a new one every three levels beyond 1st (two at 6th and three at 9th).",
+        "level": 3,
+        "seedName": "Alter Ego (Mountebank)",
+        "stackable": true
+      },
+      "Sideslip": {
+        "description": "Beginning at 4th level, you become supernaturally elusive. Once per day as an immediate action, you can transfer yourself from your current space to another up to 20 feet away. This ability otherwise works like the dimension door spell, except that you cannot transport other creatures with you. At 6th level, and at every two levels thereafter, you gain an additional daily use of sideslip.",
+        "level": 4,
+        "seedName": "Sideslip (Mountebank)",
+        "stackable": true
+      },
+      "Slippery Mind": {
+        "description": "Starting at 7th level, whenever you are affected by an enchantment spell or effect and you fail your saving throw, you can attempt it again 1 round later at the same DC. You get only one extra chance to succeed on your save using this ability.",
+        "level": 7,
+        "seedName": "Slippery Mind (Mountebank)"
+      },
+      "Sneak Attack": {
+        "description": "Beginning at 2nd level, you deal an extra 1d6 points of damage when you are flanking an opponent or at any time when the target would be denied its Dexterity bonus. See the rogue class feature, PH 50. The extra damage dealt by your sneak attack increases to 2d6 at 5th level and to 3d6 at 8th level. If you get a sneak attack bonus from another source (such as rogue levels), the bonuses on damage stack.",
+        "level": 2,
+        "seedName": "Sneak Attack (Mountebank)",
+        "stackable": true
+      },
+      "Sudden Escape": {
+        "description": "Beginning at 10th level, you can expend two daily uses of your sideslip ability as a swift action to use dimension door, as the spell. Your caster level is equal to your character level.",
+        "level": 10,
+        "seedName": "Sudden Escape (Mountebank)"
+      },
+      "Tongue of the Devil": {
+        "description": "Your cunning misdirection leaves others at your mercy. You add your Intelligence bonus (if any) to Bluff checks.",
+        "level": 1,
+        "seedName": "Tongue of the Devil (Mountebank)"
+      }
+    },
+    "occurrenceMap": {
+      "Alter Ego": "Alter Ego",
+      "Sideslip": "Sideslip",
+      "Slippery Mind": "Slippery Mind",
+      "Sneak Attack": "Sneak Attack",
+      "Sudden Escape": "Sudden Escape",
+      "Tongue Of The Devil": "Tongue of the Devil"
+    },
+    "overrides": {
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgearcana.rank",
+              "value": "4",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgelocal.rank",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.deceitful.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "identity.beliefs.alignment",
+              "value": "Neutral Good",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.beliefs.alignment",
+              "value": "True Neutral",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.beliefs.alignment",
+              "value": "Neutral Evil",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.beliefs.alignment",
+              "value": "Chaotic Good",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.beliefs.alignment",
+              "value": "Chaotic Neutral",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.beliefs.alignment",
+              "value": "Chaotic Evil",
+              "valueType": "string"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Your cunning misdirection leaves others at your mercy. You add your Intelligence bonus (if any) to Bluff checks.",
+        "name": "Tongue of the Devil",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 2nd level, you deal an extra 1d6 points of damage when you are flanking an opponent or at any time when the target would be denied its Dexterity bonus. See the rogue class feature, PH 50. The extra damage dealt by your sneak attack increases to 2d6 at 5th level and to 3d6 at 8th level. If you get a sneak attack bonus from another source (such as rogue levels), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, you establish an alternate identity. This alter ego has its own distinct physical characteristics, quirks, preferred clothing, and so on. At will, you can switch your form between that of your normal identity and that of your alter ego. This ability works like the alter self spell, except that you can assume only the appearance of your alternate identity. Your caster level for this ability is equal to your mountebank class level. As you advance in this prestige class, you develop additional alter egos, gaining a new one every three levels beyond 1st (two at 6th and three at 9th).",
+        "name": "Alter Ego",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 4th level, you become supernaturally elusive. Once per day as an immediate action, you can transfer yourself from your current space to another up to 20 feet away. This ability otherwise works like the dimension door spell, except that you cannot transport other creatures with you. At 6th level, and at every two levels thereafter, you gain an additional daily use of sideslip.",
+        "name": "Sideslip",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 7th level, whenever you are affected by an enchantment spell or effect and you fail your saving throw, you can attempt it again 1 round later at the same DC. You get only one extra chance to succeed on your save using this ability.",
+        "name": "Slippery Mind",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 10th level, you can expend two daily uses of your sideslip ability as a swift action to use dimension door, as the spell. Your caster level is equal to your character level.",
+        "name": "Sudden Escape",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Bluff",
+      "Concentration",
+      "Diplomacy",
+      "Disguise",
+      "Escape Artist",
+      "Forgery",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Local)",
+      "Knowledge (Psionics)",
+      "Listen",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Spellcraft",
+      "Spot",
+      "Tumble"
+    ],
+    "description": "Mountebanks are frauds and con artists, capable of slipping into new identities as others change clothing.",
+    "hitDie": "d6",
+    "name": "Mountebank",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonlawful",
+        "feats": [
+          "Deceitful"
+        ],
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 8
+          },
+          {
+            "name": "Knowledge (arcana, local or psionics)",
+            "ranks": 4
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Alignment: Any nonlawful Skills: Bluff 8 ranks, Knowledge (arcana, local or psionics) 4 ranks, Spellcraft 4 ranks Feats: Deceitful"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Tongue of the devil"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Alter ego"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Sideslip 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Alter ego",
+          "sideslip 2/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Slippery mind"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Sideslip 3/day",
+          "sneak attack +3d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Alter ego"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Sideslip 4/day",
+          "sudden escape"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

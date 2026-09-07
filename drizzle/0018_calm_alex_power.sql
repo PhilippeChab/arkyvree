@@ -1,0 +1,1 @@
+ALTER TABLE "rules"."rulesets" ADD COLUMN "extension_ruleset_ids" uuid[] DEFAULT '{}' NOT NULL;

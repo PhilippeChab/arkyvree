@@ -1,0 +1,412 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-04-01T02:22:22.050Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/arcane-trickster/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5,
+          9
+        ],
+        "name": "Ranged Legerdemain"
+      },
+      {
+        "levels": [
+          2,
+          4,
+          6,
+          8,
+          10
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          3,
+          7
+        ],
+        "name": "Impromptu Sneak Attack"
+      }
+    ],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.decipherscript.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disabledevice.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.escapeartist.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "feats.sneakattack.count",
+        "value": "2",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Arcane Trickster Class Feature",
+    "features": {
+      "Impromptu Sneak Attack": {
+        "description": "Starting at 3rd level, an arcane trickster may designate one melee or ranged attack per day as a sneak attack (ranged attacks are limited to targets within 30 feet). The chosen target loses its Dexterity bonus to AC for that single attack only. This ability works against any creature, though targets immune to critical hits do not take the additional sneak attack damage (they still lose their Dexterity bonus to AC against the attack). At 7th level, this ability can be used twice per day.",
+        "level": 3,
+        "seedName": "Impromptu Sneak Attack (Arcane Trickster)",
+        "stackable": true
+      },
+      "Ranged Legerdemain": {
+        "description": "An arcane trickster gains the ability to use certain skills at a distance of 30 feet: Disable Device, Open Lock, or Sleight of Hand. Performing a skill remotely raises the DC of the check by 5, and the character may not take 10 on this roll. The targeted object must weigh no more than 5 pounds. This ability may be used once per day at 1st level, twice per day starting at 5th level, and three times per day from 9th level onward. Only a single ranged legerdemain check is permitted per day, and the character must possess at least 1 rank in the relevant skill.",
+        "level": 1,
+        "seedName": "Ranged Legerdemain (Arcane Trickster)",
+        "stackable": true
+      },
+      "Sneak Attack": {
+        "description": "This functions identically to the rogue class feature of the same name. The bonus damage increases by +1d6 at every even-numbered class level (2nd, 4th, 6th, 8th, and 10th). Sneak attack damage from this class stacks with sneak attack damage gained from any other source.",
+        "level": 2,
+        "seedName": "Sneak Attack (Arcane Trickster)",
+        "stackable": true
+      },
+      "Spells per Day": {
+        "description": "Each time an arcane trickster gains a new class level, the character receives additional spells per day as though having also advanced one level in a spellcasting class to which they belonged prior to entering this prestige class. This does not confer any other benefits that the prior class would normally provide, aside from improved effective caster level. Characters who had multiple spellcasting classes before becoming an arcane trickster must choose which class receives the additional level for the purpose of spells per day.",
+        "level": 1,
+        "seedName": "Spells per Day (Arcane Trickster)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Taking levels in this prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Arcane Trickster)"
+      }
+    },
+    "occurrenceMap": {
+      "Impromptu Sneak Attack": "Impromptu Sneak Attack",
+      "Ranged Legerdemain": "Ranged Legerdemain",
+      "Sneak Attack": "Sneak Attack"
+    },
+    "overrides": {
+      "description": "Arcane tricksters blend arcane spellcasting ability with a knack for subterfuge, thievery, or general roguish behavior.",
+      "features": {
+        "Impromptu Sneak Attack": {
+          "description": "Starting at 3rd level, an arcane trickster may designate one melee or ranged attack per day as a sneak attack (ranged attacks are limited to targets within 30 feet). The chosen target loses its Dexterity bonus to AC for that single attack only. This ability works against any creature, though targets immune to critical hits do not take the additional sneak attack damage (they still lose their Dexterity bonus to AC against the attack). At 7th level, this ability can be used twice per day."
+        },
+        "Ranged Legerdemain": {
+          "description": "An arcane trickster gains the ability to use certain skills at a distance of 30 feet: Disable Device, Open Lock, or Sleight of Hand. Performing a skill remotely raises the DC of the check by 5, and the character may not take 10 on this roll. The targeted object must weigh no more than 5 pounds. This ability may be used once per day at 1st level, twice per day starting at 5th level, and three times per day from 9th level onward. Only a single ranged legerdemain check is permitted per day, and the character must possess at least 1 rank in the relevant skill."
+        },
+        "Sneak Attack": {
+          "description": "This functions identically to the rogue class feature of the same name. The bonus damage increases by +1d6 at every even-numbered class level (2nd, 4th, 6th, 8th, and 10th). Sneak attack damage from this class stacks with sneak attack damage gained from any other source."
+        },
+        "Spells per Day": {
+          "description": "Each time an arcane trickster gains a new class level, the character receives additional spells per day as though having also advanced one level in a spellcasting class to which they belonged prior to entering this prestige class. This does not confer any other benefits that the prior class would normally provide, aside from improved effective caster level. Characters who had multiple spellcasting classes before becoming an arcane trickster must choose which class receives the additional level for the purpose of spells per day."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Taking levels in this prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Arcane tricksters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new arcane trickster level is gained, the character gains new spells per day as if he had also gained a level in a spellcasting class he belonged to before adding the prestige class. He does not, however, gain any other benefit a character of that class would have gained, except for an increased effective level of spellcasting. If a character had more than one spellcasting class before becoming an arcane trickster, he must decide to which class he adds the new level for purposes of determining spells per day.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "An arcane trickster can perform one of the following class skills at a range of 30 feet: Disable Device, Open Lock, or Sleight of Hand. Working at a distance increases the normal skill check DC by 5, and an arcane trickster cannot take 10 on this check. Any object to be manipulated must weigh 5 pounds or less. An arcane trickster can use ranged legerdemain once per day initially, twice per day upon attaining 5th level, and three times per day at 9th level or higher. He can make only one ranged legerdemain skill check each day, and only if he has at least 1 rank in the skill being used.",
+        "name": "Ranged Legerdemain"
+      },
+      {
+        "description": "This is exactly like the rogue ability of the same name. The extra damage dealt increases by +1d6 every other level (2nd, 4th, 6th, 8th, and 10th). If an arcane trickster gets a sneak attack bonus from another source the bonuses on damage stack.",
+        "name": "Sneak Attack"
+      },
+      {
+        "description": "Beginning at 3rd level, once per day an arcane trickster can declare one melee or ranged attack he makes to be a sneak attack (the target can be no more than 30 feet distant if the impromptu sneak attack is a ranged attack). The target of an impromptu sneak attack loses any Dexterity bonus to AC, but only against that attack. The power can be used against any target, but creatures that are not subject to critical hits take no extra damage (though they still lose any Dexterity bonus to AC against the attack). At 7th level, an arcane trickster can use this ability twice per day.",
+        "name": "Impromptu Sneak Attack"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Gather Information",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Profession",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Speak Language",
+      "Spellcraft",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Arcane tricksters combine their knowledge of spells with a taste for intrigue, larceny, or just plain mischief.",
+    "hitDie": "d4",
+    "name": "Arcane Trickster",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "any nonlawful",
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "arcane"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Decipher Script",
+            "ranks": 7
+          },
+          {
+            "name": "Disable Device",
+            "ranks": 7
+          },
+          {
+            "name": "Escape Artist",
+            "ranks": 7
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Sneak attack +2d6."
+        ]
+      },
+      "text": "Alignment: any nonlawful Skills: Decipher Script 7 ranks, Disable Device 7 ranks, Escape Artist 7 ranks, Knowledge (arcana) 4 ranks Spells: Ability to cast mage hand and at least one arcane spell of 3rd level or higher. Special: Sneak attack +2d6."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Ranged Legerdemain 1/day"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Sneak Attack +1d6"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Impromptu Sneak Attack 1/day"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Sneak Attack +2d6"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Ranged Legerdemain 2/day"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Sneak Attack +3d6"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Impromptu Sneak Attack 2/day"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Sneak Attack +4d6"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Ranged Legerdemain 3/day"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Sneak Attack +5d6"
+        ],
+        "spellsPerDay": "+1 Level of Existing Class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

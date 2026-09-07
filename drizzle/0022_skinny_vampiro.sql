@@ -1,0 +1,1 @@
+ALTER TABLE "customization"."modifiers" DROP CONSTRAINT "modifiers_source_id_source_type_target_key";

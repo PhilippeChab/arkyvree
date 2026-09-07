@@ -1,0 +1,884 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-23T02:04:00.635Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/ranger/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          2
+        ],
+        "target": "aptitudes.rangercombatstyle.allowed"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "target": "aptitudes.rangerimprovedcombatstyle.allowed"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "target": "aptitudes.rangercombatstylemastery.allowed"
+      }
+    ],
+    "bab": "good",
+    "bonusFeatLists": [
+      {
+        "aptitude": "Ranger Combat Style (2nd)",
+        "feats": [
+          "Rapid Shot",
+          "Two-Weapon Fighting"
+        ],
+        "levels": [
+          2
+        ]
+      },
+      {
+        "aptitude": "Ranger Improved Combat Style (6th)",
+        "feats": [
+          "Manyshot",
+          "Improved Two-Weapon Fighting"
+        ],
+        "levels": [
+          6
+        ]
+      },
+      {
+        "aptitude": "Ranger Combat Style Mastery (11th)",
+        "feats": [
+          "Improved Precise Shot",
+          "Greater Two-Weapon Fighting"
+        ],
+        "levels": [
+          11
+        ]
+      }
+    ],
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "1st Favored Enemy"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Track"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wild Empathy"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Combat Style"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Endurance"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Animal Companion"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "2nd Favored Enemy"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Improved Combat Style"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Woodland Stride"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Swift Tracker"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "3rd Favored Enemy"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Combat Style Mastery"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "Camouflage"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "4th Favored Enemy"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Hide In Plain Sight"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "5th Favored Enemy"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6,
+    "spellsPerDay": [
+      [],
+      [],
+      [],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Ranger Class Feature",
+    "features": {
+      "Animal Companion": {
+        "description": "Upon reaching 4th level, the ranger acquires an animal companion chosen from the following options: badger, camel, dire rat, dog, riding dog, eagle, hawk, horse (light or heavy), owl, pony, snake (Small or Medium viper), or wolf. In campaigns with significant aquatic settings, the GM may also permit crocodile, porpoise, Medium shark, or squid. This loyal animal travels with the ranger on adventures as fits its nature - an aquatic companion, for example, cannot accompany a land-based expedition and should not normally be chosen by a non-aquatic character. Typically, the companion serves as a mount, lookout, scout, or hunting partner rather than a bodyguard. This ability works like the druid's animal companion feature, except that the ranger's effective druid level equals half his ranger level. A 4th-level ranger, for example, has the equivalent of a 2nd-level druid's companion. Rangers may also choose from the druid's alternative companion lists, again using half their ranger level as their effective druid level. This means a ranger must be at least 8th level to access the 4th-level druid companion options, and selecting such a companion reduces his effective druid level by 3, to 1st level. As with a druid, a ranger cannot pick an alternative companion if doing so would drop his effective druid level below 1st.",
+        "level": 4,
+        "seedName": "Animal Companion (Ranger)"
+      },
+      "Camouflage": {
+        "description": "Beginning at 13th level, the ranger can attempt Hide checks in any kind of natural terrain, even when the terrain provides neither cover nor concealment.",
+        "level": 13,
+        "seedName": "Camouflage (Ranger)"
+      },
+      "Combat Style": {
+        "description": "At 2nd level, the ranger commits to one of two fighting disciplines: archery or two-weapon combat. This decision shapes certain class abilities but places no restrictions on feat or special ability choices. Choosing archery grants the benefits of the Rapid Shot feat, bypassing its normal prerequisites. Choosing two-weapon combat grants the benefits of the Two-Weapon Fighting feat, likewise without needing to meet prerequisites. These combat style benefits are available only while wearing light armor or no armor; they are lost entirely when the ranger dons medium or heavy armor.",
+        "level": 2,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.rangercombatstyle.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Combat Style (Ranger)"
+      },
+      "Combat Style Mastery": {
+        "description": "At 11th level, the ranger reaches the pinnacle of his chosen combat discipline (archery or two-weapon combat). If he selected archery at 2nd level, he gains the benefits of the Improved Precise Shot feat without requiring its normal prerequisites. If he selected two-weapon combat, he gains the benefits of the Greater Two-Weapon Fighting feat without needing its prerequisites. As always, these combat style benefits apply only while wearing light armor or no armor and are forfeited when wearing medium or heavy armor.",
+        "level": 11,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.rangercombatstylemastery.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Combat Style Mastery (Ranger)"
+      },
+      "Endurance": {
+        "description": "At 3rd level, the ranger gains Endurance as a bonus feat.",
+        "level": 3,
+        "seedName": "Endurance (Ranger)"
+      },
+      "Evasion": {
+        "description": "At 9th level, the ranger develops the reflexes to completely dodge certain attacks. When he succeeds on a Reflex saving throw against an effect that would normally deal half damage on a successful save (such as a red dragon's breath weapon or a fireball spell), he instead takes no damage at all. This ability functions only while the ranger wears light armor or no armor. A helpless ranger (for example, one who is unconscious or paralyzed) cannot benefit from evasion.",
+        "level": 9,
+        "seedName": "Evasion (Ranger)"
+      },
+      "Favored Enemy": {
+        "description": "At 1st level, the ranger designates one creature type as a favored enemy. His focused knowledge of and training against these creatures grants him a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks made against them, as well as a +2 bonus on weapon damage rolls targeting them. At 5th level, and again at every fifth level after that (10th, 15th, and 20th), the ranger chooses another favored enemy type. Each time he gains a new favored enemy, he also increases the bonus against one existing favored enemy (which may include the newly chosen one) by +2. For instance, at 5th level a ranger has two favored enemies. One might have a +4 bonus on the relevant checks and damage, while the other has +2. At 10th level with three favored enemies, he distributes another +2 increase, resulting in possible combinations such as +4/+4/+2 or +6/+2/+2. When selecting humanoids or outsiders, the ranger must also pick a specific subtype. If a creature qualifies under multiple favored enemy categories, the ranger uses only the highest applicable bonus rather than stacking them.",
+        "level": 1,
+        "seedName": "Favored Enemy (Ranger)",
+        "stackable": true,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.favoredenemy.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Hide in Plain Sight": {
+        "description": "At 17th level and beyond, the ranger can use the Hide skill in any natural terrain even while being directly observed.",
+        "level": 17,
+        "seedName": "Hide in Plain Sight (Ranger)"
+      },
+      "Improved Combat Style": {
+        "description": "At 6th level, the ranger's skill in his selected combat discipline (archery or two-weapon combat) advances further. If he chose archery at 2nd level, he gains the benefits of the Manyshot feat without needing its normal prerequisites. If he chose two-weapon combat, he gains the benefits of the Improved Two-Weapon Fighting feat without meeting its prerequisites. As with the initial combat style, these advantages apply only when the ranger wears light armor or no armor. Wearing medium or heavy armor causes him to lose all combat style benefits.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.rangerimprovedcombatstyle.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Improved Combat Style (Ranger)"
+      },
+      "Spells": {
+        "description": "Starting at 4th level, a ranger can cast a limited number of divine spells chosen from the ranger spell list. He must select and prepare his spells ahead of time. Casting or preparing a spell requires a minimum Wisdom score of 10 + the spell's level (for example, Wisdom 11 for 1st-level spells, Wisdom 12 for 2nd-level spells, and so on). The saving throw DC against a ranger's spell equals 10 + the spell's level + his Wisdom modifier. Like all spellcasters, a ranger has a daily allotment of spells per level. A high Wisdom score grants him additional spells per day. When his daily allotment for a given spell level is 0, he only receives bonus spells from a high Wisdom score. Rangers have no access to domain spells or domain-granted powers. They prepare and cast spells in the same manner as a cleric, but cannot sacrifice a prepared spell to spontaneously cast a healing spell. A ranger may prepare any spell from the ranger list as long as he can cast spells of that level, choosing his spells during daily meditation. Through 3rd level, a ranger has no caster level. From 4th level onward, his caster level equals half his ranger level.",
+        "level": 4,
+        "seedName": "Spells (Ranger)"
+      },
+      "Swift Tracker": {
+        "description": "From 8th level onward, the ranger no longer takes the standard -5 penalty when tracking at his normal movement speed. When tracking at up to double his normal speed, he takes only a -10 penalty rather than the usual -20.",
+        "level": 8,
+        "seedName": "Swift Tracker (Ranger)"
+      },
+      "Track": {
+        "description": "The ranger receives Track as a bonus feat.",
+        "level": 1,
+        "seedName": "Track (Ranger)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Rangers have training with all simple and martial weapons. They can also wear light armor and use shields, though not tower shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Ranger)"
+      },
+      "Wild Empathy": {
+        "description": "Through gestures, sounds, and body language, a ranger can shift the disposition of an animal (such as a bear or monitor lizard) in the same way a Diplomacy check improves a person's attitude. The check result equals 1d20 + his ranger level + his Charisma modifier. Domesticated animals typically start with an indifferent attitude, whereas wild animals are generally unfriendly. Both the ranger and the animal must be within 30 feet of each other under normal conditions of visibility. This process normally requires 1 minute, though it may take more or less time depending on circumstances, just as with influencing people. A ranger can also attempt to sway a magical beast that has an Intelligence of 1 or 2 (such as a basilisk or girallon), but suffers a -4 penalty on the check.",
+        "level": 1,
+        "seedName": "Wild Empathy (Ranger)"
+      },
+      "Woodland Stride": {
+        "description": "From 7th level onward, the ranger can pass through natural undergrowth - including thorns, briars, overgrown areas, and comparable terrain - at full speed and without suffering damage or other hindrances. Undergrowth that has been magically altered or enchanted to restrict movement continues to affect him normally.",
+        "level": 7,
+        "seedName": "Woodland Stride (Ranger)"
+      }
+    },
+    "occurrenceMap": {
+      "1st Favored Enemy": "Favored Enemy",
+      "2nd Favored Enemy": "Favored Enemy",
+      "3rd Favored Enemy": "Favored Enemy",
+      "4th Favored Enemy": "Favored Enemy",
+      "5th Favored Enemy": "Favored Enemy",
+      "Animal Companion": "Animal Companion",
+      "Camouflage": "Camouflage",
+      "Combat Style": "Combat Style",
+      "Combat Style Mastery": "Combat Style",
+      "Endurance": "Endurance",
+      "Evasion": "Evasion",
+      "Hide In Plain Sight": "Hide in Plain Sight",
+      "Improved Combat Style": "Improved Combat Style",
+      "Swift Tracker": "Swift Tracker",
+      "Track": "Track",
+      "Wild Empathy": "Wild Empathy",
+      "Woodland Stride": "Woodland Stride"
+    },
+    "overrides": {
+      "description": "Wilderness warriors who master the art of tracking and survival, rangers are expert hunters equally at home stalking prey through dense forests or open plains. Through dedicated study of specific enemy types and rigorous combat training, they develop deadly effectiveness against their chosen foes. Rangers serve as guardians of the frontier, protecting travelers and settlers from the dangerous creatures that roam wild lands. They combine martial prowess with specialized fighting techniques, keen survival instincts, and the ability to form bonds with animal companions. As they grow in experience, rangers develop an ever-deepening connection to the natural world, eventually gaining the capacity to channel divine magic drawn from nature itself, similar to a druid's power.",
+      "features": {
+        "Animal Companion": {
+          "description": "Upon reaching 4th level, the ranger acquires an animal companion chosen from the following options: badger, camel, dire rat, dog, riding dog, eagle, hawk, horse (light or heavy), owl, pony, snake (Small or Medium viper), or wolf. In campaigns with significant aquatic settings, the GM may also permit crocodile, porpoise, Medium shark, or squid. This loyal animal travels with the ranger on adventures as fits its nature - an aquatic companion, for example, cannot accompany a land-based expedition and should not normally be chosen by a non-aquatic character. Typically, the companion serves as a mount, lookout, scout, or hunting partner rather than a bodyguard. This ability works like the druid's animal companion feature, except that the ranger's effective druid level equals half his ranger level. A 4th-level ranger, for example, has the equivalent of a 2nd-level druid's companion. Rangers may also choose from the druid's alternative companion lists, again using half their ranger level as their effective druid level. This means a ranger must be at least 8th level to access the 4th-level druid companion options, and selecting such a companion reduces his effective druid level by 3, to 1st level. As with a druid, a ranger cannot pick an alternative companion if doing so would drop his effective druid level below 1st."
+        },
+        "Camouflage": {
+          "description": "Beginning at 13th level, the ranger can attempt Hide checks in any kind of natural terrain, even when the terrain provides neither cover nor concealment."
+        },
+        "Combat Style": {
+          "description": "At 2nd level, the ranger commits to one of two fighting disciplines: archery or two-weapon combat. This decision shapes certain class abilities but places no restrictions on feat or special ability choices. Choosing archery grants the benefits of the Rapid Shot feat, bypassing its normal prerequisites. Choosing two-weapon combat grants the benefits of the Two-Weapon Fighting feat, likewise without needing to meet prerequisites. These combat style benefits are available only while wearing light armor or no armor; they are lost entirely when the ranger dons medium or heavy armor."
+        },
+        "Combat Style Mastery": {
+          "description": "At 11th level, the ranger reaches the pinnacle of his chosen combat discipline (archery or two-weapon combat). If he selected archery at 2nd level, he gains the benefits of the Improved Precise Shot feat without requiring its normal prerequisites. If he selected two-weapon combat, he gains the benefits of the Greater Two-Weapon Fighting feat without needing its prerequisites. As always, these combat style benefits apply only while wearing light armor or no armor and are forfeited when wearing medium or heavy armor."
+        },
+        "Endurance": {
+          "description": "At 3rd level, the ranger gains Endurance as a bonus feat."
+        },
+        "Evasion": {
+          "description": "At 9th level, the ranger develops the reflexes to completely dodge certain attacks. When he succeeds on a Reflex saving throw against an effect that would normally deal half damage on a successful save (such as a red dragon's breath weapon or a fireball spell), he instead takes no damage at all. This ability functions only while the ranger wears light armor or no armor. A helpless ranger (for example, one who is unconscious or paralyzed) cannot benefit from evasion."
+        },
+        "Favored Enemy": {
+          "description": "At 1st level, the ranger designates one creature type as a favored enemy. His focused knowledge of and training against these creatures grants him a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks made against them, as well as a +2 bonus on weapon damage rolls targeting them. At 5th level, and again at every fifth level after that (10th, 15th, and 20th), the ranger chooses another favored enemy type. Each time he gains a new favored enemy, he also increases the bonus against one existing favored enemy (which may include the newly chosen one) by +2. For instance, at 5th level a ranger has two favored enemies. One might have a +4 bonus on the relevant checks and damage, while the other has +2. At 10th level with three favored enemies, he distributes another +2 increase, resulting in possible combinations such as +4/+4/+2 or +6/+2/+2. When selecting humanoids or outsiders, the ranger must also pick a specific subtype. If a creature qualifies under multiple favored enemy categories, the ranger uses only the highest applicable bonus rather than stacking them."
+        },
+        "Hide in Plain Sight": {
+          "description": "At 17th level and beyond, the ranger can use the Hide skill in any natural terrain even while being directly observed."
+        },
+        "Improved Combat Style": {
+          "description": "At 6th level, the ranger's skill in his selected combat discipline (archery or two-weapon combat) advances further. If he chose archery at 2nd level, he gains the benefits of the Manyshot feat without needing its normal prerequisites. If he chose two-weapon combat, he gains the benefits of the Improved Two-Weapon Fighting feat without meeting its prerequisites. As with the initial combat style, these advantages apply only when the ranger wears light armor or no armor. Wearing medium or heavy armor causes him to lose all combat style benefits."
+        },
+        "Spells": {
+          "description": "Starting at 4th level, a ranger can cast a limited number of divine spells chosen from the ranger spell list. He must select and prepare his spells ahead of time. Casting or preparing a spell requires a minimum Wisdom score of 10 + the spell's level (for example, Wisdom 11 for 1st-level spells, Wisdom 12 for 2nd-level spells, and so on). The saving throw DC against a ranger's spell equals 10 + the spell's level + his Wisdom modifier. Like all spellcasters, a ranger has a daily allotment of spells per level. A high Wisdom score grants him additional spells per day. When his daily allotment for a given spell level is 0, he only receives bonus spells from a high Wisdom score. Rangers have no access to domain spells or domain-granted powers. They prepare and cast spells in the same manner as a cleric, but cannot sacrifice a prepared spell to spontaneously cast a healing spell. A ranger may prepare any spell from the ranger list as long as he can cast spells of that level, choosing his spells during daily meditation. Through 3rd level, a ranger has no caster level. From 4th level onward, his caster level equals half his ranger level."
+        },
+        "Swift Tracker": {
+          "description": "From 8th level onward, the ranger no longer takes the standard -5 penalty when tracking at his normal movement speed. When tracking at up to double his normal speed, he takes only a -10 penalty rather than the usual -20."
+        },
+        "Track": {
+          "description": "The ranger receives Track as a bonus feat."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Rangers have training with all simple and martial weapons. They can also wear light armor and use shields, though not tower shields."
+        },
+        "Wild Empathy": {
+          "description": "Through gestures, sounds, and body language, a ranger can shift the disposition of an animal (such as a bear or monitor lizard) in the same way a Diplomacy check improves a person's attitude. The check result equals 1d20 + his ranger level + his Charisma modifier. Domesticated animals typically start with an indifferent attitude, whereas wild animals are generally unfriendly. Both the ranger and the animal must be within 30 feet of each other under normal conditions of visibility. This process normally requires 1 minute, though it may take more or less time depending on circumstances, just as with influencing people. A ranger can also attempt to sway a magical beast that has an Intelligence of 1 or 2 (such as a basilisk or girallon), but suffers a -4 penalty on the check."
+        },
+        "Woodland Stride": {
+          "description": "From 7th level onward, the ranger can pass through natural undergrowth - including thorns, briars, overgrown areas, and comparable terrain - at full speed and without suffering damage or other hindrances. Undergrowth that has been magically altered or enchanted to restrict movement continues to affect him normally."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [],
+        [],
+        [],
+        [
+          0
+        ],
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "slug": "rangerspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "A ranger is proficient with all simple and martial weapons, and with light armor and shields (except tower shields).",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 4th level, a ranger gains the ability to cast a small number of divine spells (the same type of spells available to the cleric, druid, and paladin), which are drawn from the ranger spell list. A ranger must choose and prepare his spells in advance. To prepare or cast a spell, a ranger must have a Wisdom score equal to at least 10 + the spell level (Wis 11 for 1st-level spells, Wis 12 for 2nd-level spells, and so forth). The Difficulty Class for a saving throw against a ranger's spell is 10 + the spell level + the ranger's Wisdom modifier. Like other spellcasters, a ranger can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given in the class table. In addition, he receives bonus spells per day if he has a high Wisdom score. When the class table, 1st-level spells for a 4th-level ranger), he gains only the bonus spells he would be entitled to based on his Wisdom score for that spell level. The ranger does not have access to any domain spells or granted powers, as a cleric does. A ranger prepares and casts spells the way a cleric does, though he cannot lose a prepared spell to cast a cure spell in its place. A ranger may prepare and cast any spell on the ranger spell list, provided that he can cast spells of that level, but he must choose which spells to prepare during his daily meditation. Through 3rd level, a ranger has no caster level. At 4th level and higher, his caster level is one-half his ranger level.",
+        "name": "Spells"
+      },
+      {
+        "description": "At 1st level, a ranger may select a type of creature from among those given in the class table. Due to his extensive study on his chosen type of foe and training in the proper techniques for combating such creatures, the ranger gains a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks when using these skills against creatures of this type. Likewise, he gets a +2 bonus on weapon damage rolls against such creatures. At 5th level and every five levels thereafter (10th, 15th, and 20th level), the ranger may select an additional favored enemy from those given on the table. In addition, at each such interval, the bonus against any one favored enemy (including the one just selected, if so desired) increases by 2. For example, a 5th-level ranger has two favored enemies; against one he gains a +4 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks and weapon damage rolls, and against the other he has a +2 bonus. At 10th level, he has three favored enemies, and he gains an additional +2 bonus, which he can allocate to the bonus against any one of his three favored enemies. Thus, his bonuses could be either +4, +4, +2 or +6, +2, +2. If the ranger chooses humanoids or outsiders as a favored enemy, he must also choose an associated subtype, as indicated on the table. If a specific creature falls into more than one category of favored enemy (for instance, devils are both evil outsiders and lawful outsiders), the ranger's bonuses do not stack; he simply uses whichever bonus is higher.",
+        "name": "Favored Enemy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A ranger gains Track as a bonus feat.",
+        "name": "Track"
+      },
+      {
+        "description": "A ranger can use body language, vocalizations, and demeanor to improve the attitude of an animal (such as a bear or a monitor lizard). This ability functions just like a Diplomacy check to improve the attitude of a person. The ranger rolls 1d20 and adds his ranger level and his Charisma bonus to determine the wild empathy check result. The typical domestic animal has a starting attitude of indifferent, while wild animals are usually unfriendly. To use wild empathy, the ranger and the animal must be able to study each other, which means that they must be within 30 feet of one another under normal visibility conditions. Generally, influencing an animal in this way takes 1 minute, but, as with influencing people, it might take more or less time. The ranger can also use this ability to influence a magical beast with an Intelligence score of 1 or 2 (such as a basilisk or a girallon), but he takes a -4 penalty on the check.",
+        "name": "Wild Empathy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a ranger must select one of two combat styles to pursue: archery or two-weapon combat. This choice affects the character's class features but does not restrict his selection of feats or special abilities in any way. If the ranger selects archery, he is treated as having the Rapid Shot feat, even if he does not have the normal prerequisites for that feat. If the ranger selects two-weapon combat, he is treated as having the Two-Weapon Fighting feat, even if he does not have the normal prerequisites for that feat. The benefits of the ranger's chosen style apply only when he wears light or no armor. He loses all benefits of his combat style when wearing medium or heavy armor.",
+        "name": "Combat Style",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A ranger gains Endurance as a bonus feat at 3rd level.",
+        "name": "Endurance"
+      },
+      {
+        "description": "At 4th level, a ranger gains an animal companion selected from the following list: badger, camel, dire rat, dog, riding dog, eagle, hawk, horse (light or heavy), owl, pony, snake (Small or Medium viper), or wolf. If the DM's campaign takes place wholly or partly in an aquatic environment, the DM may add the following creatures to the ranger's list of options: crocodile, porpoise, Medium shark, and squid. This animal is a loyal companion that accompanies the ranger on his adventures as appropriate for its kind. (For instance, an aquatic creature can't adventure with a ranger on land and shouldn't be selected by a nonaquatic character without extenuating circumstances). In most cases, the animal companion functions as a mount, sentry, scout, or hunting animal, rather than as a protector. This ability functions like the druid ability of the same name, except that the ranger's effective druid level is one-half his ranger level. For example, the animal companion of a 4th-level ranger would be the equivalent of a 2nd-level druid's animal companion. A ranger may select from the alternative lists of animal companions just as a druid can, though again his effective druid level is half his ranger level. Thus, he must be at least an 8th-level ranger to select from the druid's list of 4th-level animal companions, and if he chooses one of those animals, his effective druid level would be reduced by 3, to 1st level. Like a druid, a ranger cannot select an alternative animal if the choice would reduce his effective druid level below 1st.",
+        "name": "Animal Companion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 6th level, a ranger's aptitude in his chosen combat style (archery or two-weapon combat) improves. If he selected archery at 2nd level, he is treated as having the Manyshot feat, even if he does not have the normal prerequisites for that feat. If the ranger selected two-weapon combat at 2nd level, he is treated as having the Improved Two-Weapon Fighting feat, even if he does not have the normal prerequisites for that feat. As before, the benefits of the ranger's chosen style apply only when he wears light or no armor. He loses all benefits of his combat style when wearing medium or heavy armor.",
+        "name": "Improved Combat Style",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 7th level, a ranger may move through any sort of undergrowth (such as natural thorns, briars, overgrown areas, and similar terrain) at his normal speed and without taking damage or suffering any other impairment. However, thorns, briars, and overgrown areas that are enchanted or magically manipulated to impede motion still affect him.",
+        "name": "Woodland Stride",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 8th level, a ranger can move at his normal speed while following tracks without taking the normal -5 penalty. He takes only a -10 penalty (instead of the normal -20) when moving at up to twice normal speed while tracking.",
+        "name": "Swift Tracker",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 9th level, a ranger can avoid even magical and unusual attacks with great agility. If he makes a successful Reflex saving throw against an attack that normally deals half damage on a successful save (such as a red dragon's fiery breath or a fireball), he instead takes no damage. Evasion can be used only if the ranger is wearing light armor or no armor. A helpless ranger (such as one who is unconscious or paralysed) does not gain the benefit of evasion.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 11th level, a ranger's aptitude in his chosen combat style (archery or two-weapon combat) improves again. If he selected archery at 2nd level, he is treated as having the Improved Precise Shot feat, even if he does not have the normal prerequisites for that feat. If the ranger selected two-weapon combat at 2nd level, he is treated as having the Greater Two-Weapon Fighting feat, even if he does not have the normal prerequisites for that feat. As before, the benefits of the ranger's chosen style apply only when he wears light or no armor. He loses all benefits of his combat style when wearing medium or heavy armor.",
+        "name": "Combat Style Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A ranger of 13th level or higher can use the Hide skill in any sort of natural terrain, even if the terrain doesn't grant cover or concealment.",
+        "name": "Camouflage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "While in any sort of natural terrain, a ranger of 17th level or higher can use the Hide skill even while being observed.",
+        "name": "Hide in Plain Sight",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Handle Animal",
+      "Heal",
+      "Hide",
+      "Jump",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (Nature)",
+      "Listen",
+      "Move Silently",
+      "Profession",
+      "Ride",
+      "Search",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Use Rope"
+    ],
+    "description": "",
+    "hitDie": "d8",
+    "name": "Ranger",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "1st favored enemy",
+          "Track",
+          "wild empathy"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Combat style"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Endurance"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Animal companion"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "2nd favored enemy"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Improved combat style"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Woodland stride"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Swift tracker"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Evasion"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "3rd favored enemy"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 11,
+        "fortSave": 7,
+        "level": 11,
+        "refSave": 7,
+        "special": [
+          "Combat style mastery"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 3
+      },
+      {
+        "bab": 12,
+        "fortSave": 8,
+        "level": 12,
+        "refSave": 8,
+        "special": [],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 4
+      },
+      {
+        "bab": 13,
+        "fortSave": 8,
+        "level": 13,
+        "refSave": 8,
+        "special": [
+          "Camouflage"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 4
+      },
+      {
+        "bab": 14,
+        "fortSave": 9,
+        "level": 14,
+        "refSave": 9,
+        "special": [],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 4
+      },
+      {
+        "bab": 15,
+        "fortSave": 9,
+        "level": 15,
+        "refSave": 9,
+        "special": [
+          "4th favored enemy"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 5
+      },
+      {
+        "bab": 16,
+        "fortSave": 10,
+        "level": 16,
+        "refSave": 10,
+        "special": [],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 5
+      },
+      {
+        "bab": 17,
+        "fortSave": 10,
+        "level": 17,
+        "refSave": 10,
+        "special": [
+          "Hide in plain sight"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 5
+      },
+      {
+        "bab": 18,
+        "fortSave": 11,
+        "level": 18,
+        "refSave": 11,
+        "special": [],
+        "spellsPerDay": "3,2,2,1",
+        "willSave": 6
+      },
+      {
+        "bab": 19,
+        "fortSave": 11,
+        "level": 19,
+        "refSave": 11,
+        "special": [],
+        "spellsPerDay": "3,3,3,2",
+        "willSave": 6
+      },
+      {
+        "bab": 20,
+        "fortSave": 12,
+        "level": 20,
+        "refSave": 12,
+        "special": [
+          "5th favored enemy"
+        ],
+        "spellsPerDay": "3,3,3,3",
+        "willSave": 6
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

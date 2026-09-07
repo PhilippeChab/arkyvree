@@ -1,0 +1,56 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, gte } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const VOID_DISCIPLE: ClassSeed = {
+  name: "Void Disciple",
+  description: "Among all elemental forces composing the universe, the most potent and hardest to master is the binding essence that exists between and connects the others: Void. Those who follow this path recognize that every object in existence contains all fundamental elements, unified by this most intangible of essences. Void functions like the silence separating musical notes, providing structure and form to the whole composition. For those who grasp how Void relates to all other things and who possess the innate capacity to directly perceive that connection, concepts of distance and physical form become meaningless.",
+  hd: 6, levels: 13, skillPoints: 2,
+  bab: "poor",
+  saves: { fortitude: "poor", reflex: "poor", will: "good" },
+  classSkills: [
+    "Concentration",
+    "Craft",
+    "Diplomacy",
+    "Heal",
+    "Knowledge (Arcana)",
+    "Knowledge (Architecture and Engineering)",
+    "Knowledge (Dungeoneering)",
+    "Knowledge (Geography)",
+    "Knowledge (History)",
+    "Knowledge (Local)",
+    "Knowledge (Nature)",
+    "Knowledge (Nobility and Royalty)",
+    "Knowledge (Psionics)",
+    "Knowledge (Religion)",
+    "Knowledge (The Planes)",
+    "Profession",
+    "Spellcraft",
+  ],
+  requirements: [
+    gte("skills.spellcraft.rank", 10),
+    eq("feats.heightenspell.possessed"),
+    eq("feats.spellpenetration.possessed"),
+  ],
+  casterLevelAdvancement: { type: "any", levels: [2, 4, 5, 6, 8, 10, 11, 12] },
+  classFeatureAptitude: "Void Disciple Class Feature",
+  classFeatures: [
+    [1, "Sense Void (Void Disciple)"],
+    [1, "Spells per Day/Spells Known (Void Disciple)"],
+    [1, "Weapon and Armor Proficiency (Void Disciple)"],
+    [3, "Sense Void (Void Disciple)"],
+    [4, "Moment of Clarity (Void Disciple)"],
+    [5, "Sense Void (Void Disciple)"],
+    [7, "Altering the Course (Void Disciple)"],
+    [7, "Sense Void (Void Disciple)"],
+    [8, "Moment of Clarity (Void Disciple)"],
+    [9, "Sense Void (Void Disciple)"],
+    [10, "Void Release (Void Disciple)"],
+    [11, "Sense Void (Void Disciple)"],
+    [12, "Moment of Clarity (Void Disciple)"],
+    [12, "Void Suppression (Void Disciple)"],
+    [13, "Sense Void (Void Disciple)"],
+    [13, "Void Strike (Void Disciple)"],
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

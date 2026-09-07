@@ -1,0 +1,712 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:10:47.297Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/warlock/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Eldritch Blast 1d6"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Invocation (Least)"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Detect Magic"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Damage Reduction 1/Cold Iron"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Eldritch Blast 2d6"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Deceive Item"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Eldritch Blast 3d6"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "New Invocation (Least Or Lesser)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Damage Reduction 2/Cold Iron"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Eldritch Blast 4d6"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Fiendish Relisience"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Eldritch Blast 5d6"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Energy Resistance 5"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Damage Reduction 3/Cold Iron"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Eldritch Blast 6d6"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "New Invocation (Least, Lesser Or Greater)"
+      },
+      {
+        "levels": [
+          12
+        ],
+        "name": "Imbue Item"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "Fiendish Resilience 2"
+      },
+      {
+        "levels": [
+          14
+        ],
+        "name": "Eldritch Blast 7d6"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Damage Reduction 4/Cold Iron"
+      },
+      {
+        "levels": [
+          16
+        ],
+        "name": "New Invocation (Least, Lesser, Greater, Or Dark)"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Eldritch Blast 8d6"
+      },
+      {
+        "levels": [
+          18
+        ],
+        "name": "Fiendish Resilience 5"
+      },
+      {
+        "levels": [
+          19
+        ],
+        "name": "Damage Reduction 5/Cold Iron"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Eldritch Blast 9d6"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Energy Resistance 10"
+      }
+    ],
+    "hd": 6,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Warlock Class Feature",
+    "features": {
+      "Damage Reduction 1/cold Iron": {
+        "description": "Fortified by the supernatural power flowing in his body, a warlock becomes resistant to physical attacks at 3rd level and above, gaining damage reduction 1/cold iron. At 7th level and every four levels thereafter, a warlock's damage reduction improves as shown in the class table.",
+        "level": 3,
+        "seedName": "Damage Reduction 1/cold Iron (Warlock)"
+      },
+      "Damage Reduction 2/cold Iron": {
+        "description": "",
+        "level": 7,
+        "seedName": "Damage Reduction 2/cold Iron (Warlock)"
+      },
+      "Damage Reduction 3/cold Iron": {
+        "description": "",
+        "level": 11,
+        "seedName": "Damage Reduction 3/cold Iron (Warlock)"
+      },
+      "Damage Reduction 4/cold Iron": {
+        "description": "",
+        "level": 15,
+        "seedName": "Damage Reduction 4/cold Iron (Warlock)"
+      },
+      "Damage Reduction 5/cold Iron": {
+        "description": "",
+        "level": 19,
+        "seedName": "Damage Reduction 5/cold Iron (Warlock)"
+      },
+      "Deceive Item": {
+        "description": "At 4th level and higher, a warlock has the ability to more easily commandeer magic items made for the use of other characters. When making a Use Magic Device check, a warlock can take 10 even if distracted or threatened.",
+        "level": 4,
+        "seedName": "Deceive Item (Warlock)"
+      },
+      "Detect Magic": {
+        "description": "Beginning at 2nd level, a warlock can use detect magic as the spell at will. His caster level equals his class level.",
+        "level": 2,
+        "seedName": "Detect Magic (Warlock)"
+      },
+      "Eldritch Blast 1d6": {
+        "description": "The first ability a warlock learns is eldritch blast. A warlock attacks his foes with eldritch power, using baleful magical energy to deal damage and sometimes impart other debilitating effects. An eldritch blast is a ray with a range of 60 feet. It is a ranged touch attack that affects a single target, allowing no saving throw. An eldritch blast deals 1d6 points of damage at 1st level and increases in power as the warlock rises in level. An eldritch blast is the equivalent of a 1st-level spell. If you apply a blast shape or eldritch essence invocation to your eldritch blast, your eldritch blast uses the level equivalent of the shape or essence. An eldritch blast is subject to spell resistance, although the Spell Penetration feat and other effects that improve caster level checks to overcome spell resistance also apply to eldritch blast. An eldritch blast deals half damage to objects. Metamagic feats cannot improve a warlock's eldritch blast (because it is a spell-like ability, not a spell). However, the feat Ability Focus (eldritch blast) increases the DC for all saving throws (if any) associated with a warlock's eldritch blast by 2. the Monster Manual.",
+        "level": 1,
+        "seedName": "Eldritch Blast 1d6 (Warlock)"
+      },
+      "Eldritch Blast 2d6": {
+        "description": "",
+        "level": 3,
+        "seedName": "Eldritch Blast 2d6 (Warlock)"
+      },
+      "Eldritch Blast 3d6": {
+        "description": "",
+        "level": 5,
+        "seedName": "Eldritch Blast 3d6 (Warlock)"
+      },
+      "Eldritch Blast 4d6": {
+        "description": "",
+        "level": 7,
+        "seedName": "Eldritch Blast 4d6 (Warlock)"
+      },
+      "Eldritch Blast 5d6": {
+        "description": "",
+        "level": 9,
+        "seedName": "Eldritch Blast 5d6 (Warlock)"
+      },
+      "Eldritch Blast 6d6": {
+        "description": "",
+        "level": 11,
+        "seedName": "Eldritch Blast 6d6 (Warlock)"
+      },
+      "Eldritch Blast 7d6": {
+        "description": "",
+        "level": 14,
+        "seedName": "Eldritch Blast 7d6 (Warlock)"
+      },
+      "Eldritch Blast 8d6": {
+        "description": "",
+        "level": 17,
+        "seedName": "Eldritch Blast 8d6 (Warlock)"
+      },
+      "Eldritch Blast 9d6": {
+        "description": "",
+        "level": 20,
+        "seedName": "Eldritch Blast 9d6 (Warlock)"
+      },
+      "Energy Resistance 10": {
+        "description": "",
+        "level": 20,
+        "seedName": "Energy Resistance 10 (Warlock)"
+      },
+      "Energy Resistance 5": {
+        "description": "At 10th level and higher, a warlock has resistance 5 against any two of the following energy types: acid, cold, electricity, fire, and sonic. Once the types are chosen, this energy resistance cannot be changed. At 20th level, a warlock gains resistance 10 against the two selected types of energy.",
+        "level": 10,
+        "seedName": "Energy Resistance 5 (Warlock)"
+      },
+      "Fiendish Relisience": {
+        "description": "",
+        "level": 8,
+        "seedName": "Fiendish Relisience (Warlock)"
+      },
+      "Fiendish Resilience 2": {
+        "description": "Beginning at 8th level, a warlock knows the trick of fiendish resilience. Once per day, as a free action, he can enter a state that lasts for 2 minutes. While in this state, the warlock gains fast healing 1. At 13th level, a warlock's fiendish resilience improves. When in his fiendish resilience state, he gains fast healing 2 instead. At 18th level, a warlock's fiendish resilience improves to fast healing 5.",
+        "level": 13,
+        "seedName": "Fiendish Resilience 2 (Warlock)"
+      },
+      "Fiendish Resilience 5": {
+        "description": "",
+        "level": 18,
+        "seedName": "Fiendish Resilience 5 (Warlock)"
+      },
+      "Imbue Item": {
+        "description": "A warlock of 12th level or higher can use his supernatural power to create magic items, even if he does not know the spells required to make an item (although he must know the appropriate item creation feat). He can substitute a Use Magic Device check (DC 15 + spell level for arcane spells or 25 + spell level for divine spells) in place of a required spell he doesn't know or can't cast. If the check succeeds, the warlock can create the item as if he had cast the required spell. If it fails, he cannot complete the item. He does not expend the XP or gp costs for making the item; his progress is simply arrested. He cannot retry this Use Magic Device check for that spell until he gains a new level.",
+        "level": 12,
+        "seedName": "Imbue Item (Warlock)"
+      },
+      "Invocation (Least)": {
+        "description": "",
+        "level": 1,
+        "seedName": "Invocation (Least) (Warlock)"
+      },
+      "New Invocation (Least or Lesser)": {
+        "description": "",
+        "level": 6,
+        "seedName": "New Invocation (Least or Lesser) (Warlock)"
+      },
+      "New Invocation (Least, Lesser or Greater)": {
+        "description": "",
+        "level": 11,
+        "seedName": "New Invocation (Least, Lesser or Greater) (Warlock)"
+      },
+      "New Invocation (Least, Lesser, Greater, or Dark)": {
+        "description": "",
+        "level": 16,
+        "seedName": "New Invocation (Least, Lesser, Greater, or Dark) (Warlock)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Warlocks are proficient with all simple weapons. They are proficient with light armor but not with shields. Because the somatic components required for warlock invocations are relatively simple, a warlock can use any of his invocations while wearing light armor without incurring the normal arcane spell failure chance. However, like arcane spellcasters, a warlock wearing medium or heavy armor or using a shield incurs a chance of arcane spell failure (all invocations, including eldritch blast, have a somatic component). A multiclass warlock still incurs the normal arcane spell failure chance for arcane spells received from levels in other classes.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Warlock)"
+      }
+    },
+    "occurrenceMap": {
+      "Damage Reduction 1/Cold Iron": "Damage Reduction 1/cold Iron",
+      "Damage Reduction 2/Cold Iron": "Damage Reduction 2/cold Iron",
+      "Damage Reduction 3/Cold Iron": "Damage Reduction 3/cold Iron",
+      "Damage Reduction 4/Cold Iron": "Damage Reduction 4/cold Iron",
+      "Damage Reduction 5/Cold Iron": "Damage Reduction 5/cold Iron",
+      "Deceive Item": "Deceive Item",
+      "Detect Magic": "Detect Magic",
+      "Eldritch Blast 1d6": "Eldritch Blast 1d6",
+      "Eldritch Blast 2d6": "Eldritch Blast 2d6",
+      "Eldritch Blast 3d6": "Eldritch Blast 3d6",
+      "Eldritch Blast 4d6": "Eldritch Blast 4d6",
+      "Eldritch Blast 5d6": "Eldritch Blast 5d6",
+      "Eldritch Blast 6d6": "Eldritch Blast 6d6",
+      "Eldritch Blast 7d6": "Eldritch Blast 7d6",
+      "Eldritch Blast 8d6": "Eldritch Blast 8d6",
+      "Eldritch Blast 9d6": "Eldritch Blast 9d6",
+      "Energy Resistance 10": "Energy Resistance 10",
+      "Energy Resistance 5": "Energy Resistance 5",
+      "Fiendish Relisience": "Fiendish Relisience",
+      "Fiendish Resilience 2": "Fiendish Resilience 2",
+      "Fiendish Resilience 5": "Fiendish Resilience 5",
+      "Imbue Item": "Imbue Item",
+      "Invocation (Least)": "Invocation (Least)",
+      "New Invocation (Least Or Lesser)": "New Invocation (Least or Lesser)",
+      "New Invocation (Least, Lesser Or Greater)": "New Invocation (Least, Lesser or Greater)",
+      "New Invocation (Least, Lesser, Greater, Or Dark)": "New Invocation (Least, Lesser, Greater, or Dark)"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Warlocks are proficient with all simple weapons. They are proficient with light armor but not with shields. Because the somatic components required for warlock invocations are relatively simple, a warlock can use any of his invocations while wearing light armor without incurring the normal arcane spell failure chance. However, like arcane spellcasters, a warlock wearing medium or heavy armor or using a shield incurs a chance of arcane spell failure (all invocations, including eldritch blast, have a somatic component). A multiclass warlock still incurs the normal arcane spell failure chance for arcane spells received from levels in other classes.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "The first ability a warlock learns is eldritch blast. A warlock attacks his foes with eldritch power, using baleful magical energy to deal damage and sometimes impart other debilitating effects. An eldritch blast is a ray with a range of 60 feet. It is a ranged touch attack that affects a single target, allowing no saving throw. An eldritch blast deals 1d6 points of damage at 1st level and increases in power as the warlock rises in level. An eldritch blast is the equivalent of a 1st-level spell. If you apply a blast shape or eldritch essence invocation to your eldritch blast, your eldritch blast uses the level equivalent of the shape or essence. An eldritch blast is subject to spell resistance, although the Spell Penetration feat and other effects that improve caster level checks to overcome spell resistance also apply to eldritch blast. An eldritch blast deals half damage to objects. Metamagic feats cannot improve a warlock's eldritch blast (because it is a spell-like ability, not a spell). However, the feat Ability Focus (eldritch blast) increases the DC for all saving throws (if any) associated with a warlock's eldritch blast by 2. the Monster Manual.",
+        "name": "Eldritch Blast 1d6",
+        "type": "(Sp)"
+      },
+      {
+        "description": "",
+        "name": "Invocation (Least)"
+      },
+      {
+        "description": "Beginning at 2nd level, a warlock can use detect magic as the spell at will. His caster level equals his class level.",
+        "name": "Detect Magic",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Fortified by the supernatural power flowing in his body, a warlock becomes resistant to physical attacks at 3rd level and above, gaining damage reduction 1/cold iron. At 7th level and every four levels thereafter, a warlock's damage reduction improves as shown in the class table.",
+        "name": "Damage Reduction 1/cold Iron",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 2d6"
+      },
+      {
+        "description": "At 4th level and higher, a warlock has the ability to more easily commandeer magic items made for the use of other characters. When making a Use Magic Device check, a warlock can take 10 even if distracted or threatened.",
+        "name": "Deceive Item",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 3d6"
+      },
+      {
+        "description": "",
+        "name": "New Invocation (Least or Lesser)"
+      },
+      {
+        "description": "",
+        "name": "Damage Reduction 2/cold Iron"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 4d6"
+      },
+      {
+        "description": "",
+        "name": "Fiendish Relisience"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 5d6"
+      },
+      {
+        "description": "At 10th level and higher, a warlock has resistance 5 against any two of the following energy types: acid, cold, electricity, fire, and sonic. Once the types are chosen, this energy resistance cannot be changed. At 20th level, a warlock gains resistance 10 against the two selected types of energy.",
+        "name": "Energy Resistance 5",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Damage Reduction 3/cold Iron"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 6d6"
+      },
+      {
+        "description": "",
+        "name": "New Invocation (Least, Lesser or Greater)"
+      },
+      {
+        "description": "A warlock of 12th level or higher can use his supernatural power to create magic items, even if he does not know the spells required to make an item (although he must know the appropriate item creation feat). He can substitute a Use Magic Device check (DC 15 + spell level for arcane spells or 25 + spell level for divine spells) in place of a required spell he doesn't know or can't cast. If the check succeeds, the warlock can create the item as if he had cast the required spell. If it fails, he cannot complete the item. He does not expend the XP or gp costs for making the item; his progress is simply arrested. He cannot retry this Use Magic Device check for that spell until he gains a new level.",
+        "name": "Imbue Item",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 8th level, a warlock knows the trick of fiendish resilience. Once per day, as a free action, he can enter a state that lasts for 2 minutes. While in this state, the warlock gains fast healing 1. At 13th level, a warlock's fiendish resilience improves. When in his fiendish resilience state, he gains fast healing 2 instead. At 18th level, a warlock's fiendish resilience improves to fast healing 5.",
+        "name": "Fiendish Resilience 2",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 7d6"
+      },
+      {
+        "description": "",
+        "name": "Damage Reduction 4/cold Iron"
+      },
+      {
+        "description": "",
+        "name": "New Invocation (Least, Lesser, Greater, or Dark)"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 8d6"
+      },
+      {
+        "description": "",
+        "name": "Fiendish Resilience 5"
+      },
+      {
+        "description": "",
+        "name": "Damage Reduction 5/cold Iron"
+      },
+      {
+        "description": "",
+        "name": "Eldritch Blast 9d6"
+      },
+      {
+        "description": "",
+        "name": "Energy Resistance 10"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Disguise",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft",
+      "Use Magic Device"
+    ],
+    "description": "A supernatural character whose sinister powers are inborn abilities, not spells.",
+    "hitDie": "d6",
+    "name": "Warlock",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Eldritch blast 1d6",
+          "invocation (least)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Detect magic"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Damage reduction 1/cold iron",
+          "eldritch blast 2d6"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Deceive item"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Eldritch blast 3d6"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "New invocation (least or lesser)"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Damage reduction 2/cold iron",
+          "eldritch blast 4d6"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Fiendish relisience"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Eldritch blast 5d6"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Energy resistance 5"
+        ],
+        "willSave": 7
+      },
+      {
+        "bab": 8,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 3,
+        "special": [
+          "Damage reduction 3/cold iron",
+          "eldritch blast 6d6",
+          "new invocation (least, lesser or greater)"
+        ],
+        "willSave": 7
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 4,
+        "special": [
+          "Imbue item"
+        ],
+        "willSave": 8
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 4,
+        "special": [
+          "Fiendish resilience 2"
+        ],
+        "willSave": 8
+      },
+      {
+        "bab": 10,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 4,
+        "special": [
+          "Eldritch blast 7d6"
+        ],
+        "willSave": 9
+      },
+      {
+        "bab": 11,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Damage reduction 4/cold iron"
+        ],
+        "willSave": 9
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 5,
+        "special": [
+          "New invocation (least, lesser, greater, or dark)"
+        ],
+        "willSave": 10
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 5,
+        "special": [
+          "Eldritch blast 8d6"
+        ],
+        "willSave": 10
+      },
+      {
+        "bab": 13,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 6,
+        "special": [
+          "Fiendish resilience 5"
+        ],
+        "willSave": 11
+      },
+      {
+        "bab": 14,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 6,
+        "special": [
+          "Damage reduction 5/cold iron"
+        ],
+        "willSave": 11
+      },
+      {
+        "bab": 15,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Eldritch blast 9d6",
+          "energy resistance 10"
+        ],
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

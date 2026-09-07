@@ -1,0 +1,1 @@
+ALTER TABLE "account"."users" ADD COLUMN "onboarding_completed_at" timestamp;

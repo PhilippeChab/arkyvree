@@ -1,0 +1,296 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:08.783Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/master-of-the-unseen-hand/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Improved Caster Level"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Versatile Telekinesis"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Telekinetic Wielder"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Sustained Concentration"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Full Attack Telekinesis"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Improved Violent Thrust"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Telekinetic Flight"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Fling Skyward"
+      }
+    ],
+    "hd": 4,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "8",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Master of the Unseen Hand Class Feature",
+    "features": {
+      "Fling Skyward": {
+        "description": "Instead of hurling a creature at another target, a 5th-level character can use the violent thrust mode of telekinesis to launch a creature straight upward. The target may attempt a Will save (and apply spell resistance) to negate this effect. The maximum height the creature can be lifted is 10 feet per caster level. On the character's next turn, the creature plummets back to the ground, taking 1d6 points of damage for every 10 feet it falls. Unlike other applications of violent thrust by this class, flinging a creature skyward causes the telekinesis effect to end immediately.",
+        "level": 5,
+        "seedName": "Fling Skyward (Master of the Unseen Hand)"
+      },
+      "Full Attack Telekinesis": {
+        "description": "By 3rd level, the character's proficiency with telekinetic combat rivals a fighter's skill in melee. When employing the combat maneuver mode of telekinesis or attacking with a telekinetically wielded weapon, he may perform a full attack action, potentially making multiple attacks, bull rushes, disarms, grapples, or trips in a single round. As with conventional attacks, he receives one additional attack for every 5 points of base attack bonus above +1 (using caster level as base attack bonus per the telekinesis spell).",
+        "level": 3,
+        "seedName": "Full Attack Telekinesis (Master of the Unseen Hand)"
+      },
+      "Improved Caster Level": {
+        "description": "Starting at 1st level, the character intensifies his dedication to telekinetic mastery. He adds his master of the unseen hand class levels to his caster level (whether derived from spellcasting class levels or from a spell-like ability) whenever he uses telekinesis. As an illustration, a 10th-level sorcerer who has gained 3 levels in this class uses telekinesis at caster level 13, while a blue slaad with 2 levels in this class would employ its telekinesis spell-like ability at caster level 10.",
+        "level": 1,
+        "seedName": "Improved Caster Level (Master of the Unseen Hand)"
+      },
+      "Improved Violent Thrust": {
+        "description": "At 4th level, the character's violent thrust mode of telekinesis grows significantly more potent. He substitutes his caster level for his base attack bonus on the attack roll. Additionally, when hurling weapons at a target, he applies his Intelligence modifier (if a wizard) or Charisma modifier (if a sorcerer or a creature with telekinesis as a supernatural or spell-like ability) as a bonus to damage rolls. Furthermore, using violent thrust no longer causes the telekinesis effect to end, though the character cannot perform another violent thrust for 1d4 rounds.",
+        "level": 4,
+        "seedName": "Improved Violent Thrust (Master of the Unseen Hand)"
+      },
+      "Sustained Concentration": {
+        "description": "At 2nd level, the character becomes skilled at acting while keeping telekinesis active. Using the sustained force mode of telekinesis (or simply maintaining concentration to prevent the effect from ending) requires only a move action rather than a standard action. The character may even cast a different spell while sustaining telekinesis, though this demands a successful Concentration check as though distracted by a nondamaging spell (DC equal to the save DC of telekinesis). Employing the combat maneuver or violent thrust modes still requires a standard action.",
+        "level": 2,
+        "seedName": "Sustained Concentration (Master of the Unseen Hand)"
+      },
+      "Telekinetic Flight": {
+        "description": "At 4th level or higher, the character can employ the sustained force mode of telekinesis to levitate himself and willing creatures. As a move action, he can travel 20 feet with perfect maneuverability and carry willing creatures along. Each lifted creature may be moved in a different direction, but any creature that strays more than 40 feet from the character falls immediately. The character can support one Medium or smaller creature (bearing up to its maximum load) per three caster levels. A Large creature counts as two Medium creatures, a Huge creature as two Large ones, and so on. Unlike magical flight from the fly spell, this telekinetic flight ceases abruptly if dispelled or if the character's concentration lapses. Unsupported creatures plummet at once, suffering 1d6 points of damage per 10 feet fallen (maximum 20d6).",
+        "level": 4,
+        "seedName": "Telekinetic Flight (Master of the Unseen Hand)"
+      },
+      "Telekinetic Wielder": {
+        "description": "From 2nd level onward, the character can attack with weapons using telekinetic power. While concentrating on the combat maneuver mode of telekinesis, he may make a single attack with an unattended weapon or one he holds, moving the weapon up to 20 feet before striking. The attack is resolved normally, but the weapon's movement does not provoke attacks of opportunity. His base attack bonus for this attack equals his caster level plus his Intelligence modifier (for wizards) or Charisma modifier (for sorcerers or creatures with telekinesis as a supernatural or spell-like ability). Weapon-related feats the character possesses (such as Weapon Focus or Power Attack) do not apply to telekinetically wielded weapons. The weapon used may be one seized from an enemy through a successful disarm attempt.",
+        "level": 2,
+        "seedName": "Telekinetic Wielder (Master of the Unseen Hand)"
+      },
+      "Versatile Telekinesis": {
+        "description": "The character gains the ability to freely alternate between the three modes of the telekinesis spell or ability during a single use. For example, he might employ sustained force for 2 rounds, shift to combat maneuver mode, and then revert back to sustained force. The effect still terminates immediately after any use of the violent thrust mode, or if the character fails to maintain concentration.",
+        "level": 1,
+        "seedName": "Versatile Telekinesis (Master of the Unseen Hand)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Master of the Unseen Hand)"
+      }
+    },
+    "occurrenceMap": {
+      "Fling Skyward": "Fling Skyward",
+      "Full Attack Telekinesis": "Full Attack Telekinesis",
+      "Improved Caster Level": "Improved Caster Level",
+      "Improved Violent Thrust": "Improved Violent Thrust",
+      "Sustained Concentration": "Sustained Concentration",
+      "Telekinetic Flight": "Telekinetic Flight",
+      "Telekinetic Wielder": "Telekinetic Wielder",
+      "Versatile Telekinesis": "Versatile Telekinesis"
+    },
+    "overrides": {
+      "description": "Those who pursue this path revel in the power of telekinetic force, using invisible energy to smash opponents, hurl heavy objects skyward, and strip weapons from foes through sheer mental will.",
+      "features": {
+        "Fling Skyward": {
+          "description": "Instead of hurling a creature at another target, a 5th-level character can use the violent thrust mode of telekinesis to launch a creature straight upward. The target may attempt a Will save (and apply spell resistance) to negate this effect. The maximum height the creature can be lifted is 10 feet per caster level. On the character's next turn, the creature plummets back to the ground, taking 1d6 points of damage for every 10 feet it falls. Unlike other applications of violent thrust by this class, flinging a creature skyward causes the telekinesis effect to end immediately."
+        },
+        "Full Attack Telekinesis": {
+          "description": "By 3rd level, the character's proficiency with telekinetic combat rivals a fighter's skill in melee. When employing the combat maneuver mode of telekinesis or attacking with a telekinetically wielded weapon, he may perform a full attack action, potentially making multiple attacks, bull rushes, disarms, grapples, or trips in a single round. As with conventional attacks, he receives one additional attack for every 5 points of base attack bonus above +1 (using caster level as base attack bonus per the telekinesis spell)."
+        },
+        "Improved Caster Level": {
+          "description": "Starting at 1st level, the character intensifies his dedication to telekinetic mastery. He adds his master of the unseen hand class levels to his caster level (whether derived from spellcasting class levels or from a spell-like ability) whenever he uses telekinesis. As an illustration, a 10th-level sorcerer who has gained 3 levels in this class uses telekinesis at caster level 13, while a blue slaad with 2 levels in this class would employ its telekinesis spell-like ability at caster level 10."
+        },
+        "Improved Violent Thrust": {
+          "description": "At 4th level, the character's violent thrust mode of telekinesis grows significantly more potent. He substitutes his caster level for his base attack bonus on the attack roll. Additionally, when hurling weapons at a target, he applies his Intelligence modifier (if a wizard) or Charisma modifier (if a sorcerer or a creature with telekinesis as a supernatural or spell-like ability) as a bonus to damage rolls. Furthermore, using violent thrust no longer causes the telekinesis effect to end, though the character cannot perform another violent thrust for 1d4 rounds."
+        },
+        "Sustained Concentration": {
+          "description": "At 2nd level, the character becomes skilled at acting while keeping telekinesis active. Using the sustained force mode of telekinesis (or simply maintaining concentration to prevent the effect from ending) requires only a move action rather than a standard action. The character may even cast a different spell while sustaining telekinesis, though this demands a successful Concentration check as though distracted by a nondamaging spell (DC equal to the save DC of telekinesis). Employing the combat maneuver or violent thrust modes still requires a standard action."
+        },
+        "Telekinetic Flight": {
+          "description": "At 4th level or higher, the character can employ the sustained force mode of telekinesis to levitate himself and willing creatures. As a move action, he can travel 20 feet with perfect maneuverability and carry willing creatures along. Each lifted creature may be moved in a different direction, but any creature that strays more than 40 feet from the character falls immediately. The character can support one Medium or smaller creature (bearing up to its maximum load) per three caster levels. A Large creature counts as two Medium creatures, a Huge creature as two Large ones, and so on. Unlike magical flight from the fly spell, this telekinetic flight ceases abruptly if dispelled or if the character's concentration lapses. Unsupported creatures plummet at once, suffering 1d6 points of damage per 10 feet fallen (maximum 20d6)."
+        },
+        "Telekinetic Wielder": {
+          "description": "From 2nd level onward, the character can attack with weapons using telekinetic power. While concentrating on the combat maneuver mode of telekinesis, he may make a single attack with an unattended weapon or one he holds, moving the weapon up to 20 feet before striking. The attack is resolved normally, but the weapon's movement does not provoke attacks of opportunity. His base attack bonus for this attack equals his caster level plus his Intelligence modifier (for wizards) or Charisma modifier (for sorcerers or creatures with telekinesis as a supernatural or spell-like ability). Weapon-related feats the character possesses (such as Weapon Focus or Power Attack) do not apply to telekinetically wielded weapons. The weapon used may be one seized from an enemy through a successful disarm attempt."
+        },
+        "Versatile Telekinesis": {
+          "description": "The character gains the ability to freely alternate between the three modes of the telekinesis spell or ability during a single use. For example, he might employ sustained force for 2 rounds, shift to combat maneuver mode, and then revert back to sustained force. The effect still terminates immediately after any use of the violent thrust mode, or if the character fails to maintain concentration."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Masters of the unseen hand gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 1st level, a master of the unseen hand begins his relentless focus on the power of telekinesis. He adds his levels in master of the unseen hand to his caster level (whether from actual spellcasting levels or determined by the spell-like ability) when using his telekinesis ability. For example, a 10th-level sorcerer/3rd-level master of the unseen hand casts telekinesis as a 13th-level caster, and a blue slaad who is a 2nd-level master of the unseen hand would use its telekinesis spell-like ability as a 10th-level caster.",
+        "name": "Improved Caster Level",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A master of the unseen hand learns to combine the three versions of the telekinesis spell or ability, switching from one to another as he likes. For instance, he can use sustained force for 2 rounds, then switch to combat maneuver, then return to using sustained force. The spell or spell-like ability ends after the first use of the violent thrust version, however, or if the master of the unseen hand is unable to maintain concentration.",
+        "name": "Versatile Telekinesis",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A master of the unseen hand develops the ability to wield weapons with his telekinetic power. By maintaining concentration on the combat maneuver version of telekinesis, a master of the unseen hand of 2nd level or higher can make a single attack with an unattended weapon or one he is holding, moving the weapon up to 20 feet before the attack. Resolve the attack as normal, except that the weapon's movement doesn't provoke attacks of opportunity. The master of the unseen hand's base attack bonus on this attempt is equal to his caster level plus his Intelligence modifier (if a wizard) or Charisma modifier (if a sorcerer or a creature with the telekinesis supernatural or spell-like ability). Any weapon-related feats the master of the unseen hand has (such as Weapon Focus and Power Attack) do not apply when he's telekinetically wielding a weapon. The weapon wielded can be one the master of the unseen hand took from a foe on a successful disarm attempt.",
+        "name": "Telekinetic Wielder",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a master of the unseen hand becomes adept at moving and fighting while maintaining his telekinesis ability. It only takes a move action, not a standard action, to use the sustained force version of telekinesis (or simply to maintain concentration so the ability doesn't end). The master of the unseen hand can even cast another spell while maintaining concentration on telekinesis, but doing so requires a successful Concentration check as if the caster were distracted by a nondamaging spell (Concentration check DC equal to the save DC of telekinesis). It still takes a standard action to use the combat maneuver or violent thrust versions of the ability, however.",
+        "name": "Sustained Concentration",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a master of the unseen hand is as skilled in telekinetic combat as a fighter is with melee combat. When using the combat maneuver version of telekinesis or wielding a weapon telekinetically, the master of the unseen hand can make a full attack, potentially attacking, bull rushing, disarming, grappling, or tripping more than once per round. Just as with nontelekinetic attacks, the master of the unseen hand gains an additional attack for every 5 points of base attack bonus above +1 (using caster level for base attack bonus as described in the telekinesis spell description).",
+        "name": "Full Attack Telekinesis",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level, a master of the unseen hand's violent thrust version of telekinesis becomes more effective. He uses his caster level in place of his base attack bonus when making the attack roll, and he uses his Intelligence modifier (if a wizard) or Charisma modifier (if a sorcerer or a creature with the telekinesis supernatural or spell-like ability) as a bonus on damage rolls if he hurls weapons at the target. Finally, using a violent thrust no longer ends the telekinesis effect, but the master of the unseen hand can't make another violent thrust for 1d4 rounds.",
+        "name": "Improved Violent Thrust",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A master of the unseen hand of 4th level or higher can use the sustained force version of telekinesis to lift himself and willing creatures into the air. With a move action, the master of the unseen hand can move 20 feet with perfect maneuverability and can move willing creatures as well. The master of the unseen hand doesn't have to move all the creatures he's lifting in the same direction, but any lifted creatures plummet to the ground if they move more than 40 feet from the master of the unseen hand. The master of the unseen hand can lift one Medium or smaller creature (carrying up to its maximum load) per three caster levels. A Large creature counts as two Medium creatures, a Huge creature counts as two Large creatures, and so forth. Unlike the form of flight granted by the fly spell, telekinetic flight ends immediately and abruptly if disrupted by dispel magic or a lapse in the master of the unseen hand's concentration. Without telekinesis to support them, creatures fall to the ground immediately, taking 1d6 points of damage per 10 feet fallen (maximum 20d6).",
+        "name": "Telekinetic Flight",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Rather than hurling a creature toward another target, a 5th-level master of the unseen hand can use the violent thrust version of telekinesis to hurl a creature straight up. A target is allowed a Will save (and spell resistance) to negate the effect. The master of the unseen hand can lift a creature into the air a maximum distance of 10 feet per caster level. At the beginning of the character's next action, the creature falls to the ground, taking 1d6 points of damage per 10 feet fallen. Unlike other times when a master of the unseen hand uses the violent thrust version of telekinesis, flinging a foe skyward immediately ends the telekinesis effect.",
+        "name": "Fling Skyward",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "Masters of the unseen hand delight in crushing their foes with invisible force, flinging massive objects into the sky, and disarming enemies with a single thought.",
+    "hitDie": "d4",
+    "name": "Master of the Unseen Hand",
+    "prerequisites": {
+      "parsed": {
+        "skills": [
+          {
+            "name": "Concentration",
+            "ranks": 8
+          }
+        ]
+      },
+      "text": "Skills: Concentration 8 ranks Spells: Able to cast the telekinesis spell, or access to telekinesis as a spell-like or supernatural ability"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Improved caster level",
+          "versatile telekinesis"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Telekinetic wielder",
+          "sustained concentration"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Full attack telekinesis"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Improved violent thrust",
+          "telekinetic flight"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Fling skyward"
+        ],
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

@@ -1,0 +1,462 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T19:42:09.424Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/alienist/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          3,
+          7
+        ],
+        "target": "aptitudes.alienistmetamagicsecret.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {
+      "augmentsummoning": "Augment Summoning"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Familiar Abilities"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Summon Alien"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Alien Blessing"
+      },
+      {
+        "levels": [
+          3,
+          7
+        ],
+        "name": "Metamagic Secret"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Mad Certainty"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Pseudonatural Familiar"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Extra Summoning"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Insane Certainty"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Timeless Body"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Alien Transcendence"
+      }
+    ],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.augmentsummoning.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Alienist Class Feature",
+    "features": {
+      "Alien Blessing": {
+        "description": "An alienist who attains 2nd level gains a +1 insight bonus on all saving throws, but she permanently loses 2 points of Wisdom.",
+        "level": 2,
+        "seedName": "Alien Blessing (Alienist)"
+      },
+      "Alien Transcendence": {
+        "description": "A 10th-level alienist, because of long association with alien entities and intense study of insane secrets, transcends her mortal form and becomes an alien creature. Her type changes to outsider. Additionally, she gains damage reduction 10/magic and resistance to acid 10 and electricity 10. Upon achieving alien transcendence, an alienist undergoes a minor physical change, usually growing a small tentacle or other strange feature, such as an extra appendage, organ, eye, or enigmatic lump. An alienist can hide this abnormality in a robe or hood, but the alien growth is not under the alienist's control and sometimes moves, twitches, opens, or otherwise animates of its own accord. This applies a -4 penalty on Disguise checks an alienist makes to conceal her true nature. Anyone who shares an alienist's predilection for study of the Far Realms immediately recognizes her transcendent nature, and she gains a +2 circumstance bonus on all Charisma- based skill checks and ability checks when interacting with such beings. She gains a +2 circumstance bonus on Intimidate checks involving any other creatures to whom she reveals her abnormal nature.",
+        "level": 10,
+        "seedName": "Alien Transcendence (Alienist)"
+      },
+      "Extra Summoning": {
+        "description": "From 6th level on, an alienist gains one extra spell slot at her highest spell level. This slot can be used only for a summon monster spell. As an alienist becomes able to learn higher-level spells, the extra slot migrates up to the new highest level.",
+        "level": 6,
+        "seedName": "Extra Summoning (Alienist)"
+      },
+      "Familiar Abilities": {
+        "description": "Levels of alienist stack with levels of any class that provide access to a familiar. Add levels from this class and the class that granted access to the familiar together and refer to the table to determine the familiar's natural armor, Intelligence, and special abilities. If a character had levels in multiple classes that grant access to a familiar before becoming an alienist, she must decide to which class to add each level for the purpose of determining the abilitiesof her familiar. This ability does not grant an alienist a familiar if she does not already have one.",
+        "level": 1,
+        "seedName": "Familiar Abilities (Alienist)"
+      },
+      "Insane Certainty": {
+        "description": "At 8th level, an alienist's mad certainty crystallizes into a truly chilling mania. She gains an additional 3 hit points, but her mental faculties continue to degrade. Her penalty on Bluff, Diplomacy, and Handle Animal checks made to influence nonpseudonatural creatures increases to -10.",
+        "level": 8,
+        "seedName": "Insane Certainty (Alienist)"
+      },
+      "Mad Certainty": {
+        "description": "At 4th level, an alienist's mad certainty in the power of entities beyond the reach of normal space and time lend her an unnatural fortitude, granting her an additional 3 hit points. However, constantly dwelling on such beings is mentally corrosive, and the alienist's mind begins to fracture. She now takes a -4 penalty on all Bluff, Diplomacy, and Handle Animal checks made to influence nonpseudonatural creatures.",
+        "level": 4,
+        "seedName": "Mad Certainty (Alienist)"
+      },
+      "Metamagic Secret": {
+        "description": "An alienist listens to the secret voices whispering from beyond time's end, and profits thereby. At 3rd and again at 7th level, she can choose any metamagic feat as a bonus feat.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.alienistmetamagicsecret.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Metamagic Secret (Alienist)",
+        "stackable": true
+      },
+      "Pseudonatural Familiar": {
+        "description": "Beginning at 5th level, an alienist's familiar, if any, gains the pseudonatural template in addition to the powers and abilities normal for a familiar of the appropriate level. This effect does not replace an existing familiar-the familiar has been slowly taking on pseudonatural aspects as the alienist rises in level, and those characteristics become fully functional at this point. From now on, the alienist's newly summoned familiars already possess the pseudonatural template. If an alienist has no familiar, this ability has no effect.",
+        "level": 5,
+        "seedName": "Pseudonatural Familiar (Alienist)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level, an alienist gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If she had more than one spellcasting class before becoming an alienist, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Alienist)"
+      },
+      "Summon Alien": {
+        "description": "Whenever an alienist would use any summon monster spell to summon a celestial or fiendish creature, she instead summons a pseudonatural version of that creature. For example, by casting summon monster IV, she could summon a pseudonatural dire wolf. This adds the pseudonatural template to the summoned creature. An alienist gives up the ability to summon nonpseudonatural creatures with a summon monster spell. For instance, the alienist described above couldn't summon a mephit or howler with summon monster IV.",
+        "level": 1,
+        "seedName": "Summon Alien (Alienist)"
+      },
+      "Timeless Body": {
+        "description": "At 9th level, an alienist learns the secret of perpetual youth. She no longer takes ability penalties for aging and cannot be magically aged. Ability score bonuses from aging still accrue, and any penalties the alienist might have already taken remain in place. An alienist is stolen away by horrible entities when her time is up, and she is never seen again.",
+        "level": 9,
+        "seedName": "Timeless Body (Alienist)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Alienists gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Alienist)"
+      }
+    },
+    "occurrenceMap": {
+      "Alien Blessing": "Alien Blessing",
+      "Alien Transcendence": "Alien Transcendence",
+      "Extra Summoning": "Extra Summoning",
+      "Familiar Abilities": "Familiar Abilities",
+      "Insane Certainty": "Insane Certainty",
+      "Mad Certainty": "Mad Certainty",
+      "Metamagic Secret": "Metamagic Secret",
+      "Pseudonatural Familiar": "Pseudonatural Familiar",
+      "Summon Alien": "Summon Alien",
+      "Timeless Body": "Timeless Body"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Alienists gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level, an alienist gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If she had more than one spellcasting class before becoming an alienist, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Levels of alienist stack with levels of any class that provide access to a familiar. Add levels from this class and the class that granted access to the familiar together and refer to the table to determine the familiar's natural armor, Intelligence, and special abilities. If a character had levels in multiple classes that grant access to a familiar before becoming an alienist, she must decide to which class to add each level for the purpose of determining the abilitiesof her familiar. This ability does not grant an alienist a familiar if she does not already have one.",
+        "name": "Familiar Abilities"
+      },
+      {
+        "description": "Whenever an alienist would use any summon monster spell to summon a celestial or fiendish creature, she instead summons a pseudonatural version of that creature. For example, by casting summon monster IV, she could summon a pseudonatural dire wolf. This adds the pseudonatural template to the summoned creature. An alienist gives up the ability to summon nonpseudonatural creatures with a summon monster spell. For instance, the alienist described above couldn't summon a mephit or howler with summon monster IV.",
+        "name": "Summon Alien"
+      },
+      {
+        "description": "An alienist who attains 2nd level gains a +1 insight bonus on all saving throws, but she permanently loses 2 points of Wisdom.",
+        "name": "Alien Blessing",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An alienist listens to the secret voices whispering from beyond time's end, and profits thereby. At 3rd and again at 7th level, she can choose any metamagic feat as a bonus feat.",
+        "name": "Metamagic Secret"
+      },
+      {
+        "description": "At 4th level, an alienist's mad certainty in the power of entities beyond the reach of normal space and time lend her an unnatural fortitude, granting her an additional 3 hit points. However, constantly dwelling on such beings is mentally corrosive, and the alienist's mind begins to fracture. She now takes a -4 penalty on all Bluff, Diplomacy, and Handle Animal checks made to influence nonpseudonatural creatures.",
+        "name": "Mad Certainty",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 5th level, an alienist's familiar, if any, gains the pseudonatural template in addition to the powers and abilities normal for a familiar of the appropriate level. This effect does not replace an existing familiar-the familiar has been slowly taking on pseudonatural aspects as the alienist rises in level, and those characteristics become fully functional at this point. From now on, the alienist's newly summoned familiars already possess the pseudonatural template. If an alienist has no familiar, this ability has no effect.",
+        "name": "Pseudonatural Familiar"
+      },
+      {
+        "description": "From 6th level on, an alienist gains one extra spell slot at her highest spell level. This slot can be used only for a summon monster spell. As an alienist becomes able to learn higher-level spells, the extra slot migrates up to the new highest level.",
+        "name": "Extra Summoning"
+      },
+      {
+        "description": "At 8th level, an alienist's mad certainty crystallizes into a truly chilling mania. She gains an additional 3 hit points, but her mental faculties continue to degrade. Her penalty on Bluff, Diplomacy, and Handle Animal checks made to influence nonpseudonatural creatures increases to -10.",
+        "name": "Insane Certainty",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 9th level, an alienist learns the secret of perpetual youth. She no longer takes ability penalties for aging and cannot be magically aged. Ability score bonuses from aging still accrue, and any penalties the alienist might have already taken remain in place. An alienist is stolen away by horrible entities when her time is up, and she is never seen again.",
+        "name": "Timeless Body",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level alienist, because of long association with alien entities and intense study of insane secrets, transcends her mortal form and becomes an alien creature. Her type changes to outsider. Additionally, she gains damage reduction 10/magic and resistance to acid 10 and electricity 10. Upon achieving alien transcendence, an alienist undergoes a minor physical change, usually growing a small tentacle or other strange feature, such as an extra appendage, organ, eye, or enigmatic lump. An alienist can hide this abnormality in a robe or hood, but the alien growth is not under the alienist's control and sometimes moves, twitches, opens, or otherwise animates of its own accord. This applies a -4 penalty on Disguise checks an alienist makes to conceal her true nature. Anyone who shares an alienist's predilection for study of the Far Realms immediately recognizes her transcendent nature, and she gains a +2 circumstance bonus on all Charisma- based skill checks and ability checks when interacting with such beings. She gains a +2 circumstance bonus on Intimidate checks involving any other creatures to whom she reveals her abnormal nature.",
+        "name": "Alien Transcendence",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Gather Information",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Profession",
+      "Spellcraft",
+      "Spot"
+    ],
+    "description": "Alienists deal with powers and entities from terrifyingly remote reaches of space and time. For them, magical power is the triumph of the mind over the rude boundaries of dimension, distance, and often, sanity. With knowledge and determination, they pierce the barrier at the edge of time itself. In the Far Realm, outside time, Herculean minds drift, absorbed in contemplations of madness. Unspeakable beings whisper terrifying secrets to those who dare communication. These secrets were not meant for mortals, but the alienist plunges into abysses of chaos and entropy that would blast a weaker mind. An alienist's mad certainty is sometimes strong enough to sway others to believe in her own future transcendence. Alienists might, on rare occasions, gather in secluded groups to enact some obscure ritual, but more often they are encountered singly. NPC alienists sometimes haunt libraries or specialty bookshops in large cities, skulking and mumbling among stacks of rare (and dangerous) volumes.",
+    "hitDie": "d4",
+    "name": "Alienist",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "any nonlawful",
+        "feats": [
+          "Augment Summoning"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Must have made peaceful contact with an alienist or a pseudonatural creature.",
+          "made peaceful contact with an alienist or a pseudonatural creature"
+        ]
+      },
+      "text": "Alignment: any nonlawful Skills: Knowledge (the planes) 8 ranks Feats: Augment Summoning Spells: Able to cast at least one summoning spell of 3rd level or higher. Special: Must have made peaceful contact with an alienist or a pseudonatural creature."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Familiar abilities",
+          "summon alien"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Alien blessing"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Metamagic secret"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Mad certainty"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Pseudonatural familiar"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Extra summoning"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Metamagic secret"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Insane certainty"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Timeless body"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Alien transcendence"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

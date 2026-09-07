@@ -1,0 +1,63 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+
+export const CLERIC: ClassSeed = {
+  name: "Cleric",
+  description: "Evidence of divine power permeates the world - visible in pristine wilderness, righteous campaigns, towering cathedrals, and the devotion of the faithful. Gods, much like mortals, span the full spectrum from kind to cruel, passive to meddlesome, straightforward to enigmatic. Yet the gods typically act through mortal agents - their clerics. Benevolent clerics mend wounds, shield the innocent, and deliver justice. Malevolent clerics plunder, ravage, and undermine. A cleric channels divine authority to enact the will of a deity. And if that divine power also elevates the cleric's own standing, that is simply to be expected. A cleric's quests should ideally serve the interests of the deity, at least broadly. A good cleric, for instance, aids those who suffer. If such righteous deeds also bolster the standing of the cleric's god or temple, all the better. An evil cleric works to expand both personal influence and the reach of the deity, so that others come to respect and dread them both. Clerics may from time to time receive directives - or at least guidance - from religious superiors, tasking them with missions on behalf of the faith. Such missions are fairly compensated, and the church can be particularly generous with spellcasting services or divine magic items as payment. Naturally, clerics are also individuals with their own motivations, and they may pursue adventure for any of the usual personal reasons.",
+  hd: 8, levels: 20, skillPoints: 2,
+  bab: "medium",
+  saves: { fortitude: "good", reflex: "poor", will: "good" },
+  classSkills: [
+    "Concentration",
+    "Craft",
+    "Diplomacy",
+    "Heal",
+    "Knowledge (Arcana)",
+    "Knowledge (History)",
+    "Knowledge (Religion)",
+    "Knowledge (The Planes)",
+    "Profession",
+    "Spellcraft",
+  ],
+  classFeatureAptitude: "Cleric Class Feature",
+  classFeatures: [
+    [1, "Aura (Cleric)"],
+    [1, "Deity, Domains, and Domain Spells (Cleric)"],
+    [1, "Spells (Cleric)"],
+    [1, "Spontaneous Casting (Cleric)"],
+    [1, "Turn or Rebuke Undead (Cleric)"],
+    [1, "Weapon and Armor Proficiency (Cleric)"],
+  ],
+  bonusSpellAbility: "Wisdom",
+  casterType: "Divine",
+  spells: {
+    slug: "clericspells",
+    perDay: [
+      [3, 1],
+      [4, 2],
+      [4, 2, 1],
+      [5, 3, 2],
+      [5, 3, 2, 1],
+      [5, 3, 3, 2],
+      [6, 4, 3, 2, 1],
+      [6, 4, 3, 3, 2],
+      [6, 4, 4, 3, 2, 1],
+      [6, 4, 4, 3, 3, 2],
+      [6, 5, 4, 4, 3, 2, 1],
+      [6, 5, 4, 4, 3, 3, 2],
+      [6, 5, 5, 4, 4, 3, 2, 1],
+      [6, 5, 5, 4, 4, 3, 3, 2],
+      [6, 5, 5, 5, 4, 4, 3, 2, 1],
+      [6, 5, 5, 5, 4, 4, 3, 3, 2],
+      [6, 5, 5, 5, 5, 4, 4, 3, 2, 1],
+      [6, 5, 5, 5, 5, 4, 4, 3, 3, 2],
+      [6, 5, 5, 5, 5, 5, 4, 4, 3, 3],
+      [6, 5, 5, 5, 5, 5, 4, 4, 4, 4],
+    ],
+    knowAll: true,
+  },
+  modifiers: [
+    { level: 1, target: "aptitudes.clericdomain.allowed", value: "2", valueType: "number", operator: "add" },
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

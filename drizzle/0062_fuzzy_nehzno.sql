@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "contributors_ruleset_email_unique" ON "rules"."contributors" USING btree ("ruleset_id","email") WHERE user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL;

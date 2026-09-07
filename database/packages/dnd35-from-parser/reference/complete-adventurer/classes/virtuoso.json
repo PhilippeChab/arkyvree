@@ -1,0 +1,354 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-04-08T13:06:56.315Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/virtuoso/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bardic Music (Fascinate)"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Virtuoso Performance (Persuasive Song)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Virtuoso Performance(Sustaining Song)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Virtuoso Performance (Jarring Song)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Virtuoso Performance (Song Of Fury)"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Virtuoso Performance (Mindbending Melody)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Virtuoso Performance (Revealing Melody)"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.diplomacy.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.intimidate.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "10",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 6,
+    "unresolvedAptitudePicks": [
+      "Virtuoso Performance (Persuasive Song)"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Virtuoso Class Feature",
+    "features": {
+      "Bardic Music (Fascinate)": {
+        "description": "Virtuoso levels stack with bard levels for the purpose of determining the virtuoso's daily uses of his bardic music abilities (if any) and the value of the bonus granted by inspire courage (if the virtuoso has that bardic music ability). For example, a 10th-level bard/4th-level virtuoso could use bardic music fourteen times per day, and his inspire courage ability would grant a +3 morale bonus on the appropriate rolls. A virtuoso also gains the fascinate bardic music ability, if he doesn't already have it. He can use his performance to cause one or more creatures to become fascinated with him. See the bard class feature of the Player's Handbook.",
+        "level": 1,
+        "seedName": "Bardic Music (Fascinate) (Virtuoso)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Beginning at 2nd level, a virtuoso gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained. If he had more than one arcane spellcasting class before becoming a virtuoso, he must decide to which class to add each level for the purpose of determining spells per d",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Virtuoso)"
+      },
+      "Virtuoso Performance (Jarring Song)": {
+        "description": "",
+        "level": 5,
+        "seedName": "Virtuoso Performance (Jarring Song) (Virtuoso)"
+      },
+      "Virtuoso Performance (Mindbending Melody)": {
+        "description": "",
+        "level": 9,
+        "seedName": "Virtuoso Performance (Mindbending Melody) (Virtuoso)"
+      },
+      "Virtuoso Performance (Persuasive Song)": {
+        "description": "A virtuoso can use his Perform skill to create magical effects on those around him. He can use this ability once per day per virtuoso level. He can use any form of performance as part of this ability. Although many of the names refer to musical performances, a virtuoso isn't actually so limited - for example, an actor could perform a ?sustaining soliloquy' or ?sustaining dance' rather than a sustaining song. Each ability requires both a minimum virtuoso level and a minimum number of ranks in any Perform skill to qualify. If a virtuoso does not have the required number of ranks in at least one Perform skill, he does not gain the virtuoso performance ability until he acquires the needed ranks. Starting a virtuoso performance effect is a standard action. Some virtuoso performance abilities require concentration, which means that the virtuoso must take a standard action each round to maintain the ability. Unlike with bardic music, virtuoso performance doesn't restrict a virtuoso's spellcasting or magic item activation. If a virtuoso's performance requires sound, a deaf virtuoso has a 20% chance to fail when attempting to use virtuoso performance. If he fails, the attempt still counts against his daily limit. If a virtuoso has the bardic music class feature, he can spend two daily uses of bardic music to deliver a virtuoso performance. Persuasive Song (Ex): A virtuoso with at least 11 ranks in a Perform skill can deliver a performance that sways the attitude of his audience. Treat this as a Diplomacy check made to influence NPC attitudes, but replace the Diplomacy check with a Perform check. Viewers must be within 30 feet of the virtuoso, be able to see and hear him clearly, and be willingly paying attention to his actions. This ability requires at least 10 consecutive rounds of concentration to take effect, and it can affect a particular creature only once per day. Hostile audience members can't be influenced with this ability. Sustaining Song (Su): A virtuoso of 3rd level or higher with at least 13 ranks in a Perform skill can sustain his dying allies, assisting their recovery. Each round that the song continues, all allies within 30 feet of him automatically become stable (if dying) or regain 1 hit point (if stable and between ?1 and ?9 hit points). A sustaining song has no effect on enemies or on allies with 0 or more hit points. A virtuoso can keep up his sustaining song for 5 minutes. This is a mind-affecting ability. Jarring Song (Su): A virtuoso of 5th level or higher with at least 15 ranks in a Perform skill can inhibit spellcasting. Any enemy within 30 feet attempting to cast a spell during a jarring song must make a Concentration check with a DC equal to the virtuoso's Perform check to avoid losing the spell. A virtuoso can keep up his jarring song for 10 rounds. Song of Fury (Su): A virtuoso of 7th level or higher with at least 17 ranks in a Perform skill can use his performance to turn his allies into furious berserkers. Each ally within 30 feet who can see and hear the virtuoso can choose to enter a rage on her turn. This functions identically to a barbarian's rage, except that it ends automatically if the virtuoso stops performing. If the ally already has the ability to rage, she can choose to apply the full effect of her own rage, without spending one of her daily uses of rage. A virtuoso can't use song of fury on himself. This is a mind-affecting ability. Mindbending Melody (Sp): A virtuoso of 9th level or higher with at least 19 ranks in a Perform skill can dominate a humanoid that he has already fascinated. This ability functions like a dominate person spell with a caster level equal to the virtuoso's class level. The target can make a Will save (DC 10 + virtuoso's class level + virtuoso's Cha modifier) to negate the effect. A mindbending melody is a mind-affecting, language-dependent, enchantment (compulsion) ability. Revealing Melody (Su): A 10th-level virtuoso with at least 20 ranks in a Perform skill can use his performance to reveal all things as they actually are. All allies within 30 feet who can see and hear the virtuoso's performance are affected as if by a true seeing spell with a caster level equal to the virtuoso's class level. The effect lasts as long as the virtuoso performs.",
+        "level": 1,
+        "seedName": "Virtuoso Performance (Persuasive Song) (Virtuoso)"
+      },
+      "Virtuoso Performance (Revealing Melody)": {
+        "description": "",
+        "level": 10,
+        "seedName": "Virtuoso Performance (Revealing Melody) (Virtuoso)"
+      },
+      "Virtuoso Performance (Song of Fury)": {
+        "description": "",
+        "level": 7,
+        "seedName": "Virtuoso Performance (Song of Fury) (Virtuoso)"
+      },
+      "Virtuoso Performance(sustaining Song)": {
+        "description": "",
+        "level": 3,
+        "seedName": "Virtuoso Performance (Sustaining Song) (Virtuoso)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Virtuosos gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Virtuoso)"
+      }
+    },
+    "occurrenceMap": {
+      "Bardic Music (Fascinate)": "Bardic Music (Fascinate)",
+      "Virtuoso Performance (Jarring Song)": "Virtuoso Performance (Jarring Song)",
+      "Virtuoso Performance (Mindbending Melody)": "Virtuoso Performance (Mindbending Melody)",
+      "Virtuoso Performance (Persuasive Song)": "Virtuoso Performance (Persuasive Song)",
+      "Virtuoso Performance (Revealing Melody)": "Virtuoso Performance (Revealing Melody)",
+      "Virtuoso Performance (Song Of Fury)": "Virtuoso Performance (Song of Fury)",
+      "Virtuoso Performance(Sustaining Song)": "Virtuoso Performance(sustaining Song)"
+    },
+    "overrides": {
+      "features": {
+        "Virtuoso Performance(sustaining Song)": {
+          "seedName": "Virtuoso Performance (Sustaining Song) (Virtuoso)"
+        }
+      },
+      "reviewed": [
+        "Virtuoso Performance (Persuasive Song)"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Virtuosos gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 2nd level, a virtuoso gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained. If he had more than one arcane spellcasting class before becoming a virtuoso, he must decide to which class to add each level for the purpose of determining spells per d",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Virtuoso levels stack with bard levels for the purpose of determining the virtuoso's daily uses of his bardic music abilities (if any) and the value of the bonus granted by inspire courage (if the virtuoso has that bardic music ability). For example, a 10th-level bard/4th-level virtuoso could use bardic music fourteen times per day, and his inspire courage ability would grant a +3 morale bonus on the appropriate rolls. A virtuoso also gains the fascinate bardic music ability, if he doesn't already have it. He can use his performance to cause one or more creatures to become fascinated with him. See the bard class feature of the Player's Handbook.",
+        "name": "Bardic Music (Fascinate)"
+      },
+      {
+        "description": "A virtuoso can use his Perform skill to create magical effects on those around him. He can use this ability once per day per virtuoso level. He can use any form of performance as part of this ability. Although many of the names refer to musical performances, a virtuoso isn't actually so limited - for example, an actor could perform a ?sustaining soliloquy' or ?sustaining dance' rather than a sustaining song. Each ability requires both a minimum virtuoso level and a minimum number of ranks in any Perform skill to qualify. If a virtuoso does not have the required number of ranks in at least one Perform skill, he does not gain the virtuoso performance ability until he acquires the needed ranks. Starting a virtuoso performance effect is a standard action. Some virtuoso performance abilities require concentration, which means that the virtuoso must take a standard action each round to maintain the ability. Unlike with bardic music, virtuoso performance doesn't restrict a virtuoso's spellcasting or magic item activation. If a virtuoso's performance requires sound, a deaf virtuoso has a 20% chance to fail when attempting to use virtuoso performance. If he fails, the attempt still counts against his daily limit. If a virtuoso has the bardic music class feature, he can spend two daily uses of bardic music to deliver a virtuoso performance. Persuasive Song (Ex): A virtuoso with at least 11 ranks in a Perform skill can deliver a performance that sways the attitude of his audience. Treat this as a Diplomacy check made to influence NPC attitudes, but replace the Diplomacy check with a Perform check. Viewers must be within 30 feet of the virtuoso, be able to see and hear him clearly, and be willingly paying attention to his actions. This ability requires at least 10 consecutive rounds of concentration to take effect, and it can affect a particular creature only once per day. Hostile audience members can't be influenced with this ability. Sustaining Song (Su): A virtuoso of 3rd level or higher with at least 13 ranks in a Perform skill can sustain his dying allies, assisting their recovery. Each round that the song continues, all allies within 30 feet of him automatically become stable (if dying) or regain 1 hit point (if stable and between ?1 and ?9 hit points). A sustaining song has no effect on enemies or on allies with 0 or more hit points. A virtuoso can keep up his sustaining song for 5 minutes. This is a mind-affecting ability. Jarring Song (Su): A virtuoso of 5th level or higher with at least 15 ranks in a Perform skill can inhibit spellcasting. Any enemy within 30 feet attempting to cast a spell during a jarring song must make a Concentration check with a DC equal to the virtuoso's Perform check to avoid losing the spell. A virtuoso can keep up his jarring song for 10 rounds. Song of Fury (Su): A virtuoso of 7th level or higher with at least 17 ranks in a Perform skill can use his performance to turn his allies into furious berserkers. Each ally within 30 feet who can see and hear the virtuoso can choose to enter a rage on her turn. This functions identically to a barbarian's rage, except that it ends automatically if the virtuoso stops performing. If the ally already has the ability to rage, she can choose to apply the full effect of her own rage, without spending one of her daily uses of rage. A virtuoso can't use song of fury on himself. This is a mind-affecting ability. Mindbending Melody (Sp): A virtuoso of 9th level or higher with at least 19 ranks in a Perform skill can dominate a humanoid that he has already fascinated. This ability functions like a dominate person spell with a caster level equal to the virtuoso's class level. The target can make a Will save (DC 10 + virtuoso's class level + virtuoso's Cha modifier) to negate the effect. A mindbending melody is a mind-affecting, language-dependent, enchantment (compulsion) ability. Revealing Melody (Su): A 10th-level virtuoso with at least 20 ranks in a Perform skill can use his performance to reveal all things as they actually are. All allies within 30 feet who can see and hear the virtuoso's performance are affected as if by a true seeing spell with a caster level equal to the virtuoso's class level. The effect lasts as long as the virtuoso performs.",
+        "name": "Virtuoso Performance (Persuasive Song)",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Virtuoso Performance(sustaining Song)"
+      },
+      {
+        "description": "",
+        "name": "Virtuoso Performance (Jarring Song)"
+      },
+      {
+        "description": "",
+        "name": "Virtuoso Performance (Song of Fury)"
+      },
+      {
+        "description": "",
+        "name": "Virtuoso Performance (Mindbending Melody)"
+      },
+      {
+        "description": "",
+        "name": "Virtuoso Performance (Revealing Melody)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Disguise",
+      "Escape Artist",
+      "Gather Information",
+      "Intimidate",
+      "Jump",
+      "Perform",
+      "Spellcraft",
+      "Tumble"
+    ],
+    "description": "The typical virtuoso is outgoing, charismatic, and gregarious.",
+    "hitDie": "d6",
+    "name": "Virtuoso",
+    "prerequisites": {
+      "parsed": {
+        "skills": [
+          {
+            "name": "Diplomacy",
+            "ranks": 4
+          },
+          {
+            "name": "Intimidate",
+            "ranks": 4
+          },
+          {
+            "name": "Perform",
+            "ranks": 10
+          }
+        ]
+      },
+      "text": "Skills: Diplomacy 4 ranks, Intimidate 4 ranks, Perform 10 ranks Spells: Arcane caster level 1st"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bardic music (fascinate)",
+          "virtuoso performance (persuasive song)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Virtuoso performance(sustaining song)"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Virtuoso performance (jarring song)"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Virtuoso performance (song of fury)"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Virtuoso performance (mindbending melody)"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Virtuoso performance (revealing melody)"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

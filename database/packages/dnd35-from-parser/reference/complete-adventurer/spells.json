@@ -1,0 +1,2073 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:46.618Z",
+    "sourceUrl": "https://dndtools.net/spells/complete-adventurer--54/",
+    "type": "spell"
+  },
+  "raw": [
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You can harmlessly absorb a weapon you are touching (even a poisoned one) into your arm, so long as it is not in another creature's possession. The weapon must be a light weapon for you at the time you cast the spell. The absorbed weapon cannot be felt under the skin and doesn't restrict your range of motion in any way. An absorbed weapon cannot be detected with even a careful search, although a detect magic spell reveals the presence of a magical aura. The only evidence of its presence is a faint blotch on your skin shaped vaguely like the weapon. When you touch the spot (an action equivalent to drawing a weapon), or when the spell duration expires, the weapon appears in your hand and the spell ends. If you attack with the weapon in the same round that you retrieve it from its hiding place, you can attempt a Bluff check to feint in combat as a free action, and you gain a +4 bonus on the Bluff check. An intelligent magic weapon gets a saving throw against this spell, but other weapons do not.",
+      "descriptors": [],
+      "duration": "1 hour/level (D)",
+      "effect": "One touched weapon not in another creature's possession",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 3
+        }
+      ],
+      "name": "Absorb Weapon",
+      "range": "Touch",
+      "savingThrow": "Will negates (object); see text",
+      "school": "Transmutation",
+      "slug": "absorb-weapon",
+      "spellResistance": "Yes (object)"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "While this spell is in effect, you can move at your normal speed when using Balance, Climb, or Move Silently without taking any penalty on your check. This spell does not affect the penalty for using these skills while running or charging. Material Component: A dead cockroach.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        },
+        {
+          "className": "Vigilante",
+          "level": 1
+        }
+      ],
+      "name": "Accelerated Movement",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "accelerated-movement",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "area": "10-ft.-radius burst, centered on you",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "This spell makes you and your companions extraordinarily fleet of foot.Each creature within the spell's area gains a 30-foot enhancement bonus to its land speed, up to a maximum of double the creature's land speed.Affected creatures retain these effects for the duration of the spell, even if they leave the original area.Material Component: A tailfeather from a bird of prey.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        },
+        {
+          "className": "Vigilante",
+          "level": 3
+        }
+      ],
+      "name": "Allegro",
+      "range": "10 ft.",
+      "savingThrow": "Fortitude negates (harmless)",
+      "school": "Transmutation",
+      "slug": "allegro",
+      "spellResistance": "Yes (harmless)"
+    },
+    {
+      "castingTime": "1 immediate action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You sharpen your senses and focus your mind on the use of a bow.While this spell is in effect and you are wielding a longbow, shortbow, greatbow*, composite greatbow*, composite shortbow, or composite longbow, you threaten all squares within your normal melee reach (5 feet if Small or Medium, 10 feet if Large) with your bow, allowing you to make attacks of opportunity with arrows shot from the bow.In addition, you do not provoke attacks of opportunity when you shoot a bow while you are in another creature's threatened square.Material Component: A flint arrowhead.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Arrow Mind",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "arrow-mind",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "You can cast this spell only at the beginning of your turn, before you take any other actions.After casting arrow storm, you can use a full-round action to make one ranged attack with a bow with which you are proficient against every foe within a distance equal to the weapon's range increment.You can attack amaximum number of individual targets equal to your character level.If you choose not to spend a full-round action in this fashion after casting the spell, the spell has no effect.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 4
+        }
+      ],
+      "name": "Arrow Storm",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "arrow-storm",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M",
+        "DF"
+      ],
+      "description": "You intuit the precise spot and stance necessary to stand on areas of even the most unstable footing.You gain a +4 insight bonus on Balance checks.If you have sufficient ranks in the Balance skill, you can even balance on an otherwise impossible surface with a DC 20 Balance check.If you have 5 or more ranks in Balance, you can balance on vertical surfaces; the normal modifier for a sloped or angled surface no longer applies to you, though other DC modifiers (such as for a slippery surface) do apply.If you balance on a vertical surface, you can move up or down as if you were climbing.However, you are not actually climbing, so you can make attacks normally, retain your Dexterity bonus to Armor Class, and generally follow the rules of the Balance skill rather than the Climb skill.If you have 10 or more ranks in Balance, you can balance on liquids, semisolid surfaces such as mud or snow, or similar surfaces that normally couldn't support your weight.For each consecutive round that you begin balanced on a particular surface of this sort, the DC of your Balance check increases by 5.As with all uses of the Balance skill, you move at half speed unless you decide to use the accelerated movement option (thereby increasing the DC of the Balance check by 5).For more information on the Balance skill, the Player's Handbook.Arcane Material Component: A thin, three-inch-long wooden dowel.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 2
+        },
+        {
+          "className": "Ranger",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Balancing Lorecall",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "balancing-lorecall",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "You can cast this spell only at the beginning of your turn, before you take any other actions.After casting blade storm, you can take a full-round action to make one attack with each melee weapon you are currently wielding against every foe within reach.If you wield two weapons, or a double weapon, you can attack each foe once with each weapon or end, using the normal rules for two-weapon fighting.So, a ranger wielding a longsword and a short sword could attack each opponent he can reach with both weapons.You can attack a maximum number of individual targets equal to your character level.If you choose not to spend a full-round action in this fashion after casting the spell, the spell has no effect.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 3
+        }
+      ],
+      "name": "Blade Storm",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "blade-storm",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "A bladeweave spell imbues your melee attacks with a fascinating pattern or rhythm that entrances your opponent.Any round that you attack with a melee weapon, you can make a single additional touch attack with that weapon at your normal attack bonus as a free action.This attack deals no damage.Instead, anyone successfully touched by the weapon must succeed on a Will save or be dazed for 1 round.Spell resistance applies to this effect.",
+      "descriptors": [
+        "Pattern"
+      ],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        },
+        {
+          "className": "Vigilante",
+          "level": 2
+        }
+      ],
+      "name": "Bladeweave",
+      "range": "Personal",
+      "savingThrow": "See text",
+      "school": "Illusion",
+      "slug": "bladeweave",
+      "spellResistance": "See text",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "If you fail a Survival check to track a creature while this spell functions, you can immediately attempt another roll against the same DC to reestablish the trail.If the reroll fails, you must search for the trail for 30 minutes (if outdoors) or 5 minutes (if indoors) before trying again.",
+      "descriptors": [],
+      "duration": "24 hours (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        }
+      ],
+      "name": "Bloodhound",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "bloodhound",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You gain a +10 competence bonus on Climb checks made in trees.As long as you remain at least 10 feet above the ground, you can brachiate (swing via branches and vines) in medium or dense forest, but not in sparse forest.When you brachiate, you gain a 10-foot enhancement bonus to your land speed and ignore the hampered movement penalties for undergrowth and other terrain features.You can charge while brachiating, but you can't run.Naturally, some local conditions such as areas of sparse forest, clearings, wide rivers, or other breaks in the forest canopy might force you to return to the ground.",
+      "descriptors": [],
+      "duration": "10 minutes/level (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Druid",
+          "level": 2
+        }
+      ],
+      "name": "Branch to Branch",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "branch-to-branch",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "area": "10-ft.-radius emanation, centered on you",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You create a barrier of sonic energy at a distance of 10 feet from yourself.Creatures on either side of the barrier hear it as a loud but harmless buzzing.Nonmagical sound (including sound produced by a thunderstone) does not cross the barrier.Supernatural or spell-based sounds or sonic effects penetrate the barrier only if the caster or originator of the effect succeeds on a caster level check (DC 11 + your caster level).A creature that crosses the barrier takes 1d6 points of sonic damage +1 point per caster level (maximum +20) and must make a Fortitude save or be deafened for 1 minute.The sonic vibrations create a 20% miss chance for any missiles crossing the barrier in either direction.The barrier moves with you, but you cannot force another creature to pass through it (for example, by moving adjacent to an enemy).If you force a creature to pass through, the barrier has no effect on that creature.",
+      "descriptors": [
+        "Sonic"
+      ],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 6
+        },
+        {
+          "className": "Sorcerer",
+          "level": 7
+        },
+        {
+          "className": "Wizard",
+          "level": 7
+        }
+      ],
+      "name": "Cacophonic Shield",
+      "range": "10 ft.",
+      "savingThrow": "Fortitude partial",
+      "school": "Evocation",
+      "slug": "cacophonic-shield",
+      "spellResistance": "Yes"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "The subject retains his or her form but takes on a blue-green watery appearance.While underwater, the subject functions as if affected by blur, freedom of movement, and water breathing and doesn't take nonlethal damage from water pressure or hypothermia for the duration of the spell.When out of the water (or even partially out), the subject gains none of these advantages except water breathing.The subject can leave and reenter water without ending the spell.",
+      "descriptors": [],
+      "duration": "1 hour/level (D)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 5
+        },
+        {
+          "className": "Sorcerer",
+          "level": 6
+        },
+        {
+          "className": "Wizard",
+          "level": 6
+        }
+      ],
+      "name": "Cloak of the Sea",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Transmutation",
+      "slug": "cloak-of-the-sea",
+      "spellResistance": "Yes (harmless)",
+      "target": "Creature touched"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "While this spell is in effect, your melee attacks are more likely to strike a foe's vital areas.Whenever you make a melee attack against a flanked foe or against a foe denied its Dexterity bonus, you deal an extra 1d6 points of damage, your weapon's threat range is doubled (as if under the effect of keen edge), and you gain a +4 insight bonus on rolls made to confirm critical hits.The increased threat range granted by this spell doesn't stack with any other effect that increases your weapon's threat range.Creatures immune to sneak attacks are immune to the extra damage dealt by your attacks.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Critical Strike",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "critical-strike",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "AF"
+      ],
+      "description": "This spell, favored by the Daggerspell Guardians, improves your ability to defend yourself when wielding a pair of daggers.The spell, like many of the daggerspell techniques, depends on the use of daggers to bring down a foe.The spell's effect cannot be realized unless you are wielding two daggers, but the spell does not end if you drop, throw, or otherwise lose a hold on one or both of your daggers.While this spell is in effect, if you make a full attack while holding a dagger in each hand, you gain a +2 insight bonus on attack rolls and damage rolls made with daggers in that round.The magical energy that permeates your daggers while this spell is active allows you to deflect the magical energy of many spells.When wielding two daggers and fighting defensively, you gain spell resistance equal to 5 + your caster level.The spell focuses your concentration so that when you devote all of your attention to defense, you can turn theforce of most blows away from your body with your daggers.When wielding two daggers and using the total defense action, you gain both the spell resistance benefit described above and damage reduction 5/magic.Focus: A pair of daggers.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Daggerspell Stance",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Abjuration",
+      "slug": "daggerspell-stance",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "area": "20-ft.-radius spread",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You create an unholy, cacophonous dirge that fills the subjects'minds with the screams of the dying, the wailing of the damned, and the howling of the mad.Affected creatures take a -4 penalty on attack rolls and Concentration checks, a -4 penalty to Dexterity, and a 50% reduction in their speed (to a minimum of 5 feet).Material Component: A pinch of ashes from a destrachan.",
+      "descriptors": [
+        "Evil",
+        "Mind-Affecting"
+      ],
+      "duration": "Concentration + 1 round/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        }
+      ],
+      "name": "Dirge of Discord",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates",
+      "school": "Enchantment",
+      "slug": "dirge-of-discord",
+      "spellResistance": "Yes",
+      "subschool": "Compulsion"
+    },
+    {
+      "area": "10-ft.-radius burst centered on you",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You emit a terrible, piercing note.Creatures (other than you) in the affected area take 1d8 points of sonic damage per two caster levels (maximum 5d8).",
+      "descriptors": [
+        "Sonic"
+      ],
+      "duration": "Instantaneous",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        }
+      ],
+      "name": "Dissonant Chord",
+      "range": "10 ft.",
+      "savingThrow": "Fortitude half",
+      "school": "Evocation",
+      "slug": "dissonant-chord",
+      "spellResistance": "Yes"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You distort a creature's vocalizations.The voice of the subject becomes warped and nearly incomprehensible.For the duration of this spell, the subject has a 50% chance to miscast spells that have verbal components, and any time the subject speaks (including the use of magic items activated by command words), there is a 50% chance that the utterance is completely incomprehensible and therefore ineffective.",
+      "descriptors": [
+        "Sonic"
+      ],
+      "duration": "1 round/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Vigilante",
+          "level": 1
+        }
+      ],
+      "name": "Distort Speech",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Fortitude negates",
+      "school": "Transmutation",
+      "slug": "distort-speech",
+      "spellResistance": "Yes",
+      "target": "One creature"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "The subject of this spell is distracted, flinching at blows that seem to come from the shadows.A creature affected by this spell is flat-footed until the beginning of its next turn.Material Component: The dried wing of a fly.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        },
+        {
+          "className": "Hexblade",
+          "level": 1
+        }
+      ],
+      "name": "Distract Assailant",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates",
+      "school": "Enchantment",
+      "slug": "distract-assailant",
+      "spellResistance": "Yes",
+      "subschool": "Compulsion",
+      "target": "One creature"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "When you cast this spell, you invoke the power of your deity to guide your actions. Once during the spell's duration, you can choose to use its effect. This spell grants you an insight bonus equal to 5 + your caster level (maximum bonus of +15) on any single skill check. Activating the effect requires an immediate action. You must choose to use divine insight before you make the check you want to modify.Once used, the spell ends. You can't have more than one divine insight effect active on you at the same time.",
+      "descriptors": [],
+      "duration": "1 hour/level or until discharged (D)",
+      "levelEntries": [
+        {
+          "className": "Cleric",
+          "level": 2
+        },
+        {
+          "className": "Paladin",
+          "level": 2
+        }
+      ],
+      "name": "Divine Insight",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "divine-insight",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "area": "Vertical path 10 ft. wide and 20 ft. tall/level",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You create a path of handholds and footholds up the surface of a cliff face, tree trunk, wall, or other vertical obstacle.This effect changes the surface to the equivalent of a very rough wall (DC 10 to climb).",
+      "descriptors": [],
+      "duration": "10 minutes/level (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 2
+        }
+      ],
+      "name": "Easy Climb",
+      "range": "Medium (100 ft. + 10 ft./level)",
+      "savingThrow": "None (object)",
+      "school": "Transmutation",
+      "slug": "easy-climb",
+      "spellResistance": "Yes (object)"
+    },
+    {
+      "area": "40-ft. radius emanation",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You radiate an energy that gently pushes plants aside, allowing easy passage and hiding your trail after you pass.Anyone in the area of the spell (including you) finds the undergrowth held aside while she passes.This effect essentially provides a trail through any kind of undergrowth, reducing any movement penalties from terrain caused by dense vegetation.Once the effect of the spell passes, the plants return to their normal shape.The DC to track anyone who traveled within the area of this spell increases by 5 (the equivalent of hiding the trail).This spell has no effect on plant creatures (that is, they aren't pushed or held aside by its effect).",
+      "descriptors": [],
+      "duration": "1 hour/level (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Druid",
+          "level": 2
+        }
+      ],
+      "name": "Easy Trail",
+      "range": "40 ft.",
+      "savingThrow": "None",
+      "school": "Abjuration",
+      "slug": "easy-trail",
+      "spellResistance": "Yes"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V"
+      ],
+      "description": "This spell allows you to adopt the nature and some of the abilities of a particular animal.Upon casting the spell, you can choose any animal whose Hit Dice are equal to or less than your caster level.You retain your own form, but you gain the natural and extraordinary senses of the creature you choose, including blindsense, blindsight, darkvision, low-light vision, and scent, as applicable.You can also choose to replace either or both of your Listen and Spot check modifiers with those of the animal chosen.For example, a 3rd-level druid casting this spell might choose to adopt the nature of a wolverine to gain low-light vision, scent, and Listen and Spot check modifiers of +6.Alternatively, she could select the eagle and gain low-light vision, Listen +2, and Spot +14.If the druid's Listen check modifier were better than +2, she could retain her own Listen check modifier while gaining the eagle's Spot check modifier.",
+      "descriptors": [],
+      "duration": "10 minutes/level (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Druid",
+          "level": 2
+        }
+      ],
+      "name": "Embrace the Wild",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "embrace-the-wild",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "AF"
+      ],
+      "description": "You cause your quarterstaff to extrude writhing vines that allow you to easily grab and entrap foes.Each time you successfully strike a foe with the staff (a normal melee attack), you deal normal damage and can attempt to start a grapple as a free action without provoking attacks of opportunity.This grapple attempt does not require a separate touch attack.You gain a +8 bonus on grapple checks you cause by striking a foe with the entangling staff.You can attempt to grapple creatures up to one size category larger than you.If your grapple check succeeds, your quarterstaff's vines constrict your foe, dealing 2d6 points of damage (you can choose to deal nonlethal damage instead of normal damage if you wish).You then have two choices: Release: You release your opponent from the grapple.Some vines remain clinging to your foe, leaving it entangled for the duration of the spell.You can attack different enemies in later rounds with the entangling staff, potentially grappling and constricting or entangling them.Maintain: You maintain your hold.In subsequent rounds, you deal constriction damage with a successful grapple check.You can then choose to release or maintain the hold again.Focus: A quarterstaff.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 3
+        },
+        {
+          "className": "Sorcerer",
+          "level": 4
+        },
+        {
+          "className": "Wizard",
+          "level": 4
+        }
+      ],
+      "name": "Entangling Staff",
+      "range": "Touch",
+      "savingThrow": "Yes (harmless, object)",
+      "school": "Transmutation",
+      "slug": "entangling-staff",
+      "spellResistance": "Yes (harmless)",
+      "target": "Quarterstaff touched"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "This transmutation makes a ranged weapon strike true against your favored enemies.All rolls made to confirm critical hits by the weapon against favored enemies automatically succeed, so every threat is a critical hit.The affected weapon also ignores any miss chance due to concealment whenever you fire at a favored enemy (unless the target has total concealment, in which case the normal miss chance applies).If the ranged weapon or the projectile fired has any magical effect or property related to critical hits, this spell has no effect on it.",
+      "descriptors": [],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        }
+      ],
+      "name": "Exacting Shot",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless, object)",
+      "school": "Transmutation",
+      "slug": "exacting-shot",
+      "spellResistance": "Yes (harmless, object)",
+      "target": "Ranged weapon touched"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "This spell functions like expeditious retreat, except as noted above.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        },
+        {
+          "className": "Vigilante",
+          "level": 1
+        },
+        {
+          "className": "Duskblade",
+          "level": 1
+        }
+      ],
+      "name": "Expeditious Retreat, Swift",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "expeditious-retreat-swift",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "This spell functions like fly, except as noted above.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        },
+        {
+          "className": "Vigilante",
+          "level": 2
+        },
+        {
+          "className": "Duskblade",
+          "level": 2
+        },
+        {
+          "className": "Druid",
+          "level": 3
+        }
+      ],
+      "name": "Fly, Swift",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "fly-swift",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V"
+      ],
+      "description": "You can use focusing chant to block out distractions and hone your attention.You gain a +1 circumstance bonus on attack rolls, skill checks, and ability checks for the duration of the spell.You need not concentrate on focusing chant, but you must continue to mutter the syllables of the chant to maintain the spell.Therefore, you cannot speak, use bardic music effects, or cast spells with verbal components while a focusing chant spell is in effect.Dismissing focusing chant is an immediate action.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 minute (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        }
+      ],
+      "name": "Focusing Chant",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Enchantment",
+      "slug": "focusing-chant",
+      "spellResistance": "",
+      "subschool": "Compulsion",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "This spell imbues one of your weapons with great killing power against a single favored enemy type.Against creatures of that type, the weapon acts as a +5 magic weapon and deals an extra 2d6 points of damage.Furthermore, while you wield the weapon, you gain a +4 resistance bonus on saving throws against effects created by creatures of that type.The spell is automatically canceled 1 round after the weapon leaves your hand for any reason.You cannot have more than one foebane weapon active at a time.If this spell is cast on a magic weapon, the powers of the spell supersede any that the weapon normally has, rendering the normal enhancement bonus and powers of the weapon inoperative for the duration of the spell.This spell is not cumulative with any other spell that might modify the weapon in any way.This spell does not work on artifacts.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 4
+        }
+      ],
+      "name": "Foebane",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless, object)",
+      "school": "Evocation",
+      "slug": "foebane",
+      "spellResistance": "Yes (harmless, object)",
+      "target": "Weapon touched"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You change your coloring and attune your footfalls to one specific kind of terrain (aquatic, desert, plains, forest, hills, mountains, marsh, or underground).While you are in terrain of that kind, you gain a +20 competence bonus on Hide and Move Silently checks.You retain these bonuses even if you leave the designated terrain and return within the duration of the spell.",
+      "descriptors": [],
+      "duration": "10 minutes/level (D)",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 3
+        },
+        {
+          "className": "Druid",
+          "level": 4
+        }
+      ],
+      "name": "Forestfold",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "forestfold",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "While this spell is in effect, you have a special connection to the arcane forces that animate constructs.For 1 round, you can deliver sneak attacks against constructs as if they were not immune to sneak attacks.To attack a construct in this manner, you must still meet the other requirements for making a sneak attack.This spell applies only to sneak attack damage.It gives you no ability to affect constructs with critical hits, nor does it confer any special ability to overcome the damage reduction or other defenses of constructs.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Golem Strike",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "golem-strike",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "DF"
+      ],
+      "description": "While this spell is in effect, you have a special connection to the forces of light and positive energy.For 1 round, you can deliver sneak attacks against undead as if they were not immune to sneak attacks.To attack an undead creature in this manner, you must still meet the other requirements for making a sneak attack.This spell applies only to sneak attack damage.It gives you no ability to affect undead with critical hits, nor does it confer any special ability to overcome the damage reduction or other defenses of undead creatures.",
+      "descriptors": [
+        "Good"
+      ],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Cleric",
+          "level": 1
+        },
+        {
+          "className": "Paladin",
+          "level": 1
+        }
+      ],
+      "name": "Grave Strike",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "grave-strike",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "You use magical energy to briefly focus your mind and body on making a perfect shot.While this spell is in effect, your ranged attacks do not take a penalty due to distance.In addition, while this spell is in effect, your ranged attacks ignore the AC bonus granted to targets by anything less than total cover.This spell does not provide any ability to exceed the maximum range of the weapon with which you are attacking, nor does it confer any ability to attack targets protected by total cover.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Guided Shot",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "guided-shot",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "AF"
+      ],
+      "description": "Harmonic chorus lets you improve the spellcasting ability of another spellcaster.For the duration of the spell, the subject gains a +2 morale bonus to caster level and a +2 morale bonus on save DCs for all spells she casts.Focus: A tuning fork.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "Concentration, up to 1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        }
+      ],
+      "name": "Harmonic Chorus",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Enchantment",
+      "slug": "harmonic-chorus",
+      "spellResistance": "Yes",
+      "subschool": "Compulsion",
+      "target": "One living creature"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "This spell functions as haste, except as noted above.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 2
+        }
+      ],
+      "name": "Haste, Swift",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "haste-swift",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V"
+      ],
+      "description": "This spell gives you the ability to see accurately at long distances.Your range increment for ranged weapons increases by 50%, and you gain a +5 competence bonus on Spot checks.",
+      "descriptors": [],
+      "duration": "10 minutes/level (D)",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 1
+        },
+        {
+          "className": "Ranger",
+          "level": 1
+        }
+      ],
+      "name": "Hawkeye",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "hawkeye",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You tap into your healing acumen to make your curative spells more potent.A caster with 5 or more ranks in Heal can, when casting a conjuration (healing) spell, choose to remove any one of the following conditions affecting the target of the spell, in addition to the spell's normal effects: dazed, dazzled, or fatigued.A caster with 10 or more ranks in Heal can choose from the following conditions in addition to those above: exhausted, nauseated, or sickened.Also, when determining the amount of damage healed by your conjuration (healing) spells, you can substitute your total ranks in Heal for your caster level.The normal caster level limit for individual spells still applies; thus, a 3rd-level cleric with 6 ranks in Heal when under the effect of healing lorecall cures 1d8+5 points of damage with a cure light wounds spell.Material Component: A small mint leaf.",
+      "descriptors": [],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Cleric",
+          "level": 2
+        },
+        {
+          "className": "Druid",
+          "level": 2
+        }
+      ],
+      "name": "Healing Lorecall",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "healing-lorecall",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "10 minutes",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Healthful rest doubles the subjects' natural healing rate.Each affected creature regains twice the hit points it otherwise would have regained during that day, depending on its activity level.",
+      "descriptors": [],
+      "duration": "24 hours",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Druid",
+          "level": 1
+        }
+      ],
+      "name": "Healthful Rest",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Conjuration",
+      "slug": "healthful-rest",
+      "spellResistance": "Yes (harmless)",
+      "subschool": "Healing",
+      "target": "One creature/level, no two of which can be more than 30 feet apart"
+    },
+    {
+      "area": "20-ft.-radius burst centered on you",
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You produce a crowd-stopping shout that holds an air of authority others find difficult to ignore.Any creature with 5 Hit Dice or less is slowed for 1 round.Creatures beyond the radius of the burst might hear the shout, but they are not slowed.",
+      "descriptors": [
+        "Mind-Affecting",
+        "Sonic"
+      ],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        }
+      ],
+      "name": "Herald's Call",
+      "range": "20 ft.",
+      "savingThrow": "Will negates",
+      "school": "Enchantment",
+      "slug": "heralds-call",
+      "spellResistance": "Yes",
+      "subschool": "Compulsion"
+    },
+    {
+      "area": "60-ft. radius, centered on you",
+      "castingTime": "1 hour",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You can see and hear into the past, getting a look at events that happened previously at your current location.The level of detail you see and hear by means of this spell depends on the span of time you wish to observe; concentrating on a span of days renders a more detailed perspective than, say, a span of centuries.You can view only one span of time per casting, chosen from the following options.Days: You sense the events of the past, stretching back one day per caster level.You gain detailed knowledge of the people, conversations, and events that transpired.Weeks: You gain a summary of the events of the past, stretching back one week per caster level.Exact wording and details are lost, but you know all the participants and the highlights of the conversations and events that took place.Years: You gain a general idea of the events of the past, stretching back one year per caster level.You notice only noteworthy events such as deaths, battles, scenes of great emotion, important discoveries, and significant happenings.Centuries: You gain a general idea of the events of the past, stretching back one century plus an additional century for every four caster levels beyond 1st.For instance, a 16th-level caster would gain insight into the events of four centuries in the past, and a 17th-level caster would see back across five centuries.You notice only the most remarkable of events: coronations, deaths of important personages, major battles, and other truly historic happenings.Material Component: An hourglass-shaped diamond worth at least 1,000 gp.",
+      "descriptors": [],
+      "duration": "Instantaneous",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 6
+        },
+        {
+          "className": "Sorcerer",
+          "level": 9
+        },
+        {
+          "className": "Wizard",
+          "level": 9
+        }
+      ],
+      "name": "Hindsight",
+      "range": "Personal",
+      "savingThrow": "None",
+      "school": "Divination",
+      "slug": "hindsight",
+      "spellResistance": "No"
+    },
+    {
+      "area": "A sphere-shaped emanation with a radius equal to the range, centered on you",
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You can strike up a rousing, inspirational song that temporarily boosts by 2 the effective caster level of each good-aligned divine spellcaster within range.This increase does not grant access to additional spells, but it does improve all spell effects that are dependent on caster level.In addition, hymn of praise mimics the effect of a hallow spell with respect to turning or rebuking undead.Within the spell's area, each good-aligned divine spellcaster gains a +4 sacred bonus on Charisma checks to turn undead, and each evil-aligned divine spellcaster takes a -4 sacred penalty on Charisma checks to rebuke undead.",
+      "descriptors": [
+        "Good",
+        "Sonic"
+      ],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        }
+      ],
+      "name": "Hymn of Praise",
+      "range": "Medium (100 ft. + 10 ft./level)",
+      "savingThrow": "Will negates",
+      "school": "Evocation",
+      "slug": "hymn-of-praise",
+      "spellResistance": "Yes"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You gain access to a floating \"pool\" of luck, which manifests as bonus points you can use as desired to improve yourodds of success at various tasks.This bonus pool consists of 2 points per caster level, which you can spend as you like to improve attack rolls, skill checks, and ability checks, although no single check can receive a bonus greater than one-half your caster level.You must declare any bonus point usage before the appropriate roll is made.Used points disappear from the pool, and any points remaining when the spell ends are wasted.These points count as luck bonuses for purposes of stacking.For example, a 14th-level bard pauses while chasing a pickpocket to cast improvisation.At any time during the next 14 rounds, he could use the points to provide him a +7 luck bonus on a Spot check, a +7 luck bonus on a Climb check, and a +7 luck bonus on two of his attacks.Material Component: A pair of dice.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 5
+        }
+      ],
+      "name": "Improvisation",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "improvisation",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "area": "A sphere-shaped emanation with a radius equal to the range, centered on you",
+      "castingTime": "1 round",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You can strike up a pulsing, powerful rhythm that temporarily boosts by 2 the effective caster level of each evil-aligned divine spellcaster within range.This increase does not grant access to addition al spells, but it does improve all spell effects that are dependent on caster level.In addition, infernal threnody mimics the effect of an unhallow spell with respect to turning or rebuking undead.Within the spell's area, each evil-aligned divine spellcaster gains a +4 profane bonus on Charisma checks to rebuke undead, and each good-aligned divine spellcaster takes a -4 profane penalty on Charisma checks to turn undead.",
+      "descriptors": [
+        "Evil",
+        "Sonic"
+      ],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        }
+      ],
+      "name": "Infernal Threnody",
+      "range": "Medium (100 ft. + 10 ft./level)",
+      "savingThrow": "Will negates",
+      "school": "Evocation",
+      "slug": "infernal-threnody",
+      "spellResistance": "Yes"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You play a catchy, silly little tune that gets stuck in the mind of the subject unless she succeeds on a Will save.The endlessly recycling melody makes it difficult for the subject to cast spells or perform any other action that requires mental focus.The subject takes a -4 penalty on all Intelligence-based skill checks and Concentration checks.Whenever the target attempts to cast, concentrate on, or direct a spell, she must succeed on a Concentration check (DC equal to insidious rhythm's save DC + spell's level) or fail at the attempt.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        }
+      ],
+      "name": "Insidious Rhythm",
+      "range": "Medium (100 ft. + 10 ft./level)",
+      "savingThrow": "Will negates",
+      "school": "Enchantment",
+      "slug": "insidious-rhythm",
+      "spellResistance": "Yes",
+      "subschool": "Compulsion",
+      "target": "One creature"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "You gain temporary insight into the way your opponent moves and reacts. You gain a +10 insight bonus on the next single Bluff check (if it is made before the start of your next turn) that you make to feint in combat.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Insightful Feint",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "insightful-feint",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "When you play your instrument, sing your song, recite your epic poem, or speak your words of encouragement, you fill your allies with greater confidence than normal.While this spell is in effect, the morale bonus granted by your inspire courage bardic music increases by 1.The effect lasts until your inspire courage effect ends.If you don't begin to use your inspire courage ability before the beginning of your next turn, the spell's effect ends.",
+      "descriptors": [
+        "Mind-Affecting",
+        "Sonic"
+      ],
+      "duration": "1 round or special; see text",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        }
+      ],
+      "name": "Inspirational Boost",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Enchantment",
+      "slug": "inspirational-boost",
+      "spellResistance": "",
+      "subschool": "Compulsion",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You can make one Disable Device check or one Open Lock check in this round as a free action.You gain a +2 insight bonus on the check.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Instant Locksmith",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "instant-locksmith",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You can make one Search check in this round as a free action.You gain a +2 insight bonus on the check.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Instant Search",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "instant-search",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V"
+      ],
+      "description": "This spell functions like invisibility, except as noted above.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 2
+        },
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Vigilante",
+          "level": 2
+        },
+        {
+          "className": "Duskblade",
+          "level": 2
+        }
+      ],
+      "name": "Invisibility, Swift",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Illusion",
+      "slug": "invisibility-swift",
+      "spellResistance": "",
+      "subschool": "Glamer",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "While this spell is in effect, the armor check penalty from the affected suit or suits of armor does not apply on Hide and Move Silently checks.Only wearers proficient in the armor's use get this benefit when wearing the affected armor.The armor check penalty still applies to other skill checks as normal.",
+      "descriptors": [],
+      "duration": "1 hour/level (D)",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 2
+        },
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Cleric",
+          "level": 2
+        },
+        {
+          "className": "Vigilante",
+          "level": 2
+        }
+      ],
+      "name": "Iron Silence",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless, object)",
+      "school": "Transmutation",
+      "slug": "iron-silence",
+      "spellResistance": "Yes (harmless, object)",
+      "target": "One suit of armor touched per three levels"
+    },
+    {
+      "area": "10-ft.-radius emanation, centered on you",
+      "castingTime": "1 standard action",
+      "components": [
+        "S"
+      ],
+      "description": "You create sonic vibrations that negate any magical silence effect in the area.This zone of negation moves with you and lasts as long as you continue to concentrate.The silence is not dispelled but simply held in abeyance; it remains in effect outside the area of the joyful noise effect.Thus, this spell is usually used to move a group out of range of a silence effect.",
+      "descriptors": [],
+      "duration": "Concentration; see text",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Vigilante",
+          "level": 1
+        }
+      ],
+      "name": "Joyful Noise",
+      "range": "10 ft.",
+      "savingThrow": "None",
+      "school": "Abjuration",
+      "slug": "joyful-noise",
+      "spellResistance": "No"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "AF"
+      ],
+      "description": "You can turn two ordinary coins into magic listening devices-one a sensor and the other a receiver.After casting the spell, you simply give the sensor coin away, either surreptitiously or overtly.By holding the receiver coin up to your ear, you can hear whatever transpires near the sensor as if you were there (much like a clairaudience effect).If the sensor coin is in a pocket, pouch, or sack, the DC of the Listen check increases by 5.The coins continue to function no matter how far apart they are, although they fall silent if they're on different planes.Focus: The pair of coins.",
+      "descriptors": [],
+      "duration": "1 hour/level (D)",
+      "effect": "Magical sensor",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 4
+        },
+        {
+          "className": "Vigilante",
+          "level": 4
+        }
+      ],
+      "name": "Listening Coin",
+      "range": "Touch",
+      "savingThrow": "None",
+      "school": "Divination",
+      "slug": "listening-coin",
+      "spellResistance": "No",
+      "subschool": "Scrying"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "You gain the ability to precisely and instantaneously identify and locate the origins of even the most minute sounds you detect.You gain a +4 insight bonus on Listen checks.In addition, if you have 5 or more ranks in Listen, you gain blindsense out to 30 feet.If you have 10 or more ranks in Listen, you gain blindsight out to 30 feet instead.A silence spell or effect negates blindsense or blindsight granted by a listening lorecall spell.",
+      "descriptors": [],
+      "duration": "10 minutes/level",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 2
+        },
+        {
+          "className": "Ranger",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Listening Lorecall",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "listening-lorecall",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "AF"
+      ],
+      "description": "Master's touch is a spell often found in the repertoire of adventurers who specialize in casting arcane spells.You gain proficiency with a single weapon or shield you hold in your hands when the spell is cast.The lack of a somatic component means the spell can be cast in the middle of a fight while you keep ready whatever items stand between you and danger.Proficiency is granted for only a single, specific item, although multiple castings allow for multiple proficiencies.For example, if you hold a short sword and a rapier, with a buckler strapped to your off hand, you could cast the spell three times, once for each weapon and once for the shield.This spell does not grant proficiency for a kind or category of item (such as short swords) but only for the one specific item held in your hand at the time the spell is cast (this short sword).Should you set that item down or otherwise lose your grip on it, the proficiency does not transfer to a different item of the same kind you might pick up.However, if you recover the original item before the spell's effect runs out, you are still proficient with that specific weapon or shield for the duration.Focus: The item in whose use you wish to be proficient.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        },
+        {
+          "className": "Vigilante",
+          "level": 1
+        }
+      ],
+      "name": "Master's Touch",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "masters-touch",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "AF"
+      ],
+      "description": "You fill the subject with so great a rage that it can do nothing but focus on engaging you in personal physical combat.The target must be able to see you when you cast this spell.If the subject later loses line of sight to you, the spell immediately ends.(A subject can't voluntarily break line of sight with you, such as by closing its eyes, to end this spell prematurely).If the subject threatens you, it must make a full attack against you using its melee weapons or natural melee attacks.If the subject doesn't threaten you, it must move at up to twice its speed, ending its movement as close to you as possible.If it moves close enough with a single move to threaten you, it may stop and make a melee attack against you as normal.While under the effect of a mindless rage spell, the subject can make use of all normal melee combat skills, abilities, and feats-either offensive or defensive.The subject can't make any attack against a creature other than you.The subject of this spell, though overcome with rage, is by no means rendered idiotic or suicidal.For example, an affected creature will not charge off a cliff in an attempt to reach you.An interesting side effect of mindless rage occurs when the spell affects any character or creature with the rage ability (such as a barbarian).In these cases, the mindless rage spell automatically activates the character's rage ability (and counts as one of the character's uses of rage for that day).Focus: A scarlet handkerchief or similar piece of cloth, waved in the target's direction while you vocalize the verbal component.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 round/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Mindless Rage",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates",
+      "school": "Enchantment",
+      "slug": "mindless-rage",
+      "spellResistance": "Yes",
+      "subschool": "Compulsion",
+      "target": "One creature"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "By calling on the power of nature, you grant the subject animal a +1 luck bonus on attack and damage rolls for every three caster levels you possess, to a maximum bonus of +5 at 15th level.",
+      "descriptors": [],
+      "duration": "1 minute",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 2
+        },
+        {
+          "className": "Ranger",
+          "level": 2
+        }
+      ],
+      "name": "Nature's Favor",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Evocation",
+      "slug": "natures-favor",
+      "spellResistance": "Yes (harmless)",
+      "target": "Animal touched"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You become a stealthy and dangerous combatant.Your mind-set changes so that you relish stealth, deception, and surprise attacks over magical assaults.You gain a +4 enhancement bonus to Dexterity, a +3 luck bonus to Armor Class, a +5 luck bonus on Reflex saving throws, a +5 competence bonus on Spot, Listen, Hide, and Move Silently checks, and proficiency with all simple weapons plus the hand crossbow, rapier, sap, shortbow, and short sword.You also gain the Weapon Finesse feat and the evasion ability.You deal an extra 3d6 points of damage whenever you attack an opponent that you flank or an opponent denied its Dexterity bonus to Armor Class.This extra damage works like the rogue's sneak attack ability.You lose your spellcasting ability for the duration of the spell, including your ability to use spell activation or spell completion magic items, just as if the spells were no longer on your class list.Material Component: A potion of cat's grace, which you drink (and whose effects are subsumed by the spell effects).",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Sorcerer",
+          "level": 5
+        },
+        {
+          "className": "Wizard",
+          "level": 5
+        }
+      ],
+      "name": "Nightstalker's Transformation",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "nightstalkers-transformation",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 round",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You briefly grant bardic abilities to a creature of your choice. The subject of the spell can then function as a bard of one-half your current bard level with respect to bardic music and bardic knowledge. However, protÃ©gÃ© imparts no spellcasting ability and does not grant access to spells not normally available to the subject. For Perform checks and bardic music prerequisites, the creature uses its own ranks in Perform or one-half of your ranks (modified by its own Charisma modifier), whichever is better.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 6
+        }
+      ],
+      "name": "ProtÃ©gÃ©",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Transmutation",
+      "slug": "protege",
+      "spellResistance": "Yes (harmless)",
+      "target": "Creature touched"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "You call forth the power of shadow, enveloping yourself in a clinging, concealing shroud of darkness.While this spell is in effect, you gain a number of benefits.The shadows wrapping your form grant you a +4 competence bonus on Escape Artist, Hide, and Move Silently checks.Your shadowy form also provides you with concealment.This shadowy concealment is not negated by a see invisibility spell, but a true seeing spell counteracts the effect.Standing within the radius of a daylight spell or in bright natural sunlight temporarily suppresses the concealment effect.In addition, if you have 5 ranks in Escape Artist, you can attempt to slip through a solid object or barrier up to 5 feet thick with a DC 20 Escape Artist check, though doing this ends the spell as soon as the attempt is completed (regardless of success).If you have 10 ranks in Escape Artist, you can attempt to pass through an object or barrier up to 10 feet thick.If you have 15 ranks in Escape Artist, you can attempt to pass through a barrier composed of magical force (or similar magical obstacles).Material Component: A small piece of black cloth taken from a funeral shroud.",
+      "descriptors": [],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 4
+        },
+        {
+          "className": "Sorcerer",
+          "level": 5
+        },
+        {
+          "className": "Wizard",
+          "level": 5
+        }
+      ],
+      "name": "Shadow Form",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Illusion",
+      "slug": "shadow-form",
+      "spellResistance": "",
+      "subschool": "Shadow",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "AF"
+      ],
+      "description": "This spell magically enhances your senses, making you deadly with ranged weapons.When you cast sniper's eye, you gain the following benefits.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 4
+        }
+      ],
+      "name": "Sniper's Eye",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "snipers-eye",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "When you cast this spell, you extend and sharpen your perceptions for one devastating ranged attack.Your next single ranged attack (if it is made before the start of your next turn) can be a sneak attack regardless of the distance between you and your target.This spell doesn't grant you the ability to make a sneak attack if you don't already have that ability.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 1
+        },
+        {
+          "className": "Ranger",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 1
+        },
+        {
+          "className": "Wizard",
+          "level": 1
+        }
+      ],
+      "name": "Sniper's Shot",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "snipers-shot",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V"
+      ],
+      "description": "This spell temporarily sheathes a weapon in sonic energy.While the spell is in effect, the affected weapon deals an extra 1d6 points of sonic damage with each successful attack.The sonic energy does not harm the weapon's wielder.Bows, crossbows, and slings that are affected by this spell bestow the sonic energy upon their ammunition.",
+      "descriptors": [
+        "Sonic"
+      ],
+      "duration": "1 minute/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        },
+        {
+          "className": "Vigilante",
+          "level": 2
+        }
+      ],
+      "name": "Sonic Weapon",
+      "range": "Touch",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "sonic-weapon",
+      "spellResistance": "",
+      "target": "Weapon touched"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Using material from the Plane of Shadow, you can fashion a quasi-real weapon of any type with which you are proficient.This spectral weapon appears in your hand and behaves as a normal weapon of its type, with two exceptions.First, you resolve attacks with your spectral weapon as melee touch attacks instead of melee attacks.Second, any foe you hit is entitled to a Will save to recognize the weapon's shadowy nature.If the save is successful, that opponent takes only one-fifth normal damage from the weapon on that attack and all subsequent attacks, and is only 20% likely to suffer any special effects of your attacks (such as a death attack delivered with the weapon).You can maintain only one spectral weapon at a time, and only you can wield it.The weapon dissipates when you let go of it or when the spell's duration expires, whichever comes first.",
+      "descriptors": [],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 3
+        },
+        {
+          "className": "Sorcerer",
+          "level": 3
+        },
+        {
+          "className": "Wizard",
+          "level": 3
+        },
+        {
+          "className": "Bard",
+          "level": 4
+        },
+        {
+          "className": "Vigilante",
+          "level": 4
+        }
+      ],
+      "name": "Spectral Weapon",
+      "range": "Personal",
+      "savingThrow": "Will partial; see text",
+      "school": "Illusion",
+      "slug": "spectral-weapon",
+      "spellResistance": "Yes; see text",
+      "subschool": "Shadow",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You and a willing target can communicate verbally no matter how much distance you put between yourselves on the same plane.Either participant can end the spell at any time.Speechlink allows each to hear the other's vocalizations, whatever their volume.It does not transfer other sounds from either participant's location.This spell works on any creatures, including animals, but does not convey any special language comprehension abilities.",
+      "descriptors": [],
+      "duration": "10 minutes/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 3
+        },
+        {
+          "className": "Vigilante",
+          "level": 3
+        }
+      ],
+      "name": "Speechlink",
+      "range": "Touch",
+      "savingThrow": "None",
+      "school": "Divination",
+      "slug": "speechlink",
+      "spellResistance": "No",
+      "target": "You and one creature touched"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S",
+        "M"
+      ],
+      "description": "When you cast this spell, you grant your allies greater insight into one another's actions, allowing them to better coordinate their attacks.If two affected allies flank the same creature, each gains a +2 insight bonus on attack rolls made against the flanked creature.This bonus is in addition to the normal +2 bonus on attack rolls granted to flanking creatures.In addition, if an affected ally successfully deals damage against an opponent that is flanked by another affected ally, she deals an extra 1d6 points of damage.Creatures immune to sneak attacks are immune to this extra damage.Material Component: A toy soldier.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 round/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 2
+        },
+        {
+          "className": "Vigilante",
+          "level": 2
+        }
+      ],
+      "name": "Tactical Precision",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Divination",
+      "slug": "tactical-precision",
+      "spellResistance": "Yes (harmless)",
+      "target": "One creature/level, no two of which can be more than 30 ft. apart"
+    },
+    {
+      "castingTime": "10 minutes",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "You temporarily boost the number of tricks that an animal knows.While this spell is in effect, the affected animal gains a number of additional tricks equal to half your caster level (maximum five).For more information on tricks and trained animals, see the descriptions of the Handle Animal skill of this book, and of the Player's Handbook.This spell does not modify an animal's attitude toward you, nor does it guarantee that an animal will cooperate when instructed to perform the newly learned tricks.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 hour/level",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 2
+        },
+        {
+          "className": "Ranger",
+          "level": 2
+        }
+      ],
+      "name": "Train Animal",
+      "range": "Touch",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Enchantment",
+      "slug": "train-animal",
+      "spellResistance": "Yes (harmless)",
+      "subschool": "Charm",
+      "target": "Animal touched"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "DF"
+      ],
+      "description": "While this spell is in effect, you have a special connection to the forces of nature that allows you to deliver sneak attacks on plant creatures as if they were not immune to sneak attacks.To attack a plant creature in this manner, you must still meet the other requirements for making a sneak attack.This spell applies only to sneak attack damage.It gives you no ability to affect plant creatures with critical hits, nor does it confer any special ability to overcome the damage reduction or other defenses of plant creatures.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 1
+        },
+        {
+          "className": "Ranger",
+          "level": 1
+        }
+      ],
+      "name": "Vine Strike",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Divination",
+      "slug": "vine-strike",
+      "spellResistance": "",
+      "target": "You"
+    },
+    {
+      "area": "Cone-shaped burst",
+      "castingTime": "1 standard action",
+      "components": [
+        "V"
+      ],
+      "description": "Anyone caught in the area of this spell suffers excruciating pain and becomes demoralized.Each creature takes 1d4 points of damage per caster level (up to a maximum of 15d4) and becomes panicked for 1 round per caster level.A successful Will save halves the damage, reduces the panicked effect to shaken, and reduces the duration of the shaken effect to 1 round.",
+      "descriptors": [
+        "Fear",
+        "Mind-Affecting",
+        "Sonic"
+      ],
+      "duration": "Instantaneous and 1 round/level or 1 round; see text",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 5
+        }
+      ],
+      "name": "Wail of Doom",
+      "range": "30 ft.",
+      "savingThrow": "Will partial; see text",
+      "school": "Necromancy",
+      "slug": "wail-of-doom",
+      "spellResistance": "Yes"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You attack with a cry that bolsters your own courage as well as intimidating your enemies.As a result of this spell, you gain a +2 morale bonus on attack rolls and damage rolls, or a +4 morale bonus on attack rolls and damage rolls made as part of a charge.If you deal damage with a melee attack, your foe must succeed on a Will save or become panicked for 1 round (spell resistance applies to this effect).An opponent who makes a successful saving throw against this effect cannot be affected again by the same casting of war cry.",
+      "descriptors": [
+        "Mind-Affecting",
+        "Sonic"
+      ],
+      "duration": "1 round/level (D)",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 4
+        }
+      ],
+      "name": "War Cry",
+      "range": "Personal",
+      "savingThrow": "See text",
+      "school": "Enchantment",
+      "slug": "war-cry",
+      "spellResistance": "See text",
+      "subschool": "Compulsion",
+      "target": "You"
+    },
+    {
+      "castingTime": "1 standard action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "Your touch causes horrible agony in a creature's vital area.You lay your hand upon a creature and deal 1d6 points of damage +1 point per caster level (maximum +10).In addition, if you have the sneak attack ability, you also deal sneak attack damage to the affected creature unless the creature is immune to extra damage from critical hits.The creature still takes the spell damage even if it does not take the sneak attack damage.Unlike a normal use of sneak attack, your target need not be flanked or denied its Dexterity bonus to take sneak attack damage from this spell.",
+      "descriptors": [],
+      "duration": "Instantaneous",
+      "levelEntries": [
+        {
+          "className": "Druid",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Wracking Touch",
+      "range": "Touch",
+      "savingThrow": "Fortitude half",
+      "school": "Necromancy",
+      "slug": "wracking-touch",
+      "spellResistance": "Yes",
+      "target": "Creature touched"
+    },
+    {
+      "castingTime": "1 swift action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "When you cast this spell, your melee weapons or natural weapons become ghostly and nearly transparent for a brief time.While this spell is in effect, your melee attacks are resolved as melee touch attacks rather than normal melee attacks.",
+      "descriptors": [],
+      "duration": "1 round",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 2
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Wraithstrike",
+      "range": "Personal",
+      "savingThrow": "",
+      "school": "Transmutation",
+      "slug": "wraithstrike",
+      "spellResistance": "",
+      "target": "You"
+    }
+  ]
+}

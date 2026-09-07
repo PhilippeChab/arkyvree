@@ -1,0 +1,367 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T14:00:10.444Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/shining-blade-of-heironeous/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          5,
+          7
+        ],
+        "target": "aptitudes.shiningbladeofheironeousholyblade.allowed"
+      }
+    ],
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3
+        ],
+        "name": "Shock Blade"
+      },
+      {
+        "levels": [
+          5,
+          7
+        ],
+        "name": "Holy Blade"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Brilliant Blade"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "7",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.beliefs.alignment",
+        "value": "Lawful Good",
+        "valueType": "string"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "saves.will.base",
+        "value": "3",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Shining Blade of Heironeous Class Feature",
+    "features": {
+      "Brilliant Blade": {
+        "description": "Beginning at 9th level, the shining blade can grant his weapon up to three separate magical augmentations. This supernatural power supersedes the holy blade ability and is usable six times per day. Each activation allows the shining blade to choose one of the following effects: imbuing the weapon with electrical energy for an additional 1d6 electricity damage, consecrating it to deal an extra 2d6 damage against evil targets, or transforming it into a brilliant energy weapon that glows like a torch and passes through nonliving material (such as armor, undead creatures, constructs, and objects). The chosen enhancement persists for a number of rounds up to the shining blade's class level plus his Charisma modifier (minimum 0), but only while he wields the weapon. Should the weapon leave his grasp through disarming or being handed off, the enhancement immediately ceases. Multiple activations may be applied simultaneously, so within a single encounter the shining blade could use one standard action to add the holy property, another to add shock, and another for brilliant energy. However, stacking the same property twice on the weapon is not permitted.",
+        "level": 9,
+        "seedName": "Brilliant Blade (Shining Blade of Heironeous)"
+      },
+      "Holy Blade": {
+        "description": "Upon reaching 5th level, the shining blade of Heironeous gains the supernatural power to apply two distinct magical augmentations to his weapon. This replaces the shock blade ability and may be activated three times per day. Each use lets the shining blade choose one of the following effects: adding the shock property for +1d6 electricity damage, or adding the holy property for +2d6 bonus damage against evil creatures. The effect lasts for a number of rounds up to the shining blade's class level plus his Charisma modifier (minimum 0), provided he continues to hold the weapon. If the weapon is taken from him or passed to someone else, the enhancement ends immediately. Both activations can be layered together, allowing the shining blade to spend one standard action applying holy and another applying shock during the same battle. The same enhancement cannot be applied to the weapon more than once simultaneously.",
+        "level": 5,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.shiningbladeofheironeousholyblade.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Holy Blade (Shining Blade of Heironeous)",
+        "stackable": true
+      },
+      "Shock Blade": {
+        "description": "As a standard action usable two times per day, the shining blade of Heironeous can infuse a slashing or piercing weapon he holds with electrical energy, turning it into a shock weapon that inflicts an additional 1d6 points of electricity damage on each successful strike. This augmentation lasts for a number of rounds up to his class level plus his Charisma modifier (minimum 0), but only as long as he maintains his grip on the weapon. If the weapon is knocked from his hand or willingly given away, the electrical enhancement immediately ends.",
+        "level": 1,
+        "seedName": "Shock Blade (Shining Blade of Heironeous)",
+        "stackable": true
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each even-numbered shining blade level, the character receives additional spells per day (and spells known, where relevant) as though he had gained a level in a divine spellcasting class he belonged to before taking this prestige class. No other class benefits from that advancement are received. A character who previously had multiple divine spellcasting classes capable of casting 1st-level spells must choose which class benefits each time this advancement applies.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Shining Blade of Heironeous)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Members of this prestige class are proficient with every simple and martial weapon, all categories of armor, and shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Shining Blade of Heironeous)"
+      }
+    },
+    "occurrenceMap": {
+      "Brilliant Blade": "Brilliant Blade",
+      "Holy Blade": "Holy Blade",
+      "Shock Blade": "Shock Blade"
+    },
+    "overrides": {
+      "description": "A shining blade of Heironeous belongs to a knightly order devoted to excellence in close-quarters combat.",
+      "features": {
+        "Brilliant Blade": {
+          "description": "Beginning at 9th level, the shining blade can grant his weapon up to three separate magical augmentations. This supernatural power supersedes the holy blade ability and is usable six times per day. Each activation allows the shining blade to choose one of the following effects: imbuing the weapon with electrical energy for an additional 1d6 electricity damage, consecrating it to deal an extra 2d6 damage against evil targets, or transforming it into a brilliant energy weapon that glows like a torch and passes through nonliving material (such as armor, undead creatures, constructs, and objects). The chosen enhancement persists for a number of rounds up to the shining blade's class level plus his Charisma modifier (minimum 0), but only while he wields the weapon. Should the weapon leave his grasp through disarming or being handed off, the enhancement immediately ceases. Multiple activations may be applied simultaneously, so within a single encounter the shining blade could use one standard action to add the holy property, another to add shock, and another for brilliant energy. However, stacking the same property twice on the weapon is not permitted."
+        },
+        "Holy Blade": {
+          "description": "Upon reaching 5th level, the shining blade of Heironeous gains the supernatural power to apply two distinct magical augmentations to his weapon. This replaces the shock blade ability and may be activated three times per day. Each use lets the shining blade choose one of the following effects: adding the shock property for +1d6 electricity damage, or adding the holy property for +2d6 bonus damage against evil creatures. The effect lasts for a number of rounds up to the shining blade's class level plus his Charisma modifier (minimum 0), provided he continues to hold the weapon. If the weapon is taken from him or passed to someone else, the enhancement ends immediately. Both activations can be layered together, allowing the shining blade to spend one standard action applying holy and another applying shock during the same battle. The same enhancement cannot be applied to the weapon more than once simultaneously."
+        },
+        "Shock Blade": {
+          "description": "As a standard action usable two times per day, the shining blade of Heironeous can infuse a slashing or piercing weapon he holds with electrical energy, turning it into a shock weapon that inflicts an additional 1d6 points of electricity damage on each successful strike. This augmentation lasts for a number of rounds up to his class level plus his Charisma modifier (minimum 0), but only as long as he maintains his grip on the weapon. If the weapon is knocked from his hand or willingly given away, the electrical enhancement immediately ends."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "At each even-numbered shining blade level, the character receives additional spells per day (and spells known, where relevant) as though he had gained a level in a divine spellcasting class he belonged to before taking this prestige class. No other class benefits from that advancement are received. A character who previously had multiple divine spellcasting classes capable of casting 1st-level spells must choose which class benefits each time this advancement applies."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Members of this prestige class are proficient with every simple and martial weapon, all categories of armor, and shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "The shining blades of Heironeous are proficient with all simple and martial weapons, with all armor, and with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When an even-numbered level is gained, the shining blade of Heironeous gains new spells per day (and spells known, if applicable) as if he had also gained a level in whatever spellcasting class in which he could cast divine spells before he added the prestige class level. He does not, however, gain any other benefit a character of that class would have gained. If a character had more than one divine spellcasting class in which he could cast 1st-level spells before he became a shining blade, he must decide to which class he adds each level of shining blade for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Twice per day as a standard action, a shining blade of Heironeous can cause a slashing or piercing weapon he is holding to become a shock weapon, dealing an extra 1d6 points of electricity damage on a successful hit. The weapon is enhanced this way for up to a number of rounds equal to the shining blade's level plus his Charisma modifier (if any), but only so long as the shining blade is holding the weapon. If he is disarmed or gives the weapon to another character, the magical effect ends.",
+        "name": "Shock Blade",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 5th level, the shining blade of Heironeous can bestow two magical enhancements upon his weapon. This supernatural ability replaces the shock blade ability and can be used three times per day. With each use of this ability, he can choose to make the weapon a shock weapon dealing +1d6 points of damage or a holy weapon dealing +2d6 points of bonus damage against evil creatures. The weapon is enhanced this way for up to a number of rounds equal to the shining blade's level plus his Charisma modifier (if any), but only so long as the shining blade is holding the weapon. If he is disarmed or gives the weapon to another character, the magical effect ends. The two uses of this ability can overlap, so in a given combat a shining blade can spend one standard action to make his blade holy and another to make it a shock weapon. The weapon cannot be made to be doubly holy or doubly shocking.",
+        "name": "Holy Blade",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 9th level, a shining blade can bestow three magical enhancements upon his weapon. This supernatural ability replaces the holy blade ability and can be used six times per day. With each use of this ability, he can choose to make the weapon a shock weapon dealing an extra 1d6 points of electricity damage, a holy weapon dealing an extra 2d6 points of damage against evil creatures, or a brilliant energy weapon, which sheds light as a torch and ignores nonliving matter (including armor, undead, constructs, and objects). The weapon is enhanced this way for up to a number of rounds equal to the shining blade's level plus his Charisma modifier (if any), but only so long as the shining blade is holding the weapon. If he is disarmed or gives the weapon to another character, the magical effect ends. The three uses of this ability can overlap, so in a given combat a shining blade can spend one standard action to make his blade holy, another to make it a shock weapon, and another to make it a brilliant energy weapon. The weapon cannot be made to be doubly holy, doubly shocking, or doubly brilliant.<",
+        "name": "Brilliant Blade",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Heal",
+      "Knowledge (Religion)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "The shining blade of Heironeous is a member of an order of knights dedicated to prowess in melee combat.",
+    "hitDie": "d10",
+    "name": "Shining Blade of Heironeous",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Lawful good",
+        "bab": 7,
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "divine"
+          }
+        ],
+        "saves": [
+          {
+            "base": 3,
+            "name": "will"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 7
+          }
+        ],
+        "special": [
+          "Must have Heironeous as a patron deity.",
+          "Heironeous as a patron deity"
+        ]
+      },
+      "text": "Base Attack Bonus: +7 Alignment: Lawful good Skills: Knowledge (religion) 7 ranks Base Save Bonus: Will +3.Spells: Able to cast 1st-level divine spellsSpecial: Must have Heironeous as a patron deity."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Shock blade 2/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Shock blade 3/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Holy blade 4/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Holy blade 5/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Brilliant blade 6/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

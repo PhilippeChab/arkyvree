@@ -1,0 +1,275 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:10:47.400Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/fatespinner/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Spin Fate"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Fickle Finger Of Fate"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Spin Destiny"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Deny Fate"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Resist Fate"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Seal Fate"
+      }
+    ],
+    "hd": 4,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.profession.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "4",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Fatespinner Class Feature",
+    "features": {
+      "Deny Fate": {
+        "description": "At 4th level and higher, a fatespinner has a better chance of beating the odds should he ever be rendered unconscious and dying. Once per day, on the first occasion when a fatespinner must make a check to become stable when dying, the check automatically succeeds. Other such checks called for later in the same 24-hour period are made normally.",
+        "level": 4,
+        "seedName": "Deny Fate (Fatespinner)"
+      },
+      "Fickle Finger of Fate": {
+        "description": "On reaching 2nd level, a fatespinner gains the ability to affect the luck of others. Once per day as an immediate action, he can force any other creature-friend or enemy-to reroll a roll that it has just made. A fatespinner must have line of sight to the creature to be affected. That creature must abide by the result of the reroll, whether it's higher or lower than the original roll.",
+        "level": 2,
+        "seedName": "Fickle Finger of Fate (Fatespinner)"
+      },
+      "Resist Fate": {
+        "description": "A fatespinner of 4th level and above embraces his extraordinary good luck. Once per day, he can reroll one roll that he has just made. He must abide by the result of the reroll, even if it's worse than the original roll.",
+        "level": 4,
+        "seedName": "Resist Fate (Fatespinner)"
+      },
+      "Seal Fate": {
+        "description": "A 5th-level fatespinner can meddle in success and failure, and even life and death, sealing the fate of a friend or foe. Once per day as a free action, the fatespinner selects a target creature he can see within 30 feet with Hit Dice equal to or less than his. The creature receives either a -10 penalty or a +10 bonus on its next saving throw, as decided by the fatespinner. If the selected target has more Hit Dice than the fatespinner, the ability doesn't work but the use for the day is not wasted. This effect lasts only for 1 round, so if no spell or other effect is brought to bear on the target creature during the round, the creature's fate is no longer sealed.",
+        "level": 5,
+        "seedName": "Seal Fate (Fatespinner)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level except 5th, a fatespinner gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If he had more than one spellcasting class before becoming a fatespinner, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Fatespinner)"
+      },
+      "Spin Destiny": {
+        "description": "Beginning at 3rd level, a fatespinner more clearly comprehends the matrix of reality and can use accumulated spin to adjust other random events. The method is identical to increasing a spell's save DC, but the fatespinner can now add spin to any skill check, attack roll, or saving throw that he attempts on a point-for-point basis. However, the spin utilized comes from the same limited reservoir of karma storage that allows him to adjust the DC of his spells. He must apply the bonus before making the roll.",
+        "level": 3,
+        "seedName": "Spin Destiny (Fatespinner)"
+      },
+      "Spin Fate": {
+        "description": "A mage of many fates understands that \"chance\" is not as random as many believe it to be, and he can adjust the probability of certain events by applying a force that fatespinners refer to as \"spin.\" Each day, a fatespinner can use a number of points of spin equal to his fatespinner class level. As a free action, a fatespinner can use stored spin to boost the save DC of a spell he casts, adding some or all his spin to the DC, on a point-for-point basis. For instance, a 5th-level wizard/3rd-level fatespinner casting fireball could choose to boost the DC of the spell by 1, 2, or 3 points. Once he uses up his spin for the day, his ability to tinker with probability in this fashion is also exhausted for the day. A fatespinner's spin is replenished whenever the character successfully regains his spells for the day (whether through rest, preparation, or prayer).",
+        "level": 1,
+        "seedName": "Spin Fate (Fatespinner)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Fatespinners gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Fatespinner)"
+      }
+    },
+    "occurrenceMap": {
+      "Deny Fate": "Deny Fate",
+      "Fickle Finger Of Fate": "Fickle Finger of Fate",
+      "Resist Fate": "Resist Fate",
+      "Seal Fate": "Seal Fate",
+      "Spin Destiny": "Spin Destiny",
+      "Spin Fate": "Spin Fate"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Fatespinners gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level except 5th, a fatespinner gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If he had more than one spellcasting class before becoming a fatespinner, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A mage of many fates understands that \"chance\" is not as random as many believe it to be, and he can adjust the probability of certain events by applying a force that fatespinners refer to as \"spin.\" Each day, a fatespinner can use a number of points of spin equal to his fatespinner class level. As a free action, a fatespinner can use stored spin to boost the save DC of a spell he casts, adding some or all his spin to the DC, on a point-for-point basis. For instance, a 5th-level wizard/3rd-level fatespinner casting fireball could choose to boost the DC of the spell by 1, 2, or 3 points. Once he uses up his spin for the day, his ability to tinker with probability in this fashion is also exhausted for the day. A fatespinner's spin is replenished whenever the character successfully regains his spells for the day (whether through rest, preparation, or prayer).",
+        "name": "Spin Fate",
+        "type": "(Ex)"
+      },
+      {
+        "description": "On reaching 2nd level, a fatespinner gains the ability to affect the luck of others. Once per day as an immediate action, he can force any other creature-friend or enemy-to reroll a roll that it has just made. A fatespinner must have line of sight to the creature to be affected. That creature must abide by the result of the reroll, whether it's higher or lower than the original roll.",
+        "name": "Fickle Finger of Fate",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a fatespinner more clearly comprehends the matrix of reality and can use accumulated spin to adjust other random events. The method is identical to increasing a spell's save DC, but the fatespinner can now add spin to any skill check, attack roll, or saving throw that he attempts on a point-for-point basis. However, the spin utilized comes from the same limited reservoir of karma storage that allows him to adjust the DC of his spells. He must apply the bonus before making the roll.",
+        "name": "Spin Destiny",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level and higher, a fatespinner has a better chance of beating the odds should he ever be rendered unconscious and dying. Once per day, on the first occasion when a fatespinner must make a check to become stable when dying, the check automatically succeeds. Other such checks called for later in the same 24-hour period are made normally.",
+        "name": "Deny Fate",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A fatespinner of 4th level and above embraces his extraordinary good luck. Once per day, he can reroll one roll that he has just made. He must abide by the result of the reroll, even if it's worse than the original roll.",
+        "name": "Resist Fate",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 5th-level fatespinner can meddle in success and failure, and even life and death, sealing the fate of a friend or foe. Once per day as a free action, the fatespinner selects a target creature he can see within 30 feet with Hit Dice equal to or less than his. The creature receives either a -10 penalty or a +10 bonus on its next saving throw, as decided by the fatespinner. If the selected target has more Hit Dice than the fatespinner, the ability doesn't work but the use for the day is not wasted. This effect lasts only for 1 round, so if no spell or other effect is brought to bear on the target creature during the round, the creature's fate is no longer sealed.",
+        "name": "Seal Fate",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Concentration",
+      "Craft",
+      "Knowledge (Arcana)",
+      "Profession",
+      "Sleight of Hand",
+      "Spellcraft"
+    ],
+    "description": "A fatespinner has pulled back the curtain of chance, circumstance, and chaos to glimpse a deeper truth: probability.",
+    "hitDie": "d4",
+    "name": "Fatespinner",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 4,
+            "type": "arcane"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 10
+          },
+          {
+            "name": "Profession (gambler)",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 10 ranks, Profession (gambler) 5 ranks Spells: Able to cast 4th-level arcane spells, including at least one divination spell of 1st level or higher."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Spin fate"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Fickle finger of fate"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Spin destiny"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Deny fate",
+          "resist fate"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Seal fate"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

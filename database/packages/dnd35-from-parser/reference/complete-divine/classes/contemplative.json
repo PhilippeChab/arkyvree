@@ -1,0 +1,414 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T14:00:10.846Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/contemplative/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          6
+        ],
+        "target": "aptitudes.contemplativebonusdomain.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          6
+        ],
+        "name": "Bonus Domain"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Divine Health"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Slippery Mind"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Divine Wholeness"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Divine Body"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Divine Soul"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Eternal Body"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Mystic Union"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "13",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "1",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Contemplative Class Feature",
+    "features": {
+      "Bonus Domain": {
+        "description": "When first entering this class and once more at 6th level, the contemplative gains an additional domain. She may pick any domain offered by her deity or alignment, receiving that domain's granted power and the ability to prepare its spells in her domain spell slots.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.contemplativebonusdomain.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Bonus Domain (Contemplative)",
+        "stackable": true
+      },
+      "Divine Body": {
+        "description": "Starting at 5th level, the contemplative gains total immunity to all types of poison.",
+        "level": 5,
+        "seedName": "Divine Body (Contemplative)"
+      },
+      "Divine Health": {
+        "description": "The contemplative is completely immune to every form of disease, including supernatural diseases like mummy rot and lycanthropy.",
+        "level": 1,
+        "seedName": "Divine Health (Contemplative)"
+      },
+      "Divine Soul": {
+        "description": "At 7th level, the contemplative acquires spell resistance equal to her class level plus 15. Any caster attempting to affect her with a spell must succeed on a caster level check (1d20 + caster level) meeting or exceeding this value.",
+        "level": 7,
+        "seedName": "Divine Soul (Contemplative)"
+      },
+      "Divine Wholeness": {
+        "description": "From 3rd level onward, the contemplative can mend her own injuries in addition to any other healing she may possess. Each day she can restore a total number of hit points equal to four times her contemplative class level, and she may divide this healing across multiple uses.",
+        "level": 3,
+        "seedName": "Divine Wholeness (Contemplative)"
+      },
+      "Eternal Body": {
+        "description": "Upon reaching 9th level, the contemplative no longer takes ability score penalties from aging and becomes immune to magical aging effects. Any penalties already accrued remain, and she continues to gain age-related bonuses. She still dies of old age when her natural lifespan ends.",
+        "level": 9,
+        "seedName": "Eternal Body (Contemplative)"
+      },
+      "Mystic Union": {
+        "description": "At 10th level, the contemplative transforms into a magical being. For all purposes related to spells and magical effects, she is considered an outsider with the native subtype instead of a humanoid. She also gains damage reduction 10/magic.",
+        "level": 10,
+        "seedName": "Mystic Union (Contemplative)"
+      },
+      "Slippery Mind": {
+        "description": "At 2nd level, the contemplative develops the ability to resist magical compulsion and control. Whenever she fails a saving throw against an enchantment effect, she may reattempt the saving throw one round later. She receives only this single additional attempt.",
+        "level": 2,
+        "seedName": "Slippery Mind (Contemplative)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "A contemplative who previously had spellcasting ability continues to advance in divine magical power as she gains levels in this class. Each time she gains a new contemplative level, she receives additional spells per day (and spells known, where applicable) as though she had also gained a level in whichever divine spellcasting class she belonged to before taking this prestige class. She does not, however, receive any other benefits that class would normally grant (such as improved undead turning or additional uses of class abilities). In practice, her contemplative levels stack with her prior spellcasting class levels for determining spells per day. If she had multiple divine spellcasting classes, the player chooses which class benefits from each contemplative level for purposes of spell progression. If the contemplative had no prior divine spellcasting class, she gains the ability to cast divine spells as a cleric of her patron deity, following the standard cleric spell progression.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Contemplative)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This class does not provide any additional weapon or armor proficiencies.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Contemplative)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Domain": "Bonus Domain",
+      "Divine Body": "Divine Body",
+      "Divine Health": "Divine Health",
+      "Divine Soul": "Divine Soul",
+      "Divine Wholeness": "Divine Wholeness",
+      "Eternal Body": "Eternal Body",
+      "Mystic Union": "Mystic Union",
+      "Slippery Mind": "Slippery Mind"
+    },
+    "overrides": {
+      "description": "Contemplatives dedicate themselves to deepening their spiritual connection with their patron deity.",
+      "features": {
+        "Bonus Domain": {
+          "description": "When first entering this class and once more at 6th level, the contemplative gains an additional domain. She may pick any domain offered by her deity or alignment, receiving that domain's granted power and the ability to prepare its spells in her domain spell slots."
+        },
+        "Divine Body": {
+          "description": "Starting at 5th level, the contemplative gains total immunity to all types of poison."
+        },
+        "Divine Health": {
+          "description": "The contemplative is completely immune to every form of disease, including supernatural diseases like mummy rot and lycanthropy."
+        },
+        "Divine Soul": {
+          "description": "At 7th level, the contemplative acquires spell resistance equal to her class level plus 15. Any caster attempting to affect her with a spell must succeed on a caster level check (1d20 + caster level) meeting or exceeding this value."
+        },
+        "Divine Wholeness": {
+          "description": "From 3rd level onward, the contemplative can mend her own injuries in addition to any other healing she may possess. Each day she can restore a total number of hit points equal to four times her contemplative class level, and she may divide this healing across multiple uses."
+        },
+        "Eternal Body": {
+          "description": "Upon reaching 9th level, the contemplative no longer takes ability score penalties from aging and becomes immune to magical aging effects. Any penalties already accrued remain, and she continues to gain age-related bonuses. She still dies of old age when her natural lifespan ends."
+        },
+        "Mystic Union": {
+          "description": "At 10th level, the contemplative transforms into a magical being. For all purposes related to spells and magical effects, she is considered an outsider with the native subtype instead of a humanoid. She also gains damage reduction 10/magic."
+        },
+        "Slippery Mind": {
+          "description": "At 2nd level, the contemplative develops the ability to resist magical compulsion and control. Whenever she fails a saving throw against an enchantment effect, she may reattempt the saving throw one round later. She receives only this single additional attempt."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "A contemplative who previously had spellcasting ability continues to advance in divine magical power as she gains levels in this class. Each time she gains a new contemplative level, she receives additional spells per day (and spells known, where applicable) as though she had also gained a level in whichever divine spellcasting class she belonged to before taking this prestige class. She does not, however, receive any other benefits that class would normally grant (such as improved undead turning or additional uses of class abilities). In practice, her contemplative levels stack with her prior spellcasting class levels for determining spells per day. If she had multiple divine spellcasting classes, the player chooses which class benefits from each contemplative level for purposes of spell progression. If the contemplative had no prior divine spellcasting class, she gains the ability to cast divine spells as a cleric of her patron deity, following the standard cleric spell progression."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This class does not provide any additional weapon or armor proficiencies."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Contemplatives gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A contemplative who was previously a spellcaster continues to gain access to more powerful divine magic while following the contemplative path. Thus, when a new contemplative level is gained, the character gains new spells per day (and spells known, if applicable) as if she had also gained a level in the spellcasting class she belonged to before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, more frequent remove disease, and so on). This essentially means that she adds the level of contemplative to the level of whatever other spellcasting class the character has, then determines spells per day accordingly. If a character had more than one divine spellcasting class before she became a contemplative, the player must decide which class to assign each level of contemplative for the purpose of determining divine spells per day and spells known. If the contemplative did not previously belong to a divine spellcasting class, she gains the ability to cast divine spells exactly as a cleric of her patron deity. Her spell progression is the same as that of a cleric.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Upon adopting the contemplative class, and again at 6th level, a character gains access to a bonus domain of her choice. The character can choose any domain made available by her deity or alignment. The character gains the granted power associated with the domain she chooses, and can select the spells in that domain as her daily domain spells.",
+        "name": "Bonus Domain"
+      },
+      {
+        "description": "A contemplative has immunity to all diseases, including magical diseases such as mummy rot and lycanthropy.",
+        "name": "Divine Health",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a contemplative gains the ability to shrug off magical effects that would otherwise control or compel her. If a contemplative with slippery mind is affected by an enchantment and fails her saving throw, one round later she can attempt her saving throw again. She only gets this one extra chance to succeed on her saving throw.",
+        "name": "Slippery Mind",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level and higher, a contemplative can heal her own wounds, in addition to any other healing ability she may have. She can heal up to four times her contemplative level in hit points each day, and she can spread this healing out among several uses.",
+        "name": "Divine Wholeness",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 5th level, a contemplative becomes immune to poisons of all kinds.",
+        "name": "Divine Body",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 7th level, a contemplative gains spell resistance. Her spell resistance equals her class level + 15. In order to affect the contemplative with a spell, a spellcaster must roll the contemplative's spell resistance or higher on 1d20 + the spellcaster's level.",
+        "name": "Divine Soul",
+        "type": "(Su)"
+      },
+      {
+        "description": "After achieving 9th level, a contemplative no longer suffers ability penalties for aging and cannot be magically aged. (Penalties she has already suffered remain in place.) Bonuses still accrue, and the contemplative still dies of old age when her time is up.",
+        "name": "Eternal Body",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 10th level, a contemplative becomes a magical creature. She is forever more treated as an outsider (native) rather than a humanoid for the purposes of spells and magical effects. Additionally, the contemplative gains damage resistance 10/magic.",
+        "name": "Mystic Union",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Heal",
+      "Intimidate",
+      "Knowledge (Religion)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "Contemplatives devote their lives to cultivating a greater closeness with their deities.",
+    "hitDie": "d6",
+    "name": "Contemplative",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "divine"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 13
+          }
+        ],
+        "special": [
+          "Must have had direct contact with one's patron deity or a direct servant of that deity, or with an enlightened being embodying the highest principles of an alignment (a solar, for example).",
+          "had direct contact with one's patron deity or a direct servant of that deity, or with an enlightened being embodying the highest principles of an alignment (a solar, for example)"
+        ]
+      },
+      "text": "Skills: Knowledge (religion) 13 ranks Spells: Able to cast 1st-level divine spells. Special: Must have had direct contact with one's patron deity or a direct servant of that deity, or with an enlightened being embodying the highest principles of an alignment (a solar, for example)."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bonus domain",
+          "divine health"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Slippery mind"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Divine wholeness"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Divine body"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Bonus domain"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Divine soul"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Eternal body"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Mystic union"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

@@ -1,0 +1,566 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-18T13:53:47.784Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/shadowdancer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "combatreflexes": "Combat Reflexes",
+      "dodge": "Dodge",
+      "mobility": "Mobility"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Hide In Plain Sight"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Darkvision"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Uncanny Dodge"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Shadow Illusion"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Summon Shadow"
+      },
+      {
+        "levels": [
+          4,
+          6,
+          8,
+          10
+        ],
+        "name": "Shadow Jump"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Defensive Roll"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Improved Uncanny Dodge"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Slippery Mind"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Improved Evasion"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatreflexes.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.dodge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mobility.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Shadowdancer Class Feature",
+    "features": {
+      "Darkvision": {
+        "description": "At 2nd level, a shadowdancer gains the permanent ability to see in complete darkness, as if she were continually affected by a darkvision spell.",
+        "level": 2,
+        "seedName": "Darkvision (Shadowdancer)"
+      },
+      "Defensive Roll": {
+        "description": "From 5th level, once per day a shadowdancer can attempt to mitigate a devastating strike by rolling with the impact. When she would be reduced to 0 or fewer hit points by combat damage (from a weapon or physical blow, not from a spell or special ability), she may make a Reflex saving throw with a DC equal to the damage dealt. On a success, she takes only half damage. She must be aware of the incoming attack and able to react in order to use this ability. If circumstances would deny her Dexterity bonus to AC, she cannot attempt a defensive roll.",
+        "level": 5,
+        "seedName": "Defensive Roll (Shadowdancer)"
+      },
+      "Evasion": {
+        "description": "From 2nd level onward, a shadowdancer gains evasion. Whenever she is subjected to an effect that permits a Reflex saving throw for half damage (for example, a fireball), a successful save means she suffers no damage at all. This ability functions only while she wears light armor or no armor.",
+        "level": 2,
+        "seedName": "Evasion (Shadowdancer)"
+      },
+      "Hide in Plain Sight": {
+        "description": "A shadowdancer may attempt a Hide check even when others are directly watching her. She needs only to be within 10 feet of an area of shadow, and she can conceal herself in the open without requiring an object to hide behind. However, she is unable to use her own shadow for this purpose.",
+        "level": 1,
+        "seedName": "Hide in Plain Sight (Shadowdancer)"
+      },
+      "Improved Evasion": {
+        "description": "Acquired at 10th level, this ability functions as an enhanced version of evasion. On a successful Reflex saving throw against effects that normally deal half damage on a save (such as breath weapons or fireballs), the shadowdancer takes no damage whatsoever. Even on a failed save, she takes only half damage, thanks to her extraordinary reflexes allowing her to partially escape the effect.",
+        "level": 10,
+        "seedName": "Improved Evasion (Shadowdancer)"
+      },
+      "Improved Uncanny Dodge": {
+        "description": "At 5th level, a shadowdancer becomes immune to flanking, as she can respond to attackers on all sides with equal ease. This means rogues cannot use flanking to gain sneak attacks against her, with one exception: a rogue whose level exceeds the shadowdancer's by four or more can still flank her and deliver sneak attacks. If a character has uncanny dodge from another class (such as barbarian or rogue), she automatically receives improved uncanny dodge, and levels from all such classes are combined to determine the minimum rogue level needed to flank her.",
+        "level": 5,
+        "seedName": "Improved Uncanny Dodge (Shadowdancer)"
+      },
+      "Shadow Illusion": {
+        "description": "Upon reaching 3rd level, a shadowdancer can manipulate nearby shadows to produce visual illusions. This works identically to the silent image spell and can be used once per day.",
+        "level": 3,
+        "seedName": "Shadow Illusion (Shadowdancer)"
+      },
+      "Shadow Jump": {
+        "description": "Starting at 4th level, a shadowdancer can teleport from one shadow to another, functioning similarly to a dimension door spell. Both the origin and destination must be areas containing at least some shadow. She may travel up to 20 feet per day using this ability, either as a single jump or split across multiple shorter jumps. The maximum daily distance doubles every two levels beyond 4th (40 feet at 6th, 80 feet at 8th, and 160 feet at 10th). The total distance can be divided among any number of jumps, but each individual jump, regardless of actual distance traveled, counts as a minimum of 10 feet. For instance, a 6th-level shadowdancer who has already jumped 32 feet has used up her full 40-foot allotment and cannot jump again until the following day.",
+        "level": 4,
+        "seedName": "Shadow Jump (Shadowdancer)",
+        "stackable": true
+      },
+      "Slippery Mind": {
+        "description": "Gained at 7th level, this ability reflects the shadowdancer's talent for shaking off mind-affecting magic. When she fails a saving throw against an enchantment effect, she receives a second attempt at the saving throw 1 round later. This extra attempt is only granted once per effect; if the second save also fails, the enchantment takes hold as normal.",
+        "level": 7,
+        "seedName": "Slippery Mind (Shadowdancer)"
+      },
+      "Summon Shadow": {
+        "description": "At 3rd level, a shadowdancer gains the ability to call forth a shadow, an undead creature of darkness. This shadow shares the shadowdancer's alignment rather than having its usual alignment, and it lacks the ability to create spawn. No third party can turn, rebuke, or command the summoned shadow. It acts as a loyal companion and can communicate coherently with the shadowdancer. Each additional three levels the shadowdancer gains grants the shadow companion +2 HD, along with corresponding increases to its base attack bonus and base save bonuses. As an example, at 9th level the shadow companion would have 6 HD. If the shadow companion is slain or voluntarily dismissed, the shadowdancer must make a DC 15 Fortitude save. On a failed save, she loses 200 experience points per shadowdancer level. A successful save halves this penalty to 100 XP per prestige class level. Her experience total cannot drop below 0 from this loss. A shadow companion that is destroyed or dismissed cannot be replaced for 30 days.",
+        "level": 3,
+        "seedName": "Summon Shadow (Shadowdancer)",
+        "stackable": true
+      },
+      "Uncanny Dodge": {
+        "description": "Beginning at 2nd level, a shadowdancer can instinctively respond to threats before she would normally perceive them. She keeps her Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. She still forfeits this bonus if she is immobilized. Should a character acquire uncanny dodge from more than one class (for instance, barbarian or rogue), she automatically upgrades to improved uncanny dodge.",
+        "level": 2,
+        "seedName": "Uncanny Dodge (Shadowdancer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Shadowdancers have proficiency with the following weapons: club, crossbow (hand, light, or heavy), dagger (all varieties), dart, mace, morningstar, quarterstaff, rapier, sap, shortbow (including composite), and short sword. They are also proficient with light armor but gain no proficiency with shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencyhandcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencylightcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyheavycrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencypunchingdagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencycompositeshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyquarterstaff.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencymorningstar.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortsword.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyrapier.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyclub.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydart.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencysap.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Shadowdancer)"
+      }
+    },
+    "occurrenceMap": {
+      "Darkvision": "Darkvision",
+      "Defensive Roll": "Defensive Roll",
+      "Evasion": "Evasion",
+      "Hide In Plain Sight": "Hide in Plain Sight",
+      "Improved Evasion": "Improved Evasion",
+      "Improved Uncanny Dodge": "Improved Uncanny Dodge",
+      "Shadow Illusion": "Shadow Illusion",
+      "Shadow Jump": "Shadow Jump",
+      "Slippery Mind": "Slippery Mind",
+      "Summon Shadow": "Summon Shadow",
+      "Uncanny Dodge": "Uncanny Dodge"
+    },
+    "overrides": {
+      "description": "Shadowdancers thrive at the threshold where light meets shadow, employing agility and trickery as their primary tools.",
+      "features": {
+        "Darkvision": {
+          "description": "At 2nd level, a shadowdancer gains the permanent ability to see in complete darkness, as if she were continually affected by a darkvision spell."
+        },
+        "Defensive Roll": {
+          "description": "From 5th level, once per day a shadowdancer can attempt to mitigate a devastating strike by rolling with the impact. When she would be reduced to 0 or fewer hit points by combat damage (from a weapon or physical blow, not from a spell or special ability), she may make a Reflex saving throw with a DC equal to the damage dealt. On a success, she takes only half damage. She must be aware of the incoming attack and able to react in order to use this ability. If circumstances would deny her Dexterity bonus to AC, she cannot attempt a defensive roll."
+        },
+        "Evasion": {
+          "description": "From 2nd level onward, a shadowdancer gains evasion. Whenever she is subjected to an effect that permits a Reflex saving throw for half damage (for example, a fireball), a successful save means she suffers no damage at all. This ability functions only while she wears light armor or no armor."
+        },
+        "Hide in Plain Sight": {
+          "description": "A shadowdancer may attempt a Hide check even when others are directly watching her. She needs only to be within 10 feet of an area of shadow, and she can conceal herself in the open without requiring an object to hide behind. However, she is unable to use her own shadow for this purpose."
+        },
+        "Improved Evasion": {
+          "description": "Acquired at 10th level, this ability functions as an enhanced version of evasion. On a successful Reflex saving throw against effects that normally deal half damage on a save (such as breath weapons or fireballs), the shadowdancer takes no damage whatsoever. Even on a failed save, she takes only half damage, thanks to her extraordinary reflexes allowing her to partially escape the effect."
+        },
+        "Improved Uncanny Dodge": {
+          "description": "At 5th level, a shadowdancer becomes immune to flanking, as she can respond to attackers on all sides with equal ease. This means rogues cannot use flanking to gain sneak attacks against her, with one exception: a rogue whose level exceeds the shadowdancer's by four or more can still flank her and deliver sneak attacks. If a character has uncanny dodge from another class (such as barbarian or rogue), she automatically receives improved uncanny dodge, and levels from all such classes are combined to determine the minimum rogue level needed to flank her."
+        },
+        "Shadow Illusion": {
+          "description": "Upon reaching 3rd level, a shadowdancer can manipulate nearby shadows to produce visual illusions. This works identically to the silent image spell and can be used once per day."
+        },
+        "Shadow Jump": {
+          "description": "Starting at 4th level, a shadowdancer can teleport from one shadow to another, functioning similarly to a dimension door spell. Both the origin and destination must be areas containing at least some shadow. She may travel up to 20 feet per day using this ability, either as a single jump or split across multiple shorter jumps. The maximum daily distance doubles every two levels beyond 4th (40 feet at 6th, 80 feet at 8th, and 160 feet at 10th). The total distance can be divided among any number of jumps, but each individual jump, regardless of actual distance traveled, counts as a minimum of 10 feet. For instance, a 6th-level shadowdancer who has already jumped 32 feet has used up her full 40-foot allotment and cannot jump again until the following day."
+        },
+        "Slippery Mind": {
+          "description": "Gained at 7th level, this ability reflects the shadowdancer's talent for shaking off mind-affecting magic. When she fails a saving throw against an enchantment effect, she receives a second attempt at the saving throw 1 round later. This extra attempt is only granted once per effect; if the second save also fails, the enchantment takes hold as normal."
+        },
+        "Summon Shadow": {
+          "description": "At 3rd level, a shadowdancer gains the ability to call forth a shadow, an undead creature of darkness. This shadow shares the shadowdancer's alignment rather than having its usual alignment, and it lacks the ability to create spawn. No third party can turn, rebuke, or command the summoned shadow. It acts as a loyal companion and can communicate coherently with the shadowdancer. Each additional three levels the shadowdancer gains grants the shadow companion +2 HD, along with corresponding increases to its base attack bonus and base save bonuses. As an example, at 9th level the shadow companion would have 6 HD. If the shadow companion is slain or voluntarily dismissed, the shadowdancer must make a DC 15 Fortitude save. On a failed save, she loses 200 experience points per shadowdancer level. A successful save halves this penalty to 100 XP per prestige class level. Her experience total cannot drop below 0 from this loss. A shadow companion that is destroyed or dismissed cannot be replaced for 30 days."
+        },
+        "Uncanny Dodge": {
+          "description": "Beginning at 2nd level, a shadowdancer can instinctively respond to threats before she would normally perceive them. She keeps her Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. She still forfeits this bonus if she is immobilized. Should a character acquire uncanny dodge from more than one class (for instance, barbarian or rogue), she automatically upgrades to improved uncanny dodge."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Shadowdancers have proficiency with the following weapons: club, crossbow (hand, light, or heavy), dagger (all varieties), dart, mace, morningstar, quarterstaff, rapier, sap, shortbow (including composite), and short sword. They are also proficient with light armor but gain no proficiency with shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Shadowdancers are proficient with the club, crossbow (hand, light, or heavy), dagger (any type), dart, mace, morningstar, quarterstaff, rapier, sap, shortbow (normal and composite), and short sword. Shadowdancers are proficient with light armor but not with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A shadowdancer can use the Hide skill even while being observed. As long as she is within 10 feet of some sort of shadow, a shadowdancer can hide herself from view in the open without anything to actually hide behind. She cannot, however, hide in her own shadow.",
+        "name": "Hide in Plain Sight",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level, a shadowdancer gains evasion. If exposed to any effect that normally allows her to attempt a Reflex saving throw for half damage (such as a fireball), she takes no damage with a successful saving throw. The evasion ability can only be used if the shadowdancer is wearing light armor or no armor.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a shadowdancer can see in the dark as though she were permanently under the effect of a darkvision spell.",
+        "name": "Darkvision",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 2nd level, a shadowdancer has the ability to react to danger before her senses would normally allow her to even be aware of it. She retains her Dexterity bonus to AC (if any) regardless of being caught flat-footed or struck by an invisible attacker. (She still loses any Dexterity bonus to AC if immobilized.) If a character gains uncanny dodge from a second class (such as barbarian or rogue), the character automatically gains improved uncanny dodge.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a shadowdancer reaches 3rd level, she can create visual illusions from surrounding shadows. This ability's effect is identical to that of the arcane spell silent image and may be employed once per day.",
+        "name": "Shadow Illusion",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 3rd level, a shadowdancer can summon a shadow, an undead shade. Unlike a normal shadow, this shadow's alignment matches that of the shadowdancer, and the creature cannot create spawn. The summoned shadow cannot be turned, rebuked, or commanded by any third party. This shadow serves as a companion to the shadowdancer and can communicate intelligibly with the shadowdancer. Every third level gained by the shadowdancer adds +2 HD (and the requisite base attack and base save bonus increases) to her shadow companion. For example, a 9th-level shadowdancer can have a shadow companion with 6 HD. If a shadow companion is destroyed, or the shadowdancer chooses to dismiss it, the shadowdancer must attempt a DC 15 Fortitude save. If the saving throw fails, the shadowdancer loses 200 experience points per shadowdancer level. A successful saving throw reduces the loss by half, to 100 XP per prestige class level. The shadowdancer's XP total can never go below 0 as the result of a shadow's dismissal or destruction. A destroyed or dismissed shadow companion cannot be replaced for 30 days.",
+        "name": "Summon Shadow",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 4th level, a shadowdancer gains the ability to travel between shadows as if by means of a dimension door spell. The limitation is that the magical transport must begin and end in an area with at least some shadow. A shadowdancer can jump up to a total of 20 feet each day in this way; this may be a single jump of 20 feet or two jumps of 10 feet each. Every two levels higher than 4th, the distance a shadowdancer can jump each day doubles (40 feet at 6th, 80 feet at 8th, and 160 feet at 10th). This amount can be split among many jumps, but each one, no matter how small, counts as a 10-foot increment. (A 6th-level shadowdancer who jumps 32 feet cannot jump again until the next day.)",
+        "name": "Shadow Jump",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 5th level, a shadowdancer can roll with a potentially lethal blow to take less damage from it. Once per day, when a shadowdancer would be reduced to 0 hit points or less by damage in combat (from a weapon or other blow, not a spell or special ability), she can attempt to roll with the damage. She makes a Reflex saving throw (DC = damage dealt) and, if successful, takes only half damage from the blow. She must be aware of the attack and able to react to it in order to execute her defensive roll. If she is in a situation that would deny her any Dexterity bonus to AC, she can't attempt a defensive roll.",
+        "name": "Defensive Roll",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, a shadowdancer can no longer be flanked, since she can react to opponents on opposite sides of her as easily as she can react to a single attacker. This defense denies rogues the ability to use flank attacks to sneak attack the shadowdancer. The exception to this defense is that a rogue at least four levels higher than the shadowdancer can flank her (and thus sneak attack her). If a character gains uncanny dodge from a second class (such as barbarian or rogue), the character automatically gains improved uncanny dodge, and the levels from those classes stack to determine the minimum rogue level required to flank the character.",
+        "name": "Improved Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "This ability, gained at 7th level, represents a shadowdancer's ability to wriggle free from magical effects that would otherwise control or compel her. If a shadowdancer is affected by an enchantment and fails her saving throw, 1 round later she can attempt her saving throw again. She only gets this one extra chance to succeed at her saving throw. If it fails as well, the spell's effects occur normally.",
+        "name": "Slippery Mind",
+        "type": "(Ex)"
+      },
+      {
+        "description": "This ability, gained at 10th level, works like evasion. A shadowdancer takes no damage at all on successful saving throws against attacks that allow a Reflex saving throw for half damage (breath weapon, fireball, and so on). What's more, she takes only half damage even if she fails her saving throw, since her reflexes allow her to get out of harm's way with incredible",
+        "name": "Improved Evasion",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Bluff",
+      "Decipher Script",
+      "Diplomacy",
+      "Disguise",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Perform",
+      "Profession",
+      "Search",
+      "Sleight of Hand",
+      "Spot",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Operating in the border between light and darkness, shadowdancers are nimble artists of deception.",
+    "hitDie": "d8",
+    "name": "Shadowdancer",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Combat Reflexes",
+          "Dodge",
+          "Mobility"
+        ],
+        "skills": [
+          {
+            "name": "Move Silently",
+            "ranks": 8
+          },
+          {
+            "name": "Hide",
+            "ranks": 10
+          },
+          {
+            "name": "Perform (dance)",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Skills: Move Silently 8 ranks, Hide 10 ranks, Perform (dance) 5 ranks Feats: Combat Reflexes, Dodge, Mobility"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Hide in plain sight"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Evasion",
+          "darkvision",
+          "uncanny dodge"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Shadow illusion",
+          "summon shadow"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Shadow jump 20 ft."
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Defensive roll",
+          "improved uncanny dodge"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Shadow jump 40 ft.",
+          "summon shadow"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Slippery mind"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Shadow jump 80 ft."
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Summon shadow"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Shadow jump 160 ft.",
+          "improved evasion"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "format_on_save": "on",
+  "formatter": "language_server",
+
+  "tab_size": 2,
+
+  "languages": {
+    "TypeScript": {
+      "language_servers": ["typescript-language-server"],
+      "formatter": "language_server"
+    },
+    "TSX": {
+      "language_servers": ["typescript-language-server"],
+      "formatter": "language_server"
+    },
+    "JSON": {
+      "tab_size": 2,
+      "formatter": "language_server"
+    }
+  },
+
+  "lsp": {
+    "oxc": {
+      "binary": {
+        "path_lookup": true
+      },
+      "settings": {
+        "configPath": ".oxlintrc.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,578 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-20T23:14:16.955Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/horizon-walker/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "target": "aptitudes.horizonwalkerterrainmastery.allowed"
+      },
+      {
+        "levels": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "target": "aptitudes.horizonwalkerplanarterrainmastery.allowed"
+      }
+    ],
+    "bab": "good",
+    "featNameMap": {
+      "endurance": "Endurance"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "name": "Terrain Mastery"
+      },
+      {
+        "levels": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "name": "Planar Terrain Mastery"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgegeography.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.endurance.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Horizon Walker Class Feature",
+    "features": {
+      "Planar Terrain Mastery": {
+        "description": "As a horizon walker advances, her understanding of terrain broadens to encompass other planes of existence. Planar terrain mastery operates identically to terrain mastery, but at each level the horizon walker may select from the planar terrain options instead. She may also choose a standard (non-planar) terrain type if she prefers.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.horizonwalkerplanarterrainmastery.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Planar Terrain Mastery (Horizon Walker)",
+        "stackable": true
+      },
+      "Terrain Mastery": {
+        "description": "Through their extensive travels, horizon walkers develop a supernatural bond with the landscapes they traverse. Each level, they select an additional terrain type from the options listed below. Mastering a terrain grants the horizon walker either a bonus on checks with a skill relevant to that environment or another fitting advantage. Additionally, a horizon walker learns the fighting habits of dangerous creatures native to that terrain, receiving a +1 insight bonus on attack rolls and damage rolls against any creature whose stat block specifically names that terrain in its Environment entry. These terrain mastery benefits are permanent and portable-the horizon walker retains all associated bonuses to skill checks, attack rolls, and damage rolls regardless of current location. For instance, a horizon walker who has chosen desert terrain mastery remains immune to fatigue whether she is below ground, atop a mountain, or within a settlement.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.horizonwalkerterrainmastery.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Terrain Mastery (Horizon Walker)",
+        "stackable": true
+      },
+      "Terrain Mastery: Aligned (Planar)": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "You can instinctively attune yourself to the prevailing alignment of the plane you occupy. You suffer no penalties for having an alignment that conflicts with the plane's dominant alignment, and spells or effects that target creatures of the opposing alignment (such as unholy blight) have no effect on you. For purposes of magic, you are treated as having the plane's dominant alignment, but your actual behavior and any alignment-dependent class features remain unchanged.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Aquatic": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "You are thoroughly comfortable in water, gaining a +4 competence bonus on Swim checks. If you already possess a swim speed, it increases by +10 feet instead. You also receive a +1 insight bonus on attack and damage rolls against aquatic creatures.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.swim.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Terrain Mastery: Cavernous (Planar)": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "You gain tremorsense with a range of 30 feet.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Cold (Planar)": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "This planar terrain mastery grants you resistance to cold 20. You also receive a +1 insight bonus on attack and damage rolls against outsiders and elementals that have the cold subtype.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Desert": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "Your survival in harsh arid conditions has taught you exceptional endurance. You are completely immune to fatigue, and any effect that would normally exhaust you causes fatigue instead. You also receive a +1 insight bonus on attack and damage rolls against desert creatures.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Fiery (Planar)": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "This planar terrain mastery grants you resistance to fire 20. You also receive a +1 insight bonus on attack and damage rolls against outsiders and elementals that have the fire subtype.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Forest": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "Your time spent among dense woodland has given you a natural talent for concealment, providing a +4 competence bonus on Hide checks. You also receive a +1 insight bonus on attack and damage rolls against forest creatures.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.hide.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Terrain Mastery: Hills": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "Your experience in hilly terrain has sharpened your hearing considerably, granting a +4 competence bonus on Listen checks. You also receive a +1 insight bonus on attack and damage rolls against hills creatures.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.listen.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Terrain Mastery: Marsh": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "Your familiarity with wetlands has taught you to move without a sound, granting a +4 competence bonus on Move Silently checks. You also receive a +1 insight bonus on attack and damage rolls against marsh creatures.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.movesilently.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Terrain Mastery: Mountains": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "You possess an exceptional ability to scale steep surfaces, gaining a +4 competence bonus on Climb checks. If you already possess a climb speed, it increases by +10 feet instead. You also receive a +1 insight bonus on attack and damage rolls against mountain creatures.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.climb.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Terrain Mastery: Other (Planar)": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "For custom planes in your campaign, the GM may design additional planar terrain options. As an example, a plane consisting of a vast spiderweb suspended above a churning sea of vermin might grant a +4 competence bonus on Balance checks and a +4 bonus on Fortitude saves against poison.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Plains": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "Spending time in vast open terrain has honed your visual acuity, providing a +4 competence bonus on Spot checks. You also receive a +1 insight bonus on attack and damage rolls against plains creatures.",
+        "level": 6,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.spot.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Terrain Mastery: Shifting (Planar)": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "You gain a supernatural ability to exploit the mutable nature of unstable planes to hasten your travel. By instinctively reading shifts in the plane's fabric, you can use dimension door as a spell-like ability (functioning at your character level) once every 1d4 rounds. You also receive a +1 insight bonus on attack and damage rolls against outsiders and elementals native to shifting planes, such as slaadi and shadow mastiffs.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Underground": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "Through magical adaptation to subterranean darkness, you gain darkvision out to 60 feet. If you already possess darkvision from another source, its range extends to 120 feet instead. You also receive a +1 insight bonus on attack and damage rolls against underground creatures.",
+        "level": 6,
+        "selectable": true
+      },
+      "Terrain Mastery: Weightless (Planar)": {
+        "aptitude": "Horizon Walker Planar Terrain Mastery",
+        "description": "On planes with no gravity or subjective gravity, your fly speed increases by +30 feet. You also receive a +1 insight bonus on attack and damage rolls against creatures native to the Astral Plane, the Elemental Plane of Air, and the Ethereal Plane, including githyanki and air elementals.",
+        "level": 6,
+        "selectable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Horizon walkers do not receive proficiency with any additional weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Horizon Walker)"
+      }
+    },
+    "occurrenceMap": {
+      "Planar Terrain Mastery": "Planar Terrain Mastery",
+      "Terrain Mastery": "Terrain Mastery"
+    },
+    "overrides": {
+      "description": "A horizon walker is a relentless explorer who ventures into the most perilous regions across all planes of existence.",
+      "features": {
+        "Planar Terrain Mastery": {
+          "description": "As a horizon walker advances, her understanding of terrain broadens to encompass other planes of existence. Planar terrain mastery operates identically to terrain mastery, but at each level the horizon walker may select from the planar terrain options instead. She may also choose a standard (non-planar) terrain type if she prefers."
+        },
+        "Terrain Mastery": {
+          "description": "Through their extensive travels, horizon walkers develop a supernatural bond with the landscapes they traverse. Each level, they select an additional terrain type from the options listed below. Mastering a terrain grants the horizon walker either a bonus on checks with a skill relevant to that environment or another fitting advantage. Additionally, a horizon walker learns the fighting habits of dangerous creatures native to that terrain, receiving a +1 insight bonus on attack rolls and damage rolls against any creature whose stat block specifically names that terrain in its Environment entry. These terrain mastery benefits are permanent and portable-the horizon walker retains all associated bonuses to skill checks, attack rolls, and damage rolls regardless of current location. For instance, a horizon walker who has chosen desert terrain mastery remains immune to fatigue whether she is below ground, atop a mountain, or within a settlement."
+        },
+        "Terrain Mastery: Aligned (Planar)": {
+          "description": "You can instinctively attune yourself to the prevailing alignment of the plane you occupy. You suffer no penalties for having an alignment that conflicts with the plane's dominant alignment, and spells or effects that target creatures of the opposing alignment (such as unholy blight) have no effect on you. For purposes of magic, you are treated as having the plane's dominant alignment, but your actual behavior and any alignment-dependent class features remain unchanged."
+        },
+        "Terrain Mastery: Aquatic": {
+          "description": "You are thoroughly comfortable in water, gaining a +4 competence bonus on Swim checks. If you already possess a swim speed, it increases by +10 feet instead. You also receive a +1 insight bonus on attack and damage rolls against aquatic creatures.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "skills.swim.misc",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Terrain Mastery: Cavernous (Planar)": {
+          "description": "You gain tremorsense with a range of 30 feet."
+        },
+        "Terrain Mastery: Cold (Planar)": {
+          "description": "This planar terrain mastery grants you resistance to cold 20. You also receive a +1 insight bonus on attack and damage rolls against outsiders and elementals that have the cold subtype."
+        },
+        "Terrain Mastery: Desert": {
+          "description": "Your survival in harsh arid conditions has taught you exceptional endurance. You are completely immune to fatigue, and any effect that would normally exhaust you causes fatigue instead. You also receive a +1 insight bonus on attack and damage rolls against desert creatures."
+        },
+        "Terrain Mastery: Fiery (Planar)": {
+          "description": "This planar terrain mastery grants you resistance to fire 20. You also receive a +1 insight bonus on attack and damage rolls against outsiders and elementals that have the fire subtype."
+        },
+        "Terrain Mastery: Forest": {
+          "description": "Your time spent among dense woodland has given you a natural talent for concealment, providing a +4 competence bonus on Hide checks. You also receive a +1 insight bonus on attack and damage rolls against forest creatures.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "skills.hide.misc",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Terrain Mastery: Hills": {
+          "description": "Your experience in hilly terrain has sharpened your hearing considerably, granting a +4 competence bonus on Listen checks. You also receive a +1 insight bonus on attack and damage rolls against hills creatures.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "skills.listen.misc",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Terrain Mastery: Marsh": {
+          "description": "Your familiarity with wetlands has taught you to move without a sound, granting a +4 competence bonus on Move Silently checks. You also receive a +1 insight bonus on attack and damage rolls against marsh creatures.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "skills.movesilently.misc",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Terrain Mastery: Mountains": {
+          "description": "You possess an exceptional ability to scale steep surfaces, gaining a +4 competence bonus on Climb checks. If you already possess a climb speed, it increases by +10 feet instead. You also receive a +1 insight bonus on attack and damage rolls against mountain creatures.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "skills.climb.misc",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Terrain Mastery: Other (Planar)": {
+          "description": "For custom planes in your campaign, the GM may design additional planar terrain options. As an example, a plane consisting of a vast spiderweb suspended above a churning sea of vermin might grant a +4 competence bonus on Balance checks and a +4 bonus on Fortitude saves against poison."
+        },
+        "Terrain Mastery: Plains": {
+          "description": "Spending time in vast open terrain has honed your visual acuity, providing a +4 competence bonus on Spot checks. You also receive a +1 insight bonus on attack and damage rolls against plains creatures.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "skills.spot.misc",
+              "value": "4",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Terrain Mastery: Shifting (Planar)": {
+          "description": "You gain a supernatural ability to exploit the mutable nature of unstable planes to hasten your travel. By instinctively reading shifts in the plane's fabric, you can use dimension door as a spell-like ability (functioning at your character level) once every 1d4 rounds. You also receive a +1 insight bonus on attack and damage rolls against outsiders and elementals native to shifting planes, such as slaadi and shadow mastiffs."
+        },
+        "Terrain Mastery: Underground": {
+          "description": "Through magical adaptation to subterranean darkness, you gain darkvision out to 60 feet. If you already possess darkvision from another source, its range extends to 120 feet instead. You also receive a +1 insight bonus on attack and damage rolls against underground creatures."
+        },
+        "Terrain Mastery: Weightless (Planar)": {
+          "description": "On planes with no gravity or subjective gravity, your fly speed increases by +30 feet. You also receive a +1 insight bonus on attack and damage rolls against creatures native to the Astral Plane, the Elemental Plane of Air, and the Ethereal Plane, including githyanki and air elementals."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Horizon walkers do not receive proficiency with any additional weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Horizon walkers gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "As horizon walkers travel, they gain a mystical connection with the very ground they walk on. At each level, they add a new terrain environment to their repertoire from those given below. Terrain mastery gives a horizon walker a bonus on checks involving a skill useful in that terrain, or some other appropriate benefit. A horizon walker also knows how to fight dangerous creatures typically found in that terrain, gaining a +1 insight bonus on attack rolls and damage rolls against creatures with that terrain mentioned in the Environment entry of their descriptions. The horizon walker only gains the bonus if the rules specifically lists the terrain type. Horizon walkers take their terrain mastery with them wherever they go. They retain their terrain mastery bonuses on skill checks, attack rolls, and damage rolls whether they?re actually in the relevant terrain or not. For example, a horizon walker who has selected desert terrain mastery is immune to fatigue even if she's underground, in the mountains, or in a city.",
+        "name": "Terrain Mastery"
+      },
+      {
+        "description": "Eventually a horizon walker's familiarity with terrain extends to her journeys to other planes of existence. Planar terrain mastery functions just like terrain mastery, except that the horizon walker can choose one of the planar categories at each level. The horizon walker can take a nonplanar terrain type instead, if she wishes.",
+        "name": "Planar Terrain Mastery"
+      },
+      {
+        "description": "You are naturally at home in the water, gaining a +4 competence bonus on Swim checks, or a +10-foot bonus to your swim speed if you have one. You gain a +1 insight bonus on attack and damage rolls against aquatic creatures.",
+        "name": "Terrain Mastery: Aquatic"
+      },
+      {
+        "description": "You have endured where others perish, so you?re good at conserving your body's resources. You resist effects that tire you. You are immune to fatigue, and anything that would cause you to become exhausted makes you fatigued instead. You gain a +1 insight bonus on attack and damage rolls against desert creatures.",
+        "name": "Terrain Mastery: Desert"
+      },
+      {
+        "description": "You have an instinctive sense of camouflage from your time among the trees, granting you a +4 competence bonus on Hide checks. You gain a +1 insight bonus on attack and damage rolls against forest creatures.",
+        "name": "Terrain Mastery: Forest"
+      },
+      {
+        "description": "The faintest echoes find their way to your ears, granting you a +4 competence bonus on Listen checks. You gain a +1 insight bonus on attack and damage rolls against hills creatures.",
+        "name": "Terrain Mastery: Hills"
+      },
+      {
+        "description": "You have learned to be quieter than the whispering rushes; your mystic connection to the marsh grants you a +4 competence bonus on Move Silently checks. You gain a +1 insight bonus on attack and damage rolls against marsh creatures.",
+        "name": "Terrain Mastery: Marsh"
+      },
+      {
+        "description": "You naturally cling to surfaces others fall from. You gain a +4 competence bonus on Climb checks, or a +10-foot bonus to your climb speed if you have one. You gain a +1 insight bonus on attack and damage rolls against mountain creatures.",
+        "name": "Terrain Mastery: Mountains"
+      },
+      {
+        "description": "The wide-open spaces have sharpened your eyes, granting you a +4 competence bonus on Spot checks. You gain a +1 insight bonus on attack and damage rolls against plains creatures.",
+        "name": "Terrain Mastery: Plains"
+      },
+      {
+        "description": "You have magically adapted to your time in the dark. You have 60-foot darkvision, or 120-foot darkvision if you already had darkvision from another source. You gain a +1 insight bonus on attack and damage rolls against underground creatures.",
+        "name": "Terrain Mastery: Underground"
+      },
+      {
+        "description": "This kind of planar terrain mastery provides you with resistance to fire 20. You gain a +1 insight bonus on attack and damage rolls against outsiders and elementals with the fire subtype.",
+        "name": "Terrain Mastery: Fiery (Planar)"
+      },
+      {
+        "description": "You gain a +30-foot bonus to your fly speed on planes with no gravity or subjective gravity, such as the Astral Plane or the Elemental Plane of Air. You gain a +1 insight on attack and damage rolls against creatures native to the Astral Plane, the Elemental Plane of Air, and the Ethereal Plane, such as githyanki and air elementals.",
+        "name": "Terrain Mastery: Weightless (Planar)"
+      },
+      {
+        "description": "This kind of planar terrain mastery provides you with resistance to cold 20. You gain a +1 insight bonus on attack and damage rolls against outsiders and elementals with the cold subtype.",
+        "name": "Terrain Mastery: Cold (Planar)"
+      },
+      {
+        "description": "You have the supernatural ability to use the ever-shifting nature of planes such as Limbo and the Plane of Shadow to travel faster. You instinctively anticipate shifts in the reality of the plane that bring you closer to your destination, giving you the spell-like ability to use dimension door (as the spell cast at your character level) once every 1d4 rounds. You gain a +1 insight bonus on attack and damage rolls against outsiders and elementals native to a shifting plane, such as slaadi and shadow mastiffs.",
+        "name": "Terrain Mastery: Shifting (Planar)"
+      },
+      {
+        "description": "You have the instinctive ability to mimic the dominant alignment of the plane. You incur none of the penalties for having an alignment at odds with that of the plane, and spells and abilities that harm those of the opposite alignment (such as unholy blight) don't affect you. You have the dominant alignment of the plane with regard to magic, but your behavior and any alignment-related class features you have are unaffected.",
+        "name": "Terrain Mastery: Aligned (Planar)"
+      },
+      {
+        "description": "You gain tremorsense with a 30-foot range.",
+        "name": "Terrain Mastery: Cavernous (Planar)"
+      },
+      {
+        "description": "If your campaign uses planes you have invented yourself, you should design additional planar terrains. A plane composed entirely of an immense black spiderweb suspended over a roiling ocean of insectoid vermin, for example, might have a +4 competence bonus on Balance checks and a +4 bonus on Fortitude saves against poison as the benefit for planar terrain master",
+        "name": "Terrain Mastery: Other (Planar)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Diplomacy",
+      "Handle Animal",
+      "Hide",
+      "Knowledge (Geography)",
+      "Listen",
+      "Move Silently",
+      "Profession",
+      "Ride",
+      "Speak Language",
+      "Spot",
+      "Survival"
+    ],
+    "description": "The horizon walker is an unceasing traveler to the universe's most dangerous places.",
+    "hitDie": "d8",
+    "name": "Horizon Walker",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Endurance"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (geography)",
+            "ranks": 8
+          }
+        ]
+      },
+      "text": "Skills: Knowledge (geography) 8 ranks Feats: Endurance"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Terrain Mastery"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Terrain Mastery"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Terrain Mastery"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Terrain Mastery"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Terrain Mastery"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Planar Terrain Mastery"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Planar Terrain Mastery"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Planar Terrain Mastery"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Planar Terrain Mastery"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Planar Terrain Mastery"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

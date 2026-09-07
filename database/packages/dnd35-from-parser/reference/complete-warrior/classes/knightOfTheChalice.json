@@ -1,0 +1,506 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:08.242Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/knight-of-the-chalice/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Fiendslaying +1/"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Censure Demons"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Courage Of Heaven (Fear)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Fiendslaying +2/"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Consecrated Casting"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Courage Of Heaven (Enchantment)"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Fiendslaying +3/"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Courage Of Heaven (Radius)"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Fiendslaying +4/"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Holy Aura"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.beliefs.alignment",
+        "value": "Lawful Good",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Knight of the Chalice Class Feature",
+    "features": {
+      "Censure Demons": {
+        "description": "A knight of the Chalice can censure demons in a manner similar to how clerics turn undead, except that she draws upon celestial energy from the lawful good planes rather than channeling positive energy. When she activates this ability, every demon within 30 feet must make a Will save (DC 10 + knight's class level + knight's Charisma modifier) or become censured. A censured demon with Hit Dice equal to or exceeding twice the knight's class level is stunned for 1 round by the surge of holy power. A censured demon with fewer Hit Dice than twice the knight's class level is also stunned, but must additionally attempt a second Will save at the same DC; failure means the demon is banished to its home plane as though affected by a dismissal effect. Only a single demon can be banished per use of this ability; when multiple demons must attempt the second save, the one with the fewest Hit Dice is checked first. The knight can use this ability once per day for every two class levels she has attained.",
+        "level": 2,
+        "seedName": "Censure Demons (Knight of the Chalice)"
+      },
+      "Consecrated Casting": {
+        "description": "At 4th level, the knight's spells become especially potent against evil outsiders. Whenever the knight casts a spell targeting an evil outsider, she adds +2 to her caster level check for overcoming that creature's spell resistance and +2 to the saving throw DC of the spell.",
+        "level": 4,
+        "seedName": "Consecrated Casting (Knight of the Chalice)"
+      },
+      "Courage of Heaven": {
+        "description": "Starting at 2nd level, a knight of the Chalice becomes immune to any fear effect produced by an evil outsider. Upon reaching 5th level, this protection expands to include immunity to all enchantment spells and effects originating from evil outsiders, such as charms and suggestions. At 8th level, both of these immunities extend to every ally within 20 feet of the knight.",
+        "level": 2,
+        "seedName": "Courage of Heaven (Knight of the Chalice)",
+        "stackable": true
+      },
+      "Courage of Heaven (Enchantment)": {
+        "description": "",
+        "level": 5,
+        "seedName": "Courage of Heaven (Enchantment) (Knight of the Chalice)"
+      },
+      "Courage of Heaven (Fear)": {
+        "description": "",
+        "level": 2,
+        "seedName": "Courage of Heaven (Fear) (Knight of the Chalice)"
+      },
+      "Fiendslaying": {
+        "description": "A knight of the Chalice gains several advantages when fighting evil outsiders. At 1st level, she receives a +1 competence bonus on attack rolls against evil outsiders and deals an additional 1d6 damage on each successful strike, reflecting her specialized training against such foes. Both the attack bonus and the extra damage scale upward as the knight gains levels. The same competence bonus extends to Intimidate, Listen, Sense Motive, and Spot checks made against evil outsiders, as well as to Will saves against their attacks and any opposed ability checks against them. All of these bonuses stack with any favored enemy bonuses the knight may possess.",
+        "level": 1,
+        "seedName": "Fiendslaying (Knight of the Chalice)",
+        "stackable": true
+      },
+      "Holy Aura": {
+        "description": "Upon reaching 10th level, the knight of the Chalice can generate a holy aura once per day that protects only herself. This aura functions identically to the spell as cast by a 10th-level cleric, with the exception that its defensive benefits against attacks, spells, and mental influence apply solely versus evil outsiders, and only evil outsiders risk being blinded when they strike the knight.",
+        "level": 10,
+        "seedName": "Holy Aura (Knight of the Chalice)"
+      },
+      "Spells": {
+        "description": "From 1st level onward, a knight of the Chalice can cast a small number of divine spells. Casting a spell requires the knight to have a Wisdom score of at least 10 + the spell's level; a knight whose Wisdom is 10 or below cannot use these spells at all. Bonus spells and save DCs are determined by Wisdom (DC equals 10 + spell level + Wisdom modifier). At any level where the base spells per day for a given spell level is 0, the knight receives only whatever bonus spells her Wisdom grants. The knight has access to the full knight of the Chalice spell list and may freely select which spells to prepare each day. Preparation and casting follow the same process as a cleric, except the knight cannot spontaneously convert prepared spells into cure spells.",
+        "level": 1,
+        "seedName": "Spells (Knight of the Chalice)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any additional weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Knight of the Chalice)"
+      }
+    },
+    "occurrenceMap": {
+      "Censure Demons": "Censure Demons",
+      "Consecrated Casting": "Consecrated Casting",
+      "Courage Of Heaven (Enchantment)": "Courage of Heaven (Enchantment)",
+      "Courage Of Heaven (Fear)": "Courage of Heaven (Fear)",
+      "Courage Of Heaven (Radius)": "Courage of Heaven",
+      "Fiendslaying +1/": "Fiendslaying",
+      "Fiendslaying +2/": "Fiendslaying",
+      "Fiendslaying +3/": "Fiendslaying",
+      "Fiendslaying +4/": "Fiendslaying",
+      "Holy Aura": "Holy Aura"
+    },
+    "overrides": {
+      "description": "The knight of the Chalice belongs to a prestigious order of holy warriors dedicated to combating demons and other fiends from the lower planes.",
+      "features": {
+        "Censure Demons": {
+          "description": "A knight of the Chalice can censure demons in a manner similar to how clerics turn undead, except that she draws upon celestial energy from the lawful good planes rather than channeling positive energy. When she activates this ability, every demon within 30 feet must make a Will save (DC 10 + knight's class level + knight's Charisma modifier) or become censured. A censured demon with Hit Dice equal to or exceeding twice the knight's class level is stunned for 1 round by the surge of holy power. A censured demon with fewer Hit Dice than twice the knight's class level is also stunned, but must additionally attempt a second Will save at the same DC; failure means the demon is banished to its home plane as though affected by a dismissal effect. Only a single demon can be banished per use of this ability; when multiple demons must attempt the second save, the one with the fewest Hit Dice is checked first. The knight can use this ability once per day for every two class levels she has attained."
+        },
+        "Consecrated Casting": {
+          "description": "At 4th level, the knight's spells become especially potent against evil outsiders. Whenever the knight casts a spell targeting an evil outsider, she adds +2 to her caster level check for overcoming that creature's spell resistance and +2 to the saving throw DC of the spell."
+        },
+        "Courage of Heaven": {
+          "description": "Starting at 2nd level, a knight of the Chalice becomes immune to any fear effect produced by an evil outsider. Upon reaching 5th level, this protection expands to include immunity to all enchantment spells and effects originating from evil outsiders, such as charms and suggestions. At 8th level, both of these immunities extend to every ally within 20 feet of the knight."
+        },
+        "Fiendslaying": {
+          "description": "A knight of the Chalice gains several advantages when fighting evil outsiders. At 1st level, she receives a +1 competence bonus on attack rolls against evil outsiders and deals an additional 1d6 damage on each successful strike, reflecting her specialized training against such foes. Both the attack bonus and the extra damage scale upward as the knight gains levels. The same competence bonus extends to Intimidate, Listen, Sense Motive, and Spot checks made against evil outsiders, as well as to Will saves against their attacks and any opposed ability checks against them. All of these bonuses stack with any favored enemy bonuses the knight may possess."
+        },
+        "Holy Aura": {
+          "description": "Upon reaching 10th level, the knight of the Chalice can generate a holy aura once per day that protects only herself. This aura functions identically to the spell as cast by a 10th-level cleric, with the exception that its defensive benefits against attacks, spells, and mental influence apply solely versus evil outsiders, and only evil outsiders risk being blinded when they strike the knight."
+        },
+        "Spells": {
+          "description": "From 1st level onward, a knight of the Chalice can cast a small number of divine spells. Casting a spell requires the knight to have a Wisdom score of at least 10 + the spell's level; a knight whose Wisdom is 10 or below cannot use these spells at all. Bonus spells and save DCs are determined by Wisdom (DC equals 10 + spell level + Wisdom modifier). At any level where the base spells per day for a given spell level is 0, the knight receives only whatever bonus spells her Wisdom grants. The knight has access to the full knight of the Chalice spell list and may freely select which spells to prepare each day. Preparation and casting follow the same process as a cleric, except the knight cannot spontaneously convert prepared spells into cure spells."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any additional weapons or armor."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "knightofthechalicespells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Knights of the Chalice gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 1st level, a knight of the Chalice gains the ability to cast a number of divine spells. To cast a spell, a knight of the Chalice must have a Wisdom score of at least 10 + the spell's level, so a knight with a Wisdom of 10 or lower can not cast these spells. Knight of the Chalice bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + the knight's Wisdom modifier. When the knight gets 0 spells per day of a given spell level (for instance, 1st-level spells for a 1st-level knight), she gains only the bonus spells she would be entitled to based on her Wisdom score for that spell level. The knight of the Chalice's spell list appears below; he has access to any spell on the list and can freely choose which to prepare. A knight of the Chalice prepares and casts spells just as a cleric does (though a knight cannot lose a spell to cast a cure spell in its place).",
+        "name": "Spells"
+      },
+      {
+        "description": "Knights of the Chalice gain a number of special benefits in combat with evil outsiders. A 1st-level knight of the Chalice gets a +1 competence bonus on attack rolls against evil outsiders. On a successful attack, she deals an extra 1d6 points of damage due to her expertise in combating these creatures. These bonuses increase as the knight advances in level, as shown in the class table. A 1st-level knight of the Chalice's +1 competence bonus also applies to Intimidate, Listen, Sense Motive, and Spot checks when she uses these skills against evil outsiders. She gets the same bonus on Will saving throws against attacks from evil outsiders, and on opposed ability checks she makes against evil outsiders. These bonuses all stack with the knight's favored enemy bonus (if any).",
+        "name": "Fiendslaying",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Knights of the Chalice can censure demons, much as clerics turn undead. Rather than channeling positive energy, a knight of the Chalice channels energy from the celestial planes of lawful good. When a knight of the Chalice uses this ability, any demon within 30 feet must succeed on a Will save (DC 10 + the knight of the Chalice's class level + the knight of the Chalice's Cha modifier) or be censured. A censured demon whose Hit Dice are equal to or greater than twice the knight's class level is stunned by the knight's holy power for 1 round. If a censured demon has fewer Hit Dice than twice the knight's class level, it is stunned and must succeed on a second Will save (same DC) or be sent back to its home plane as if it had been the subject of a dismissal spell. Only one demon may dismissed in this way by any single censure demons attempt; if more than one demon is required to make this second Will save, check for the demon with the lowest HD first. A knight may attempt to censure demons once per day for every two class levels she possesses.",
+        "name": "Censure Demons",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Courage of Heaven (Fear)"
+      },
+      {
+        "description": "When a knight reaches 4th level, spells cast by the character on evil outsiders become more difficult to resist. When the knight casts a spell that targets an evil outsider, add +2 to the knight's caster level check to overcome the target's spell resistance and +2 to the DC of any saving throw the spell allows.",
+        "name": "Consecrated Casting",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Courage of Heaven (Enchantment)"
+      },
+      {
+        "description": "A knight of the Chalice of 2nd level or higher is immune to fear effects cast or created by evil outsiders. At 5th level and higher, a knight of the Chalice is also immune to enchantment spells and effects cast or created by evil outsiders, including charms and suggestions. At 8th level and higher, these immunities extend to all allies within 20 feet of the knight of the Chalice.",
+        "name": "Courage of Heaven",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 10th-level knight of the Chalice has the ability to create a holy aura once per day that affects herself only. The aura's effect is as the spell cast by a 10th-level cleric, but it wards the knight against the attacks, spells, and mental influence of evil outsiders only, and only evil outsiders can be blinded if they strike the knight.",
+        "name": "Holy Aura",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Intimidate",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Sense Motive"
+    ],
+    "description": "The knight of the Chalice is a member of an elite knightly organization devoted to fighting demons and other evil outsiders.",
+    "hitDie": "d10",
+    "name": "Knight of the Chalice",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Lawful good",
+        "bab": 8,
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "divine"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 10
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +8 Alignment: Lawful good Skills: Knowledge (the planes) 5 ranks, Knowledge (religion) 10 ranks Spells: Able to cast divine spells, including protection from evil"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Fiendslaying +1/+1d6"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Censure demons",
+          "courage of heaven (fear)"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Fiendslaying +2/+2d6"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Consecrated casting"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Courage of heaven (enchantment)"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Fiendslaying +3/+3d6"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Courage of heaven (radius)"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Fiendslaying +4/+4d6"
+        ],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Holy aura 1/day"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

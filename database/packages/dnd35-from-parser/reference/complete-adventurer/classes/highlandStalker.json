@@ -1,0 +1,348 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-04-01T02:22:04.195Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/highland-stalker/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "track": "Track"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Mountain Stride"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Skirmish (+1d6)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Swift Tracker"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Skirmish (+1d6, +1 AC)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Surefooted"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Skirmish (+2d6, +1 AC)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Camouflage"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Skirmish (+2d6, +2 AC)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Skirmish (+3d6, +2 AC)"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.listen.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spot.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.track.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.sneakattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Highland Stalker Class Feature",
+    "features": {
+      "Camouflage": {
+        "description": "Beginning at 7th level, a highland stalker can use the Hide skill in any sort of natural terrain.",
+        "level": 7,
+        "seedName": "Camouflage (Highland Stalker)"
+      },
+      "Mountain Stride": {
+        "description": "A highland stalker can move through scree and dense rubble at her normal speed. She can also move up steep slopes and stairs at her normal speed.",
+        "level": 1,
+        "seedName": "Mountain Stride (Highland Stalker)"
+      },
+      "Skirmish": {
+        "description": "A highland stalker relies on mobility to deal extra damage and improve her defense. Starting at 2nd level, she deals an extra 1d6 points of damage on all attacks during any round in which she moves at least 10 feet. This extra damage applies only to attacks taken during her turn. It increases by an additional 1d6 for every four levels gained above 2nd (2d6 at 6th and 3d6 at 10th). This extra damage only applies against living creatures that have a discernible anatomy. Undead, constructs, oozes, plants, incorporeal creatures, and creatures immune to extra damage from critical hits are not vulnerable to this extra damage. A highland stalker must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. Highland stalkers can apply this extra damage to ranged attacks made while skirmishing, but only if the target is within 30 feet. At 4th level, a highland stalker gains a +1 competence bonus to Armor Class during any round in which she moves at least 10 feet. The bonus applies as soon as she has moved 10 feet, and lasts until the start of her next turn. It improves to +2 at 8th level. A highland stalker loses this ability when wearing medium or heavy armor or when carrying a medium or heavy load. If she gains the skirmish ability from another class, the bonuses stack.",
+        "level": 2,
+        "seedName": "Skirmish (Highland Stalker)",
+        "stackable": true
+      },
+      "Surefooted": {
+        "description": "Starting at 5th level, a highland stalker is well acquainted with the dangers of mountainous terrain. She can ignore DC modifiers on Balance, Move Silently, and Tumble checks derived from scree, light rubble, dense rubble, steep slopes, or stairs. She also does not need to make a DC 10 Balance check when running or charging down a steep slope.",
+        "level": 5,
+        "seedName": "Surefooted (Highland Stalker)"
+      },
+      "Swift Tracker": {
+        "description": "Beginning at 3rd level, a highland stalker can move at her normal speed while following tracks. See the ranger class feature of the Player's Handbook.",
+        "level": 3,
+        "seedName": "Swift Tracker (Highland Stalker)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Highland stalkers are proficient with light armor. They gain no proficiency with any weapon.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Highland Stalker)"
+      }
+    },
+    "occurrenceMap": {
+      "Camouflage": "Camouflage",
+      "Mountain Stride": "Mountain Stride",
+      "Skirmish (+1d6)": "Skirmish",
+      "Skirmish (+1d6, +1 AC)": "Skirmish",
+      "Skirmish (+2d6, +1 AC)": "Skirmish",
+      "Skirmish (+2d6, +2 AC)": "Skirmish",
+      "Skirmish (+3d6, +2 AC)": "Skirmish",
+      "Surefooted": "Surefooted",
+      "Swift Tracker": "Swift Tracker"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Highland stalkers are proficient with light armor. They gain no proficiency with any weapon.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A highland stalker can move through scree and dense rubble at her normal speed. She can also move up steep slopes and stairs at her normal speed.",
+        "name": "Mountain Stride",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A highland stalker relies on mobility to deal extra damage and improve her defense. Starting at 2nd level, she deals an extra 1d6 points of damage on all attacks during any round in which she moves at least 10 feet. This extra damage applies only to attacks taken during her turn. It increases by an additional 1d6 for every four levels gained above 2nd (2d6 at 6th and 3d6 at 10th). This extra damage only applies against living creatures that have a discernible anatomy. Undead, constructs, oozes, plants, incorporeal creatures, and creatures immune to extra damage from critical hits are not vulnerable to this extra damage. A highland stalker must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. Highland stalkers can apply this extra damage to ranged attacks made while skirmishing, but only if the target is within 30 feet. At 4th level, a highland stalker gains a +1 competence bonus to Armor Class during any round in which she moves at least 10 feet. The bonus applies as soon as she has moved 10 feet, and lasts until the start of her next turn. It improves to +2 at 8th level. A highland stalker loses this ability when wearing medium or heavy armor or when carrying a medium or heavy load. If she gains the skirmish ability from another class, the bonuses stack.",
+        "name": "Skirmish",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a highland stalker can move at her normal speed while following tracks. See the ranger class feature of the Player's Handbook.",
+        "name": "Swift Tracker",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 5th level, a highland stalker is well acquainted with the dangers of mountainous terrain. She can ignore DC modifiers on Balance, Move Silently, and Tumble checks derived from scree, light rubble, dense rubble, steep slopes, or stairs. She also does not need to make a DC 10 Balance check when running or charging down a steep slope.",
+        "name": "Surefooted",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 7th level, a highland stalker can use the Hide skill in any sort of natural terrain.",
+        "name": "Camouflage",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Craft",
+      "Hide",
+      "Jump",
+      "Knowledge (Geography)",
+      "Knowledge (Nature)",
+      "Listen",
+      "Move Silently",
+      "Search",
+      "Spot",
+      "Survival"
+    ],
+    "description": "The mountains are unforgiving, and the ability to ?nd food at high altitude often means the difference between survival and starvation. For those who live in such climes, hunters provide not only food but also clothing, shelter, and tools when they bring back animal skins and bones. The best high-altitude hunters?highland stalkers?are consummate trackers with an instinctive knowledge of their mountainous territories. Scouts are the most likely candidates to become highland stalkers, but rogues are well represented, and the prestige class attracts a fair number of multiclass barbarians and rangers who qualify.",
+    "hitDie": "d8",
+    "name": "Highland Stalker",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Track"
+        ],
+        "skills": [
+          {
+            "name": "Listen",
+            "ranks": 8
+          },
+          {
+            "name": "Spot",
+            "ranks": 8
+          },
+          {
+            "name": "Survival",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Skirmish or sneak attack class feature."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Listen 8 ranks, Spot 8 ranks, Survival 8 ranks Feats: Track Special: Skirmish or sneak attack class feature."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Mountain stride"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Skirmish (+1d6)"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Swift tracker"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Skirmish (+1d6, +1 AC)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Surefooted"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Skirmish (+2d6, +1 AC)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Camouflage"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Skirmish (+2d6, +2 AC)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Skirmish (+3d6, +2 AC)"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

@@ -1,0 +1,3797 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-04-01T02:22:20.953Z",
+    "sourceUrl": "https://dndtools.net/feats/complete-scoundrel--60/",
+    "type": "feat"
+  },
+  "detected": {
+    "Acrobatic Backstab": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Advantageous Avoidance": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Ascetic Stalker": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "kipower": "Ki Power"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.kipower.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Assume Quirk": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.disguise.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Back on Your Feet": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Better Lucky than Good": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Chant of the Long Road": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Chord of Distraction": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "bardicmusic": "Bardic Music"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.bardicmusic.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "9",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Clarity of Vision": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spot.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Clever Improviser": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.disabledevice.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.openlock.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Collector of Stories": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgearcana.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgearchitectureandengineering.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgedungeoneering.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgegeography.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgehistory.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgelocal.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgenature.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgenobilityandroyalty.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgepsionics.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgereligion.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgetheplanes.rank",
+              "value": "5",
+              "valueType": "number"
+            }
+          ]
+        }
+      ]
+    },
+    "Conceal Spellcasting": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.concentration.rank",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Concussion Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "3",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Cool Head (CS)": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Corner Perch": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ],
+      "unresolvedModifiers": [
+        "Unresolved bonus: \"On her next turn, still braced in the corner, she draws her quarterstaff and attacks an ogre that has moved next to her, gaining a +1 bonus on the attack roll for higher ground\""
+      ]
+    },
+    "Daredevil Athlete": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Daring Outlaw": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "2",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.grace.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Daring Warrior": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "weaponspecialization": "Weapon Specialization"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.weaponspecialization.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.grace.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Deadly Defense": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Deafening Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Disemboweling Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [],
+      "template": {
+        "familyName": "Disemboweling Strike",
+        "type": "weapon"
+      }
+    },
+    "Dismount Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.ride.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Dumb Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Easy Escape": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Fine",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Diminutive",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Tiny",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Small",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Medium",
+              "valueType": "string"
+            }
+          ]
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Eldritch Erosion": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgearcana.rank",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Enduring Ki": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Epic of the Lost King": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Escape Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Expanded Ki Pool": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "kipower": "Ki Power"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.kipower.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Extreme Leap": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.jump.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "False Theurgy": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Fortuitous Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Freerunner": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Good Karma": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Group Fake-Out": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Head Shot": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [],
+      "template": {
+        "familyName": "Head Shot",
+        "type": "weapon"
+      }
+    },
+    "Healer's Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Healing Hands": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.heal.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Hidden Blade": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "quickdraw": "Quick Draw"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.quickdraw.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Impeding Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Improved Familiar": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.familiarsorcerer.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.familiarwizard.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Improved Skirmish": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.skirmish.count",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Leaping Climber": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.jump.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Listen to This": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.listen.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Lucky Break": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Lucky Catch": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Lucky Fingers": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Lucky Start": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Magical Appraisal": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.appraise.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgearcana.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ],
+      "template": {
+        "familyName": "Magical Appraisal",
+        "type": "school"
+      }
+    },
+    "Magical Fortune": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Make Your Own Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ],
+      "template": {
+        "familyName": "Make Your Own Luck",
+        "type": "skill"
+      }
+    },
+    "Martial Stalker": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [],
+      "unresolvedModifiers": [
+        "Unresolved bonus: \"For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja)\""
+      ]
+    },
+    "Master Spellthief": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.arcane",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Merciful Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Mind Drain": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Miser's Fortune": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Mosquito's Bite": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Never Outnumbered": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.intimidate.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Nimble Charge": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.balance.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Nimble Stand": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Opening Tap": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.openlock.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Persistent Attacker": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Point it Out": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spot.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Poison Expert": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "poisonuse": "Poison Use"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.poisonuse.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.craft.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Poison Master": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "poisonexpert": "Poison Expert",
+        "poisonuse": "Poison Use"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.poisonexpert.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.poisonuse.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.craft.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Psithief": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Psychic Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Quick Escape": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Quick Swimmer": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.swim.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Savvy Rogue": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "classes.rogue.level",
+          "value": "10",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Second Impression": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.disguise.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Shrouded Dance": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.hide.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Slipping Past": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sly Fortune": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Social Recovery": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.diplomacy.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sound of Silence": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "bardicmusic": "Bardic Music"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.bardicmusic.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "9",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Speedy Ascent": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Spot the Weak Point": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spot.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sudden Draw": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "quickdraw": "Quick Draw"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.quickdraw.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sure Hand": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Survivor's Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Sweet Talker": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Swift Ambusher": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.skirmish.count",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Swift Concentration": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.concentration.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Swift Hunter": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "favoredenemy": "Favored Enemy"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.favoredenemy.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.skirmish.count",
+          "value": "1",
+          "valueType": "number"
+        }
+      ],
+      "unresolvedModifiers": [
+        "Unresolved bonus: \"For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger\""
+      ]
+    },
+    "Tempting Fate": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Third Time's the Charm": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Throat Punch": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "improvedunarmedstrike": "Improved Unarmed Strike"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.improvedunarmedstrike.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "3",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Timely Misdirection": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Tumbling Crawl": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Twisted Charge": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.balance.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Unbelievable Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Up the Hill": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.balance.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Victor's Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": []
+    },
+    "Walk the Walls": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "12",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Wall Jumper": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.jump.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Warning Shout": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {
+        "bardicmusic": "Bardic Music",
+        "evasion": "Evasion"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.bardicmusic.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.evasion.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "9",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Whip Climber": {
+      "aptitudes": [
+        "General"
+      ],
+      "featNameMap": {},
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.userope.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    }
+  },
+  "mapping": {
+    "Acrobatic Backstab": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you succeed on a Tumble check to move through an enemy's space, you can treat that enemy as flat-footed against the next melee attack you make against it on your current turn. Your enemy must be standing on the ground or floor in order for you to use this trick.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Advantageous Avoidance": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to force a foe to reroll a critical hit confirmation roll made when attacking you. You can expend two luck rerolls as an immediate action to force a foe to reroll an attack roll made against you. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Ascetic Stalker": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
+      "featNameMap": {
+        "kipower": "Ki Power"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.kipower.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Assume Quirk": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When impersonating a particular individual, you can eliminate the normal Spot bonus granted to a viewer familiar with that individual (PH 73). The effect extends to all viewers. Using this trick requires no special action, but you can maintain the deception for only 1 hour per day.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.disguise.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Back on Your Feet": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you fall prone for any reason, you can stand up as an immediate action without provoking attacks of opportunity.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Better Lucky than Good": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you roll a natural 1 when making an attack roll, you can expend one luck reroll as a swift action to instead treat the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Chant of the Long Road": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a standard action, you can expend one daily use of your bardic music ability to allow yourself and all allies within 60 feet to avoid taking nonlethal damage for hustling (PH 164). This requires 1 minute of performance, and the effect lasts for 1 hour.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Chord of Distraction": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As an immediate action, you can expend three daily uses of your bardic music ability to distract an opponent. The target must be within 30 feet of you and able to hear or see you. Make a Perform check, opposed by the target's Sense Motive check (modified as if you were using Bluff to feint in combat). If you succeed, that opponent is rendered flat-footed against an ally of your choice. The effect lasts until that opponent is attacked or until the start of your next turn, whichever comes first.",
+      "featNameMap": {
+        "bardicmusic": "Bardic Music"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.bardicmusic.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "9",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Clarity of Vision": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a swift action, you can attempt a DC 20 Spot check. If successful, you focus your vision so clearly that you can pinpoint the location of invisible creatures within 30 feet. This clarity lasts until the end of your turn.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spot.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Clever Improviser": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When making a Disable Device or Open Lock check without using thieves' tools, you ignore the normal -2 penalty. You can use this trick any number of times per day until you fail a Disable Device or Open Lock check made without using thieves' tools. After a failure, you can't use Clever Improviser again until after you have rested for 8 hours.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.disabledevice.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.openlock.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Collector of Stories": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you attempt a trained Knowledge check to identify a creature or to learn its special powers or vulnerabilities, you gain a +5 competence bonus on the check.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgearcana.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgearchitectureandengineering.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgedungeoneering.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgegeography.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgehistory.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgelocal.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgenature.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgenobilityandroyalty.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgepsionics.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgereligion.rank",
+              "value": "5",
+              "valueType": "number"
+            },
+            {
+              "operator": "greater_than_or_equal",
+              "target": "skills.knowledgetheplanes.rank",
+              "value": "5",
+              "valueType": "number"
+            }
+          ]
+        }
+      ]
+    },
+    "Conceal Spellcasting": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can cast a spell without revealing that you are doing so. Make a Sleight of Hand check as part of the action used to cast the spell, opposed by the Spot checks of onlookers. If you are successful, an observer can't tell that you're casting a spell. That observer cannot make an attack of opportunity against you for casting, nor can it attempt to counter your spell.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.concentration.rank",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Concussion Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack imposes a 2 penalty on the target's Intelligence and Wisdom checks, as well as on any Intelligence and Wisdom-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 2d6.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "3",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Cool Head (CS)": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You immediately learn up to two mental skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on mental skill tricks.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Corner Perch": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you succeed on a Climb check to ascend or descend either a \"chimney,\" where you can brace against opposite walls, or a corner where you can brace against perpendicular walls (PH 69), you can suspend yourself momentarily. Until the end of your next turn, you can use your hands freely for any other purpose (including attacking) without risk of falling. At the end of your next turn, you fall from the wall unless you succeed on a Climb check against the normal DC + 5 (made as a move action) or you have succeeded on another Climb check to move up or down the wall as normal. Example: Ember the monk succeeds on a DC 15 Climb check to scramble up 10 feet (one-quarter of her speed) into a corner formed by two typical dungeon walls. Using Corner Perch, she then braces her legs against the walls and uses her remaining standard action to draw and throw a shuriken at a bugbear on the ground below her. On her next turn, still braced in the corner, she draws her quarterstaff and attacks an ogre that has moved next to her, gaining a +1 bonus on the attack roll for higher ground. At the end of that turn, she drops from the wall rather than attempting to hold her position. Since she has the slow fall class feature, Ember takes no damage from the drop.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Daredevil Athlete": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Three times per day, you can use an immediate action to gain a +5 competence bonus on a single Balance, Climb, Escape Artist, Jump, Ride, Swim, or Tumble check",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Daring Outlaw": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 7th-level rogue/4th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage. For example, a 7th-level rogue/4th-level swashbuckler would deal an extra 6d6 points of damage with her sneak attack, as if she were an 11th-level rogue.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "2",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.grace.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Daring Warrior": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+      "featNameMap": {
+        "weaponspecialization": "Weapon Specialization"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.weaponspecialization.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.grace.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Deadly Defense": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Deafening Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack causes the target to be deafened for 3 rounds. If you use this feat a second time on a target before 3 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Disemboweling Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack with a slashing weapon for which you have selected Weapon Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.",
+      "modifiers": [],
+      "requirements": [],
+      "template": {
+        "familyName": "Disemboweling Strike",
+        "type": "weapon"
+      }
+    },
+    "Dismount Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If your mount has moved at least 10 feet in this round and you succeed on a fast dismount (Ride, PH 80), you can use a standard action to attack an adjacent opponent as if you had charged that opponent.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.ride.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Dumb Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20.You can use this feat once per day.You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Easy Escape": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If your opponent is larger than Medium, you gain a circumstance bonus on your Escape Artist check to escape a grapple or pin. The size of the bonus depends on your opponent's size, according to the following table.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Fine",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Diminutive",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Tiny",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Small",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.size",
+              "value": "Medium",
+              "valueType": "string"
+            }
+          ]
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Eldritch Erosion": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack reduces your target's spell resistance and power resistance by 5 (minimum 0) for 10 rounds. If you use this feat a second time on a target before the ten rounds have elapsed, the effect of the first expires. using this reduces your sneak attack damage by 4d6",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgearcana.rank",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "4",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Enduring Ki": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By spending an extra daily use of your ki power when you activate it, the chosen effect lasts for an additional round (ki power is a class feature of the ninja; see the sidebar for details). You also gain one extra daily use of your ki power.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Epic of the Lost King": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a move action, you can expend one daily use of your bardic music ability to remove fatigue from up to three allies (including yourself) within 30 feet. If you spend three daily uses of bardic music, you can remove exhaustion from your allies instead.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Escape Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you escape a grapple, you can make a single melee attack with a light weapon as a swift action against the opponent that was grappling you. The opponent is considered flat-footed against this attack. You must have the weapon in hand at the beginning of your turn in order to use this trick.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Expanded Ki Pool": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You gain three extra daily uses of your ki power (ki power is a class feature of the ninja; see the sidebar for details).",
+      "featNameMap": {
+        "kipower": "Ki Power"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.kipower.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Extreme Leap": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you make a horizontal jump of at least 10 feet during your turn, you can spend a swift action to move an additional 10 feet on that turn.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.jump.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "False Theurgy": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a swift action when casting a spell, you can adjust the spell's verbal and somatic components to mimic those of another spell of your choice of the same level. Any creature using Spellcraft or any other means to identify the spell you're casting believes it to be the other spell instead. This trick renders your spell immune to the normal method of counterspelling, though dispel magic or a similar effect still works normally. Of course, once the spell takes effect, it can be identified and dealt with normally (a fireball still looks and feels like a fireball once you've cast it).",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Fortuitous Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as a swift action to reroll a weapon damage roll. You can expend two luck rerolls as a swift action to reroll an attack roll. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Freerunner": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You immediately learn up to two movement skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on movement skill tricks.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Good Karma": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to redirect an attack made against an adjacent ally so that it is made against you instead. You must be within reach of the attacker (if a melee attack) or within range of the attack (if a ranged attack) in order to use this ability. The attack roll result remains the same, but it is against your AC, rather than that of your ally. If the redirected attack hits you, you take an extra 50% damage from it. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Group Fake-Out": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can use Bluff to feint in combat (PH 68) against more than one opponent. Make one Bluff check opposed by separate Sense Motive checks for each opponent. For each opponent after the first that you wish to affect, you take a cumulative -2 penalty on your Bluff check. Example: Lidda wants to feint against a group of three orcs, so she rolls a Bluff check with a -4 penalty. Each orc rolls a separate Sense Motive check opposed by Lidda's adjusted Bluff check result.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Head Shot": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack with a bludgeoning weapon for which you have selected Weapon Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.",
+      "modifiers": [],
+      "requirements": [],
+      "template": {
+        "familyName": "Head Shot",
+        "type": "weapon"
+      }
+    },
+    "Healer's Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as a swift action to reroll the number of points of damage healed by a conjuration (healing) spell you have just cast on your current turn. You gain one luck reroll per day",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Healing Hands": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you succeed on a Heal check made to stabilize a dying character, that character also heals 1d6 points of damage.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.heal.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Hidden Blade": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "After you have used the Sleight of Hand skill to successfully conceal a weapon (PH 81), you can draw that weapon as a move action instead of a standard action. An opponent that was unaware of the concealed weapon is treated as flat-footed against the first attack you make in that turn.",
+      "featNameMap": {
+        "quickdraw": "Quick Draw"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.quickdraw.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Impeding Attack": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack imposes a -2 penalty on the target's Strength and Dexterity checks, as well as on any Strength- and Dexterity-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Improved Familiar": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you choose a familiar, the creatures on the table below are also available. You can choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic,good through evil). For example, a chaotic good spellcaster could acquire a neutral familiar. A lawful neutral spellcaster could acquire a neutral good familiar. Except as noted here, improved familiars otherwise use the normal rules for familiars (PH 52). Arcane Familiar Alignment Caster Level Monstrous centipede, Small N 2nd Badger N 3rd Monstrous scorpion, Small N 3rd Viper, Medium N 3rd Monstrous spider, Small N 4th Vargouille* NE 6th Mephit, any N 7th * Vargouilles summoned as familiars do not possess the kiss supernatural ability.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.familiarsorcerer.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.familiarwizard.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    "Improved Skirmish": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.skirmish.count",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Leaping Climber": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you begin a climb by making a Jump check as a swift action, you can add the vertical distance of your jump to the distance climbed in that round. Treat the Jump check as being made with a running start even if you didn't move at least 20 feet. Example: Ember the monk is standing at the base of a craggy cliff and wants to scale the cliff as quickly as possible. She spends a swift action to make a Jump check and gets a result of 24. Thus, she adds 6 feet to the distance she climbs in that round.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.jump.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Listen to This": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Whenever you make a successful Listen check to hear a noise, you can describe that sound any time up to 1 hour later with such clarity that any individuals hearing the description are treated as if they had heard the sound themselves. This trick is particularly useful if you overhear a conversation but don't understand the language spoken, since it allows you to repeat it verbatim to an ally who might be able to translate.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.listen.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Lucky Break": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as a swift action to reroll a Strength check made to break an item or burst open a door. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Lucky Catch": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to reroll a Balance, Climb, or Jump check. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Lucky Fingers": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to reroll a Disable Device, Open Lock, or Sleight of Hand check. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Lucky Start": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll to reroll an initiative check. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Magical Appraisal": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you succeed by 5 or more on a Spellcraft check to determine the school of magic of the aura surrounding a magic item (by casting detect magic), you can then spend 1 minute concentrating to also learn the properties of the item, as if you had cast identify. You can use this skill trick once per day.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.appraise.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.knowledgearcana.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ],
+      "template": {
+        "familyName": "Magical Appraisal",
+        "type": "school"
+      }
+    },
+    "Magical Fortune": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as a swift action to reroll the damage dealt by a spell you have just cast. You can expend two luck rerolls as a swift action to reroll a caster level check. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Make Your Own Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to reroll a skill check, as long as you have at least 1 rank in that skill. You gain one luck reroll per day",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ],
+      "template": {
+        "familyName": "Make Your Own Luck",
+        "type": "skill"
+      }
+    },
+    "Martial Stalker": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Master Spellthief": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your spellthief levels stack with levels of other arcane spellcaster classes (that is, levels of any class that grants arcane spellcasting other than the spellthief) for the purpose of determining what level of spell you can steal. For example, a 4th-level spellthief/4th-level wizard could steal spells of up to 4th level, as if he were an 8th-level spellthief. Your spellthief and arcane spellcaster levels also stack when determining your caster level for all arcane spells. The character described above would have a caster level of 8th for both his spellthief spells and his wizard spells. In addition, you do not incur a chance of arcane spell failure for arcane spells cast or stolen from other classes, but only if you are wearing light armor. You incur the normal arcane spell failure chance when wearing medium or heavy armor or when using a shield.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.arcane",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Merciful Strike": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack deals nonlethal damage. When using this feat, you can ignore the usual -4 penalty on attack rolls for attempting to deal nonlethal damage with a lethal weapon. Using this feat reduces your sneak attack damage by 1d6.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Mind Drain": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack drains power points from your target equal to its manifester level (minimum 1). If this attack reduces your target to 0 power points, the opponent also loses any psionic focus. A target that has no power points when you make the sneak attack is not affected by this feat. You can't use this feat on the same target more than once per round. Using this feat reduces your sneak attack damage by 1d6.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Miser's Fortune": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll.In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws.You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Mosquito's Bite": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you use a light weapon to hit a flat-footed opponent, you can choose to have the opponent not realize that it has been hit until the start of your next turn. Instead, that opponent reacts as if you had attacked and missed. Using this skill trick doesn't require an action on your part. This trick doesn't allow the opponent to ignore any of the other effects of your attack, such as ability damage from poison on your blade or falling unconscious when reduced to fewer than 0 hit points.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Never Outnumbered": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you use Intimidate to demoralize an opponent (PH 76), you can affect all enemies within 10 feet that can see you, rather than only a single enemy you threaten. Each enemy rolls a separate modified level check to oppose your Intimidate check, but the skill check otherwise works as normal.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.intimidate.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Nimble Charge": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can run or charge across a difficult surface without needing to make a Balance check (PH 67).",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.balance.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Nimble Stand": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can stand up from prone without provoking attacks of opportunity.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Opening Tap": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a swift action, you can make an Open Lock check with a -10 penalty by tapping a lock with a hard, blunt object such as the pommel of a weapon. You don't take any additional penalty for making the check without thieves' tools. You can use this trick any number of times per day until you fail an Open Lock check made in this way. After a failure, you can't use Opening Tap again until after you have rested for 8 hours.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.openlock.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Persistent Attacker": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If your sneak attack hits, your first attack against that creature on your next turn is also considered a sneak attack even if it wouldn't normally qualify. Using this feat reduces your first sneak attack's damage by 4d6. The resulting second sneak attack deals its full extra damage.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Point it Out": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you make a successful Spot check, you can spend an immediate action to grant a single ally a free Spot check to see the same thing (with a +2 circumstance bonus). Your ally must be within 30 feet of you and able to see or hear you to benefit from this effect.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spot.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Poison Expert": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Choose a type of poison (contact, ingested, inhaled, or injury). The DC to resist both the initial and secondary damage of poisons of this type that you create and use increases by 1. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+      "featNameMap": {
+        "poisonuse": "Poison Use"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.poisonuse.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.craft.rank",
+          "value": "4",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Poison Master": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Choose a type of poison (contact, ingested, inhaled, or injury) for which you have selected the Poison Expert feat. The initial and secondary damage dealt by poisons of this type that you create and use increases by 1 point per die of damage (or by 1 point, if it deals a fixed amount of damage). For example, lich dust used by a character with Poison Master (ingested) would deal initial damage of 2d6+2 Str and secondary damage of 1d6+1 Con plus 1d6+1 Str. If a poison doesn't deal damage, this feat has no effect. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+      "featNameMap": {
+        "poisonexpert": "Poison Expert",
+        "poisonuse": "Poison Use"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.poisonexpert.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.poisonuse.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.craft.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ],
+      "stackable": true
+    },
+    "Psithief": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can use your steal spell ability to siphon psionic energy instead of spell energy. Instead of stealing a spell, you can choose to steal a number of power points equal twice to the maximum level of spell you can steal minus 1 (up to a maximum value equal to the manifester level of the creature struck). For example, a 4th-level spellthief/1st-level psychic warrior could steal up to 3 power points; if he used this ability against a 2nd-level psion he could steal only 2 power points, since that is the target's manifester level. You can use the stolen power points only to manifest a psionic power you already know. You must use these power points within 1 hour of stealing them; otherwise, the extra psionic energy fades harmlessly away. This feat otherwise follows the rules for the steal spell class feature. In addition, Knowledge (psionics) and Psicraft are spellthief class skills for you. These skills appear on of Expanded Psionics Handbook.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Psychic Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as a swift action to reroll the damage dealt by a psionic power you have just manifested. You can expend two luck rerolls as a swift action to reroll a manifester level check. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Quick Escape": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "This trick has two options, either of which can be used once per encounter. You can make an Escape Artist check to escape from a grapple or pin as a swift action. You can use this trick even if you have already used a standard action on your current turn to attempt the same escape. Alternatively, you can make any Escape Artist check that would normally require a full-round action as a move action. You can't use this option more than once per day against the same kind of restraint.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Quick Swimmer": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you succeed on a Swim check to move at least 10 feet, you can move an extra 10 feet as part of that action.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.swim.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Savvy Rogue": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Based on the rogue special abilities you have (PH 50), you gain one or more additional special benefits as described below. You gain the benefits for all the special abilities you have, even those you gain after selecting this feat. Crippling Strike: You can deal Strength damage even to a target that is immune to extra damage from sneak attacks. Defensive Roll: You can use this ability three times per day, rather than once per day. Improved Evasion: You gain a +2 competence bonus on Reflex saves. Opportunist: You can use the opportunist ability as many times per round as you can make attacks of opportunity, but no more than once per creature per round. Each use of the opportunist ability counts as an attack of opportunity. Skill Mastery: When taking 10 with a skill to which you have assigned skill mastery, you can treat the die roll as a 12 instead of as a 10. (In effect, you're \"taking 12.\") Slippery Mind: You gain a +2 competence bonus on the extra save granted by slippery mind.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "classes.rogue.level",
+          "value": "10",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Second Impression": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If an observer sees through your disguise with a successful Spot check, you can (as an immediate action) attempt a Bluff check to convince him that he's mistaken. Use the observer's Spot check result as the DC for your Bluff check; if you succeed, the observer ignores the evidence of his own senses in favor of what your disguise attempts to show. You must be aware of the observer's discovery in order to use this trick; for example, you can't use it against someone viewing you secretly, nor can you use it against someone who sees through your disguise but keeps that information secret. When in doubt, the DM should allow a character to use this trick if she has any reason to fear that her cover has been blown. You can use this trick only once per day, but its effect extends to all viewers within 30 feet of you. For example, you could attempt it against an entire patrol of guards confronting you just as effectively as against a single person. This trick doesn't let you maintain a disguise that has been defeated by other means; for example, if your disguise self spell is penetrated by a true seeing spell, Second Impression won't help.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.disguise.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Shrouded Dance": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a move action, you can attempt a DC 20 Hide check. If you succeed, you have concealment until the start of your next turn.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.hide.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Slipping Past": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a swift action, you can ignore the additional movement movement cost and penalty on attack rolls and to AC when squeezing through a narrow space (PH 148). The benefit lasts until the start of your next turn.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.escapeartist.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sly Fortune": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to reroll a Hide, Move Silently, or Tumble check. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Social Recovery": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If your Diplomacy check to influence an NPC's attitude fails, you can spend another full round talking to the NPC, then make a Bluff check with a -10 penalty. Use the result of this check in place of the Diplomacy check result, except that it can't improve the NPC's attitude by more than one step. Once you use this skill trick (successfully or not), you cannot use it against the same target again for 24 hours.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.diplomacy.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sound of Silence": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a standard action, you can expend two daily uses of your bardic music ability to deafen a single target for 3 rounds. A successful Will save (using your Perform check result as the DC) negates the effect. The target must be within 30 feet of you and be able to hear you.",
+      "featNameMap": {
+        "bardicmusic": "Bardic Music"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.bardicmusic.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "9",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Speedy Ascent": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you succeed on a Climb check to move at least 10 feet, you can move an extra 10 feet as part of that action.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Spot the Weak Point": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As a standard action, you can attempt a Spot check to find a weakness in your opponent's defenses. The DC of this check equals the opponent's AC. If the check succeeds, your next attack against that opponent (which must be made no later than your next turn) is treated as a touch attack. If you use a ranged weapon to deliver the attack, your opponent must be within 30 feet of you in order for you to benefit from the trick.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spot.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sudden Draw": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If an opponent provokes an attack of opportunity from you, you can draw a weapon that you have successfully concealed using Sleight of Hand (PH 81) as an immediate action to deliver the attack of opportunity with that weapon. That opponent is treated as flat-footed against the attack with the concealed weapon.",
+      "featNameMap": {
+        "quickdraw": "Quick Draw"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.quickdraw.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.sleightofhand.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Sure Hand": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You immediately learn up to two manipulation skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on manipulation skill tricks.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Survivor's Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to reroll a saving throw you just failed. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Sweet Talker": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You immediately learn up to two interaction skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on interaction skill tricks.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Swift Ambusher": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/7th-level rogue would deal an extra 3d6 points of damage and gain a +3 competence bonus to AC when skirmishing, as if she were an 11th-level scout. In addition, you can qualify for ambush feats as if your sneak attack bonus damage were the sum of your skirmish damage and sneak attack bonus damage. You cannot sacrifice skirmish extra damage to use those feats, however.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.skirmish.count",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Swift Concentration": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can maintain concentration on a spell or similar effect as a swift action.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.concentration.rank",
+          "value": "12",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Swift Hunter": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your ranger and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/1st-level ranger would deal an extra 2d6 points of damage and gain a +1 competence bonus to AC when skirmishing, as if she were a 5th-level scout. Your ranger and scout levels also stack for the purpose of determining when you select additional favored enemies, as well as the total bonus granted against your favored enemies. For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger. In addition, your skirmish extra damage applies against any creature you have selected as a favored enemy, even if it is normally immune to extra damage from critical hits or skirmish attacks.",
+      "featNameMap": {
+        "favoredenemy": "Favored Enemy"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.favoredenemy.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.skirmish.count",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Tempting Fate": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend a luck reroll to reroll a stabilization check. In addition, once per day, whenever you have at least 1 hit point remaining and would be dealt enough damage to kill you, you can expend one luck reroll as an immediate action to take only enough damage to reduce you to -9 hit points. You automatically stabilize. You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "identity.meta.level",
+          "value": "6",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Third Time's the Charm": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as an immediate action to use the granted power of the Luck domain an additional time per day. You can only use this benefit immediately after using the Luck domain's granted power (in effect, this feat gives you a third chance to succeed on the roll). You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Throat Punch": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "Your successful sneak attack delivered with an unarmed strike temporarily hinders the target's ability to speak. For the next 3 rounds, the target takes a -5 penalty on any skill check requiring speech and has a 50% chance of failure when casting a spell with a verbal component or activating a magic item with a command word. Multiple uses of this feat don't increase the duration beyond 3 rounds. Using this feat reduces your sneak attack damage by 2d6.",
+      "featNameMap": {
+        "improvedunarmedstrike": "Improved Unarmed Strike"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.improvedunarmedstrike.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "feats.sneakattack.count",
+          "value": "3",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Timely Misdirection": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you succeed on a Bluff check to feint in combat (PH 68), your opponent can't make any attacks of opportunity against you until the start of its next turn. This effect is in addition to the normal benefits of a successful feint.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.bluff.rank",
+          "value": "8",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Tumbling Crawl": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "By succeeding on a DC 15 Tumble check, you can crawl 5 feet as a move action without provoking attacks of opportunity. Crawling normally provokes attacks of opportunity from any attackers who threaten you at any point during your crawl (PH 142).",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Twisted Charge": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "When you charge, you can make one turn of up to 90 degrees during your movement. You can't move more than your speed as part of this charge. All other restrictions on charges still apply, and you must have line of sight to the opponent at the start of your turn.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.balance.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Unbelievable Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As long as you have at least one luck reroll remaining for the day, you gain a +2 luck bonus on whichever of your saves has the lowest base bonus. If two or more of your saves tie for the lowest base bonus, choose when you select this feat which save it applies to. If your base save bonuses later change so that the chosen save no longer has the lowest base bonus, the luck bonus from this feat immediately applies to the save that now has the lowest base bonus. You gain two luck rerolls per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Up the Hill": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can move up a steep slope or stairs at your normal speed instead of at half speed. This effect lasts for 1 round.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.balance.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Victor's Luck": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll.You gain one luck reroll per day.",
+      "modifiers": [],
+      "requirements": []
+    },
+    "Walk the Walls": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can move up a wall without making a Climb check. Each 5 feet of vertical movement costs you 4 squares of movement, and you must begin and end your turn on a horizontal surface.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "12",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Wall Jumper": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "If you have succeeded on a Climb check to ascend or descend a wall during this or your previous turn, you can leap horizontally from that wall as if you had a running start.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.climb.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.jump.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Warning Shout": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "As an immediate action, you can expend two daily uses of your bardic music ability to grant a single ally (other than yourself) a +5 morale bonus on her next Reflex save and evasion the monk class feature, PH 41). The ally must be within 30 feet of you and able to see or hear you. The effect lasts until the target rolls a Reflex save or until the start of your turn, whichever comes first.",
+      "featNameMap": {
+        "bardicmusic": "Bardic Music",
+        "evasion": "Evasion"
+      },
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.bardicmusic.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.evasion.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "9",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Whip Climber": {
+      "aptitudes": [
+        "General"
+      ],
+      "description": "You can use a whip as a makeshift grappling hook, lashing it around a protrusion or other firm, weightbearing object in order to climb a wall or swing across a chasm. You make Climb checks using the whip as if it were a normal rope. Using this feat requires a Use Rope check as normal for securing a grappling hook (PH 86) but takes only a move action.",
+      "modifiers": [],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.userope.rank",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
+    },
+    "overrides": {
+      "reviewed": [
+        "Unresolved bonus: \"On her next turn, still braced in the corner, she draws her quarterstaff and attacks an ogre that has moved next to her, gaining a +1 bonus on the attack roll for higher ground\"",
+        "Unresolved bonus: \"For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja)\"",
+        "Unresolved bonus: \"For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger\""
+      ]
+    }
+  },
+  "raw": [
+    {
+      "benefit": "If you succeed on a Tumble check to move through an enemy's space, you can treat that enemy as flat-footed against the next melee attack you make against it on your current turn. Your enemy must be standing on the ground or floor in order for you to use this trick.",
+      "featType": "general",
+      "name": "Acrobatic Backstab",
+      "prerequisiteText": "Tumble 12 ranks,"
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to force a foe to reroll a critical hit confirmation roll made when attacking you. You can expend two luck rerolls as an immediate action to force a foe to reroll an attack roll made against you. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Advantageous Avoidance",
+      "prerequisiteText": "",
+      "special": "Unlike other luck feats, you can use this feat after seeing the success of the roll to be affected."
+    },
+    {
+      "benefit": "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
+      "featType": "general",
+      "name": "Ascetic Stalker",
+      "prerequisiteText": "Ki power, ki strike (magic),",
+      "special": "A monk can select Ascetic Stalker as a bonus feat at 1st, 2nd, or 6th level instead of one of the other feats indicated for those levels (PH 41)."
+    },
+    {
+      "benefit": "When impersonating a particular individual, you can eliminate the normal Spot bonus granted to a viewer familiar with that individual (PH 73). The effect extends to all viewers. Using this trick requires no special action, but you can maintain the deception for only 1 hour per day.",
+      "featType": "general",
+      "name": "Assume Quirk",
+      "prerequisiteText": "Disguise 5 ranks,"
+    },
+    {
+      "benefit": "If you fall prone for any reason, you can stand up as an immediate action without provoking attacks of opportunity.",
+      "featType": "general",
+      "name": "Back on Your Feet",
+      "prerequisiteText": "Tumble 12 ranks,"
+    },
+    {
+      "benefit": "If you roll a natural 1 when making an attack roll, you can expend one luck reroll as a swift action to instead treat the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day",
+      "featType": "luck",
+      "name": "Better Lucky than Good",
+      "prerequisiteText": "Character Level 6, any two luck feats,"
+    },
+    {
+      "benefit": "As a standard action, you can expend one daily use of your bardic music ability to allow yourself and all allies within 60 feet to avoid taking nonlethal damage for hustling (PH 164). This requires 1 minute of performance, and the effect lasts for 1 hour.",
+      "featType": "bardic",
+      "name": "Chant of the Long Road",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "As an immediate action, you can expend three daily uses of your bardic music ability to distract an opponent. The target must be within 30 feet of you and able to hear or see you. Make a Perform check, opposed by the target's Sense Motive check (modified as if you were using Bluff to feint in combat). If you succeed, that opponent is rendered flat-footed against an ally of your choice. The effect lasts until that opponent is attacked or until the start of your next turn, whichever comes first.",
+      "featType": "bardic",
+      "name": "Chord of Distraction",
+      "prerequisiteText": "Perform 9 ranks, Bardic music.,"
+    },
+    {
+      "benefit": "As a swift action, you can attempt a DC 20 Spot check. If successful, you focus your vision so clearly that you can pinpoint the location of invisible creatures within 30 feet. This clarity lasts until the end of your turn.",
+      "featType": "general",
+      "name": "Clarity of Vision",
+      "prerequisiteText": "Spot 12 ranks,"
+    },
+    {
+      "benefit": "When making a Disable Device or Open Lock check without using thieves' tools, you ignore the normal -2 penalty. You can use this trick any number of times per day until you fail a Disable Device or Open Lock check made without using thieves' tools. After a failure, you can't use Clever Improviser again until after you have rested for 8 hours.",
+      "featType": "general",
+      "name": "Clever Improviser",
+      "prerequisiteText": "Disable Device 5 ranks, Open Lock 5 ranks,"
+    },
+    {
+      "benefit": "When you attempt a trained Knowledge check to identify a creature or to learn its special powers or vulnerabilities, you gain a +5 competence bonus on the check.",
+      "featType": "general",
+      "name": "Collector of Stories",
+      "prerequisiteText": "Knowledge (any) 5 ranks,"
+    },
+    {
+      "benefit": "You can cast a spell without revealing that you are doing so. Make a Sleight of Hand check as part of the action used to cast the spell, opposed by the Spot checks of onlookers. If you are successful, an observer can't tell that you're casting a spell. That observer cannot make an attack of opportunity against you for casting, nor can it attempt to counter your spell.",
+      "featType": "general",
+      "name": "Conceal Spellcasting",
+      "prerequisiteText": "Concentration 1 ranks, Sleight of Hand 5 ranks, Spellcraft 1 ranks,"
+    },
+    {
+      "benefit": "Your successful sneak attack imposes a 2 penalty on the target's Intelligence and Wisdom checks, as well as on any Intelligence and Wisdom-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 2d6.",
+      "featType": "ambush",
+      "name": "Concussion Attack",
+      "prerequisiteText": "Sneak attack +3d6,"
+    },
+    {
+      "benefit": "You immediately learn up to two mental skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on mental skill tricks.",
+      "featType": "general",
+      "name": "Cool Head (CS)",
+      "normal": "You are limited to a maximum number of skill tricks equal to one-half your character level.",
+      "prerequisiteText": "Any two mental skill tricks.,"
+    },
+    {
+      "benefit": "If you succeed on a Climb check to ascend or descend either a \"chimney,\" where you can brace against opposite walls, or a corner where you can brace against perpendicular walls (PH 69), you can suspend yourself momentarily. Until the end of your next turn, you can use your hands freely for any other purpose (including attacking) without risk of falling. At the end of your next turn, you fall from the wall unless you succeed on a Climb check against the normal DC + 5 (made as a move action) or you have succeeded on another Climb check to move up or down the wall as normal. Example: Ember the monk succeeds on a DC 15 Climb check to scramble up 10 feet (one-quarter of her speed) into a corner formed by two typical dungeon walls. Using Corner Perch, she then braces her legs against the walls and uses her remaining standard action to draw and throw a shuriken at a bugbear on the ground below her. On her next turn, still braced in the corner, she draws her quarterstaff and attacks an ogre that has moved next to her, gaining a +1 bonus on the attack roll for higher ground. At the end of that turn, she drops from the wall rather than attempting to hold her position. Since she has the slow fall class feature, Ember takes no damage from the drop.",
+      "featType": "general",
+      "name": "Corner Perch",
+      "prerequisiteText": "Climb 8 ranks,"
+    },
+    {
+      "benefit": "Three times per day, you can use an immediate action to gain a +5 competence bonus on a single Balance, Climb, Escape Artist, Jump, Ride, Swim, or Tumble check",
+      "featType": "general",
+      "name": "Daredevil Athlete",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 7th-level rogue/4th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage. For example, a 7th-level rogue/4th-level swashbuckler would deal an extra 6d6 points of damage with her sneak attack, as if she were an 11th-level rogue.",
+      "featType": "general",
+      "name": "Daring Outlaw",
+      "prerequisiteText": "Sneak attack +2d6, Grace +1,"
+    },
+    {
+      "benefit": "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+      "featType": "general",
+      "name": "Daring Warrior",
+      "prerequisiteText": "Weapon Specialization, Grace +1,",
+      "special": "A fighter can select Daring Warrior as one of his fighter bonus feats (PH 38)."
+    },
+    {
+      "benefit": "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
+      "featType": "general",
+      "name": "Deadly Defense",
+      "prerequisiteText": "",
+      "special": "If you have the Combat Expertise feat, you also gain the benefit of Deadly Defense when taking a penalty of at least -2 on your attack roll from that feat. A fighter can select Deadly Defense as one of his fighter bonus feats (PH 38)."
+    },
+    {
+      "benefit": "Your successful sneak attack causes the target to be deafened for 3 rounds. If you use this feat a second time on a target before 3 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
+      "featType": "ambush",
+      "name": "Deafening Strike",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "Your successful sneak attack with a slashing weapon for which you have selected Weapon Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.",
+      "featType": "ambush",
+      "name": "Disemboweling Strike",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "If your mount has moved at least 10 feet in this round and you succeed on a fast dismount (Ride, PH 80), you can use a standard action to attack an adjacent opponent as if you had charged that opponent.",
+      "featType": "general",
+      "name": "Dismount Attack",
+      "prerequisiteText": "Ride 5 ranks,"
+    },
+    {
+      "benefit": "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20.You can use this feat once per day.You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Dumb Luck",
+      "prerequisiteText": "Character Level 6, any two luck feats,"
+    },
+    {
+      "benefit": "If your opponent is larger than Medium, you gain a circumstance bonus on your Escape Artist check to escape a grapple or pin. The size of the bonus depends on your opponent's size, according to the following table.",
+      "featType": "general",
+      "name": "Easy Escape",
+      "prerequisiteText": "Escape Artist 8 ranks, Medium or smaller size,"
+    },
+    {
+      "benefit": "Your successful sneak attack reduces your target's spell resistance and power resistance by 5 (minimum 0) for 10 rounds. If you use this feat a second time on a target before the ten rounds have elapsed, the effect of the first expires. using this reduces your sneak attack damage by 4d6",
+      "featType": "ambush",
+      "name": "Eldritch Erosion",
+      "prerequisiteText": "Sneak Attack +4d6, Knowledge (arcana) 1 rank,"
+    },
+    {
+      "benefit": "By spending an extra daily use of your ki power when you activate it, the chosen effect lasts for an additional round (ki power is a class feature of the ninja; see the sidebar for details). You also gain one extra daily use of your ki power.",
+      "featType": "general",
+      "name": "Enduring Ki",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "As a move action, you can expend one daily use of your bardic music ability to remove fatigue from up to three allies (including yourself) within 30 feet. If you spend three daily uses of bardic music, you can remove exhaustion from your allies instead.",
+      "featType": "bardic",
+      "name": "Epic of the Lost King",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "When you escape a grapple, you can make a single melee attack with a light weapon as a swift action against the opponent that was grappling you. The opponent is considered flat-footed against this attack. You must have the weapon in hand at the beginning of your turn in order to use this trick.",
+      "featType": "general",
+      "name": "Escape Attack",
+      "prerequisiteText": "Escape Artist 8 ranks,"
+    },
+    {
+      "benefit": "You gain three extra daily uses of your ki power (ki power is a class feature of the ninja; see the sidebar for details).",
+      "featType": "general",
+      "name": "Expanded Ki Pool",
+      "prerequisiteText": "Ki power,"
+    },
+    {
+      "benefit": "If you make a horizontal jump of at least 10 feet during your turn, you can spend a swift action to move an additional 10 feet on that turn.",
+      "featType": "general",
+      "name": "Extreme Leap",
+      "prerequisiteText": "Jump 5 ranks,"
+    },
+    {
+      "benefit": "As a swift action when casting a spell, you can adjust the spell's verbal and somatic components to mimic those of another spell of your choice of the same level. Any creature using Spellcraft or any other means to identify the spell you're casting believes it to be the other spell instead. This trick renders your spell immune to the normal method of counterspelling, though dispel magic or a similar effect still works normally. Of course, once the spell takes effect, it can be identified and dealt with normally (a fireball still looks and feels like a fireball once you've cast it).",
+      "featType": "general",
+      "name": "False Theurgy",
+      "prerequisiteText": "Bluff (or) 8 ranks, Sleight of Hand 8 ranks, Spellcraft 8 ranks,"
+    },
+    {
+      "benefit": "You can expend one luck reroll as a swift action to reroll a weapon damage roll. You can expend two luck rerolls as a swift action to reroll an attack roll. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Fortuitous Strike",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You immediately learn up to two movement skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on movement skill tricks.",
+      "featType": "general",
+      "name": "Freerunner",
+      "normal": "You are limited to a maximum number of skill tricks equal to one-half your character level.",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to redirect an attack made against an adjacent ally so that it is made against you instead. You must be within reach of the attacker (if a melee attack) or within range of the attack (if a ranged attack) in order to use this ability. The attack roll result remains the same, but it is against your AC, rather than that of your ally. If the redirected attack hits you, you take an extra 50% damage from it. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Good Karma",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can use Bluff to feint in combat (PH 68) against more than one opponent. Make one Bluff check opposed by separate Sense Motive checks for each opponent. For each opponent after the first that you wish to affect, you take a cumulative -2 penalty on your Bluff check. Example: Lidda wants to feint against a group of three orcs, so she rolls a Bluff check with a -4 penalty. Each orc rolls a separate Sense Motive check opposed by Lidda's adjusted Bluff check result.",
+      "featType": "general",
+      "name": "Group Fake-Out",
+      "prerequisiteText": "Bluff 8 ranks,"
+    },
+    {
+      "benefit": "Your successful sneak attack with a bludgeoning weapon for which you have selected Weapon Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.",
+      "featType": "ambush",
+      "name": "Head Shot",
+      "prerequisiteText": "",
+      "special": "You must be able to reach your foe's head to use this feat with a melee attack."
+    },
+    {
+      "benefit": "You can expend one luck reroll as a swift action to reroll the number of points of damage healed by a conjuration (healing) spell you have just cast on your current turn. You gain one luck reroll per day",
+      "featType": "luck",
+      "name": "Healer's Luck",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "If you succeed on a Heal check made to stabilize a dying character, that character also heals 1d6 points of damage.",
+      "featType": "general",
+      "name": "Healing Hands",
+      "prerequisiteText": "Heal 5 ranks,"
+    },
+    {
+      "benefit": "After you have used the Sleight of Hand skill to successfully conceal a weapon (PH 81), you can draw that weapon as a move action instead of a standard action. An opponent that was unaware of the concealed weapon is treated as flat-footed against the first attack you make in that turn.",
+      "featType": "general",
+      "name": "Hidden Blade",
+      "prerequisiteText": "Quick Draw, Sleight of Hand 5 ranks,"
+    },
+    {
+      "benefit": "Your successful sneak attack imposes a -2 penalty on the target's Strength and Dexterity checks, as well as on any Strength- and Dexterity-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
+      "featType": "ambush",
+      "name": "Impeding Attack",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "When you choose a familiar, the creatures on the table below are also available. You can choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic,good through evil). For example, a chaotic good spellcaster could acquire a neutral familiar. A lawful neutral spellcaster could acquire a neutral good familiar. Except as noted here, improved familiars otherwise use the normal rules for familiars (PH 52). Arcane Familiar Alignment Caster Level Monstrous centipede, Small N 2nd Badger N 3rd Monstrous scorpion, Small N 3rd Viper, Medium N 3rd Monstrous spider, Small N 4th Vargouille* NE 6th Mephit, any N 7th * Vargouilles summoned as familiars do not possess the kiss supernatural ability.",
+      "featType": "general",
+      "name": "Improved Familiar",
+      "prerequisiteText": "Ability to acquire a new familiar, compatible alignment, sufficiently high arcane spellcaster level,",
+      "special": "This feat was originally presented on of the DMG; the description here provides new alternatives for arcane spellcasters who want familiars stealthy and versatile enough to follow them anywhere."
+    },
+    {
+      "benefit": "If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.",
+      "featType": "general",
+      "name": "Improved Skirmish",
+      "normal": "A scout's bonus damage and AC bonus apply if she moves at least 10 feet away from where she was at the start of her turn.",
+      "prerequisiteText": "Skirmish +2d6/+1 AC,",
+      "special": "A scout can select Improved Skirmish as one of her scout bonus feats."
+    },
+    {
+      "benefit": "If you begin a climb by making a Jump check as a swift action, you can add the vertical distance of your jump to the distance climbed in that round. Treat the Jump check as being made with a running start even if you didn't move at least 20 feet. Example: Ember the monk is standing at the base of a craggy cliff and wants to scale the cliff as quickly as possible. She spends a swift action to make a Jump check and gets a result of 24. Thus, she adds 6 feet to the distance she climbs in that round.",
+      "featType": "general",
+      "name": "Leaping Climber",
+      "prerequisiteText": "Climb 5 ranks, Jump 5 ranks,"
+    },
+    {
+      "benefit": "Whenever you make a successful Listen check to hear a noise, you can describe that sound any time up to 1 hour later with such clarity that any individuals hearing the description are treated as if they had heard the sound themselves. This trick is particularly useful if you overhear a conversation but don't understand the language spoken, since it allows you to repeat it verbatim to an ally who might be able to translate.",
+      "featType": "general",
+      "name": "Listen to This",
+      "prerequisiteText": "Listen 5 ranks,"
+    },
+    {
+      "benefit": "You can expend one luck reroll as a swift action to reroll a Strength check made to break an item or burst open a door. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Lucky Break",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to reroll a Balance, Climb, or Jump check. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Lucky Catch",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to reroll a Disable Device, Open Lock, or Sleight of Hand check. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Lucky Fingers",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can expend one luck reroll to reroll an initiative check. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Lucky Start",
+      "prerequisiteText": "",
+      "special": "Unlike most other luck feats, using Lucky Start requires no action."
+    },
+    {
+      "benefit": "When you succeed by 5 or more on a Spellcraft check to determine the school of magic of the aura surrounding a magic item (by casting detect magic), you can then spend 1 minute concentrating to also learn the properties of the item, as if you had cast identify. You can use this skill trick once per day.",
+      "featType": "general",
+      "name": "Magical Appraisal",
+      "prerequisiteText": "Appraise 5 ranks, Knowledge (arcana) 5 ranks, Spellcraft 12 ranks,"
+    },
+    {
+      "benefit": "You can expend one luck reroll as a swift action to reroll the damage dealt by a spell you have just cast. You can expend two luck rerolls as a swift action to reroll a caster level check. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Magical Fortune",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to reroll a skill check, as long as you have at least 1 rank in that skill. You gain one luck reroll per day",
+      "featType": "luck",
+      "name": "Make Your Own Luck",
+      "prerequisiteText": "Character Level 6th, any luck feat,"
+    },
+    {
+      "benefit": "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+      "featType": "general",
+      "name": "Martial Stalker",
+      "prerequisiteText": "ki power, Proficiency with all martial weapons,",
+      "special": "A fighter can select Martial Stalker as one of his fighter bonus feats (PH 38)."
+    },
+    {
+      "benefit": "Your spellthief levels stack with levels of other arcane spellcaster classes (that is, levels of any class that grants arcane spellcasting other than the spellthief) for the purpose of determining what level of spell you can steal. For example, a 4th-level spellthief/4th-level wizard could steal spells of up to 4th level, as if he were an 8th-level spellthief. Your spellthief and arcane spellcaster levels also stack when determining your caster level for all arcane spells. The character described above would have a caster level of 8th for both his spellthief spells and his wizard spells. In addition, you do not incur a chance of arcane spell failure for arcane spells cast or stolen from other classes, but only if you are wearing light armor. You incur the normal arcane spell failure chance when wearing medium or heavy armor or when using a shield.",
+      "featType": "general",
+      "name": "Master Spellthief",
+      "normal": "A spellthief does not incur a chance of arcane spell failure when casting spellthief spells in light armor. He incurs the normal arcane spell failure chance for other arcane spells he casts, including those stolen from arcane casters.",
+      "prerequisiteText": "Ability to cast 2nd-level arcane spells, steal spell,"
+    },
+    {
+      "benefit": "Your successful sneak attack deals nonlethal damage. When using this feat, you can ignore the usual -4 penalty on attack rolls for attempting to deal nonlethal damage with a lethal weapon. Using this feat reduces your sneak attack damage by 1d6.",
+      "featType": "ambush",
+      "name": "Merciful Strike",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "Your successful sneak attack drains power points from your target equal to its manifester level (minimum 1). If this attack reduces your target to 0 power points, the opponent also loses any psionic focus. A target that has no power points when you make the sneak attack is not affected by this feat. You can't use this feat on the same target more than once per round. Using this feat reduces your sneak attack damage by 1d6.",
+      "featType": "ambush",
+      "name": "Mind Drain",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll.In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws.You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Miser's Fortune",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "If you use a light weapon to hit a flat-footed opponent, you can choose to have the opponent not realize that it has been hit until the start of your next turn. Instead, that opponent reacts as if you had attacked and missed. Using this skill trick doesn't require an action on your part. This trick doesn't allow the opponent to ignore any of the other effects of your attack, such as ability damage from poison on your blade or falling unconscious when reduced to fewer than 0 hit points.",
+      "featType": "general",
+      "name": "Mosquito's Bite",
+      "prerequisiteText": "Sleight of Hand 12 ranks,"
+    },
+    {
+      "benefit": "When you use Intimidate to demoralize an opponent (PH 76), you can affect all enemies within 10 feet that can see you, rather than only a single enemy you threaten. Each enemy rolls a separate modified level check to oppose your Intimidate check, but the skill check otherwise works as normal.",
+      "featType": "general",
+      "name": "Never Outnumbered",
+      "prerequisiteText": "Intimidate 8 ranks,"
+    },
+    {
+      "benefit": "You can run or charge across a difficult surface without needing to make a Balance check (PH 67).",
+      "featType": "general",
+      "name": "Nimble Charge",
+      "prerequisiteText": "Balance 5 ranks,"
+    },
+    {
+      "benefit": "You can stand up from prone without provoking attacks of opportunity.",
+      "featType": "general",
+      "name": "Nimble Stand",
+      "prerequisiteText": "Tumble 8 ranks,"
+    },
+    {
+      "benefit": "As a swift action, you can make an Open Lock check with a -10 penalty by tapping a lock with a hard, blunt object such as the pommel of a weapon. You don't take any additional penalty for making the check without thieves' tools. You can use this trick any number of times per day until you fail an Open Lock check made in this way. After a failure, you can't use Opening Tap again until after you have rested for 8 hours.",
+      "featType": "general",
+      "name": "Opening Tap",
+      "prerequisiteText": "Open Lock 12 ranks,"
+    },
+    {
+      "benefit": "If your sneak attack hits, your first attack against that creature on your next turn is also considered a sneak attack even if it wouldn't normally qualify. Using this feat reduces your first sneak attack's damage by 4d6. The resulting second sneak attack deals its full extra damage.",
+      "featType": "ambush",
+      "name": "Persistent Attacker",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "When you make a successful Spot check, you can spend an immediate action to grant a single ally a free Spot check to see the same thing (with a +2 circumstance bonus). Your ally must be within 30 feet of you and able to see or hear you to benefit from this effect.",
+      "featType": "general",
+      "name": "Point it Out",
+      "prerequisiteText": "Spot 8 ranks,"
+    },
+    {
+      "benefit": "Choose a type of poison (contact, ingested, inhaled, or injury). The DC to resist both the initial and secondary damage of poisons of this type that you create and use increases by 1. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+      "featType": "general",
+      "name": "Poison Expert",
+      "prerequisiteText": "Craft (poisonmaking) 4 ranks, Poison use,",
+      "special": "You can gain this feat multiple times. Its effect does not stack. Each time you take the feat, it applies to a new type of poison."
+    },
+    {
+      "benefit": "Choose a type of poison (contact, ingested, inhaled, or injury) for which you have selected the Poison Expert feat. The initial and secondary damage dealt by poisons of this type that you create and use increases by 1 point per die of damage (or by 1 point, if it deals a fixed amount of damage). For example, lich dust used by a character with Poison Master (ingested) would deal initial damage of 2d6+2 Str and secondary damage of 1d6+1 Con plus 1d6+1 Str. If a poison doesn't deal damage, this feat has no effect. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+      "featType": "general",
+      "name": "Poison Master",
+      "prerequisiteText": "Poison Expert, Craft (poisonmaking) 8 ranks, Poison use,",
+      "special": "You can gain this feat multiple times. Its effect does not stack. Each time you take the feat, it applies to a different type of poison for which you have selected Poison Expert."
+    },
+    {
+      "benefit": "You can use your steal spell ability to siphon psionic energy instead of spell energy. Instead of stealing a spell, you can choose to steal a number of power points equal twice to the maximum level of spell you can steal minus 1 (up to a maximum value equal to the manifester level of the creature struck). For example, a 4th-level spellthief/1st-level psychic warrior could steal up to 3 power points; if he used this ability against a 2nd-level psion he could steal only 2 power points, since that is the target's manifester level. You can use the stolen power points only to manifest a psionic power you already know. You must use these power points within 1 hour of stealing them; otherwise, the extra psionic energy fades harmlessly away. This feat otherwise follows the rules for the steal spell class feature. In addition, Knowledge (psionics) and Psicraft are spellthief class skills for you. These skills appear on of Expanded Psionics Handbook.",
+      "featType": "general",
+      "name": "Psithief",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can expend one luck reroll as a swift action to reroll the damage dealt by a psionic power you have just manifested. You can expend two luck rerolls as a swift action to reroll a manifester level check. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Psychic Luck",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "This trick has two options, either of which can be used once per encounter. You can make an Escape Artist check to escape from a grapple or pin as a swift action. You can use this trick even if you have already used a standard action on your current turn to attempt the same escape. Alternatively, you can make any Escape Artist check that would normally require a full-round action as a move action. You can't use this option more than once per day against the same kind of restraint.",
+      "featType": "general",
+      "name": "Quick Escape",
+      "prerequisiteText": "Escape Artist 12 ranks,"
+    },
+    {
+      "benefit": "If you succeed on a Swim check to move at least 10 feet, you can move an extra 10 feet as part of that action.",
+      "featType": "general",
+      "name": "Quick Swimmer",
+      "prerequisiteText": "Swim 5 ranks,"
+    },
+    {
+      "benefit": "Based on the rogue special abilities you have (PH 50), you gain one or more additional special benefits as described below. You gain the benefits for all the special abilities you have, even those you gain after selecting this feat. Crippling Strike: You can deal Strength damage even to a target that is immune to extra damage from sneak attacks. Defensive Roll: You can use this ability three times per day, rather than once per day. Improved Evasion: You gain a +2 competence bonus on Reflex saves. Opportunist: You can use the opportunist ability as many times per round as you can make attacks of opportunity, but no more than once per creature per round. Each use of the opportunist ability counts as an attack of opportunity. Skill Mastery: When taking 10 with a skill to which you have assigned skill mastery, you can treat the die roll as a 12 instead of as a 10. (In effect, you're \"taking 12.\") Slippery Mind: You gain a +2 competence bonus on the extra save granted by slippery mind.",
+      "featType": "general",
+      "name": "Savvy Rogue",
+      "prerequisiteText": "Rogue level 10,"
+    },
+    {
+      "benefit": "If an observer sees through your disguise with a successful Spot check, you can (as an immediate action) attempt a Bluff check to convince him that he's mistaken. Use the observer's Spot check result as the DC for your Bluff check; if you succeed, the observer ignores the evidence of his own senses in favor of what your disguise attempts to show. You must be aware of the observer's discovery in order to use this trick; for example, you can't use it against someone viewing you secretly, nor can you use it against someone who sees through your disguise but keeps that information secret. When in doubt, the DM should allow a character to use this trick if she has any reason to fear that her cover has been blown. You can use this trick only once per day, but its effect extends to all viewers within 30 feet of you. For example, you could attempt it against an entire patrol of guards confronting you just as effectively as against a single person. This trick doesn't let you maintain a disguise that has been defeated by other means; for example, if your disguise self spell is penetrated by a true seeing spell, Second Impression won't help.",
+      "featType": "general",
+      "name": "Second Impression",
+      "prerequisiteText": "Bluff 5 ranks, Disguise 5 ranks,"
+    },
+    {
+      "benefit": "As a move action, you can attempt a DC 20 Hide check. If you succeed, you have concealment until the start of your next turn.",
+      "featType": "general",
+      "name": "Shrouded Dance",
+      "prerequisiteText": "Hide 8 ranks, Perform (dance) 5 ranks,"
+    },
+    {
+      "benefit": "As a swift action, you can ignore the additional movement movement cost and penalty on attack rolls and to AC when squeezing through a narrow space (PH 148). The benefit lasts until the start of your next turn.",
+      "featType": "general",
+      "name": "Slipping Past",
+      "prerequisiteText": "Escape Artist 5 ranks, Tumble 5 ranks,"
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to reroll a Hide, Move Silently, or Tumble check. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Sly Fortune",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "If your Diplomacy check to influence an NPC's attitude fails, you can spend another full round talking to the NPC, then make a Bluff check with a -10 penalty. Use the result of this check in place of the Diplomacy check result, except that it can't improve the NPC's attitude by more than one step. Once you use this skill trick (successfully or not), you cannot use it against the same target again for 24 hours.",
+      "featType": "general",
+      "name": "Social Recovery",
+      "prerequisiteText": "Bluff 8 ranks, Diplomacy 5 ranks,"
+    },
+    {
+      "benefit": "As a standard action, you can expend two daily uses of your bardic music ability to deafen a single target for 3 rounds. A successful Will save (using your Perform check result as the DC) negates the effect. The target must be within 30 feet of you and be able to hear you.",
+      "featType": "bardic",
+      "name": "Sound of Silence",
+      "prerequisiteText": "Perform 9 ranks, Bardic music,"
+    },
+    {
+      "benefit": "If you succeed on a Climb check to move at least 10 feet, you can move an extra 10 feet as part of that action.",
+      "featType": "general",
+      "name": "Speedy Ascent",
+      "prerequisiteText": "Climb 5 ranks,"
+    },
+    {
+      "benefit": "As a standard action, you can attempt a Spot check to find a weakness in your opponent's defenses. The DC of this check equals the opponent's AC. If the check succeeds, your next attack against that opponent (which must be made no later than your next turn) is treated as a touch attack. If you use a ranged weapon to deliver the attack, your opponent must be within 30 feet of you in order for you to benefit from the trick.",
+      "featType": "general",
+      "name": "Spot the Weak Point",
+      "prerequisiteText": "Spot 12 ranks,"
+    },
+    {
+      "benefit": "If an opponent provokes an attack of opportunity from you, you can draw a weapon that you have successfully concealed using Sleight of Hand (PH 81) as an immediate action to deliver the attack of opportunity with that weapon. That opponent is treated as flat-footed against the attack with the concealed weapon.",
+      "featType": "general",
+      "name": "Sudden Draw",
+      "prerequisiteText": "Quick Draw, Sleight of Hand 8 ranks,"
+    },
+    {
+      "benefit": "You immediately learn up to two manipulation skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on manipulation skill tricks.",
+      "featType": "general",
+      "name": "Sure Hand",
+      "normal": "You are limited to a maximum number of skill tricks equal to one-half your character level.",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to reroll a saving throw you just failed. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Survivor's Luck",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You immediately learn up to two interaction skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on interaction skill tricks.",
+      "featType": "general",
+      "name": "Sweet Talker",
+      "normal": "You are limited to a maximum number of skill tricks equal to one-half your character level.",
+      "prerequisiteText": "Any two interaction skill tricks,"
+    },
+    {
+      "benefit": "Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/7th-level rogue would deal an extra 3d6 points of damage and gain a +3 competence bonus to AC when skirmishing, as if she were an 11th-level scout. In addition, you can qualify for ambush feats as if your sneak attack bonus damage were the sum of your skirmish damage and sneak attack bonus damage. You cannot sacrifice skirmish extra damage to use those feats, however.",
+      "featType": "general",
+      "name": "Swift Ambusher",
+      "prerequisiteText": "Skirmish +1d6/+1 AC, Sneak attack +1d6,",
+      "special": "A scout can select Swift Ambusher as one of her scout bonus feats."
+    },
+    {
+      "benefit": "You can maintain concentration on a spell or similar effect as a swift action.",
+      "featType": "general",
+      "name": "Swift Concentration",
+      "prerequisiteText": "Concentration 12 ranks,"
+    },
+    {
+      "benefit": "Your ranger and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/1st-level ranger would deal an extra 2d6 points of damage and gain a +1 competence bonus to AC when skirmishing, as if she were a 5th-level scout. Your ranger and scout levels also stack for the purpose of determining when you select additional favored enemies, as well as the total bonus granted against your favored enemies. For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger. In addition, your skirmish extra damage applies against any creature you have selected as a favored enemy, even if it is normally immune to extra damage from critical hits or skirmish attacks.",
+      "featType": "general",
+      "name": "Swift Hunter",
+      "prerequisiteText": "Skirmish +1d6/+1 AC, Favored Enemy,",
+      "special": "A scout can select Swift Hunter as one of her scout bonus feats."
+    },
+    {
+      "benefit": "You can expend a luck reroll to reroll a stabilization check. In addition, once per day, whenever you have at least 1 hit point remaining and would be dealt enough damage to kill you, you can expend one luck reroll as an immediate action to take only enough damage to reduce you to -9 hit points. You automatically stabilize. You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Tempting Fate",
+      "prerequisiteText": "Character Level 6, any luck feat,",
+      "special": "Unlike most other luck feats, using Tempting Fate requires no action."
+    },
+    {
+      "benefit": "You can expend one luck reroll as an immediate action to use the granted power of the Luck domain an additional time per day. You can only use this benefit immediately after using the Luck domain's granted power (in effect, this feat gives you a third chance to succeed on the roll). You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Third Time's the Charm",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "Your successful sneak attack delivered with an unarmed strike temporarily hinders the target's ability to speak. For the next 3 rounds, the target takes a -5 penalty on any skill check requiring speech and has a 50% chance of failure when casting a spell with a verbal component or activating a magic item with a command word. Multiple uses of this feat don't increase the duration beyond 3 rounds. Using this feat reduces your sneak attack damage by 2d6.",
+      "featType": "ambush",
+      "name": "Throat Punch",
+      "prerequisiteText": "Improved Unarmed Strike, sneak attack +3d6,",
+      "special": "You must be able to reach your foe's neck to use this feat."
+    },
+    {
+      "benefit": "If you succeed on a Bluff check to feint in combat (PH 68), your opponent can't make any attacks of opportunity against you until the start of its next turn. This effect is in addition to the normal benefits of a successful feint.",
+      "featType": "general",
+      "name": "Timely Misdirection",
+      "prerequisiteText": "Bluff 8 ranks,"
+    },
+    {
+      "benefit": "By succeeding on a DC 15 Tumble check, you can crawl 5 feet as a move action without provoking attacks of opportunity. Crawling normally provokes attacks of opportunity from any attackers who threaten you at any point during your crawl (PH 142).",
+      "featType": "general",
+      "name": "Tumbling Crawl",
+      "prerequisiteText": "Tumble 5 ranks,"
+    },
+    {
+      "benefit": "When you charge, you can make one turn of up to 90 degrees during your movement. You can't move more than your speed as part of this charge. All other restrictions on charges still apply, and you must have line of sight to the opponent at the start of your turn.",
+      "featType": "general",
+      "name": "Twisted Charge",
+      "prerequisiteText": "Balance 5 ranks, Tumble 5 ranks,"
+    },
+    {
+      "benefit": "As long as you have at least one luck reroll remaining for the day, you gain a +2 luck bonus on whichever of your saves has the lowest base bonus. If two or more of your saves tie for the lowest base bonus, choose when you select this feat which save it applies to. If your base save bonuses later change so that the chosen save no longer has the lowest base bonus, the luck bonus from this feat immediately applies to the save that now has the lowest base bonus. You gain two luck rerolls per day.",
+      "featType": "luck",
+      "name": "Unbelievable Luck",
+      "prerequisiteText": "Any Luck feat,"
+    },
+    {
+      "benefit": "You can move up a steep slope or stairs at your normal speed instead of at half speed. This effect lasts for 1 round.",
+      "featType": "general",
+      "name": "Up the Hill",
+      "prerequisiteText": "Balance 5 ranks, Tumble 5 ranks,"
+    },
+    {
+      "benefit": "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll.You gain one luck reroll per day.",
+      "featType": "luck",
+      "name": "Victor's Luck",
+      "prerequisiteText": ""
+    },
+    {
+      "benefit": "You can move up a wall without making a Climb check. Each 5 feet of vertical movement costs you 4 squares of movement, and you must begin and end your turn on a horizontal surface.",
+      "featType": "general",
+      "name": "Walk the Walls",
+      "prerequisiteText": "Climb 12 ranks, Tumble 5 ranks,"
+    },
+    {
+      "benefit": "If you have succeeded on a Climb check to ascend or descend a wall during this or your previous turn, you can leap horizontally from that wall as if you had a running start.",
+      "featType": "general",
+      "name": "Wall Jumper",
+      "prerequisiteText": "Climb 5 ranks, Jump 5 ranks,"
+    },
+    {
+      "benefit": "As an immediate action, you can expend two daily uses of your bardic music ability to grant a single ally (other than yourself) a +5 morale bonus on her next Reflex save and evasion the monk class feature, PH 41). The ally must be within 30 feet of you and able to see or hear you. The effect lasts until the target rolls a Reflex save or until the start of your turn, whichever comes first.",
+      "featType": "bardic",
+      "name": "Warning Shout",
+      "prerequisiteText": "Perform 9 ranks, Bardic music, Evasion,"
+    },
+    {
+      "benefit": "You can use a whip as a makeshift grappling hook, lashing it around a protrusion or other firm, weightbearing object in order to climb a wall or swing across a chasm. You make Climb checks using the whip as if it were a normal rope. Using this feat requires a Use Rope check as normal for securing a grappling hook (PH 86) but takes only a move action.",
+      "featType": "general",
+      "name": "Whip Climber",
+      "prerequisiteText": "Use Rope 5 ranks, proficiency with the whip,"
+    }
+  ]
+}

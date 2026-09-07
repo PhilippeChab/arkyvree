@@ -1,0 +1,642 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T13:42:19.441Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/blighter/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Deforestation"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Blightfire"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Sustenance"
+      },
+      {
+        "levels": [
+          3,
+          4,
+          6,
+          8,
+          10
+        ],
+        "name": "Undead Wild Shape"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Speak With Dead Animal"
+      },
+      {
+        "levels": [
+          5,
+          7,
+          9
+        ],
+        "name": "Contagious Touch"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Undead Wild Shape (Large)"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Animate Dead Animal"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Unbond"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Undead Wild Shape (Huge)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Plague"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "spellsPerDay": [
+      [
+        4,
+        2
+      ],
+      [
+        5,
+        3,
+        0
+      ],
+      [
+        5,
+        3,
+        1,
+        0
+      ],
+      [
+        6,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        4,
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        5,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Blighter Class Feature",
+    "features": {
+      "Animate Dead Animal": {
+        "description": "Gained at 6th level, this ability works like animate dead but is restricted to animal corpses and does not require any material component. It can be used once per day.",
+        "level": 6,
+        "seedName": "Animate Dead Animal (Blighter)"
+      },
+      "Blightfire": {
+        "description": "From 2nd level onward, as a standard action, the blighter can release a burst of searing flame. This deals 5d6 fire damage to every creature within a 10-foot radius (Reflex save for half; DC equals 10 + blighter class level + Wisdom modifier) and sets alight any flammable objects it contacts.",
+        "level": 2,
+        "seedName": "Blightfire (Blighter)"
+      },
+      "Contagious Touch": {
+        "description": "At 5th level, the blighter gains the ability to produce a contagious touch effect once per day. An additional daily use is gained for every two blighter levels beyond 5th.",
+        "level": 5,
+        "seedName": "Contagious Touch (Blighter)",
+        "stackable": true
+      },
+      "Deforestation": {
+        "description": "Once per day as a full-round action, the blighter can slay all non-sentient plant life within a radius of 20 feet per class level. If an affected plant is controlled by another creature (for example, through a liveoak effect or as a dryad's bonded tree), the controller may attempt a Fortitude save (DC 10 + blighter level + Wisdom modifier) to protect it. Destroyed plants stop all biological functions immediately. They look healthy for a few hours but wilt and turn brown within a day. Except for plants saved by a controller, nothing can regrow in the blighted zone unless hallow is cast on the area and it is replanted. Performing deforestation is what empowers the blighter to cast her daily spells. This works in any terrain, but using it in an area with negligible vegetation (such as a barren desert or ice field) does not grant spellcasting ability.",
+        "level": 1,
+        "seedName": "Deforestation (Blighter)"
+      },
+      "Plague": {
+        "description": "At 10th level, the blighter can spread disease across a wide area. This works identically to contagious touch, except that it requires no attack roll and affects all designated targets within a 20-foot radius.",
+        "level": 10,
+        "seedName": "Plague (Blighter)"
+      },
+      "Speak With Dead Animal": {
+        "description": "Beginning at 4th level, the blighter can communicate with deceased animals. This works like speak with dead cast by a cleric whose level equals the sum of the character's druid and blighter levels, but it only applies to animal corpses. It can be used once per day.",
+        "level": 4,
+        "seedName": "Speak With Dead Animal (Blighter)"
+      },
+      "Spells per Day": {
+        "description": "Because blighters are former druids, they forfeit their druid spellcasting. In its place, they gain a new and more destructive set of spells. At each blighter level, the character receives spell slots as shown in the class table, choosing from the blighter spell list. The blighter's caster level equals the sum of her blighter and druid levels. Casting a blighter spell requires a Wisdom score of at least 10 + the spell's level; a blighter with Wisdom 10 or lower cannot cast these spells. Bonus spells are determined by Wisdom, and spell save DCs equal 10 + spell level + Wisdom modifier. When the class table shows 0 spells per day for a given level, the blighter receives only whatever bonus spells her Wisdom score provides at that level. The blighter has access to the entire blighter spell list and may freely select which spells to prepare, just as a druid does (though spontaneous casting of summon spells is not available). Spell preparation and casting follow the same procedure as a druid. The blighter fuels her daily spellcasting through deforestation; if more than 24 hours pass without deforesting a wooded area, she loses the ability to cast spells until she does so again. The standard divine focus for blighter spells is a dried sprig of holly or mistletoe, and any material component must have been dead for at least one day before use.",
+        "level": 1,
+        "seedName": "Spells per Day (Blighter)"
+      },
+      "Sustenance": {
+        "description": "From 2nd level onward, the blighter no longer requires food or water to survive.",
+        "level": 2,
+        "seedName": "Sustenance (Blighter)"
+      },
+      "Unbond": {
+        "description": "Starting at 8th level, the blighter can temporarily sever the bond between a creature and its bonded animal or magical beast (such as a companion, familiar, or special mount) once per day. The bonded creature must be within 40 feet of both its master and the blighter. If the master fails a Will save (DC 10 + blighter level + Wisdom modifier), the bond is broken as though the servitor had perished, though a familiar's loss does not cost experience points. Creatures that are ordinarily hostile will turn on their former masters but are not otherwise affected. The bond restores itself after 1 minute per blighter level, returning all associated benefits. The master may also reclaim the servitor through the usual means of acquiring one.",
+        "level": 8,
+        "seedName": "Unbond (Blighter)"
+      },
+      "Undead Wild Shape": {
+        "description": "At 3rd level, the blighter gains a specialized form of wild shape. This functions like the druid's wild shape ability, except the blighter applies the skeleton template to the chosen animal form. The skeletal animal form has the following modifications: its type becomes undead; natural armor bonus is +0 (Tiny), +1 (Small), +2 (Medium or Large), or +3 (Huge); it gains +2 Dexterity and has no Constitution score; it is immune to cold; and it has damage reduction 5/bludgeoning. The blighter receives one additional daily use of this ability at every even-numbered blighter level after 3rd. At 5th level, the blighter can assume the form of a Large skeletal animal, and at 9th level, a Huge skeletal animal becomes available.",
+        "level": 3,
+        "seedName": "Undead Wild Shape (Blighter)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This class does not provide any additional weapon or armor proficiencies.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Blighter)"
+      }
+    },
+    "occurrenceMap": {
+      "Animate Dead Animal": "Animate Dead Animal",
+      "Blightfire": "Blightfire",
+      "Contagious Touch": "Contagious Touch",
+      "Deforestation": "Deforestation",
+      "Plague": "Plague",
+      "Speak With Dead Animal": "Speak With Dead Animal",
+      "Sustenance": "Sustenance",
+      "Unbond": "Unbond",
+      "Undead Wild Shape": "Undead Wild Shape",
+      "Undead Wild Shape (Huge)": "Undead Wild Shape",
+      "Undead Wild Shape (Large)": "Undead Wild Shape"
+    },
+    "overrides": {
+      "description": "Blighters are agents of decay and ruin, leaving devastation in their wake wherever they go.",
+      "features": {
+        "Animate Dead Animal": {
+          "description": "Gained at 6th level, this ability works like animate dead but is restricted to animal corpses and does not require any material component. It can be used once per day."
+        },
+        "Blightfire": {
+          "description": "From 2nd level onward, as a standard action, the blighter can release a burst of searing flame. This deals 5d6 fire damage to every creature within a 10-foot radius (Reflex save for half; DC equals 10 + blighter class level + Wisdom modifier) and sets alight any flammable objects it contacts."
+        },
+        "Contagious Touch": {
+          "description": "At 5th level, the blighter gains the ability to produce a contagious touch effect once per day. An additional daily use is gained for every two blighter levels beyond 5th."
+        },
+        "Deforestation": {
+          "description": "Once per day as a full-round action, the blighter can slay all non-sentient plant life within a radius of 20 feet per class level. If an affected plant is controlled by another creature (for example, through a liveoak effect or as a dryad's bonded tree), the controller may attempt a Fortitude save (DC 10 + blighter level + Wisdom modifier) to protect it. Destroyed plants stop all biological functions immediately. They look healthy for a few hours but wilt and turn brown within a day. Except for plants saved by a controller, nothing can regrow in the blighted zone unless hallow is cast on the area and it is replanted. Performing deforestation is what empowers the blighter to cast her daily spells. This works in any terrain, but using it in an area with negligible vegetation (such as a barren desert or ice field) does not grant spellcasting ability."
+        },
+        "Plague": {
+          "description": "At 10th level, the blighter can spread disease across a wide area. This works identically to contagious touch, except that it requires no attack roll and affects all designated targets within a 20-foot radius."
+        },
+        "Speak With Dead Animal": {
+          "description": "Beginning at 4th level, the blighter can communicate with deceased animals. This works like speak with dead cast by a cleric whose level equals the sum of the character's druid and blighter levels, but it only applies to animal corpses. It can be used once per day."
+        },
+        "Spells per Day": {
+          "description": "Because blighters are former druids, they forfeit their druid spellcasting. In its place, they gain a new and more destructive set of spells. At each blighter level, the character receives spell slots as shown in the class table, choosing from the blighter spell list. The blighter's caster level equals the sum of her blighter and druid levels. Casting a blighter spell requires a Wisdom score of at least 10 + the spell's level; a blighter with Wisdom 10 or lower cannot cast these spells. Bonus spells are determined by Wisdom, and spell save DCs equal 10 + spell level + Wisdom modifier. When the class table shows 0 spells per day for a given level, the blighter receives only whatever bonus spells her Wisdom score provides at that level. The blighter has access to the entire blighter spell list and may freely select which spells to prepare, just as a druid does (though spontaneous casting of summon spells is not available). Spell preparation and casting follow the same procedure as a druid. The blighter fuels her daily spellcasting through deforestation; if more than 24 hours pass without deforesting a wooded area, she loses the ability to cast spells until she does so again. The standard divine focus for blighter spells is a dried sprig of holly or mistletoe, and any material component must have been dead for at least one day before use."
+        },
+        "Sustenance": {
+          "description": "From 2nd level onward, the blighter no longer requires food or water to survive."
+        },
+        "Unbond": {
+          "description": "Starting at 8th level, the blighter can temporarily sever the bond between a creature and its bonded animal or magical beast (such as a companion, familiar, or special mount) once per day. The bonded creature must be within 40 feet of both its master and the blighter. If the master fails a Will save (DC 10 + blighter level + Wisdom modifier), the bond is broken as though the servitor had perished, though a familiar's loss does not cost experience points. Creatures that are ordinarily hostile will turn on their former masters but are not otherwise affected. The bond restores itself after 1 minute per blighter level, returning all associated benefits. The master may also reclaim the servitor through the usual means of acquiring one."
+        },
+        "Undead Wild Shape": {
+          "description": "At 3rd level, the blighter gains a specialized form of wild shape. This functions like the druid's wild shape ability, except the blighter applies the skeleton template to the chosen animal form. The skeletal animal form has the following modifications: its type becomes undead; natural armor bonus is +0 (Tiny), +1 (Small), +2 (Medium or Large), or +3 (Huge); it gains +2 Dexterity and has no Constitution score; it is immune to cold; and it has damage reduction 5/bludgeoning. The blighter receives one additional daily use of this ability at every even-numbered blighter level after 3rd. At 5th level, the blighter can assume the form of a Large skeletal animal, and at 9th level, a Huge skeletal animal becomes available."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This class does not provide any additional weapon or armor proficiencies."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "perDay": [
+        [
+          4,
+          2
+        ],
+        [
+          5,
+          3,
+          0
+        ],
+        [
+          5,
+          3,
+          1,
+          0
+        ],
+        [
+          6,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          4,
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          5,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          5,
+          5,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "slug": "blighterspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Blighters gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Since blighters are ex-druids, they lose their druid spellcasting abilities. However, they gain access to new, more destructive spells. At each blighter level, the character gains spells per day according to the class table. She must choose her spells from the blighter spell list. The blighter's caster level is equal to her blighter level plus her druid level. To cast a blighter spell, a blighter must have a Wisdom score of at least 10 + the spell's level, so a blighter with a Wisdom of 10 or lower cannot cast these spells. Blighter bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + the blighter's Wisdom modifier. When the blighter gets 0 spells per day of a given level (for instance 2nd-level spells for a 2nd-level blighter), she gains only the bonus spells she would be entitled to based on her Wisdom score for that spell level. A blighter has access to any spell on the list and can freely choose which to prepare, just as a druid. A blighter prepares and casts spells just as a druid does (though a blighter cannot spontaneously cast summon spells). The blighter gains access to her daily spells through deforestation. If she goes more than 24 hours without deforesting a wooded area, she cannot cast spells until she does so. The default divine focus for any spell cast by a blighter is a desiccated sprig of holly or mistletoe. Any material component for a blighter's spell must have been dead for at least a day before use.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "A blighter can kill all nonsentient plant life within a radius of 20 feet per blighter level as a full-round action once per day. If a potentially affected plant is under the control of another (such as a druid's liveoak or a dryad's home tree), the controller can make a Fortitude save (DC 10 + blighter level + blighter's Wis modifier) to keep it alive. Affected plants immediately cease photosynthesis, root tapping, and all other methods of sustenance. Like picked flowers, they appear vibrant for several hours, but within a day, they turn brown and wither. Except for plants selected by a controller, nothing can grow in a deforested area until it has a hallow spell cast upon it and it is reseeded. Deforestation enables a blighter to cast her daily allotment of spells. This ability works in any terrain, but deforesting a sandy desert, ice floe, or other environment with only sparse vegetation does not empower the character to cast spells.",
+        "name": "Deforestation",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Starting at 2nd level, as a standard action, a blighter can unleash a scorching blast of fire. This effect deals 5d6 points of fire damage to all creatures within 10 feet (Reflex half; save DC is 10 + blighter's class level + blighter's Wis modifier) and ignites flammable objects it touches. Blighters delight in starting wildfires and often use this ability to do so.",
+        "name": "Blightfire",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level and higher, a blighter no longer needs food or water to survive.",
+        "name": "Sustenance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, the blighter gains a version of the wild shape ability. Undead wild shape functions like the druid's wild shape ability, except that the blighter adds the skeleton template to the animal form he chooses to transform into. The blighter's animal form is altered as follows:? Type changes to undead.? Natural armor bonus is +0 (Tiny animal), +1 (Small), +2 (Medium or Large), or +3 (Huge).? +2 Dexterity, no Constitution score.? Immunity to cold.? Damage reduction 5/bludgeoning.The blighter gains one extra use per day of this ability at every even blighter level after 3rd. In addition, she gains the ability to take the shape of a Large skeletal animal at 5th level and a Huge skeletal animal at 9th level.",
+        "name": "Undead Wild Shape",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Starting at 4th level, a blighter can converse with dead animals. This ability functions like a speak with dead spell cast by a cleric of a level equal to the total of the character's druid and blighter levels, except that it affects only corpses of animal creatures. It is usable once per day.",
+        "name": "Speak With Dead Animal",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 5th level and higher, a blighter can produce an effect like that of a contagious touch spell once per day. She gains one extra use per day of this ability for every two additional blighter levels she acquires.",
+        "name": "Contagious Touch",
+        "type": "(Su)"
+      },
+      {
+        "description": "This ability, gained at 6th level, functions like an animate dead spell, except that it affects only corpses of animal creatures and requires no material component. It is usable once per day.",
+        "name": "Animate Dead Animal",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 8th level, a blighter can temporarily separate a bonded animal or magical beast (such as an animal companion, familiar, or mount) from its master once per day. The target creature must be within 40 feet of both its master and the blighter. If the master fails a Will save (DC 10 + blighter level + blighter's Wis modifier), the bond terminates as if the servitor had died, though this does not cause experience loss in the case of a familiar. Normally hostile creatures attack their masters but are otherwise unaffected. The bond returns after 1 minute per blighter level, restoring all benefits. Alternatively, the master can regain the servitor through the normal methods of acquisition.",
+        "name": "Unbond",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 10th level and higher, a blighter can spread disease over a large area. This ability functions like the contagious touch ability, except that no attack roll is required and it affects all targets the blighter designates within a 20-foot radius. Plague is usable",
+        "name": "Plague",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Handle Animal",
+      "Heal",
+      "Knowledge (Nature)",
+      "Listen",
+      "Profession",
+      "Spellcraft",
+      "Spot",
+      "Survival",
+      "Swim"
+    ],
+    "description": "Blighters bring desolation wherever they tread.",
+    "hasCantrips": true,
+    "hitDie": "d8",
+    "name": "Blighter",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nongood",
+        "bab": 4,
+        "special": [
+          "The character must be an ex-druid previously capable of casting 3rd-level druid spells, Profession skill must be herbalist.",
+          "an ex-druid previously capable of casting 3rd-level druid spells, Profession skill must be herbalist"
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Alignment: Any nongood Special: The character must be an ex-druid previously capable of casting 3rd-level druid spells, Profession skill must be herbalist."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Deforestation"
+        ],
+        "spellsPerDay": "4,2,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Blightfire",
+          "sustenance"
+        ],
+        "spellsPerDay": "5,3,0,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Undead wild shape 1/day"
+        ],
+        "spellsPerDay": "5,3,1,0,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Speak with dead animal",
+          "undead wild shape 2/day"
+        ],
+        "spellsPerDay": "6,3,2,1,0,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Contagious touch 1/day",
+          "undead wild shape (Large)"
+        ],
+        "spellsPerDay": "6,3,3,2,1,0,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Animate dead animal",
+          "undead wild shape 3/day"
+        ],
+        "spellsPerDay": "6,3,3,3,2,1,0,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Contagious touch 2/day"
+        ],
+        "spellsPerDay": "6,4,3,3,3,2,1,0,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Unbond",
+          "undead wild shape 4/day"
+        ],
+        "spellsPerDay": "6,4,4,3,3,3,2,1,0,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Contagious touch 3/day",
+          "undead wild shape (Huge)"
+        ],
+        "spellsPerDay": "6,5,4,4,4,4,3,2,1,0",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Plague",
+          "undead wild shape 5/day"
+        ],
+        "spellsPerDay": "6,5,5,4,4,4,4,3,2,1",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

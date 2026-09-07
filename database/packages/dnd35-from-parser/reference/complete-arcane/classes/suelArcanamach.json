@@ -1,0 +1,647 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T19:42:14.459Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/suel-arcanamach/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Arcane",
+    "featNameMap": {
+      "combatcasting": "Combat Casting",
+      "ironwilllanguageancientsuloise": "Iron Will Language: Ancient Suloise"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Ignore Spell Failure Chance 5%"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Tenacious Spells"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Dispelling Strike"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Extended Spellstrength"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Ignore Spell Failure Chance 10%"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Ignore Spell Failure Chance 15%"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Ignore Spell Failure Chance 20%"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.jump.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.tumble.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatcasting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ironwilllanguageancientsuloise.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "spellsKnown": [
+      [
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        2,
+        2
+      ],
+      [
+        3,
+        3,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        2,
+        2
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        3,
+        2,
+        2
+      ],
+      [
+        4,
+        4,
+        3,
+        3,
+        2
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        2,
+        0
+      ],
+      [
+        3,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        3,
+        3,
+        2
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Suel Arcanamach Class Feature",
+    "features": {
+      "Dispelling Strike": {
+        "description": "Once per day, a Suel arcanamach of 2nd level or higher can attempt a dispelling strike with one normal melee attack. If he hits, he deals normal damage, and the victim is subject to a targeted greater dispel magic. The arcanamach's dispel check is 1d20 + class level + 6. If a Suel arcanamach makes a dispelling strike against a creature with no spells or effects to dispel, the dispelling strike has no effect, but the ability is used up for that day. At 6th level, an arcanamach can use this power two times per day, and at 10th level he can use it three times per day.",
+        "level": 2,
+        "seedName": "Dispelling Strike (Suel Arcanamach)",
+        "stackable": true
+      },
+      "Extended Spellstrength": {
+        "description": "Beginning at 3rd level, a Suel arcanamach knows how to extend the duration of spells that he casts on himself. The duration of any of his Suel arcanamach spells with which he targets himself is doubled, as if affected by the Extend Spell feat (but without any adjustment to the spell's effective level or casting time). For instance, a bull's strength spell cast by a 3rd-level Suel arcanamach on himself has a duration of 6 minutes rather than 3 minutes. Spells that target multiple targets are affected by this power, but only the arcanamach gains the extended duration. For example, a 5th-level arcanamach who casts haste would be hasted for 10 rounds, while his allies would gain the effect only for the normal 5-round duration. Spells that do not have a Target entry are unaffected by this power even if the arcanamach is the only one affec",
+        "level": 3,
+        "seedName": "Extended Spellstrength (Suel Arcanamach)"
+      },
+      "Ignore Spell Failure Chance": {
+        "description": "A Suel arcanamach's practice at merging spellcasting and swordplay results in a reduction in the arcane spell failure chance associated with using armor or shields. This reduction starts at 5% at 1st level and increases by 5% every three levels thereafter. The arcanamach subtracts the given percentage value from his total spell failure chance, if any. For example, a 1st-level arcanamach wearing a mithral shirt has a spell failure chance of 5%, not 10%. This ability only functions when the character casts a Suel arcanamach spell.",
+        "level": 1,
+        "seedName": "Ignore Spell Failure Chance (Suel Arcanamach)",
+        "stackable": true
+      },
+      "Spells per Day": {
+        "description": "A Suel arcanamach has the ability to cast a small number of arcane spells. To cast a Suel arcanamach spell, he must have a Charisma score of at least 10 + the spell's level, so if he has a Charisma of 10 or lower, he cannot cast these spells. Bonus spells are based on Charisma, and saving throws against these spells have a DC of 10 + spell level + his Cha modifier. When he gets 0 spells per day of a given level (for instance, 1st-level spells for 1st level), he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. He has access to any spell of the abjuration, divination, illusion, and transmutation schools on the sorcerer/wizard spell list. He casts spells just as a sorcerer does, including the ability to replace a known Suel arcanamach spell with a new spell at every even-numbered class level beginning at 4th.",
+        "level": 1,
+        "seedName": "Spells per Day (Suel Arcanamach)"
+      },
+      "Tenacious Spells": {
+        "description": "An arcanamach's Suel arcanamach spells are particularly difficult to dispel; add 6 to the DC required to dispel the character's arcanamach spells.",
+        "level": 1,
+        "seedName": "Tenacious Spells (Suel Arcanamach)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Suel arcanamachs gain no proficiency with any weapon or armor. Armor of any type interferes with an arcanamach's movements, which can cause spells with somatic components to fail (but see Ignore Spell Failure Chance, below).",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Suel Arcanamach)"
+      }
+    },
+    "occurrenceMap": {
+      "Dispelling Strike": "Dispelling Strike",
+      "Extended Spellstrength": "Extended Spellstrength",
+      "Ignore Spell Failure Chance 10%": "Ignore Spell Failure Chance",
+      "Ignore Spell Failure Chance 15%": "Ignore Spell Failure Chance",
+      "Ignore Spell Failure Chance 20%": "Ignore Spell Failure Chance",
+      "Ignore Spell Failure Chance 5%": "Ignore Spell Failure Chance",
+      "Tenacious Spells": "Tenacious Spells"
+    },
+    "spells": {
+      "known": [
+        [
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          2,
+          2
+        ],
+        [
+          3,
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          2,
+          2
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          3,
+          2,
+          2
+        ],
+        [
+          4,
+          4,
+          3,
+          3,
+          2
+        ]
+      ],
+      "noCantrips": true,
+      "perDay": [
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2,
+          0
+        ],
+        [
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          3,
+          3,
+          2
+        ]
+      ],
+      "slug": "suelarcanamachspells"
+    },
+    "overrides": {
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "combat.bab",
+          "value": "6",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.concentration.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.jump.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.spellcraft.rank",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.combatcasting.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.ironwill.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Suel arcanamachs gain no proficiency with any weapon or armor. Armor of any type interferes with an arcanamach's movements, which can cause spells with somatic components to fail (but see Ignore Spell Failure Chance, below).",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A Suel arcanamach has the ability to cast a small number of arcane spells. To cast a Suel arcanamach spell, he must have a Charisma score of at least 10 + the spell's level, so if he has a Charisma of 10 or lower, he cannot cast these spells. Bonus spells are based on Charisma, and saving throws against these spells have a DC of 10 + spell level + his Cha modifier. When he gets 0 spells per day of a given level (for instance, 1st-level spells for 1st level), he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. He has access to any spell of the abjuration, divination, illusion, and transmutation schools on the sorcerer/wizard spell list. He casts spells just as a sorcerer does, including the ability to replace a known Suel arcanamach spell with a new spell at every even-numbered class level beginning at 4th.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "A Suel arcanamach's practice at merging spellcasting and swordplay results in a reduction in the arcane spell failure chance associated with using armor or shields. This reduction starts at 5% at 1st level and increases by 5% every three levels thereafter. The arcanamach subtracts the given percentage value from his total spell failure chance, if any. For example, a 1st-level arcanamach wearing a mithral shirt has a spell failure chance of 5%, not 10%. This ability only functions when the character casts a Suel arcanamach spell.",
+        "name": "Ignore Spell Failure Chance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An arcanamach's Suel arcanamach spells are particularly difficult to dispel; add 6 to the DC required to dispel the character's arcanamach spells.",
+        "name": "Tenacious Spells",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Once per day, a Suel arcanamach of 2nd level or higher can attempt a dispelling strike with one normal melee attack. If he hits, he deals normal damage, and the victim is subject to a targeted greater dispel magic. The arcanamach's dispel check is 1d20 + class level + 6. If a Suel arcanamach makes a dispelling strike against a creature with no spells or effects to dispel, the dispelling strike has no effect, but the ability is used up for that day. At 6th level, an arcanamach can use this power two times per day, and at 10th level he can use it three times per day.",
+        "name": "Dispelling Strike",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, a Suel arcanamach knows how to extend the duration of spells that he casts on himself. The duration of any of his Suel arcanamach spells with which he targets himself is doubled, as if affected by the Extend Spell feat (but without any adjustment to the spell's effective level or casting time). For instance, a bull's strength spell cast by a 3rd-level Suel arcanamach on himself has a duration of 6 minutes rather than 3 minutes. Spells that target multiple targets are affected by this power, but only the arcanamach gains the extended duration. For example, a 5th-level arcanamach who casts haste would be hasted for 10 rounds, while his allies would gain the effect only for the normal 5-round duration. Spells that do not have a Target entry are unaffected by this power even if the arcanamach is the only one affec",
+        "name": "Extended Spellstrength",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Disguise",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (History)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Move Silently",
+      "Profession",
+      "Search",
+      "Spellcraft",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Arcanamach formerly served as elite guards and agents for powerful wizards.",
+    "hitDie": "d8",
+    "name": "Suel Arcanamach",
+    "prerequisites": {
+      "parsed": {
+        "bab": 6,
+        "feats": [
+          "Combat Casting",
+          "Iron Will Language: Ancient Suloise"
+        ],
+        "skills": [
+          {
+            "name": "Concentration",
+            "ranks": 4
+          },
+          {
+            "name": "Jump",
+            "ranks": 4
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 5
+          },
+          {
+            "name": "Tumble",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Must be proficient with at least four martial or exotic weapons.",
+          "proficient with at least four martial or exotic weapons"
+        ]
+      },
+      "text": "Base Attack Bonus: +6 Skills: Concentration 4 ranks, Jump 4 ranks, Spellcraft 5 ranks, Tumble 4 ranks Feats: Combat Casting, Iron Will Language: Ancient Suloise. Special: Must be proficient with at least four martial or exotic weapons. Special: Must read the Grimoire Arcanamacha, or study with a willing instructor who has done so. Reading the Grimoire requires one full week of uninterrupted study, and the ability to read Ancient Suloise. Learning from a willing instructor requires four weeks of training."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Ignore spell failure chance 5%",
+          "tenacious spells"
+        ],
+        "spellsPerDay": "1,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Dispelling strike 1/day"
+        ],
+        "spellsPerDay": "1,0,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Extended spellstrength"
+        ],
+        "spellsPerDay": "2,1,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Ignore spell failure chance 10%"
+        ],
+        "spellsPerDay": "2,2,0,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "3,2,1,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Dispelling strike 2/day"
+        ],
+        "spellsPerDay": "3,3,2,0,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Ignore spell failure chance 15%"
+        ],
+        "spellsPerDay": "3,3,2,1,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "4,3,3,2,0",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "4,4,3,2,1",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Dispelling strike 3/day",
+          "ignore spell failure chance 20%"
+        ],
+        "spellsPerDay": "4,4,3,3,2",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier",
+    "spellsKnown": [
+      "1,-,-,-,-",
+      "2,1,-,-,-",
+      "2,2,-,-,-",
+      "2,2,1,-,-",
+      "3,2,2,-,-",
+      "3,3,2,1,-",
+      "3,3,2,2,-",
+      "4,3,3,2,1",
+      "4,4,3,2,2",
+      "4,4,3,3,2"
+    ]
+  }
+}

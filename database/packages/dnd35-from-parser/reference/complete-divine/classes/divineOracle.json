@@ -1,0 +1,404 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-20T23:14:12.504Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/divine-oracle/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {
+      "skillfocusknowledgereligion": "Skill Focus (Knowledge [religion])"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Oracle Domain"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Scry Bonus"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Prescient Sense"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Trap Sense"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Divination Enhancement"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Uncanny Dodge (Dex Bonus To AC)"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Improved Uncanny Dodge (Can't Be Flanked)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Immune To Surprise"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.skillfocusknowledgereligion.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "unresolvedAptitudePicks": [
+      "Oracle Domain"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Divine Oracle Class Feature",
+    "features": {
+      "Divination Enhancement": {
+        "description": "From 3rd level onward, whenever the divine oracle casts a divination spell (such as augury or divination), she may make two rolls and use whichever result is more favorable.",
+        "level": 3,
+        "seedName": "Divination Enhancement (Divine Oracle)"
+      },
+      "Immune to Surprise": {
+        "description": "At 10th level, the divine oracle's awareness of impending threats becomes so finely tuned that she can never be caught off guard. She is always able to act during a surprise round by taking a standard action, provided she is not physically prevented from doing so. If no surprise round occurs, this ability has no effect.",
+        "level": 10,
+        "seedName": "Immune to Surprise (Divine Oracle)"
+      },
+      "Improved Uncanny Dodge (Can't Be Flanked)": {
+        "description": "At 6th level and higher, the divine oracle can no longer be flanked, since she can react to opponents on opposite sides of her as easily as she can react to a single attacker. This defense denies rogues the ability to use flank attacks to sneak attack the divine oracle. The exception to this defense is when an attacker has at least 4 more rogue levels than the target has divine oracle levels. If a character already has levels of a class that could gain uncanny dodge, the levels from the classes that grant uncanny dodge stack to determine the minimum level a rogue must be to flank the character.",
+        "level": 6,
+        "seedName": "Improved Uncanny Dodge (Can't Be Flanked) (Divine Oracle)"
+      },
+      "Oracle Domain": {
+        "description": "When a character enters this prestige class, she gains access to the Oracle domain. She receives its granted power (a +2 bonus to caster level for divination spells) and may select spells from that domain as her daily domain spell choices.",
+        "level": 1,
+        "seedName": "Oracle Domain (Divine Oracle)"
+      },
+      "Prescient Sense": {
+        "description": "Starting at 2nd level, when the divine oracle succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save (such as a dragon's breath weapon or a fireball), she instead suffers no damage at all due to her prophetic awareness allowing her to avoid the danger entirely. Unlike the standard evasion ability available to monks and rogues, this works regardless of what armor the divine oracle is wearing.",
+        "level": 2,
+        "seedName": "Prescient Sense (Divine Oracle)"
+      },
+      "Scry Bonus": {
+        "description": "The divine oracle receives a +1 sacred bonus to the saving throw DC of all divination (scrying) spells she casts.",
+        "level": 1,
+        "seedName": "Scry Bonus (Divine Oracle)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "The divine oracle continues to develop her spellcasting power alongside her prestige class abilities. Each time she gains a new divine oracle level, she gains additional spells per day (and spells known, if relevant) as though she had also advanced one level in a spellcasting class she belonged to prior to taking this prestige class. She does not, however, receive any other class benefits from that prior class (such as improved undead turning, wild shape, or similar abilities). In effect, the divine oracle level is added to the previous spellcasting class level for the purpose of calculating spells per day. If the character had multiple spellcasting classes before becoming a divine oracle, she must choose which class benefits from each level of divine oracle for spellcasting progression purposes.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Divine Oracle)"
+      },
+      "Trap Sense": {
+        "description": "At 2nd level, the divine oracle develops an instinctive awareness of danger posed by traps, granting a +1 bonus on Reflex saves to avoid traps and a +1 dodge bonus to AC against trap attacks. This bonus increases to +2 at 5th level and +3 at 8th level.",
+        "level": 2,
+        "seedName": "Trap Sense (Divine Oracle)",
+        "stackable": true
+      },
+      "Uncanny Dodge (Dex Bonus to Ac)": {
+        "description": "From 4th level onward, the divine oracle can sense danger before she would normally perceive it. She retains her Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. She does still lose her Dexterity bonus to AC if she is rendered immobile.",
+        "level": 4,
+        "seedName": "Uncanny Dodge (Dex Bonus to Ac) (Divine Oracle)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Divine Oracle)"
+      }
+    },
+    "occurrenceMap": {
+      "Divination Enhancement": "Divination Enhancement",
+      "Immune To Surprise": "Immune to Surprise",
+      "Improved Uncanny Dodge (Can't Be Flanked)": "Improved Uncanny Dodge (Can't Be Flanked)",
+      "Oracle Domain": "Oracle Domain",
+      "Prescient Sense": "Prescient Sense",
+      "Scry Bonus": "Scry Bonus",
+      "Trap Sense": "Trap Sense",
+      "Uncanny Dodge (Dex Bonus To AC)": "Uncanny Dodge (Dex Bonus to Ac)"
+    },
+    "overrides": {
+      "aptitudePicks": [],
+      "description": "Certain mortals possess the ability to receive and interpret divine messages, serving as oracles of the gods.",
+      "features": {
+        "Divination Enhancement": {
+          "description": "From 3rd level onward, whenever the divine oracle casts a divination spell (such as augury or divination), she may make two rolls and use whichever result is more favorable."
+        },
+        "Immune to Surprise": {
+          "description": "At 10th level, the divine oracle's awareness of impending threats becomes so finely tuned that she can never be caught off guard. She is always able to act during a surprise round by taking a standard action, provided she is not physically prevented from doing so. If no surprise round occurs, this ability has no effect."
+        },
+        "Oracle Domain": {
+          "description": "When a character enters this prestige class, she gains access to the Oracle domain. She receives its granted power (a +2 bonus to caster level for divination spells) and may select spells from that domain as her daily domain spell choices."
+        },
+        "Prescient Sense": {
+          "description": "Starting at 2nd level, when the divine oracle succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save (such as a dragon's breath weapon or a fireball), she instead suffers no damage at all due to her prophetic awareness allowing her to avoid the danger entirely. Unlike the standard evasion ability available to monks and rogues, this works regardless of what armor the divine oracle is wearing."
+        },
+        "Scry Bonus": {
+          "description": "The divine oracle receives a +1 sacred bonus to the saving throw DC of all divination (scrying) spells she casts."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "The divine oracle continues to develop her spellcasting power alongside her prestige class abilities. Each time she gains a new divine oracle level, she gains additional spells per day (and spells known, if relevant) as though she had also advanced one level in a spellcasting class she belonged to prior to taking this prestige class. She does not, however, receive any other class benefits from that prior class (such as improved undead turning, wild shape, or similar abilities). In effect, the divine oracle level is added to the previous spellcasting class level for the purpose of calculating spells per day. If the character had multiple spellcasting classes before becoming a divine oracle, she must choose which class benefits from each level of divine oracle for spellcasting progression purposes."
+        },
+        "Trap Sense": {
+          "description": "At 2nd level, the divine oracle develops an instinctive awareness of danger posed by traps, granting a +1 bonus on Reflex saves to avoid traps and a +1 dodge bonus to AC against trap attacks. This bonus increases to +2 at 5th level and +3 at 8th level."
+        },
+        "Uncanny Dodge (Dex Bonus to Ac)": {
+          "description": "From 4th level onward, the divine oracle can sense danger before she would normally perceive it. She retains her Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. She does still lose her Dexterity bonus to AC if she is rendered immobile."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      },
+      "freeFeats": [
+        [
+          1,
+          "Oracle Domain",
+          "Cleric Domain"
+        ]
+      ],
+      "reviewed": [
+        "Oracle Domain"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Divine oracles gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A divine oracle continues advancing in spellcasting ability as well as gaining the abilities of her new class. Thus, when a new divine oracle level is gained, the character gains new spells per day (and spells known, if applicable) as if she had also gained a level in whatever spellcasting class she belonged to before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, wild shape ability, and so on). This essentially means that she adds the level of divine oracle to the level of whatever other spellcasting class the character has, then determines spells per day accordingly. If a character had more than one spellcasting class before she became a divine oracle, the player must decide which class to assign each level of divine oracle for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Upon adopting the divine oracle class, the character gains access to the Oracle domain, described in Chapter 7: Domains and Spells. The character gains the granted power associated with the domain (+2 caster level for divination spells), and can choose the spells in that domain as her daily domain spells.",
+        "name": "Oracle Domain"
+      },
+      {
+        "description": "A divine oracle adds a +1 sacred bonus to the save DC of all her divination (scrying) spells.",
+        "name": "Scry Bonus",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 2nd level, if a divine oracle makes a successful Reflex saving throw against an attack that normally inflicts half damage on a successful save (such as a red dragon's fiery breath or a fireball spell), she instead takes no damage, since her prescience allowed her to get out of the way faster. This form of evasion works no matter what armor the divine oracle wears, unlike the evasion ability used by monks and rogues.",
+        "name": "Prescient Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, the divine oracle gains an intuitive sense that alerts her to danger from traps, giving her a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to AC against attacks by traps. This increases to +2 at level 5 and +3 at level 8.",
+        "name": "Trap Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a divine oracle may roll twice and take the better result when using divination spells such as augury or divination.",
+        "name": "Divination Enhancement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 4th level, a divine oracle gains the ability to react to danger before her senses would normally allow her to do so. The divine oracle retains her Dexterity modifier to AC (if any) regardless of being caught flat-footed or struck by an invisible attacker. (She still loses her Dexterity modifier to AC if immobilized.)",
+        "name": "Uncanny Dodge (Dex Bonus to Ac)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 6th level and higher, the divine oracle can no longer be flanked, since she can react to opponents on opposite sides of her as easily as she can react to a single attacker. This defense denies rogues the ability to use flank attacks to sneak attack the divine oracle. The exception to this defense is when an attacker has at least 4 more rogue levels than the target has divine oracle levels. If a character already has levels of a class that could gain uncanny dodge, the levels from the classes that grant uncanny dodge stack to determine the minimum level a rogue must be to flank the character.",
+        "name": "Improved Uncanny Dodge (Can't Be Flanked)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 10th level, the divine oracle's sensitivity to danger is so great that she is never surprised. She can always take a standard action during a surprise round, unless she is physically restrained from doing so. If there is no surprise round then this ability doesn't help.<",
+        "name": "Immune to Surprise",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Heal",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "Some mortals hear the words of deities; these can be divine oracles.",
+    "hitDie": "d6",
+    "name": "Divine Oracle",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Skill Focus (Knowledge [religion])"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 8
+          }
+        ]
+      },
+      "text": "Skills: Knowledge (religion) 8 ranks Feats: Skill Focus (Knowledge [religion]) Spells: Able to cast at least 2 divination spells."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Oracle domain",
+          "scry bonus"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Prescient sense",
+          "trap sense +1"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Divination enhancement"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Uncanny dodge (Dex bonus to AC)"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Trap sense +2"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Improved uncanny dodge (can't be flanked)"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Trap sense +3"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Immune to surprise"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

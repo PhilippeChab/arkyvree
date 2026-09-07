@@ -1,0 +1,623 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-23T01:27:20.018Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/blackguard/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterType": "Divine",
+    "featNameMap": {
+      "cleave": "Cleave",
+      "improvedsunder": "Improved Sunder",
+      "powerattack": "Power Attack"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Aura Of Evil"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Good"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Poison Use"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Dark Blessing"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          10
+        ],
+        "name": "Smite Good"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Command Undead"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Aura Of Despair"
+      },
+      {
+        "levels": [
+          4,
+          7,
+          10
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Fiendish Servant"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.cleave.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedsunder.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.powerattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Blackguard Class Feature",
+    "features": {
+      "Aura of Despair": {
+        "description": "From 3rd level onward, the blackguard projects a demoralizing supernatural aura. All enemies within 10 feet suffer a -2 penalty on their saving throws.",
+        "level": 3,
+        "seedName": "Aura of Despair (Blackguard)"
+      },
+      "Aura of Evil": {
+        "description": "The intensity of a blackguard's evil aura (as perceived by detect evil) equals his blackguard class level combined with any cleric levels he possesses.",
+        "level": 1,
+        "seedName": "Aura of Evil (Blackguard)"
+      },
+      "Command Undead": {
+        "description": "At 3rd level, a blackguard acquires the supernatural capacity to command and rebuke undead creatures. His effective cleric level for this ability is two levels below his blackguard class level.",
+        "level": 3,
+        "seedName": "Command Undead (Blackguard)"
+      },
+      "Dark Blessing": {
+        "description": "A blackguard adds his Charisma modifier (if it is a positive value) as a bonus to all of his saving throws.",
+        "level": 2,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.*.misc",
+            "value": "{{ [abilities.charisma.modifier] }}",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Dark Blessing (Blackguard)"
+      },
+      "Detect Good": {
+        "description": "A blackguard may use detect good at will as a spell-like ability, replicating the effects of the detect good spell.",
+        "level": 1,
+        "seedName": "Detect Good (Blackguard)"
+      },
+      "Fiendish Servant": {
+        "description": "",
+        "level": 5,
+        "seedName": "Fiendish Servant (Blackguard)"
+      },
+      "Poison Use": {
+        "description": "Blackguards are trained in handling poisons and never accidentally expose themselves to a toxin when coating a weapon with poison.",
+        "level": 1,
+        "seedName": "Poison Use (Blackguard)"
+      },
+      "Smite Good": {
+        "description": "Starting at 2nd level, a blackguard can attempt to smite a good-aligned creature once per day using a single normal melee attack. The blackguard adds his Charisma modifier (if positive) to the attack roll and inflicts 1 additional point of damage for each blackguard class level. As an example, a 9th-level blackguard wielding a longsword would deal 1d8+9 damage, before any other applicable bonuses from Strength or magic. If the target of the smite is not good-aligned, the attempt produces no effect but still expends one daily use. The blackguard gains an additional daily use of this ability at 5th level and again at 10th level.",
+        "level": 2,
+        "seedName": "Smite Good (Blackguard)",
+        "stackable": true
+      },
+      "Sneak Attack": {
+        "description": "At 4th level, the blackguard gains the sneak attack ability, which functions identically to the rogue class feature of the same name. The bonus damage increases by +1d6 at every third level after 4th (at 7th and 10th level). If a blackguard has sneak attack damage from another source (such as levels in rogue), the damage bonuses are cumulative.",
+        "level": 4,
+        "seedName": "Sneak Attack (Blackguard)",
+        "stackable": true
+      },
+      "Spells": {
+        "description": "A blackguard can cast a limited selection of divine spells. Casting a blackguard spell requires a minimum Wisdom score equal to 10 + the spell's level; a blackguard whose Wisdom is 10 or lower is unable to cast any of these spells. Bonus spells for this class are determined by Wisdom, and the saving throw DC against blackguard spells equals 10 + spell level + the blackguard's Wisdom modifier. At any spell level where the blackguard receives 0 base spells per day (such as 1st-level spells at class level 1), only bonus spells from a high Wisdom score are available. The blackguard has access to the entire blackguard spell list and may freely select which spells to prepare each day, functioning identically to cleric spellcasting in terms of preparation and use. However, a blackguard cannot spontaneously convert prepared spells into cure or inflict spells.",
+        "level": 1,
+        "seedName": "Spells (Blackguard)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Blackguards have proficiency with every simple and martial weapon, all armor types (light, medium, and heavy), and shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Blackguard)"
+      }
+    },
+    "occurrenceMap": {
+      "Aura Of Despair": "Aura of Despair",
+      "Aura Of Evil": "Aura of Evil",
+      "Command Undead": "Command Undead",
+      "Dark Blessing": "Dark Blessing",
+      "Detect Good": "Detect Good",
+      "Fiendish Servant": "Fiendish Servant",
+      "Poison Use": "Poison Use",
+      "Smite Good": "Smite Good",
+      "Sneak Attack": "Sneak Attack"
+    },
+    "overrides": {
+      "description": "The blackguard epitomizes the dark knight archetype, a warrior who has wholly embraced evil.",
+      "features": {
+        "Aura of Despair": {
+          "description": "From 3rd level onward, the blackguard projects a demoralizing supernatural aura. All enemies within 10 feet suffer a -2 penalty on their saving throws."
+        },
+        "Aura of Evil": {
+          "description": "The intensity of a blackguard's evil aura (as perceived by detect evil) equals his blackguard class level combined with any cleric levels he possesses."
+        },
+        "Command Undead": {
+          "description": "At 3rd level, a blackguard acquires the supernatural capacity to command and rebuke undead creatures. His effective cleric level for this ability is two levels below his blackguard class level."
+        },
+        "Dark Blessing": {
+          "description": "A blackguard adds his Charisma modifier (if it is a positive value) as a bonus to all of his saving throws.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "saves.*.misc",
+              "value": "{{ [abilities.charisma.modifier] }}",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Detect Good": {
+          "description": "A blackguard may use detect good at will as a spell-like ability, replicating the effects of the detect good spell."
+        },
+        "Poison Use": {
+          "description": "Blackguards are trained in handling poisons and never accidentally expose themselves to a toxin when coating a weapon with poison."
+        },
+        "Smite Good": {
+          "description": "Starting at 2nd level, a blackguard can attempt to smite a good-aligned creature once per day using a single normal melee attack. The blackguard adds his Charisma modifier (if positive) to the attack roll and inflicts 1 additional point of damage for each blackguard class level. As an example, a 9th-level blackguard wielding a longsword would deal 1d8+9 damage, before any other applicable bonuses from Strength or magic. If the target of the smite is not good-aligned, the attempt produces no effect but still expends one daily use. The blackguard gains an additional daily use of this ability at 5th level and again at 10th level."
+        },
+        "Sneak Attack": {
+          "description": "At 4th level, the blackguard gains the sneak attack ability, which functions identically to the rogue class feature of the same name. The bonus damage increases by +1d6 at every third level after 4th (at 7th and 10th level). If a blackguard has sneak attack damage from another source (such as levels in rogue), the damage bonuses are cumulative."
+        },
+        "Spells": {
+          "description": "A blackguard can cast a limited selection of divine spells. Casting a blackguard spell requires a minimum Wisdom score equal to 10 + the spell's level; a blackguard whose Wisdom is 10 or lower is unable to cast any of these spells. Bonus spells for this class are determined by Wisdom, and the saving throw DC against blackguard spells equals 10 + spell level + the blackguard's Wisdom modifier. At any spell level where the blackguard receives 0 base spells per day (such as 1st-level spells at class level 1), only bonus spells from a high Wisdom score are available. The blackguard has access to the entire blackguard spell list and may freely select which spells to prepare each day, functioning identically to cleric spellcasting in terms of preparation and use. However, a blackguard cannot spontaneously convert prepared spells into cure or inflict spells."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Blackguards have proficiency with every simple and martial weapon, all armor types (light, medium, and heavy), and shields."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "blackguardspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Blackguards are proficient with all simple and martial weapons, with all types of armor, and with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A blackguard has the ability to cast a small number of divine spells. To cast a blackguard spell, a blackguard must have a Wisdom score of at least 10 + the spell's level, so a blackguard with a Wisdom of 10 or lower cannot cast these spells. Blackguard bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + the blackguard's Wisdom modifier. When the blackguard gets 0 spells per day of a given spell level (for instance, 1st-level spells for a 1st-level blackguard), he gains only the bonus spells he would be entitled to based on his Wisdom score for that spell level. The blackguard's spell list appears below. A blackguard has access to any spell on the list and can freely choose which to prepare, just as a cleric. A blackguard prepares and casts spells just as a cleric does (though a blackguard cannot spontaneously cast cure or inflict spells).",
+        "name": "Spells"
+      },
+      {
+        "description": "The power of a blackguard's aura of evil the detect evil spell) is equal to his class level plus his cleric level, if any.",
+        "name": "Aura of Evil",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At will, a blackguard can use detect good as a spell-like ability, duplicating the effect of the detect good spell.",
+        "name": "Detect Good",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Blackguards are skilled in the use of poison and never risk accidentally poisoning themselves when applying poison to a blade.",
+        "name": "Poison Use"
+      },
+      {
+        "description": "A blackguard applies his Charisma modifier (if positive) as a bonus on all saving throws.",
+        "name": "Dark Blessing",
+        "type": "(Su)"
+      },
+      {
+        "description": "Once a day, a blackguard of 2nd level or higher may attempt to smite good with one normal melee attack. He adds his Charisma modifier (if positive) to his attack roll and deals 1 extra point of damage per class level. For example, a 9th-level blackguard armed with a longsword would deal 1d8+9 points of damage, plus any additional bonuses from high Strength or magical effects that normally apply. If a blackguard accidentally smites a creature that is not good, the smite has no effect but it is still used up for that day. At 5th level, and again at 10th level, a blackguard may smite good one additional time per day.",
+        "name": "Smite Good",
+        "type": "(Su)"
+      },
+      {
+        "description": "When a blackguard reaches 3rd level, he gains the supernatural ability to command and rebuke undead. He commands undead as would a cleric of two levels lower.",
+        "name": "Command Undead",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, the blackguard radiates a malign aura that causes enemies within 10 feet of him to take a ?2 penalty on all saving throws.",
+        "name": "Aura of Despair",
+        "type": "(Su)"
+      },
+      {
+        "description": "This ability, gained at 4th level, is like the rogue ability of the same name. The extra damage increases by +1d6 every third level beyond 4th (7th and 10th). If a blackguard gets a sneak attack bonus from another source (such as rogue levels), the bonuses on damage stack.",
+        "name": "Sneak Attack"
+      },
+      {
+        "description": "",
+        "name": "Fiendish Servant"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Diplomacy",
+      "Handle Animal",
+      "Heal",
+      "Hide",
+      "Intimidate",
+      "Knowledge (Religion)",
+      "Profession",
+      "Ride"
+    ],
+    "description": "The blackguard is the quintessential black knight.",
+    "hitDie": "d10",
+    "name": "Blackguard",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "any evil",
+        "bab": 6,
+        "feats": [
+          "Cleave",
+          "Improved Sunder",
+          "Power Attack"
+        ],
+        "skills": [
+          {
+            "name": "Hide",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 2
+          }
+        ],
+        "special": [
+          "The character must have made peaceful contact with an evil outsider who was summoned by him or someone else.",
+          "made peaceful contact with an evil outsider who was summoned by him or someone else"
+        ]
+      },
+      "text": "Base Attack Bonus: +6 Alignment: any evil Skills: Hide 5 ranks, Knowledge (religion) 2 ranks Feats: Cleave, Improved Sunder, Power Attack Special: The character must have made peaceful contact with an evil outsider who was summoned by him or someone else."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Aura of evil",
+          "detect good",
+          "poison use"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Dark blessing",
+          "smite good 1/day"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Command undead",
+          "aura of despair"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Fiendish servant",
+          "smite good 2/day"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +3d6",
+          "smite good 3/day"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

@@ -1,0 +1,20 @@
+import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+const APT = "Master of Many Forms Class Feature";
+
+export const MASTER_OF_MANY_FORMS_FEATS: FeatSeed[] = [
+  { name: "Evershifting Form (Master of Many Forms)", description: "A 10th-level master of many forms has reached the pinnacle of her shapechanging abilities. She gains the shapechanger subtype and becomes immune to any transmutation effect unless she is willing to accept it. In addition, she no longer takes ability penalties for aging and is not subject to magical aging, though any aging penalties she already may have taken remain in place. Bonuses still accrue, and a master of many forms still dies of old age when her time is up.", selectable: false, aptitudes: [APT] },
+  { name: "Extraordinary Wild Shape (Master of Many Forms)", description: "Starting at 7th level, a master of many forms gains the extraordinary special qualities of any form she assumes with wild shape.", selectable: false, aptitudes: [APT] },
+  { name: "Fast Wild Shape (Master of Many Forms)", description: "Starting at 3rd level, a master of many forms can use her wild shape ability as a move action, rather than as a standard action.", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Master of Many Forms)", description: "A master of many forms knows how to use her wild shape ability to assume a wider range of forms. At 1st level, she can assume a humanoid form with wild shape. She later gains the ability to assume the form of a giant (at 2nd level), a monstrous humanoid (at 3rd level), a fey (at 4th level), a vermin (at 5th level), an aberration (at 6th level), a plant (at 7th level), an ooze (at 8th level), an elemental (at 9th level), and a dragon (at 10th level). The size limit of the shapes she can assume also increases as she gains levels. At 2nd level, she can assume the form of a Large creature; at 4th level, a Tiny creature; at 6th level, a Huge creature; at 8th level, a Diminutive creature; and at 10th level, a Gargantuan creature. A master of many forms also gains one additional daily use of her wild shape ability per class level gained. The master of many forms' class levels stack with other class levels that grant wild shape for the purpose of determining the maximum Hit Dice of a form.", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Aberration; Huge) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Dragon; Gargantuan) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Fey; Tiny) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Giant; Large) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Humanoid) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Monstrous Humanoid) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Ooze; Diminutive) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Improved Wild Shape (Vermin) (Master of Many Forms)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Shifter's Speech (Master of Many Forms)", description: "A master of many forms maintains her ability to speak normally (including verbal components of spells) regardless of the form she takes. Furthermore, she can communicate with other creatures of the same kind while in wild shape, as long as such creatures are normally capable of communicating with each other using natural methods.", selectable: false, aptitudes: [APT] },
+  { name: "Weapon and Armor Proficiency (Master of Many Forms)", description: "Masters of many forms gain no proficiency with any weapon or armor.", selectable: false, aptitudes: [APT] },
+];

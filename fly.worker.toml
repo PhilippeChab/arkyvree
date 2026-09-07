@@ -1,0 +1,34 @@
+app = "arkyvree-worker"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+  build_target = "worker"
+
+[processes]
+  worker = "./worker-bin"
+
+[env]
+  WORKER_PORT = "8001"
+
+[[services]]
+  processes = ["worker"]
+  protocol = "tcp"
+  internal_port = 8001
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[services.ports]]
+    port = 8001
+    handlers = ["http"]
+
+  [services.concurrency]
+    type = "connections"
+    soft_limit = 5
+    hard_limit = 10
+
+[[vm]]
+  processes = ["worker"]
+  size = "shared-cpu-4x"
+  memory = "1gb"

@@ -1,0 +1,1 @@
+ALTER TABLE "rules"."items" DROP COLUMN "rarity";

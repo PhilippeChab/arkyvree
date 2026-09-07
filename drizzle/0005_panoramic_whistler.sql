@@ -1,0 +1,1 @@
+ALTER TABLE "account"."users" ADD COLUMN "pending_email_address" text;

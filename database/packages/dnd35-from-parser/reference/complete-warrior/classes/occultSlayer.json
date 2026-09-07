@@ -1,0 +1,363 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:43:23.175Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/occult-slayer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "improvedinitiative": "Improved Initiative"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "name": "Magical Defense"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Weapon Bond"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Vicious Strike"
+      },
+      {
+        "levels": [
+          2,
+          4
+        ],
+        "name": "Mind Over Magic"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Auravision"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Nondetection Cloak"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Blank Thoughts"
+      }
+    ],
+    "hd": 8,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedinitiative.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Occult Slayer Class Feature",
+    "features": {
+      "Auravision": {
+        "description": "Beginning at 3rd level, an occult slayer can perceive magical auras within 60 feet as a free action. This functions identically to detect magic, except that the occult slayer can only discern the number of magical auras present, not any additional information about them.",
+        "level": 3,
+        "seedName": "Auravision (Occult Slayer)"
+      },
+      "Blank Thoughts": {
+        "description": "At 5th level, an occult slayer can enter a state of complete mental emptiness, rendering herself immune to all mind-affecting effects, including charms, compulsions, patterns, phantasms, and morale effects. She may activate or deactivate this ability as a free action.",
+        "level": 5,
+        "seedName": "Blank Thoughts (Occult Slayer)"
+      },
+      "Magical Defense": {
+        "description": "Through rigorous practice at resisting all forms of magic, an occult slayer gains a bonus on saving throws against spells and spell-like abilities. This bonus starts at +1 at 1st level, rises to +2 at 3rd level, and reaches +3 at 5th level.",
+        "level": 1,
+        "seedName": "Magical Defense (Occult Slayer)",
+        "stackable": true
+      },
+      "Mind Over Magic": {
+        "description": "From 2nd level onward, an occult slayer can reflect a spell or spell-like ability that targets her back at its caster as a free action. This works like spell turning with a caster level equal to her occult slayer level + 5. She may use this ability once per day at 2nd level, increasing to twice per day at 4th level.",
+        "level": 2,
+        "seedName": "Mind Over Magic (Occult Slayer)",
+        "stackable": true
+      },
+      "Nondetection Cloak": {
+        "description": "At 4th level, an occult slayer and all equipment she wears or carries become resistant to divination magic such as clairaudience/clairvoyance, locate object, and similar detection effects. She receives protection equivalent to nondetection (caster level equal to her occult slayer level), though this protection applies solely to herself and her gear.",
+        "level": 4,
+        "seedName": "Nondetection Cloak (Occult Slayer)"
+      },
+      "Vicious Strike": {
+        "description": "Starting at 2nd level, when an occult slayer readies an attack action specifically to disrupt a spellcaster, she inflicts double damage on a successful hit.",
+        "level": 2,
+        "seedName": "Vicious Strike (Occult Slayer)"
+      },
+      "Weapon Bond": {
+        "description": "An occult slayer selects a single weapon of at least masterwork quality to serve as the vessel for her power. Once chosen, she forges a supernatural link with that weapon, channeling her animosity toward spellcasters through it. Any successful strike she lands with this bonded weapon against a spellcaster or a creature possessing spell-like abilities deals an additional 1d6 points of damage. If the bonded weapon is lost or destroyed, she cannot deal the extra damage until she obtains and bonds with a new weapon of the same type, which must also be at least masterwork quality. Establishing a new bond requires one day of dedicated practice per character level, during which she can do little else and cannot adventure.",
+        "level": 1,
+        "seedName": "Weapon Bond (Occult Slayer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Occult slayers gain proficiency with all simple weapons, all martial weapons, every type of armor, and all shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.towershieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Occult Slayer)"
+      }
+    },
+    "occurrenceMap": {
+      "Auravision": "Auravision",
+      "Blank Thoughts": "Blank Thoughts",
+      "Magical Defense": "Magical Defense",
+      "Mind Over Magic": "Mind Over Magic",
+      "Nondetection Cloak": "Nondetection Cloak",
+      "Vicious Strike": "Vicious Strike",
+      "Weapon Bond": "Weapon Bond"
+    },
+    "overrides": {
+      "description": "An occult slayer is a dedicated warrior who relentlessly pursues and confronts wielders of arcane and divine magic.",
+      "features": {
+        "Auravision": {
+          "description": "Beginning at 3rd level, an occult slayer can perceive magical auras within 60 feet as a free action. This functions identically to detect magic, except that the occult slayer can only discern the number of magical auras present, not any additional information about them."
+        },
+        "Blank Thoughts": {
+          "description": "At 5th level, an occult slayer can enter a state of complete mental emptiness, rendering herself immune to all mind-affecting effects, including charms, compulsions, patterns, phantasms, and morale effects. She may activate or deactivate this ability as a free action."
+        },
+        "Magical Defense": {
+          "description": "Through rigorous practice at resisting all forms of magic, an occult slayer gains a bonus on saving throws against spells and spell-like abilities. This bonus starts at +1 at 1st level, rises to +2 at 3rd level, and reaches +3 at 5th level."
+        },
+        "Mind Over Magic": {
+          "description": "From 2nd level onward, an occult slayer can reflect a spell or spell-like ability that targets her back at its caster as a free action. This works like spell turning with a caster level equal to her occult slayer level + 5. She may use this ability once per day at 2nd level, increasing to twice per day at 4th level."
+        },
+        "Nondetection Cloak": {
+          "description": "At 4th level, an occult slayer and all equipment she wears or carries become resistant to divination magic such as clairaudience/clairvoyance, locate object, and similar detection effects. She receives protection equivalent to nondetection (caster level equal to her occult slayer level), though this protection applies solely to herself and her gear."
+        },
+        "Vicious Strike": {
+          "description": "Starting at 2nd level, when an occult slayer readies an attack action specifically to disrupt a spellcaster, she inflicts double damage on a successful hit."
+        },
+        "Weapon Bond": {
+          "description": "An occult slayer selects a single weapon of at least masterwork quality to serve as the vessel for her power. Once chosen, she forges a supernatural link with that weapon, channeling her animosity toward spellcasters through it. Any successful strike she lands with this bonded weapon against a spellcaster or a creature possessing spell-like abilities deals an additional 1d6 points of damage. If the bonded weapon is lost or destroyed, she cannot deal the extra damage until she obtains and bonds with a new weapon of the same type, which must also be at least masterwork quality. Establishing a new bond requires one day of dedicated practice per character level, during which she can do little else and cannot adventure."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Occult slayers gain proficiency with all simple weapons, all martial weapons, every type of armor, and all shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Occult slayers are proficient with all simple and martial weapons and all armor and shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "An occult slayer's constant training in countering magic of all types manifests itself as a bonus on saving throws against spells or spell-like abilities. This bonus is +1 at 1st level, and it increases to +2 at 3rd level and to +3 at 5th level.",
+        "name": "Magical Defense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An occult slayer must choose a particular weapon of at least masterwork quality as the focus of her power. Upon making her selection, she immediately forms a bond with the chosen weapon that imbues it with the force of her hatred for spellcasters. Thereafter, any successful attack she makes with that weapon against a spellcaster or a creature with spell-like abilities deals an extra 1d6 points of damage. If this particular weapon is lost or destroyed, the occult slayer loses the ability to deal the extra damage until she acquires and bonds with another weapon of the same kind of at least masterwork quality. The occult slayer must spend one day per character level practicing with the replacement weapon (and doing very little else-no adventuring) to create a new weapon bond.",
+        "name": "Weapon Bond",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level and higher, an occult slayer who readies an attack action to disrupt a spellcaster deals double damage if the attack hits.",
+        "name": "Vicious Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, an occult slayer can cause a spell or spell-like ability targeted against her to rebound onto the originator as a free action. This ability otherwise functions as the spell turning spell (caster level equals the character's occult slayer level + 5). An occult slayer can use this ability once per day at 2nd level and twice per day at 4th level.",
+        "name": "Mind Over Magic",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 3rd level, an occult slayer gains the ability to see magical auras at a range of up to 60 feet as a free action. This ability otherwise functions as the detect magic spell. The character cannot use this ability to determine anything but the number of magical auras present.",
+        "name": "Auravision",
+        "type": "(Su)"
+      },
+      {
+        "description": "Upon reaching 4th level, an occult slayer (and any gear she wears or carries) becomes more difficult to locate through divinations such as clairaudience/clairvoyance, locate object, and other detection spells. The occult slayer gains magical protection from divinations equivalent to a nondetection spell (caster level equals the character's occult slayer level), except that it affects only the occult slayer and her possessions.",
+        "name": "Nondetection Cloak",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 5th level, an occult slayer can induce within herself a state of mental absence, thereby becoming immune to mind-affecting effects (charms, compulsions, patterns, phantasms, and morale effects). She can suppress or resume this ability as a free action.",
+        "name": "Blank Thoughts",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Craft",
+      "Gather Information",
+      "Knowledge (Arcana)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "The occult slayer is driven to confront any arcane or divine spellcaster who crosses her path.",
+    "hitDie": "d8",
+    "name": "Occult Slayer",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Improved Initiative",
+          "Weapon Focus (any weapon)"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 4
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 3
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Knowledge (arcana) 4 ranks, Spellcraft 3 ranks Feats: Improved Initiative, Weapon Focus (any weapon)"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Magical defense +1",
+          "weapon bond"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Vicious strike",
+          "mind over magic 1/day"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Auravision",
+          "magical defense +2"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Mind over magic 2/day",
+          "nondetection cloak"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Blank thoughts",
+          "magical defense +3"
+        ],
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

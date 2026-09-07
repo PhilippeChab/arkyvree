@@ -1,0 +1,78 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-09T00:00:00.000Z",
+    "sourceUrl": "https://srd.dndtools.org/srd/classes/baseCore/wizard.html",
+    "type": "wizardSchool"
+  },
+  "mapping": {
+    "overrides": {
+      "Abjuration": {
+        "description": "Choosing abjuration as a specialty grants the wizard heightened skill with defensive and warding magic. Beyond the usual advantages of specialization, the abjurer receives no extra class features."
+      },
+      "Conjuration": {
+        "description": "By focusing on conjuration, a wizard gains exceptional proficiency with spells that summon creatures, produce objects, and move things across distances. Apart from the standard specialization bonuses, the conjurer does not gain any further class features."
+      },
+      "Divination": {
+        "description": "Specializing in divination gives the wizard superior command over magic that uncovers hidden knowledge and gathers information. Unlike other specialists, a diviner only needs to sacrifice one prohibited school instead of two."
+      },
+      "Enchantment": {
+        "description": "When a wizard takes enchantment as a specialty, they develop particular expertise in magic that influences the thoughts and behavior of other creatures. The enchanter gains the normal specialization benefits but no additional class features beyond those."
+      },
+      "Evocation": {
+        "description": "Focusing on evocation sharpens a wizard's ability to channel raw energy and produce dramatic magical effects. Outside of the standard benefits granted by specialization, the evoker does not receive any extra class features."
+      },
+      "Illusion": {
+        "description": "A wizard who dedicates study to illusion becomes remarkably skilled at weaving false sensory impressions and phantasmal manifestations. No class features are gained beyond the normal advantages of being a specialist."
+      },
+      "Necromancy": {
+        "description": "Specialization in necromancy provides the wizard with enhanced mastery over forces related to death, undeath, and life force manipulation. The necromancer benefits from the standard specialist advantages but gains no further class features."
+      },
+      "Transmutation": {
+        "description": "Taking transmutation as a specialty makes the wizard particularly adept at magic that alters the physical form and characteristics of creatures and objects. Aside from the standard specialist benefits, the transmuter receives no additional class features."
+      }
+    }
+  },
+  "raw": [
+    {
+      "description": "A wizard who specializes in abjuration becomes especially adept at casting protective spells. In addition to the standard specialist benefits, an abjurer gains no additional class abilities.",
+      "name": "Abjuration",
+      "prohibitedSchoolCount": 2
+    },
+    {
+      "description": "A wizard who specializes in conjuration becomes especially adept at creating creatures and objects and at transporting them. In addition to the standard specialist benefits, a conjurer gains no additional class abilities.",
+      "name": "Conjuration",
+      "prohibitedSchoolCount": 2
+    },
+    {
+      "description": "A wizard who specializes in divination becomes especially adept at spells that reveal information. A diviner need only give up one other school, rather than two.",
+      "name": "Divination",
+      "prohibitedSchoolCount": 1
+    },
+    {
+      "description": "A wizard who specializes in enchantment becomes especially adept at affecting the minds and actions of others. In addition to the standard specialist benefits, an enchanter gains no additional class abilities.",
+      "name": "Enchantment",
+      "prohibitedSchoolCount": 2
+    },
+    {
+      "description": "A wizard who specializes in evocation becomes especially adept at manipulating energy and creating powerful effects. In addition to the standard specialist benefits, an evoker gains no additional class abilities.",
+      "name": "Evocation",
+      "prohibitedSchoolCount": 2
+    },
+    {
+      "description": "A wizard who specializes in illusion becomes especially adept at crafting deceptive images and phantom effects. In addition to the standard specialist benefits, an illusionist gains no additional class abilities.",
+      "name": "Illusion",
+      "prohibitedSchoolCount": 2
+    },
+    {
+      "description": "A wizard who specializes in necromancy becomes especially adept at manipulating the power of death and unlife. In addition to the standard specialist benefits, a necromancer gains no additional class abilities.",
+      "name": "Necromancy",
+      "prohibitedSchoolCount": 2
+    },
+    {
+      "description": "A wizard who specializes in transmutation becomes especially adept at changing the properties of things. In addition to the standard specialist benefits, a transmuter gains no additional class abilities.",
+      "name": "Transmutation",
+      "prohibitedSchoolCount": 2
+    }
+  ]
+}

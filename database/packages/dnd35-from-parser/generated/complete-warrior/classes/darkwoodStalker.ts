@@ -1,0 +1,57 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, eqStr, gte } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const DARKWOOD_STALKER: ClassSeed = {
+  name: "Darkwood Stalker",
+  description: "Certain elves dedicate themselves to becoming specialist orc hunters, known as darkwood stalkers.",
+  hd: 8, levels: 10, skillPoints: 4,
+  bab: "good",
+  saves: { fortitude: "good", reflex: "good", will: "poor" },
+  classSkills: [
+    "Climb",
+    "Craft",
+    "Heal",
+    "Hide",
+    "Jump",
+    "Knowledge (Nature)",
+    "Listen",
+    "Move Silently",
+    "Profession",
+    "Ride",
+    "Search",
+    "Spot",
+    "Survival",
+    "Swim",
+    "Use Rope",
+  ],
+  requirements: [
+    gte("combat.bab", 5),
+    gte("skills.hide.rank", 5),
+    gte("skills.listen.rank", 5),
+    gte("skills.movesilently.rank", 5),
+    gte("skills.spot.rank", 5),
+    gte("skills.survival.rank", 5),
+    eq("feats.dodge.possessed"),
+    eq("feats.track.possessed"),
+    eqStr("identity.physiology.race.name", "Elf"),
+  ],
+  classFeatureAptitude: "Darkwood Stalker Class Feature",
+  classFeatures: [
+    [1, "Ancient Foe (Darkwood Stalker)"],
+    [1, "Weapon and Armor Proficiency (Darkwood Stalker)"],
+    [2, "Uncanny Dodge (Darkwood Stalker)"],
+    [3, "Sneak Attack (Darkwood Stalker)"],
+    [4, "Ancient Foe (Darkwood Stalker)"],
+    [4, "Darkvision (Darkwood Stalker)"],
+    [5, "Improved Uncanny Dodge (Darkwood Stalker)"],
+    [6, "Sneak Attack (Darkwood Stalker)"],
+    [7, "Ancient Foe (Darkwood Stalker)"],
+    [7, "Darkvision (Darkwood Stalker)"],
+    [8, "Dodge Critical (Darkwood Stalker)"],
+    [9, "Sneak Attack (Darkwood Stalker)"],
+    [10, "Ancient Foe (Darkwood Stalker)"],
+    [10, "Death Attack (Darkwood Stalker)"],
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

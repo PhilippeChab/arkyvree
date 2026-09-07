@@ -1,0 +1,474 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:27:27.181Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/stormlord/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {
+      "endurance": "Endurance",
+      "greatfortitude": "Great Fortitude"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          6,
+          9
+        ],
+        "name": "Enhanced Javelins"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Resistance To Electricity 5"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Shock Weapon"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Storm Walk"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Resistance To Electricity 10"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Thundering Weapon"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Storm Ride"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Resistance To Electricity 15"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Shocking Burst Weapon"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Immunity To Electricity"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Elemental Conflagration"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "equal",
+        "target": "feats.endurance.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.greatfortitude.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "saves.fortitude.base",
+        "value": "4",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Stormlord Class Feature",
+    "features": {
+      "Elemental Conflagration": {
+        "description": "",
+        "level": 10,
+        "seedName": "Elemental Conflagration (Stormlord)"
+      },
+      "Enhanced Javelins": {
+        "description": "When a stormlord hurls a javelin, it functions as a +1 magical weapon. This enhancement improves to +2 at 6th level and +3 at 10th level.",
+        "level": 1,
+        "seedName": "Enhanced Javelins (Stormlord)",
+        "stackable": true
+      },
+      "Immunity to Electricity": {
+        "description": "",
+        "level": 9,
+        "seedName": "Immunity to Electricity (Stormlord)"
+      },
+      "Resistance to Electricity 10": {
+        "description": "",
+        "level": 4,
+        "seedName": "Resistance to Electricity 10 (Stormlord)"
+      },
+      "Resistance to Electricity 15": {
+        "description": "",
+        "level": 7,
+        "seedName": "Resistance to Electricity 15 (Stormlord)"
+      },
+      "Resistance to Electricity 5": {
+        "description": "As a stormlord advances in this prestige class, his body grows progressively more resistant to electrical energy, gaining electricity resistance as indicated by his class level. Upon reaching 9th level, the stormlord becomes completely immune to electricity.",
+        "level": 1,
+        "seedName": "Resistance to Electricity 5 (Stormlord)"
+      },
+      "Shock Weapon": {
+        "description": "At 2nd level and beyond, any spear or javelin wielded by a stormlord gains the shock property, inflicting an additional 1d6 points of electricity damage on a hit. This property fades 1 round after the weapon leaves the stormlord's grasp.",
+        "level": 2,
+        "seedName": "Shock Weapon (Stormlord)"
+      },
+      "Shocking Burst Weapon": {
+        "description": "From 8th level onward, any spear or javelin wielded by a stormlord gains the shocking burst property. This property fades 1 round after the weapon leaves the stormlord's grasp. This benefit stacks with the stormlord's thundering weapon ability. Storm of Elemental Fury (Sp): Upon reaching 10th level, the stormlord can call forth a devastating storm of tremendous force. Once per day, the stormlord may invoke storm of elemental fury, functioning as though cast by a 17th-level cleric.",
+        "level": 8,
+        "seedName": "Shocking Burst Weapon (Stormlord)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Each time the stormlord gains a class level, he receives new spells per day (and spells known, if relevant) as though he had also gained a level in a divine spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other benefits that class would normally grant (such as improved turning ability, additional favored enemies, or similar features). If the character had multiple divine spellcasting classes prior to becoming a stormlord, he must choose which class receives the benefit of each new stormlord level for determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Stormlord)"
+      },
+      "Storm Ride": {
+        "description": "At 6th level, the stormlord gains the capacity to fly whenever a storm is present, as though under the effect of a fly spell. Hostile wind conditions have no impact on him while airborne; even winds of hurricane strength cannot knock him from the sky or blow him off course.",
+        "level": 6,
+        "seedName": "Storm Ride (Stormlord)"
+      },
+      "Storm Walk": {
+        "description": "From 3rd level onward, the stormlord (along with his mount, if applicable) can travel on foot or mounted through any storm, whether natural or magical, at his normal movement rate. He remains entirely unhindered by powerful winds (including gust of wind effects), driving rain or waves, airborne debris carried by the wind (which invariably misses him), deafening thunder, natural lightning strikes, or any other storm-related hazard.",
+        "level": 3,
+        "seedName": "Storm Walk (Stormlord)"
+      },
+      "Thundering Weapon": {
+        "description": "At 5th level and higher, any spear or javelin used by the stormlord gains the thundering property. This property fades 1 round after the weapon leaves the stormlord's grasp. This benefit stacks with the stormlord's shock weapon ability.",
+        "level": 5,
+        "seedName": "Thundering Weapon (Stormlord)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "The stormlord does not gain any additional weapon or armor proficiencies.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Stormlord)"
+      }
+    },
+    "occurrenceMap": {
+      "Elemental Conflagration": "Elemental Conflagration",
+      "Enhanced Javelins": "Enhanced Javelins",
+      "Immunity To Electricity": "Immunity to Electricity",
+      "Resistance To Electricity 10": "Resistance to Electricity 10",
+      "Resistance To Electricity 15": "Resistance to Electricity 15",
+      "Resistance To Electricity 5": "Resistance to Electricity 5",
+      "Shock Weapon": "Shock Weapon",
+      "Shocking Burst Weapon": "Shocking Burst Weapon",
+      "Storm Ride": "Storm Ride",
+      "Storm Walk": "Storm Walk",
+      "Thundering Weapon": "Thundering Weapon"
+    },
+    "overrides": {
+      "description": "Stormlords tend to live as bandits, pursuing their desires for riches, fine food, luxuries, and reckless indulgence, driven by an appetite for sudden, dramatic destruction.",
+      "features": {
+        "Enhanced Javelins": {
+          "description": "When a stormlord hurls a javelin, it functions as a +1 magical weapon. This enhancement improves to +2 at 6th level and +3 at 10th level."
+        },
+        "Resistance to Electricity 5": {
+          "description": "As a stormlord advances in this prestige class, his body grows progressively more resistant to electrical energy, gaining electricity resistance as indicated by his class level. Upon reaching 9th level, the stormlord becomes completely immune to electricity."
+        },
+        "Shock Weapon": {
+          "description": "At 2nd level and beyond, any spear or javelin wielded by a stormlord gains the shock property, inflicting an additional 1d6 points of electricity damage on a hit. This property fades 1 round after the weapon leaves the stormlord's grasp."
+        },
+        "Shocking Burst Weapon": {
+          "description": "From 8th level onward, any spear or javelin wielded by a stormlord gains the shocking burst property. This property fades 1 round after the weapon leaves the stormlord's grasp. This benefit stacks with the stormlord's thundering weapon ability. Storm of Elemental Fury (Sp): Upon reaching 10th level, the stormlord can call forth a devastating storm of tremendous force. Once per day, the stormlord may invoke storm of elemental fury, functioning as though cast by a 17th-level cleric."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "Each time the stormlord gains a class level, he receives new spells per day (and spells known, if relevant) as though he had also gained a level in a divine spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other benefits that class would normally grant (such as improved turning ability, additional favored enemies, or similar features). If the character had multiple divine spellcasting classes prior to becoming a stormlord, he must choose which class receives the benefit of each new stormlord level for determining spells per day and spells known."
+        },
+        "Storm Ride": {
+          "description": "At 6th level, the stormlord gains the capacity to fly whenever a storm is present, as though under the effect of a fly spell. Hostile wind conditions have no impact on him while airborne; even winds of hurricane strength cannot knock him from the sky or blow him off course."
+        },
+        "Storm Walk": {
+          "description": "From 3rd level onward, the stormlord (along with his mount, if applicable) can travel on foot or mounted through any storm, whether natural or magical, at his normal movement rate. He remains entirely unhindered by powerful winds (including gust of wind effects), driving rain or waves, airborne debris carried by the wind (which invariably misses him), deafening thunder, natural lightning strikes, or any other storm-related hazard."
+        },
+        "Thundering Weapon": {
+          "description": "At 5th level and higher, any spear or javelin used by the stormlord gains the thundering property. This property fades 1 round after the weapon leaves the stormlord's grasp. This benefit stacks with the stormlord's shock weapon ability."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "The stormlord does not gain any additional weapon or armor proficiencies."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Stormlords gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each stormlord level, the character gains new spells per day (and spells known, if applicable) as if he had also gained a level in a divine spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, additional favored enemies, and so on). If the character had more than one divine spellcasting class before becoming a stormlord, the player must decide to which class to add each stormlord level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "Any javelin thrown by a stormlord counts as a +1 magic weapon. This bonus increases at 6th level to +2 and at 10th level to +3.",
+        "name": "Enhanced Javelins"
+      },
+      {
+        "description": "As a stormlord gains levels in this prestige class, he becomes increasingly resistant to electrical energy, gaining resistance to electricity in the amount given on the table. At 9th level, a stormlord gains immunity to electricity.",
+        "name": "Resistance to Electricity 5",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Any spear or javelin used by a stormlord of 2nd level or higher is treated as a shock weapon (dealing an extra 1d6 points of electricity damage). The weapon loses this ability 1 round after leaving the hand of the stormlord.",
+        "name": "Shock Weapon",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, a stormlord (and his mount, if any) can walk or ride through storms (natural or magical) at his regular movement rate, completely unaffected by high winds (including gust of wind), pounding precipitation or waves, objects driven by the wind (which always seem to miss him), great claps of thunder, natural bolts of lightning, or any other natural symptom of Talos's fury.",
+        "name": "Storm Walk",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Resistance to Electricity 10"
+      },
+      {
+        "description": "For a stormlord of 5th level or higher, any spear or javelin he uses is treated as a thundering weapon. The weapon loses this ability 1 round after leaving the hand of the stormlord. This effect stacks with that of the stormlord's shock weapon ability.",
+        "name": "Thundering Weapon",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 6th level, a stormlord gains the ability to fly during any storm as if using the fly spell. Adverse wind conditions do not affect him; for example, even hurricane-force winds cannot knock him down or blow him away when flying.",
+        "name": "Storm Ride",
+        "type": "(Sp)"
+      },
+      {
+        "description": "",
+        "name": "Resistance to Electricity 15"
+      },
+      {
+        "description": "For a stormlord of 8th level or higher, any spear or javelin he uses is treated as a shocking burst weapon. The weapon loses this ability 1 round after leaving the hand of the stormlord. This effect stacks with that of the stormlord's thundering weapon ability. Storm of Elemental Fury (Sp): At 10th level, a stormlord can summon a storm of great magnitude and power. Once per day, a stormlord can use storm of elemental fury as if he were a 17th-level cleric.",
+        "name": "Shocking Burst Weapon",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Immunity to Electricity"
+      },
+      {
+        "description": "",
+        "name": "Elemental Conflagration"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Disguise",
+      "Gather Information",
+      "Intimidate",
+      "Knowledge (Nature)",
+      "Knowledge (Religion)",
+      "Survival",
+      "Swim"
+    ],
+    "description": "Stormlords often live as brigands, indulging their personal desires for wealth, food, luxury items, and wanton behavior as they crave random, spectacular acts of violence.",
+    "hitDie": "d8",
+    "name": "Stormlord",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "As for a cleric of Talos",
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Endurance",
+          "Great Fortitude",
+          "Weapon Focus (any spear or javelin)"
+        ],
+        "saves": [
+          {
+            "base": 4,
+            "name": "fortitude"
+          }
+        ],
+        "special": [
+          "The character must have been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived.",
+          "been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived"
+        ]
+      },
+      "text": "Alignment: As for a cleric of Talos Feats: Endurance, Great Fortitude, Weapon Focus (any spear or javelin) Base Save Bonus: Fort +4.Spells: Able to cast 3rd-level divine spells.Patron: Talos.Special: The character must have been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Enhanced javelins +1",
+          "resistance to electricity 5"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Shock weapon +1"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Storm walk"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Resistance to electricity 10"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Thundering weapon"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Storm ride",
+          "enhanced javelins +2"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Resistance to electricity 15"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Shocking burst weapon"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Immunity to electricity",
+          "Enhanced javelins +3"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Elemental conflagration"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

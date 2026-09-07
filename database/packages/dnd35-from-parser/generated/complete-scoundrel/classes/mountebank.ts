@@ -1,0 +1,62 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const MOUNTEBANK: ClassSeed = {
+  name: "Mountebank",
+  description: "Mountebanks are frauds and con artists, capable of slipping into new identities as others change clothing.",
+  hd: 6, levels: 10, skillPoints: 4,
+  bab: "medium",
+  saves: { fortitude: "poor", reflex: "good", will: "poor" },
+  classSkills: [
+    "Appraise",
+    "Bluff",
+    "Concentration",
+    "Diplomacy",
+    "Disguise",
+    "Escape Artist",
+    "Forgery",
+    "Intimidate",
+    "Jump",
+    "Knowledge (Arcana)",
+    "Knowledge (Local)",
+    "Knowledge (Psionics)",
+    "Listen",
+    "Sense Motive",
+    "Sleight of Hand",
+    "Spellcraft",
+    "Spot",
+    "Tumble",
+  ],
+  requirements: [
+    gte("skills.bluff.rank", 8),
+    or(gte("skills.knowledgearcana.rank", 4), gte("skills.knowledgelocal.rank", 4)),
+    gte("skills.spellcraft.rank", 4),
+    eq("feats.deceitful.possessed"),
+    or(
+      eqStr("identity.beliefs.alignment", "Neutral Good"),
+      eqStr("identity.beliefs.alignment", "True Neutral"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      eqStr("identity.beliefs.alignment", "Chaotic Good"),
+      eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
+  ],
+  classFeatureAptitude: "Mountebank Class Feature",
+  classFeatures: [
+    [1, "Tongue of the Devil (Mountebank)"],
+    [2, "Sneak Attack (Mountebank)"],
+    [3, "Alter Ego (Mountebank)"],
+    [4, "Sideslip (Mountebank)"],
+    [5, "Sneak Attack (Mountebank)"],
+    [6, "Alter Ego (Mountebank)"],
+    [6, "Sideslip (Mountebank)"],
+    [7, "Slippery Mind (Mountebank)"],
+    [8, "Sideslip (Mountebank)"],
+    [8, "Sneak Attack (Mountebank)"],
+    [9, "Alter Ego (Mountebank)"],
+    [10, "Sideslip (Mountebank)"],
+    [10, "Sudden Escape (Mountebank)"],
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

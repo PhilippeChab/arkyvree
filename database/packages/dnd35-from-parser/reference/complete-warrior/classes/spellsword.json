@@ -1,0 +1,398 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T14:00:08.345Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/spellsword/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          2
+        ],
+        "target": "aptitudes.fighterbonusfeat.allowed"
+      }
+    ],
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        3,
+        5,
+        7,
+        9
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "light": "light)",
+      "martialweapons": "martial weapons",
+      "medium": "medium",
+      "proficiencywithallsimple": "Proficiency with all simple",
+      "withallarmorheavy": "with all armor (heavy"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Ignore Spell Failure 10%"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Ignore Spell Failure 15%"
+      },
+      {
+        "levels": [
+          4,
+          6,
+          8
+        ],
+        "name": "Channel Spell"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Ignore Spell Failure 20%"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Ignore Spell Failure 25%"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Ignore Spell Failure 30%"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Multiple Channel Spell"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.proficiencywithallsimple.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.martialweapons.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.withallarmorheavy.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.medium.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.light.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "2",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Spellsword Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "Upon reaching 2nd level, the spellsword furthers his expertise and receives a bonus feat. This feat must be selected from either the metamagic feat category or the fighter bonus feat list.",
+        "level": 2,
+        "seedName": "Bonus Feat (Spellsword)"
+      },
+      "Channel Spell": {
+        "description": "Beginning at 4th level, the spellsword gains the ability to infuse any spell he can cast into his melee weapon. Doing so requires a move action and expends the prepared spell or spell slot as though the spell had been cast normally. The stored spell takes effect on the next creature the spellsword hits with that weapon (the target may still attempt saving throws and benefit from spell resistance as usual). Regardless of whether the spell would ordinarily affect an area or function as a ray, it only strikes the single target hit. Once the spell discharges, the weapon can receive a new spell. Only one weapon can hold a channeled spell at a time. Any spell stored in a weapon that goes unused for 8 hours is lost.",
+        "level": 4,
+        "seedName": "Channel Spell (Spellsword)",
+        "stackable": true
+      },
+      "Ignore Spell Failure": {
+        "description": "Starting at 1st level, the spellsword's dedicated training in combining magic with martial technique begins to bear fruit. As an extraordinary ability, he reduces the arcane spell failure chance imposed by armor he wears. This reduction begins at 10% and progressively rises to 30% as he advances in level. The spellsword simply subtracts the listed percentage from his total arcane spell failure chance. For example, a 1st-level spellsword wearing scale mail and a small shield (which would normally impose a 30% failure chance) would only suffer a 20% chance of spell failure.",
+        "level": 1,
+        "seedName": "Ignore Spell Failure (Spellsword)",
+        "stackable": true
+      },
+      "Multiple Channel Spell": {
+        "description": "At 10th level, the spellsword becomes capable of storing two spells simultaneously in his melee weapon, spending a move action to channel each one. When the spellsword lands a hit, both stored spells discharge against the target in the sequence they were placed into the weapon. Saving throws and spell resistance function normally for each spell. Using this ability expends two of the spellsword's five daily uses of channel spell.",
+        "level": 10,
+        "seedName": "Multiple Channel Spell (Spellsword)"
+      },
+      "Spells per Day": {
+        "description": "At each odd-numbered spellsword level (1st, 3rd, 5th, 7th, and 9th), the character gains additional spells per day as though he had also advanced one level in whichever arcane spellcasting class he belonged to before entering this prestige class. This progression improves his effective caster level and spells per day but does not confer any other class benefits (such as undead turning, bonus metamagic feats, item creation feats, or similar features). A character who previously had levels in more than one arcane casting class must choose which class receives the benefit for the purpose of calculating spells per day.",
+        "level": 1,
+        "seedName": "Spells per Day (Spellsword)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat",
+      "Channel Spell": "Channel Spell",
+      "Ignore Spell Failure 10%": "Ignore Spell Failure",
+      "Ignore Spell Failure 15%": "Ignore Spell Failure",
+      "Ignore Spell Failure 20%": "Ignore Spell Failure",
+      "Ignore Spell Failure 25%": "Ignore Spell Failure",
+      "Ignore Spell Failure 30%": "Ignore Spell Failure",
+      "Multiple Channel Spell": "Multiple Channel Spell"
+    },
+    "overrides": {
+      "description": "A spellsword represents the ideal union of arcane magic and armed combat.",
+      "features": {
+        "Bonus Feat": {
+          "description": "Upon reaching 2nd level, the spellsword furthers his expertise and receives a bonus feat. This feat must be selected from either the metamagic feat category or the fighter bonus feat list."
+        },
+        "Channel Spell": {
+          "description": "Beginning at 4th level, the spellsword gains the ability to infuse any spell he can cast into his melee weapon. Doing so requires a move action and expends the prepared spell or spell slot as though the spell had been cast normally. The stored spell takes effect on the next creature the spellsword hits with that weapon (the target may still attempt saving throws and benefit from spell resistance as usual). Regardless of whether the spell would ordinarily affect an area or function as a ray, it only strikes the single target hit. Once the spell discharges, the weapon can receive a new spell. Only one weapon can hold a channeled spell at a time. Any spell stored in a weapon that goes unused for 8 hours is lost."
+        },
+        "Ignore Spell Failure": {
+          "description": "Starting at 1st level, the spellsword's dedicated training in combining magic with martial technique begins to bear fruit. As an extraordinary ability, he reduces the arcane spell failure chance imposed by armor he wears. This reduction begins at 10% and progressively rises to 30% as he advances in level. The spellsword simply subtracts the listed percentage from his total arcane spell failure chance. For example, a 1st-level spellsword wearing scale mail and a small shield (which would normally impose a 30% failure chance) would only suffer a 20% chance of spell failure."
+        },
+        "Multiple Channel Spell": {
+          "description": "At 10th level, the spellsword becomes capable of storing two spells simultaneously in his melee weapon, spending a move action to channel each one. When the spellsword lands a hit, both stored spells discharge against the target in the sequence they were placed into the weapon. Saving throws and spell resistance function normally for each spell. Using this ability expends two of the spellsword's five daily uses of channel spell."
+        },
+        "Spells per Day": {
+          "description": "At each odd-numbered spellsword level (1st, 3rd, 5th, 7th, and 9th), the character gains additional spells per day as though he had also advanced one level in whichever arcane spellcasting class he belonged to before entering this prestige class. This progression improves his effective caster level and spells per day but does not confer any other class benefits (such as undead turning, bonus metamagic feats, item creation feats, or similar features). A character who previously had levels in more than one arcane casting class must choose which class receives the benefit for the purpose of calculating spells per day."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "At every odd-numbered level, a spell sword gains new spells per day as if he had also gained a level in an arcane spellcasting class he belonged to before adding the prestige class. He does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, metamagic or item creation feats, and so on), save for an increased effective level of spellcasting. If a character had more than one spellcasting class before becoming a spellsword, he must decide to which class he adds the new level for purposes of determining spells per day.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "Beginning at 1st level, a spell sword's hard work and practice at merging spellcraft with weaponplay starts to pay off. As an extraordinary ability, he ignores a portion of the arcane spell failure chance associated with using armor. This reduction starts at 10%and gradually increases to 30%, as shown on the class table. A spellsword subtracts the given percentage value from his total spell failure chance, if any. For instance, a character wearing scale mail and carrying a small shield normally has a spell failure chance of 30%, but this drops to only 20% for a 1st-level spellsword.",
+        "name": "Ignore Spell Failure",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a spellsword advances his art, gaining a bonus feat. This bonus feat must be either a metamagic feat or one drawn from the list of bonus feats allowed to a fighter.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "At 4th level, a spellsword can channel any spell he can cast into his melee weapon. Using this ability requires a move action, and the spellsword uses up the prepared spell or spell slot just as if he had cast the spell. The channeled spell affects the next target that the spell sword successfully attacks with his weapon (saving throws and spell resistance still apply). Even if the spell normally affects an area or is a ray, it affects only the target. The spell is discharged from the weapon, which can then hold an other spell. A spellsword can channel his spells into only one weapon at a time. Spells channeled into a weapon are lost if not used in 8 hours.",
+        "name": "Channel Spell",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A 10th-level spellsword can channel two spells into his melee weapon, using a move action to channel each one. Both channeled spells affect the next target the spellsword successfully attacks with his weapon, in the order the spells were placed into the weapon. As with the channel spell class feature, saving throws and spell resistance apply normally. Each time a spellsword uses multiple channel spell, two of his five channel spell uses per day are expended.",
+        "name": "Multiple Channel Spell",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "The dream of melding magic and weaponplay is fulfilled in the person of the spellsword.",
+    "hitDie": "d8",
+    "name": "Spellsword",
+    "prerequisites": {
+      "parsed": {
+        "bab": 4,
+        "casterLevel": [
+          {
+            "level": 2,
+            "type": "arcane"
+          }
+        ],
+        "feats": [
+          "Proficiency with all simple",
+          "martial weapons",
+          "with all armor (heavy",
+          "medium",
+          "light)"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 6
+          }
+        ],
+        "special": [
+          "Must have defeated a foe through force of arms alone, without recourse to spellcasting.Feats: Proficiency with all simple and martial weapons and with all armor (heavy, medium, and light).",
+          "defeated a foe through force of arms alone, without recourse to spellcasting"
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Skills: Knowledge (arcana) 6 ranks Spells: Able to cast 2nd-level arcane spells.Special: Must have defeated a foe through force of arms alone, without recourse to spellcasting.Feats: Proficiency with all simple and martial weapons and with all armor (heavy, medium, and light)."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Ignore spell failure 10%"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Ignore spell failure 15%"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Channel spell 3/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Ignore spell failure 20%"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Channel spell 4/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Ignore spell failure 25%"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Channel spell 5/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Ignore spell failure 30%"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Multiple channel spell"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

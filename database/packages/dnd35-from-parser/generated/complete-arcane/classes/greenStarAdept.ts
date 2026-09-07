@@ -1,0 +1,56 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { gte } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const GREEN_STAR_ADEPT: ClassSeed = {
+  name: "Green Star Adept",
+  description: "A Green Star adept is the master of the strange and powerful magic derived from Alhazarde's glittering green starmetal.",
+  hd: 8, levels: 10, skillPoints: 2,
+  bab: "poor",
+  saves: { fortitude: "poor", reflex: "poor", will: "good" },
+  classSkills: [
+    "Appraise",
+    "Concentration",
+    "Craft",
+    "Decipher Script",
+    "Knowledge (Arcana)",
+    "Knowledge (Architecture and Engineering)",
+    "Knowledge (Geography)",
+    "Knowledge (History)",
+    "Profession",
+    "Spellcraft",
+  ],
+  requirements: [
+    gte("combat.bab", 4),
+    gte("skills.decipherscript.rank", 2),
+    gte("skills.knowledgearcana.rank", 8),
+    gte("skills.knowledgearchitectureandengineering.rank", 2),
+    gte("skills.knowledgegeography.rank", 2),
+    gte("skills.knowledgehistory.rank", 2),
+  ],
+  casterLevelAdvancement: { type: "arcane", levels: [2, 4, 6, 8, 10] },
+  classFeatureAptitude: "Green Star Adept Class Feature",
+  classFeatures: [
+    [1, "Damage Reduction (Green Star Adept)"],
+    [1, "Improved Caster Level (Green Star Adept)"],
+    [1, "Spells per Day/Spells Known (Green Star Adept)"],
+    [1, "Starmetal Dependency (Green Star Adept)"],
+    [1, "Starmetal Rigor 1 (Green Star Adept)"],
+    [1, "Weapon and Armor Proficiency (Green Star Adept)"],
+    [2, "Natural Attack (Green Star Adept)"],
+    [2, "Unnatural Metabolism (Green Star Adept)"],
+    [3, "Fortification (Green Star Adept)"],
+    [4, "Otherworldly Vision (Green Star Adept)"],
+    [4, "Starmetal Rigor 2 (Green Star Adept)"],
+    [5, "Unnatural Metabolism (Green Star Adept)"],
+    [6, "Fortification (Green Star Adept)"],
+    [7, "Null Metabolism (Green Star Adept)"],
+    [7, "Starmetal Rigor 4 (Green Star Adept)"],
+    [8, "Unnatural Metabolism (Green Star Adept)"],
+    [9, "Fortification (Green Star Adept)"],
+    [10, "Emerald Perfection (Green Star Adept)"],
+    [10, "Rapid Repair (Green Star Adept)"],
+    [10, "Starmetal Rigor 6 (Green Star Adept)"],
+  ],
+};
+
+// TODO: No modifiers defined — review if this class needs any

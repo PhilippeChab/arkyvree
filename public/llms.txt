@@ -1,0 +1,55 @@
+# Arkyvree
+
+> A programmable ruleset engine for tabletop RPGs.
+
+Arkyvree is a web platform for encoding tabletop RPG game systems as programmable rulesets. You define the rules - abilities, classes, feats, spells, skills, items, and how they interact - and the system handles validation, computation, and character progression automatically.
+
+## Core Concepts
+
+### Rulesets
+
+A ruleset is the complete definition of a game system's mechanics. It contains:
+
+- **Abilities** - core attributes (e.g. Strength, Dexterity)
+- **Races** - playable races with traits and modifiers
+- **Classes** - character classes with level progression
+- **Skills** - skill definitions with class/cross-class costs
+- **Feats** - selectable features with prerequisites
+- **Powers/Spells** - magical or special abilities organized by level
+- **Items** - equipment, weapons, armor, and magical items
+- **Saves** - saving throw categories
+- **Aptitudes** - pools of choosable options that unlock at certain levels
+
+Arkyvree ships with a D&D 3.5e ruleset as a reference implementation, but the platform is system-agnostic.
+
+### Customization System
+
+The customization system is how you wire game mechanics together without writing code:
+
+- **Properties** - typed key-value attributes on any entity. They serve as metadata and mechanical hooks (e.g. SPELL_SCHOOL = "Evocation", WEAPON_PROFICIENCY = "Martial").
+- **Requirements** - prerequisite rules that gate access to entities. They use a tree structure with logical operators (and/or) and comparisons (e.g. "character level >= 5 AND has feat: Power Attack").
+- **Modifiers** - mechanical effects that entities have on a character. Each modifier specifies a target, an operator (add, subtract, multiply, divide, set), and a value (e.g. Toughness feat adds 3 to hit points).
+
+Properties describe what something is, requirements control when it's available, and modifiers define what it does.
+
+### Characters
+
+Characters are created under a specific ruleset. The system guides you through ability score allocation, race and class selection, and leveling. The level-up wizard handles class selection, HP, skill points, feat selection, and spell selection - all validated against the ruleset's rules. Characters can be exported as PDF character sheets.
+
+### Campaigns
+
+Campaigns are shared spaces where a Game Master (GM) brings players together under a specific ruleset. Players link characters to campaigns with a visibility setting (public, partial, or private) that controls how much of their character sheet others can see.
+
+### Forking & Syncing
+
+You can fork any published ruleset to create your own editable copy. Forks are lightweight - they inherit entities from the parent and only create copies when you modify something. Forks automatically receive upstream changes for entities you haven't modified. Forks can be chained up to 3 levels deep.
+
+Merging lets you pull changes from sibling forks that share a common ancestor. Extensions are system-published content packages (sourcebooks) you can subscribe to from your fork.
+
+## Public Pages
+
+- `https://arkyvree.featurebase.app/help` - Help Center
+- `https://arkyvree.featurebase.app/changelog` - Latest updates and improvements
+- `https://arkyvree.featurebase.app/` - Feedback and feature requests
+- `/sign-up` - Create an account
+- `/sign-in` - Sign in

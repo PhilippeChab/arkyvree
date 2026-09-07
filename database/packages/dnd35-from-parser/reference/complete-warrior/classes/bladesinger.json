@@ -1,0 +1,540 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T14:00:09.523Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/bladesinger/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        3,
+        5,
+        7,
+        9
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "combatcasting": "Combat Casting",
+      "combatexpertise": "Combat Expertise",
+      "dodge": "Dodge",
+      "weaponfocuslongsword": "Weapon Focus: Longsword",
+      "weaponfocusrapier": "Weapon Focus: Rapier"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bladesong Style"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Lesser Spellsong"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Song Of Celerity (2nd)"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Greater Spellsong"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Song Of Celerity (4th)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Song Of Fury"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.balance.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.tumble.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatcasting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatexpertise.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.dodge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "feats.weaponfocuslongsword.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.weaponfocusrapier.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Half-Elf",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Bladesinger Class Feature",
+    "features": {
+      "Bladesong Style": {
+        "description": "While holding a longsword or rapier in one hand with the other hand free, the bladesinger receives a dodge bonus to AC equal to her class level, to a maximum equal to her Intelligence bonus. Wearing medium or heavy armor causes the bladesinger to lose all benefits of this ability.",
+        "level": 1,
+        "seedName": "Bladesong Style (Bladesinger)"
+      },
+      "Greater Spellsong": {
+        "description": "From 6th level onward, the bladesinger no longer suffers arcane spell failure when casting in light armor.",
+        "level": 6,
+        "seedName": "Greater Spellsong (Bladesinger)"
+      },
+      "Lesser Spellsong": {
+        "description": "Starting at 2nd level, a bladesinger who wields a longsword or rapier in one hand with the other hand empty may take 10 on Concentration checks made to cast spells defensively.",
+        "level": 2,
+        "seedName": "Lesser Spellsong (Bladesinger)"
+      },
+      "Song of Celerity": {
+        "description": "Beginning at 4th level, once per day the bladesinger may quicken a single spell of 2nd level or lower, functioning as the Quicken Spell feat but without increasing the spell's effective level or altering its casting time. This ability requires wielding a longsword or rapier in one hand with nothing in the other. Upon reaching 8th level, the bladesinger may instead quicken a spell of up to 4th level.",
+        "level": 4,
+        "seedName": "Song of Celerity (Bladesinger)",
+        "stackable": true
+      },
+      "Song of Fury": {
+        "description": "At 10th level, when the bladesinger executes a full attack while holding a longsword or rapier in one hand with the other hand free, she gains one additional attack at her highest base attack bonus. However, every attack she makes that round (including the extra one) takes a -2 penalty. This penalty persists for 1 round and therefore also applies to any attacks of opportunity she makes before her next turn.",
+        "level": 10,
+        "seedName": "Song of Fury (Bladesinger)"
+      },
+      "Spells per Day": {
+        "description": "At each odd-numbered bladesinger level (1st, 3rd, 5th, 7th, and 9th), the character receives additional spells per day as though she had gained a level in whichever arcane spellcasting class she belonged to prior to entering this prestige class. This advancement applies only to spells per day and effective caster level; no other class benefits are gained. A character who possessed multiple arcane spellcasting classes must choose which one benefits from this progression at each applicable level.",
+        "level": 1,
+        "seedName": "Spells per Day (Bladesinger)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Bladesingers do not gain proficiency with any additional weapons. They become proficient with light armor but not with shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Bladesinger)"
+      }
+    },
+    "occurrenceMap": {
+      "Bladesong Style": "Bladesong Style",
+      "Greater Spellsong": "Greater Spellsong",
+      "Lesser Spellsong": "Lesser Spellsong",
+      "Song Of Celerity (2nd)": "Song of Celerity",
+      "Song Of Celerity (4th)": "Song of Celerity",
+      "Song Of Fury": "Song of Fury"
+    },
+    "overrides": {
+      "classSkills": [
+        "Balance",
+        "Concentration",
+        "Jump",
+        "Perform",
+        "Spellcraft",
+        "Tumble"
+      ],
+      "description": "Bladesingers are elven warriors who seamlessly weave together artistry, sword technique, and arcane spellcasting into a unified fighting discipline.",
+      "features": {
+        "Bladesong Style": {
+          "description": "While holding a longsword or rapier in one hand with the other hand free, the bladesinger receives a dodge bonus to AC equal to her class level, to a maximum equal to her Intelligence bonus. Wearing medium or heavy armor causes the bladesinger to lose all benefits of this ability."
+        },
+        "Greater Spellsong": {
+          "description": "From 6th level onward, the bladesinger no longer suffers arcane spell failure when casting in light armor."
+        },
+        "Lesser Spellsong": {
+          "description": "Starting at 2nd level, a bladesinger who wields a longsword or rapier in one hand with the other hand empty may take 10 on Concentration checks made to cast spells defensively."
+        },
+        "Song of Celerity": {
+          "description": "Beginning at 4th level, once per day the bladesinger may quicken a single spell of 2nd level or lower, functioning as the Quicken Spell feat but without increasing the spell's effective level or altering its casting time. This ability requires wielding a longsword or rapier in one hand with nothing in the other. Upon reaching 8th level, the bladesinger may instead quicken a spell of up to 4th level."
+        },
+        "Song of Fury": {
+          "description": "At 10th level, when the bladesinger executes a full attack while holding a longsword or rapier in one hand with the other hand free, she gains one additional attack at her highest base attack bonus. However, every attack she makes that round (including the extra one) takes a -2 penalty. This penalty persists for 1 round and therefore also applies to any attacks of opportunity she makes before her next turn."
+        },
+        "Spells per Day": {
+          "description": "At each odd-numbered bladesinger level (1st, 3rd, 5th, 7th, and 9th), the character receives additional spells per day as though she had gained a level in whichever arcane spellcasting class she belonged to prior to entering this prestige class. This advancement applies only to spells per day and effective caster level; no other class benefits are gained. A character who possessed multiple arcane spellcasting classes must choose which one benefits from this progression at each applicable level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Bladesingers do not gain proficiency with any additional weapons. They become proficient with light armor but not with shields."
+        }
+      },
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "combat.bab",
+          "value": "5",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.balance.rank",
+          "value": "2",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.concentration.rank",
+          "value": "4",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.perform.rank",
+          "value": "2",
+          "valueType": "number"
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "skills.tumble.rank",
+          "value": "2",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.combatcasting.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.combatexpertise.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.dodge.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "feats.weaponfocuslongsword.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            },
+            {
+              "operator": "equal",
+              "target": "feats.weaponfocusrapier.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        },
+        {
+          "operator": "greater_than_or_equal",
+          "target": "spellcasting.arcane",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "chainingOperator": "or",
+          "children": [
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.name",
+              "value": "Elf",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "identity.physiology.race.name",
+              "value": "Half-Elf",
+              "valueType": "string"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Bladesingers gain no proficiency with any weapon. They gain Proficiency with light armor but not with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At every oddnumbered level gained in the bladesinger class, the character gains new spells per day as if she had also gained a level in an arcane spellcasting class she belonged to before adding the prestige class. She does not, however, gain any other benefi t a character of that class would have gained, except for an increased effective level of spellcasting. If a character had more than one arcane spellcasting class be fore becoming a bladesinger, she must decide to which class she adds the new level for purposes of determining spells per day.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "When wielding a longsword or rapier in one hand (and nothing in the other), a bladesinger gains a dodge bonus to Armor Class equal to his class level, up to a maximum of her Intelligence bonus. If the bladesinger wears medium or heavy armor, she loses all benefi ts of the bladesong style.",
+        "name": "Bladesong Style",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When wielding a longsword or rapier in one hand (and nothing in the other), a bladesinger of 2nd level or higher can take 10 when making a Concentration check to cast defensively.",
+        "name": "Lesser Spellsong",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Once per day, a bladesinger of 4th level or higher may quicken a single spell of up to 2nd level, as if she had used the Quicken Spell feat, but without any adjustment to the spell's effective level or casting time. She may only use this ability when wielding a longsword or rapier in one hand (and nothing in the other). At 8th level and higher, she can quicken a single spell of up to 4th level.",
+        "name": "Song of Celerity",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A bladesinger of 6th level or higher ignores arcane spell failure chances when wearing light armor.",
+        "name": "Greater Spellsong",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a 10th-level bladesinger makes a full attack with a longsword or rapier in one hand (and nothing in the other), she can make one extra attack in a round at her highest base attack bonus, but this attack and each other attack made in that round take a ?2 penalty. This penalty applies for 1 round, so it also affects attacks of opportunity the bladesinger might make before her next action.",
+        "name": "Song of Fury",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "1st",
+      "2nd",
+      "3rd",
+      "4th",
+      "5th",
+      "6th",
+      "7th",
+      "8th",
+      "9th",
+      "10th"
+    ],
+    "description": "Bladesingers are elves who have blended art, swordplay, and arcane magic into a harmonious whole.",
+    "hitDie": "d8",
+    "name": "Bladesinger",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "arcane"
+          }
+        ],
+        "feats": [
+          "Combat Casting",
+          "Combat Expertise",
+          "Dodge",
+          "Weapon Focus (Longsword or Rapier)"
+        ],
+        "skills": [
+          {
+            "name": "Balance",
+            "ranks": 2
+          },
+          {
+            "name": "Concentration",
+            "ranks": 4
+          },
+          {
+            "name": "Perform (Dance)",
+            "ranks": 2
+          },
+          {
+            "name": "Perform (Sing)",
+            "ranks": 2
+          },
+          {
+            "name": "Tumble",
+            "ranks": 2
+          }
+        ],
+        "special": [
+          "Race: Half-elf"
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Race: Half-elf or Elf Skills: Balance 2 ranks, Concentration 4 ranks, Perform (Dance) 2 ranks, Perform (Sing) 2 ranks, Tumble 2 ranks Feats: Combat Casting, Combat Expertise, Dodge, Weapon Focus (Longsword or Rapier) Spells: Able to cast arcane spells of 1st level."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Bladesong style"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Lesser spellsong"
+        ],
+        "spellsPerDay": "?",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Song of celerity (2nd)"
+        ],
+        "spellsPerDay": "?",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Greater spellsong"
+        ],
+        "spellsPerDay": "?",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Song of celerity (4th)"
+        ],
+        "spellsPerDay": "?",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Song of fury"
+        ],
+        "spellsPerDay": "?",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

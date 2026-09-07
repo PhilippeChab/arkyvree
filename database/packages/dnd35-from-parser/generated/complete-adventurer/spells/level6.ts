@@ -1,0 +1,56 @@
+import type { PowerSeed } from "@/database/packages/dnd35/v1/spells/types.ts";
+
+export const LEVEL_6_SPELLS: PowerSeed[] = [
+  {
+    name: "Cacophonic Shield",
+    description: "You create a barrier of sonic energy at a distance of 10 feet from yourself.Creatures on either side of the barrier hear it as a loud but harmless buzzing.Nonmagical sound (including sound produced by a thunderstone) does not cross the barrier.Supernatural or spell-based sounds or sonic effects penetrate the barrier only if the caster or originator of the effect succeeds on a caster level check (DC 11 + your caster level).A creature that crosses the barrier takes 1d6 points of sonic damage +1 point per caster level (maximum +20) and must make a Fortitude save or be deafened for 1 minute.The sonic vibrations create a 20% miss chance for any missiles crossing the barrier in either direction.The barrier moves with you, but you cannot force another creature to pass through it (for example, by moving adjacent to an enemy).If you force a creature to pass through, the barrier has no effect on that creature.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 6, "Sorcerer Spells": 7, "Wizard Spells": 7 },
+    savingThrow: "Fortitude partial",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Evocation" },
+      { type: "SPELL_DESCRIPTOR", value: "Sonic" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "10 ft." },
+      { type: "SPELL_AREA_OF_EFFECT", value: "10-ft.-radius emanation, centered on you" },
+      { type: "SPELL_DURATION", value: "1 minute/level (D)" },
+      { type: "SPELL_RESISTANCE", value: "Yes" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+  {
+    name: "Hindsight",
+    description: "You can see and hear into the past, getting a look at events that happened previously at your current location.The level of detail you see and hear by means of this spell depends on the span of time you wish to observe; concentrating on a span of days renders a more detailed perspective than, say, a span of centuries.You can view only one span of time per casting, chosen from the following options.Days: You sense the events of the past, stretching back one day per caster level.You gain detailed knowledge of the people, conversations, and events that transpired.Weeks: You gain a summary of the events of the past, stretching back one week per caster level.Exact wording and details are lost, but you know all the participants and the highlights of the conversations and events that took place.Years: You gain a general idea of the events of the past, stretching back one year per caster level.You notice only noteworthy events such as deaths, battles, scenes of great emotion, important discoveries, and significant happenings.Centuries: You gain a general idea of the events of the past, stretching back one century plus an additional century for every four caster levels beyond 1st.For instance, a 16th-level caster would gain insight into the events of four centuries in the past, and a 17th-level caster would see back across five centuries.You notice only the most remarkable of events: coronations, deaths of important personages, major battles, and other truly historic happenings.Material Component: An hourglass-shaped diamond worth at least 1,000 gp.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 6, "Sorcerer Spells": 9, "Wizard Spells": 9 },
+    savingThrow: "None",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Divination" },
+      { type: "SPELL_CASTING_TIME", value: "1 hour" },
+      { type: "SPELL_RANGE_TYPE", value: "Personal" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "60-ft. radius, centered on you" },
+      { type: "SPELL_DURATION", value: "Instantaneous" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
+    ],
+  },
+  {
+    name: "ProtÃ©gÃ©",
+    description: "You briefly grant bardic abilities to a creature of your choice. The subject of the spell can then function as a bard of one-half your current bard level with respect to bardic music and bardic knowledge. However, protÃ©gÃ© imparts no spellcasting ability and does not grant access to spells not normally available to the subject. For Perform checks and bardic music prerequisites, the creature uses its own ranks in Perform or one-half of your ranks (modified by its own Charisma modifier), whichever is better.",
+    aptitudes: ["Bard Spells"],
+    savingThrow: "Will negates (harmless)",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Transmutation" },
+      { type: "SPELL_CASTING_TIME", value: "1 round" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_TARGET", value: "Creature touched" },
+      { type: "SPELL_DURATION", value: "1 minute/level (D)" },
+      { type: "SPELL_RESISTANCE", value: "Yes (harmless)" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+];

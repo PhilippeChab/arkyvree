@@ -1,0 +1,1159 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-31T22:19:25.998Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/favored-soul/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          3
+        ],
+        "name": "Deity's Weapon Focus"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Energy Resistance (1st Type)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Energy Resistance (2nd Type)"
+      },
+      {
+        "levels": [
+          12
+        ],
+        "name": "Deity's Weapon Specialization"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Energy Resistance (3rd Type)"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Wings"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Damage Reduction"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsKnown": [
+      [
+        4,
+        3
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        6,
+        4,
+        3
+      ],
+      [
+        6,
+        5,
+        3
+      ],
+      [
+        7,
+        5,
+        4,
+        3
+      ],
+      [
+        7,
+        6,
+        4,
+        3
+      ],
+      [
+        8,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        8,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        4,
+        3
+      ],
+      [
+        9,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        4
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        5,
+        3
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        6,
+        3
+      ],
+      [
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ]
+    ],
+    "unresolvedAptitudePicks": [
+      "Deity's Weapon Focus",
+      "Deity's Weapon Specialization"
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Favored Soul Class Feature",
+    "features": {
+      "Damage Reduction": {
+        "description": "Upon reaching 20th level, a favored soul obtains damage reduction. A lawful-aligned character receives DR 10/silver, while a chaotic-aligned character receives DR 10/cold iron. If the favored soul is neither lawful nor chaotic, she may select which of the two forms of damage reduction to gain.",
+        "level": 20,
+        "seedName": "Damage Reduction (Favored Soul)"
+      },
+      "Deity's Weapon Focus": {
+        "description": "Starting at 3rd level, a favored soul receives the Weapon Focus feat for her deity's favored weapon at no cost. If she already possesses that feat, she may select a different feat instead.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.deitysweaponfocus.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Deity's Weapon Focus (Favored Soul)"
+      },
+      "Deity's Weapon Specialization": {
+        "description": "At 12th level, a favored soul automatically gains the Weapon Specialization feat with her deity's favored weapon. If she already has that feat, she may pick a different feat in its place.",
+        "level": 12,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.deitysweaponspecialization.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Deity's Weapon Specialization (Favored Soul)"
+      },
+      "Energy Resistance": {
+        "description": "Beginning at 5th level, a favored soul selects one energy type and gains resistance 10 against it. At 10th level and again at 15th level, she selects an additional energy type and gains resistance 10 against that type as well.",
+        "level": 5,
+        "seedName": "Energy Resistance (Favored Soul)",
+        "stackable": true
+      },
+      "Spells": {
+        "description": "A favored soul draws from the cleric spell list and casts divine spells spontaneously, without needing to prepare them in advance. Casting a spell requires a minimum Charisma score equal to 10 + the spell's level. The saving throw DC for a favored soul's spells equals 10 + spell level + her Wisdom modifier. Her daily spell allotment is limited by class level and she gains bonus spells from a high Charisma score. Unlike a cleric, a favored soul has a restricted number of spells known. She starts play knowing four 0-level and three 1st-level spells, gaining additional spells known as she advances in level. Charisma does not increase the number of spells she knows. Beginning at 4th level and at every even-numbered level thereafter, a favored soul may replace one spell she knows with a different spell of the same level, provided the original spell is at least two levels lower than the highest spell level she can cast. She may exchange only a single spell per level, and must decide whether to swap at the same time she would learn new spells.",
+        "level": 1,
+        "seedName": "Spells (Favored Soul)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Favored souls have proficiency with all simple weapons, light and medium armor, and shields (but not tower shields). A favored soul also gains proficiency with the favored weapon of her deity. Heavy armor does not interfere with her divine spellcasting, even though she lacks proficiency with it.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Favored Soul)"
+      },
+      "Wings": {
+        "description": "At 17th level, a favored soul sprouts wings and gains a fly speed of 60 feet with good maneuverability. A good-aligned favored soul develops feathered wings, while an evil-aligned favored soul grows bat-like wings. A favored soul who is neither good nor evil may choose either wing type.",
+        "level": 17,
+        "seedName": "Wings (Favored Soul)"
+      }
+    },
+    "occurrenceMap": {
+      "Damage Reduction": "Damage Reduction",
+      "Deity's Weapon Focus": "Deity's Weapon Focus",
+      "Deity's Weapon Specialization": "Deity's Weapon Specialization",
+      "Energy Resistance (1st Type)": "Energy Resistance",
+      "Energy Resistance (2nd Type)": "Energy Resistance",
+      "Energy Resistance (3rd Type)": "Energy Resistance",
+      "Wings": "Wings"
+    },
+    "overrides": {
+      "aptitudePicks": [
+        {
+          "levels": [
+            3
+          ],
+          "target": "aptitudes.deitysweaponfocus.allowed"
+        },
+        {
+          "levels": [
+            12
+          ],
+          "target": "aptitudes.deitysweaponspecialization.allowed"
+        }
+      ],
+      "bonusSpellAbility": "Charisma",
+      "description": "Favored souls channel divine magic through an innate gift rather than through study and devotion. Their connection to the divine is instinctive, making their spellcasting spontaneous instead of prepared.",
+      "features": {
+        "Damage Reduction": {
+          "description": "Upon reaching 20th level, a favored soul obtains damage reduction. A lawful-aligned character receives DR 10/silver, while a chaotic-aligned character receives DR 10/cold iron. If the favored soul is neither lawful nor chaotic, she may select which of the two forms of damage reduction to gain."
+        },
+        "Deity's Weapon Focus": {
+          "description": "Starting at 3rd level, a favored soul receives the Weapon Focus feat for her deity's favored weapon at no cost. If she already possesses that feat, she may select a different feat instead.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "aptitudes.deitysweaponfocus.allowed",
+              "value": "1",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Deity's Weapon Specialization": {
+          "description": "At 12th level, a favored soul automatically gains the Weapon Specialization feat with her deity's favored weapon. If she already has that feat, she may pick a different feat in its place.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "aptitudes.deitysweaponspecialization.allowed",
+              "value": "1",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Energy Resistance": {
+          "description": "Beginning at 5th level, a favored soul selects one energy type and gains resistance 10 against it. At 10th level and again at 15th level, she selects an additional energy type and gains resistance 10 against that type as well."
+        },
+        "Spells": {
+          "description": "A favored soul draws from the cleric spell list and casts divine spells spontaneously, without needing to prepare them in advance. Casting a spell requires a minimum Charisma score equal to 10 + the spell's level. The saving throw DC for a favored soul's spells equals 10 + spell level + her Wisdom modifier. Her daily spell allotment is limited by class level and she gains bonus spells from a high Charisma score. Unlike a cleric, a favored soul has a restricted number of spells known. She starts play knowing four 0-level and three 1st-level spells, gaining additional spells known as she advances in level. Charisma does not increase the number of spells she knows. Beginning at 4th level and at every even-numbered level thereafter, a favored soul may replace one spell she knows with a different spell of the same level, provided the original spell is at least two levels lower than the highest spell level she can cast. She may exchange only a single spell per level, and must decide whether to swap at the same time she would learn new spells."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Favored souls have proficiency with all simple weapons, light and medium armor, and shields (but not tower shields). A favored soul also gains proficiency with the favored weapon of her deity. Heavy armor does not interfere with her divine spellcasting, even though she lacks proficiency with it."
+        },
+        "Wings": {
+          "description": "At 17th level, a favored soul sprouts wings and gains a fly speed of 60 feet with good maneuverability. A good-aligned favored soul develops feathered wings, while an evil-aligned favored soul grows bat-like wings. A favored soul who is neither good nor evil may choose either wing type."
+        }
+      },
+      "reviewed": [
+        "Deity's Weapon Focus",
+        "Deity's Weapon Specialization"
+      ],
+      "spells": {
+        "inheritsFrom": "Cleric"
+      }
+    },
+    "spells": {
+      "known": [
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          4,
+          3
+        ],
+        [
+          6,
+          5,
+          3
+        ],
+        [
+          7,
+          5,
+          4,
+          3
+        ],
+        [
+          7,
+          6,
+          4,
+          3
+        ],
+        [
+          8,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          8,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4,
+          3
+        ],
+        [
+          9,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4
+        ]
+      ],
+      "perDay": [
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6,
+          3
+        ],
+        [
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ]
+      ],
+      "slug": "favoredsoulspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Favored souls are proficient with all simple weapons, with light and medium armor, and with shields (except tower shields). A favored soul is also proficient with her deity's favored weapon. Although a favored soul is not proficient with heavy armor, wearing it does not interfere with her spellcasting.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A favored soul casts divine spells (the same type of spells available to clerics), which are drawn from the cleric spell list. She can cast any spell she knows without preparing it ahead of time the way a cleric must. To cast a spell, a favored soul must have a Charisma score of 10 + the spell's level (Cha 10 for 0-level spells, Cha 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a favored soul's spell is 10 + the spell's level + the favored soul's Wisdom modifier. Like other spellcasters, a favored soul can cast only a certain number of spells of each spell level per day. Her base daily spell allotment is given in the class table. In addition, she receives bonus spells for a high Charisma. Unlike a cleric, a favored soul's selection of spells is limited. A favored soul begins play knowing four 0-level spells and three 1st-level spells of your choice. At each new favored soul level, she gains one or more new spells, as indicated in the class table. (Unlike spells per day, her Charisma score does not affect the number of spells a favored soul knows; the numbers in the class table.) Upon reaching 4th level, and at every even-numbered favored soul level after that (6th, 8th, and so on), a favored soul can choose to learn a new spell in place of one she already knows. In effect, the favored soul \"loses\" the old spell in exchange for the new one. The new spell's level must be the same as that of the spell being exchanged, and it must be at least two levels lower than the highest-level favored soul spell the favored soul can cast. A favored soul may swap only a single spell at any given level, and must choose whether or not to swap the spell at the same time that she gains new spells known for the level. Unlike a cleric, a favored soul need not prepare her spells in advance. She can cast any spell she knows at any time, assuming she has not yet used up her spells per day for that spell level.",
+        "name": "Spells"
+      },
+      {
+        "description": "At 3rd level, a favored soul gains the Weapon Focus feat with her deity's favored weapon. If the character already has that feat, she can choose a different one.",
+        "name": "Deity's Weapon Focus"
+      },
+      {
+        "description": "At 5th level, a favored soul chooses an energy type and gains resistance 10 against that type. At 10th level and 15th level, the character gains resistance 10 against another energy type of her choosing.",
+        "name": "Energy Resistance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 12th level, a favored soul gains the Weapon Specialization feat with her deity's favored weapon. If she already has that feat, she can choose a different one.",
+        "name": "Deity's Weapon Specialization"
+      },
+      {
+        "description": "At 17th level, a favored soul gains wings and can fly at a speed of 60 feet (good maneuverability). A good-aligned favored soul grows feathered wings, and an evil-aligned favored soul gains batlike wings. A favored soul who is neither good nor evil may choose either type of wings.",
+        "name": "Wings",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 20th-level favored soul gains damage reduction. If the character is lawful-aligned, the damage reduction is 10/silver. If the character is chaotic-aligned, the damage reduction is 10/cold iron. A favored soul who is neither lawful nor chaotic may choose either type of damage reduction.",
+        "name": "Damage Reduction",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Heal",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.",
+    "hasCantrips": true,
+    "hitDie": "d8",
+    "name": "Favored Soul",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "5,3,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "6,4,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Deity's weapon focus"
+        ],
+        "spellsPerDay": "6,5,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,3,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Energy resistance (1st type)"
+        ],
+        "spellsPerDay": "6,6,4,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "6,6,5,3,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "6,6,6,4,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,5,3,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,4,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Energy resistance (2nd type)"
+        ],
+        "spellsPerDay": "6,6,6,6,5,3,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 8,
+        "fortSave": 7,
+        "level": 11,
+        "refSave": 7,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,4,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 12,
+        "refSave": 8,
+        "special": [
+          "Deity's weapon specialization"
+        ],
+        "spellsPerDay": "6,6,6,6,6,5,3,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 13,
+        "refSave": 8,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,4,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 10,
+        "fortSave": 9,
+        "level": 14,
+        "refSave": 9,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,5,3,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 11,
+        "fortSave": 9,
+        "level": 15,
+        "refSave": 9,
+        "special": [
+          "Energy resistance (3rd type)"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,4,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 16,
+        "refSave": 10,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,5,3,-",
+        "willSave": 10
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 17,
+        "refSave": 10,
+        "special": [
+          "Wings"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,4,-",
+        "willSave": 10
+      },
+      {
+        "bab": 13,
+        "fortSave": 11,
+        "level": 18,
+        "refSave": 11,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,5,3",
+        "willSave": 11
+      },
+      {
+        "bab": 14,
+        "fortSave": 11,
+        "level": 19,
+        "refSave": 11,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,4",
+        "willSave": 11
+      },
+      {
+        "bab": 15,
+        "fortSave": 12,
+        "level": 20,
+        "refSave": 12,
+        "special": [
+          "Damage reduction"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,6",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier",
+    "spellsKnown": [
+      "4,3,-,-,-,-,-,-,-,-",
+      "5,3,-,-,-,-,-,-,-,-",
+      "5,4,-,-,-,-,-,-,-,-",
+      "6,4,3,-,-,-,-,-,-,-",
+      "6,5,3,-,-,-,-,-,-,-",
+      "7,5,4,3,-,-,-,-,-,-",
+      "7,6,4,3,-,-,-,-,-,-",
+      "8,6,5,4,3,-,-,-,-,-",
+      "8,6,5,4,3,-,-,-,-,-",
+      "9,6,6,5,4,3,-,-,-,-",
+      "9,6,6,5,4,3,-,-,-,-",
+      "9,6,6,6,5,4,3,-,-,-",
+      "9,6,6,6,5,4,3,-,-,-",
+      "9,6,6,6,6,5,4,3,-,-",
+      "9,6,6,6,6,5,4,3,-,-",
+      "9,6,6,6,6,6,5,4,3,-",
+      "9,6,6,6,6,6,5,4,3,-",
+      "9,6,6,6,6,6,6,5,4,3",
+      "9,6,6,6,6,6,6,5,4,3",
+      "9,6,6,6,6,6,6,6,5,4"
+    ]
+  }
+}

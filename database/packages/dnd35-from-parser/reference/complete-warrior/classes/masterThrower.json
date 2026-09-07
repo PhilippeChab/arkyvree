@@ -1,0 +1,373 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-18T13:17:15.416Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/master-thrower/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "target": "aptitudes.masterthrowerthrownweapontrick.allowed"
+      }
+    ],
+    "bab": "good",
+    "featNameMap": {
+      "pointblankshot": "Point Blank Shot",
+      "preciseshot": "Precise Shot"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Quick Draw"
+      },
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "name": "Thrown Weapon Trick"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Snatch Arrows"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Critical Throw"
+      }
+    ],
+    "hd": 8,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sleightofhand.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.pointblankshot.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.preciseshot.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Master Thrower Class Feature",
+    "features": {
+      "Critical Throw": {
+        "description": "Upon reaching 5th level, the master thrower receives the Improved Critical feat applicable to any thrown weapon for which she possesses Weapon Focus.",
+        "level": 5,
+        "seedName": "Critical Throw (Master Thrower)"
+      },
+      "Deadeye Shot": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "When employing this technique, the critical multiplier of a chosen thrown weapon type rises by one increment (for instance, a hand axe would critically multiply damage by 4 rather than the usual 3). This bonus cannot be combined with any other effect that raises critical multipliers.",
+        "level": 1,
+        "selectable": true
+      },
+      "Defensive Throw": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "Before making a thrown weapon attack while standing in a threatened area, a master thrower with this technique can attempt a Concentration check (DC 10 + the number of enemies threatening her). On a success, her thrown weapon attacks do not provoke attacks of opportunity for the remainder of that round. On a failure, enemies may take attacks of opportunity against her as usual.",
+        "level": 1,
+        "selectable": true
+      },
+      "Doubletoss": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "Using a standard action, a master thrower with this technique can hurl two weapons simultaneously at one or two targets that are each within 30 feet. She may add her full Strength modifier to the damage of both weapons, rather than applying only half her Strength bonus to the off-hand weapon. Standard two-weapon fighting penalties still apply.",
+        "level": 1,
+        "selectable": true
+      },
+      "Evasion": {
+        "description": "Starting at 2nd level, the master thrower gains evasion. When she succeeds on a Reflex save against an effect that would normally deal half damage on a successful save, she takes no damage instead. This ability only functions while wearing light armor or no armor, and is unavailable when she is helpless (for example, unconscious or paralyzed). If the character already possesses evasion, she instead gains improved evasion, which works identically except that a failed Reflex save results in only half damage rather than full damage.",
+        "level": 2,
+        "seedName": "Evasion (Master Thrower)"
+      },
+      "Palm Throw": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "When wielding small thrown weapons such as darts, shuriken, or daggers (other weapons may qualify at the GM's discretion), a master thrower with this technique can launch two of the chosen weapon using a single attack roll. Damage is determined independently for each weapon, but the character's Strength modifier is not added to either damage roll.",
+        "level": 1,
+        "selectable": true
+      },
+      "Quick Draw": {
+        "description": "At 1st level, the master thrower receives the Quick Draw feat as a bonus.",
+        "level": 1,
+        "seedName": "Quick Draw (Master Thrower)"
+      },
+      "Snatch Arrows": {
+        "description": "At 4th level, the master thrower gains the benefits of the Snatch Arrows feat, regardless of whether she meets its normal prerequisites.",
+        "level": 4,
+        "seedName": "Snatch Arrows (Master Thrower)"
+      },
+      "Sneaky Shot": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "Immediately before executing a ranged attack, a master thrower with this technique may spend a move action to make a Sleight of Hand check contested by the target's Spot check. If the master thrower prevails, the target loses its Dexterity bonus to AC against that attack.",
+        "level": 1,
+        "selectable": true
+      },
+      "Thrown Weapon Trick": {
+        "description": "At 1st level and again at every second level after that, the master thrower selects one thrown weapon trick from the available options. Each selection is permanent and cannot be swapped out later. No trick may be chosen more than once. Every trick applies only when using a thrown weapon for which the character has Weapon Focus.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.masterthrowerthrownweapontrick.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Thrown Weapon Trick (Master Thrower)",
+        "stackable": true
+      },
+      "Trip Shot": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "A master thrower with this technique can attempt to trip a distant opponent (beyond 5 feet) using a thrown weapon. She makes a standard ranged attack with the thrown weapon; if it hits, it deals damage normally and she then makes a Dexterity check with a +4 bonus opposed by the target's Dexterity or Strength check (using whichever ability has the higher modifier). Additional modifiers may apply to this opposed check. If the master thrower wins, the target is knocked prone. This benefit does not stack with the Improved Trip feat.",
+        "level": 1,
+        "selectable": true
+      },
+      "Tumbling Toss": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "While wearing light, medium, or no armor, a master thrower with this technique can throw a single weapon at any point during an acrobatic tumble as a standard action. If her Tumble check result is 25 or higher, this ranged attack does not provoke attacks of opportunity, regardless of how many foes threaten her.",
+        "level": 1,
+        "selectable": true
+      },
+      "Two with One Blow": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "When attacking two opponents who are standing adjacent to one another, a master thrower with this technique may accept a -4 penalty on the attack roll to attempt hitting both targets with a single thrown weapon. Depending on the roll and each target's Armor Class, the attack might strike one, both, or neither opponent. Damage is calculated separately for each target. If the roll threatens a critical hit, confirmation rolls are made individually for each target.",
+        "level": 1,
+        "selectable": true
+      },
+      "Weak Spot": {
+        "aptitude": "Master Thrower Thrown Weapon Trick",
+        "description": "This technique is available only to master throwers who have reached 5th level. When throwing a weapon at a creature of her own size category or larger, the character may make a ranged touch attack in place of a standard attack roll. On a successful hit, her Strength bonus does not apply to the damage dealt.",
+        "level": 1,
+        "selectable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Master Thrower)"
+      }
+    },
+    "occurrenceMap": {
+      "Critical Throw": "Critical Throw",
+      "Evasion": "Evasion",
+      "Quick Draw": "Quick Draw",
+      "Snatch Arrows": "Snatch Arrows",
+      "Thrown Weapon Trick": "Thrown Weapon Trick"
+    },
+    "overrides": {
+      "description": "Master throwers rely on swift reactions, careful tactics, and precise ranged attacks to overcome their foes.",
+      "features": {
+        "Critical Throw": {
+          "description": "Upon reaching 5th level, the master thrower receives the Improved Critical feat applicable to any thrown weapon for which she possesses Weapon Focus."
+        },
+        "Deadeye Shot": {
+          "description": "When employing this technique, the critical multiplier of a chosen thrown weapon type rises by one increment (for instance, a hand axe would critically multiply damage by 4 rather than the usual 3). This bonus cannot be combined with any other effect that raises critical multipliers."
+        },
+        "Defensive Throw": {
+          "description": "Before making a thrown weapon attack while standing in a threatened area, a master thrower with this technique can attempt a Concentration check (DC 10 + the number of enemies threatening her). On a success, her thrown weapon attacks do not provoke attacks of opportunity for the remainder of that round. On a failure, enemies may take attacks of opportunity against her as usual."
+        },
+        "Doubletoss": {
+          "description": "Using a standard action, a master thrower with this technique can hurl two weapons simultaneously at one or two targets that are each within 30 feet. She may add her full Strength modifier to the damage of both weapons, rather than applying only half her Strength bonus to the off-hand weapon. Standard two-weapon fighting penalties still apply."
+        },
+        "Evasion": {
+          "description": "Starting at 2nd level, the master thrower gains evasion. When she succeeds on a Reflex save against an effect that would normally deal half damage on a successful save, she takes no damage instead. This ability only functions while wearing light armor or no armor, and is unavailable when she is helpless (for example, unconscious or paralyzed). If the character already possesses evasion, she instead gains improved evasion, which works identically except that a failed Reflex save results in only half damage rather than full damage."
+        },
+        "Palm Throw": {
+          "description": "When wielding small thrown weapons such as darts, shuriken, or daggers (other weapons may qualify at the GM's discretion), a master thrower with this technique can launch two of the chosen weapon using a single attack roll. Damage is determined independently for each weapon, but the character's Strength modifier is not added to either damage roll."
+        },
+        "Quick Draw": {
+          "description": "At 1st level, the master thrower receives the Quick Draw feat as a bonus."
+        },
+        "Snatch Arrows": {
+          "description": "At 4th level, the master thrower gains the benefits of the Snatch Arrows feat, regardless of whether she meets its normal prerequisites."
+        },
+        "Sneaky Shot": {
+          "description": "Immediately before executing a ranged attack, a master thrower with this technique may spend a move action to make a Sleight of Hand check contested by the target's Spot check. If the master thrower prevails, the target loses its Dexterity bonus to AC against that attack."
+        },
+        "Thrown Weapon Trick": {
+          "description": "At 1st level and again at every second level after that, the master thrower selects one thrown weapon trick from the available options. Each selection is permanent and cannot be swapped out later. No trick may be chosen more than once. Every trick applies only when using a thrown weapon for which the character has Weapon Focus."
+        },
+        "Trip Shot": {
+          "description": "A master thrower with this technique can attempt to trip a distant opponent (beyond 5 feet) using a thrown weapon. She makes a standard ranged attack with the thrown weapon; if it hits, it deals damage normally and she then makes a Dexterity check with a +4 bonus opposed by the target's Dexterity or Strength check (using whichever ability has the higher modifier). Additional modifiers may apply to this opposed check. If the master thrower wins, the target is knocked prone. This benefit does not stack with the Improved Trip feat."
+        },
+        "Tumbling Toss": {
+          "description": "While wearing light, medium, or no armor, a master thrower with this technique can throw a single weapon at any point during an acrobatic tumble as a standard action. If her Tumble check result is 25 or higher, this ranged attack does not provoke attacks of opportunity, regardless of how many foes threaten her."
+        },
+        "Two with One Blow": {
+          "description": "When attacking two opponents who are standing adjacent to one another, a master thrower with this technique may accept a -4 penalty on the attack roll to attempt hitting both targets with a single thrown weapon. Depending on the roll and each target's Armor Class, the attack might strike one, both, or neither opponent. Damage is calculated separately for each target. If the roll threatens a critical hit, confirmation rolls are made individually for each target."
+        },
+        "Weak Spot": {
+          "description": "This technique is available only to master throwers who have reached 5th level. When throwing a weapon at a creature of her own size category or larger, the character may make a ranged touch attack in place of a standard attack roll. On a successful hit, her Strength bonus does not apply to the damage dealt."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Master throwers gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 1st level, a master thrower gains the Quick Draw feat.",
+        "name": "Quick Draw"
+      },
+      {
+        "description": "At 1st level and every two levels thereafter, a master thrower chooses one of the following thrown weapon tricks. Once chosen, the trick is a permanent part of the master thrower's repertoire and may not be exchanged. A master thrower cannot choose the same trick more than once. Each trick may only be used with a thrown weapon for which the character has taken Weapon Focus. Deadeye Shot: The critical multiplier for any specific type of thrown weapon increases by one (for example, a hand axe has a critical multiplier of Ã-4 instead of Ã-3) when this ability is used. The benefit of this ability does not stack with any other effect that increases critical multipliers. Defensive Throw: If a master thrower with this ability succeeds on a Concentration check (DC 10 + number of threatening foes) before attempting to attack with a thrown weapon while in a threatened square, her thrown weapon attacks don't provoke attacks of opportunity for 1 round. If the check fails, her opponents get attacks of opportunity as normal when she makes her attacks. Doubletoss: A master thrower with this ability may, as a standardaction, throw two weapons at one or two targets within 30 feet. The character may apply her full Strength bonus to each weapon (instead of one-half her Strength bonus for the off-hand weapon). The normal penalties for fighting with two weapons apply. Palm Throw: When using little thrown weapons (darts, shuriken, and daggers; the DM may allow other weapons), a master thrower with this ability may throw two of each weapon with a single attack roll. Damage for each weapon is resolved separately, but the master thrower does not apply her Strength bonus to either damage roll. Sneaky Shot: Just before making a ranged attack, a master thrower with this ability can use a move action to make a Sleight of Hand check opposed by her target's Spot check. If she wins the opposed check, her opponent is denied his Dexterity bonus to Armor Class against the attack. Trip Shot: A master thrower with this ability may use a thrown weapon to make a trip attempt against an opponent farther than 5 feet away. The character makes a normal attack against the opponent with a thrown weapon. If the attack succeeds, in addition to doing damage as normal, the master thrower makes a Dexterity check with a +4 bonus opposed by the opponent's Dexterity check or Strength check (whichever ability score has the higher modifi er). Other modifiers may apply on this opposed check. If the master thrower wins the opposed check, the opponent is tripped. The benefit of this ability does not stack with the benefi t of the Improved Trip feat. Tumbling Toss: When wearing light, medium, or no armor, a master thrower with this ability can hurl a single thrown weapon at any point during a tumbling attempt as a standard action. If the result of her Tumble check is 25 or higher, the master thrower does not provoke an attack of opportunity for making this attack regardless of how many opponents threaten her. Two with One Blow: If a master thrower with this ability uses a thrown weapon to attack two opponents adjacent to each other, she may take a -4 penalty on the attack roll and attempt to hit both opponents at once. The attack may hit either, both, or neither opponent depending on the roll and the Armor Class of each opponent. Damage for each opponent is resolved separately. If the attack roll results in the threat of a critical hit, roll to confirm each critical hit separately. Weak Spot: A master thrower can gain this ability only after reaching 5th level. When using a thrown weapon against a target of her size or larger, the character can make a ranged touch attack instead of a normal attack. If the attack hits, the master thrower does not apply her Strength bonus to the damage.",
+        "name": "Thrown Weapon Trick",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a master thrower gains the evasion ability. If she makes a successful Reflex saving throw against an attack that normally deals half damage on a successful save, she instead takes no damage. Evasion can be used only if the master thrower is wearing light armor or no armor. A helpless master thrower (such as one who is unconscious or paralyzed) does not gain the benefit of the ability. If the character already has the evasion ability, he gains improved evasion instead. Improved evasion works like evasion, except that while the character still takes no damage on a successful Refl ex saving throw, she takes only half damage on a failed save.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A master thrower gains the benefit of the Snatch Arrows feat at 4th level, even if she does not meet the prerequisites.",
+        "name": "Snatch Arrows"
+      },
+      {
+        "description": "At 5th level, a master thrower gains the Improved Critical feat for any thrown weapon with which she has Weapon Focus.",
+        "name": "Critical Throw",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Jump",
+      "Perform",
+      "Profession",
+      "Sleight of Hand",
+      "Spot",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Master throwers depend on quick reflexes, good planning, and deadly aim.",
+    "hitDie": "d8",
+    "name": "Master Thrower",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Point Blank Shot",
+          "Precise Shot",
+          "Weapon Focus (Any Thrown Weapon)"
+        ],
+        "skills": [
+          {
+            "name": "Sleight of Hand",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Sleight of Hand 4 ranks Feats: Point Blank Shot, Precise Shot, Weapon Focus (Any Thrown Weapon)"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Quick Draw",
+          "thrown weapon trick"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Evasion"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Thrown weapon trick"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Snatch Arrows"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Critical throw",
+          "thrown weapon trick"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

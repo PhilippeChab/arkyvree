@@ -1,0 +1,479 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-22T16:52:26.001Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/pious-templar/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          4,
+          8
+        ],
+        "target": "aptitudes.fighterbonusfeat.allowed"
+      }
+    ],
+    "bab": "good",
+    "casterType": "Divine",
+    "featNameMap": {
+      "truebeliever": "True Believer"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Mettle"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Smite"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Damage Reduction 1/?"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Weapon Specialization"
+      },
+      {
+        "levels": [
+          4,
+          8
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Damage Reduction 2/?"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.truebeliever.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Pious Templar Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "At 4th level and once more at 8th level, a pious templar receives a bonus feat. These feats must be selected from those available as fighter bonus feats. If the pious templar chooses a feat that must be applied to a particular weapon (such as Improved Critical), she must apply it to her deity's favored weapon.",
+        "level": 4,
+        "seedName": "Bonus Feat (Pious Templar)",
+        "stackable": true
+      },
+      "Damage Reduction 1/?": {
+        "description": "Beginning at 3rd level, a pious templar can absorb a portion of the damage from every hit she takes. She gains damage reduction 1/?. When she reaches 7th level, this increases to damage reduction 2/?.",
+        "level": 3,
+        "seedName": "Damage Reduction 1/? (Pious Templar)"
+      },
+      "Damage Reduction 2/?": {
+        "description": "",
+        "level": 7,
+        "seedName": "Damage Reduction 2/? (Pious Templar)"
+      },
+      "Mettle": {
+        "description": "Through divine favor, a pious templar can resist magical effects that would normally harm her. When she succeeds on a Will or Fortitude saving throw against a spell that normally has a reduced effect on a successful save, she instead negates the spell's effect entirely. This applies only to spells whose saving throw entries indicate a partial or reduced effect, such as \"Will partial\" or \"Fortitude half.\"",
+        "level": 1,
+        "seedName": "Mettle (Pious Templar)"
+      },
+      "Smite": {
+        "description": "Once per day, a pious templar of 2nd level or higher can attempt a single melee strike with a +4 bonus on the attack roll and bonus damage equal to her pious templar level. She must declare the smite before rolling the attack. At 6th level she gains a second daily use, and at 10th level a third. If the pious templar already possesses a smite evil or similar smite ability from another class (such as paladin or a cleric with the Destruction domain), she instead receives one additional daily use of that ability (two additional uses at 7th level). The attack bonus remains unchanged, but the damage bonus is calculated using the character's combined levels in pious templar and the class that granted the original smite.",
+        "level": 2,
+        "seedName": "Smite (Pious Templar)",
+        "stackable": true
+      },
+      "Spells per Day": {
+        "description": "A pious templar can cast a limited number of divine spells. She must have a Wisdom score of at least 10 + the spell's level to cast a given spell; a pious templar with Wisdom 10 or lower cannot cast any of these spells. Bonus spells and saving throw DCs are based on Wisdom (DC equals 10 + spell level + Wisdom modifier). When her allotment for a given spell level is 0, she can only cast bonus spells of that level, and if she has no bonus spell for that level she cannot cast spells of that level at all. The pious templar has access to her entire spell list and freely chooses which spells to prepare each day, preparing and casting them in the manner of a cleric (though she cannot spontaneously convert spells into cure or inflict spells). A good-aligned pious templar (or a neutral one who serves a good deity) draws from the paladin spell list. An evil pious templar (or a neutral one who serves an evil deity) draws from the blackguard spell list. A pious templar who is neither good nor evil and whose deity is also neither good nor evil may choose either the paladin or blackguard spell list; once this choice is made it is permanent.",
+        "level": 1,
+        "seedName": "Spells per Day (Pious Templar)"
+      },
+      "Weapon Specialization": {
+        "description": "At 3rd level, the pious templar receives Weapon Specialization as a bonus feat, applied to her deity's favored weapon.",
+        "level": 3,
+        "seedName": "Weapon Specialization (Pious Templar)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant any additional weapon or armor proficiencies.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Pious Templar)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat",
+      "Damage Reduction 1/?": "Damage Reduction 1/?",
+      "Damage Reduction 2/?": "Damage Reduction 2/?",
+      "Mettle": "Mettle",
+      "Smite": "Smite",
+      "Weapon Specialization": "Weapon Specialization"
+    },
+    "overrides": {
+      "classSkills": [
+        "Concentration",
+        "Craft",
+        "Heal",
+        "Intimidate",
+        "Knowledge (Religion)",
+        "Profession",
+        "Sense Motive"
+      ],
+      "description": "Dedicated to safeguarding a holy site, the pious templar is a divine warrior who receives supernatural combat ability and exceptional resilience from her patron deity.",
+      "features": {
+        "Bonus Feat": {
+          "description": "At 4th level and once more at 8th level, a pious templar receives a bonus feat. These feats must be selected from those available as fighter bonus feats. If the pious templar chooses a feat that must be applied to a particular weapon (such as Improved Critical), she must apply it to her deity's favored weapon."
+        },
+        "Damage Reduction 1/?": {
+          "description": "Beginning at 3rd level, a pious templar can absorb a portion of the damage from every hit she takes. She gains damage reduction 1/?. When she reaches 7th level, this increases to damage reduction 2/?."
+        },
+        "Mettle": {
+          "description": "Through divine favor, a pious templar can resist magical effects that would normally harm her. When she succeeds on a Will or Fortitude saving throw against a spell that normally has a reduced effect on a successful save, she instead negates the spell's effect entirely. This applies only to spells whose saving throw entries indicate a partial or reduced effect, such as \"Will partial\" or \"Fortitude half.\""
+        },
+        "Smite": {
+          "description": "Once per day, a pious templar of 2nd level or higher can attempt a single melee strike with a +4 bonus on the attack roll and bonus damage equal to her pious templar level. She must declare the smite before rolling the attack. At 6th level she gains a second daily use, and at 10th level a third. If the pious templar already possesses a smite evil or similar smite ability from another class (such as paladin or a cleric with the Destruction domain), she instead receives one additional daily use of that ability (two additional uses at 7th level). The attack bonus remains unchanged, but the damage bonus is calculated using the character's combined levels in pious templar and the class that granted the original smite."
+        },
+        "Spells per Day": {
+          "description": "A pious templar can cast a limited number of divine spells. She must have a Wisdom score of at least 10 + the spell's level to cast a given spell; a pious templar with Wisdom 10 or lower cannot cast any of these spells. Bonus spells and saving throw DCs are based on Wisdom (DC equals 10 + spell level + Wisdom modifier). When her allotment for a given spell level is 0, she can only cast bonus spells of that level, and if she has no bonus spell for that level she cannot cast spells of that level at all. The pious templar has access to her entire spell list and freely chooses which spells to prepare each day, preparing and casting them in the manner of a cleric (though she cannot spontaneously convert spells into cure or inflict spells). A good-aligned pious templar (or a neutral one who serves a good deity) draws from the paladin spell list. An evil pious templar (or a neutral one who serves an evil deity) draws from the blackguard spell list. A pious templar who is neither good nor evil and whose deity is also neither good nor evil may choose either the paladin or blackguard spell list; once this choice is made it is permanent."
+        },
+        "Weapon Specialization": {
+          "description": "At 3rd level, the pious templar receives Weapon Specialization as a bonus feat, applied to her deity's favored weapon."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant any additional weapon or armor proficiencies."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "pioustemplarspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Pious templars gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A pious templar has the ability to cast a small number of divine spells. To cast a spell, the pious templar must have a Wisdom score of at least 10 + the spell's level, so a pious templar with a Wisdom of 10 or lower cannot cast these spells. Pious templar bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + the pious templar's Wisdom modifier. When the pious templar gets 0 spells of a given level, such as 0 1st-level spells at 1st level, she gets only bonus spells. (A pious templar without a bonus spell for that level cannot yet cast a spell of that level.) A pious templar has access to any spell on the list and can freely choose which to prepare, just like a cleric. A pious templar prepares and casts spells just as a cleric does (though the pious templar cannot spontaneously cast cure or inflict spells). A good pious templar (or a neutral pious templar of a good deity) uses the paladin spell list. An evil pious templar (or a neutral pious templar of an evil deity) uses the blackguard spell list. A pious templar who is neither good nor evil and whose deity is neither good nor evil can chose to use the paladin or the blackguard spell list. Once the player makes this choice, it cannot be reversed.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "A pious templar's special blessing allows her to shrug off magical effects that would otherwise harm her. If a pious templar makes a successful Will or Fortitude saving throw that would normally reduce the spell's effect, she suffers no effect from the spell at all. Only those spells with a Saving Throw entry of ?Will partial,? ?Fortitude half,? or similar entries can be negated through this ability.",
+        "name": "Mettle",
+        "type": "(Su)"
+      },
+      {
+        "description": "Once per day, a pious templar of 2nd level or higher may make a single melee attack with a +4 attack bonus and a damage bonus equal to her pious templar level (if she hits). The pious templar must declare the smite before making the attack. Starting at 6th level, a pious templar can smite twice per day and at 10th level, three times per day. If a pious templar has a smite evil or smite ability (for being a paladin or a cleric with the Destruction domain) already, she can use the ability one extra time per day (two extra times at 7th level). The attack bonus does not increase, but the damage bonus is based on the character's combined level (pious templar level plus cleric or paladin level).",
+        "name": "Smite",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 3rd level, pious templars have the ability to shrug off some amount of injury from each blow or attack. A pious templar gains damage reduction 1/?. At 7th level, this damage reduction rises to 2/?.",
+        "name": "Damage Reduction 1/?",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a pious templar gains the Weapon Specialization feat with her deity's favored weapon.",
+        "name": "Weapon Specialization"
+      },
+      {
+        "description": "At 4th level and again at 8th level, a pious templar gets a bonus feat. These bonus feats must be drawn from the feats noted as fighter bonus feats If a pious templar selects a feat that requires her to apply its effects to a specific weapon (such as Improved Critical), she may only apply that feat to her deity's favor",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "",
+        "name": "Damage Reduction 2/?"
+      }
+    ],
+    "classSkills": [
+      "1st",
+      "2nd",
+      "3rd",
+      "4th",
+      "5th",
+      "6th",
+      "7th",
+      "8th",
+      "9th",
+      "10th"
+    ],
+    "description": "Sworn to the defense of a temple site, the pious templar is a holy warrior blessed by her deity with combat prowess and great endurance.",
+    "hitDie": "d10",
+    "name": "Pious Templar",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "True Believer",
+          "Weapon Focus (with deity's favored weapon)"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Knowledge (religion) 4 ranks Feats: True Believer, Weapon Focus (with deity's favored weapon)"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Mettle"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Smite 1/day"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Damage reduction 1/?",
+          "Weapon Specialization"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Smite 2/day"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Damage reduction 2/?"
+        ],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Smite 3/day"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

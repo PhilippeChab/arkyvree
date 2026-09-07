@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.env
+.env.*
+*.log
+tests
+docker-compose*.yml
+playwright.config.ts
+playwright-report
+test-results
+CLAUDE.md
+DATABASE.md
+README.md
+docs

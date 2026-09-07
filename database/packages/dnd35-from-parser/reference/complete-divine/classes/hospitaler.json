@@ -1,0 +1,418 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:56:30.868Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/hospitaler/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          5,
+          9
+        ],
+        "target": "aptitudes.fighterbonusfeat.allowed"
+      }
+    ],
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {
+      "mountedcombat": "Mounted Combat",
+      "ridebyattack": "Ride-By Attack"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5,
+          9
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Lay On Hands"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Remove Disease 1/Week"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Remove Disease 2/Week"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.handleanimal.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.ride.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mountedcombat.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ridebyattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Hospitaler Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "At certain levels, a hospitaler gains a bonus feat chosen from the list of feats available as fighter bonus feats.",
+        "level": 1,
+        "seedName": "Bonus Feat (Hospitaler)",
+        "stackable": true
+      },
+      "Lay on Hands": {
+        "description": "A hospitaler who has a Charisma score of at least 12 can mend injuries through physical contact. She can restore a total number of hit points per day equal to her hospitaler level multiplied by her Charisma modifier. This healing can be split across multiple targets and need not be expended all at once. Activating this ability requires a standard action. If the hospitaler possesses lay on hands from a different class, the levels from both classes are combined when calculating the total hit points she can restore daily.",
+        "level": 1,
+        "seedName": "Lay on Hands (Hospitaler)"
+      },
+      "Remove Disease": {
+        "description": "Starting at 3rd level, a hospitaler gains the ability to use remove disease once per week as a spell-like ability. From 7th level onward, she may use this ability twice per week.",
+        "level": 3,
+        "seedName": "Remove Disease (Hospitaler)",
+        "stackable": true
+      },
+      "Spells per Day/Spells Known": {
+        "description": "A hospitaler continues to develop her divine spellcasting alongside her hospitaler training. Whenever she gains a new hospitaler level (with the exception of 1st, 5th, and 9th levels), she receives additional divine spells per day (and spells known, if relevant) as though she had advanced one level in a divine spellcasting class she belonged to prior to entering this prestige class. She does not, however, receive any other class benefits that would normally accompany such a level gain (such as enhanced undead turning or rebuking, increased smite evil damage, or similar abilities). If the character possessed more than one divine spellcasting class before becoming a hospitaler, she must select which class gains the benefit of each new hospitaler level for determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Hospitaler)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Hospitalers are proficient with all simple and martial weapons, all armor types, and shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Hospitaler)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat",
+      "Lay On Hands": "Lay on Hands",
+      "Remove Disease 1/Week": "Remove Disease",
+      "Remove Disease 2/Week": "Remove Disease"
+    },
+    "overrides": {
+      "description": "Hospitalers are militant protectors bound by vows of poverty and obedience, dedicated to safeguarding those under their charge.",
+      "features": {
+        "Bonus Feat": {
+          "description": "At certain levels, a hospitaler gains a bonus feat chosen from the list of feats available as fighter bonus feats."
+        },
+        "Lay on Hands": {
+          "description": "A hospitaler who has a Charisma score of at least 12 can mend injuries through physical contact. She can restore a total number of hit points per day equal to her hospitaler level multiplied by her Charisma modifier. This healing can be split across multiple targets and need not be expended all at once. Activating this ability requires a standard action. If the hospitaler possesses lay on hands from a different class, the levels from both classes are combined when calculating the total hit points she can restore daily."
+        },
+        "Remove Disease": {
+          "description": "Starting at 3rd level, a hospitaler gains the ability to use remove disease once per week as a spell-like ability. From 7th level onward, she may use this ability twice per week."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "A hospitaler continues to develop her divine spellcasting alongside her hospitaler training. Whenever she gains a new hospitaler level (with the exception of 1st, 5th, and 9th levels), she receives additional divine spells per day (and spells known, if relevant) as though she had advanced one level in a divine spellcasting class she belonged to prior to entering this prestige class. She does not, however, receive any other class benefits that would normally accompany such a level gain (such as enhanced undead turning or rebuking, increased smite evil damage, or similar abilities). If the character possessed more than one divine spellcasting class before becoming a hospitaler, she must select which class gains the benefit of each new hospitaler level for determining spells per day and spells known."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Hospitalers are proficient with all simple and martial weapons, all armor types, and shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Hospitalers gain proficiency with all simple and martial weapons, with all types of armor, and with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A hospitaler continues advancing in divine spellcasting ability as well as learning the skills of the hospitalers. Thus, when a new hospitaler level is gained (except for 1st, 5th, and 9th levels), the character gains new divine spells per day (and spells known, if applicable) as if she had gained a level in the a divine spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, greater damage with the smite evil ability, and so on). If the character had more than one divine spellcasting class before becoming a hospitaler, the player must decide to which class to add each hospitaler level for the purposes of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "At the indicated levels, a hospitaler may take a bonus feat. These feats are drawn from the feats designated as fighter bonus feats.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "A hospitaler with a Charisma score of 12 or higher can heal wounds by touch. Each day she can heal a total number of hit points of damage equal to her hospitaler level times her Charisma modifier. A hospitaler may choose to divide her healing among multiple recipients, and she doesn't have to use it all at once. Using lay on hands is a standard action. If the hospitaler has this ability from another class, her levels in those classes stack to determine the total number of hit points of damage she can heal each day.",
+        "name": "Lay on Hands",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, a hospitaler can use remove disease as a spell-like ability once per week. At 7th level and higher, she can use this ability twice per week.",
+        "name": "Remove Disease",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Handle Animal",
+      "Heal",
+      "Knowledge (Religion)",
+      "Profession",
+      "Ride"
+    ],
+    "description": "Hospitalers are a fighting force of necessity, sworn to poverty, obedience, and the defense of those in their care.",
+    "hitDie": "d8",
+    "name": "Hospitaler",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonchaotic",
+        "bab": 5,
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Mounted Combat",
+          "Ride-By Attack"
+        ],
+        "skills": [
+          {
+            "name": "Handle Animal",
+            "ranks": 5
+          },
+          {
+            "name": "Ride",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Any nonchaotic Skills: Handle Animal 5 ranks, Ride 5 ranks Feats: Mounted Combat, Ride-By Attack Spells: Able to cast 1st-level divine spells."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bonus feat",
+          "lay on hands"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Remove disease 1/week"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Remove disease 2/week"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

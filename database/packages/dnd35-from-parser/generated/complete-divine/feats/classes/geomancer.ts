@@ -1,0 +1,24 @@
+import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+const APT = "Geomancer Class Feature";
+
+export const GEOMANCER_FEATS: FeatSeed[] = [
+  { name: "Drift 1 (Geomancer)", description: "As the geomancer advances, his body gradually transforms to reflect his bond with the natural world. At every geomancer level, select one drift from the stage corresponding to that level.", stackable: true, selectable: false, aptitudes: [APT], modifiers: [{ target: "aptitudes.geomancerdrift1.allowed", operator: "add", value: "1", valueType: "number" }] },
+  { name: "Drift 2 (Geomancer)", description: "", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Drift 3 (Geomancer)", description: "", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Drift 4 (Geomancer)", description: "", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Drift 5 (Geomancer)", description: "", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Ley Lines (Geomancer)", description: "Beginning at 2nd level, the geomancer forges a mystical link to a particular kind of terrain. Select one terrain type from the following: aquatic, desert, forest, hills, marsh, mountains, or plains. While in that terrain, the geomancer's effective caster level for all spells is increased by +1. At 6th level and once more at 10th level, the geomancer may either pick an additional terrain to gain the +1 caster level bonus, or raise his effective caster level in a terrain he has already chosen by a further +1.", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 0 (Geomancer)", description: "Starting at 1st level, the geomancer gains the ability to merge his arcane and divine magical traditions. He continues to learn and prepare spells normally for each of his spellcasting classes. However, when casting spells, he may freely combine spellcasting parameters from any of his classes to achieve the best possible outcome for any spell whose level does not exceed his current spell versatility score. For instance, a 4th-level geomancer can cast his 3rd-level or lower arcane spells without incurring arcane spell failure from worn armor. (The druid's prohibition on metal armor still applies to druid/geomancers, as this restriction arises from a spiritual commitment rather than a mechanical limitation.) The geomancer may apply his Wisdom modifier to determine the save DC of arcane spells, or use his Charisma or Intelligence modifier (whichever normally governs his arcane casting) for the save DC of divine spells. When a spell calls for either an arcane material component or a divine focus, the geomancer may substitute one for the other. A cleric/geomancer who also possesses levels in wizard, sorcerer, or bard may spontaneously convert any prepared arcane or divine spell (other than a domain spell) of a suitable level into a cure or inflict spell of equal or lower level, provided he is able to cast that cure or inflict spell as a cleric.", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 1 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 2 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 3 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 4 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 5 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 6 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 7 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 8 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spell Versatility 9 (Geomancer)", description: "", selectable: false, aptitudes: [APT] },
+  { name: "Spells per Day/Spells Known (Geomancer)", description: "With each geomancer level gained, the character receives additional spells per day (and spells known, where relevant) as though he had also advanced one level in a spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other benefits that class would normally grant (such as additional wild shape forms, metamagic feats, item creation feats, or similar abilities). Because the character must have had multiple spellcasting classes prior to becoming a geomancer, the player chooses which class receives the spellcasting advancement at each new geomancer level.", selectable: false, aptitudes: [APT] },
+  { name: "Weapon and Armor Proficiency (Geomancer)", description: "Geomancers do not gain any additional weapon or armor proficiencies.", selectable: false, aptitudes: [APT] },
+];

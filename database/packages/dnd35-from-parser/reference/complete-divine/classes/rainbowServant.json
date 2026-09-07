@@ -1,0 +1,417 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T14:00:13.069Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/rainbow-servant/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        5,
+        6,
+        8,
+        9
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Evil"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Extra Domain (Good)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Extra Domain (Air)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Grow Wings"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Detect Chaos"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Extra Domain (Law)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Cleric Spell Access"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Detect Thoughts"
+      }
+    ],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Rainbow Servant Class Feature",
+    "features": {
+      "Cleric Spell Access": {
+        "description": "Upon reaching 10th level, a rainbow servant gains the ability to learn and cast spells from the cleric spell list, even those not found on any of his existing spellcasting class lists. Spells taken from the cleric list that do not appear on the sorcerer/wizard or bard lists are treated as divine spells when cast. This grants access to the spells themselves but does not provide any additional spell slots per day. A 10th-level rainbow servant may also use scrolls, wands, and staffs containing cleric spells.",
+        "level": 10,
+        "seedName": "Cleric Spell Access (Rainbow Servant)"
+      },
+      "Detect Chaos": {
+        "description": "A rainbow servant of 7th level or higher can use detect chaos at will, functioning as the spell of the same name.",
+        "level": 7,
+        "seedName": "Detect Chaos (Rainbow Servant)"
+      },
+      "Detect Evil": {
+        "description": "A rainbow servant can use detect evil at will, functioning as the spell of the same name.",
+        "level": 1,
+        "seedName": "Detect Evil (Rainbow Servant)"
+      },
+      "Detect Thoughts": {
+        "description": "A 10th-level rainbow servant can use detect thoughts at will, functioning as the spell of the same name. The saving throw DC for this ability is based on Charisma.",
+        "level": 10,
+        "seedName": "Detect Thoughts (Rainbow Servant)"
+      },
+      "Extra Domain (Air)": {
+        "description": "",
+        "level": 4,
+        "seedName": "Extra Domain (Air) (Rainbow Servant)"
+      },
+      "Extra Domain (Good)": {
+        "description": "A rainbow servant receives the granted power and spell access of the Good domain at 1st level, the Air domain at 4th level, and the Law domain at 7th level. The rainbow servant typically employs a multicolored couatl feather as her divine focus.",
+        "level": 1,
+        "seedName": "Extra Domain (Good) (Rainbow Servant)"
+      },
+      "Extra Domain (Law)": {
+        "description": "",
+        "level": 7,
+        "seedName": "Extra Domain (Law) (Rainbow Servant)"
+      },
+      "Grow Wings": {
+        "description": "Beginning at 4th level, a rainbow servant can sprout multicolored feathered wings resembling those of a couatl. These wings grant a fly speed of 60 feet with good maneuverability. The total daily flight duration is 1 minute per rainbow servant level, which the character may divide into segments as desired. Growing or dismissing the wings requires a standard action. Any restrictive clothing or armor prevents the wings from forming, and a rainbow servant cannot manifest them while grappled.",
+        "level": 4,
+        "seedName": "Grow Wings (Rainbow Servant)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Each time a rainbow servant gains a new level in this prestige class, she receives additional spells per day as though she had also advanced one level in whichever arcane spellcasting class allowed her to cast 3rd-level spells prior to entering this class. She does not, however, receive any other benefits that class would normally grant (such as improved undead turning, wild shape, or similar abilities). In effect, her rainbow servant levels are added to her other spellcasting class level for purposes of calculating spells per day. If the character could cast 3rd-level arcane spells in more than one class before becoming a rainbow servant, she must choose which class receives the benefit each time she gains a rainbow servant level.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Rainbow Servant)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Rainbow Servant)"
+      }
+    },
+    "occurrenceMap": {
+      "Cleric Spell Access": "Cleric Spell Access",
+      "Detect Chaos": "Detect Chaos",
+      "Detect Evil": "Detect Evil",
+      "Detect Thoughts": "Detect Thoughts",
+      "Extra Domain (Air)": "Extra Domain (Air)",
+      "Extra Domain (Good)": "Extra Domain (Good)",
+      "Extra Domain (Law)": "Extra Domain (Law)",
+      "Grow Wings": "Grow Wings"
+    },
+    "overrides": {
+      "description": "Individuals who have discovered and studied the sacred knowledge within the hidden couatl temples are called rainbow servants.",
+      "features": {
+        "Cleric Spell Access": {
+          "description": "Upon reaching 10th level, a rainbow servant gains the ability to learn and cast spells from the cleric spell list, even those not found on any of his existing spellcasting class lists. Spells taken from the cleric list that do not appear on the sorcerer/wizard or bard lists are treated as divine spells when cast. This grants access to the spells themselves but does not provide any additional spell slots per day. A 10th-level rainbow servant may also use scrolls, wands, and staffs containing cleric spells."
+        },
+        "Detect Chaos": {
+          "description": "A rainbow servant of 7th level or higher can use detect chaos at will, functioning as the spell of the same name."
+        },
+        "Detect Evil": {
+          "description": "A rainbow servant can use detect evil at will, functioning as the spell of the same name."
+        },
+        "Detect Thoughts": {
+          "description": "A 10th-level rainbow servant can use detect thoughts at will, functioning as the spell of the same name. The saving throw DC for this ability is based on Charisma."
+        },
+        "Extra Domain (Good)": {
+          "description": "A rainbow servant receives the granted power and spell access of the Good domain at 1st level, the Air domain at 4th level, and the Law domain at 7th level. The rainbow servant typically employs a multicolored couatl feather as her divine focus."
+        },
+        "Grow Wings": {
+          "description": "Beginning at 4th level, a rainbow servant can sprout multicolored feathered wings resembling those of a couatl. These wings grant a fly speed of 60 feet with good maneuverability. The total daily flight duration is 1 minute per rainbow servant level, which the character may divide into segments as desired. Growing or dismissing the wings requires a standard action. Any restrictive clothing or armor prevents the wings from forming, and a rainbow servant cannot manifest them while grappled."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "Each time a rainbow servant gains a new level in this prestige class, she receives additional spells per day as though she had also advanced one level in whichever arcane spellcasting class allowed her to cast 3rd-level spells prior to entering this class. She does not, however, receive any other benefits that class would normally grant (such as improved undead turning, wild shape, or similar abilities). In effect, her rainbow servant levels are added to her other spellcasting class level for purposes of calculating spells per day. If the character could cast 3rd-level arcane spells in more than one class before becoming a rainbow servant, she must choose which class receives the benefit each time she gains a rainbow servant level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Rainbow servants gain no proficiency in weapons or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new rainbow servant level is gained, the character gains new spells per day as if she had also gained a level in whatever spellcasting class in which she could cast 3rd-level arcane spells before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, wild shape ability, and so on). This essentially means that she adds the level of rainbow servant to the level of whatever other spellcasting class the character has, then determines spells per day accordingly. If a character had more than one spellcasting class in which she could cast 3rd-level arcane spells before she became a rainbow servant, the player must decide which class to assign each level of rainbow servant for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "At will, a rainbow servant can use detect evil, as the spell.",
+        "name": "Detect Evil",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A rainbow servant gains the granted power and spell access of the Good domain at 1st level, the Air domain at 4th level, and the Law domain at 7th level. The rainbow servant generally uses a multicolored feather of a couatl as her divine focus.",
+        "name": "Extra Domain (Good)"
+      },
+      {
+        "description": "",
+        "name": "Extra Domain (Air)"
+      },
+      {
+        "description": "Starting at 4th level, a rainbow servant can grow multicolored, feathered wings like that of a couatl. The wings, which allow flight at a speed of 60 feet with good maneuverability, have a daily duration of 1 minute per rainbow servant level, divided up however the rainbow servant wishes. It takes a standard action to grow or eliminate the feathered wings. Restrictive clothing and armor of any kind prevents the wings from growing, and a rainbow servant can't grow wings while grappling.",
+        "name": "Grow Wings",
+        "type": "(Su)"
+      },
+      {
+        "description": "At will, a rainbow servant of 7th level or higher can use detect chaos, as the spell.",
+        "name": "Detect Chaos",
+        "type": "(Sp)"
+      },
+      {
+        "description": "",
+        "name": "Extra Domain (Law)"
+      },
+      {
+        "description": "A 10th-level rainbow servant can learn and cast spells from the cleric list, even if they don't appear on the lists of any spellcasting class he has. Such spells are cast as divine spells if they don't appear on the sorcerer/wizard or bard spell lists. This class feature grants access to the spells, but not extra spells per day. The 10th-level rainbow servant can likewise read scrolls with cleric spells on them and use wands and staffs that contain cleric spells.",
+        "name": "Cleric Spell Access"
+      },
+      {
+        "description": "At will, a 10th-level rainbow servant can use detect thoughts, as the spell. The save DC is Charisma based.<",
+        "name": "Detect Thoughts",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Knowledge (Arcana)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "Those who have learned what the couatl temples have to offer are known as rainbow servants.",
+    "hitDie": "d4",
+    "name": "Rainbow Servant",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonevil and nonchaotic",
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "arcane"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Must find the hidden jungle temples of the couatls."
+        ]
+      },
+      "text": "Alignment: Any nonevil and nonchaotic Skills: Knowledge (arcana) 4 ranks Spells: Able to cast 3rd-level arcane spells.Special: Must find the hidden jungle temples of the couatls."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Detect evil",
+          "extra domain (Good)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Extra domain (Air)",
+          "grow wings"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Detect chaos",
+          "extra domain (Law)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Cleric spell access",
+          "detect thoughts"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

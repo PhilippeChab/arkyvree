@@ -1,0 +1,466 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:09.917Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/justiciar/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "skillfocusgatherinformation": "Skill Focus (Gather Information)",
+      "track": "Track"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bring 'em Back Alive"
+      },
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Nonlethal Strike"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Improved Grapple"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Crippling Strike"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Exotic Weapon Proficiency (Manacles)"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Street Savvy"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Hog-Tie"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Improved Hog-Tie"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Intuition"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.gatherinformation.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.search.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.skillfocusgatherinformation.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.track.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Justiciar Class Feature",
+    "features": {
+      "Bring 'em Back Alive": {
+        "description": "A justiciar who strikes with a melee weapon may choose to inflict nonlethal damage instead of lethal damage without suffering the usual -4 attack roll penalty that normally applies when attempting to deal nonlethal damage with a lethal weapon.",
+        "level": 1,
+        "seedName": "Bring 'em Back Alive (Justiciar)"
+      },
+      "Crippling Strike": {
+        "description": "From 2nd level onward, a justiciar who deals damage with a nonlethal strike delivers such a precisely targeted blow that the opponent also suffers 1 point of Strength damage.",
+        "level": 2,
+        "seedName": "Crippling Strike (Justiciar)"
+      },
+      "Exotic Weapon Proficiency (Manacles)": {
+        "description": "Through extensive experience in capturing criminals, justiciars learn to employ manacles as weapons. At 3rd level, a justiciar can wield a pair of metal manacles in one hand as though they were a club, with no improvised weapon penalty. Masterwork manacles function as a masterwork light flail when wielded this way.",
+        "level": 3,
+        "seedName": "Exotic Weapon Proficiency (Manacles) (Justiciar)"
+      },
+      "Hog-tie": {
+        "description": "At 5th level, a justiciar who has successfully pinned a grappled opponent may attempt to bind that opponent. The justiciar must be holding a rope, chain, or pair of manacles in one hand. This ability can be used on opponents up to one size category larger than the justiciar and only works on creatures with a humanoid body shape (including most humanoids, monstrous humanoids, outsiders, and giants). The binding attempt uses an opposed check: the justiciar rolls a Use Rope check in place of a grapple check, while the target rolls either a grapple check or an Escape Artist check. If the justiciar wins, the target is bound and rendered helpless. If the target wins, the binding fails and the grapple continues. A bound creature can try to escape with an Escape Artist check opposed by the justiciar's Use Rope check, or by making a Strength check against a DC that depends on the restraints used (DC 23 for rope, DC 26 for chain or standard manacles, DC 28 for masterwork manacles).",
+        "level": 5,
+        "seedName": "Hog-tie (Justiciar)"
+      },
+      "Improved Grapple": {
+        "description": "Starting at 2nd level, a justiciar gains Improved Grapple as a bonus feat, even without meeting its normal prerequisites.",
+        "level": 2,
+        "seedName": "Improved Grapple (Justiciar)"
+      },
+      "Improved Hog-tie": {
+        "description": "At 8th level, a justiciar no longer needs to pin an opponent before attempting to bind them. As soon as a grapple is initiated, the justiciar can spend an attack action to attempt the binding. Additionally, if the justiciar possesses the Quick Draw feat, there is no need to already be holding the rope, chain, or manacles before making the attempt.",
+        "level": 8,
+        "seedName": "Improved Hog-tie (Justiciar)"
+      },
+      "Intuition": {
+        "description": "At 10th level, while actively pursuing a specific individual, the justiciar can make a Survival check (DC 15 + target's HD) to sense the direction toward that person, provided the target is within 1 mile. This works against anyone the justiciar has previously engaged in combat. The GM should roll this check in secret, since the justiciar cannot tell whether a failure resulted from a poor roll or from the target being out of range. This ability may be used once per day per target.",
+        "level": 10,
+        "seedName": "Intuition (Justiciar)"
+      },
+      "Nonlethal Strike": {
+        "description": "When using the bring 'em back alive ability against a target that is denied its Dexterity bonus to AC (regardless of whether the target actually has such a bonus) or when the justiciar flanks the target, the attack inflicts an additional 1d6 points of nonlethal damage. This bonus rises to 2d6 at 4th level, 3d6 at 7th level, and 4d6 at 10th level. Critical hits do not multiply this bonus damage. This ability works only against living creatures with discernible anatomy; undead, constructs, oozes, plants, and incorporeal creatures are immune. Creatures that cannot take nonlethal damage are likewise unaffected. A justiciar cannot apply this ability against a target with concealment.",
+        "level": 1,
+        "seedName": "Nonlethal Strike (Justiciar)",
+        "stackable": true
+      },
+      "Street Savvy": {
+        "description": "At 3rd level, a justiciar receives a +2 circumstance bonus on Gather Information checks made while pursuing a criminal. This bonus increases by +2 at every third level after 3rd.",
+        "level": 3,
+        "seedName": "Street Savvy (Justiciar)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Justiciar)"
+      }
+    },
+    "occurrenceMap": {
+      "Bring 'em Back Alive": "Bring 'em Back Alive",
+      "Crippling Strike": "Crippling Strike",
+      "Exotic Weapon Proficiency (Manacles)": "Exotic Weapon Proficiency (Manacles)",
+      "Hog-Tie": "Hog-tie",
+      "Improved Grapple": "Improved Grapple",
+      "Improved Hog-Tie": "Improved Hog-tie",
+      "Intuition": "Intuition",
+      "Nonlethal Strike": "Nonlethal Strike",
+      "Street Savvy": "Street Savvy"
+    },
+    "overrides": {
+      "description": "Justiciars specialize in tracking down and apprehending lawbreakers, using measured force to bring offenders to justice alive.",
+      "features": {
+        "Bring 'em Back Alive": {
+          "description": "A justiciar who strikes with a melee weapon may choose to inflict nonlethal damage instead of lethal damage without suffering the usual -4 attack roll penalty that normally applies when attempting to deal nonlethal damage with a lethal weapon."
+        },
+        "Crippling Strike": {
+          "description": "From 2nd level onward, a justiciar who deals damage with a nonlethal strike delivers such a precisely targeted blow that the opponent also suffers 1 point of Strength damage."
+        },
+        "Exotic Weapon Proficiency (Manacles)": {
+          "description": "Through extensive experience in capturing criminals, justiciars learn to employ manacles as weapons. At 3rd level, a justiciar can wield a pair of metal manacles in one hand as though they were a club, with no improvised weapon penalty. Masterwork manacles function as a masterwork light flail when wielded this way."
+        },
+        "Hog-tie": {
+          "description": "At 5th level, a justiciar who has successfully pinned a grappled opponent may attempt to bind that opponent. The justiciar must be holding a rope, chain, or pair of manacles in one hand. This ability can be used on opponents up to one size category larger than the justiciar and only works on creatures with a humanoid body shape (including most humanoids, monstrous humanoids, outsiders, and giants). The binding attempt uses an opposed check: the justiciar rolls a Use Rope check in place of a grapple check, while the target rolls either a grapple check or an Escape Artist check. If the justiciar wins, the target is bound and rendered helpless. If the target wins, the binding fails and the grapple continues. A bound creature can try to escape with an Escape Artist check opposed by the justiciar's Use Rope check, or by making a Strength check against a DC that depends on the restraints used (DC 23 for rope, DC 26 for chain or standard manacles, DC 28 for masterwork manacles)."
+        },
+        "Improved Grapple": {
+          "description": "Starting at 2nd level, a justiciar gains Improved Grapple as a bonus feat, even without meeting its normal prerequisites."
+        },
+        "Improved Hog-tie": {
+          "description": "At 8th level, a justiciar no longer needs to pin an opponent before attempting to bind them. As soon as a grapple is initiated, the justiciar can spend an attack action to attempt the binding. Additionally, if the justiciar possesses the Quick Draw feat, there is no need to already be holding the rope, chain, or manacles before making the attempt."
+        },
+        "Intuition": {
+          "description": "At 10th level, while actively pursuing a specific individual, the justiciar can make a Survival check (DC 15 + target's HD) to sense the direction toward that person, provided the target is within 1 mile. This works against anyone the justiciar has previously engaged in combat. The GM should roll this check in secret, since the justiciar cannot tell whether a failure resulted from a poor roll or from the target being out of range. This ability may be used once per day per target."
+        },
+        "Nonlethal Strike": {
+          "description": "When using the bring 'em back alive ability against a target that is denied its Dexterity bonus to AC (regardless of whether the target actually has such a bonus) or when the justiciar flanks the target, the attack inflicts an additional 1d6 points of nonlethal damage. This bonus rises to 2d6 at 4th level, 3d6 at 7th level, and 4d6 at 10th level. Critical hits do not multiply this bonus damage. This ability works only against living creatures with discernible anatomy; undead, constructs, oozes, plants, and incorporeal creatures are immune. Creatures that cannot take nonlethal damage are likewise unaffected. A justiciar cannot apply this ability against a target with concealment."
+        },
+        "Street Savvy": {
+          "description": "At 3rd level, a justiciar receives a +2 circumstance bonus on Gather Information checks made while pursuing a criminal. This bonus increases by +2 at every third level after 3rd."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Justiciars gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Whenever a justiciar attacks with a melee weapon, he can deal nonlethal damage with the weapon instead of lethal damage with no penalty on the attack roll. Normally, attempting to deal nonlethal damage with a weapon in this way incurs a -4 penalty on the attack roll.",
+        "name": "Bring 'em Back Alive",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A justiciar can make nonlethal strikes. Any time the character uses the bring 'em back alive ability and his target would be denied her Dexterity bonus to Armor Class (whether she actually has a Dexterity bonus or not) or when the justiciar flanks the target, the justiciar's attack deals an extra 1d6 points of nonlethal damage. This extra damage increases to 2d6 at 4th level, 3d6 at 7th level, and 4d6 at 10th level. Should the justiciar score a critical hit with a nonlethal strike, this extra damage is not multiplied. A justiciar can use nonlethal strike only on a living creature with discernible anatomy-undead, constructs, oozes, plants, and incorporeal creatures are not subject to this extra damage. Also, creatures immune to nonlethal damage are immune to nonlethal strike damage. The justiciar cannot make a nonlethal strike against a creature with concealment.",
+        "name": "Nonlethal Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a justiciar receives Improved Grapple as a bonus feat even if he does not meet the prerequisites.",
+        "name": "Improved Grapple",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A justiciar of 2nd level or higher can make a nonlethal strike against an opponent with such precision that his blow weakens and hampers the opponent. When a justiciar damages an opponent with a nonlethal strike, that character also takes 1 point of Strength damage.",
+        "name": "Crippling Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Intimately familiar with the capture of criminals, justiciars have learned to do more with a pair of manacles than restrain a lawbreaker. A justiciar of 3rd level or higher can swing a pair of metal manacles in one hand as if they were a club without taking a penalty for using an improvised weapon. Masterwork manacles can be wielded as if they were a masterwork light flail.",
+        "name": "Exotic Weapon Proficiency (Manacles)"
+      },
+      {
+        "description": "A justiciar of 3rd level or higher gains a circumstance bonus on Gather Information checks he attempts while in pursuit of a criminal. This bonus is initially +2 at 3rd level, and increases by an extra +2 every third level thereafter.",
+        "name": "Street Savvy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a justiciar of 5th level or higher successfully pins an opponent while grappling, he can attempt to hog-tie the opponent. A justiciar must have a rope, chain, or manacles in one hand to use this ability. A justiciar can use this ability on an opponent of up to one size category larger than he is (for example, a halfling justiciar can attempt to hog-tie a Medium or smaller opponent). He can use the ability only against humanoid-shaped creatures (thus, most humanoids, monstrous humanoids, outsiders, and giants would qualify). An attempt to hog-tie is resolved with an opposed check. The justiciar can make a Use Rope check instead of a normal grapple check, while the opponent makes either a grapple check or an Escape Artist check. If the justiciar succeeds, the opponent is hog-tied. If the opponent succeeds, the hogtie attempt fails and the grapple continues. If a justiciar successfully hog-ties an opponent, that person is considered bound and helpless. A bound opponent can attempt to escape by making an Escape Artist check opposed by the justiciar's Use Rope check or a Strength check (DC 23 for rope, DC 26 for chain or manacles, DC 28 for masterwork manacles) to break free.",
+        "name": "Hog-tie",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A justiciar of 8th level or higher can make a hog-tie attempt without first pinning his opponent.Whenever a grapple is established, the justiciar can use an attack action to make a hog-tie attempt. Also, if the justiciar has the Quick Draw feat, he does not need to be holding the rope, chain, or manacles in his hand before making the attempt.",
+        "name": "Improved Hog-tie",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When hunting a specific person, a 10th level justiciar can use a Survival check to determine in which direction the culprit might be found if the criminal is within 1 mile of the justiciar (DC 15 + target's HD). A justiciar can use this ability to determine the direction of anyone he has previously faced in combat if he or she is within range. The DM should make this check secretly for the justiciar, since the character should not know if he failed the check because of the die roll or because the target is too far away. A justiciar can make this check once per day for any single target.",
+        "name": "Intuition",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Disguise",
+      "Gather Information",
+      "Heal",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Ride",
+      "Search",
+      "Sense Motive",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Use Rope"
+    ],
+    "description": "Justiciars make a living kicking the daylights out of criminals who desperately deserve it.",
+    "hitDie": "d10",
+    "name": "Justiciar",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any lawful",
+        "bab": 6,
+        "feats": [
+          "Skill Focus (Gather Information)",
+          "Track"
+        ],
+        "skills": [
+          {
+            "name": "Gather Information",
+            "ranks": 5
+          },
+          {
+            "name": "Search",
+            "ranks": 5
+          },
+          {
+            "name": "Survival",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +6 Alignment: Any lawful Skills: Gather Information 5 ranks, Search 5 ranks, Survival 5 ranks Feats: Skill Focus (Gather Information), Track"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bring 'em back alive",
+          "nonlethal strike +1d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Improved grapple",
+          "crippling strike"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Exotic Weapon Proficiency (manacles)",
+          "street savvy +2"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Nonlethal strike +2d6"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Hog-tie"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Street savvy +4"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Nonlethal strike +3d6"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Improved hog-tie"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Street savvy +6"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Intuition",
+          "nonlethal strike +4d6"
+        ],
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

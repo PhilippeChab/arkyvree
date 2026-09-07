@@ -1,0 +1,499 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.265Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/dread-pirate/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "quickdraw": "Quick Draw",
+      "weaponfinesse": "Weapon Finesse"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Seamanship"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Two-Weapon Fighting"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Fearsome Reputation"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Rally The Crew +1 (1/Day) Or Sneak Attack"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Acrobatic Charge"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Steady Stance"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Luck Of The Wind Or Scourge Of The Seas"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Rally The Crew +2 (2/Day) Or Sneak Attack"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Skill Mastery"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Fight To The Death Or Motivate The Scum"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Pirate King"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.appraise.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.profession.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.swim.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.userope.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.quickdraw.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfinesse.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Dread Pirate Class Feature",
+    "features": {
+      "Acrobatic Charge": {
+        "description": "A dread pirate of 4th level or higher can charge over difficult terrain that normally slows movement or through the squares occupied by allies blocking his path. This ability enables him to charge across a cluttered ship's deck, leap down from a higher deck, or swing between two adjacent ships to get to his target. Depending on the circumstances, he might still need to make appropriate checks (such as Jump, Tumble, or Use Rope checks) to successfully move over the terrain.",
+        "level": 4,
+        "seedName": "Acrobatic Charge (Dread Pirate)"
+      },
+      "Fearsome Reputation": {
+        "description": "By the time he attains 2nd level, a dread pirate has developed a reputation on the high seas. At this point, he must choose whether to cultivate a reputation as an honorable pirate (avoiding undue bloodshed, honoring flags of truce, and the like) or as a dishonorable pirate (favoring mayhem and dire treatment of prisoners). An honorable dread pirate gains a +2 circumstance bonus on Diplomacy checks, while a dishonorable one gains a +2 circumstance bonus on Intimidate checks. This bonus increases to +4 at 6th level and to +6 at 10th level. In addition, a dread pirate gains other abilities at higher levels based on his chosen reputation. A dread pirate's actual activities or alignment need not match his reputation. However, a radical shift away from his reputation might negate or even reverse that reputation at the DM's option. Also, a dread pirate in disguise does not gain any effect granted by his reputation (including the special abilities described below that depend on the dread pirate's reputation).",
+        "level": 2,
+        "seedName": "Fearsome Reputation (Dread Pirate)",
+        "stackable": true
+      },
+      "Fight to the Death or Motivate the Scum": {
+        "description": "At 9th level and higher, an honorable dread pirate can inspire his allies to carry on against tremendous odds. Each ally affected by the dread pirate's rally the crew ability also gains temporary hit points equal to 10 + the dread pirate's Cha bonus (minimum 10), gains a dodge bonus to Armor Class equal to the dread pirate's Cha bonus (minimum +1), and is treated as having the Diehard feat even if he doesn't meet the prerequisites. These effects are lost if the dread pirate loses consciousness. Motivate the Scum (Ex): Once per day, a dishonorable dread pirate of 9th level or higher can motivate his allies by killing a helpless individual. All allies of the dread pirate who see the act gain a +2 morale bonus on damage rolls. This effect lasts for 24 hours. Most dishonorable dread pirates don't care whether the victim is a prisoner or one of their own crew. In fact, if the slain individual is one of the dread pirate's crew, the morale bonus on damage rolls improves to +4, but the allies also take a -2 penalty on Will saves for the duration of the effect.",
+        "level": 9,
+        "seedName": "Fight to the Death or Motivate the Scum (Dread Pirate)"
+      },
+      "Luck of the Wind or Scourge of the Seas": {
+        "description": "Once per day, an honorable dread pirate of 5th level or higher can reroll any failed attack roll, skill check, ability check, or saving throw. He must take the result of the reroll, even if it's worse than the original roll. Scourge of the Seas (Ex): Starting at 5th level, a dishonorable dread pirate can instill fear into his enemies. When the character uses Intimidate to demoralize foes, the attempt affects all enemies within 30 feet who can see and hear him, and the effect lasts for a number of rounds equal to his Charisma modifier (minimum 1 round). Multiple uses of this ability don't stack. This is a mind-affecting ability.",
+        "level": 5,
+        "seedName": "Luck of the Wind or Scourge of the Seas (Dread Pirate)"
+      },
+      "Pirate King": {
+        "description": "A 10th-level dread pirate's exploits have become so legendary that great numbers of able sailors are willing to sign on as his crew for no compensation other than a share of the booty. Treat this ability as the equivalent of the Leadership feat, except that only followers (and no cohorts) are gained.",
+        "level": 10,
+        "seedName": "Pirate King (Dread Pirate)"
+      },
+      "Rally the Crew +1 (1/day) or Sneak Attack": {
+        "description": "Starting at 3rd level, an honorable dread pirate can inspire his allies (including himself) to great bravery in combat once per day. This inspiration grants them a +1 morale bonus on saving throws against charm and fear effects and a +1 morale bonus on attack rolls and weapon damage rolls. To be affected, an ally must be able to see or hear the dread pirate. The effect requires a free action to activate and lasts for 1 minute per class level, even if the dread pirate moves out of range or loses consciousness. This is a mind-affecting ability. At 7th level, a dread pirate can use this ability twice per day, and the bonus increases to +2. If a dread pirate has the inspire courage bardic music ability, he can add the morale bonus gained from that ability to the morale bonus gained from this ability to determine the total morale bonus granted. For example, an 8th-level bard/3rd-level dread pirate would provide a +3 morale bonus on attack rolls and weapon damage rolls. Sneak Attack (Ex): Beginning at 3rd level, a dishonorable dread pirate deals an extra 1d6 points of damage when flanking an opponent or at any time when the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. See the rogue class feature of the Player's Handbook. The amount of extra damage dealt increases to 2d6 at 7th level. If a dishonorable dread pirate gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "level": 3,
+        "seedName": "Rally the Crew +1 (1/day) or Sneak Attack (Dread Pirate)"
+      },
+      "Rally the Crew +2 (2/day) or Sneak Attack": {
+        "description": "",
+        "level": 7,
+        "seedName": "Rally the Crew +2 (2/day) or Sneak Attack (Dread Pirate)"
+      },
+      "Seamanship": {
+        "description": "A dread pirate adds his class level as an insight bonus on all Profession (sailor) checks. Allies within sight or hearing of a dread pirate add an insight bonus equal to half this number on their Profession (sailor) checks.",
+        "level": 1,
+        "seedName": "Seamanship (Dread Pirate)"
+      },
+      "Skill Mastery": {
+        "description": "At 8th level, a dread pirate becomes supremely confident of his mobility. He has mastered the skills Balance, Climb, Jump, and Tumble to the extent that he can take 10 with them even under stress.",
+        "level": 8,
+        "seedName": "Skill Mastery (Dread Pirate)"
+      },
+      "Steady Stance": {
+        "description": "At 4th level and higher, a dread pirate remains stable on his feet when others have difficulty standing. He is not considered flat-footed while balancing or climbing, and he adds his class level as a bonus on Balance or Climb checks to remain balancing or climbing when he takes damage.",
+        "level": 4,
+        "seedName": "Steady Stance (Dread Pirate)"
+      },
+      "Two-weapon Fighting": {
+        "description": "A dread pirate wearing light or no armor is treated as having the Two-Weapon Fighting feat, even if he does not have the prerequisites for the feat.",
+        "level": 1,
+        "seedName": "Two-weapon Fighting (Dread Pirate)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Dread pirates are proficient with all simple weapons, with light martial weapons, and with the rapier. Dread pirates are proficient with light armor but not with shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyrapier.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Dread Pirate)"
+      }
+    },
+    "occurrenceMap": {
+      "Acrobatic Charge": "Acrobatic Charge",
+      "Fearsome Reputation": "Fearsome Reputation",
+      "Fight To The Death Or Motivate The Scum": "Fight to the Death or Motivate the Scum",
+      "Luck Of The Wind Or Scourge Of The Seas": "Luck of the Wind or Scourge of the Seas",
+      "Pirate King": "Pirate King",
+      "Rally The Crew +1 (1/Day) Or Sneak Attack": "Rally the Crew +1 (1/day) or Sneak Attack",
+      "Rally The Crew +2 (2/Day) Or Sneak Attack": "Rally the Crew +2 (2/day) or Sneak Attack",
+      "Seamanship": "Seamanship",
+      "Skill Mastery": "Skill Mastery",
+      "Steady Stance": "Steady Stance",
+      "Two-Weapon Fighting": "Two-weapon Fighting"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Dread pirates are proficient with all simple weapons, with light martial weapons, and with the rapier. Dread pirates are proficient with light armor but not with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A dread pirate adds his class level as an insight bonus on all Profession (sailor) checks. Allies within sight or hearing of a dread pirate add an insight bonus equal to half this number on their Profession (sailor) checks.",
+        "name": "Seamanship",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dread pirate wearing light or no armor is treated as having the Two-Weapon Fighting feat, even if he does not have the prerequisites for the feat.",
+        "name": "Two-weapon Fighting"
+      },
+      {
+        "description": "By the time he attains 2nd level, a dread pirate has developed a reputation on the high seas. At this point, he must choose whether to cultivate a reputation as an honorable pirate (avoiding undue bloodshed, honoring flags of truce, and the like) or as a dishonorable pirate (favoring mayhem and dire treatment of prisoners). An honorable dread pirate gains a +2 circumstance bonus on Diplomacy checks, while a dishonorable one gains a +2 circumstance bonus on Intimidate checks. This bonus increases to +4 at 6th level and to +6 at 10th level. In addition, a dread pirate gains other abilities at higher levels based on his chosen reputation. A dread pirate's actual activities or alignment need not match his reputation. However, a radical shift away from his reputation might negate or even reverse that reputation at the DM's option. Also, a dread pirate in disguise does not gain any effect granted by his reputation (including the special abilities described below that depend on the dread pirate's reputation).",
+        "name": "Fearsome Reputation",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, an honorable dread pirate can inspire his allies (including himself) to great bravery in combat once per day. This inspiration grants them a +1 morale bonus on saving throws against charm and fear effects and a +1 morale bonus on attack rolls and weapon damage rolls. To be affected, an ally must be able to see or hear the dread pirate. The effect requires a free action to activate and lasts for 1 minute per class level, even if the dread pirate moves out of range or loses consciousness. This is a mind-affecting ability. At 7th level, a dread pirate can use this ability twice per day, and the bonus increases to +2. If a dread pirate has the inspire courage bardic music ability, he can add the morale bonus gained from that ability to the morale bonus gained from this ability to determine the total morale bonus granted. For example, an 8th-level bard/3rd-level dread pirate would provide a +3 morale bonus on attack rolls and weapon damage rolls. Sneak Attack (Ex): Beginning at 3rd level, a dishonorable dread pirate deals an extra 1d6 points of damage when flanking an opponent or at any time when the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. See the rogue class feature of the Player's Handbook. The amount of extra damage dealt increases to 2d6 at 7th level. If a dishonorable dread pirate gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Rally the Crew +1 (1/day) or Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dread pirate of 4th level or higher can charge over difficult terrain that normally slows movement or through the squares occupied by allies blocking his path. This ability enables him to charge across a cluttered ship's deck, leap down from a higher deck, or swing between two adjacent ships to get to his target. Depending on the circumstances, he might still need to make appropriate checks (such as Jump, Tumble, or Use Rope checks) to successfully move over the terrain.",
+        "name": "Acrobatic Charge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level and higher, a dread pirate remains stable on his feet when others have difficulty standing. He is not considered flat-footed while balancing or climbing, and he adds his class level as a bonus on Balance or Climb checks to remain balancing or climbing when he takes damage.",
+        "name": "Steady Stance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Once per day, an honorable dread pirate of 5th level or higher can reroll any failed attack roll, skill check, ability check, or saving throw. He must take the result of the reroll, even if it's worse than the original roll. Scourge of the Seas (Ex): Starting at 5th level, a dishonorable dread pirate can instill fear into his enemies. When the character uses Intimidate to demoralize foes, the attempt affects all enemies within 30 feet who can see and hear him, and the effect lasts for a number of rounds equal to his Charisma modifier (minimum 1 round). Multiple uses of this ability don't stack. This is a mind-affecting ability.",
+        "name": "Luck of the Wind or Scourge of the Seas",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Rally the Crew +2 (2/day) or Sneak Attack"
+      },
+      {
+        "description": "At 8th level, a dread pirate becomes supremely confident of his mobility. He has mastered the skills Balance, Climb, Jump, and Tumble to the extent that he can take 10 with them even under stress.",
+        "name": "Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 9th level and higher, an honorable dread pirate can inspire his allies to carry on against tremendous odds. Each ally affected by the dread pirate's rally the crew ability also gains temporary hit points equal to 10 + the dread pirate's Cha bonus (minimum 10), gains a dodge bonus to Armor Class equal to the dread pirate's Cha bonus (minimum +1), and is treated as having the Diehard feat even if he doesn't meet the prerequisites. These effects are lost if the dread pirate loses consciousness. Motivate the Scum (Ex): Once per day, a dishonorable dread pirate of 9th level or higher can motivate his allies by killing a helpless individual. All allies of the dread pirate who see the act gain a +2 morale bonus on damage rolls. This effect lasts for 24 hours. Most dishonorable dread pirates don't care whether the victim is a prisoner or one of their own crew. In fact, if the slain individual is one of the dread pirate's crew, the morale bonus on damage rolls improves to +4, but the allies also take a -2 penalty on Will saves for the duration of the effect.",
+        "name": "Fight to the Death or Motivate the Scum",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level dread pirate's exploits have become so legendary that great numbers of able sailors are willing to sign on as his crew for no compensation other than a share of the booty. Treat this ability as the equivalent of the Leadership feat, except that only followers (and no cohorts) are gained.",
+        "name": "Pirate King",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Gather Information",
+      "Intimidate",
+      "Jump",
+      "Listen",
+      "Perform",
+      "Profession",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Thugs and cutthroats in every port lay claim to the title ?pirate,? but actually making a fortune through piracy is no easy task. A dread pirate, however, has mastered every aspect of larceny on the high seas. Some dread pirates accomplish their goals through fear, killing indiscriminately and ruling their ships at rapier-point. Others minimize bloodshed and exhibit a curious sort of chivalry, perhaps realizing that the captain and crew of a prize ship are more likely to surrender if they believe they will live to see port again. Now and then a dread pirate takes his chivalric streak a step farther and preys only on the ships of enemy nations?or even solely on other pirates. A dread pirate's lifestyle is ideal for most rogues, because the job requires a number of skills that other classes don't have the time or inclination to learn. However, the class also attracts some spellcasters, who can use magic to conceal their ships or incapacitate a prize vessel's cre",
+    "hitDie": "d8",
+    "name": "Dread Pirate",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonlawful",
+        "bab": 4,
+        "feats": [
+          "Quick Draw",
+          "Weapon Finesse"
+        ],
+        "skills": [
+          {
+            "name": "Appraise",
+            "ranks": 8
+          },
+          {
+            "name": "Profession (Sailor)",
+            "ranks": 8
+          },
+          {
+            "name": "Swim",
+            "ranks": 4
+          },
+          {
+            "name": "Use Rope",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "The character must own a ship worth at least 10,000 gp. The method of acquisition-purchase, force of arms, or skullduggery-makes no difference, as long as he can freely operate it on the high seas."
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Alignment: Any nonlawful. Skills: Appraise 8 ranks, Profession (Sailor) 8 ranks, Swim 4 ranks, Use Rope 4 ranks Feats: Quick Draw, Weapon Finesse Special: The character must own a ship worth at least 10,000 gp. The method of acquisition-purchase, force of arms, or skullduggery-makes no difference, as long as he can freely operate it on the high seas."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Seamanship",
+          "two-weapon fighting"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Fearsome reputation +2"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Rally the crew +1 (1/day) or sneak attack +1d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Acrobatic charge",
+          "steady stance"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Luck of the wind or scourge of the seas"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Fearsome reputation +4"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Rally the crew +2 (2/day) or sneak attack +2d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Skill mastery"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Fight to the death or motivate the scum"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Fearsome reputation +6",
+          "pirate king"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

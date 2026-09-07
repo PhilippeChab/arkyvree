@@ -1,0 +1,4 @@
+-- No-op: fix already folded into v1 seeds.
+-- Original migration wrapped monk bonus feat requirements in
+-- or(and(...prereqs...), classReq("monk", level)) for Stunning Fist,
+-- Improved Grapple, Deflect Arrows, Improved Disarm, and Improved Trip.

@@ -1,0 +1,457 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T18:43:36.997Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/stonelord/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          2,
+          4,
+          6,
+          8,
+          10
+        ],
+        "target": "aptitudes.stonelordstonepower.allowed"
+      }
+    ],
+    "bab": "good",
+    "featNameMap": {
+      "endurance": "Endurance"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Earth's Blood"
+      },
+      {
+        "levels": [
+          2,
+          4,
+          6,
+          8,
+          10
+        ],
+        "name": "Stone Power"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Stone Shape"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Meld Into Stone"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Stone Tell"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Earthquake"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.craft.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.endurance.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Dwarf",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2,
+    "unresolvedPrereqs": [
+      "The character must undergo an arduous ritual involving immersion in sacred loam, long fasting periods deep underground, and the ingestion of 1,000 gp worth of powdered gemstones. The gem type chosen is then the stonelord's totem gem, and she must carry that type of stone with her at all times to access the spell-like abilities she gains as a stonelord"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Stonelord Class Feature",
+    "features": {
+      "Earth Magic": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord who possesses this ability and has spellcasting capability can treat a single spell as though it were maximized (as per the Maximize Spell feat), without increasing its effective spell level. The spell's level must not exceed the stonelord's class level. Activating this ability is a free action",
+        "level": 2,
+        "selectable": true
+      },
+      "Earth Power": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord with this ability adds a +2 bonus to attack rolls and deals an additional 2d6 points of damage on all melee attacks she makes during a single round. Activating this ability is a free action",
+        "level": 2,
+        "selectable": true
+      },
+      "Earth Shadows": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "A number of times per day equal to her class level, a stonelord with this ability can conjure an illusory Medium earth elemental that materializes in a flanking position next to one of her opponents for 1 round. This grants the stonelord flanking benefits (+2 to attack rolls, and sneak attack damage if she has that capability) against the targeted foe for that round. Activating this ability is a free action",
+        "level": 2,
+        "selectable": true
+      },
+      "Earth's Blood": {
+        "description": "Once daily, a stonelord can spend a standard action to mend her injuries by applying a handful of mud. She recovers hit points equal to 1d8 plus her stonelord class level.",
+        "level": 1,
+        "seedName": "Earth's Blood (Stonelord)"
+      },
+      "Earth's Endurance": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord with this ability enhances her Constitution score, gaining a bonus equivalent to the bear's endurance spell lasting 1 hour",
+        "level": 2,
+        "selectable": true
+      },
+      "Earth's Strength": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord with this ability enhances her Strength score, gaining a bonus equivalent to the bull's strength spell lasting 1 hour",
+        "level": 2,
+        "selectable": true
+      },
+      "Earthgrip": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord with this ability can target any creature in contact with the ground with a hold monster effect. Creatures that are flying or swimming cannot be affected",
+        "level": 2,
+        "selectable": true
+      },
+      "Earthquake": {
+        "description": "Upon reaching 9th level, a stonelord can produce an earthquake effect once per day, with a caster level equal to her stonelord class level.",
+        "level": 9,
+        "seedName": "Earthquake (Stonelord)"
+      },
+      "Gravity": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord with this ability can produce a slow effect, functioning as the spell",
+        "level": 2,
+        "selectable": true
+      },
+      "Meld Into Stone": {
+        "description": "Starting at 5th level, a stonelord can merge her body into stone a number of times per day equal to her class level, using a meld into stone effect with a caster level equal to her stonelord class level.",
+        "level": 5,
+        "seedName": "Meld Into Stone (Stonelord)"
+      },
+      "Stone Power": {
+        "description": "At each even-numbered class level, a stonelord selects one stone power from the available options. Each stone power may only be chosen once. Unless stated otherwise, the stonelord's class level serves as the caster level for these abilities (save DCs are based on Constitution). Activating a stone power requires a standard action unless its entry specifies otherwise. Earthgrip (Sp): Once daily, the stonelord can target any ground-touching creature with a hold monster effect. Flying or waterborne creatures are immune to this ability. Earth Magic (Su): Once daily, the stonelord can treat one spell she casts as maximized (per the Maximize Spell feat) without changing its effective level. The spell's level cannot exceed her stonelord class level. This is a free action. Earth's Endurance (Sp): Once daily, the stonelord enhances her Constitution with a bonus equivalent to bear's endurance for 1 hour. Earth's Strength (Sp): Once daily, the stonelord enhances her Strength with a bonus equivalent to bull's strength for 1 hour. Earth Power (Su): Once daily, all of the stonelord's melee attacks in a single round gain +2 to hit and inflict an extra 2d6 damage. This is a free action. Earth Shadows (Su): A number of times per day equal to her class level, the stonelord conjures an illusory Medium earth elemental in a flanking position beside her opponent for 1 round, granting her flanking bonuses (+2 to hit, plus sneak attack if available) against that foe. This is a free action. Gravity (Sp): Once daily, the stonelord can produce a slow effect as the spell. Stoneskin (Sp): Once daily, the stonelord can grant herself the benefit of stoneskin with a caster level equal to her class level. She must supply the normal material component. Summon Earth Elemental (Sp): Once daily, the stonelord can call forth an earth elemental as though using summon monster. The elemental's size scales with class level: Small at 1st-3rd, Medium at 4th-6th, Large at 7th-9th, and Huge at 10th.",
+        "level": 2,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.stonelordstonepower.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Stone Power (Stonelord)",
+        "stackable": true
+      },
+      "Stone Shape": {
+        "description": "Beginning at 3rd level, a stonelord can reshape stone once per day using a stone shape effect, with a caster level equal to her stonelord class level.",
+        "level": 3,
+        "seedName": "Stone Shape (Stonelord)"
+      },
+      "Stone Tell": {
+        "description": "Starting at 7th level, a stonelord can commune with stone once per day as though using stone tell, with a caster level equal to her stonelord class level.",
+        "level": 7,
+        "seedName": "Stone Tell (Stonelord)"
+      },
+      "Stoneskin": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord with this ability can protect herself with a stoneskin effect, using a caster level equal to her stonelord class level. She must provide the standard material component for the spell",
+        "level": 2,
+        "selectable": true
+      },
+      "Summon Earth Elemental": {
+        "aptitude": "Stonelord Stone Power",
+        "description": "Once daily, a stonelord with this ability can call forth an earth elemental as though casting a summon monster spell. The elemental's size is determined by the stonelord's class level: Small at levels 1st-3rd, Medium at levels 4th-6th, Large at levels 7th-9th, and Huge at 10th level",
+        "level": 2,
+        "selectable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Stonelord)"
+      }
+    },
+    "occurrenceMap": {
+      "Earth's Blood": "Earth's Blood",
+      "Earthquake": "Earthquake",
+      "Meld Into Stone": "Meld Into Stone",
+      "Stone Power": "Stone Power",
+      "Stone Shape": "Stone Shape",
+      "Stone Tell": "Stone Tell"
+    },
+    "overrides": {
+      "description": "Certain dwarves develop a profound attunement to the living rock, becoming stonelords who channel the primordial power of the earth itself.",
+      "features": {
+        "Earth Magic": {
+          "description": "Once daily, a stonelord who possesses this ability and has spellcasting capability can treat a single spell as though it were maximized (as per the Maximize Spell feat), without increasing its effective spell level. The spell's level must not exceed the stonelord's class level. Activating this ability is a free action"
+        },
+        "Earth Power": {
+          "description": "Once daily, a stonelord with this ability adds a +2 bonus to attack rolls and deals an additional 2d6 points of damage on all melee attacks she makes during a single round. Activating this ability is a free action"
+        },
+        "Earth Shadows": {
+          "description": "A number of times per day equal to her class level, a stonelord with this ability can conjure an illusory Medium earth elemental that materializes in a flanking position next to one of her opponents for 1 round. This grants the stonelord flanking benefits (+2 to attack rolls, and sneak attack damage if she has that capability) against the targeted foe for that round. Activating this ability is a free action"
+        },
+        "Earth's Blood": {
+          "description": "Once daily, a stonelord can spend a standard action to mend her injuries by applying a handful of mud. She recovers hit points equal to 1d8 plus her stonelord class level."
+        },
+        "Earth's Endurance": {
+          "description": "Once daily, a stonelord with this ability enhances her Constitution score, gaining a bonus equivalent to the bear's endurance spell lasting 1 hour"
+        },
+        "Earth's Strength": {
+          "description": "Once daily, a stonelord with this ability enhances her Strength score, gaining a bonus equivalent to the bull's strength spell lasting 1 hour"
+        },
+        "Earthgrip": {
+          "description": "Once daily, a stonelord with this ability can target any creature in contact with the ground with a hold monster effect. Creatures that are flying or swimming cannot be affected"
+        },
+        "Earthquake": {
+          "description": "Upon reaching 9th level, a stonelord can produce an earthquake effect once per day, with a caster level equal to her stonelord class level."
+        },
+        "Gravity": {
+          "description": "Once daily, a stonelord with this ability can produce a slow effect, functioning as the spell"
+        },
+        "Meld Into Stone": {
+          "description": "Starting at 5th level, a stonelord can merge her body into stone a number of times per day equal to her class level, using a meld into stone effect with a caster level equal to her stonelord class level."
+        },
+        "Stone Power": {
+          "description": "At each even-numbered class level, a stonelord selects one stone power from the available options. Each stone power may only be chosen once. Unless stated otherwise, the stonelord's class level serves as the caster level for these abilities (save DCs are based on Constitution). Activating a stone power requires a standard action unless its entry specifies otherwise. Earthgrip (Sp): Once daily, the stonelord can target any ground-touching creature with a hold monster effect. Flying or waterborne creatures are immune to this ability. Earth Magic (Su): Once daily, the stonelord can treat one spell she casts as maximized (per the Maximize Spell feat) without changing its effective level. The spell's level cannot exceed her stonelord class level. This is a free action. Earth's Endurance (Sp): Once daily, the stonelord enhances her Constitution with a bonus equivalent to bear's endurance for 1 hour. Earth's Strength (Sp): Once daily, the stonelord enhances her Strength with a bonus equivalent to bull's strength for 1 hour. Earth Power (Su): Once daily, all of the stonelord's melee attacks in a single round gain +2 to hit and inflict an extra 2d6 damage. This is a free action. Earth Shadows (Su): A number of times per day equal to her class level, the stonelord conjures an illusory Medium earth elemental in a flanking position beside her opponent for 1 round, granting her flanking bonuses (+2 to hit, plus sneak attack if available) against that foe. This is a free action. Gravity (Sp): Once daily, the stonelord can produce a slow effect as the spell. Stoneskin (Sp): Once daily, the stonelord can grant herself the benefit of stoneskin with a caster level equal to her class level. She must supply the normal material component. Summon Earth Elemental (Sp): Once daily, the stonelord can call forth an earth elemental as though using summon monster. The elemental's size scales with class level: Small at 1st-3rd, Medium at 4th-6th, Large at 7th-9th, and Huge at 10th."
+        },
+        "Stone Shape": {
+          "description": "Beginning at 3rd level, a stonelord can reshape stone once per day using a stone shape effect, with a caster level equal to her stonelord class level."
+        },
+        "Stone Tell": {
+          "description": "Starting at 7th level, a stonelord can commune with stone once per day as though using stone tell, with a caster level equal to her stonelord class level."
+        },
+        "Stoneskin": {
+          "description": "Once daily, a stonelord with this ability can protect herself with a stoneskin effect, using a caster level equal to her stonelord class level. She must provide the standard material component for the spell"
+        },
+        "Summon Earth Elemental": {
+          "description": "Once daily, a stonelord with this ability can call forth an earth elemental as though casting a summon monster spell. The elemental's size is determined by the stonelord's class level: Small at levels 1st-3rd, Medium at levels 4th-6th, Large at levels 7th-9th, and Huge at 10th level"
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      },
+      "reviewed": [
+        "The character must undergo an arduous ritual involving immersion in sacred loam, long fasting periods deep underground, and the ingestion of 1,000 gp worth of powdered gemstones. The gem type chosen is then the stonelord's totem gem, and she must carry that type of stone with her at all times to access the spell-like abilities she gains as a stonelord"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Stonelords gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Once per day, a stonelord can take a standard action to heal her own wounds using a clump of mud. This ability heals a number of hit points equal to 1d8 + her stonelord class level.",
+        "name": "Earth's Blood",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At every even-numbered level, a stonelord can choose one ability from the following list of stone powers. No stone power can be chosen more than once. Unless otherwise noted, the stonelord uses her class level as the caster level for these effects (the save DCs are Constitution-based). Using one of these abilities is a standard action unless otherwise noted. Earthgrip (Sp): Once per day, a stonelord with this ability can use hold monster on any target touching the ground. If the opponent is airborne or waterborne, the stonelord cannot affect the creature with the spell. Earth Magic (Su): Once per day, a spell cast by a stonelord with this ability (assuming she can cast spells) is considered maximized as if prepared with the Maximize Spell feat, although the spell's level is unaffected. The spell's level cannot be higher than the class level of the stonelord. Using this ability is a free action. Earth's Endurance (Sp): Once per day, a stonelord with this ability grants herself a boost to her Constitution score as if she were affected by a bear's endurance spell for 1 hour. Earth's Strength (Sp): Once per day, a stonelord with this ability grants herself a boost to her Strength score as if she were affected by a bull's strength spell for 1 hour. Earth Power (Su): Once per day, all melee attacks made in a single round by a stonelord with this ability gain a +2 bonus on the attack roll and deal an extra 2d6 points of damage on a successful hit. Using this ability is a free action. Earth Shadows (Su): Once per day per class level, a stonelord with this ability can create a figment of a Medium earth elemental that appears in a flanking position adjacent to the stonelord's opponent for 1 round. This ability allows the stonelord to make flanking attacks (+2 to hit, can make a sneak attack if such ability is available) against that opponent during that round. Using this ability is a free action. Gravity (Sp): Once per day, a stonelord with this ability can use a slow effect (as the spell). Stoneskin (Sp): Once per day, a stonelord with this ability can give herself the benefit of a stoneskin spell (caster level equal to the stonelord's class level). The character must provide the material component as if she were actually casting the spell. Summon Earth Elemental (Sp): Once per day, a stone lord with this ability can summon an earth elemental as if she had cast a summon monster spell. The size of the summoned earth elemental depends on the stonelord's class level, as follows: 1st-3rd, Small; 4th-6th, Medium; 7th-9th, Large; 10th, Huge.",
+        "name": "Stone Power"
+      },
+      {
+        "description": "Once per day, a stonelord of 3rd level or higher can use a stone shape effect (caster level equal to the stonelord's class level).",
+        "name": "Stone Shape",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Once per day per class level, a stonelord of 5th level or higher can use a meld into stone effect (caster level equal to the stonelord's class level).",
+        "name": "Meld Into Stone",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Once per day, a stonelord of 7th level or higher can speak with stone as if she had cast stone tell (caster level equal to the stonelord's class level).",
+        "name": "Stone Tell",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Once per day, a stonelord of 9th level or higher can use an earthquake effect (caster level equal to the stonelord's class level).",
+        "name": "Earthquake",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spot",
+      "Survival"
+    ],
+    "description": "The earth whispers to special dwarves known as stonelords.",
+    "hitDie": "d8",
+    "name": "Stonelord",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Endurance"
+        ],
+        "skills": [
+          {
+            "name": "Craft (stoneworking)",
+            "ranks": 6
+          },
+          {
+            "name": "Speak Language (Terran)",
+            "ranks": 1
+          }
+        ],
+        "special": [
+          "Race: Dwarf",
+          "The character must undergo an arduous ritual involving immersion in sacred loam, long fasting periods deep underground, and the ingestion of 1,000 gp worth of powdered gemstones. The gem type chosen is then the stonelord's totem gem, and she must carry that type of stone with her at all times to access the spell-like abilities she gains as a stonelord"
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Race: Dwarf Skills: Craft (stoneworking) 6 ranks, Speak Language (Terran) 1 ranks Feats: Endurance Special: The character must undergo an arduous ritual involving immersion in sacred loam, long fasting periods deep underground, and the ingestion of 1,000 gp worth of powdered gemstones. The gem type chosen is then the stonelord's totem gem, and she must carry that type of stone with her at all times to access the spell-like abilities she gains as a stonelord"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Earth's blood"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Stone power"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Stone shape"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Stone power"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Meld into stone"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Stone power"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Stone tell"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Stone power"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Earthquake"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Stone power"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

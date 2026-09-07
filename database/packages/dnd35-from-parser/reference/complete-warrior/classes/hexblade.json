@@ -1,0 +1,950 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-27T01:26:18.410Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/hexblade/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          5,
+          10,
+          15,
+          20
+        ],
+        "target": "aptitudes.hexbladebonusfeat.allowed"
+      }
+    ],
+    "bab": "good",
+    "bonusFeatLists": [
+      {
+        "aptitude": "Hexblade Bonus Feat",
+        "feats": [
+          "Combat Casting",
+          "Greater Spell Focus (enchantment, necromancy, or transmutation only)",
+          "Greater Spell Penetration",
+          "Spell Focus (enchantment, necromancy, or transmutation only)",
+          "Spell Penetration"
+        ]
+      }
+    ],
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5,
+          9,
+          13,
+          17
+        ],
+        "name": "Hexblade's Curse"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Arcane Resistance"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Mettle"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Summon Familiar"
+      },
+      {
+        "levels": [
+          5,
+          10,
+          15,
+          20
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Greater Hexblade's Curse"
+      },
+      {
+        "levels": [
+          12,
+          16,
+          20
+        ],
+        "name": "Aura Of Unlucky"
+      },
+      {
+        "levels": [
+          19
+        ],
+        "name": "Dire Hexblade's Curse"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 10,
+    "levels": 20,
+    "requirements": [
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsKnown": [
+      [],
+      [],
+      [],
+      [
+        2
+      ],
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        3
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        5,
+        4,
+        4,
+        4
+      ],
+      [
+        5,
+        5,
+        4,
+        4
+      ],
+      [
+        5,
+        5,
+        5,
+        4
+      ],
+      [
+        5,
+        5,
+        5,
+        5
+      ]
+    ],
+    "spellsPerDay": [
+      [],
+      [],
+      [],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Hexblade Class Feature",
+    "features": {
+      "Arcane Resistance": {
+        "description": "At 2nd level, the hexblade gains a supernatural bonus on saving throws against spells and spell-like abilities equal to his Charisma bonus (with a minimum bonus of +1).",
+        "level": 2,
+        "seedName": "Arcane Resistance (Hexblade)"
+      },
+      "Aura of Unlucky": {
+        "description": "At 12th level, a hexblade can activate a supernatural aura of ill fortune once per day as a free action. While this aura is active, all melee and ranged attacks directed at the hexblade have a 20% miss chance (functioning like concealment). The aura persists for a number of rounds equal to 3 + the hexblade's Charisma bonus (minimum 3 rounds). At 16th level the hexblade can use this aura twice per day, and at 20th level it becomes usable three times per day.",
+        "level": 12,
+        "seedName": "Aura of Unlucky (Hexblade)",
+        "stackable": true
+      },
+      "Bonus Feat": {
+        "description": "At 5th level and every five levels after that (10th, 15th, and 20th), the hexblade receives a bonus feat chosen from the following options: Combat Casting, Greater Spell Focus (restricted to enchantment, necromancy, or transmutation), Greater Spell Penetration, Spell Focus (restricted to enchantment, necromancy, or transmutation), or Spell Penetration.",
+        "level": 5,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.hexbladebonusfeat.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Bonus Feat (Hexblade)",
+        "stackable": true
+      },
+      "Dire Hexblade's Curse": {
+        "description": "At 19th level, the penalty imposed by the hexblade's curse on attack rolls, saving throws, ability checks, skill checks, and weapon damage rolls increases to -6 (up from -4).",
+        "level": 19,
+        "seedName": "Dire Hexblade's Curse (Hexblade)"
+      },
+      "Greater Hexblade's Curse": {
+        "description": "Upon reaching 7th level, the penalty inflicted by the hexblade's curse on attack rolls, saving throws, ability checks, skill checks, and weapon damage rolls increases to -4 (up from -2).",
+        "level": 7,
+        "seedName": "Greater Hexblade's Curse (Hexblade)"
+      },
+      "Hexblade's Curse": {
+        "description": "Once per day, a hexblade may place a curse on an enemy as a free action. The target must be visible and no farther than 60 feet away. A cursed creature suffers a -2 penalty on attack rolls, saving throws, ability checks, skill checks, and weapon damage rolls, lasting 1 hour. A successful Will saving throw (DC 10 + half the hexblade's class level + the hexblade's Charisma modifier) prevents the effect entirely. Every four levels after 1st (at 5th, 9th, 13th, and 17th level), the hexblade can use this ability one extra time per day. The penalties from multiple curses do not stack with each other, and a creature that resists the curse is immune to that hexblade's curse for 24 hours. Any spell or effect that lifts or dispels curses also ends this ability's effect.",
+        "level": 1,
+        "seedName": "Hexblade's Curse (Hexblade)",
+        "stackable": true
+      },
+      "Mettle": {
+        "description": "Beginning at 3rd level, the hexblade's resilience allows him to shrug off magical and supernatural attacks through sheer determination. When the hexblade succeeds on a Will or Fortitude saving throw against an effect that would normally deal reduced damage or impose a lesser effect on a successful save (such as a spell noted as Will half or Fortitude partial), the hexblade negates the effect entirely instead. A hexblade who is unconscious or asleep does not benefit from mettle.",
+        "level": 3,
+        "seedName": "Mettle (Hexblade)"
+      },
+      "Spells": {
+        "description": "Starting at 4th level, the hexblade gains access to a small repertoire of arcane spells drawn from the hexblade spell list. These spells are cast spontaneously without preparation, similar to how a sorcerer casts. A hexblade needs a Charisma score of at least 10 + the spell level to learn or cast a given spell (for example, Charisma 11 for 1st-level spells, Charisma 12 for 2nd-level spells, and so on). Saving throw DCs against hexblade spells equal 10 + the spell level + the hexblade's Charisma modifier. As with other spellcasting classes, the hexblade is limited to a set number of spells per day at each level, and a high Charisma score grants bonus daily spells. If a hexblade's base allotment for a given spell level is 0, only bonus spells from Charisma are available at that level. The hexblade's pool of known spells is very narrow; the hexblade starts knowing no spells and acquires new ones at specific levels. Charisma does not influence the total number of spells known. At 12th level and every third hexblade level thereafter (15th and 18th), the hexblade may exchange one known spell for a different spell of the same level, provided the spell being replaced is at least two levels lower than the highest-level hexblade spell available. For example, at 12th level the hexblade could swap a single 1st-level spell (since the maximum castable level is 3rd); at 15th level, a 1st- or 2nd-level spell could be traded (since 4th-level spells are now accessible). Only one spell may be swapped per level, and the decision must be made at the same time new spells known are gained. Through 3rd level, a hexblade possesses no caster level. Beginning at 4th level, the hexblade's caster level equals half the hexblade class level.",
+        "level": 4,
+        "seedName": "Spells (Hexblade)"
+      },
+      "Summon Familiar": {
+        "description": "Starting at 4th level, the hexblade may acquire a familiar by spending 24 hours and 100 gp worth of magical materials. A familiar is a magical beast taking the form of a small creature that is tougher and more intelligent than a normal animal of its kind, serving as both companion and servant. The hexblade selects the type of familiar, and as the hexblade gains levels the familiar grows in power. For the purposes of determining the familiar's abilities and special powers, treat the hexblade as a sorcerer three levels lower. If the familiar is slain or dismissed, the hexblade must make a DC 15 Fortitude save; failure costs 200 experience points per hexblade level, while success halves that penalty. The hexblade's experience total cannot drop below 0 from this loss. A lost familiar cannot be replaced for a year and a day, though a slain familiar can be raised from the dead without losing a level or Constitution point. A character with multiple classes that grant familiars may only have one familiar at a time.",
+        "level": 4,
+        "seedName": "Summon Familiar (Hexblade)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "A hexblade is proficient with all simple and martial weapons as well as light armor, but not shields. The somatic gestures for hexblade spells are straightforward enough that a hexblade can cast them while wearing light armor without risking arcane spell failure. Wearing medium or heavy armor, or carrying a shield, imposes the standard arcane spell failure chance on any hexblade spell that includes a somatic component (as most do). A hexblade who multiclasses still suffers normal arcane spell failure for spells gained from other arcane casting classes.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Hexblade)"
+      }
+    },
+    "occurrenceMap": {
+      "Arcane Resistance": "Arcane Resistance",
+      "Aura Of Unlucky": "Aura of Unlucky",
+      "Bonus Feat": "Bonus Feat",
+      "Dire Hexblade's Curse": "Dire Hexblade's Curse",
+      "Greater Hexblade's Curse": "Greater Hexblade's Curse",
+      "Hexblade's Curse": "Hexblade's Curse",
+      "Mettle": "Mettle",
+      "Summon Familiar": "Summon Familiar"
+    },
+    "overrides": {
+      "alignment": "Any nongood",
+      "bonusFeatLists": [
+        {
+          "aptitude": "Hexblade Bonus Feat",
+          "feats": [
+            "Combat Casting",
+            "Spell Focus: Enchantment",
+            "Spell Focus: Necromancy",
+            "Spell Focus: Transmutation",
+            "Greater Spell Focus: Enchantment",
+            "Greater Spell Focus: Necromancy",
+            "Greater Spell Focus: Transmutation",
+            "Spell Penetration",
+            "Greater Spell Penetration"
+          ]
+        }
+      ],
+      "description": "The hexblade merges martial combat skill with arcane power, posing a formidable threat to enemies who are unprepared for such a versatile adversary.",
+      "features": {
+        "Arcane Resistance": {
+          "description": "At 2nd level, the hexblade gains a supernatural bonus on saving throws against spells and spell-like abilities equal to his Charisma bonus (with a minimum bonus of +1)."
+        },
+        "Aura of Unlucky": {
+          "description": "At 12th level, a hexblade can activate a supernatural aura of ill fortune once per day as a free action. While this aura is active, all melee and ranged attacks directed at the hexblade have a 20% miss chance (functioning like concealment). The aura persists for a number of rounds equal to 3 + the hexblade's Charisma bonus (minimum 3 rounds). At 16th level the hexblade can use this aura twice per day, and at 20th level it becomes usable three times per day."
+        },
+        "Bonus Feat": {
+          "description": "At 5th level and every five levels after that (10th, 15th, and 20th), the hexblade receives a bonus feat chosen from the following options: Combat Casting, Greater Spell Focus (restricted to enchantment, necromancy, or transmutation), Greater Spell Penetration, Spell Focus (restricted to enchantment, necromancy, or transmutation), or Spell Penetration."
+        },
+        "Dire Hexblade's Curse": {
+          "description": "At 19th level, the penalty imposed by the hexblade's curse on attack rolls, saving throws, ability checks, skill checks, and weapon damage rolls increases to -6 (up from -4)."
+        },
+        "Greater Hexblade's Curse": {
+          "description": "Upon reaching 7th level, the penalty inflicted by the hexblade's curse on attack rolls, saving throws, ability checks, skill checks, and weapon damage rolls increases to -4 (up from -2)."
+        },
+        "Hexblade's Curse": {
+          "description": "Once per day, a hexblade may place a curse on an enemy as a free action. The target must be visible and no farther than 60 feet away. A cursed creature suffers a -2 penalty on attack rolls, saving throws, ability checks, skill checks, and weapon damage rolls, lasting 1 hour. A successful Will saving throw (DC 10 + half the hexblade's class level + the hexblade's Charisma modifier) prevents the effect entirely. Every four levels after 1st (at 5th, 9th, 13th, and 17th level), the hexblade can use this ability one extra time per day. The penalties from multiple curses do not stack with each other, and a creature that resists the curse is immune to that hexblade's curse for 24 hours. Any spell or effect that lifts or dispels curses also ends this ability's effect."
+        },
+        "Mettle": {
+          "description": "Beginning at 3rd level, the hexblade's resilience allows him to shrug off magical and supernatural attacks through sheer determination. When the hexblade succeeds on a Will or Fortitude saving throw against an effect that would normally deal reduced damage or impose a lesser effect on a successful save (such as a spell noted as Will half or Fortitude partial), the hexblade negates the effect entirely instead. A hexblade who is unconscious or asleep does not benefit from mettle."
+        },
+        "Spells": {
+          "description": "Starting at 4th level, the hexblade gains access to a small repertoire of arcane spells drawn from the hexblade spell list. These spells are cast spontaneously without preparation, similar to how a sorcerer casts. A hexblade needs a Charisma score of at least 10 + the spell level to learn or cast a given spell (for example, Charisma 11 for 1st-level spells, Charisma 12 for 2nd-level spells, and so on). Saving throw DCs against hexblade spells equal 10 + the spell level + the hexblade's Charisma modifier. As with other spellcasting classes, the hexblade is limited to a set number of spells per day at each level, and a high Charisma score grants bonus daily spells. If a hexblade's base allotment for a given spell level is 0, only bonus spells from Charisma are available at that level. The hexblade's pool of known spells is very narrow; the hexblade starts knowing no spells and acquires new ones at specific levels. Charisma does not influence the total number of spells known. At 12th level and every third hexblade level thereafter (15th and 18th), the hexblade may exchange one known spell for a different spell of the same level, provided the spell being replaced is at least two levels lower than the highest-level hexblade spell available. For example, at 12th level the hexblade could swap a single 1st-level spell (since the maximum castable level is 3rd); at 15th level, a 1st- or 2nd-level spell could be traded (since 4th-level spells are now accessible). Only one spell may be swapped per level, and the decision must be made at the same time new spells known are gained. Through 3rd level, a hexblade possesses no caster level. Beginning at 4th level, the hexblade's caster level equals half the hexblade class level."
+        },
+        "Summon Familiar": {
+          "description": "Starting at 4th level, the hexblade may acquire a familiar by spending 24 hours and 100 gp worth of magical materials. A familiar is a magical beast taking the form of a small creature that is tougher and more intelligent than a normal animal of its kind, serving as both companion and servant. The hexblade selects the type of familiar, and as the hexblade gains levels the familiar grows in power. For the purposes of determining the familiar's abilities and special powers, treat the hexblade as a sorcerer three levels lower. If the familiar is slain or dismissed, the hexblade must make a DC 15 Fortitude save; failure costs 200 experience points per hexblade level, while success halves that penalty. The hexblade's experience total cannot drop below 0 from this loss. A lost familiar cannot be replaced for a year and a day, though a slain familiar can be raised from the dead without losing a level or Constitution point. A character with multiple classes that grant familiars may only have one familiar at a time."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "A hexblade is proficient with all simple and martial weapons as well as light armor, but not shields. The somatic gestures for hexblade spells are straightforward enough that a hexblade can cast them while wearing light armor without risking arcane spell failure. Wearing medium or heavy armor, or carrying a shield, imposes the standard arcane spell failure chance on any hexblade spell that includes a somatic component (as most do). A hexblade who multiclasses still suffers normal arcane spell failure for spells gained from other arcane casting classes."
+        }
+      }
+    },
+    "spells": {
+      "known": [
+        [],
+        [],
+        [],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          5,
+          4,
+          4,
+          4
+        ],
+        [
+          5,
+          5,
+          4,
+          4
+        ],
+        [
+          5,
+          5,
+          5,
+          4
+        ],
+        [
+          5,
+          5,
+          5,
+          5
+        ]
+      ],
+      "noCantrips": true,
+      "perDay": [
+        [],
+        [],
+        [],
+        [
+          0
+        ],
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "slug": "hexbladespells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "Hexblades are proficient with all simple and martial weapons, and with light armor but not with shields. Because the somatic components required for hexblade spells are simple, a hexblade can cast hexblade spells while wearing light armor without incurring the normal arcane spell failure chance. However, like any other arcane spellcaster, a hexblade wearing medium or heavy armor or using a shield incurs a chance of arcane spell failure if the spell in question has a somatic component (and most do). A multiclass hexblade still incurs the normal arcane spell failure chance for arcane spells derived from other classes.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 4th level, a hexblade gains the ability to cast a small number of arcane spells, which are drawn from the hexblade spell list. He can cast any spell he knows without preparing it ahead of time, just as a sorcerer can. To learn or cast a spell, a hexblade must have a Charisma score equal to at least 10 + the spell level (Cha 11 for 1st-level spells, Cha 12 for 2nd-level spells, and so forth). The Difficulty Class for a saving throw against a hexblade's spell is 10 + the spell level + the hexblade's Cha modifier. Like other spellcasters, a hexblade can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given in the class table. In addition, he receives bonus spells per day if he has a high Charisma score. When the class table, 1st-level spells for a 4th-level hexblade), he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. The hexblade's selection of spells is extremely limited. A hexblade begins play knowing no spells, but gains one or more new spells at certain levels, as indicated in the class table. (Unlike spells per day, his Charisma score does not affect the number of spells a hexblade knows; the numbers in the class table.) Upon reaching 12th level, and at every third hexblade level after that (15th and 18th), a hexblade can choose to learn a new spell in place of one he already knows. In effect, the hexblade \"loses\" the old spell in exchange for the new one. The new spell's level must be the same as that of the spell being exchanged, and it must be at least two levels lower than the highest-level hexblade spell the hexblade can cast. For instance, upon reaching 12th level, a hexblade could trade in a single 1st level spell (two spell levels below the highest-level hexblade spell he can cast, which is 3rd) for a different 1st-level spell. At 15th level, he could trade in a single 1st-level or 2nd-level spell (since he now can cast 4th-level hexblade spells) for a different spell of the same level. A hexblade may swap only a single spell at any given level, and must choose whether or not to swap the spell at the same time that he gains new spells known for the level. Through 3rd level, a hexblade has no caster level. At 4th level and higher, his caster level is one-half his hexblade level.",
+        "name": "Spells"
+      },
+      {
+        "description": "Once per day, as a free action, a hexblade can unleash a curse upon a foe. The target must be visible to the hexblade and within 60 feet. The target of a hexblade's curse takes a -2 penalty on attacks, saves, ability checks, skill checks, and weapon damage rolls for 1 hour thereafter. A successful Will save (DC 10 + 1/2 hexblade's class level + hexblade's Cha modifi er) negates the effect. At every four levels beyond 1st (5th, 9th, 13th, and 17th) a hexblade gains the ability to use his curse one additional time per day, as indicated in the class table. Multiple hexblade's curses don't stack, and any foe that successfully resists the effect cannot be affected again by the same hexblade's curse for 24 hours. Any effect that removes or dispels a curse eliminates the effect of a hexblade's curse. Arcane Resistance (Su): At 2nd level, a hexblade gains a bonus equal to his Charisma bonus (minimum +1) on saving throws against spells and spell-like effects.",
+        "name": "Hexblade's Curse",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Arcane Resistance"
+      },
+      {
+        "description": "At 3rd level and higher, a hexblade can resist magical and unusual attacks with great willpower or fortitude. If he makes a successful Will or Fortitude save against an attack that normally would have a lesser effect on a successful save (such as any spell with a saving throw entry of Will half or Fortitude partial), he instead completely negates the effect. An unconscious or sleeping hexblade does not gain the benefit of mettle. Familiar: Beginning at 4th level, a hexblade can obtain a familiar. Doing so takes 24 hours and uses up magical materials that cost 100 gp. A familiar is a magical beast that resembles a small animal and is unusually tough and intelligent. The creature serves as a companion and servant. The hexblade chooses the kind of familiar he gets. As the hexblade advances in level, his familiar also increases in power. Treat the hexblade as a sorcerer of three levels lower for determining the familiar's powers and abilities. If the familiar dies or is dismissed by the hexblade, the latter must attempt a DC 15 Fortitude saving throw. Failure means he loses 200 experience points per hexblade level; success reduces the loss to one-half that amount. However, a hexblade's experience point total can never go below 0 as the result of a familiar's demise or dismissal. A slain or dismissed familiar cannot be replaced for a year and day. A slain familiar can be raised from the dead just as a character can be, but it does not lose a level or a point of Constitution when this happy event occurs. A character with more than one class that grants a familiar may have only one familiar at a time.",
+        "name": "Mettle",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Summon Familiar"
+      },
+      {
+        "description": "At 5th level, and every five levels thereafter (10th, 15th, and 20th), a hexblade gains a bonus feat, which must be selected from the following list: Combat Casting, Greater Spell Focus (enchantment, necromancy, or transmutation only), Greater Spell Penetration, Spell Focus (enchantment, necromancy, or transmutation only), Spell Penetration.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "When a hexblade attains 7th level, the penalty on attacks, saves, ability checks, skill checks, and weapon damage rolls incurred by a target of the hexblade's curse becomes -4 instead of -2. Aura of Unluck (Su): Once per day, a hexblade of 12th level or higher can create a baleful aura of misfortune. Any melee or ranged attack made against the hexblade while this aura of unluck is active has a 20% miss chance (similar to the effect of concealment). Activating the aura is a free action, and the aura lasts for a number of rounds equal to 3 + the hexblade's Charisma bonus (if any). At 16th level and higher, a hexblade can use his aura of unluck twice per day. A 20th-level hexblade can activate this aura three times per day.",
+        "name": "Greater Hexblade's Curse",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Aura of Unlucky"
+      },
+      {
+        "description": "When a hexblade attains 19th level, the penalty on attacks, saves, ability checks, skill checks, and weapon damage rolls incurred by a target of the hexblade's curse becomes -6 instead of -4.",
+        "name": "Dire Hexblade's Curse",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Profession",
+      "Ride",
+      "Spellcraft"
+    ],
+    "description": "Combining the dynamic powers of martial prowess and arcane might, the hexblade presents a deadly challenge to opponents unused to such a foe.",
+    "hitDie": "d10",
+    "name": "Hexblade",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nongood"
+      },
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Hexblade's curse 1/day"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Arcane resistance"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Mettle"
+        ],
+        "spellsPerDay": "-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Summon familiar"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Bonus feat",
+          "hexblade's curse 2/day"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Greater hexblade's curse"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Hexblade's curse 3/day"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 11,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 7
+      },
+      {
+        "bab": 12,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 4,
+        "special": [
+          "Aura of unlucky 1/day"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 8
+      },
+      {
+        "bab": 13,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 4,
+        "special": [
+          "Hexblade's curse 4/day"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 8
+      },
+      {
+        "bab": 14,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 9
+      },
+      {
+        "bab": 15,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Bonus Feat"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 9
+      },
+      {
+        "bab": 16,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 5,
+        "special": [
+          "Aura of unlucky 2/day"
+        ],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 10
+      },
+      {
+        "bab": 17,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 5,
+        "special": [
+          "Hexblade's curse 5/day"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 10
+      },
+      {
+        "bab": 18,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "3,2,2,1",
+        "willSave": 11
+      },
+      {
+        "bab": 19,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 6,
+        "special": [
+          "Dire hexblade's curse"
+        ],
+        "spellsPerDay": "3,3,3,2",
+        "willSave": 11
+      },
+      {
+        "bab": 20,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Aura of unlucky 3/day",
+          "bonus feat"
+        ],
+        "spellsPerDay": "3,3,3,3",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier",
+    "spellsKnown": [
+      "-,-,-,-",
+      "-,-,-,-",
+      "-,-,-,-",
+      "2,-,-,-",
+      "2,-,-,-",
+      "3,-,-,-",
+      "3,-,-,-",
+      "4,2,-,-",
+      "4,2,-,-",
+      "4,3,-,-",
+      "4,3,2,-",
+      "4,4,3,-",
+      "4,4,3,-",
+      "4,4,4,2",
+      "4,4,4,3",
+      "4,4,4,3",
+      "5,4,4,4",
+      "5,5,4,4",
+      "5,5,5,4",
+      "5,5,5,5"
+    ]
+  }
+}

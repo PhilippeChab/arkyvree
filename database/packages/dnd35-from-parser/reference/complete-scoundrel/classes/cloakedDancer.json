@@ -1,0 +1,230 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-03-22T16:06:24.531Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/cloaked-dancer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Enchanting Dance (Beguiling Dance)"
+      },
+      {
+        "levels": [
+          2,
+          4
+        ],
+        "name": "Surprise Strike"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Enchanting Dance (Wearying Dance)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Enchanting Dance (Frightful Dance)"
+      }
+    ],
+    "hd": 6,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sleightofhand.rank",
+        "value": "5",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Cloaked Dancer Class Feature",
+    "features": {
+      "Enchanting Dance (Beguiling Dance)": {
+        "description": "Once per day per cloaked dancer level, you can use your dance to produce supernatural effects on those who observe you. Each ability requires both a minimum cloaked dancer level and a minimum number of ranks in the Perform (dance) skill to qualify; if you do not have the required number of ranks, you do not gain the enchanting dance ability until you acquire them. This ability can be used only if you are wearing light armor or no armor and carrying no more than a light load. Enchanting dance is an enchantment (compulsion), mind-affecting ability. Starting an enchanting dance effect is a standard action. You must concentrate each round to maintain the dance; no dance can be maintained for more rounds than your cloaked dancer level + your Con modifier (minimum 1 round). The save DC for your enchanting dance effects is 10 + your cloaked dancer level + your Cha modifier. A creature can't be affected again by your enchanting dance effect for 24 hours whether or not it succeeds on the saving throw. Beguiling Dance: A cloaked dancer with 10 or more ranks in Perform (dance) can use her enchanting dance to distract her enemies. Whenever you start or maintain a beguiling dance, all enemies within 30 feet who can see you must succeed on a Will save or be dazed for 1 round. Creatures that fail this save also have their attitude improved by one step for as long as you maintain the dance Influencing NPC Attitudes, PH 74). This attitude adjustment does not prevent any subsequent attitude changes. For example, an enemy that becomes indifferent toward you as a result of this effect still turns hostile if you then attack it. Wearying Dance: A 3rd-level cloaked dancer with 12 or more ranks in Perform (dance) can use her enchanting dance to tire her enemies. Whenever you start or maintain a wearying dance, all enemies within 30 feet who can see you must succeed on a Will save or be fatigued for as long as you maintain the dance. Creatures failing this save that are already fatigued become exhausted. Frightful Dance: A 5th-level cloaked dancer with 14 or more ranks in Perform (dance) can use her enchanting dance to scare her enemies. Whenever you start or maintain a frightful dance, all enemies within 30 feet who can see you must succeed on a Will save or be shaken for as long as you maintain the dance. Creatures failing this save that are already shaken become frightened, and those that are already frightened become panicked.",
+        "level": 1,
+        "seedName": "Enchanting Dance (Beguiling Dance) (Cloaked Dancer)"
+      },
+      "Enchanting Dance (Frightful Dance)": {
+        "description": "",
+        "level": 5,
+        "seedName": "Enchanting Dance (Frightful Dance) (Cloaked Dancer)"
+      },
+      "Enchanting Dance (Wearying Dance)": {
+        "description": "",
+        "level": 3,
+        "seedName": "Enchanting Dance (Wearying Dance) (Cloaked Dancer)"
+      },
+      "Surprise Strike": {
+        "description": "Beginning at 2nd level, you can make a particularly effective attack against creatures distracted by your dance. As a full-round action, you can maintain your enchanting dance and make a melee attack with a light weapon, dealing an extra 1d6 points of damage. At 4th level, the extra damage you deal increases to 2d6. The extra damage from the surprise strike ability stacks with the extra damage from sneak attack whenever both would apply to the same target. A target under the effect of your enchanting dance is considered flat-footed against the attack. Any creature that is not vulnerable to extra damage from sneak attacks is immune to this effect. This ability counts as sudden strike for the purpose of meeting prerequisites or using ambush feats.",
+        "level": 2,
+        "seedName": "Surprise Strike (Cloaked Dancer)",
+        "stackable": true
+      }
+    },
+    "occurrenceMap": {
+      "Enchanting Dance (Beguiling Dance)": "Enchanting Dance (Beguiling Dance)",
+      "Enchanting Dance (Frightful Dance)": "Enchanting Dance (Frightful Dance)",
+      "Enchanting Dance (Wearying Dance)": "Enchanting Dance (Wearying Dance)",
+      "Surprise Strike": "Surprise Strike"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Once per day per cloaked dancer level, you can use your dance to produce supernatural effects on those who observe you. Each ability requires both a minimum cloaked dancer level and a minimum number of ranks in the Perform (dance) skill to qualify; if you do not have the required number of ranks, you do not gain the enchanting dance ability until you acquire them. This ability can be used only if you are wearing light armor or no armor and carrying no more than a light load. Enchanting dance is an enchantment (compulsion), mind-affecting ability. Starting an enchanting dance effect is a standard action. You must concentrate each round to maintain the dance; no dance can be maintained for more rounds than your cloaked dancer level + your Con modifier (minimum 1 round). The save DC for your enchanting dance effects is 10 + your cloaked dancer level + your Cha modifier. A creature can't be affected again by your enchanting dance effect for 24 hours whether or not it succeeds on the saving throw. Beguiling Dance: A cloaked dancer with 10 or more ranks in Perform (dance) can use her enchanting dance to distract her enemies. Whenever you start or maintain a beguiling dance, all enemies within 30 feet who can see you must succeed on a Will save or be dazed for 1 round. Creatures that fail this save also have their attitude improved by one step for as long as you maintain the dance Influencing NPC Attitudes, PH 74). This attitude adjustment does not prevent any subsequent attitude changes. For example, an enemy that becomes indifferent toward you as a result of this effect still turns hostile if you then attack it. Wearying Dance: A 3rd-level cloaked dancer with 12 or more ranks in Perform (dance) can use her enchanting dance to tire her enemies. Whenever you start or maintain a wearying dance, all enemies within 30 feet who can see you must succeed on a Will save or be fatigued for as long as you maintain the dance. Creatures failing this save that are already fatigued become exhausted. Frightful Dance: A 5th-level cloaked dancer with 14 or more ranks in Perform (dance) can use her enchanting dance to scare her enemies. Whenever you start or maintain a frightful dance, all enemies within 30 feet who can see you must succeed on a Will save or be shaken for as long as you maintain the dance. Creatures failing this save that are already shaken become frightened, and those that are already frightened become panicked.",
+        "name": "Enchanting Dance (Beguiling Dance)",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 2nd level, you can make a particularly effective attack against creatures distracted by your dance. As a full-round action, you can maintain your enchanting dance and make a melee attack with a light weapon, dealing an extra 1d6 points of damage. At 4th level, the extra damage you deal increases to 2d6. The extra damage from the surprise strike ability stacks with the extra damage from sneak attack whenever both would apply to the same target. A target under the effect of your enchanting dance is considered flat-footed against the attack. Any creature that is not vulnerable to extra damage from sneak attacks is immune to this effect. This ability counts as sudden strike for the purpose of meeting prerequisites or using ambush feats.",
+        "name": "Surprise Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Enchanting Dance (Wearying Dance)"
+      },
+      {
+        "description": "",
+        "name": "Enchanting Dance (Frightful Dance)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Disguise",
+      "Escape Artist",
+      "Gather Information",
+      "Jump",
+      "Perform",
+      "Profession",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Speak Language",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "The cloaked dancer dances into the hearts and minds of her audience, beguiling those around her with boundless charm and careful dance moves, leaving her victims in a state of ecstasy even as she kills them.",
+    "hitDie": "d6",
+    "name": "Cloaked Dancer",
+    "prerequisites": {
+      "parsed": {
+        "skills": [
+          {
+            "name": "Hide",
+            "ranks": 5
+          },
+          {
+            "name": "Perform (dance)",
+            "ranks": 10
+          },
+          {
+            "name": "Sleight of Hand",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Skills: Hide 5 ranks, Perform (dance) 10 ranks, Sleight of Hand 5 ranks"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Enchanting dance (beguiling dance)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Surprise strike +1d6"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Enchanting dance (wearying dance)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Surprise strike +2d6"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Enchanting dance (frightful dance)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

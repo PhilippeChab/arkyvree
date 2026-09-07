@@ -1,0 +1,712 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-27T00:09:21.110Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/scout/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          4,
+          8,
+          12,
+          16,
+          20
+        ],
+        "target": "aptitudes.scoutbonusfeat.allowed"
+      }
+    ],
+    "bab": "medium",
+    "bonusFeatLists": [
+      {
+        "aptitude": "Scout Bonus Feat",
+        "feats": [
+          "Acrobatic",
+          "Agile",
+          "Alertness",
+          "Athletic",
+          "Blind-Fight",
+          "Brachiation?",
+          "Combat Expertise",
+          "Danger Sense?",
+          "Dodge",
+          "Endurance",
+          "Far Shot",
+          "Great Fortitude",
+          "Hear the Unseen?",
+          "Improved Initiative",
+          "Improved Swimming?",
+          "Iron Will",
+          "Lightning Reflexes",
+          "Mobility",
+          "Point Blank Shot",
+          "Precise Shot",
+          "Quick Draw",
+          "Quick Reconnoiter?",
+          "Rapid Reload",
+          "Shot on the Run",
+          "Skill Focus",
+          "Spring Attack",
+          "Track"
+        ]
+      }
+    ],
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Skirmish (+1d6)"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Trapfinding"
+      },
+      {
+        "levels": [
+          2,
+          11,
+          20
+        ],
+        "name": "Battle Fortitude"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Uncanny Dodge"
+      },
+      {
+        "levels": [
+          3,
+          11
+        ],
+        "name": "Fast Movement +"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Skirmish (+1d6, +1AC)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Trackless Step"
+      },
+      {
+        "levels": [
+          4,
+          8,
+          12,
+          16,
+          20
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Skirmish (+2d6, +1AC)"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Flawless Stride"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Skirmish (+2d6, +2 AC)"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Camoflague"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Skirmish (+3d6, +2 AC)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Blindsense"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Skirmish (+3d6, +3 AC)"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "Skirmish (+4d6, +3 AC)"
+      },
+      {
+        "levels": [
+          14
+        ],
+        "name": "Hide In Plain Sight"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Skirmish (+4d6, +4 AC)"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Skirmish (+5d6, +4 AC)"
+      },
+      {
+        "levels": [
+          18
+        ],
+        "name": "Free Movement"
+      },
+      {
+        "levels": [
+          19
+        ],
+        "name": "Skirmish (+5d6, +5 AC)"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Blind Sight"
+      }
+    ],
+    "hd": 8,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 8
+  },
+  "mapping": {
+    "classFeatureAptitude": "Scout Class Feature",
+    "features": {
+      "Battle Fortitude": {
+        "description": "At 2nd level, a scout gains a +1 competence bonus on Fortitude saves and initiative checks. This bonus increases to +2 at 11th level and +3 at 20th level. A scout loses this bonus when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "level": 2,
+        "seedName": "Battle Fortitude (Scout)",
+        "stackable": true
+      },
+      "Blind Sight": {
+        "description": "",
+        "level": 20,
+        "seedName": "Blind Sight (Scout)"
+      },
+      "Blindsense": {
+        "description": "At 10th level, a scout gains the blindsense ability out to 30 feet. This ability functions as described.",
+        "level": 10,
+        "seedName": "Blindsense (Scout)"
+      },
+      "Bonus Feat": {
+        "description": "At 4th level and every four levels thereafter (8th, 12th, 16th, and 20th level), a scout gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Athletic, Blind-Fight, Brachiation?, Combat Expertise, Danger Sense?, Dodge, Endurance, Far Shot, Great Fortitude, Hear the Unseen?, Improved Initiative, Improved Swimming?, Iron Will, Lightning Reflexes, Mobility, Point Blank Shot, Precise Shot, Quick Draw, Quick Reconnoiter?, Rapid Reload, Shot on the Run, Skill Focus, Spring Attack, Track. She must meet all the prerequisites for the feat.?New feat described in Chapter 3.",
+        "level": 4,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.scoutbonusfeat.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Bonus Feat (Scout)",
+        "stackable": true
+      },
+      "Camoflague": {
+        "description": "",
+        "level": 8,
+        "seedName": "Camouflage (Scout)"
+      },
+      "Evasion": {
+        "description": "Beginning at 5th level, a scout can avoid damage from certain attacks with a successful Reflex save. See the monk class feature of the Player's Handbook.",
+        "level": 5,
+        "seedName": "Evasion (Scout)"
+      },
+      "Fast Movement": {
+        "description": "Starting at 3rd level, a scout's gains a +10 foot enhancement bonus to her base land speed. At 11th level, this bonus increases to +20 feet. See the monk class feature of the Player's Handbook. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.speed.misc",
+            "value": "20",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Fast Movement (Scout)",
+        "stackable": true
+      },
+      "Fast Movement +": {
+        "description": "",
+        "level": 3,
+        "seedName": "Fast Movement + (Scout)",
+        "stackable": true
+      },
+      "Flawless Stride": {
+        "description": "Starting at 6th level, a scout can move through any sort of terrain that slows movement (such as undergrowth, rubble, and similar terrain) at her normal speed and without taking damage or suffering any other impairment. This ability does not let her move more quickly through terrain that requires a Climb or Swim check to navigate, nor can she move more quickly through terrain or undergrowth that has been magically manipulated to impede motion. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load. Camouflage (Ex): Beginning at 8th level, a scout can use the Hide skill in any sort of natural terrain. See the ranger class feature of the Player's Handbook. She loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "level": 6,
+        "seedName": "Flawless Stride (Scout)"
+      },
+      "Free Movement": {
+        "description": "At 18th level and higher, a scout can slip out of bonds, grapples, and even the effects of confining spells easily. This ability duplicates the effect of a freedom of movement spell, except that it is always active. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load. Blindsight (Ex): A 20th-level scout gains the blindsight ability out to 30 feet. Her senses become so acute that she can maneuver and fight flawlessly even in total darkness. Invisibility, darkness, and most kinds of concealment are irrelevant, though the scout must have line of effect to a creature or object to discern i",
+        "level": 18,
+        "seedName": "Free Movement (Scout)"
+      },
+      "Hide in Plain Sight": {
+        "description": "Beginning at 14th level, a scout can use the Hide skill in natural terrain even while being observed. See the ranger class feature of the Player's Handbook. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "level": 14,
+        "seedName": "Hide in Plain Sight (Scout)"
+      },
+      "Skirmish": {
+        "description": "A scout relies on mobility to deal extra damage and improve her defense. She deals an extra 1d6 points of damage on all attacks she makes during any round in which she moves at least 10 feet. The extra damage applies only to attacks taken during the scout's turn. This extra damage increases by 1d6 for every four levels gained above 1st (2d6 at 5th, 3d6 at 9th, 4d6 at 13th, and 5d6 at 17th level). The extra damage only applies against living creatures that have a discernible anatomy. Undead, constructs, oozes, plants, incorporeal creatures, and creatures immune to extra damage from critical hits are not vulnerable to this additional damage. The scout must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. Scouts can apply this extra damage to ranged attacks made while skirmishing, but only if the target is within 30 feet. At 3rd level, a scout gains a +1 competence bonus to Armor Class during any round in which she moves at least 10 feet. The bonus applies as soon as the scout has moved 10 feet, and lasts until the start of her next turn. This bonus improves by 1 for every four levels gained above 3rd (+2 at 7th, +3 at 11th, +4 at 15th, and +5 at 19th level). A scout loses this ability when wearing medium or heavy armor or when carrying a medium or heavy load. If she gains the skirmish ability from another class, the bonuses stack.",
+        "level": 1,
+        "seedName": "Skirmish (Scout)",
+        "stackable": true
+      },
+      "Trackless Step": {
+        "description": "Beginning at 3rd level, a scout cannot be tracked in natural surroundings. See the druid class feature of the Player's Handbook.",
+        "level": 3,
+        "seedName": "Trackless Step (Scout)"
+      },
+      "Trapfinding": {
+        "description": "A scout can use the Search skill to locate traps with a DC higher than 20, and she can use Disable Device to bypass a trap or disarm magic traps. See the rogue class feature of the Player's Handbook.",
+        "level": 1,
+        "seedName": "Trapfinding (Scout)"
+      },
+      "Uncanny Dodge": {
+        "description": "Starting at 2nd level, a scout cannot be caught flat-footed and reacts to danger before her senses would normally allow her to do so. See the barbarian class feature of the Player's Handbook.",
+        "level": 2,
+        "seedName": "Uncanny Dodge (Scout)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Scouts are proficient with all simple weapons, plus the handaxe, throwing axe, short sword, and shortbow. Scouts are proficient with light armor, but not with shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencythrowingaxe.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortsword.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyhandaxe.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Scout)"
+      }
+    },
+    "occurrenceMap": {
+      "Battle Fortitude": "Battle Fortitude",
+      "Blind Sight": "Blind Sight",
+      "Blindsense": "Blindsense",
+      "Bonus Feat": "Bonus Feat",
+      "Camoflague": "Camoflague",
+      "Evasion": "Evasion",
+      "Fast Movement +": "Fast Movement",
+      "Flawless Stride": "Flawless Stride",
+      "Free Movement": "Free Movement",
+      "Hide In Plain Sight": "Hide in Plain Sight",
+      "Skirmish (+1d6)": "Skirmish",
+      "Skirmish (+1d6, +1AC)": "Skirmish",
+      "Skirmish (+2d6, +1AC)": "Skirmish",
+      "Skirmish (+2d6, +2 AC)": "Skirmish",
+      "Skirmish (+3d6, +2 AC)": "Skirmish",
+      "Skirmish (+3d6, +3 AC)": "Skirmish",
+      "Skirmish (+4d6, +3 AC)": "Skirmish",
+      "Skirmish (+4d6, +4 AC)": "Skirmish",
+      "Skirmish (+5d6, +4 AC)": "Skirmish",
+      "Skirmish (+5d6, +5 AC)": "Skirmish",
+      "Trackless Step": "Trackless Step",
+      "Trapfinding": "Trapfinding",
+      "Uncanny Dodge": "Uncanny Dodge"
+    },
+    "overrides": {
+      "features": {
+        "Camoflague": {
+          "seedName": "Camouflage (Scout)"
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Scouts are proficient with all simple weapons, plus the handaxe, throwing axe, short sword, and shortbow. Scouts are proficient with light armor, but not with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Starting at 3rd level, a scout's gains a +10 foot enhancement bonus to her base land speed. At 11th level, this bonus increases to +20 feet. See the monk class feature of the Player's Handbook. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "name": "Fast Movement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A scout relies on mobility to deal extra damage and improve her defense. She deals an extra 1d6 points of damage on all attacks she makes during any round in which she moves at least 10 feet. The extra damage applies only to attacks taken during the scout's turn. This extra damage increases by 1d6 for every four levels gained above 1st (2d6 at 5th, 3d6 at 9th, 4d6 at 13th, and 5d6 at 17th level). The extra damage only applies against living creatures that have a discernible anatomy. Undead, constructs, oozes, plants, incorporeal creatures, and creatures immune to extra damage from critical hits are not vulnerable to this additional damage. The scout must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. Scouts can apply this extra damage to ranged attacks made while skirmishing, but only if the target is within 30 feet. At 3rd level, a scout gains a +1 competence bonus to Armor Class during any round in which she moves at least 10 feet. The bonus applies as soon as the scout has moved 10 feet, and lasts until the start of her next turn. This bonus improves by 1 for every four levels gained above 3rd (+2 at 7th, +3 at 11th, +4 at 15th, and +5 at 19th level). A scout loses this ability when wearing medium or heavy armor or when carrying a medium or heavy load. If she gains the skirmish ability from another class, the bonuses stack.",
+        "name": "Skirmish",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A scout can use the Search skill to locate traps with a DC higher than 20, and she can use Disable Device to bypass a trap or disarm magic traps. See the rogue class feature of the Player's Handbook.",
+        "name": "Trapfinding",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a scout gains a +1 competence bonus on Fortitude saves and initiative checks. This bonus increases to +2 at 11th level and +3 at 20th level. A scout loses this bonus when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "name": "Battle Fortitude",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, a scout cannot be caught flat-footed and reacts to danger before her senses would normally allow her to do so. See the barbarian class feature of the Player's Handbook.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Fast Movement +"
+      },
+      {
+        "description": "Beginning at 3rd level, a scout cannot be tracked in natural surroundings. See the druid class feature of the Player's Handbook.",
+        "name": "Trackless Step",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level and every four levels thereafter (8th, 12th, 16th, and 20th level), a scout gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Athletic, Blind-Fight, Brachiation?, Combat Expertise, Danger Sense?, Dodge, Endurance, Far Shot, Great Fortitude, Hear the Unseen?, Improved Initiative, Improved Swimming?, Iron Will, Lightning Reflexes, Mobility, Point Blank Shot, Precise Shot, Quick Draw, Quick Reconnoiter?, Rapid Reload, Shot on the Run, Skill Focus, Spring Attack, Track. She must meet all the prerequisites for the feat.?New feat described in Chapter 3.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "Beginning at 5th level, a scout can avoid damage from certain attacks with a successful Reflex save. See the monk class feature of the Player's Handbook.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 6th level, a scout can move through any sort of terrain that slows movement (such as undergrowth, rubble, and similar terrain) at her normal speed and without taking damage or suffering any other impairment. This ability does not let her move more quickly through terrain that requires a Climb or Swim check to navigate, nor can she move more quickly through terrain or undergrowth that has been magically manipulated to impede motion. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load. Camouflage (Ex): Beginning at 8th level, a scout can use the Hide skill in any sort of natural terrain. See the ranger class feature of the Player's Handbook. She loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "name": "Flawless Stride",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Camoflague"
+      },
+      {
+        "description": "At 10th level, a scout gains the blindsense ability out to 30 feet. This ability functions as described.",
+        "name": "Blindsense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 14th level, a scout can use the Hide skill in natural terrain even while being observed. See the ranger class feature of the Player's Handbook. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.",
+        "name": "Hide in Plain Sight",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 18th level and higher, a scout can slip out of bonds, grapples, and even the effects of confining spells easily. This ability duplicates the effect of a freedom of movement spell, except that it is always active. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load. Blindsight (Ex): A 20th-level scout gains the blindsight ability out to 30 feet. Her senses become so acute that she can maneuver and fight flawlessly even in total darkness. Invisibility, darkness, and most kinds of concealment are irrelevant, though the scout must have line of effect to a creature or object to discern i",
+        "name": "Free Movement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Blind Sight"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Craft",
+      "Disable Device",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (Nature)",
+      "Listen",
+      "Move Silently",
+      "Ride",
+      "Search",
+      "Sense Motive",
+      "Speak Language",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.",
+    "hitDie": "d8",
+    "name": "Scout",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Skirmish (+1d6)",
+          "trapfinding"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Battle Fortitude +1",
+          "uncanny dodge"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Fast movement +10ft",
+          "skirmish (+1d6, +1AC)",
+          "trackless step"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Bonus Feat"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Evasion",
+          "skirmish (+2d6, +1AC)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Flawless Stride"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Skirmish (+2d6, +2 AC)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Camoflague",
+          "bonus feat"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Skirmish (+3d6, +2 AC)"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Blindsense 30ft"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 8,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 7,
+        "special": [
+          "Battle Fortitude +2",
+          "fast movement +20ft",
+          "skirmish (+3d6, +3 AC)"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 8,
+        "special": [
+          "Bonus Feat"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 8,
+        "special": [
+          "Skirmish (+4d6, +3 AC)"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 10,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 9,
+        "special": [
+          "Hide in Plain Sight"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 11,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 9,
+        "special": [
+          "Skirmish (+4d6, +4 AC)"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 10,
+        "special": [
+          "Bonus Feat"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 10,
+        "special": [
+          "Skirmish (+5d6, +4 AC)"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 13,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 11,
+        "special": [
+          "Free Movement"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 14,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 11,
+        "special": [
+          "Skirmish (+5d6, +5 AC)"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 15,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 12,
+        "special": [
+          "Battle Fortitude +3",
+          "blind sight 30ft",
+          "bonus feat"
+        ],
+        "willSave": 6
+      }
+    ],
+    "skillPointsPerLevel": "8 + Int modifier"
+  }
+}

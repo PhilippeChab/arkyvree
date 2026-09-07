@@ -1,0 +1,247 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.303Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/maester/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Quick Crafting"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Identification"
+      }
+    ],
+    "hd": 4,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.craft.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.usemagicdevice.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.any.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Gnome",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Maester Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "At 1st and 5th level, a maester receives a bonus item creation feat. He must meet the prerequisites for this feat.",
+        "level": 1,
+        "seedName": "Bonus Feat (Maester)",
+        "stackable": true
+      },
+      "Identification": {
+        "description": "A maester of 3rd level or higher can determine the magical properties of a magic item by handling it for 1 minute and making a successful Spellcraft check (DC 10 + the item's caster level). The maester can't take 10 on this check, nor can he retry the check (and thus he can't take 20). This ability otherwise functions as the identify spell.",
+        "level": 3,
+        "seedName": "Identification (Maester)"
+      },
+      "Quick Crafting": {
+        "description": "A maester can craft magic items in half the normal time required (one day per 2,000 gp in the item's base price; minimum one day).",
+        "level": 1,
+        "seedName": "Quick Crafting (Maester)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Beginning at 2nd level, a maester gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefi t a character of that class would have gained. If he had more than one spellcasting class before becoming a maester, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Maester)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Maesters gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Maester)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat",
+      "Identification": "Identification",
+      "Quick Crafting": "Quick Crafting"
+    },
+    "overrides": {
+      "classSkills": [
+        "Appraise",
+        "Concentration",
+        "Craft",
+        "Decipher Script",
+        "Disable Device",
+        "Knowledge (Arcana)",
+        "Knowledge (Architecture and Engineering)",
+        "Knowledge (Dungeoneering)",
+        "Knowledge (Geography)",
+        "Knowledge (History)",
+        "Knowledge (Local)",
+        "Knowledge (Nature)",
+        "Knowledge (Nobility and Royalty)",
+        "Knowledge (Religion)",
+        "Knowledge (The Planes)",
+        "Profession",
+        "Search",
+        "Spellcraft",
+        "Use Magic Device"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Maesters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 2nd level, a maester gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefi t a character of that class would have gained. If he had more than one spellcasting class before becoming a maester, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "At 1st and 5th level, a maester receives a bonus item creation feat. He must meet the prerequisites for this feat.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "A maester can craft magic items in half the normal time required (one day per 2,000 gp in the item's base price; minimum one day).",
+        "name": "Quick Crafting",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A maester of 3rd level or higher can determine the magical properties of a magic item by handling it for 1 minute and making a successful Spellcraft check (DC 10 + the item's caster level). The maester can't take 10 on this check, nor can he retry the check (and thus he can't take 20). This ability otherwise functions as the identify spell.",
+        "name": "Identification",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "1st",
+      "2nd",
+      "3rd",
+      "4th",
+      "5th"
+    ],
+    "description": "Maesters are the master crafters of the gnome world, combining technical and magical expertise to create incredible marvels. They specialize in the creation of magic items, bending all their skill and ability toward the construction of items that are their art and livelihood. Maesters are usually wizards, although sorcerers occasionally take up the class. Some bards also have been known to become maesters, but typically not until they have spent a number of years adventuring.",
+    "hitDie": "d4",
+    "name": "Maester",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Any two item creation feats"
+        ],
+        "skills": [
+          {
+            "name": "Craft (any)",
+            "ranks": 8
+          },
+          {
+            "name": "Use Magic Device",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Race: Gnome"
+        ]
+      },
+      "text": "Skills: Craft (any) 8 ranks, Use Magic Device 4 ranks Race: Gnome.Feats: Any two item creation feats.Spells: Arcane caster level 5th."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bonus feat",
+          "quick crafting"
+        ],
+        "spellsPerDay": "?",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Identification"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Bonus feat"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

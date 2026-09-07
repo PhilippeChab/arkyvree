@@ -1,0 +1,1424 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:56:32.415Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/spirit-shaman/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Divine",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Spirit Guide"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wild Empathy"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Chastise Spirits"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Detect Spirits"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Blessing Of The Spirits"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Follow The Guide"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Ghost Warrior"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Warding Of The Spirits"
+      },
+      {
+        "levels": [
+          9,
+          15,
+          20
+        ],
+        "name": "Spirit Form"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Guide Magic"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Recall Spirit"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "Exorcism"
+      },
+      {
+        "levels": [
+          16
+        ],
+        "name": "Weaken Spirits"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Spirit Journey"
+      },
+      {
+        "levels": [
+          19
+        ],
+        "name": "Favored Of The Spirits"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Spirit Who Walks"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "spellsKnown": [
+      [
+        3,
+        1
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        1,
+        1
+      ],
+      [
+        3,
+        3,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      [
+        3,
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        3,
+        2
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        5,
+        4,
+        2
+      ],
+      [
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        4,
+        2
+      ],
+      [
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        4,
+        2
+      ],
+      [
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        4,
+        2
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        4,
+        2
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4,
+        2
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4,
+        2
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4,
+        2
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        4
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5
+      ]
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Spirit Shaman Class Feature",
+    "features": {
+      "Blessing of the Spirits": {
+        "description": "Beginning at 4th level, the spirit shaman can conduct a ritual that bestows a protective ward upon herself. She enters a meditative trance, journeying spiritually for 10 minutes. This ward applies only to the spirit shaman personally and cannot be performed on behalf of others. The resulting protection operates identically to protection from evil, but shields against spirits rather than evil creatures, and persists until dismissed or dispelled. If the effect is dispelled, the spirit shaman may simply repeat the 10-minute ritual to restore it.",
+        "level": 4,
+        "seedName": "Blessing of the Spirits (Spirit Shaman)"
+      },
+      "Chastise Spirits": {
+        "description": "From 2nd level onward, the spirit shaman can channel divine power from her spirit patrons to harm hostile spirits. As a standard action, she inflicts 1d6 damage per shaman level on every spirit within a 30-foot radius. Each affected spirit may attempt a Will save (DC 10 + shaman level + Charisma modifier) to reduce the damage by half. Against incorporeal creatures, the spirit shaman bypasses the usual 50% miss chance entirely -- the energy strikes automatically. This ability can be used a number of times per day equal to 3 + the spirit shaman's Charisma modifier.",
+        "level": 2,
+        "seedName": "Chastise Spirits (Spirit Shaman)"
+      },
+      "Detect Spirits": {
+        "description": "Through her spirit guide's heightened perception, the spirit shaman can sense spirits in her vicinity. She may use this as a spell-like ability at will. It operates identically to detect undead, except that it reveals creatures classified as spirits instead.",
+        "level": 3,
+        "seedName": "Detect Spirits (Spirit Shaman)"
+      },
+      "Exorcism": {
+        "description": "From 13th level, as a full-round action, the spirit shaman can drive a possessing entity out of the body it occupies (such as a ghost using malevolence). She rolls a class level check, adding her Charisma modifier if applicable, against a DC equal to 10 + the possessor's Hit Dice + its Charisma modifier (if any). If the check meets or exceeds the DC, the possessing creature is expelled, with outcomes determined by its particular method of possession. A spirit expelled this way is barred from possessing that same individual for 24 hours.",
+        "level": 13,
+        "seedName": "Exorcism (Spirit Shaman)"
+      },
+      "Favored of the Spirits": {
+        "description": "At 19th level, the spirit shaman can perform a protective rite that shields her from death. The rite takes 8 hours to complete, and the spirit shaman must sacrifice a portion of her life energy, expending 1,000 experience points. The protection remains active until dismissed or discharged. While this rite is in effect, if the spirit shaman drops to 0 or fewer hit points, or if any of her ability scores is reduced to 0, she instantly gains the benefit of a heal spell (with a caster level equal to her spirit shaman level). This healing takes effect immediately, even if the triggering blow would have reduced her below -10 hit points, potentially saving her from outright death. Once triggered, the protection ends, and the spirit shaman must perform the rite again to regain this benefit.",
+        "level": 19,
+        "seedName": "Favored of the Spirits (Spirit Shaman)"
+      },
+      "Follow the Guide": {
+        "description": "At 5th level, the spirit shaman's spirit guide assists her in resisting mental influence. Whenever she fails a saving throw against an enchantment spell or effect, she may retry the save once, 1 round later, at the same DC. Only one additional attempt is granted per failed save.",
+        "level": 5,
+        "seedName": "Follow the Guide (Spirit Shaman)"
+      },
+      "Ghost Warrior": {
+        "description": "Starting at 6th level, any weapon the spirit shaman wields gains the ghost touch property for as long as she holds it. In addition, she becomes more resilient against the touch attacks of incorporeal beings, applying her full Armor Class rather than just her touch AC when defending against an incorporeal creature's touch attack.",
+        "level": 6,
+        "seedName": "Ghost Warrior (Spirit Shaman)"
+      },
+      "Guide Magic": {
+        "description": "From 10th level, as a free action, the spirit shaman can delegate concentration on a spell or spell-like ability to her spirit guide. While the guide maintains the spell, the spirit shaman is free to act normally. The guide can sustain concentration on only one spell at a time. When Concentration checks are required to maintain the spell, the guide uses the spirit shaman's normal Concentration modifier. However, the guide does not need to make Concentration checks due to external disruptions such as the spirit shaman taking damage. Because the spirit guide has no physical presence, it cannot be targeted or interrupted by other creatures.",
+        "level": 10,
+        "seedName": "Guide Magic (Spirit Shaman)"
+      },
+      "Recall Spirit": {
+        "description": "At 11th level, the spirit shaman gains the power to summon back the departing spirit of a creature that has just died, reconnecting it to its body. She can use this ability once per week, and it must be employed within 1 round of the creature's death. This works like raise dead, except the restored creature suffers no level loss, no Constitution loss, and no loss of prepared spells.",
+        "level": 11,
+        "seedName": "Recall Spirit (Spirit Shaman)"
+      },
+      "Spells": {
+        "description": "The spirit shaman casts divine spells drawn from the druid spell list. She can cast any spell she has retrieved for the day without needing to prepare it in advance, similar to how a bard or sorcerer casts known spells spontaneously. Retrieving or casting a spell requires a minimum Wisdom score of 10 + the spell's level. The saving throw DC for her spells equals 10 + spell level + her Charisma modifier. Like other casters, she is limited to a certain number of spells per day at each level, as shown in the class table, and gains bonus spells per day from a high Wisdom score. Although the spirit shaman knows only a limited number of spells at a time (like a sorcerer), she can change which spells she knows each day. During her daily meditation to recover spell slots, her spirit guide ventures into the spirit world and returns with knowledge of specific druid spells she can use that day. She may then cast any retrieved spell freely, as long as she has unused spell slots of the appropriate level. For instance, a 3rd-level spirit shaman retrieves three 0-level, two 1st-level, and one 2nd-level spell. She can cast 0-level spells five times, 1st-level spells four times, and her 2nd-level spell twice throughout the day, mixing and matching her retrieved spells in any combination that does not exceed her daily allotment for each level. Metamagic feats must be applied at the time of retrieval, not at the time of casting. For example, she could retrieve an empowered flame strike in a 6th-level slot; every time she casts flame strike that day, it uses a 6th-level slot and is always empowered. She could also retrieve both a normal flame strike in a 4th-level slot and an empowered version in a 6th-level slot to have both options available. Unlike other spontaneous casters, spirit shamans do not suffer increased casting times when applying metamagic. The spirit shaman must designate a specific time each day when she spends 1 hour in quiet meditation to regain her spells and negotiate with the spirits for the particular spells she will know that day.",
+        "level": 1,
+        "seedName": "Spells (Spirit Shaman)"
+      },
+      "Spirit Form": {
+        "description": "At 9th level, the spirit shaman learns to temporarily transform into a spirit. Once per day, as a standard action, she can become incorporeal for up to 1 minute. In this state, she gains all benefits of the incorporeal subtype: immunity to nonmagical attacks, a 50% chance to avoid damage from corporeal sources, and the ability to pass through solid objects. She loses any armor or natural armor bonus to AC but gains a deflection bonus equal to her Charisma modifier (minimum +1). She has no effective Strength score against corporeal creatures or objects and cannot physically attack them, but she can deliver a melee touch attack (using her Dexterity modifier on the attack roll) that deals 1d6 damage to corporeal targets. This attack counts as a magic weapon for purposes of bypassing damage reduction. At 15th level, she can use spirit form twice per day. At 20th level, the daily uses increase to three.",
+        "level": 9,
+        "seedName": "Spirit Form (Spirit Shaman)",
+        "stackable": true
+      },
+      "Spirit Guide": {
+        "description": "Every spirit shaman possesses a spirit guide -- a manifestation of the spirit world that exists entirely within her mind and soul. The shaman and her guide share all perceptions and experiences as though they were a single being. Unlike a familiar, the spirit guide is not a separate creature; only the spirit shaman can perceive or interact with it. The spirit guide grants the spirit shaman heightened awareness, providing the Alertness feat. It also unlocks further abilities at 5th level (Follow the Guide) and 10th level (Guide Magic). The spirit shaman selects the guide's form at 1st level, typically based on the qualities it symbolizes. The specific appearance of the guide is a matter of personal choice and provides no mechanical advantages or drawbacks.",
+        "level": 1,
+        "seedName": "Spirit Guide (Spirit Shaman)"
+      },
+      "Spirit Journey": {
+        "description": "From 17th level, the spirit shaman can physically transport herself into the spirit realm. This works like shadow walk, but she can only bring herself. She does not need to be in a shadowy area to activate it, and she travels through the Plane of Spirits rather than the Plane of Shadow. This ability can be used once per day.",
+        "level": 17,
+        "seedName": "Spirit Journey (Spirit Shaman)"
+      },
+      "Spirit Who Walks": {
+        "description": "Upon reaching 20th level, the spirit shaman merges permanently with the spirit world. She is henceforth considered a fey rather than a humanoid for all purposes involving spells and magical effects. She also gains damage reduction 5/cold iron.",
+        "level": 20,
+        "seedName": "Spirit Who Walks (Spirit Shaman)"
+      },
+      "Warding of the Spirits": {
+        "description": "From 7th level, the spirit shaman can perform a daily protective rite that shields herself and her allies from hostile spirits. The ritual takes 1 minute to complete. The resulting ward persists for 10 minutes per level and functions identically to magic circle against evil, except that it offers protection against spirits.",
+        "level": 7,
+        "seedName": "Warding of the Spirits (Spirit Shaman)"
+      },
+      "Weaken Spirits": {
+        "description": "At 16th level, the spirit shaman gains the option to use her chastise spirits ability to strip away spirits' defenses rather than simply dealing damage. A weakened spirit loses its spell resistance and any damage reduction that can be overcome by magic, silver, cold iron, or aligned weapons (though DR overcome only by adamantine or DR with no bypass remains unaffected). A weakened incorporeal spirit also loses its immunity to nonmagical attacks, its 50% chance to ignore corporeal damage, and its ability to pass through solid objects. To use this option, the spirit shaman sacrifices a portion of the chastise spirits damage: for every 3d6 of damage she forgoes, affected spirits are weakened for 1 round. For example, a 16th-level spirit shaman normally deals 16d6 damage, but could reduce the damage to 7d6 in order to weaken the targets for 3 rounds instead. Spirits that succeed on their Will save against the chastise spirits damage avoid the weakening effect entirely, though they still take half damage.",
+        "level": 16,
+        "seedName": "Weaken Spirits (Spirit Shaman)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "The spirit shaman is proficient with clubs, daggers, darts, hand axes, javelins, longspears, quarterstaves, shortspears, spears, slings, shortbows, throwing axes, as well as light armor and shields. These represent the typical armaments of the tribal cultures from which spirit shamans originate.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyhandaxe.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyquarterstaff.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencythrowingaxe.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyshortspear.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencylongspear.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyjavelin.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyspear.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencysling.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyclub.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydart.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Spirit Shaman)"
+      },
+      "Wild Empathy": {
+        "description": "Drawing on her connection to animal spirits, the spirit shaman can use body language, vocalizations, and demeanor to shift the disposition of an animal (any creature of the animal type). This works like a Diplomacy check to improve a person's attitude. She rolls 1d20 and adds her spirit shaman level plus her Charisma modifier to determine the result. Domesticated animals typically start as indifferent, while wild animals are generally unfriendly. Both the spirit shaman and the animal must be able to observe one another, requiring them to be within 30 feet under normal circumstances. Influencing an animal in this manner generally takes about 1 minute, though it can take more or less time depending on circumstances. This ability does not work on magical beasts.",
+        "level": 1,
+        "seedName": "Wild Empathy (Spirit Shaman)"
+      }
+    },
+    "occurrenceMap": {
+      "Blessing Of The Spirits": "Blessing of the Spirits",
+      "Chastise Spirits": "Chastise Spirits",
+      "Detect Spirits": "Detect Spirits",
+      "Exorcism": "Exorcism",
+      "Favored Of The Spirits": "Favored of the Spirits",
+      "Follow The Guide": "Follow the Guide",
+      "Ghost Warrior": "Ghost Warrior",
+      "Guide Magic": "Guide Magic",
+      "Recall Spirit": "Recall Spirit",
+      "Spirit Form": "Spirit Form",
+      "Spirit Guide": "Spirit Guide",
+      "Spirit Journey": "Spirit Journey",
+      "Spirit Who Walks": "Spirit Who Walks",
+      "Warding Of The Spirits": "Warding of the Spirits",
+      "Weaken Spirits": "Weaken Spirits",
+      "Wild Empathy": "Wild Empathy"
+    },
+    "overrides": {
+      "bonusSpellAbility": "Wisdom",
+      "description": "Through negotiation and communion with spirits of the living world, the spirit shaman channels potent divine magic and wields authority over the forces of nature.",
+      "features": {
+        "Blessing of the Spirits": {
+          "description": "Beginning at 4th level, the spirit shaman can conduct a ritual that bestows a protective ward upon herself. She enters a meditative trance, journeying spiritually for 10 minutes. This ward applies only to the spirit shaman personally and cannot be performed on behalf of others. The resulting protection operates identically to protection from evil, but shields against spirits rather than evil creatures, and persists until dismissed or dispelled. If the effect is dispelled, the spirit shaman may simply repeat the 10-minute ritual to restore it."
+        },
+        "Chastise Spirits": {
+          "description": "From 2nd level onward, the spirit shaman can channel divine power from her spirit patrons to harm hostile spirits. As a standard action, she inflicts 1d6 damage per shaman level on every spirit within a 30-foot radius. Each affected spirit may attempt a Will save (DC 10 + shaman level + Charisma modifier) to reduce the damage by half. Against incorporeal creatures, the spirit shaman bypasses the usual 50% miss chance entirely -- the energy strikes automatically. This ability can be used a number of times per day equal to 3 + the spirit shaman's Charisma modifier."
+        },
+        "Detect Spirits": {
+          "description": "Through her spirit guide's heightened perception, the spirit shaman can sense spirits in her vicinity. She may use this as a spell-like ability at will. It operates identically to detect undead, except that it reveals creatures classified as spirits instead."
+        },
+        "Exorcism": {
+          "description": "From 13th level, as a full-round action, the spirit shaman can drive a possessing entity out of the body it occupies (such as a ghost using malevolence). She rolls a class level check, adding her Charisma modifier if applicable, against a DC equal to 10 + the possessor's Hit Dice + its Charisma modifier (if any). If the check meets or exceeds the DC, the possessing creature is expelled, with outcomes determined by its particular method of possession. A spirit expelled this way is barred from possessing that same individual for 24 hours."
+        },
+        "Favored of the Spirits": {
+          "description": "At 19th level, the spirit shaman can perform a protective rite that shields her from death. The rite takes 8 hours to complete, and the spirit shaman must sacrifice a portion of her life energy, expending 1,000 experience points. The protection remains active until dismissed or discharged. While this rite is in effect, if the spirit shaman drops to 0 or fewer hit points, or if any of her ability scores is reduced to 0, she instantly gains the benefit of a heal spell (with a caster level equal to her spirit shaman level). This healing takes effect immediately, even if the triggering blow would have reduced her below -10 hit points, potentially saving her from outright death. Once triggered, the protection ends, and the spirit shaman must perform the rite again to regain this benefit."
+        },
+        "Follow the Guide": {
+          "description": "At 5th level, the spirit shaman's spirit guide assists her in resisting mental influence. Whenever she fails a saving throw against an enchantment spell or effect, she may retry the save once, 1 round later, at the same DC. Only one additional attempt is granted per failed save."
+        },
+        "Ghost Warrior": {
+          "description": "Starting at 6th level, any weapon the spirit shaman wields gains the ghost touch property for as long as she holds it. In addition, she becomes more resilient against the touch attacks of incorporeal beings, applying her full Armor Class rather than just her touch AC when defending against an incorporeal creature's touch attack."
+        },
+        "Guide Magic": {
+          "description": "From 10th level, as a free action, the spirit shaman can delegate concentration on a spell or spell-like ability to her spirit guide. While the guide maintains the spell, the spirit shaman is free to act normally. The guide can sustain concentration on only one spell at a time. When Concentration checks are required to maintain the spell, the guide uses the spirit shaman's normal Concentration modifier. However, the guide does not need to make Concentration checks due to external disruptions such as the spirit shaman taking damage. Because the spirit guide has no physical presence, it cannot be targeted or interrupted by other creatures."
+        },
+        "Recall Spirit": {
+          "description": "At 11th level, the spirit shaman gains the power to summon back the departing spirit of a creature that has just died, reconnecting it to its body. She can use this ability once per week, and it must be employed within 1 round of the creature's death. This works like raise dead, except the restored creature suffers no level loss, no Constitution loss, and no loss of prepared spells."
+        },
+        "Spells": {
+          "description": "The spirit shaman casts divine spells drawn from the druid spell list. She can cast any spell she has retrieved for the day without needing to prepare it in advance, similar to how a bard or sorcerer casts known spells spontaneously. Retrieving or casting a spell requires a minimum Wisdom score of 10 + the spell's level. The saving throw DC for her spells equals 10 + spell level + her Charisma modifier. Like other casters, she is limited to a certain number of spells per day at each level, as shown in the class table, and gains bonus spells per day from a high Wisdom score. Although the spirit shaman knows only a limited number of spells at a time (like a sorcerer), she can change which spells she knows each day. During her daily meditation to recover spell slots, her spirit guide ventures into the spirit world and returns with knowledge of specific druid spells she can use that day. She may then cast any retrieved spell freely, as long as she has unused spell slots of the appropriate level. For instance, a 3rd-level spirit shaman retrieves three 0-level, two 1st-level, and one 2nd-level spell. She can cast 0-level spells five times, 1st-level spells four times, and her 2nd-level spell twice throughout the day, mixing and matching her retrieved spells in any combination that does not exceed her daily allotment for each level. Metamagic feats must be applied at the time of retrieval, not at the time of casting. For example, she could retrieve an empowered flame strike in a 6th-level slot; every time she casts flame strike that day, it uses a 6th-level slot and is always empowered. She could also retrieve both a normal flame strike in a 4th-level slot and an empowered version in a 6th-level slot to have both options available. Unlike other spontaneous casters, spirit shamans do not suffer increased casting times when applying metamagic. The spirit shaman must designate a specific time each day when she spends 1 hour in quiet meditation to regain her spells and negotiate with the spirits for the particular spells she will know that day."
+        },
+        "Spirit Form": {
+          "description": "At 9th level, the spirit shaman learns to temporarily transform into a spirit. Once per day, as a standard action, she can become incorporeal for up to 1 minute. In this state, she gains all benefits of the incorporeal subtype: immunity to nonmagical attacks, a 50% chance to avoid damage from corporeal sources, and the ability to pass through solid objects. She loses any armor or natural armor bonus to AC but gains a deflection bonus equal to her Charisma modifier (minimum +1). She has no effective Strength score against corporeal creatures or objects and cannot physically attack them, but she can deliver a melee touch attack (using her Dexterity modifier on the attack roll) that deals 1d6 damage to corporeal targets. This attack counts as a magic weapon for purposes of bypassing damage reduction. At 15th level, she can use spirit form twice per day. At 20th level, the daily uses increase to three."
+        },
+        "Spirit Guide": {
+          "description": "Every spirit shaman possesses a spirit guide -- a manifestation of the spirit world that exists entirely within her mind and soul. The shaman and her guide share all perceptions and experiences as though they were a single being. Unlike a familiar, the spirit guide is not a separate creature; only the spirit shaman can perceive or interact with it. The spirit guide grants the spirit shaman heightened awareness, providing the Alertness feat. It also unlocks further abilities at 5th level (Follow the Guide) and 10th level (Guide Magic). The spirit shaman selects the guide's form at 1st level, typically based on the qualities it symbolizes. The specific appearance of the guide is a matter of personal choice and provides no mechanical advantages or drawbacks."
+        },
+        "Spirit Journey": {
+          "description": "From 17th level, the spirit shaman can physically transport herself into the spirit realm. This works like shadow walk, but she can only bring herself. She does not need to be in a shadowy area to activate it, and she travels through the Plane of Spirits rather than the Plane of Shadow. This ability can be used once per day."
+        },
+        "Spirit Who Walks": {
+          "description": "Upon reaching 20th level, the spirit shaman merges permanently with the spirit world. She is henceforth considered a fey rather than a humanoid for all purposes involving spells and magical effects. She also gains damage reduction 5/cold iron."
+        },
+        "Warding of the Spirits": {
+          "description": "From 7th level, the spirit shaman can perform a daily protective rite that shields herself and her allies from hostile spirits. The ritual takes 1 minute to complete. The resulting ward persists for 10 minutes per level and functions identically to magic circle against evil, except that it offers protection against spirits."
+        },
+        "Weaken Spirits": {
+          "description": "At 16th level, the spirit shaman gains the option to use her chastise spirits ability to strip away spirits' defenses rather than simply dealing damage. A weakened spirit loses its spell resistance and any damage reduction that can be overcome by magic, silver, cold iron, or aligned weapons (though DR overcome only by adamantine or DR with no bypass remains unaffected). A weakened incorporeal spirit also loses its immunity to nonmagical attacks, its 50% chance to ignore corporeal damage, and its ability to pass through solid objects. To use this option, the spirit shaman sacrifices a portion of the chastise spirits damage: for every 3d6 of damage she forgoes, affected spirits are weakened for 1 round. For example, a 16th-level spirit shaman normally deals 16d6 damage, but could reduce the damage to 7d6 in order to weaken the targets for 3 rounds instead. Spirits that succeed on their Will save against the chastise spirits damage avoid the weakening effect entirely, though they still take half damage."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "The spirit shaman is proficient with clubs, daggers, darts, hand axes, javelins, longspears, quarterstaves, shortspears, spears, slings, shortbows, throwing axes, as well as light armor and shields. These represent the typical armaments of the tribal cultures from which spirit shamans originate."
+        },
+        "Wild Empathy": {
+          "description": "Drawing on her connection to animal spirits, the spirit shaman can use body language, vocalizations, and demeanor to shift the disposition of an animal (any creature of the animal type). This works like a Diplomacy check to improve a person's attitude. She rolls 1d20 and adds her spirit shaman level plus her Charisma modifier to determine the result. Domesticated animals typically start as indifferent, while wild animals are generally unfriendly. Both the spirit shaman and the animal must be able to observe one another, requiring them to be within 30 feet under normal circumstances. Influencing an animal in this manner generally takes about 1 minute, though it can take more or less time depending on circumstances. This ability does not work on magical beasts."
+        }
+      },
+      "spells": {
+        "inheritsFrom": "Druid"
+      }
+    },
+    "spells": {
+      "known": [
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          1,
+          1
+        ],
+        [
+          3,
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          2,
+          1,
+          1
+        ],
+        [
+          3,
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2,
+          1,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          2
+        ]
+      ],
+      "perDay": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          4,
+          2
+        ],
+        [
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          4,
+          2
+        ],
+        [
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          4,
+          2
+        ],
+        [
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          4,
+          2
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          4,
+          2
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4,
+          2
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4,
+          2
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4,
+          2
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          3
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          4
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5
+        ]
+      ],
+      "slug": "spiritshamanspells"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "A spirit shaman is proficient with the club, dagger, dart, hand axe, javelin, longspear, quarterstaff, shortspear, spear, sling, shortbow, throwing axe, and with light armor and shields. These are the weapons commonly used by the tribal societies in which spirit shamans are found.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A spirit shaman casts divine spells from the druid spell list. She can cast any spell she has retrieved, much like a bard or sorcerer can cast any spell she knows without preparing it ahead of time. To retrieve or cast a spell, a spirit shaman must have a Wisdom score of at least 10 + the spell level (Wisdom 10 for 0-level spells, Wisdom 11 for 1st-level spells, and so on). The Difficulty Class for a saving throw against a spirit shaman's spell is 10 + the spell level + the spirit shaman's Charisma modifier. Like other spellcasters, a spirit shaman can cast only a certain number of spells of each spell level per day. Her base daily spell allotment is given in the class table. In addition, she receives bonus spells per day if she has a high Wisdom score. Like a sorcerer, a spirit shaman knows only a small number of spells. However, each day a spirit shaman may change the spells she knows. When a spirit shaman meditates to regain her daily allotment of spells, she sends forth her spirit guide to bargain with the spirits and retrieve knowledge of the specific druid spells she will be able to use that day. She can cast any spell she has retrieved at any time, assuming she has not yet used up her spells per day for that spell level. For example, a 3rd-level spirit shaman can retrieve three 0-level, two 1st-level, and one 2nd-level druid spells. She can cast 0-level spells five times, 1st-level spells four times, and her 2nd-level spell two times in the course of the day. She might end up using the same 0-level spell five times, or one 0-level spell two times and another 0-level spell three times, or any combination that adds up to five uses of any of her 0-level spells. If a spirit shaman knows any metamagic feats, she applies them to her spells when she retrieves her spells for the day. For example, a spirit shaman might choose to retrieve an empowered flame strike by using a 6th-level spell retrieved slot. Any time she uses flame strike during the ensuing day, she must use a 6th-level spell slot to cast it, and it is always empowered. A spirit shaman could use a 4th-level spell slot and a 6th-level spell slot to retrieve flame strike and empowered flame strike if she wanted to have both spells available to her in a day. A spirit shaman cannot choose to alter her spells with metamagic feats on the fly, as other spontaneous casters do. Spirit shamans using metamagic feats do not have an increased casting time as sorcerers do. Each spirit shaman must choose a time at which she must spend 1 hour in quiet meditation to regain her daily allotment of spells and bargain with the spirits for the specific spells she knows on that day.",
+        "name": "Spells"
+      },
+      {
+        "description": "All spirit shamans have a spirit guide, a personification of the spirit world. In some sense a spirit shaman and her guide are one being, both knowing and seeing and experiencing the same things. Unlike a familiar, a spirit guide is not a separate entity from a spirit shaman. She is the only one who can perceive or interact with her guide. It exists only inside her own mind and soul. The spirit shaman's spirit guide confers greater awareness of her surroundings, and grants her the Alertness feat. The spirit guide grants additional abilities at 5th and 10th level Follow the Guide and Guide Magic, below). The exact form of the spirit guide is chosen by the spirit shaman at 1st level, usually for the qualities it represents, as shown above. The exact form of a spirit guide is purely personal preference, and confers no special advantages or disadvantages.",
+        "name": "Spirit Guide"
+      },
+      {
+        "description": "Guided by her insight into animal spirits, a spirit shaman can use body language, vocalizations, and demeanor to improve the attitude of an animal (a monster of the animal type). This ability functions just like a Diplomacy check made to improve the attitude of a person. The spirit shaman rolls 1d20 and adds her spirit shaman level and her Charisma modifier to determine the wild empathy check result. The typical domestic animal has a starting attitude of indifferent, while wild animals are usually unfriendly. To use wild empathy, the spirit shaman and the animal must be able to study each other, which means that they must be within 30 feet of one another under normal conditions. Generally, influencing an animal in this way takes 1 minute (as with influencing people, use of this ability might take more or less time). A spirit shaman cannot use this ability to influence a magical beast.",
+        "name": "Wild Empathy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 2nd level, a spirit shaman can use divine energy granted by her patrons in the spirit world to damage hostile spirits the What is a Spirit' sidebar). Chastising spirits is a standard action that deals 1d6 damage/shaman level to all spirits within 30 feet of the shaman. The affected spirits get a Will save (DC 10+ shaman level + Cha modifier) for half damage. When using this ability against incorporeal creatures, a spirit shaman does not have to roll the normal 50% miss chance-the effect hits the spirits automatically. A spirit shaman can use this ability a number of times per day equal to 3 + her Charisma modifier.",
+        "name": "Chastise Spirits",
+        "type": "(Su)"
+      },
+      {
+        "description": "The spirit shaman's spirit guide perceives nearby spirits. At will, the spirit shaman can use detect spirits as a spell-like ability. It functions just like detect undead, except it detects creatures that are considered spirits.",
+        "name": "Detect Spirits",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Starting at 4th level, a spirit shaman can perform a special rite to gain a special blessing. The shaman goes into a meditative state in which she travels to the spirit world. Performing the rite requires 10 minutes; the spirit shaman can only ward herself with this ability and cannot perform the rite for anyone else. The blessing functions just like protection from evil, except it protects against spirits and lasts until it is dismissed or dispelled. If this ability is dispelled, the spirit shaman can recreate it simply by taking 10 minutes to do so.",
+        "name": "Blessing of the Spirits",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 5th level and higher, a spirit shaman's spirit guide helps her maintain control of her mind. If a spirit shaman is affected by an enchantment spell or effect and fails her saving throw, she can attempt it again 1 round later at the same DC. She only gets this one extra chance to succeed on her saving throw.",
+        "name": "Follow the Guide",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 6th level, a spirit shaman confers the ghost touch special ability to any weapon she holds for as long as she holds it. She also becomes resistant to the touch attacks of incorporeal creatures, and may use her normal Armor Class (not her touch AC) against any touch attack delivered by an incorporeal creature.",
+        "name": "Ghost Warrior",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 7th level, a spirit shaman can perform a special rite once per day to ward herself and her companions against hostile spirits. Performing the rite requires 1 minute. The warding lasts for 10 minutes per level and otherwise functions like magic circle against evil, except it protects against spirits.",
+        "name": "Warding of the Spirits",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 9th level and higher, a spirit shaman learns how to temporarily transform herself into a spirit. Once per day, as a standard action, she can make herself incorporeal for up to 1 minute. While incorporeal, a spirit shaman gains all the advantages of the incorporeal subtype, including immunity to all nonmagical attack forms, a 50% chance to ignore damage from any corporeal source, and the ability to enter or pass through solid objects. The spirit shaman loses any armor or natural armor bonus to AC, but gains a deflection bonus equal to her Charisma modifier (minimum +1). She has no Strength score against corporeal creatures or objects and cannot make physical attacks against them, but she gains the ability to make a melee touch attack (add the spirit shaman's Dexterity modifier to her attack roll) that deals 1d6 points of damage to a corporeal target. This effect is treated as a magic weapon for the purpose of overcoming damage reduction. At 15th level and higher, a spirit shaman can use her spirit form twice per day. At 20th level, she can use this ability three times per day.",
+        "name": "Spirit Form",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 10th level, as a free action, a spirit shaman can assign her spirit guide the task of concentrating on a spell or spell-like ability that is maintained through concentration. The spirit shaman can act normally while her spirit guide concentrates on the spell. A spirit guide can concentrate on only one spell at a time. If necessary to maintain the spell, the spirit guide makes Concentration checks for the spirit shaman, using the spirit shaman's normal Concentration modifier. A spirit guide does not have to make Concentration checks for circumstances such as the spirit shaman taking damage. The spirit itself is not present for anyone to interrupt or otherwise interact with.",
+        "name": "Guide Magic",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 11th level, a spirit shaman gains the ability to call back the spirit of a dead creature before the spirit of the deceased has completely left the body. Once per week, she can reconnect a spirit to its body, restoring life to a recently deceased creature. The ability must be used within 1 round of the victim's death. This ability functions like raise dead, except that the raised creature receives no level loss, no thus may survive a blow that otherwise would have killed her. The rite's protection is discharged once it is triggered,",
+        "name": "Recall Spirit",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Starting at 13th level, as a full-round action, a spirit shaman can force a possessing creature or spirit out of the body it inhabits (for example, a ghost with the malevolence ability). To exorcise a possessing creature, she makes a class level check (also adding her Charisma modifier, if any), against a DC of 10 + the possessing creature's HD + its Charisma modifier (if any). If her result equals or exceeds the DC, she succeeds in forcing the possessor from the body, with the normal results based on its method of possession. A spirit so exorcised cannot attempt to possess the same victim for 24 hours.",
+        "name": "Exorcism",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 16th level and higher, a spirit shaman can choose to strip spirits of their defenses instead of damaging them with her chastise spirits ability. When a spirit is weakened, it loses its spell resistance and any damage reduction overcome by magic weapons, silver or cold iron weapons, and aligned weapons (but not damage reduction overcome by adamantine weapons or not overcome by anything). In addition, an incorporeal spirit loses its immunity to nonmagical attack, its 50% chance to ignore damage from corporeal sources, and its ability to move into or through objects. To weaken spirits, a spirit shaman uses her chastise spirits ability but chooses to do less damage in exchange for weakening the spirits for a short time. For each 3d6 of chastise spirit damage the spirit shaman foregoes, the affected spirits are weakened for 1 round. For example, a 16th-level spirit shaman chastising two dread wraiths deals 16d6 points of damage to each dread wraith, but she could choose to deal 7d6 points of damage to each wraith and weaken them for 3 rounds. Spirits that make their Will save against the chastise spirits damage are unaffected by the weakening effect (but still take half the damage).",
+        "name": "Weaken Spirits",
+        "type": "(Su)"
+      },
+      {
+        "description": "A spirit shaman knows how to vanish bodily into the spirit world beginning at 17th level. This ability functions like the spell shadow walk, except that a spirit shaman can only transport herself. She need not use the ability in a shadowy area, and she travels through the Plane of Spirits, not the Plane of Shadows. A spirit shaman can use this ability once per day.",
+        "name": "Spirit Journey",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 19th level, a spirit shaman learns how to perform a special rite that guards her from death. Performing the rite requires 8 hours, and the spirit shaman must bargain away part of her life force, expending 1,000 experience points. The rite's effect lasts until it is dismissed or discharged. While under the protection of this rite, a spirit shaman instantly receives the benefit of a heal spell (caster level equal to her spirit shaman level) if she is reduced to 0 hit points or lower or has any ability score reduced to 0. The spirit shaman receives the spell's effect immediately, even if reduced to -10 hit points or lower by an enemy attack, and thus may survive a blow that otherwise would have killed her. The rite's protection is discharged once it is triggered, and the spirit shaman must perform a new rite to use this ability again.",
+        "name": "Favored of the Spirits",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 20th level, a spirit shaman becomes one with the spirit world. She is forevermore treated as a fey instead of a humanoid for purposes of spells and magical effects. Additionally, she gains damage reduction 5/cold iron.",
+        "name": "Spirit Who Walks",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Handle Animal",
+      "Heal",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Listen",
+      "Profession",
+      "Ride",
+      "Spellcraft",
+      "Spot",
+      "Survival"
+    ],
+    "description": "By bargaining with living spirits, the spirit shaman gains power over the natural world and mighty divine magic.",
+    "hasCantrips": true,
+    "hitDie": "d8",
+    "name": "Spirit Shaman",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Spirit guide",
+          "wild empathy"
+        ],
+        "spellsPerDay": "3,2,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Chastise spirits"
+        ],
+        "spellsPerDay": "4,3,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Detect spirits"
+        ],
+        "spellsPerDay": "5,4,2,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Blessing of the spirits"
+        ],
+        "spellsPerDay": "6,5,3,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Follow the guide"
+        ],
+        "spellsPerDay": "6,6,4,2,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Ghost warrior"
+        ],
+        "spellsPerDay": "6,6,5,3,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Warding of the spirits"
+        ],
+        "spellsPerDay": "6,6,6,4,2,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "6,6,6,5,3,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Spirit form 1/day"
+        ],
+        "spellsPerDay": "6,6,6,6,4,2,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Guide magic"
+        ],
+        "spellsPerDay": "6,6,6,6,5,3,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 8,
+        "fortSave": 7,
+        "level": 11,
+        "refSave": 3,
+        "special": [
+          "Recall spirit"
+        ],
+        "spellsPerDay": "6,6,6,6,6,4,2,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 12,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,5,3,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 13,
+        "refSave": 4,
+        "special": [
+          "Exorcism"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,4,2,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 10,
+        "fortSave": 9,
+        "level": 14,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,5,3,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 11,
+        "fortSave": 9,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Spirit form 2/day"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,4,2,-",
+        "willSave": 9
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 16,
+        "refSave": 5,
+        "special": [
+          "Weaken spirits"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,5,3,-",
+        "willSave": 10
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 17,
+        "refSave": 5,
+        "special": [
+          "Spirit journey"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,4,2",
+        "willSave": 10
+      },
+      {
+        "bab": 13,
+        "fortSave": 11,
+        "level": 18,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,5,3",
+        "willSave": 11
+      },
+      {
+        "bab": 14,
+        "fortSave": 11,
+        "level": 19,
+        "refSave": 6,
+        "special": [
+          "Favored of the spirits"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,4",
+        "willSave": 11
+      },
+      {
+        "bab": 15,
+        "fortSave": 12,
+        "level": 20,
+        "refSave": 6,
+        "special": [
+          "Spirit form 3/day",
+          "spirit who walks"
+        ],
+        "spellsPerDay": "6,6,6,6,6,6,6,6,6,5",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier",
+    "spellsKnown": [
+      "3,1,-,-,-,-,-,-,-,-",
+      "3,2,-,-,-,-,-,-,-,-",
+      "3,2,1,-,-,-,-,-,-,-",
+      "3,3,1,-,-,-,-,-,-,-",
+      "3,3,1,1,-,-,-,-,-,-",
+      "3,3,2,1,-,-,-,-,-,-",
+      "3,3,2,1,1,-,-,-,-,-",
+      "3,3,2,2,1,-,-,-,-,-",
+      "3,3,3,2,1,1,-,-,-,-",
+      "3,3,3,2,2,1,-,-,-,-",
+      "3,3,3,3,2,1,1,-,-,-",
+      "3,3,3,3,2,2,1,-,-,-",
+      "3,3,3,3,3,2,1,1,-,-",
+      "3,3,3,3,3,2,2,1,-,-",
+      "3,3,3,3,3,3,2,1,1,-",
+      "3,3,3,3,3,3,2,2,1,-",
+      "3,3,3,3,3,3,3,2,1,1",
+      "3,3,3,3,3,3,3,2,2,1",
+      "3,3,3,3,3,3,3,3,2,2",
+      "3,3,3,3,3,3,3,3,3,2"
+    ]
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-15T17:53:17.345Z",
+    "sourceUrl": "https://dndtools.net/spells/complete-warrior--61/",
+    "type": "spell"
+  },
+  "mapping": {
+    "overrides": {
+      "Augment Familiar": {
+        "description": "When cast on your familiar, this spell bestows a +4 enhancement bonus to its Strength, Dexterity, and Constitution scores, grants it damage reduction 5/magic, and gives it a +2 resistance bonus on all saving throws."
+      },
+      "Cloak of Bravery": {
+        "description": "You and every ally within the emanation receive a morale bonus on saving throws against fear effects. This bonus equals your caster level, up to a maximum of +10 at caster level 10th."
+      },
+      "Cloak of Bravery, Greater": {
+        "description": "This enhanced version of cloak of bravery renders you and all allies within the emanation completely immune to fear effects and also grants them a +2 morale bonus on attack rolls. Allies who lack line of sight to you do not benefit from this spell."
+      },
+      "Cursed Blade": {
+        "description": "A melee weapon enchanted by this spell inflicts wounds that resist normal healing. Damage dealt directly by the weapon (excluding bonus damage from special properties like flaming, holy, wounding, and similar effects) cannot be healed by any means until the injured creature receives a remove curse spell or an equivalent curse-removing effect. If a creature is slain by a weapon under this spell's effect, it cannot be brought back to life unless remove curse or a similar effect is first cast on the corpse, or unless true resurrection is used."
+      },
+      "Hound of Doom": {
+        "description": "You draw upon shadow-stuff from the Plane of Shadow to fashion a loyal, dog-like companion that obeys you for the spell's duration. The hound of doom uses dire wolf statistics with these modifications: it gains a deflection bonus to Armor Class equal to your Charisma bonus, its hit point total at creation equals your full normal hit points, and it uses your base attack bonus in place of its own (still applying its +7 Strength bonus and -1 size penalty as usual). You can direct the hound as a move action, as though it were fully trained in all tricks from the Handle Animal skill. The hound is destroyed if reduced to 0 hit points. It counts as a magical beast for the purposes of spells and effects, but it can also be dispelled. Only one hound of doom can exist at a time; casting this spell again while a previous hound still exists immediately dispels the first one."
+      },
+      "Lion's Roar": {
+        "description": "You unleash a thunderous roar that inflicts 1d8 points of sonic damage per two caster levels upon all enemies in the area and stuns them for 1 round. A successful Fortitude save reduces the damage by half and prevents the stunning. Additionally, all allies within the area receive a +1 morale bonus on attack rolls and saving throws against fear effects, along with temporary hit points equal to 1d8 + your caster level (capped at 1d8+20 at 20th caster level)."
+      },
+      "Phantom Threat": {
+        "description": "You implant a false perception in the target's mind that it is beset by more opponents than are actually present. The subject does not see or interact with these illusory foes and does not waste attacks on them, but it is treated as flanked regardless of whether any other creatures actually threaten it. No amount of persuasion from others can overcome this effect - only a successful saving throw at the time of casting can prevent it."
+      },
+      "Valiant Fury": {
+        "description": "The target gains a +4 morale bonus to Strength and Constitution and a +2 morale bonus on Will saves. Furthermore, when making a full attack action, the affected creature can make one extra attack with any weapon it holds, using its full base attack bonus plus all applicable modifiers. This extra attack does not stack with similar effects such as haste, and it does not provide an additional action that could be used for casting a spell or performing other non-attack activities."
+      }
+    }
+  },
+  "raw": [
+    {
+      "castingTime": "1 action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "This spell grants your familiar a +4 enhancement bonus to Strength, Dexterity and Constitution, damage reduction 5/magic, and a +2 resistance bonus on saving throws.",
+      "descriptors": [],
+      "duration": "Concentration + 1 round/level",
+      "levelEntries": [
+        {
+          "className": "Hexblade",
+          "level": 1
+        },
+        {
+          "className": "Sorcerer",
+          "level": 2
+        },
+        {
+          "className": "Wizard",
+          "level": 2
+        }
+      ],
+      "name": "Augment Familiar",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Fortitude negates (harmless)",
+      "school": "Transmutation",
+      "slug": "augment-familiar",
+      "spellResistance": "Yes (harmless)",
+      "target": "Your familiar"
+    },
+    {
+      "area": "60-ft.-radius emanation centered on you",
+      "castingTime": "1 action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "All allies within the emanation (including you) gain a morale bonus on saves against fear effects equal to your caster level (to a maximum of +10 at 10th level).",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "10 minutes/level",
+      "levelEntries": [
+        {
+          "className": "Paladin",
+          "level": 2
+        },
+        {
+          "className": "Cleric",
+          "level": 3
+        },
+        {
+          "className": "Courage",
+          "level": 3
+        }
+      ],
+      "name": "Cloak of Bravery",
+      "range": "60 ft.",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Abjuration",
+      "slug": "cloak-of-bravery",
+      "spellResistance": "Yes (harmless)"
+    },
+    {
+      "area": "1-mile-radius emanation centered on you",
+      "castingTime": "",
+      "components": [],
+      "description": "As cloak of bravery, except all allies within the emanation (including you) are immune to fear effects and gain a +2 morale bonus on attack rolls.Allies who don't have line of sight to you are unaffected.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 hour/level",
+      "levelEntries": [
+        {
+          "className": "Courage",
+          "level": 9
+        }
+      ],
+      "name": "Cloak of Bravery, Greater",
+      "range": "1 mile; see text",
+      "savingThrow": "",
+      "school": "Abjuration",
+      "slug": "cloak-of-bravery-greater",
+      "spellResistance": ""
+    },
+    {
+      "castingTime": "1 action",
+      "components": [
+        "V"
+      ],
+      "description": "A weapon affected by this spell deals wounds that can't be healed in the usual fashion.Any damage dealt by the weapon (not including damage from special weapon properties such as flaming, holy, wounding, and so on) cannot be cured by any means until the damaged individual has received a remove curse spell (or some other effect that neutralizes a curse).If a creature is slain by a weapon that is under the effect of this spell, it can't be raised from the dead unless a remove curse spell (or similar effect) is cast on the body or a true resurrection spell is used.",
+      "descriptors": [],
+      "duration": "1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Assassin",
+          "level": 4
+        },
+        {
+          "className": "Hexblade",
+          "level": 4
+        }
+      ],
+      "name": "Cursed Blade",
+      "range": "Touch",
+      "savingThrow": "None",
+      "school": "Necromancy",
+      "slug": "cursed-blade",
+      "spellResistance": "No",
+      "target": "One melee weapon"
+    },
+    {
+      "castingTime": "1 round",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You shape the essence of the Plane of Shadow to create a powerful doglike companion that serves you loyally for the duration of the spell.The hound of doom has the statistics of a dire wolf with the following adjustments: It gains a deflection bonus to Armor Class equal to your Charisma bonus, its hit points when created are equal to your full normal hit points, and it uses your base attack bonus instead of its own (adding its +7 bonus from Strength and -1 penalty from size as normal).You can command a hound of doom as a move action just as if it were fully trained to perform all the tricks listed in the Handle Animal skill.If a hound of doom's hit points are reduced to 0, it is destroyed.A hound of doom is treated as a magical beast for the purpose of spells and effects, but it can also be dispelled.You can only have one hound of doom in existence at a time.If you cast a second hound of doom spell while the first is still active, the first hound is instantly dispelled.",
+      "descriptors": [],
+      "duration": "1 minute/level (D) or until destroyed",
+      "effect": "Shadowy hound",
+      "levelEntries": [
+        {
+          "className": "Hexblade",
+          "level": 3
+        }
+      ],
+      "name": "Hound of Doom",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "None",
+      "school": "Illusion",
+      "slug": "hound-of-doom",
+      "spellResistance": "No",
+      "subschool": "Shadow"
+    },
+    {
+      "area": "120-ft.-radius burst centered on you",
+      "castingTime": "1 action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "You emit a titanic roar that deals 1d8 points of sonic damage per two caster levels to all enemies within the spell's area and stuns them for 1 round.A successful Fortitude save halves the damage and negates the stunning effect.In addition, all allies within the spell's area gain a +1 morale bonus on attack rolls and saves against fear effects, plus temporary hit points equal to 1d8 + caster level (to a maximum of 1d8+20 temporary hit points at caster level 20th).",
+      "descriptors": [
+        "Sonic"
+      ],
+      "duration": "Instantaneous or 1 minute/level",
+      "levelEntries": [
+        {
+          "className": "Cleric",
+          "level": 8
+        },
+        {
+          "className": "Courage",
+          "level": 8
+        }
+      ],
+      "name": "Lion's Roar",
+      "range": "120 ft.",
+      "savingThrow": "Fortitude partial or Will negates (harmless); see text",
+      "school": "Evocation",
+      "slug": "lions-roar",
+      "spellResistance": "Yes or Yes (harmless); see text"
+    },
+    {
+      "castingTime": "1 action",
+      "components": [
+        "V",
+        "S"
+      ],
+      "description": "You create the sensation in the subject's mind that he is threatened by more foes than he actually faces.Though the subject doesn't actually perceive any additional enemies (and thus doesn't waste any attacks on the phantasm), a creature affected by this spell is considered flanked, even if not threatened by other creatures.No amount of convincing by others can help the victim of this spell avoid its effect-only a successful saving throw against the spell when initially cast can help the target.",
+      "descriptors": [
+        "Mind-Affecting"
+      ],
+      "duration": "1 round/level",
+      "levelEntries": [
+        {
+          "className": "Bard",
+          "level": 1
+        },
+        {
+          "className": "Hexblade",
+          "level": 1
+        }
+      ],
+      "name": "Phantom Threat",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates",
+      "school": "Illusion",
+      "slug": "phantom-threat",
+      "spellResistance": "Yes",
+      "subschool": "Phantasm",
+      "target": "One creature"
+    },
+    {
+      "castingTime": "1 action",
+      "components": [
+        "V",
+        "S",
+        "DF"
+      ],
+      "description": "The affected creature gains a +4 morale bonus to Strength and Constitution and a +2 morale bonus on Will saves.In addition, when making a full attack, the affected creature may make one additional attack with any weapon he is holding.The attack is made using the creature's full base attack bonus, plus any modifiers appropriate to the situation.(This effect is not cumulative with similar effects, such as that provided by the haste spell, nor does it actually grant an extra action, so you can't use it to cast a second spell or otherwise take an extra action in the round).",
+      "descriptors": [],
+      "duration": "1 round/level",
+      "levelEntries": [
+        {
+          "className": "Courage",
+          "level": 5
+        }
+      ],
+      "name": "Valiant Fury",
+      "range": "Close (25 ft. + 5 ft./2 levels)",
+      "savingThrow": "Will negates (harmless)",
+      "school": "Transmutation",
+      "slug": "valiant-fury",
+      "spellResistance": "Yes (harmless)",
+      "target": "One living creature"
+    }
+  ]
+}

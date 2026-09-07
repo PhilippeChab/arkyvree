@@ -1,0 +1,396 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.293Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/ghost-faced-killer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "improvedinitiative": "Improved Initiative",
+      "powerattack": "Power Attack"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Ghost Step"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Sudden Strike"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Frightful Attack"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Ghost Step (Ethereal)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Ghost Sight"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Frightful Cleave"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.intimidate.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedinitiative.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.powerattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Ghost-faced Killer Class Feature",
+    "features": {
+      "Frightful Attack": {
+        "description": "Beginning at 3rd level, a ghost-faced killer can panic onlookers and even frighten his victim to death by making a sudden strike attack. Once per day, a ghost-faced killer can designate a melee sudden strike attack as a frightful attack. The ghost-faced killer must use his Power Attack feat on the attack and must take a penalty of at least -1 to his attack roll. If the attack deals damage to the target, the victim must make a Will save (DC 10 + ghost-faced killer's class level + ghost-faced killer's Cha modifier). If the victim succeeds, she is shaken for 1 round per class level of the ghost-faced killer; if she fails, she instantly dies of fear. Creatures immune to mind-affecting effects, immune to fear, or with Hit Dice that exceed the ghost-faced killer's character level are immune to this frightful attack. In addition, all creatures within 30 feet who see the frightful attack (not including the victim, the ghost-faced killer, or the ghost-faced killer's allies) become panicked (if their Hit Dice are less than the ghost-faced killer's class level + his Cha modifier) or shaken (if their Hit Dice equal or exceed the ghost-faced killer's class level + Cha modifier) for 1 round per class level of the ghostfaced killer. A successful Will save (DC 10 + ghost-faced killer's class level + ghost-faced killer's Cha modifier + damage bonus from Power Attack on the frightful attack) negates this effect. A ghost-faced killer can use this ability one additional time per day for every three levels gained above 3rd (2/day at 6th level, 3/day at 9th level).",
+        "level": 3,
+        "seedName": "Frightful Attack (Ghost-faced Killer)",
+        "stackable": true
+      },
+      "Frightful Cleave": {
+        "description": "If a 10th-level ghost-faced killer slays a foe with his frightful attack (either from the damage dealt or because of a failed save against its fear effect), he gets an immediate extra melee attack against another target within reach. If the new target is flat-footed, this extra attack is also a frightful attack, though it doesn't count against the ghost-faced killer's daily limit of frightful attacks. This ability otherwise functions exactly as the Cleave feat",
+        "level": 10,
+        "seedName": "Frightful Cleave (Ghost-faced Killer)"
+      },
+      "Ghost Sight": {
+        "description": "Starting at 7th level, a ghost-faced killer can see ethereal and invisible creatures and objects as easily as he sees material creatures and objects.",
+        "level": 7,
+        "seedName": "Ghost Sight (Ghost-faced Killer)"
+      },
+      "Ghost Step": {
+        "description": "A ghost-faced killer can become invisible for 1 round once per day. Using this ability is a swift action that does not provoke attacks of opportunity. A ghost-faced killer can use this ability one additional time per day for every three class levels gained above 1st (2/day at 4th level, 3/day at 7th level, and 4/day at 10th level). At 6th level, a ghost-faced killer can become ethereal when using ghost step instead of becoming invisible.",
+        "level": 1,
+        "seedName": "Ghost Step (Ghost-faced Killer)",
+        "stackable": true
+      },
+      "Ghost Step (Ethereal)": {
+        "description": "",
+        "level": 6,
+        "seedName": "Ghost Step (Ethereal) (Ghost-faced Killer)"
+      },
+      "Sudden Strike": {
+        "description": "If a ghost-faced killer of 2nd level or higher can catch an opponent when she is unable to defend herself effectively from his attack, he can strike a vital spot for extra damage. Whenever a ghost-faced killer's target is denied her Dexterity bonus to Armor Class (if any) against his attack, the ghost-faced killer deals an extra 1d6 points of damage with his attack. The bonus damage increases by 1d6 every three levels (+2d6 at 5th level, +3d6 at 8th level). This ability otherwise works like the ninja ability described on.",
+        "level": 2,
+        "seedName": "Sudden Strike (Ghost-faced Killer)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Ghost-faced killers are proficient with all simple and martial weapons, and with light armor.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Ghost-faced Killer)"
+      }
+    },
+    "occurrenceMap": {
+      "Frightful Attack": "Frightful Attack",
+      "Frightful Cleave": "Frightful Cleave",
+      "Ghost Sight": "Ghost Sight",
+      "Ghost Step": "Ghost Step",
+      "Ghost Step (Ethereal)": "Ghost Step",
+      "Sudden Strike": "Sudden Strike"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Ghost-faced killers are proficient with all simple and martial weapons, and with light armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A ghost-faced killer can become invisible for 1 round once per day. Using this ability is a swift action that does not provoke attacks of opportunity. A ghost-faced killer can use this ability one additional time per day for every three class levels gained above 1st (2/day at 4th level, 3/day at 7th level, and 4/day at 10th level). At 6th level, a ghost-faced killer can become ethereal when using ghost step instead of becoming invisible.",
+        "name": "Ghost Step",
+        "type": "(Su)"
+      },
+      {
+        "description": "If a ghost-faced killer of 2nd level or higher can catch an opponent when she is unable to defend herself effectively from his attack, he can strike a vital spot for extra damage. Whenever a ghost-faced killer's target is denied her Dexterity bonus to Armor Class (if any) against his attack, the ghost-faced killer deals an extra 1d6 points of damage with his attack. The bonus damage increases by 1d6 every three levels (+2d6 at 5th level, +3d6 at 8th level). This ability otherwise works like the ninja ability described on.",
+        "name": "Sudden Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a ghost-faced killer can panic onlookers and even frighten his victim to death by making a sudden strike attack. Once per day, a ghost-faced killer can designate a melee sudden strike attack as a frightful attack. The ghost-faced killer must use his Power Attack feat on the attack and must take a penalty of at least -1 to his attack roll. If the attack deals damage to the target, the victim must make a Will save (DC 10 + ghost-faced killer's class level + ghost-faced killer's Cha modifier). If the victim succeeds, she is shaken for 1 round per class level of the ghost-faced killer; if she fails, she instantly dies of fear. Creatures immune to mind-affecting effects, immune to fear, or with Hit Dice that exceed the ghost-faced killer's character level are immune to this frightful attack. In addition, all creatures within 30 feet who see the frightful attack (not including the victim, the ghost-faced killer, or the ghost-faced killer's allies) become panicked (if their Hit Dice are less than the ghost-faced killer's class level + his Cha modifier) or shaken (if their Hit Dice equal or exceed the ghost-faced killer's class level + Cha modifier) for 1 round per class level of the ghostfaced killer. A successful Will save (DC 10 + ghost-faced killer's class level + ghost-faced killer's Cha modifier + damage bonus from Power Attack on the frightful attack) negates this effect. A ghost-faced killer can use this ability one additional time per day for every three levels gained above 3rd (2/day at 6th level, 3/day at 9th level).",
+        "name": "Frightful Attack",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Ghost Step (Ethereal)"
+      },
+      {
+        "description": "Starting at 7th level, a ghost-faced killer can see ethereal and invisible creatures and objects as easily as he sees material creatures and objects.",
+        "name": "Ghost Sight",
+        "type": "(Su)"
+      },
+      {
+        "description": "If a 10th-level ghost-faced killer slays a foe with his frightful attack (either from the damage dealt or because of a failed save against its fear effect), he gets an immediate extra melee attack against another target within reach. If the new target is flat-footed, this extra attack is also a frightful attack, though it doesn't count against the ghost-faced killer's daily limit of frightful attacks. This ability otherwise functions exactly as the Cleave feat",
+        "name": "Frightful Cleave",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Search",
+      "Spot",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "Long ago, a persecuted clan of dangerous warriors sought a way to take revenge against their oppressors. Through sorcery, the spellcasters of the clan beseeched dark spirits to reveal a way that their clan might survive the coming strife and take revenge on the emperor who sought to crush them. The clan members struck a dark bargain, and the demon-spirits they had contacted provided the clan with a means to the bloody ends they desired. Donning terrifying masks to hide their identities, warriors of the clan crept into the imperial palace, and through the evil power of the pact they had made, passed invisibly and intangibly into the imperial household and murdered the entire imperial family, plunging the country into bloody civil war once again. No one ever discovered the clan's honorless actions, and to this day, no one knows what clan the ghost-faced killers came from. Today ghost-faced killers act as assassins and spies for hire, a mercenary clan that hides behind a guise of open and honorable conduct. When on a mission, they wear porcelain demon-masks of ghostly white to hide their identities and as a symbol of the pact their clan made with the demon-spirits. Through training and discipline, ghost-faced killers learn the deadliest and most terrifying ways to attack foes, and through their mystic connection with spirits, ghost-faced killers learn to turn invisible, walk through walls, and even see with the eyes of the spirits themselves. Most ghost-faced killers begin their careers as rangers or rogues, though ninjas are also common. Fighters are only slightly less common. Few monks, barbarians, or members of spellcasting classes choose to become ghost-faced killers, but such characters are not unknown.",
+    "hitDie": "d8",
+    "name": "Ghost-faced Killer",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any evil",
+        "bab": 5,
+        "feats": [
+          "Improved Initiative",
+          "Power Attack"
+        ],
+        "skills": [
+          {
+            "name": "Hide",
+            "ranks": 6
+          },
+          {
+            "name": "Concentration",
+            "ranks": 4
+          },
+          {
+            "name": "Intimidate",
+            "ranks": 8
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 6
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Any evil. Skills: Hide 6 ranks, Concentration 4 ranks, Intimidate 8 ranks, Move Silently 6 ranks Feats: Improved Initiative, Power Attack"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Ghost step 1/day"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Sudden strike +1d6"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Frightful attack 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Ghost step 2/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Sudden strike +2d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Frightful attack 2/day",
+          "ghost step (ethereal)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Ghost sight",
+          "ghost step 3/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Sudden strike +3d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Frightful attack 3/day"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Frightful cleave",
+          "ghost step 4/day"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

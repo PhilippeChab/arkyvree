@@ -1,0 +1,397 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-18T13:18:51.699Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/arcane-archer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "pointblankshot": "Point Blank Shot",
+      "preciseshot": "Precise Shot",
+      "weaponfocuslongbow": "Weapon Focus: Longbow",
+      "weaponfocusshortbow": "Weapon Focus: Shortbow"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        "name": "Enhance Arrow"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Imbue Arrow"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Seeker Arrow"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Phase Arrow"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Hail Of Arrows"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Arrow Of Death"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.pointblankshot.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.preciseshot.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "feats.weaponfocuslongbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.weaponfocusshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Elf",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Arcane Archer Class Feature",
+    "features": {
+      "Arrow of Death": {
+        "description": "At 10th level, an arcane archer can craft a specially prepared lethal arrow. If this arrow hits and deals damage, the target must succeed on a DC 20 Fortitude save or die instantly. Creating this arrow requires one full day of work, and only the arcane archer who crafted it can use it. The arrow remains potent for up to one year, and the archer can only maintain one such arrow at a time.",
+        "level": 10,
+        "seedName": "Arrow of Death (Arcane Archer)"
+      },
+      "Enhance Arrow": {
+        "description": "Beginning at 1st level, any nonmagical arrow that an arcane archer fires is automatically treated as magical, receiving a +1 enhancement bonus. The archer does not need to expend gold or experience points to achieve this effect. These magically enhanced arrows only work when used by the arcane archer herself. For every two levels gained beyond 1st level in this prestige class, the enhancement bonus on her arrows increases by +1 (+1 at 1st level, +2 at 3rd level, +3 at 5th level, +4 at 7th level, and +5 at 9th level).",
+        "level": 1,
+        "seedName": "Enhance Arrow (Arcane Archer)",
+        "stackable": true
+      },
+      "Hail of Arrows": {
+        "description": "At 8th level or higher, an arcane archer may once per day replace her normal attacks with a volley of arrows directed at multiple foes. She can target one enemy for each arcane archer level she possesses, provided each target is within range. Every attack in the volley uses her highest attack bonus, and no single enemy can be struck by more than one arrow from this volley.",
+        "level": 8,
+        "seedName": "Hail of Arrows (Arcane Archer)"
+      },
+      "Imbue Arrow": {
+        "description": "Starting at 2nd level, an arcane archer learns to channel an area spell through an arrow she fires. The spell's area of effect is centered where the arrow strikes, regardless of whether the spell would normally need to originate from the caster. This lets the archer take advantage of the bow's range instead of being limited by the spell's normal range. Casting the spell and firing the arrow together requires a standard action. If the arrow is not released during the same round the spell is cast, the spell is lost.",
+        "level": 2,
+        "seedName": "Imbue Arrow (Arcane Archer)"
+      },
+      "Phase Arrow": {
+        "description": "At 6th level, an arcane archer gains the ability to fire one arrow per day that passes through solid matter in a direct line toward a known target within range. The arrow travels straight to the target, phasing through any nonmagical walls or obstacles along the way. Magical barriers such as a wall of force or wall of fire will still block it. This effect ignores cover, concealment, and armor modifiers, but the attack is otherwise rolled normally. Using this ability requires a standard action, which includes releasing the arrow.",
+        "level": 6,
+        "seedName": "Phase Arrow (Arcane Archer)"
+      },
+      "Seeker Arrow": {
+        "description": "Upon reaching 4th level, an arcane archer may fire a single arrow once per day at any target she is aware of within range. The arrow magically guides itself toward the target, navigating around obstacles and corners. Only a completely impassable barrier or exceeding the arrow's maximum range can stop it. This negates any cover or concealment modifiers the target might have, though the attack roll is otherwise resolved normally. Activating this ability is a standard action that includes firing the arrow.",
+        "level": 4,
+        "seedName": "Seeker Arrow (Arcane Archer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "An arcane archer gains proficiency with all simple weapons, all martial weapons, light and medium armor, and shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Arcane Archer)"
+      }
+    },
+    "occurrenceMap": {
+      "Arrow Of Death": "Arrow of Death",
+      "Enhance Arrow": "Enhance Arrow",
+      "Hail Of Arrows": "Hail of Arrows",
+      "Imbue Arrow": "Imbue Arrow",
+      "Phase Arrow": "Phase Arrow",
+      "Seeker Arrow": "Seeker Arrow"
+    },
+    "overrides": {
+      "description": "The arcane archer combines martial archery expertise with arcane magical ability, weaving spells into her ranged combat techniques.",
+      "features": {
+        "Arrow of Death": {
+          "description": "At 10th level, an arcane archer can craft a specially prepared lethal arrow. If this arrow hits and deals damage, the target must succeed on a DC 20 Fortitude save or die instantly. Creating this arrow requires one full day of work, and only the arcane archer who crafted it can use it. The arrow remains potent for up to one year, and the archer can only maintain one such arrow at a time."
+        },
+        "Enhance Arrow": {
+          "description": "Beginning at 1st level, any nonmagical arrow that an arcane archer fires is automatically treated as magical, receiving a +1 enhancement bonus. The archer does not need to expend gold or experience points to achieve this effect. These magically enhanced arrows only work when used by the arcane archer herself. For every two levels gained beyond 1st level in this prestige class, the enhancement bonus on her arrows increases by +1 (+1 at 1st level, +2 at 3rd level, +3 at 5th level, +4 at 7th level, and +5 at 9th level)."
+        },
+        "Hail of Arrows": {
+          "description": "At 8th level or higher, an arcane archer may once per day replace her normal attacks with a volley of arrows directed at multiple foes. She can target one enemy for each arcane archer level she possesses, provided each target is within range. Every attack in the volley uses her highest attack bonus, and no single enemy can be struck by more than one arrow from this volley."
+        },
+        "Imbue Arrow": {
+          "description": "Starting at 2nd level, an arcane archer learns to channel an area spell through an arrow she fires. The spell's area of effect is centered where the arrow strikes, regardless of whether the spell would normally need to originate from the caster. This lets the archer take advantage of the bow's range instead of being limited by the spell's normal range. Casting the spell and firing the arrow together requires a standard action. If the arrow is not released during the same round the spell is cast, the spell is lost."
+        },
+        "Phase Arrow": {
+          "description": "At 6th level, an arcane archer gains the ability to fire one arrow per day that passes through solid matter in a direct line toward a known target within range. The arrow travels straight to the target, phasing through any nonmagical walls or obstacles along the way. Magical barriers such as a wall of force or wall of fire will still block it. This effect ignores cover, concealment, and armor modifiers, but the attack is otherwise rolled normally. Using this ability requires a standard action, which includes releasing the arrow."
+        },
+        "Seeker Arrow": {
+          "description": "Upon reaching 4th level, an arcane archer may fire a single arrow once per day at any target she is aware of within range. The arrow magically guides itself toward the target, navigating around obstacles and corners. Only a completely impassable barrier or exceeding the arrow's maximum range can stop it. This negates any cover or concealment modifiers the target might have, though the attack roll is otherwise resolved normally. Activating this ability is a standard action that includes firing the arrow."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "An arcane archer gains proficiency with all simple weapons, all martial weapons, light and medium armor, and shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "An arcane archer is proficient with all simple and martial weapons, light armor, medium armor, and shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 1st level, every nonmagical arrow an arcane archer nocks and lets fly becomes magical, gaining a +1 enhancement bonus. Unlike magic weapons created by normal means, the archer need not spend experience points or gold pieces to accomplish this task. However, an archer's magic arrows only function for her. For every two levels the character advances past 1st level in the prestige class, the magic arrows she creates gain +1 greater potency (+1 at 1st level, +2 at 3rd level, +3 at 5th level, +4 at 7th level, and +5 at 9th level).",
+        "name": "Enhance Arrow",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level, an arcane archer gains the ability to place an area spell upon an arrow. When the arrow is fired, the spell's area is centered on where the arrow lands, even if the spell could normally be centered only on the caster. This ability allows the archer to use the bow's range rather than the spell's range. It takes a standard action to cast the spell and fire the arrow. The arrow must be fired in the round the spell is cast, or the spell is wasted.",
+        "name": "Imbue Arrow",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 4th level, an arcane archer can launch an arrow once per day at a target known to her within range, and the arrow travels to the target, even around corners. Only an unavoidable obstacle or the limit of the arrow's range prevents the arrow's flight. This ability negates cover and concealment modifiers, but otherwise the attack is rolled normally. Using this ability is a standard action (and shooting the arrow is part of the action).",
+        "name": "Seeker Arrow",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 6th level, an arcane archer can launch an arrow once per day at a target known to her within range, and the arrow travels to the target in a straight path, passing through any nonmagical barrier or wall in its way. (A wall of force, a wall of fire, or the like stops the arrow.) This ability negates cover, concealment, and even armor modifiers, but otherwise the attack is rolled normally. Using this ability is a standard action (and shooting the arrow is part of the action).",
+        "name": "Phase Arrow",
+        "type": "(Sp)"
+      },
+      {
+        "description": "In lieu of her regular attacks, once per day an arcane archer of 8th level or higher can fire an arrow at each and every target within range, to a maximum of one target for every arcane archer level she has earned. Each attack uses the archer's primary attack bonus, and each enemy may only be targeted by a single arrow.",
+        "name": "Hail of Arrows",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 10th level, an arcane archer can create an arrow of death that forces the target, if damaged by the arrow's attack, to make a DC 20 Fortitude save or be slain immediately. It takes one day to make an arrow of death, and the arrow only functions for the arcane archer who created it. The arrow of death lasts no longer than one year, and the archer can only have one such arrow in existence at a t",
+        "name": "Arrow of Death",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Craft",
+      "Hide",
+      "Listen",
+      "Move Silently",
+      "Ride",
+      "Spot",
+      "Survival",
+      "Use Rope"
+    ],
+    "description": "The arcane archer is a warrior skilled in using magic to supplement her combat prowess.",
+    "hitDie": "d8",
+    "name": "Arcane Archer",
+    "prerequisites": {
+      "parsed": {
+        "bab": 6,
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "arcane"
+          }
+        ],
+        "feats": [
+          "Point Blank Shot",
+          "Precise Shot",
+          "Weapon Focus (longbow or shortbow)"
+        ],
+        "special": [
+          "Race: Elf"
+        ]
+      },
+      "text": "Base Attack Bonus: +6 Race: Elf (or) or Half-elf Feats: Point Blank Shot, Precise Shot, Weapon Focus (longbow or shortbow) Spells: Ability to cast 1st level arcane spells."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Enhance Arrow +1"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Imbue Arrow"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Enhance Arrow +2"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Seeker Arrow"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Enhance Arrow +3"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Phase Arrow"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Enhance Arrow +4"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Hail of Arrows"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Enhance Arrow +5"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Arrow of Death"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

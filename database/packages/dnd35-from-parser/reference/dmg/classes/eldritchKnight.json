@@ -1,0 +1,254 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-22T16:50:46.265Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/eldritch-knight/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1
+        ],
+        "target": "aptitudes.fighterbonusfeat.allowed"
+      }
+    ],
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "martialweaponproficiency": "Martial Weapon Proficiency"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bonus Feat"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.martialweaponproficiency.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Eldritch Knight Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "Upon reaching 1st level, the eldritch knight selects one bonus feat from the fighter bonus feat list. This feat is granted on top of the standard feats every character earns at every third level. The eldritch knight must still satisfy all prerequisites for the chosen feat, including the requirement of four fighter levels for Weapon Specialization.",
+        "level": 1,
+        "seedName": "Bonus Feat (Eldritch Knight)"
+      },
+      "Spells per Day": {
+        "description": "Beginning at 2nd level, each time the eldritch knight gains a new level in this prestige class, she receives additional spells per day as though she had also advanced one level in an arcane spellcasting class she belonged to prior to taking this class. She gains no other class benefits that the original class would have provided, such as bonus metamagic or item creation feats, bard abilities, assassin abilities, or similar features. In practice, the eldritch knight level is added to the level of her prior arcane spellcasting class to determine her spells per day and caster level. If the character had multiple arcane spellcasting classes before becoming an eldritch knight, she must choose which class receives the benefit each time she gains an eldritch knight level.",
+        "level": 1,
+        "seedName": "Spells per Day (Eldritch Knight)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "An eldritch knight does not gain proficiency with any additional weapons or armor upon entering this class.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Eldritch Knight)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat"
+    },
+    "overrides": {
+      "description": "The eldritch knight pursues mastery of both swordplay and arcane magic in equal measure, becoming a highly adaptable warrior-spellcaster.",
+      "features": {
+        "Bonus Feat": {
+          "description": "Upon reaching 1st level, the eldritch knight selects one bonus feat from the fighter bonus feat list. This feat is granted on top of the standard feats every character earns at every third level. The eldritch knight must still satisfy all prerequisites for the chosen feat, including the requirement of four fighter levels for Weapon Specialization."
+        },
+        "Spells per Day": {
+          "description": "Beginning at 2nd level, each time the eldritch knight gains a new level in this prestige class, she receives additional spells per day as though she had also advanced one level in an arcane spellcasting class she belonged to prior to taking this class. She gains no other class benefits that the original class would have provided, such as bonus metamagic or item creation feats, bard abilities, assassin abilities, or similar features. In practice, the eldritch knight level is added to the level of her prior arcane spellcasting class to determine her spells per day and caster level. If the character had multiple arcane spellcasting classes before becoming an eldritch knight, she must choose which class receives the benefit each time she gains an eldritch knight level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "An eldritch knight does not gain proficiency with any additional weapons or armor upon entering this class."
+        }
+      },
+      "reviewed": [
+        "Bonus Feat"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Eldritch knights gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "From 2nd level on, when a new eldritch knight level is gained, the character gains new spells per day as if she had also gained a level in whatever arcane spellcasting class she belonged to before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (bonus metamagic or item creation feats, bard or assassin abilities, and so on). This essentially means that she adds the level of eldritch knight to the level of whatever other arcane spellcasting class the character has, then determines spells per day and caster level accordingly. If a character had more than one arcane spellcasting class before she became an eldritch knight, she must decide to which class she adds each level of eldritch knight for the purpose of determining spells per day.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "At 1st level, an eldritch knight may choose a bonus feat from the list of feats available to fighters. This is in addition to the feats that a character of any class normally gets every three levels. The character must still meet any prerequisites for these bonus feats, including four levels of fighter for the Weapon Specialization feat.",
+        "name": "Bonus Feat"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Nobility and Royalty)",
+      "Ride",
+      "Sense Motive",
+      "Spellcraft",
+      "Swim"
+    ],
+    "description": "Studying the martial and arcane arts to equal degree, the eldritch knight is a versatile combatant.",
+    "hitDie": "d6",
+    "name": "Eldritch Knight",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "arcane"
+          }
+        ],
+        "special": [
+          "proficient with all martial weapons"
+        ]
+      },
+      "text": "Weapon Proficiency: Must be proficient with all martial weapons. Spells: Able to cast 3rd-level arcane spells."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bonus feat"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "+1 level of existing arcane spellcasting class"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

@@ -1,0 +1,404 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T19:42:09.082Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/acolyte-of-the-skin/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wear Fiend"
+      },
+      {
+        "levels": [
+          1,
+          5
+        ],
+        "name": "Poison"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Flame Resistant"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Fiendish Glare"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Skin Adaptation"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Cold Resistant"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Glare Of The Pit"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Summon Fiend"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Fiendish Symbiosis"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Acolyte of the Skin Class Feature",
+    "features": {
+      "Cold Resistant": {
+        "description": "Beginning at 6th level, an acolyte has resistance to cold 10.",
+        "level": 6,
+        "seedName": "Cold Resistant (Acolyte of the Skin)"
+      },
+      "Fiendish Glare": {
+        "description": "From 3rd level on, an acolyte of the skin has the supernatural ability to unnerve opponents with a ferocious glare once per day. This is not a gaze attack, and the target need not meet the acolyte's eyes or even see the acolyte (although the acolyte must have line of effect to the target). Glaring is a standard action that affects any creature the acolyte can see within 100 feet. The target becomes shaken for 10 minutes, and must also attempt a Will save (DC 10 + acolyte's class level + Cha modifier) or be stunned. The duration of the stun effect depends on the target's hit points: 50 or less 10 rounds 51 to 100 3 rounds 101 to 150 2 rounds 151 or more 1 roundFiendish glare is a mind-affecting fear effect.",
+        "level": 3,
+        "seedName": "Fiendish Glare (Acolyte of the Skin)"
+      },
+      "Fiendish Symbiosis": {
+        "description": "At 10th level, the fiendish skin and acolyte become one, and only final death can separate them. The acolyte's type changes to outsider. Additionally, an acolyte of this level gains damage reduction 10/good. Unlike other outsiders, an acolyte can be raised or resurrected.",
+        "level": 10,
+        "seedName": "Fiendish Symbiosis (Acolyte of the Skin)"
+      },
+      "Flame Resistant": {
+        "description": "At 2nd level and higher, the fiendish skin binds more tightly, granting an acolyte resistance to fire 10.",
+        "level": 2,
+        "seedName": "Flame Resistant (Acolyte of the Skin)"
+      },
+      "Glare of the Pit": {
+        "description": "At 7th level and higher, an acolyte has the supernatural ability to produce fiery rays from his eyes. Once per day as a standard action, he can project two rays (one from each eye) with a range of 100 feet. Each ray requires a ranged touch attack to hit and deals 8d6 points of fire damage. The rays can be aimed at two different targets within range, but the target of each ray must be designated simultaneously.",
+        "level": 7,
+        "seedName": "Glare of the Pit (Acolyte of the Skin)"
+      },
+      "Poison": {
+        "description": "An acolyte of the skin can use poison once per day as an 8th-level caster. The save DC is 14 + the acolyte's primary spellcasting ability modifier (Intelligence for wizards, Charisma for sorcerers and warlocks, Wisdom for clerics, and so forth). At 5th level, an acolyte can use this ability two times per day.",
+        "level": 1,
+        "seedName": "Poison (Acolyte of the Skin)",
+        "stackable": true
+      },
+      "Skin Adaptation": {
+        "description": "By 5th level, an acolyte's skin and its wearer have grown more comfortable together, as if they had never been separate. The increase to natural armor granted by the fiendish skin improves to +2, the acolyte gains a +2 inherent bonus to Constitution, and the acolyte's darkvision is effective out to 120 feet.",
+        "level": 5,
+        "seedName": "Skin Adaptation (Acolyte of the Skin)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each even-numbered level, an acolyte of the skin gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If he had more than one spellcasting class before becoming an acolyte of the skin, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Acolyte of the Skin)"
+      },
+      "Summon Fiend": {
+        "description": "At 9th level, an acolyte learns to draw on another power of his fiendish skin. If the skin is demonic, once per day he can summon a babau; if devilish, once per day he can summon a chain devil. The summoned creature does the acolyte's bidding, but it automatically returns whence it came after 1 hour. A summoned creature cannot use any innate summoning abilities it might have. An acolyte's caster level for this ability is equal to his spellcaster level.",
+        "level": 9,
+        "seedName": "Summon Fiend (Acolyte of the Skin)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Acolytes of the skin gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Acolyte of the Skin)"
+      },
+      "Wear Fiend": {
+        "description": "An acolyte of the skin summons the essence of a fiend and wears it like a second skin. The bonded fiendish skin is for all intents and purposes the character's own. It increases the acolyte of the skin's natural armor bonus by 1 and grants a +2 inherent bonus to Dexterity. The acolyte also gains darkvision out to 60 feet. The DM determines the actual nature of the skin, be it demonic, devilish, or from some other fiendish creature.",
+        "level": 1,
+        "seedName": "Wear Fiend (Acolyte of the Skin)"
+      }
+    },
+    "occurrenceMap": {
+      "Cold Resistant": "Cold Resistant",
+      "Fiendish Glare": "Fiendish Glare",
+      "Fiendish Symbiosis": "Fiendish Symbiosis",
+      "Flame Resistant": "Flame Resistant",
+      "Glare Of The Pit": "Glare of the Pit",
+      "Poison": "Poison",
+      "Skin Adaptation": "Skin Adaptation",
+      "Summon Fiend": "Summon Fiend",
+      "Wear Fiend": "Wear Fiend"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Acolytes of the skin gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each even-numbered level, an acolyte of the skin gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or destroying undead, a bonus feat, and so on). If he had more than one spellcasting class before becoming an acolyte of the skin, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "An acolyte of the skin summons the essence of a fiend and wears it like a second skin. The bonded fiendish skin is for all intents and purposes the character's own. It increases the acolyte of the skin's natural armor bonus by 1 and grants a +2 inherent bonus to Dexterity. The acolyte also gains darkvision out to 60 feet. The DM determines the actual nature of the skin, be it demonic, devilish, or from some other fiendish creature.",
+        "name": "Wear Fiend",
+        "type": "(Su)"
+      },
+      {
+        "description": "An acolyte of the skin can use poison once per day as an 8th-level caster. The save DC is 14 + the acolyte's primary spellcasting ability modifier (Intelligence for wizards, Charisma for sorcerers and warlocks, Wisdom for clerics, and so forth). At 5th level, an acolyte can use this ability two times per day.",
+        "name": "Poison",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 2nd level and higher, the fiendish skin binds more tightly, granting an acolyte resistance to fire 10.",
+        "name": "Flame Resistant",
+        "type": "(Ex)"
+      },
+      {
+        "description": "From 3rd level on, an acolyte of the skin has the supernatural ability to unnerve opponents with a ferocious glare once per day. This is not a gaze attack, and the target need not meet the acolyte's eyes or even see the acolyte (although the acolyte must have line of effect to the target). Glaring is a standard action that affects any creature the acolyte can see within 100 feet. The target becomes shaken for 10 minutes, and must also attempt a Will save (DC 10 + acolyte's class level + Cha modifier) or be stunned. The duration of the stun effect depends on the target's hit points: 50 or less 10 rounds 51 to 100 3 rounds 101 to 150 2 rounds 151 or more 1 roundFiendish glare is a mind-affecting fear effect.",
+        "name": "Fiendish Glare",
+        "type": "(Su)"
+      },
+      {
+        "description": "By 5th level, an acolyte's skin and its wearer have grown more comfortable together, as if they had never been separate. The increase to natural armor granted by the fiendish skin improves to +2, the acolyte gains a +2 inherent bonus to Constitution, and the acolyte's darkvision is effective out to 120 feet.",
+        "name": "Skin Adaptation",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 6th level, an acolyte has resistance to cold 10.",
+        "name": "Cold Resistant",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 7th level and higher, an acolyte has the supernatural ability to produce fiery rays from his eyes. Once per day as a standard action, he can project two rays (one from each eye) with a range of 100 feet. Each ray requires a ranged touch attack to hit and deals 8d6 points of fire damage. The rays can be aimed at two different targets within range, but the target of each ray must be designated simultaneously.",
+        "name": "Glare of the Pit",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 9th level, an acolyte learns to draw on another power of his fiendish skin. If the skin is demonic, once per day he can summon a babau; if devilish, once per day he can summon a chain devil. The summoned creature does the acolyte's bidding, but it automatically returns whence it came after 1 hour. A summoned creature cannot use any innate summoning abilities it might have. An acolyte's caster level for this ability is equal to his spellcaster level.",
+        "name": "Summon Fiend",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 10th level, the fiendish skin and acolyte become one, and only final death can separate them. The acolyte's type changes to outsider. Additionally, an acolyte of this level gains damage reduction 10/good. Unlike other outsiders, an acolyte can be raised or resurrected.",
+        "name": "Fiendish Symbiosis",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "Acolytes of the skin seek to gain power by replacing their skin with that of a demon's.",
+    "hitDie": "d8",
+    "name": "Acolyte of the Skin",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nongood",
+        "skills": [
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 6
+          }
+        ],
+        "special": [
+          "Must have made peaceful contact with a summoned evil outsider.",
+          "made peaceful contact with a summoned evil outsider"
+        ]
+      },
+      "text": "Alignment: Any nongood Skills: Knowledge (the planes) 6 ranks Spells or Spell-Like Abilities: Caster level 5th. Special: Must have made peaceful contact with a summoned evil outsider. Special: Must undergo the Ritual of Bonding."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Wear fiend",
+          "poison 1/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Flame resistant"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Fiendish glare"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Skin adaptation",
+          "poison 2/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Cold resistant"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Glare of the pit"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Summon fiend"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Fiendish symbiosis"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

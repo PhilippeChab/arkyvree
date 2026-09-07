@@ -1,0 +1,514 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.281Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/exemplar/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "target": "aptitudes.exemplarskillartistry.allowed"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "target": "aptitudes.exemplarbonusfeat.allowed"
+      }
+    ],
+    "bab": "medium",
+    "bonusFeatLists": [
+      {
+        "aptitude": "Exemplar Bonus Feat",
+        "feats": [
+          "Acrobatic",
+          "Agile",
+          "Alertness",
+          "Animal Affinity",
+          "Athletic",
+          "Blind-Fight",
+          "Combat Casting",
+          "Combat Expertise",
+          "Deceitful",
+          "Deft Hands",
+          "Diligent",
+          "Improved Initiative",
+          "Improved Swimming?",
+          "Investigator",
+          "Magical Aptitude",
+          "Negotiator",
+          "Nimble Fingers",
+          "Open Minded?",
+          "Persuasive",
+          "Self-Sufficient",
+          "Skill Focus",
+          "Stealthy",
+          "Track",
+          "Versatile Performer?"
+        ]
+      }
+    ],
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Skill Artistry"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Skill Mastery"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Lend Talent (One-Half Penalty)"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Sustaining Presence"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Persuasive Performance"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Intellectual Agility"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Lend Talent (Equal To Penalty)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Perfect Self"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.diplomacy.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.skillfocusany.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 8,
+    "unresolvedAptitudePicks": [
+      "Persuasive Performance"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Exemplar Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "At 3rd, 6th, and 9th levels, an exemplar gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Animal Affinity, Athletic, Blind-Fight, Combat Casting, Combat Expertise, Deceitful, Deft Hands, Diligent, Improved Initiative, Improved Swimming?, Investigator, Magical Aptitude, Negotiator, Nimble Fingers, Open Minded?, Persuasive, Self-Sufficient, Skill Focus, Stealthy, Track, or Versatile Performer?. The exemplar must meet all the prerequisites for the chosen feat.? New feat described in Chapter 3.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.exemplarbonusfeat.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Bonus Feat (Exemplar)",
+        "stackable": true
+      },
+      "Intellectual Agility": {
+        "description": "Starting at 8th level, an exemplar can channel her intellect to more physical needs. She adds her Intelligence bonus (if any) to her initiative checks and Reflex saves.",
+        "level": 8,
+        "seedName": "Intellectual Agility (Exemplar)"
+      },
+      "Lend Talent (Equal to Penalty)": {
+        "description": "",
+        "level": 8,
+        "seedName": "Lend Talent (Equal to Penalty) (Exemplar)"
+      },
+      "Lend Talent (One-half Penalty)": {
+        "description": "Starting at 2nd level, an exemplar can lend some of her skill artistry to allies, allowing them to exceed their normal talents. By accepting a penalty on checks using a skill for which she has selected skill artistry, an exemplar grants a competence bonus on checks with that skill to all allies within 30 feet. The penalty can be any number that does not exceed the exemplar's class level, and the competence bonus is equal to one-half the penalty. Activating this ability is a full-round action,and the effect lasts for as long as the exemplar remains conscious and within range. For example, a 4th-level exemplar who has selected skill artistry with Craft (armorsmithing) can accept a -4 penalty on Craft (armorsmithing) checks to grant all allies within 30 feet a +2 competence bonus on Craft (armorsmithing) checks for as long as she remains nearby. At 8th level, the competence bonus granted by this ability becomes equal to the penalty accepted by the exemplar.",
+        "level": 2,
+        "seedName": "Lend Talent (One-half Penalty) (Exemplar)"
+      },
+      "Perfect Self": {
+        "description": "A 10th-level exemplar has tuned her body with skill to the point that she becomes a magical creature. Her type changes to outsider (native). See the monk class feature of the Player's Handbook.",
+        "level": 10,
+        "seedName": "Perfect Self (Exemplar)"
+      },
+      "Persuasive Performance": {
+        "description": "Starting at 5th level, an exemplar can use her skill artistry to improve the attitudes of NPCs. To do this, the NPCs must observe her using one of the skills to which she has applied skill artistry. Treat this as a Diplomacy check made to influence NPC attitudes, but replace the Diplomacy check with a check using the chosen skill. The demonstration must be nonthreatening and intended to entertain and amuse the onlookers. Viewers must be within 30 feet of the exemplar, must be able to see her clearly, and must willingly pay attention to her actions. This ability requires at least 1 minute to perform, and it can affect a particular creature only once every 24 hours.",
+        "level": 5,
+        "seedName": "Persuasive Performance (Exemplar)"
+      },
+      "Skill Artistry": {
+        "description": "An exemplar is particularly talented in the use of one of her skills. Choose one skill in which the exemplar has at least 13 ranks. She gains a +4 competence bonus on all checks involving that skill. At 4th, 7th, and 10th levels, an exemplar gains this ability again. Each time she selects a different skill to receive the +4 competence bonus, provided she has at least 13 ranks in a skill that she has not yet chosen to benefit from this ability. If not, she gains no benefit from the ability until she has 13 ranks in another skill. She can then immediately apply the benefit of skill artistry to that skill.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.exemplarskillartistry.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Skill Artistry (Exemplar)",
+        "stackable": true
+      },
+      "Skill Mastery": {
+        "description": "An exemplar is so confident in the use of certain skills that she can use them reliably even under adverse conditions. She selects a number of skills equal to 1 + her Int modifier. When making a check with one of these skills, she can take 10 even if stress and distractions would normally prevent her from doing so. Each time an exemplar gains a class level, she can add another skill to the list of skills with which she has mastery.",
+        "level": 1,
+        "seedName": "Skill Mastery (Exemplar)"
+      },
+      "Sustaining Presence": {
+        "description": "Starting at 4th level, an exemplar knows how to call upon her force of personality to help keep herself alive in tense or dangerous situations. She adds her Charisma bonus (if any) to her Concentration checks and Fortitude saves.",
+        "level": 4,
+        "seedName": "Sustaining Presence (Exemplar)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Exemplars gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Exemplar)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat",
+      "Intellectual Agility": "Intellectual Agility",
+      "Lend Talent (Equal To Penalty)": "Lend Talent (Equal to Penalty)",
+      "Lend Talent (One-Half Penalty)": "Lend Talent (One-half Penalty)",
+      "Perfect Self": "Perfect Self",
+      "Persuasive Performance": "Persuasive Performance",
+      "Skill Artistry": "Skill Artistry",
+      "Skill Mastery": "Skill Mastery",
+      "Sustaining Presence": "Sustaining Presence"
+    },
+    "overrides": {
+      "classSkills": [
+        "Appraise",
+        "Balance",
+        "Bluff",
+        "Climb",
+        "Concentration",
+        "Craft",
+        "Decipher Script",
+        "Diplomacy",
+        "Disable Device",
+        "Disguise",
+        "Escape Artist",
+        "Forgery",
+        "Gather Information",
+        "Handle Animal",
+        "Heal",
+        "Hide",
+        "Intimidate",
+        "Jump",
+        "Knowledge (Arcana)",
+        "Knowledge (Architecture and Engineering)",
+        "Knowledge (Dungeoneering)",
+        "Knowledge (Geography)",
+        "Knowledge (History)",
+        "Knowledge (Local)",
+        "Knowledge (Nature)",
+        "Knowledge (Nobility and Royalty)",
+        "Knowledge (Psionics)",
+        "Knowledge (Religion)",
+        "Knowledge (The Planes)",
+        "Listen",
+        "Move Silently",
+        "Open Lock",
+        "Perform",
+        "Profession",
+        "Ride",
+        "Search",
+        "Sense Motive",
+        "Sleight of Hand",
+        "Speak Language",
+        "Spellcraft",
+        "Spot",
+        "Survival",
+        "Swim",
+        "Tumble",
+        "Use Magic Device",
+        "Use Rope"
+      ],
+      "reviewed": [
+        "Persuasive Performance"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Exemplars gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "An exemplar is particularly talented in the use of one of her skills. Choose one skill in which the exemplar has at least 13 ranks. She gains a +4 competence bonus on all checks involving that skill. At 4th, 7th, and 10th levels, an exemplar gains this ability again. Each time she selects a different skill to receive the +4 competence bonus, provided she has at least 13 ranks in a skill that she has not yet chosen to benefit from this ability. If not, she gains no benefit from the ability until she has 13 ranks in another skill. She can then immediately apply the benefit of skill artistry to that skill.",
+        "name": "Skill Artistry",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An exemplar is so confident in the use of certain skills that she can use them reliably even under adverse conditions. She selects a number of skills equal to 1 + her Int modifier. When making a check with one of these skills, she can take 10 even if stress and distractions would normally prevent her from doing so. Each time an exemplar gains a class level, she can add another skill to the list of skills with which she has mastery.",
+        "name": "Skill Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, an exemplar can lend some of her skill artistry to allies, allowing them to exceed their normal talents. By accepting a penalty on checks using a skill for which she has selected skill artistry, an exemplar grants a competence bonus on checks with that skill to all allies within 30 feet. The penalty can be any number that does not exceed the exemplar's class level, and the competence bonus is equal to one-half the penalty. Activating this ability is a full-round action,and the effect lasts for as long as the exemplar remains conscious and within range. For example, a 4th-level exemplar who has selected skill artistry with Craft (armorsmithing) can accept a -4 penalty on Craft (armorsmithing) checks to grant all allies within 30 feet a +2 competence bonus on Craft (armorsmithing) checks for as long as she remains nearby. At 8th level, the competence bonus granted by this ability becomes equal to the penalty accepted by the exemplar.",
+        "name": "Lend Talent (One-half Penalty)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd, 6th, and 9th levels, an exemplar gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Animal Affinity, Athletic, Blind-Fight, Combat Casting, Combat Expertise, Deceitful, Deft Hands, Diligent, Improved Initiative, Improved Swimming?, Investigator, Magical Aptitude, Negotiator, Nimble Fingers, Open Minded?, Persuasive, Self-Sufficient, Skill Focus, Stealthy, Track, or Versatile Performer?. The exemplar must meet all the prerequisites for the chosen feat.? New feat described in Chapter 3.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "Starting at 4th level, an exemplar knows how to call upon her force of personality to help keep herself alive in tense or dangerous situations. She adds her Charisma bonus (if any) to her Concentration checks and Fortitude saves.",
+        "name": "Sustaining Presence",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 5th level, an exemplar can use her skill artistry to improve the attitudes of NPCs. To do this, the NPCs must observe her using one of the skills to which she has applied skill artistry. Treat this as a Diplomacy check made to influence NPC attitudes, but replace the Diplomacy check with a check using the chosen skill. The demonstration must be nonthreatening and intended to entertain and amuse the onlookers. Viewers must be within 30 feet of the exemplar, must be able to see her clearly, and must willingly pay attention to her actions. This ability requires at least 1 minute to perform, and it can affect a particular creature only once every 24 hours.",
+        "name": "Persuasive Performance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 8th level, an exemplar can channel her intellect to more physical needs. She adds her Intelligence bonus (if any) to her initiative checks and Reflex saves.",
+        "name": "Intellectual Agility",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Lend Talent (Equal to Penalty)"
+      },
+      {
+        "description": "A 10th-level exemplar has tuned her body with skill to the point that she becomes a magical creature. Her type changes to outsider (native). See the monk class feature of the Player's Handbook.",
+        "name": "Perfect Self"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Autohypnosis",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Control Shape",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Forgery",
+      "Gather Information",
+      "Handle Animal",
+      "Heal",
+      "Hide",
+      "Iaijutsu Focus",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Martial Lore",
+      "Move Silently",
+      "Open Lock",
+      "Perform",
+      "Profession",
+      "Psicraft",
+      "Ride",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Speak Language",
+      "Spellcraft",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Truespeak",
+      "Tumble",
+      "Use Magic Device",
+      "Use Psionic Device",
+      "Use Rope"
+    ],
+    "description": "An exemplar is someone who believes that most individuals and creatures possess a wellspring of untapped talent and capability, and that the multiverse would be a better place if only they would all try to live up to their potential. To her mind, the best way to encourage this behavior in others is to exemplify it herself. An exemplar focuses her energy on improving the skills she possesses until she is able to perform them with ?uidity, grace, and art. She believes that even the simplest action (such as climbing a tree or building a chair) can be done with such skill and ?air as to inspire awe and stimulate a desire for self-betterment. No matter what area a particular exemplar excels in, be it walking a tightrope, deciphering forgotten languages, or remembering the names of every arch?end in the Abyss, she performs it with passion and joy. Bards are the characters most likely to become exemplars, but wizards, rogues, rangers, and druids sometimes choose this path as well. All of these classes have a fair number of people who believe that their actions can be viewed as art, and like most artists they want to inspire others with their abilities. Clerics, paladins, and monks also choose this prestige class on rare occasions, but their dedication to promoting a philosophy or a higher power sometimes con?icts with the exemplar's belief that the best way to inspire others is simply to be a good role model.",
+    "hitDie": "d6",
+    "name": "Exemplar",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Skill Focus (any) Any other skill 13 ranks"
+        ],
+        "skills": [
+          {
+            "name": "Diplomacy",
+            "ranks": 6
+          }
+        ]
+      },
+      "text": "Skills: Diplomacy 6 ranks Feats: Skill Focus (any) Any other skill 13 ranks."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Skill artistry",
+          "skill mastery"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Lend talent (one-half penalty)"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Bonus feat"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Skill artistry",
+          "sustaining presence"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Persuasive performance"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Bonus feat"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Skill artistry"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Intellectual agility",
+          "lend talent (equal to penalty)"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Bonus feat"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Perfect self",
+          "skill artistry"
+        ],
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "8 + Int modifier"
+  }
+}

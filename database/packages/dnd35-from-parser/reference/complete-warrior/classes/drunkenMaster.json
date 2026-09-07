@@ -1,0 +1,491 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T18:43:35.335Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/drunken-master/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "dodge": "Dodge",
+      "greatfortitude": "Great Fortitude",
+      "improvedunarmedstrikeormonksunarmedstrikeability": "Improved Unarmed Strike (or monk's unarmed strike ability)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Drink Like A Demon"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Improvised Weapons"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Stagger"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Swaying Waist"
+      },
+      {
+        "levels": [
+          4,
+          9
+        ],
+        "name": "AC Bonus"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Improved Improvised Weapons"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Greater Improvised Weapons"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Improved Feint"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Improved Grapple"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "For Medicinal Purposes"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Corkscrew Rush"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Superior Improvised Weapons"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Breath Of Flame"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.tumble.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.dodge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.greatfortitude.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedunarmedstrikeormonksunarmedstrikeability.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.flurryofblows.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Drunken Master Class Feature",
+    "features": {
+      "AC Bonus": {
+        "description": "Starting at 4th level, the character receives a +1 bonus to Armor Class. At 9th level, this bonus increases to +2.",
+        "level": 4,
+        "seedName": "AC Bonus (Drunken Master)",
+        "stackable": true
+      },
+      "Breath of Flame": {
+        "description": "At 10th level, the character can ignite alcohol stored within his body and exhale it as a burst of fire. This is a free action that produces a 20-foot cone dealing 3d12 points of fire damage. Targets may attempt a Reflex save (DC 10 + class level + Constitution modifier) for half damage. Each use of this ability expends one drink's worth of alcohol from the character's system, removing 2 points of the Wisdom and Intelligence penalties and 2 points of the Strength or Constitution bonus (player's choice). A monk who enters this prestige class may continue to advance as a monk.",
+        "level": 10,
+        "seedName": "Breath of Flame (Drunken Master)"
+      },
+      "Corkscrew Rush": {
+        "description": "At 9th level, the character can execute a spinning, airborne headbutt maneuver during a charge. In addition to normal charge damage, this allows a bull rush attempt that does not provoke an attack of opportunity. A successful bull rush stuns the target unless the target succeeds on a Will save (DC 10 + class level + Wisdom modifier). If the bull rush fails, however, the character falls prone in front of the target.",
+        "level": 9,
+        "seedName": "Corkscrew Rush (Drunken Master)"
+      },
+      "Drink Like a Demon": {
+        "description": "The character's physiology processes alcohol in an unusual manner. As a move action, he can consume a large tankard of ale, a bottle of wine, or an equivalent quantity of stronger spirits. Each drink consumed in combat imposes a -2 penalty to both Wisdom and Intelligence, while granting a +2 bonus to either Strength or Constitution (chosen by the player). The maximum number of drinks that provide a benefit equals the character's class level. Both the penalties and bonuses persist for a number of rounds equal to the character's class level + 3.",
+        "level": 1,
+        "seedName": "Drink Like a Demon (Drunken Master)"
+      },
+      "For Medicinal Purposes": {
+        "description": "At 8th level, the character can transform a single ingested alcoholic drink into the equivalent of a cure moderate wounds potion. Using this ability requires that the character currently be under the effects of Drink Like a Demon. Converting one drink reverses its ability score adjustments (+2 to Intelligence and Wisdom, -2 to Strength or Constitution) as though that drink's duration had ended. This ability may be used up to three times per day as a standard action that does not provoke attacks of opportunity.",
+        "level": 8,
+        "seedName": "For Medicinal Purposes (Drunken Master)"
+      },
+      "Greater Improvised Weapons": {
+        "description": "At 5th level and beyond, the extra damage dealt by an improvised weapon increases to 1d8 (replacing the previous 1d4 bonus).",
+        "level": 5,
+        "seedName": "Greater Improvised Weapons (Drunken Master)"
+      },
+      "Improved Feint": {
+        "description": "At 6th level, the character receives Improved Feint as a bonus feat, regardless of whether the normal prerequisites are met.",
+        "level": 6,
+        "seedName": "Improved Feint (Drunken Master)"
+      },
+      "Improved Grapple": {
+        "description": "At 7th level, the character receives Improved Grapple as a bonus feat, even without meeting its usual prerequisites.",
+        "level": 7,
+        "seedName": "Improved Grapple (Drunken Master)"
+      },
+      "Improved Improvised Weapons": {
+        "description": "From 4th level onward, elongated improvised weapons (like ladders) function as reach weapons based on their length. Objects with multiple protruding parts (such as chairs) grant a +2 bonus on attempts to disarm opponents. Additionally, large flat-surfaced objects (like tables) can be flipped upright to serve as improvised tower shields.",
+        "level": 4,
+        "seedName": "Improved Improvised Weapons (Drunken Master)"
+      },
+      "Improvised Weapons": {
+        "description": "Although tankards and bottles remain the signature tools, the character can wield virtually any available object - furniture, agricultural tools, or other nearby items - as a weapon. An improvised weapon used this way deals damage equal to the character's unarmed strike damage plus an additional 1d4 points. Most such weapons inflict bludgeoning damage, though certain objects (such as a shattered bottle) might deal piercing or slashing damage instead. On a natural 1 on an attack roll with an improvised weapon, the object shatters and is destroyed.",
+        "level": 1,
+        "seedName": "Improvised Weapons (Drunken Master)"
+      },
+      "Stagger": {
+        "description": "Beginning at 2nd level, the character can perform a charge attack using stumbling, weaving movements that catch opponents off guard. This provides two advantages: the charge path does not need to follow a straight line (though the total distance remains limited to double the character's speed), and by succeeding on a DC 15 Tumble check before initiating the charge, the character's movement does not provoke attacks of opportunity when passing through threatened squares.",
+        "level": 2,
+        "seedName": "Stagger (Drunken Master)"
+      },
+      "Superior Improvised Weapons": {
+        "description": "At 9th level and higher, the bonus damage from an improvised weapon increases to 1d12 (replacing the previous 1d8).",
+        "level": 9,
+        "seedName": "Superior Improvised Weapons (Drunken Master)"
+      },
+      "Swaying Waist": {
+        "description": "At 3rd level, the character learns to weave unpredictably during combat, becoming harder to strike. On each turn, the character selects a single opponent and gains a +2 dodge bonus to Armor Class against that foe.",
+        "level": 3,
+        "seedName": "Swaying Waist (Drunken Master)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Drunken Master)"
+      }
+    },
+    "occurrenceMap": {
+      "AC Bonus": "AC Bonus",
+      "Breath Of Flame": "Breath of Flame",
+      "Corkscrew Rush": "Corkscrew Rush",
+      "Drink Like A Demon": "Drink Like a Demon",
+      "For Medicinal Purposes": "For Medicinal Purposes",
+      "Greater Improvised Weapons": "Greater Improvised Weapons",
+      "Improved Feint": "Improved Feint",
+      "Improved Grapple": "Improved Grapple",
+      "Improved Improvised Weapons": "Improved Improvised Weapons",
+      "Improvised Weapons": "Improvised Weapons",
+      "Stagger": "Stagger",
+      "Superior Improvised Weapons": "Superior Improvised Weapons",
+      "Swaying Waist": "Swaying Waist"
+    },
+    "overrides": {
+      "description": "Through erratic, swaying movements that mimic intoxication, practitioners of this fighting style evade incoming attacks with deceptive agility.",
+      "features": {
+        "AC Bonus": {
+          "description": "Starting at 4th level, the character receives a +1 bonus to Armor Class. At 9th level, this bonus increases to +2."
+        },
+        "Breath of Flame": {
+          "description": "At 10th level, the character can ignite alcohol stored within his body and exhale it as a burst of fire. This is a free action that produces a 20-foot cone dealing 3d12 points of fire damage. Targets may attempt a Reflex save (DC 10 + class level + Constitution modifier) for half damage. Each use of this ability expends one drink's worth of alcohol from the character's system, removing 2 points of the Wisdom and Intelligence penalties and 2 points of the Strength or Constitution bonus (player's choice). A monk who enters this prestige class may continue to advance as a monk."
+        },
+        "Corkscrew Rush": {
+          "description": "At 9th level, the character can execute a spinning, airborne headbutt maneuver during a charge. In addition to normal charge damage, this allows a bull rush attempt that does not provoke an attack of opportunity. A successful bull rush stuns the target unless the target succeeds on a Will save (DC 10 + class level + Wisdom modifier). If the bull rush fails, however, the character falls prone in front of the target."
+        },
+        "Drink Like a Demon": {
+          "description": "The character's physiology processes alcohol in an unusual manner. As a move action, he can consume a large tankard of ale, a bottle of wine, or an equivalent quantity of stronger spirits. Each drink consumed in combat imposes a -2 penalty to both Wisdom and Intelligence, while granting a +2 bonus to either Strength or Constitution (chosen by the player). The maximum number of drinks that provide a benefit equals the character's class level. Both the penalties and bonuses persist for a number of rounds equal to the character's class level + 3."
+        },
+        "For Medicinal Purposes": {
+          "description": "At 8th level, the character can transform a single ingested alcoholic drink into the equivalent of a cure moderate wounds potion. Using this ability requires that the character currently be under the effects of Drink Like a Demon. Converting one drink reverses its ability score adjustments (+2 to Intelligence and Wisdom, -2 to Strength or Constitution) as though that drink's duration had ended. This ability may be used up to three times per day as a standard action that does not provoke attacks of opportunity."
+        },
+        "Greater Improvised Weapons": {
+          "description": "At 5th level and beyond, the extra damage dealt by an improvised weapon increases to 1d8 (replacing the previous 1d4 bonus)."
+        },
+        "Improved Feint": {
+          "description": "At 6th level, the character receives Improved Feint as a bonus feat, regardless of whether the normal prerequisites are met."
+        },
+        "Improved Grapple": {
+          "description": "At 7th level, the character receives Improved Grapple as a bonus feat, even without meeting its usual prerequisites."
+        },
+        "Improved Improvised Weapons": {
+          "description": "From 4th level onward, elongated improvised weapons (like ladders) function as reach weapons based on their length. Objects with multiple protruding parts (such as chairs) grant a +2 bonus on attempts to disarm opponents. Additionally, large flat-surfaced objects (like tables) can be flipped upright to serve as improvised tower shields."
+        },
+        "Improvised Weapons": {
+          "description": "Although tankards and bottles remain the signature tools, the character can wield virtually any available object - furniture, agricultural tools, or other nearby items - as a weapon. An improvised weapon used this way deals damage equal to the character's unarmed strike damage plus an additional 1d4 points. Most such weapons inflict bludgeoning damage, though certain objects (such as a shattered bottle) might deal piercing or slashing damage instead. On a natural 1 on an attack roll with an improvised weapon, the object shatters and is destroyed."
+        },
+        "Stagger": {
+          "description": "Beginning at 2nd level, the character can perform a charge attack using stumbling, weaving movements that catch opponents off guard. This provides two advantages: the charge path does not need to follow a straight line (though the total distance remains limited to double the character's speed), and by succeeding on a DC 15 Tumble check before initiating the charge, the character's movement does not provoke attacks of opportunity when passing through threatened squares."
+        },
+        "Superior Improvised Weapons": {
+          "description": "At 9th level and higher, the bonus damage from an improvised weapon increases to 1d12 (replacing the previous 1d8)."
+        },
+        "Swaying Waist": {
+          "description": "At 3rd level, the character learns to weave unpredictably during combat, becoming harder to strike. On each turn, the character selects a single opponent and gains a +2 dodge bonus to Armor Class against that foe."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Drunken masters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 4th level, a drunken master gains a +1 bonus to Armor Class. This bonus improves to +2 at 9th level.",
+        "name": "AC Bonus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A drunken master's body handles alcohol differently from other people's. He can drink a large tankard of ale, a bottle of wine, or a corresponding amount of stronger alcohol as a move action. Every bottle or tankard of alcohol he consumes during combat reduces his Wisdom and Intelligence by 2 points each, but increases his Strength or Constitution (character's choice) by 2 points. A drunken master may benefit from a number of drinks equal to his class level. The duration of both the penalty and the bonus is a number of rounds equal to the character's drunken master level + 3.",
+        "name": "Drink Like a Demon",
+        "type": "(Ex)"
+      },
+      {
+        "description": "While bottles and tankards are a drunken master's preferred improvised weapons, he can use furniture, farm implements, or nearly anything else at hand to attack his foes. A drunken master's improvised weapon deals as much damage as his unarmed strike plus an extra 1d4 points. Most improvised weapons deal bludgeoning damage, although some (a broken glass bottle, for example) would deal piercing or slashing damage. When a drunken master rolls a natural 1 on an attack roll while using an improvised weapon, that weapon breaks apart and becomes useless.",
+        "name": "Improvised Weapons",
+        "type": "(Ex)"
+      },
+      {
+        "description": "By tripping, stumbling, and staggering, a drunken master of 2nd level or higher can make a charge attack that surprises his opponents. This ability has two beneficial aspects: First, the charge need not be in a straight line, even though the character can still move up to twice his speed. Second, if a drunken master makes a DC 15 Tumble check before beginning a charge, his movement through threatened squares provokes no attacks of opportunity.",
+        "name": "Stagger",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a drunken master knows how to weave and bob during an attack, making him more difficult to hit. The character gains a +2 dodge bonus to Armor Class against any one opponent he chooses during his turn.",
+        "name": "Swaying Waist",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A drunken master of 4th level or higher can use long improvised weapons (such as ladders) as reach weapons according to their length, and improvised weapons with many protrusions (such as chairs) provide a +2 bonus on opponents' disarm attempts. Finally, large objects with broad, flat surfaces (such as tables) can be upended to become improvised tower shields.",
+        "name": "Improved Improvised Weapons",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level and higher, a drunken master wielding an improvised weapon deals an extra 1d8 points of damage instead of 1d4. Improved Feint (Ex): A drunken master who attains 6th level gains Improved Feint as a bonus feat even if he does not meet the prerequisites.",
+        "name": "Greater Improvised Weapons",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Improved Feint"
+      },
+      {
+        "description": "A drunken master who attains 7th level gains Improved Grapple as a bonus feat even if he does not meet the prerequisites.",
+        "name": "Improved Grapple",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 8th level, a drunken master gains the ability to convert a single alcoholic drink he has ingested into a single potion of cure moderate wounds, as if he had just drunk a dose of the potion. To use this ability, the character must be under the effect of an alcoholic drink Drink Like a Demon, above). When he converts one drink of alcohol into one dose of the potion, his ability scores change (+2 to Intelligence and Wisdom, -2 to Strength or Constitution) as if the duration of the alcohol's effect had expired. This ability can be used up to three times per day. It is a standard action that does not provoke an attack of opportunity.",
+        "name": "For Medicinal Purposes",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A drunken master of 9th level or higher can perform this maneuver, leaping forward and twisting his body in midair as he attempts to head-butt an opponent. When making a charge attack he can, in addition to dealing normal damage, initiate a bull rush (without provoking an attack of opportunity). If the bull rush attempt succeeds, the opponent is stunned unless she makes a Will save (DC 10 + the drunken master's class level + the drunken master's Wis modifier). However, if the bull rush attempt fails, the drunken master lands prone in front of the opponent.",
+        "name": "Corkscrew Rush",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 9th level and higher, a drunken master wielding an improvised weapon deals an extra 1d12 points of damage instead of 1d8. Breath of Flame (Sp): A 10th-level drunken master can ignite some of the alcohol within his body and spew it forth from his mouth as a free action. This breath of flame deals 3d12 points of fire damage to all within the 20-foot cone, or half damage to those who make a Reflex save (DC 10 + the drunken master's class level + the drunken master's Con modifier). Each time a drunken master uses breath of flame, it consumes one drink's worth of alcohol from within his body, lessening the penalty to his Wisdom and Intelligence scores and reducing the bonus to his Strength or Constitution score (character's choice). Multiclass Note: A monk who becomes a drunken master may continue advancing as a monk.",
+        "name": "Superior Improvised Weapons",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Breath of Flame"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Perform",
+      "Profession",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "By weaving and staggering about as if inebriated, drunken boxers avoid many blows.",
+    "hitDie": "d8",
+    "name": "Drunken Master",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Dodge",
+          "Great Fortitude",
+          "Improved Unarmed Strike (or monk's unarmed strike ability)"
+        ],
+        "skills": [
+          {
+            "name": "Tumble",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Flurry of blows ability; evasion ability; must be chosen by existing drunken masters and survive a night of revelry among them without being incarcerated, poisoned, or extraordinarily embarrassed.",
+          "chosen by existing drunken masters and survive a night of revelry among them without being incarcerated, poisoned, or extraordinarily embarrassed"
+        ]
+      },
+      "text": "Skills: Tumble 8 ranks Feats: Dodge, Great Fortitude, Improved Unarmed Strike (or monk's unarmed strike ability) Special: Flurry of blows ability; evasion ability; must be chosen by existing drunken masters and survive a night of revelry among them without being incarcerated, poisoned, or extraordinarily embarrassed."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Drink like a demon",
+          "improvised weapons"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Stagger"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Swaying waist"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "AC bonus +1",
+          "improved improvised weapons"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "greater improvised weapons"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Improved Feint"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Improved Grapple"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "For medicinal purposes"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "AC bonus +2",
+          "corkscrew rush",
+          "superior improvised weapons"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Breath of flame"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

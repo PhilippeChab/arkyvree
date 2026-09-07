@@ -1,0 +1,3730 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-19T15:28:49.703Z",
+    "sourceUrls": {
+      "armor": "https://www.d20srd.org/srd/equipment/armor.htm",
+      "goods": "https://www.d20srd.org/srd/equipment/goodsAndServices.htm",
+      "weapons": "https://www.d20srd.org/srd/equipment/weapons.htm"
+    },
+    "type": "item"
+  },
+  "detected": {
+    "armor": {
+      "Banded mail": {
+        "costGp": "250",
+        "generatorName": "Banded Mail",
+        "proficiencyCategory": "Heavy armor",
+        "type": "Armor",
+        "weight": "35"
+      },
+      "Breastplate": {
+        "costGp": "200",
+        "generatorName": "Breastplate",
+        "proficiencyCategory": "Medium armor",
+        "type": "Armor",
+        "weight": "30"
+      },
+      "Buckler": {
+        "costGp": "15",
+        "generatorName": "Buckler",
+        "proficiencyCategory": "Shields",
+        "type": "Shield",
+        "weight": "5"
+      },
+      "Chain shirt": {
+        "costGp": "100",
+        "generatorName": "Chain Shirt",
+        "proficiencyCategory": "Light armor",
+        "type": "Armor",
+        "weight": "25"
+      },
+      "Chainmail": {
+        "costGp": "150",
+        "generatorName": "Chain Mail",
+        "proficiencyCategory": "Medium armor",
+        "type": "Armor",
+        "weight": "40"
+      },
+      "Full plate": {
+        "costGp": "1500",
+        "generatorName": "Full Plate",
+        "proficiencyCategory": "Heavy armor",
+        "type": "Armor",
+        "weight": "50"
+      },
+      "Half-plate": {
+        "costGp": "600",
+        "generatorName": "Half-Plate",
+        "proficiencyCategory": "Heavy armor",
+        "type": "Armor",
+        "weight": "50"
+      },
+      "Hide": {
+        "costGp": "15",
+        "generatorName": "Hide Armor",
+        "proficiencyCategory": "Medium armor",
+        "type": "Armor",
+        "weight": "25"
+      },
+      "Leather": {
+        "costGp": "10",
+        "generatorName": "Leather Armor",
+        "proficiencyCategory": "Light armor",
+        "type": "Armor",
+        "weight": "15"
+      },
+      "Padded": {
+        "costGp": "5",
+        "generatorName": "Padded Armor",
+        "proficiencyCategory": "Light armor",
+        "type": "Armor",
+        "weight": "10"
+      },
+      "Scale mail": {
+        "costGp": "50",
+        "generatorName": "Scale Mail",
+        "proficiencyCategory": "Medium armor",
+        "type": "Armor",
+        "weight": "30"
+      },
+      "Shield, heavy steel": {
+        "costGp": "20",
+        "generatorName": "Heavy Steel Shield",
+        "proficiencyCategory": "Shields",
+        "type": "Shield",
+        "weight": "15"
+      },
+      "Shield, heavy wooden": {
+        "costGp": "7",
+        "generatorName": "Heavy Wooden Shield",
+        "proficiencyCategory": "Shields",
+        "type": "Shield",
+        "weight": "10"
+      },
+      "Shield, light steel": {
+        "costGp": "9",
+        "generatorName": "Light Steel Shield",
+        "proficiencyCategory": "Shields",
+        "type": "Shield",
+        "weight": "6"
+      },
+      "Shield, light wooden": {
+        "costGp": "3",
+        "generatorName": "Light Wooden Shield",
+        "proficiencyCategory": "Shields",
+        "type": "Shield",
+        "weight": "5"
+      },
+      "Shield, tower": {
+        "costGp": "30",
+        "generatorName": "Tower Shield",
+        "proficiencyCategory": "Shields",
+        "type": "Shield",
+        "weight": "45"
+      },
+      "Splint mail": {
+        "costGp": "200",
+        "generatorName": "Splint Mail",
+        "proficiencyCategory": "Heavy armor",
+        "type": "Armor",
+        "weight": "45"
+      },
+      "Studded leather": {
+        "costGp": "25",
+        "generatorName": "Studded Leather",
+        "proficiencyCategory": "Light armor",
+        "type": "Armor",
+        "weight": "20"
+      }
+    },
+    "goods": {
+      "Acid (flask)": {
+        "category": "Special Substances and Items",
+        "costGp": "10",
+        "weight": "1"
+      },
+      "Alchemist's fire (flask)": {
+        "category": "Special Substances and Items",
+        "costGp": "20",
+        "weight": "1"
+      },
+      "Alchemist's lab": {
+        "category": "Tools and Skill Kits",
+        "costGp": "500",
+        "weight": "40"
+      },
+      "Antitoxin (vial)": {
+        "category": "Special Substances and Items",
+        "costGp": "50",
+        "weight": "0"
+      },
+      "Artisan's outfit": {
+        "category": "Clothing",
+        "costGp": "1",
+        "weight": "4"
+      },
+      "Artisan's tools": {
+        "category": "Tools and Skill Kits",
+        "costGp": "5",
+        "weight": "5"
+      },
+      "Artisan's tools, masterwork": {
+        "category": "Tools and Skill Kits",
+        "costGp": "55",
+        "weight": "5"
+      },
+      "Backpack (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "2",
+        "weight": "2"
+      },
+      "Banquet (per person)": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "10",
+        "weight": "0"
+      },
+      "Barrel (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "2",
+        "weight": "30"
+      },
+      "Basket (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.4",
+        "weight": "1"
+      },
+      "Bedroll": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "5"
+      },
+      "Bell": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "0"
+      },
+      "Bit and bridle": {
+        "category": "Mounts and Related Gear",
+        "costGp": "2",
+        "weight": "1"
+      },
+      "Blanket, winter": {
+        "category": "Adventuring Gear",
+        "costGp": "0.5",
+        "weight": "3"
+      },
+      "Block and tackle": {
+        "category": "Adventuring Gear",
+        "costGp": "5",
+        "weight": "5"
+      },
+      "Bottle, wine, glass": {
+        "category": "Adventuring Gear",
+        "costGp": "2",
+        "weight": "0"
+      },
+      "Bread, per loaf": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.02",
+        "weight": "0.5"
+      },
+      "Bucket (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.5",
+        "weight": "2"
+      },
+      "Caltrops": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "2"
+      },
+      "Candle": {
+        "category": "Adventuring Gear",
+        "costGp": "0.01",
+        "weight": "0"
+      },
+      "Canvas (sq. yd.)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "1"
+      },
+      "Carriage": {
+        "category": "Transport",
+        "costGp": "100",
+        "weight": "600"
+      },
+      "Cart": {
+        "category": "Transport",
+        "costGp": "15",
+        "weight": "200"
+      },
+      "Case, map or scroll": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "0.5"
+      },
+      "Chain (10 ft.)": {
+        "category": "Adventuring Gear",
+        "costGp": "30",
+        "weight": "2"
+      },
+      "Chalk, 1 piece": {
+        "category": "Adventuring Gear",
+        "costGp": "0.01",
+        "weight": "0"
+      },
+      "Cheese, hunk of": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.1",
+        "weight": "0.5"
+      },
+      "Chest (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "2",
+        "weight": "25"
+      },
+      "Cleric's vestments": {
+        "category": "Clothing",
+        "costGp": "5",
+        "weight": "6"
+      },
+      "Climber's kit": {
+        "category": "Tools and Skill Kits",
+        "costGp": "80",
+        "weight": "5"
+      },
+      "Cold weather outfit": {
+        "category": "Clothing",
+        "costGp": "8",
+        "weight": "7"
+      },
+      "Common": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.3",
+        "weight": "0"
+      },
+      "Common (pitcher)": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.2",
+        "weight": "6"
+      },
+      "Courtier's outfit": {
+        "category": "Clothing",
+        "costGp": "30",
+        "weight": "6"
+      },
+      "Crowbar": {
+        "category": "Adventuring Gear",
+        "costGp": "2",
+        "weight": "5"
+      },
+      "Disguise kit": {
+        "category": "Tools and Skill Kits",
+        "costGp": "50",
+        "weight": "8"
+      },
+      "Dog, guard": {
+        "category": "Mounts and Related Gear",
+        "costGp": "25",
+        "weight": "0"
+      },
+      "Dog, riding": {
+        "category": "Mounts and Related Gear",
+        "costGp": "150",
+        "weight": "0"
+      },
+      "Donkey or mule": {
+        "category": "Mounts and Related Gear",
+        "costGp": "8",
+        "weight": "0"
+      },
+      "Entertainer's outfit": {
+        "category": "Clothing",
+        "costGp": "3",
+        "weight": "4"
+      },
+      "Everburning torch": {
+        "category": "Special Substances and Items",
+        "costGp": "110",
+        "weight": "1"
+      },
+      "Explorer's outfit": {
+        "category": "Clothing",
+        "costGp": "10",
+        "weight": "8"
+      },
+      "Feed (per day)": {
+        "category": "Mounts and Related Gear",
+        "costGp": "0.05",
+        "weight": "10"
+      },
+      "Fine (bottle)": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "10",
+        "weight": "1.5"
+      },
+      "Firewood (per day)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.01",
+        "weight": "20"
+      },
+      "Fishhook": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "0"
+      },
+      "Fishing net, 25 sq. ft.": {
+        "category": "Adventuring Gear",
+        "costGp": "4",
+        "weight": "5"
+      },
+      "Flask (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.03",
+        "weight": "1.5"
+      },
+      "Flint and steel": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "0"
+      },
+      "Galley": {
+        "category": "Transport",
+        "costGp": "30000",
+        "weight": "0"
+      },
+      "Gallon": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.2",
+        "weight": "8"
+      },
+      "Good": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.5",
+        "weight": "0"
+      },
+      "Grappling hook": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "4"
+      },
+      "Hammer": {
+        "category": "Adventuring Gear",
+        "costGp": "0.5",
+        "weight": "2"
+      },
+      "Healer's kit": {
+        "category": "Tools and Skill Kits",
+        "costGp": "50",
+        "weight": "1"
+      },
+      "Holly and mistletoe": {
+        "category": "Tools and Skill Kits",
+        "costGp": "0",
+        "weight": "0"
+      },
+      "Holy symbol, silver": {
+        "category": "Tools and Skill Kits",
+        "costGp": "25",
+        "weight": "1"
+      },
+      "Holy symbol, wooden": {
+        "category": "Tools and Skill Kits",
+        "costGp": "1",
+        "weight": "0"
+      },
+      "Holy water (flask)": {
+        "category": "Special Substances and Items",
+        "costGp": "25",
+        "weight": "1"
+      },
+      "Horse, heavy": {
+        "category": "Mounts and Related Gear",
+        "costGp": "200",
+        "weight": "0"
+      },
+      "Horse, light": {
+        "category": "Mounts and Related Gear",
+        "costGp": "75",
+        "weight": "0"
+      },
+      "Hourglass": {
+        "category": "Tools and Skill Kits",
+        "costGp": "25",
+        "weight": "1"
+      },
+      "Ink (1 oz. vial)": {
+        "category": "Adventuring Gear",
+        "costGp": "8",
+        "weight": "0"
+      },
+      "Inkpen": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "0"
+      },
+      "Jug, clay": {
+        "category": "Adventuring Gear",
+        "costGp": "0.03",
+        "weight": "9"
+      },
+      "Keelboat": {
+        "category": "Transport",
+        "costGp": "3000",
+        "weight": "0"
+      },
+      "Ladder, 10-foot": {
+        "category": "Adventuring Gear",
+        "costGp": "0.05",
+        "weight": "20"
+      },
+      "Lamp, common": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "1"
+      },
+      "Lantern, bullseye": {
+        "category": "Adventuring Gear",
+        "costGp": "12",
+        "weight": "3"
+      },
+      "Lantern, hooded": {
+        "category": "Adventuring Gear",
+        "costGp": "7",
+        "weight": "2"
+      },
+      "Large creature": {
+        "category": "Mounts and Related Gear",
+        "costGp": "0",
+        "weight": "0"
+      },
+      "Lock (amazing)": {
+        "category": "Adventuring Gear",
+        "costGp": "150",
+        "weight": "1"
+      },
+      "Lock (average)": {
+        "category": "Adventuring Gear",
+        "costGp": "40",
+        "weight": "1"
+      },
+      "Lock (good)": {
+        "category": "Adventuring Gear",
+        "costGp": "80",
+        "weight": "1"
+      },
+      "Lock (very simple)": {
+        "category": "Adventuring Gear",
+        "costGp": "20",
+        "weight": "1"
+      },
+      "Longship": {
+        "category": "Transport",
+        "costGp": "10000",
+        "weight": "0"
+      },
+      "Magnifying glass": {
+        "category": "Tools and Skill Kits",
+        "costGp": "100",
+        "weight": "0"
+      },
+      "Manacles": {
+        "category": "Adventuring Gear",
+        "costGp": "15",
+        "weight": "2"
+      },
+      "Manacles, masterwork": {
+        "category": "Adventuring Gear",
+        "costGp": "50",
+        "weight": "2"
+      },
+      "Meat, chunk of": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.3",
+        "weight": "0.5"
+      },
+      "Medium creature": {
+        "category": "Mounts and Related Gear",
+        "costGp": "0",
+        "weight": "0"
+      },
+      "Military": {
+        "category": "Mounts and Related Gear",
+        "costGp": "60",
+        "weight": "40"
+      },
+      "Mirror, small steel": {
+        "category": "Adventuring Gear",
+        "costGp": "10",
+        "weight": "0.5"
+      },
+      "Monk's outfit": {
+        "category": "Clothing",
+        "costGp": "5",
+        "weight": "2"
+      },
+      "Mug": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.04",
+        "weight": "1"
+      },
+      "Mug/Tankard, clay": {
+        "category": "Adventuring Gear",
+        "costGp": "0.02",
+        "weight": "1"
+      },
+      "Musical instrument, common": {
+        "category": "Tools and Skill Kits",
+        "costGp": "5",
+        "weight": "3"
+      },
+      "Musical instrument, masterwork": {
+        "category": "Tools and Skill Kits",
+        "costGp": "100",
+        "weight": "3"
+      },
+      "Noble's outfit": {
+        "category": "Clothing",
+        "costGp": "75",
+        "weight": "10"
+      },
+      "Oar": {
+        "category": "Transport",
+        "costGp": "2",
+        "weight": "10"
+      },
+      "Oil (1-pint flask)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "1"
+      },
+      "Pack": {
+        "category": "Mounts and Related Gear",
+        "costGp": "15",
+        "weight": "20"
+      },
+      "Paper (sheet)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.4",
+        "weight": "0"
+      },
+      "Parchment (sheet)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.2",
+        "weight": "0"
+      },
+      "Peasant's outfit": {
+        "category": "Clothing",
+        "costGp": "0.1",
+        "weight": "2"
+      },
+      "Pick, miner's": {
+        "category": "Adventuring Gear",
+        "costGp": "3",
+        "weight": "10"
+      },
+      "Pitcher, clay": {
+        "category": "Adventuring Gear",
+        "costGp": "0.02",
+        "weight": "5"
+      },
+      "Piton": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "0.5"
+      },
+      "Pole, 10-foot": {
+        "category": "Adventuring Gear",
+        "costGp": "0.2",
+        "weight": "8"
+      },
+      "Pony": {
+        "category": "Mounts and Related Gear",
+        "costGp": "30",
+        "weight": "0"
+      },
+      "Poor": {
+        "category": "Food, Drink, and Lodging",
+        "costGp": "0.1",
+        "weight": "0"
+      },
+      "Pot, iron": {
+        "category": "Adventuring Gear",
+        "costGp": "0.5",
+        "weight": "10"
+      },
+      "Pouch, belt (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "0.5"
+      },
+      "Ram, portable": {
+        "category": "Adventuring Gear",
+        "costGp": "10",
+        "weight": "20"
+      },
+      "Rations, trail (per day)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.5",
+        "weight": "1"
+      },
+      "Riding": {
+        "category": "Mounts and Related Gear",
+        "costGp": "30",
+        "weight": "30"
+      },
+      "Rope, hempen (50 ft.)": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "10"
+      },
+      "Rope, silk (50 ft.)": {
+        "category": "Adventuring Gear",
+        "costGp": "10",
+        "weight": "5"
+      },
+      "Rowboat": {
+        "category": "Transport",
+        "costGp": "50",
+        "weight": "100"
+      },
+      "Royal outfit": {
+        "category": "Clothing",
+        "costGp": "200",
+        "weight": "15"
+      },
+      "Sack (empty)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.1",
+        "weight": "0.5"
+      },
+      "Saddlebags": {
+        "category": "Mounts and Related Gear",
+        "costGp": "4",
+        "weight": "8"
+      },
+      "Sailing ship": {
+        "category": "Transport",
+        "costGp": "10000",
+        "weight": "0"
+      },
+      "Scale, merchant's": {
+        "category": "Tools and Skill Kits",
+        "costGp": "2",
+        "weight": "1"
+      },
+      "Scholar's outfit": {
+        "category": "Clothing",
+        "costGp": "5",
+        "weight": "6"
+      },
+      "Sealing wax": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "1"
+      },
+      "Sewing needle": {
+        "category": "Adventuring Gear",
+        "costGp": "0.5",
+        "weight": "0"
+      },
+      "Signal whistle": {
+        "category": "Adventuring Gear",
+        "costGp": "0.8",
+        "weight": "0"
+      },
+      "Signet ring": {
+        "category": "Adventuring Gear",
+        "costGp": "5",
+        "weight": "0"
+      },
+      "Sled": {
+        "category": "Transport",
+        "costGp": "20",
+        "weight": "300"
+      },
+      "Sledge": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "10"
+      },
+      "Smokestick": {
+        "category": "Special Substances and Items",
+        "costGp": "20",
+        "weight": "0.5"
+      },
+      "Soap (per lb.)": {
+        "category": "Adventuring Gear",
+        "costGp": "0.5",
+        "weight": "1"
+      },
+      "Spade or shovel": {
+        "category": "Adventuring Gear",
+        "costGp": "2",
+        "weight": "8"
+      },
+      "Spell component pouch": {
+        "category": "Tools and Skill Kits",
+        "costGp": "5",
+        "weight": "2"
+      },
+      "Spellbook, wizard's (blank)": {
+        "category": "Tools and Skill Kits",
+        "costGp": "15",
+        "weight": "3"
+      },
+      "Spyglass": {
+        "category": "Adventuring Gear",
+        "costGp": "1000",
+        "weight": "1"
+      },
+      "Stabling (per day)": {
+        "category": "Mounts and Related Gear",
+        "costGp": "0.5",
+        "weight": "0"
+      },
+      "Sunrod": {
+        "category": "Special Substances and Items",
+        "costGp": "2",
+        "weight": "1"
+      },
+      "Tanglefoot bag": {
+        "category": "Special Substances and Items",
+        "costGp": "50",
+        "weight": "4"
+      },
+      "Tent": {
+        "category": "Adventuring Gear",
+        "costGp": "10",
+        "weight": "20"
+      },
+      "Thieves' tools": {
+        "category": "Tools and Skill Kits",
+        "costGp": "30",
+        "weight": "1"
+      },
+      "Thieves' tools, masterwork": {
+        "category": "Tools and Skill Kits",
+        "costGp": "100",
+        "weight": "2"
+      },
+      "Thunderstone": {
+        "category": "Special Substances and Items",
+        "costGp": "30",
+        "weight": "1"
+      },
+      "Tindertwig": {
+        "category": "Special Substances and Items",
+        "costGp": "1",
+        "weight": "0"
+      },
+      "Tool, masterwork": {
+        "category": "Tools and Skill Kits",
+        "costGp": "50",
+        "weight": "1"
+      },
+      "Torch": {
+        "category": "Adventuring Gear",
+        "costGp": "0.01",
+        "weight": "1"
+      },
+      "Traveler's outfit": {
+        "category": "Clothing",
+        "costGp": "1",
+        "weight": "5"
+      },
+      "Vial, ink or potion": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "10"
+      },
+      "Wagon": {
+        "category": "Transport",
+        "costGp": "35",
+        "weight": "400"
+      },
+      "Warhorse, heavy": {
+        "category": "Mounts and Related Gear",
+        "costGp": "400",
+        "weight": "0"
+      },
+      "Warhorse, light": {
+        "category": "Mounts and Related Gear",
+        "costGp": "150",
+        "weight": "0"
+      },
+      "Warpony": {
+        "category": "Mounts and Related Gear",
+        "costGp": "100",
+        "weight": "0"
+      },
+      "Warship": {
+        "category": "Transport",
+        "costGp": "25000",
+        "weight": "0"
+      },
+      "Water clock": {
+        "category": "Tools and Skill Kits",
+        "costGp": "1000",
+        "weight": "200"
+      },
+      "Waterskin": {
+        "category": "Adventuring Gear",
+        "costGp": "1",
+        "weight": "4"
+      },
+      "Whetstone": {
+        "category": "Adventuring Gear",
+        "costGp": "0.02",
+        "weight": "1"
+      }
+    },
+    "unresolved": [],
+    "weapons": {
+      "Axe, orc double": {
+        "costGp": "60",
+        "generatorName": "Orc Double Axe",
+        "proficiency": "Exotic",
+        "weight": "15"
+      },
+      "Axe, throwing": {
+        "costGp": "8",
+        "generatorName": "Throwing Axe",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Battleaxe": {
+        "costGp": "10",
+        "generatorName": "Battleaxe",
+        "proficiency": "Martial",
+        "weight": "6"
+      },
+      "Bolas": {
+        "costGp": "5",
+        "generatorName": "Bolas",
+        "proficiency": "Exotic",
+        "weight": "2"
+      },
+      "Chain, spiked": {
+        "costGp": "25",
+        "generatorName": "Spiked Chain",
+        "proficiency": "Exotic",
+        "weight": "10"
+      },
+      "Club": {
+        "costGp": "0",
+        "generatorName": "Club",
+        "proficiency": "Simple",
+        "weight": "3"
+      },
+      "Crossbow, hand": {
+        "costGp": "100",
+        "generatorName": "Hand Crossbow",
+        "proficiency": "Exotic",
+        "weight": "2"
+      },
+      "Crossbow, heavy": {
+        "costGp": "50",
+        "generatorName": "Heavy Crossbow",
+        "proficiency": "Simple",
+        "weight": "8"
+      },
+      "Crossbow, light": {
+        "costGp": "35",
+        "generatorName": "Light Crossbow",
+        "proficiency": "Simple",
+        "weight": "4"
+      },
+      "Crossbow, repeating heavy": {
+        "costGp": "400",
+        "generatorName": "Repeating Heavy Crossbow",
+        "proficiency": "Exotic",
+        "weight": "12"
+      },
+      "Crossbow, repeating light": {
+        "costGp": "250",
+        "generatorName": "Repeating Light Crossbow",
+        "proficiency": "Exotic",
+        "weight": "6"
+      },
+      "Dagger": {
+        "costGp": "2",
+        "generatorName": "Dagger",
+        "proficiency": "Simple",
+        "weight": "1"
+      },
+      "Dagger, punching": {
+        "costGp": "2",
+        "generatorName": "Punching Dagger",
+        "proficiency": "Simple",
+        "weight": "1"
+      },
+      "Dart": {
+        "costGp": "0.5",
+        "generatorName": "Dart",
+        "proficiency": "Simple",
+        "weight": "0.5"
+      },
+      "Falchion": {
+        "costGp": "75",
+        "generatorName": "Falchion",
+        "proficiency": "Martial",
+        "weight": "8"
+      },
+      "Flail": {
+        "costGp": "8",
+        "generatorName": "Flail",
+        "proficiency": "Martial",
+        "weight": "5"
+      },
+      "Flail, dire": {
+        "costGp": "90",
+        "generatorName": "Dire Flail",
+        "proficiency": "Exotic",
+        "weight": "10"
+      },
+      "Flail, heavy": {
+        "costGp": "15",
+        "generatorName": "Heavy Flail",
+        "proficiency": "Martial",
+        "weight": "10"
+      },
+      "Gauntlet": {
+        "costGp": "2",
+        "generatorName": "Gauntlet",
+        "proficiency": "Simple",
+        "weight": "1"
+      },
+      "Gauntlet, spiked": {
+        "costGp": "5",
+        "generatorName": "Spiked Gauntlet",
+        "proficiency": "Simple",
+        "weight": "1"
+      },
+      "Glaive": {
+        "costGp": "8",
+        "generatorName": "Glaive",
+        "proficiency": "Martial",
+        "weight": "10"
+      },
+      "Greataxe": {
+        "costGp": "20",
+        "generatorName": "Greataxe",
+        "proficiency": "Martial",
+        "weight": "12"
+      },
+      "Greatclub": {
+        "costGp": "5",
+        "generatorName": "Greatclub",
+        "proficiency": "Martial",
+        "weight": "8"
+      },
+      "Greatsword": {
+        "costGp": "50",
+        "generatorName": "Greatsword",
+        "proficiency": "Martial",
+        "weight": "8"
+      },
+      "Guisarme": {
+        "costGp": "9",
+        "generatorName": "Guisarme",
+        "proficiency": "Martial",
+        "weight": "12"
+      },
+      "Halberd": {
+        "costGp": "10",
+        "generatorName": "Halberd",
+        "proficiency": "Martial",
+        "weight": "12"
+      },
+      "Hammer, gnome hooked": {
+        "costGp": "20",
+        "generatorName": "Gnome Hooked Hammer",
+        "proficiency": "Exotic",
+        "weight": "6"
+      },
+      "Hammer, light": {
+        "costGp": "1",
+        "generatorName": "Light Hammer",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Handaxe": {
+        "costGp": "6",
+        "generatorName": "Handaxe",
+        "proficiency": "Martial",
+        "weight": "3"
+      },
+      "Javelin": {
+        "costGp": "1",
+        "generatorName": "Javelin",
+        "proficiency": "Simple",
+        "weight": "2"
+      },
+      "Kama": {
+        "costGp": "2",
+        "generatorName": "Kama",
+        "proficiency": "Exotic",
+        "weight": "2"
+      },
+      "Kukri": {
+        "costGp": "8",
+        "generatorName": "Kukri",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Lance": {
+        "costGp": "10",
+        "generatorName": "Lance",
+        "proficiency": "Martial",
+        "weight": "10"
+      },
+      "Longbow": {
+        "costGp": "75",
+        "generatorName": "Longbow",
+        "proficiency": "Martial",
+        "weight": "3"
+      },
+      "Longbow, composite": {
+        "costGp": "100",
+        "generatorName": "Composite Longbow",
+        "proficiency": "Martial",
+        "weight": "3"
+      },
+      "Longspear": {
+        "costGp": "5",
+        "generatorName": "Longspear",
+        "proficiency": "Simple",
+        "weight": "9"
+      },
+      "Longsword": {
+        "costGp": "15",
+        "generatorName": "Longsword",
+        "proficiency": "Martial",
+        "weight": "4"
+      },
+      "Mace, heavy": {
+        "costGp": "12",
+        "generatorName": "Heavy Mace",
+        "proficiency": "Simple",
+        "weight": "8"
+      },
+      "Mace, light": {
+        "costGp": "5",
+        "generatorName": "Light Mace",
+        "proficiency": "Simple",
+        "weight": "4"
+      },
+      "Morningstar": {
+        "costGp": "8",
+        "generatorName": "Morningstar",
+        "proficiency": "Simple",
+        "weight": "6"
+      },
+      "Net": {
+        "costGp": "20",
+        "generatorName": "Net",
+        "proficiency": "Exotic",
+        "weight": "6"
+      },
+      "Nunchaku": {
+        "costGp": "2",
+        "generatorName": "Nunchaku",
+        "proficiency": "Exotic",
+        "weight": "2"
+      },
+      "Pick, heavy": {
+        "costGp": "8",
+        "generatorName": "Heavy Pick",
+        "proficiency": "Martial",
+        "weight": "6"
+      },
+      "Pick, light": {
+        "costGp": "4",
+        "generatorName": "Light Pick",
+        "proficiency": "Martial",
+        "weight": "3"
+      },
+      "Quarterstaff": {
+        "costGp": "0",
+        "generatorName": "Quarterstaff",
+        "proficiency": "Simple",
+        "weight": "4"
+      },
+      "Ranseur": {
+        "costGp": "10",
+        "generatorName": "Ranseur",
+        "proficiency": "Martial",
+        "weight": "12"
+      },
+      "Rapier": {
+        "costGp": "20",
+        "generatorName": "Rapier",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Sai": {
+        "costGp": "1",
+        "generatorName": "Sai",
+        "proficiency": "Exotic",
+        "weight": "1"
+      },
+      "Sap": {
+        "costGp": "1",
+        "generatorName": "Sap",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Scimitar": {
+        "costGp": "15",
+        "generatorName": "Scimitar",
+        "proficiency": "Martial",
+        "weight": "4"
+      },
+      "Scythe": {
+        "costGp": "18",
+        "generatorName": "Scythe",
+        "proficiency": "Martial",
+        "weight": "10"
+      },
+      "Shortbow": {
+        "costGp": "30",
+        "generatorName": "Shortbow",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Shortbow, composite": {
+        "costGp": "75",
+        "generatorName": "Composite Shortbow",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Shortspear": {
+        "costGp": "1",
+        "generatorName": "Shortspear",
+        "proficiency": "Simple",
+        "weight": "3"
+      },
+      "Shuriken (5)": {
+        "costGp": "1",
+        "generatorName": "Shuriken",
+        "proficiency": "Exotic",
+        "weight": "0.5"
+      },
+      "Siangham": {
+        "costGp": "3",
+        "generatorName": "Siangham",
+        "proficiency": "Exotic",
+        "weight": "1"
+      },
+      "Sickle": {
+        "costGp": "6",
+        "generatorName": "Sickle",
+        "proficiency": "Simple",
+        "weight": "2"
+      },
+      "Sling": {
+        "costGp": "0",
+        "generatorName": "Sling",
+        "proficiency": "Simple",
+        "weight": "0"
+      },
+      "Spear": {
+        "costGp": "2",
+        "generatorName": "Spear",
+        "proficiency": "Simple",
+        "weight": "6"
+      },
+      "Sword, bastard": {
+        "costGp": "35",
+        "generatorName": "Bastard Sword",
+        "proficiency": "Exotic",
+        "weight": "6"
+      },
+      "Sword, short": {
+        "costGp": "10",
+        "generatorName": "Shortsword",
+        "proficiency": "Martial",
+        "weight": "2"
+      },
+      "Sword, two-bladed": {
+        "costGp": "100",
+        "generatorName": "Two-Bladed Sword",
+        "proficiency": "Exotic",
+        "weight": "10"
+      },
+      "Trident": {
+        "costGp": "15",
+        "generatorName": "Trident",
+        "proficiency": "Martial",
+        "weight": "4"
+      },
+      "Urgrosh, dwarven": {
+        "costGp": "50",
+        "generatorName": "Dwarven Urgrosh",
+        "proficiency": "Exotic",
+        "weight": "12"
+      },
+      "Waraxe, dwarven": {
+        "costGp": "30",
+        "generatorName": "Dwarven Waraxe",
+        "proficiency": "Exotic",
+        "weight": "8"
+      },
+      "Warhammer": {
+        "costGp": "12",
+        "generatorName": "Warhammer",
+        "proficiency": "Martial",
+        "weight": "5"
+      },
+      "Whip": {
+        "costGp": "1",
+        "generatorName": "Whip",
+        "proficiency": "Exotic",
+        "weight": "2"
+      }
+    }
+  },
+  "mapping": {
+    "overrides": {
+      "nameMap": {},
+      "reviewed": [],
+      "Axe, orc double": {
+        "description": "An orc double axe is a two-handed exotic double weapon with an axe head on each end."
+      },
+      "Axe, throwing": {
+        "description": "A throwing axe is a light martial melee weapon designed to be thrown."
+      },
+      "Battleaxe": {
+        "description": "A battleaxe is a one-handed martial melee weapon."
+      },
+      "Bolas": {
+        "description": "A bolas is an exotic thrown ranged weapon used to trip opponents."
+      },
+      "Chain, spiked": {
+        "description": "A spiked chain is a two-handed exotic melee weapon with reach that can also strike adjacent foes."
+      },
+      "Club": {
+        "description": "A club is a one-handed simple melee weapon."
+      },
+      "Crossbow, hand": {
+        "description": "A hand crossbow is a one-handed exotic ranged weapon."
+      },
+      "Crossbow, heavy": {
+        "description": "A heavy crossbow is a two-handed simple ranged weapon."
+      },
+      "Crossbow, light": {
+        "description": "A light crossbow is a two-handed simple ranged weapon."
+      },
+      "Crossbow, repeating heavy": {
+        "description": "A repeating heavy crossbow is a two-handed exotic ranged weapon with a magazine."
+      },
+      "Crossbow, repeating light": {
+        "description": "A repeating light crossbow is a two-handed exotic ranged weapon with a magazine."
+      },
+      "Dagger": {
+        "description": "A dagger is a light simple melee weapon that can also be thrown."
+      },
+      "Dagger, punching": {
+        "description": "A punching dagger is a light simple melee weapon designed for close-quarters stabbing."
+      },
+      "Dart": {
+        "description": "A dart is a simple thrown ranged weapon."
+      },
+      "Falchion": {
+        "description": "A falchion is a two-handed martial melee weapon with a broad curved blade."
+      },
+      "Flail": {
+        "description": "A flail is a one-handed martial melee weapon."
+      },
+      "Flail, dire": {
+        "description": "A dire flail is a two-handed exotic double weapon with a spiked ball on each end."
+      },
+      "Flail, heavy": {
+        "description": "A heavy flail is a two-handed martial melee weapon."
+      },
+      "Gauntlet": {
+        "description": "A gauntlet lets you deal lethal damage with an unarmed strike rather than nonlethal."
+      },
+      "Gauntlet, spiked": {
+        "description": "A spiked gauntlet lets you deal lethal piercing damage with an unarmed strike."
+      },
+      "Glaive": {
+        "description": "A glaive is a two-handed martial melee weapon with reach."
+      },
+      "Greataxe": {
+        "description": "A greataxe is a two-handed martial melee weapon."
+      },
+      "Greatclub": {
+        "description": "A greatclub is a two-handed martial melee weapon."
+      },
+      "Greatsword": {
+        "description": "A greatsword is a two-handed martial melee weapon."
+      },
+      "Guisarme": {
+        "description": "A guisarme is a two-handed martial melee weapon with reach."
+      },
+      "Halberd": {
+        "description": "A halberd is a two-handed martial melee weapon combining an axe blade and a spike."
+      },
+      "Hammer, gnome hooked": {
+        "description": "A gnome hooked hammer is a two-handed exotic double weapon with a hammer head and a hook."
+      },
+      "Hammer, light": {
+        "description": "A light hammer is a light martial melee weapon that can also be thrown."
+      },
+      "Handaxe": {
+        "description": "A handaxe is a light martial melee weapon that can also be thrown."
+      },
+      "Javelin": {
+        "description": "A javelin is a one-handed simple thrown weapon."
+      },
+      "Kama": {
+        "description": "A kama is a light exotic melee weapon, a monk weapon."
+      },
+      "Kukri": {
+        "description": "A kukri is a light martial melee weapon with a curved blade."
+      },
+      "Lance": {
+        "description": "A lance is a two-handed martial melee weapon designed for mounted combat."
+      },
+      "Longbow": {
+        "description": "A longbow is a two-handed martial ranged weapon."
+      },
+      "Longbow, composite": {
+        "description": "A composite longbow is a two-handed martial ranged weapon that can add Strength bonus to damage."
+      },
+      "Longspear": {
+        "description": "A longspear is a two-handed simple melee weapon with reach."
+      },
+      "Longsword": {
+        "description": "A longsword is a one-handed martial melee weapon."
+      },
+      "Mace, heavy": {
+        "description": "A heavy mace is a one-handed simple melee weapon."
+      },
+      "Mace, light": {
+        "description": "A light mace is a light simple melee weapon."
+      },
+      "Morningstar": {
+        "description": "A morningstar is a one-handed simple melee weapon with a spiked metal ball."
+      },
+      "Net": {
+        "description": "A net is an exotic thrown ranged weapon used to entangle opponents."
+      },
+      "Nunchaku": {
+        "description": "A nunchaku is a light exotic melee weapon, a monk weapon."
+      },
+      "Pick, heavy": {
+        "description": "A heavy pick is a one-handed martial melee weapon."
+      },
+      "Pick, light": {
+        "description": "A light pick is a light martial melee weapon."
+      },
+      "Quarterstaff": {
+        "description": "A quarterstaff is a two-handed simple melee weapon, a double weapon."
+      },
+      "Ranseur": {
+        "description": "A ranseur is a two-handed martial melee weapon with reach."
+      },
+      "Rapier": {
+        "description": "A rapier is a one-handed martial melee weapon favored for its precision."
+      },
+      "Sai": {
+        "description": "A sai is a light exotic melee weapon, a monk weapon with a pointed blade and two prongs."
+      },
+      "Sap": {
+        "description": "A sap is a light martial melee weapon that deals nonlethal damage."
+      },
+      "Scimitar": {
+        "description": "A scimitar is a one-handed martial melee weapon with a curved blade."
+      },
+      "Scythe": {
+        "description": "A scythe is a two-handed martial melee weapon."
+      },
+      "Shortbow": {
+        "description": "A shortbow is a two-handed martial ranged weapon."
+      },
+      "Shortbow, composite": {
+        "description": "A composite shortbow is a two-handed martial ranged weapon that can add Strength bonus to damage."
+      },
+      "Shortspear": {
+        "description": "A shortspear is a one-handed simple melee weapon that can also be thrown."
+      },
+      "Shuriken (5)": {
+        "description": "A shuriken is an exotic thrown ranged weapon, a monk weapon."
+      },
+      "Siangham": {
+        "description": "A siangham is a light exotic melee weapon, a monk weapon."
+      },
+      "Sickle": {
+        "description": "A sickle is a light simple melee weapon resembling a farming tool."
+      },
+      "Sling": {
+        "description": "A sling is a simple ranged weapon."
+      },
+      "Spear": {
+        "description": "A spear is a two-handed simple melee weapon that can also be thrown."
+      },
+      "Sword, bastard": {
+        "description": "A bastard sword is a one-handed exotic melee weapon (or two-handed martial)."
+      },
+      "Sword, short": {
+        "description": "A shortsword is a light martial melee weapon."
+      },
+      "Sword, two-bladed": {
+        "description": "A two-bladed sword is a two-handed exotic double weapon with a blade on each end."
+      },
+      "Trident": {
+        "description": "A trident is a one-handed martial melee weapon that can also be thrown."
+      },
+      "Urgrosh, dwarven": {
+        "description": "A dwarven urgrosh is a two-handed exotic double weapon with an axe head and a spear point."
+      },
+      "Waraxe, dwarven": {
+        "description": "A dwarven waraxe is a one-handed exotic melee weapon (or two-handed martial)."
+      },
+      "Warhammer": {
+        "description": "A warhammer is a one-handed martial melee weapon."
+      },
+      "Whip": {
+        "description": "A whip is a one-handed exotic melee weapon with 15 ft. reach."
+      },
+      "Banded mail": {
+        "description": "Banded mail is heavy armor made of overlapping strips of metal sewn to a leather backing."
+      },
+      "Breastplate": {
+        "description": "A breastplate is medium armor covering the front and back torso."
+      },
+      "Buckler": {
+        "description": "A buckler is a small metal shield worn strapped to the forearm."
+      },
+      "Chain shirt": {
+        "description": "A chain shirt is light armor made of interlocking metal rings covering the torso."
+      },
+      "Chainmail": {
+        "description": "Chain mail is medium armor made of interlocking metal rings."
+      },
+      "Full plate": {
+        "description": "Full plate armor is heavy armor consisting of shaped metal plates covering the entire body."
+      },
+      "Half-plate": {
+        "description": "Half-plate is heavy armor combining chainmail with metal plates covering vital areas."
+      },
+      "Hide": {
+        "description": "Hide armor is medium armor made from the thick hides of animals."
+      },
+      "Leather": {
+        "description": "Leather armor is light armor made of hardened leather."
+      },
+      "Padded": {
+        "description": "Padded armor is light armor consisting of heavy, quilted cloth."
+      },
+      "Scale mail": {
+        "description": "Scale mail is medium armor made of overlapping metal scales."
+      },
+      "Shield, heavy steel": {
+        "description": "A heavy steel shield is a large shield made of steel."
+      },
+      "Shield, heavy wooden": {
+        "description": "A heavy wooden shield is a large shield made of wood."
+      },
+      "Shield, light steel": {
+        "description": "A light steel shield is a small shield made of steel."
+      },
+      "Shield, light wooden": {
+        "description": "A light wooden shield is a small shield made of wood."
+      },
+      "Shield, tower": {
+        "description": "A tower shield is a massive shield that provides cover but limits mobility."
+      },
+      "Splint mail": {
+        "description": "Splint mail is heavy armor made of metal strips riveted to a leather backing."
+      },
+      "Studded leather": {
+        "description": "Studded leather armor is light armor reinforced with metal rivets."
+      }
+    }
+  },
+  "raw": {
+    "armor": [
+      {
+        "acBonus": "1",
+        "arcaneSpellFailure": "5%",
+        "armorCheckPenalty": "0",
+        "category": "Light armor",
+        "cost": "5 gp",
+        "maxDexBonus": "8",
+        "name": "Padded",
+        "speed20": "20 ft.",
+        "speed30": "30 ft.",
+        "weight": "10 lb."
+      },
+      {
+        "acBonus": "2",
+        "arcaneSpellFailure": "10%",
+        "armorCheckPenalty": "0",
+        "category": "Light armor",
+        "cost": "10 gp",
+        "maxDexBonus": "6",
+        "name": "Leather",
+        "speed20": "20 ft.",
+        "speed30": "30 ft.",
+        "weight": "15 lb."
+      },
+      {
+        "acBonus": "3",
+        "arcaneSpellFailure": "15%",
+        "armorCheckPenalty": "-1",
+        "category": "Light armor",
+        "cost": "25 gp",
+        "maxDexBonus": "5",
+        "name": "Studded leather",
+        "speed20": "20 ft.",
+        "speed30": "30 ft.",
+        "weight": "20 lb."
+      },
+      {
+        "acBonus": "4",
+        "arcaneSpellFailure": "20%",
+        "armorCheckPenalty": "-2",
+        "category": "Light armor",
+        "cost": "100 gp",
+        "maxDexBonus": "4",
+        "name": "Chain shirt",
+        "speed20": "20 ft.",
+        "speed30": "30 ft.",
+        "weight": "25 lb."
+      },
+      {
+        "acBonus": "3",
+        "arcaneSpellFailure": "20%",
+        "armorCheckPenalty": "-3",
+        "category": "Medium armor",
+        "cost": "15 gp",
+        "maxDexBonus": "4",
+        "name": "Hide",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "25 lb."
+      },
+      {
+        "acBonus": "4",
+        "arcaneSpellFailure": "25%",
+        "armorCheckPenalty": "-4",
+        "category": "Medium armor",
+        "cost": "50 gp",
+        "maxDexBonus": "3",
+        "name": "Scale mail",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "30 lb."
+      },
+      {
+        "acBonus": "5",
+        "arcaneSpellFailure": "30%",
+        "armorCheckPenalty": "-5",
+        "category": "Medium armor",
+        "cost": "150 gp",
+        "maxDexBonus": "2",
+        "name": "Chainmail",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "40 lb."
+      },
+      {
+        "acBonus": "5",
+        "arcaneSpellFailure": "25%",
+        "armorCheckPenalty": "-4",
+        "category": "Medium armor",
+        "cost": "200 gp",
+        "maxDexBonus": "3",
+        "name": "Breastplate",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "30 lb."
+      },
+      {
+        "acBonus": "6",
+        "arcaneSpellFailure": "40%",
+        "armorCheckPenalty": "-7",
+        "category": "Heavy armor",
+        "cost": "200 gp",
+        "maxDexBonus": "0",
+        "name": "Splint mail",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "45 lb."
+      },
+      {
+        "acBonus": "6",
+        "arcaneSpellFailure": "35%",
+        "armorCheckPenalty": "-6",
+        "category": "Heavy armor",
+        "cost": "250 gp",
+        "maxDexBonus": "1",
+        "name": "Banded mail",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "35 lb."
+      },
+      {
+        "acBonus": "7",
+        "arcaneSpellFailure": "40%",
+        "armorCheckPenalty": "-7",
+        "category": "Heavy armor",
+        "cost": "600 gp",
+        "maxDexBonus": "0",
+        "name": "Half-plate",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "50 lb."
+      },
+      {
+        "acBonus": "8",
+        "arcaneSpellFailure": "35%",
+        "armorCheckPenalty": "-6",
+        "category": "Heavy armor",
+        "cost": "1,500 gp",
+        "maxDexBonus": "1",
+        "name": "Full plate",
+        "speed20": "15 ft.",
+        "speed30": "20 ft.",
+        "weight": "50 lb."
+      },
+      {
+        "acBonus": "1",
+        "arcaneSpellFailure": "5%",
+        "armorCheckPenalty": "-1",
+        "category": "Shields",
+        "cost": "15 gp",
+        "maxDexBonus": "-",
+        "name": "Buckler",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "5 lb."
+      },
+      {
+        "acBonus": "1",
+        "arcaneSpellFailure": "5%",
+        "armorCheckPenalty": "-1",
+        "category": "Shields",
+        "cost": "3 gp",
+        "maxDexBonus": "-",
+        "name": "Shield, light wooden",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "5 lb."
+      },
+      {
+        "acBonus": "1",
+        "arcaneSpellFailure": "5%",
+        "armorCheckPenalty": "-1",
+        "category": "Shields",
+        "cost": "9 gp",
+        "maxDexBonus": "-",
+        "name": "Shield, light steel",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "6 lb."
+      },
+      {
+        "acBonus": "2",
+        "arcaneSpellFailure": "15%",
+        "armorCheckPenalty": "-2",
+        "category": "Shields",
+        "cost": "7 gp",
+        "maxDexBonus": "-",
+        "name": "Shield, heavy wooden",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "10 lb."
+      },
+      {
+        "acBonus": "2",
+        "arcaneSpellFailure": "15%",
+        "armorCheckPenalty": "-2",
+        "category": "Shields",
+        "cost": "20 gp",
+        "maxDexBonus": "-",
+        "name": "Shield, heavy steel",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "15 lb."
+      },
+      {
+        "acBonus": "4",
+        "arcaneSpellFailure": "50%",
+        "armorCheckPenalty": "-10",
+        "category": "Shields",
+        "cost": "30 gp",
+        "maxDexBonus": "2",
+        "name": "Shield, tower",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "45 lb."
+      },
+      {
+        "acBonus": "-",
+        "arcaneSpellFailure": "-",
+        "armorCheckPenalty": "-",
+        "category": "Extras",
+        "cost": "+50 gp",
+        "maxDexBonus": "-",
+        "name": "Armor spikes",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "+10 lb."
+      },
+      {
+        "acBonus": "-",
+        "arcaneSpellFailure": "-",
+        "armorCheckPenalty": "Special",
+        "category": "Extras",
+        "cost": "8 gp",
+        "maxDexBonus": "-",
+        "name": "Gauntlet, locked",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "+5 lb."
+      },
+      {
+        "acBonus": "-",
+        "arcaneSpellFailure": "-",
+        "armorCheckPenalty": "-",
+        "category": "Extras",
+        "cost": "+10 gp",
+        "maxDexBonus": "-",
+        "name": "Shield spikes",
+        "speed20": "-",
+        "speed30": "-",
+        "weight": "+5 lb."
+      }
+    ],
+    "goods": [
+      {
+        "cost": "2 gp",
+        "name": "Backpack (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Barrel (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "30 lb."
+      },
+      {
+        "cost": "4 sp",
+        "name": "Basket (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Bedroll",
+        "tableId": "tableAdventuringGear",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Bell",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "5 sp",
+        "name": "Blanket, winter",
+        "tableId": "tableAdventuringGear",
+        "weight": "3 lb."
+      },
+      {
+        "cost": "5 gp",
+        "name": "Block and tackle",
+        "tableId": "tableAdventuringGear",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Bottle, wine, glass",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "5 sp",
+        "name": "Bucket (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Caltrops",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "1 cp",
+        "name": "Candle",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "1 sp",
+        "name": "Canvas (sq. yd.)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Case, map or scroll",
+        "tableId": "tableAdventuringGear",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "30 gp",
+        "name": "Chain (10 ft.)",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "1 cp",
+        "name": "Chalk, 1 piece",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "2 gp",
+        "name": "Chest (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "25 lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Crowbar",
+        "tableId": "tableAdventuringGear",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "1 cp",
+        "name": "Firewood (per day)",
+        "tableId": "tableAdventuringGear",
+        "weight": "20 lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Fishhook",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "4 gp",
+        "name": "Fishing net, 25 sq. ft.",
+        "tableId": "tableAdventuringGear",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "3 cp",
+        "name": "Flask (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1½ lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Flint and steel",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "1 gp",
+        "name": "Grappling hook",
+        "tableId": "tableAdventuringGear",
+        "weight": "4 lb."
+      },
+      {
+        "cost": "5 sp",
+        "name": "Hammer",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "8 gp",
+        "name": "Ink (1 oz. vial)",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "1 sp",
+        "name": "Inkpen",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "3 cp",
+        "name": "Jug, clay",
+        "tableId": "tableAdventuringGear",
+        "weight": "9 lb."
+      },
+      {
+        "cost": "5 cp",
+        "name": "Ladder, 10-foot",
+        "tableId": "tableAdventuringGear",
+        "weight": "20 lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Lamp, common",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "12 gp",
+        "name": "Lantern, bullseye",
+        "tableId": "tableAdventuringGear",
+        "weight": "3 lb."
+      },
+      {
+        "cost": "7 gp",
+        "name": "Lantern, hooded",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "20 gp",
+        "name": "Lock (very simple)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "40 gp",
+        "name": "Lock (average)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "80 gp",
+        "name": "Lock (good)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "150 gp",
+        "name": "Lock (amazing)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "15 gp",
+        "name": "Manacles",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "50 gp",
+        "name": "Manacles, masterwork",
+        "tableId": "tableAdventuringGear",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Mirror, small steel",
+        "tableId": "tableAdventuringGear",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "2 cp",
+        "name": "Mug/Tankard, clay",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Oil (1-pint flask)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "4 sp",
+        "name": "Paper (sheet)",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "2 sp",
+        "name": "Parchment (sheet)",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "3 gp",
+        "name": "Pick, miner's",
+        "tableId": "tableAdventuringGear",
+        "weight": "10 lb."
+      },
+      {
+        "cost": "2 cp",
+        "name": "Pitcher, clay",
+        "tableId": "tableAdventuringGear",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Piton",
+        "tableId": "tableAdventuringGear",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "2 sp",
+        "name": "Pole, 10-foot",
+        "tableId": "tableAdventuringGear",
+        "weight": "8 lb."
+      },
+      {
+        "cost": "5 sp",
+        "name": "Pot, iron",
+        "tableId": "tableAdventuringGear",
+        "weight": "10 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Pouch, belt (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Ram, portable",
+        "tableId": "tableAdventuringGear",
+        "weight": "20 lb."
+      },
+      {
+        "cost": "5 sp",
+        "name": "Rations, trail (per day)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Rope, hempen (50 ft.)",
+        "tableId": "tableAdventuringGear",
+        "weight": "10 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Rope, silk (50 ft.)",
+        "tableId": "tableAdventuringGear",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Sack (empty)",
+        "tableId": "tableAdventuringGear",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Sealing wax",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "5 sp",
+        "name": "Sewing needle",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "8 sp",
+        "name": "Signal whistle",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "5 gp",
+        "name": "Signet ring",
+        "tableId": "tableAdventuringGear",
+        "weight": "-"
+      },
+      {
+        "cost": "1 gp",
+        "name": "Sledge",
+        "tableId": "tableAdventuringGear",
+        "weight": "10 lb."
+      },
+      {
+        "cost": "5 sp",
+        "name": "Soap (per lb.)",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Spade or shovel",
+        "tableId": "tableAdventuringGear",
+        "weight": "8 lb."
+      },
+      {
+        "cost": "1,000 gp",
+        "name": "Spyglass",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Tent",
+        "tableId": "tableAdventuringGear",
+        "weight": "20 lb."
+      },
+      {
+        "cost": "1 cp",
+        "name": "Torch",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Vial, ink or potion",
+        "tableId": "tableAdventuringGear",
+        "weight": "1/10 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Waterskin",
+        "tableId": "tableAdventuringGear",
+        "weight": "4 lb."
+      },
+      {
+        "cost": "2 cp",
+        "name": "Whetstone",
+        "tableId": "tableAdventuringGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Acid (flask)",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "20 gp",
+        "name": "Alchemist's fire (flask)",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "50 gp",
+        "name": "Antitoxin (vial)",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "-"
+      },
+      {
+        "cost": "110 gp",
+        "name": "Everburning torch",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "25 gp",
+        "name": "Holy water (flask)",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "20 gp",
+        "name": "Smokestick",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Sunrod",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "50 gp",
+        "name": "Tanglefoot bag",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "4 lb."
+      },
+      {
+        "cost": "30 gp",
+        "name": "Thunderstone",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Tindertwig",
+        "tableId": "tableSpecialSubstancesAndItems",
+        "weight": "-"
+      },
+      {
+        "cost": "500 gp",
+        "name": "Alchemist's lab",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "40 lb."
+      },
+      {
+        "cost": "5 gp",
+        "name": "Artisan's tools",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "55 gp",
+        "name": "Artisan's tools, masterwork",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "80 gp",
+        "name": "Climber's kit",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "50 gp",
+        "name": "Disguise kit",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "8 lb."
+      },
+      {
+        "cost": "50 gp",
+        "name": "Healer's kit",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "-",
+        "name": "Holly and mistletoe",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "-"
+      },
+      {
+        "cost": "1 gp",
+        "name": "Holy symbol, wooden",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "-"
+      },
+      {
+        "cost": "25 gp",
+        "name": "Holy symbol, silver",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "25 gp",
+        "name": "Hourglass",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "100 gp",
+        "name": "Magnifying glass",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "-"
+      },
+      {
+        "cost": "5 gp",
+        "name": "Musical instrument, common",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "3 lb."
+      },
+      {
+        "cost": "100 gp",
+        "name": "Musical instrument, masterwork",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "3 lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Scale, merchant's",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "5 gp",
+        "name": "Spell component pouch",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "15 gp",
+        "name": "Spellbook, wizard's (blank)",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "3 lb."
+      },
+      {
+        "cost": "30 gp",
+        "name": "Thieves' tools",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "100 gp",
+        "name": "Thieves' tools, masterwork",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "50 gp",
+        "name": "Tool, masterwork",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "1,000 gp",
+        "name": "Water clock",
+        "tableId": "tableToolsAndSkillKits",
+        "weight": "200 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Artisan's outfit",
+        "tableId": "tableClothing",
+        "weight": "4 lb."
+      },
+      {
+        "cost": "5 gp",
+        "name": "Cleric's vestments",
+        "tableId": "tableClothing",
+        "weight": "6 lb."
+      },
+      {
+        "cost": "8 gp",
+        "name": "Cold weather outfit",
+        "tableId": "tableClothing",
+        "weight": "7 lb."
+      },
+      {
+        "cost": "30 gp",
+        "name": "Courtier's outfit",
+        "tableId": "tableClothing",
+        "weight": "6 lb."
+      },
+      {
+        "cost": "3 gp",
+        "name": "Entertainer's outfit",
+        "tableId": "tableClothing",
+        "weight": "4 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Explorer's outfit",
+        "tableId": "tableClothing",
+        "weight": "8 lb."
+      },
+      {
+        "cost": "5 gp",
+        "name": "Monk's outfit",
+        "tableId": "tableClothing",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "75 gp",
+        "name": "Noble's outfit",
+        "tableId": "tableClothing",
+        "weight": "10 lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Peasant's outfit",
+        "tableId": "tableClothing",
+        "weight": "2 lb."
+      },
+      {
+        "cost": "200 gp",
+        "name": "Royal outfit",
+        "tableId": "tableClothing",
+        "weight": "15 lb."
+      },
+      {
+        "cost": "5 gp",
+        "name": "Scholar's outfit",
+        "tableId": "tableClothing",
+        "weight": "6 lb."
+      },
+      {
+        "cost": "1 gp",
+        "name": "Traveler's outfit",
+        "tableId": "tableClothing",
+        "weight": "5 lb."
+      },
+      {
+        "cost": "2 sp",
+        "name": "Gallon",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "8 lb."
+      },
+      {
+        "cost": "4 cp",
+        "name": "Mug",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Banquet (per person)",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "-"
+      },
+      {
+        "cost": "2 cp",
+        "name": "Bread, per loaf",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "1 sp",
+        "name": "Cheese, hunk of",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Good",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "-"
+      },
+      {
+        "cost": "5 sp",
+        "name": "Common",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "-"
+      },
+      {
+        "cost": "2 sp",
+        "name": "Poor",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "-"
+      },
+      {
+        "cost": "5 sp",
+        "name": "Good",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "-"
+      },
+      {
+        "cost": "3 sp",
+        "name": "Common",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "-"
+      },
+      {
+        "cost": "1 sp",
+        "name": "Poor",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "-"
+      },
+      {
+        "cost": "3 sp",
+        "name": "Meat, chunk of",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "½ lb."
+      },
+      {
+        "cost": "2 sp",
+        "name": "Common (pitcher)",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "6 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Fine (bottle)",
+        "tableId": "tableFoodDrinkAndLodging",
+        "weight": "1½ lb."
+      },
+      {
+        "cost": "×2",
+        "name": "Medium creature",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "×1"
+      },
+      {
+        "cost": "×4",
+        "name": "Large creature",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "×2"
+      },
+      {
+        "cost": "2 gp",
+        "name": "Bit and bridle",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "1 lb."
+      },
+      {
+        "cost": "25 gp",
+        "name": "Dog, guard",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "150 gp",
+        "name": "Dog, riding",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "8 gp",
+        "name": "Donkey or mule",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "5 cp",
+        "name": "Feed (per day)",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "10 lb."
+      },
+      {
+        "cost": "200 gp",
+        "name": "Horse, heavy",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "75 gp",
+        "name": "Horse, light",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "30 gp",
+        "name": "Pony",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "400 gp",
+        "name": "Warhorse, heavy",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "150 gp",
+        "name": "Warhorse, light",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "100 gp",
+        "name": "Warpony",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "20 gp",
+        "name": "Military",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "30 lb."
+      },
+      {
+        "cost": "5 gp",
+        "name": "Pack",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "15 lb."
+      },
+      {
+        "cost": "10 gp",
+        "name": "Riding",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "25 lb."
+      },
+      {
+        "cost": "60 gp",
+        "name": "Military",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "40 lb."
+      },
+      {
+        "cost": "15 gp",
+        "name": "Pack",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "20 lb."
+      },
+      {
+        "cost": "30 gp",
+        "name": "Riding",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "30 lb."
+      },
+      {
+        "cost": "4 gp",
+        "name": "Saddlebags",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "8 lb."
+      },
+      {
+        "cost": "5 sp",
+        "name": "Stabling (per day)",
+        "tableId": "tableMountsAndRelatedGear",
+        "weight": "-"
+      },
+      {
+        "cost": "100 gp",
+        "name": "Carriage",
+        "tableId": "tableTransport",
+        "weight": "600 lb."
+      },
+      {
+        "cost": "15 gp",
+        "name": "Cart",
+        "tableId": "tableTransport",
+        "weight": "200 lb."
+      },
+      {
+        "cost": "30,000 gp",
+        "name": "Galley",
+        "tableId": "tableTransport",
+        "weight": "-"
+      },
+      {
+        "cost": "3,000 gp",
+        "name": "Keelboat",
+        "tableId": "tableTransport",
+        "weight": "-"
+      },
+      {
+        "cost": "10,000 gp",
+        "name": "Longship",
+        "tableId": "tableTransport",
+        "weight": "-"
+      },
+      {
+        "cost": "50 gp",
+        "name": "Rowboat",
+        "tableId": "tableTransport",
+        "weight": "100 lb."
+      },
+      {
+        "cost": "2 gp",
+        "name": "Oar",
+        "tableId": "tableTransport",
+        "weight": "10 lb."
+      },
+      {
+        "cost": "10,000 gp",
+        "name": "Sailing ship",
+        "tableId": "tableTransport",
+        "weight": "-"
+      },
+      {
+        "cost": "20 gp",
+        "name": "Sled",
+        "tableId": "tableTransport",
+        "weight": "300 lb."
+      },
+      {
+        "cost": "35 gp",
+        "name": "Wagon",
+        "tableId": "tableTransport",
+        "weight": "400 lb."
+      },
+      {
+        "cost": "25,000 gp",
+        "name": "Warship",
+        "tableId": "tableTransport",
+        "weight": "-"
+      }
+    ],
+    "weapons": [
+      {
+        "category": "Unarmed Attacks",
+        "cost": "2 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d3",
+        "dmgSmall": "1d2",
+        "name": "Gauntlet",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Unarmed Attacks",
+        "cost": "-",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d3",
+        "dmgSmall": "1d2",
+        "name": "Unarmed strike",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "-"
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "2 gp",
+        "critical": "19-20/×2",
+        "damageType": "Piercing or slashing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Dagger",
+        "proficiency": "Simple",
+        "rangeIncrement": "10 ft.",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "2 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Dagger, punching",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "5 gp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Gauntlet, spiked",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "5 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Mace, light",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "4 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "6 gp",
+        "critical": "×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Sickle",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "-",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Club",
+        "proficiency": "Simple",
+        "rangeIncrement": "10 ft.",
+        "weight": "3 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "12 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Mace, heavy",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "8 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "8 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning and piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Morningstar",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "6 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "1 gp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Shortspear",
+        "proficiency": "Simple",
+        "rangeIncrement": "20 ft.",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "5 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Longspear",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "9 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "-",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d6/1d6",
+        "dmgSmall": "1d4/1d4",
+        "name": "Quarterstaff",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "4 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "2 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Spear",
+        "proficiency": "Simple",
+        "rangeIncrement": "20 ft.",
+        "weight": "6 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "50 gp",
+        "critical": "19-20/×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Crossbow, heavy",
+        "proficiency": "Simple",
+        "rangeIncrement": "120 ft.",
+        "weight": "8 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Bolts, crossbow (10)",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "35 gp",
+        "critical": "19-20/×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Crossbow, light",
+        "proficiency": "Simple",
+        "rangeIncrement": "80 ft.",
+        "weight": "4 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Bolts, crossbow (10)",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "5 sp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Dart",
+        "proficiency": "Simple",
+        "rangeIncrement": "20 ft.",
+        "weight": "½ lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Javelin",
+        "proficiency": "Simple",
+        "rangeIncrement": "30 ft.",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "-",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Sling",
+        "proficiency": "Simple",
+        "rangeIncrement": "50 ft.",
+        "weight": "0 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 sp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Bullets, sling (10)",
+        "proficiency": "Simple",
+        "rangeIncrement": "-",
+        "weight": "5 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "8 gp",
+        "critical": "×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Axe, throwing",
+        "proficiency": "Martial",
+        "rangeIncrement": "10 ft.",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "1 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Hammer, light",
+        "proficiency": "Martial",
+        "rangeIncrement": "20 ft.",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "6 gp",
+        "critical": "×3",
+        "damageType": "Slashing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Handaxe",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "8 gp",
+        "critical": "18-20/×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Kukri",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "4 gp",
+        "critical": "×4",
+        "damageType": "Piercing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Pick, light",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "1 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Sap",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "special",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d3",
+        "dmgSmall": "1d2",
+        "name": "Shield, light",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "special"
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "special",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Spiked armor",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "special"
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "special",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Spiked shield, light",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "special"
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "10 gp",
+        "critical": "19-20/×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Sword, short",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "10 gp",
+        "critical": "×3",
+        "damageType": "Slashing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Battleaxe",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "6 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "8 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Flail",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "5 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "15 gp",
+        "critical": "19-20/×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Longsword",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "4 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "8 gp",
+        "critical": "×4",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Pick, heavy",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "6 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "20 gp",
+        "critical": "18-20/×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Rapier",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "15 gp",
+        "critical": "18-20/×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Scimitar",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "4 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "special",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Shield, heavy",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "special"
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "special",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Spiked shield, heavy",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "special"
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "15 gp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Trident",
+        "proficiency": "Martial",
+        "rangeIncrement": "10 ft.",
+        "weight": "4 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "12 gp",
+        "critical": "×3",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Warhammer",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "5 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "75 gp",
+        "critical": "18-20/×2",
+        "damageType": "Slashing",
+        "dmgMedium": "2d4",
+        "dmgSmall": "1d6",
+        "name": "Falchion",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "8 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "8 gp",
+        "critical": "×3",
+        "damageType": "Slashing",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Glaive",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "10 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "20 gp",
+        "critical": "×3",
+        "damageType": "Slashing",
+        "dmgMedium": "1d12",
+        "dmgSmall": "1d10",
+        "name": "Greataxe",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "12 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "5 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Greatclub",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "8 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "15 gp",
+        "critical": "19-20/×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Flail, heavy",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "10 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "50 gp",
+        "critical": "19-20/×2",
+        "damageType": "Slashing",
+        "dmgMedium": "2d6",
+        "dmgSmall": "1d10",
+        "name": "Greatsword",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "8 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "9 gp",
+        "critical": "×3",
+        "damageType": "Slashing",
+        "dmgMedium": "2d4",
+        "dmgSmall": "1d6",
+        "name": "Guisarme",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "12 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "10 gp",
+        "critical": "×3",
+        "damageType": "Piercing or slashing",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Halberd",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "12 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "10 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Lance",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "10 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "10 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "2d4",
+        "dmgSmall": "1d6",
+        "name": "Ranseur",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "12 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "18 gp",
+        "critical": "×4",
+        "damageType": "Piercing or slashing",
+        "dmgMedium": "2d4",
+        "dmgSmall": "1d6",
+        "name": "Scythe",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "10 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "75 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Longbow",
+        "proficiency": "Martial",
+        "rangeIncrement": "100 ft.",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Arrows (20)",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "100 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Longbow, composite",
+        "proficiency": "Martial",
+        "rangeIncrement": "110 ft.",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Arrows (20)",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "30 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Shortbow",
+        "proficiency": "Martial",
+        "rangeIncrement": "60 ft.",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Arrows (20)",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "75 gp",
+        "critical": "×3",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Shortbow, composite",
+        "proficiency": "Martial",
+        "rangeIncrement": "70 ft.",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Arrows (20)",
+        "proficiency": "Martial",
+        "rangeIncrement": "-",
+        "weight": "3 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "2 gp",
+        "critical": "×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Kama",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "2 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Nunchaku",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "1 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Sai",
+        "proficiency": "Exotic",
+        "rangeIncrement": "10 ft.",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Light Melee Weapons",
+        "cost": "3 gp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d6",
+        "dmgSmall": "1d4",
+        "name": "Siangham",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "35 gp",
+        "critical": "19-20/×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Sword, bastard",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "6 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "30 gp",
+        "critical": "×3",
+        "damageType": "Slashing",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Waraxe, dwarven",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "8 lb."
+      },
+      {
+        "category": "One-Handed Melee Weapons",
+        "cost": "1 gp",
+        "critical": "×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d3",
+        "dmgSmall": "1d2",
+        "name": "Whip",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "60 gp",
+        "critical": "×3",
+        "damageType": "Slashing",
+        "dmgMedium": "1d8/1d8",
+        "dmgSmall": "1d6/1d6",
+        "name": "Axe, orc double",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "15 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "25 gp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "2d4",
+        "dmgSmall": "1d6",
+        "name": "Chain, spiked",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "10 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "90 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d8/1d8",
+        "dmgSmall": "1d6/1d6",
+        "name": "Flail, dire",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "10 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "20 gp",
+        "critical": "×3/×4",
+        "damageType": "Bludgeoning/Piercing",
+        "dmgMedium": "1d8/1d6",
+        "dmgSmall": "1d6/1d4",
+        "name": "Hammer, gnome hooked",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "6 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "100 gp",
+        "critical": "19-20/×2",
+        "damageType": "Slashing",
+        "dmgMedium": "1d8/1d8",
+        "dmgSmall": "1d6/1d6",
+        "name": "Sword, two-bladed",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "10 lb."
+      },
+      {
+        "category": "Two-Handed Melee Weapons",
+        "cost": "50 gp",
+        "critical": "×3",
+        "damageType": "Slashing or piercing",
+        "dmgMedium": "1d8/1d6",
+        "dmgSmall": "1d6/1d4",
+        "name": "Urgrosh, dwarven",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "12 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "5 gp",
+        "critical": "×2",
+        "damageType": "Bludgeoning",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Bolas",
+        "proficiency": "Exotic",
+        "rangeIncrement": "10 ft.",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "100 gp",
+        "critical": "19-20/×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d4",
+        "dmgSmall": "1d3",
+        "name": "Crossbow, hand",
+        "proficiency": "Exotic",
+        "rangeIncrement": "30 ft.",
+        "weight": "2 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Bolts (10)",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "400 gp",
+        "critical": "19-20/×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d10",
+        "dmgSmall": "1d8",
+        "name": "Crossbow, repeating heavy",
+        "proficiency": "Exotic",
+        "rangeIncrement": "120 ft.",
+        "weight": "12 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Bolts (5)",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "250 gp",
+        "critical": "19-20/×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d8",
+        "dmgSmall": "1d6",
+        "name": "Crossbow, repeating light",
+        "proficiency": "Exotic",
+        "rangeIncrement": "80 ft.",
+        "weight": "6 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Bolts (5)",
+        "proficiency": "Exotic",
+        "rangeIncrement": "-",
+        "weight": "1 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "20 gp",
+        "critical": "-",
+        "damageType": "-",
+        "dmgMedium": "-",
+        "dmgSmall": "-",
+        "name": "Net",
+        "proficiency": "Exotic",
+        "rangeIncrement": "10 ft.",
+        "weight": "6 lb."
+      },
+      {
+        "category": "Ranged Weapons",
+        "cost": "1 gp",
+        "critical": "×2",
+        "damageType": "Piercing",
+        "dmgMedium": "1d2",
+        "dmgSmall": "1",
+        "name": "Shuriken (5)",
+        "proficiency": "Exotic",
+        "rangeIncrement": "10 ft.",
+        "weight": "½ lb."
+      }
+    ]
+  }
+}

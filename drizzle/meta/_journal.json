@@ -1,0 +1,496 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1771020587294,
+      "tag": "0000_tense_catseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771032364803,
+      "tag": "0001_cynical_nighthawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771094534028,
+      "tag": "0002_powerful_echo",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771097315624,
+      "tag": "0003_outgoing_blockbuster",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771103859933,
+      "tag": "0004_keen_spyke",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771108561063,
+      "tag": "0005_panoramic_whistler",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771200000000,
+      "tag": "0006_sharp_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771174362411,
+      "tag": "0007_fk_policies_and_character_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1771300432963,
+      "tag": "0008_remove-item-rarity",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1771307051942,
+      "tag": "0009_slimy_rumiko_fujikawa",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771367798342,
+      "tag": "0010_add-starred-rulesets-soft-delete",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1771422404147,
+      "tag": "0011_remove-replace-ability-operator",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1771452441779,
+      "tag": "0012_entity-snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1771598610326,
+      "tag": "0013_ruleset-extensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1771622065427,
+      "tag": "0014_entity-snapshots-covering-index",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1771622165427,
+      "tag": "0015_ancestor-ruleset-ids",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1771876979199,
+      "tag": "0016_daily_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1771888440254,
+      "tag": "0017_youthful_callisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1771962485986,
+      "tag": "0018_calm_alex_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1772064107242,
+      "tag": "0019_uneven_thor_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1772241577268,
+      "tag": "0020_dusty_the_professor",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1772314048005,
+      "tag": "0021_material_toad_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1772330744515,
+      "tag": "0022_skinny_vampiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1772389921535,
+      "tag": "0023_contributors",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1772409410872,
+      "tag": "0024_fix-save-progression",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1772416292949,
+      "tag": "0025_add-properties-entity-id-index",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1772490478241,
+      "tag": "0026_bouncy_moira_mactaggert",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1772500218249,
+      "tag": "0027_stale_tigra",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1772500869522,
+      "tag": "0028_demonic_luke_cage",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1772512952570,
+      "tag": "0029_lying_the_santerians",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1772632317802,
+      "tag": "0030_chief_wind_dancer",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1772655173689,
+      "tag": "0031_legal_moon_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1772700000000,
+      "tag": "0032_fix-requirement-levels",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1772800000000,
+      "tag": "0033_monk-bonus-feat-requirements",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1773973813376,
+      "tag": "0034_natural_maginty",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1774060800000,
+      "tag": "0035_enable-pg-trgm",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1774204456608,
+      "tag": "0036_busy_hawkeye",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1774220742039,
+      "tag": "0037_sparkling_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1774621472630,
+      "tag": "0038_drop-ability-dc-from-powers-aptitudes",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1775768414870,
+      "tag": "0039_optional-character-physical-fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1775770442394,
+      "tag": "0040_optional-entity-descriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1775882144402,
+      "tag": "0041_add_mechanics_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1776192000000,
+      "tag": "0042_exports",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1776302377918,
+      "tag": "0043_add_system_column_to_rulesets",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1776792443664,
+      "tag": "0044_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1776798877263,
+      "tag": "0045_comp_plan",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1776827258382,
+      "tag": "0046_add_cancel_at_period_end",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1776828258270,
+      "tag": "0047_unique_stripe_customer_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1776858577116,
+      "tag": "0048_stripe_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1776864419245,
+      "tag": "0049_timestamptz",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1777468437295,
+      "tag": "0050_superb_christian_walker",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1777497198768,
+      "tag": "0051_mushy_scarlet_spider",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1777498302195,
+      "tag": "0052_classy_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1777505332541,
+      "tag": "0053_melodic_black_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1777511762779,
+      "tag": "0054_free_overlord",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1777515241791,
+      "tag": "0055_last_the_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1777549395238,
+      "tag": "0056_fine_caretaker",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1777653795597,
+      "tag": "0057_fk_restrict_character_picks",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1777660787241,
+      "tag": "0058_drop_requirements_condition_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1777827633304,
+      "tag": "0059_loud_kree",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1777999218958,
+      "tag": "0060_bright_talkback",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1778005347338,
+      "tag": "0061_stale_onslaught",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1778019986191,
+      "tag": "0062_fuzzy_nehzno",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1778249513408,
+      "tag": "0063_tricky_scarlet_spider",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1778433601551,
+      "tag": "0064_shiny_wild_child",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1778609000000,
+      "tag": "0065_silly_iron_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1778618527126,
+      "tag": "0066_wide_bug",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1778700000000,
+      "tag": "0067_bare_path_template_rewrite",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1778710000000,
+      "tag": "0068_bonded_uniqueness",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1788720326522,
+      "tag": "0069_remove_billing_data",
+      "breakpoints": true
+    }
+  ]
+}

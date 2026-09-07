@@ -1,0 +1,496 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:15:54.855Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/initiate-of-the-sevenfold-veil/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "target": "aptitudes.initiateofthesevenfoldveilwarding.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "greaterspellfocusabjuration": "Greater Spell Focus (abjuration)",
+      "skillfocusspellcraft": "Skill Focus (spellcraft)",
+      "spellfocusabjuration": "Spell Focus (abjuration)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "name": "Warding"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Unimpeachable Abjuration"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Red Veil"
+      },
+      {
+        "levels": [
+          2,
+          6
+        ],
+        "name": "Unanswerable Strike"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Orange Veil"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Yellow Veil"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Reactivating Warding"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Green Veil"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Blue Veil"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Double Warding"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Indigo Veil"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Kaleidoscopic Doom"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Violet Veil"
+      }
+    ],
+    "hd": 4,
+    "levels": 7,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "12",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgenature.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "12",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.greaterspellfocusabjuration.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.spellfocusabjuration.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.skillfocusspellcraft.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Initiate of the Sevenfold Veil Class Feature",
+    "features": {
+      "Area": {
+        "aptitude": "Initiate of the Sevenfold Veil Warding",
+        "description": "An area warding affects an initiate's space and all adjacent squares (a sphere 15 feet in diameter for a Small or Medium initiate, 20 feet in diameter for a Large initiate, and so on). Any creature who remains adjacent to the initiate gains the benefit of the warding's protection, even if part of its body lies outside the sphere. Moving out of the warding (stepping away from the initiate) is completely safe, but anyone attempting to enter the warding-even someone who was formerly inside it and left-becomes subject to the effects of the chosen veil. The warding moves with the initiate, but she cannot force another creature to pass through it (for example, by moving adjacent to an enemy). If she does force a creature to pass through, the warding has no effect on that creature. This warding provides concealment to all within from creatures outside, but anyone inside the warding can see out with no hindrance. It lasts for 1 minute per level or until dismissed",
+        "level": 1,
+        "selectable": true
+      },
+      "Blue Veil": {
+        "description": "At 5th level, an initiate learns the blue veil. This veil blocks all divinations and mind-affecting spells and abilities. Any creature crossing a blue veil must succeed on a Fortitude save or be petrified. A magic missile spell destroys a blue veil but is negated by it. A warding with this is the equivalent of a 6th-level spell.",
+        "level": 5,
+        "seedName": "Blue Veil (Initiate of the Sevenfold Veil)"
+      },
+      "Double Warding": {
+        "description": "At 6th level and higher, an initiate can raise two veils at once any time she creates a warding. This still counts as only one use of her warding ability. The less powerful effect (progressing from red up through violet) is always considered to be \"outside\" the more powerful effect, so a double warding consisting of a blue veil and a green veil would subject any creature passing through to the green veil first, followed by the blue veil. To negate the entire warding, the outermost veil must be negated before the inner veil can be negated.",
+        "level": 6,
+        "seedName": "Double Warding (Initiate of the Sevenfold Veil)"
+      },
+      "Green Veil": {
+        "description": "A 4th-level initiate masters the green veil. This veil stops the passage of breath weapons. A creature crossing a green veil must succeed on a Fortitude save or die; on a successful save, the creature takes 1d6 points of Constitution damage. This veil is a poison effect. A passwall spell destroys a green veil. A warding with this veil is the equivalent of a 6th-level spell.",
+        "level": 4,
+        "seedName": "Green Veil (Initiate of the Sevenfold Veil)"
+      },
+      "Indigo Veil": {
+        "description": "A 6th-level initiate can create the mighty indigo veil. This veil prevents the passage of all spells or spell-like abilities. Any creature crossing an indigo veil must succeed on a Will save or become confused, as if by an insanity spell. A daylight spell negates and is negated by an indigo veil. A warding with this veil is the equivalent of a 7th-level spell.Violet Veil: At 7th level, an initiate masters the seventh and final veil: the violet veil. This barrier destroys all objects and effects that cross it, as if they were disintegrated. Living creatures passing a violet veil must succeed on a Will save or be shifted to a random place on a random plane (as the plane shift spell). A violet veil is destroyed by a successful dispel magic spell. A warding with this veil is the equivalent of an 8th-level spell.",
+        "level": 6,
+        "seedName": "Indigo Veil (Initiate of the Sevenfold Veil)"
+      },
+      "Kaleidoscopic Doom": {
+        "description": "At 7th level, an Initiate of the Sevenfold Veil learns the secret of the awesome kaleidoscopic doom. Once per day as a standard action, she designates one creature within 60 feet and turns magical effects currently affecting the creature against it. This effect functions like a targeted greater dispel magic, except that for every spell or effect negated on the target, the effect of one veil is visited on the victim as if the subject had crossed it. The veils created around the victim proceed through the spectrum from red to violet, with one veil activated per spell negated. Thus, a creature with three spells negated would be subject to the effects of the red, orange, and yellow veils. The subject is still entitled to the normal saving throws allowed by each veil. This ability is the equivalent of a 9th level spell.",
+        "level": 7,
+        "seedName": "Kaleidoscopic Doom (Initiate of the Sevenfold Veil)"
+      },
+      "Orange Veil": {
+        "description": "At 2nd level, an initiate learns the secret of the orange veil. A warding with this veil halts magical ranged attacks, including spells that conjure missiles (such as Melf's acid arrow) or create rays (such as disintegrate or a beholder's eye rays) but not spells that do not require a ranged attack (such as magic missile). A creature crossing an orange veil takes 40 points of acid damage (Reflex half). A gust of wind spell or similar effect destroys the veil but is negated in the process. A warding with this veil is the equivalent of a 5th-level spell.",
+        "level": 2,
+        "seedName": "Orange Veil (Initiate of the Sevenfold Veil)"
+      },
+      "Personal": {
+        "aptitude": "Initiate of the Sevenfold Veil Warding",
+        "description": "This warding is a sphere whose diameter is equal to an initiate's space (5 feet for Small or Medium creatures, 10 feet for Large, and so on) and encapsulates the initiate. It moves with her, but she cannot force another creature to pass through it (for example, by attempting to grapple an enemy). If she does force a creature to pass through, the warding has no effect on that creature. Any creature striking at her with a melee weapon or natural attack is subject to the veil's effect (although creatures using reach weapons are not). The warding provides concealment to the initiate, but she can see out with no hindrance. It lasts for 1 minute per level or until dismissed",
+        "level": 1,
+        "selectable": true
+      },
+      "Reactivating Warding": {
+        "description": "",
+        "level": 4,
+        "seedName": "Reactivating Warding (Initiate of the Sevenfold Veil)"
+      },
+      "Red Veil": {
+        "description": "The first veil an initiate learns is the red veil. A warding imbued with this veil blocks all nonmagical ranged attacks and missiles. A creature crossing a red veil takes 20 points of fire damage (Reflex half). A cone of cold spell or effect destroys a warding with this veil but is negated in the process. A warding with this veil is the equivalent of a 4th-level spell.",
+        "level": 1,
+        "seedName": "Red Veil (Initiate of the Sevenfold Veil)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level, an Initiate of the Sevenfold Veil gains new spells per day (and spells known, if applicable) as if she had also gained a level in an arcane spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If she had more than one arcane spellcasting class before becoming an Initiate of the Sevenfold Veil, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Initiate of the Sevenfold Veil)"
+      },
+      "Unanswerable Strike": {
+        "description": "Due to her study of magical defenses, an initiate learns how to defeat them more easily. At 2nd level and higher, she gains a +2 bonus on caster level checks to counter or dispel abjuration spells. At 6th level, this bonus increases to a +4 bonus. Reactive Warding (Sp): At 4th level, an initiate learns to create a warding in response to an attack. She can raise a warding as an immediate action, after an opponent begins an action but before it is completed. For example, if she sees an enemy warrior charging her, she can raise a warding to protect herself. The opponent can choose to continue the charge through the warding or can halt outside it.",
+        "level": 2,
+        "seedName": "Unanswerable Strike (Initiate of the Sevenfold Veil)",
+        "stackable": true
+      },
+      "Unimpeachable Abjuration": {
+        "description": "An initiate's abjuration spells are particularly difficult to defeat with spells or effects that dispel them. An initiate can add her class level to the DC to dispel any abjuration spell or effect she creates.",
+        "level": 1,
+        "seedName": "Unimpeachable Abjuration (Initiate of the Sevenfold Veil)"
+      },
+      "Violet Veil": {
+        "description": "",
+        "level": 7,
+        "seedName": "Violet Veil (Initiate of the Sevenfold Veil)"
+      },
+      "Wall": {
+        "aptitude": "Initiate of the Sevenfold Veil Warding",
+        "description": "This warding takes the form of a wall, up to 10 feet long and 5 feet high per initiate class level. For example, a 3rd-level Initiate of the Sevenfold Veil could create a warding wall 30 feet long and 15 feet high. The wall can be made smaller, but it is not otherwise shapeable. The wall must begin within 30 feet of the initiate, but can extend beyond that distance. The wall is immobile once created. An initiate may choose to make crossing through the wall in one direction safe, if she chooses. In any event, she can pass through her own warding wall with no danger. This warding provides concealment to creatures on either side. It lasts for 10 minutes per level or until dismissed. The save DC for an initiate's warding is equal to 18 + her primary spellcasting ability modifier (Intelligence for wizards, Charisma for sorcerers and bards, and so on). The spell level equivalent of a warding depends on which veil is integrated into it",
+        "level": 1,
+        "selectable": true
+      },
+      "Warding": {
+        "description": "An Initiate of the Sevenfold Veil can create a warding. She can choose one veil she knows to be imbued in the warding. A warding lasts for a certain amount of time as indicated in its description, unless it is dismissed. When she creates a warding, she can choose one of three types. Personal: This warding is a sphere whose diameter is equal to an initiate's space (5 feet for Small or Medium creatures, 10 feet for Large, and so on) and encapsulates the initiate. It moves with her, but she cannot force another creature to pass through it (for example, by attempting to grapple an enemy). If she does force a creature to pass through, the warding has no effect on that creature. Any creature striking at her with a melee weapon or natural attack is subject to the veil's effect (although creatures using reach weapons are not). The warding provides concealment to the initiate, but she can see out with no hindrance. It lasts for 1 minute per level or until dismissed. Area: An area warding affects an initiate's space and all adjacent squares (a sphere 15 feet in diameter for a Small or Medium initiate, 20 feet in diameter for a Large initiate, and so on). Any creature who remains adjacent to the initiate gains the benefit of the warding's protection, even if part of its body lies outside the sphere. Moving out of the warding (stepping away from the initiate) is completely safe, but anyone attempting to enter the warding-even someone who was formerly inside it and left-becomes subject to the effects of the chosen veil. The warding moves with the initiate, but she cannot force another creature to pass through it (for example, by moving adjacent to an enemy). If she does force a creature to pass through, the warding has no effect on that creature. This warding provides concealment to all within from creatures outside, but anyone inside the warding can see out with no hindrance. It lasts for 1 minute per level or until dismissed. Wall: This warding takes the form of a wall, up to 10 feet long and 5 feet high per initiate class level. For example, a 3rd-level Initiate of the Sevenfold Veil could create a warding wall 30 feet long and 15 feet high. The wall can be made smaller, but it is not otherwise shapeable. The wall must begin within 30 feet of the initiate, but can extend beyond that distance. The wall is immobile once created. An initiate may choose to make crossing through the wall in one direction safe, if she chooses. In any event, she can pass through her own warding wall with no danger. This warding provides concealment to creatures on either side. It lasts for 10 minutes per level or until dismissed. The save DC for an initiate's warding is equal to 18 + her primary spellcasting ability modifier (Intelligence for wizards, Charisma for sorcerers and bards, and so on). The spell level equivalent of a warding depends on which veil is integrated into it.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.initiateofthesevenfoldveilwarding.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Warding (Initiate of the Sevenfold Veil)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Initiates of the Sevenfold Veil gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Initiate of the Sevenfold Veil)"
+      },
+      "Yellow Veil": {
+        "description": "An initiate of 3rd level or higher can create a yellow veil. This veil prevents gases or clouds from entering the warded area, and it defeats petrification attacks. In addition, a character inside a personal or area warding imbued with a yellow veil has immunity to poison introduced from outside the warding (such as from a creature with an envenomed weapon striking through the barrier). A creature crossing a yellow veil takes 80 points of electricity damage (Reflex half). A disintegrate spell destroys the veil but is negated in the process. A warding with this veil is the equivalent of a 6th-level spell.",
+        "level": 3,
+        "seedName": "Yellow Veil (Initiate of the Sevenfold Veil)"
+      }
+    },
+    "occurrenceMap": {
+      "Blue Veil": "Blue Veil",
+      "Double Warding": "Double Warding",
+      "Green Veil": "Green Veil",
+      "Indigo Veil": "Indigo Veil",
+      "Kaleidoscopic Doom": "Kaleidoscopic Doom",
+      "Orange Veil": "Orange Veil",
+      "Reactivating Warding": "Reactivating Warding",
+      "Red Veil": "Red Veil",
+      "Unanswerable Strike": "Unanswerable Strike",
+      "Unimpeachable Abjuration": "Unimpeachable Abjuration",
+      "Violet Veil": "Violet Veil",
+      "Warding": "Warding",
+      "Yellow Veil": "Yellow Veil"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Initiates of the Sevenfold Veil gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level, an Initiate of the Sevenfold Veil gains new spells per day (and spells known, if applicable) as if she had also gained a level in an arcane spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If she had more than one arcane spellcasting class before becoming an Initiate of the Sevenfold Veil, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "An Initiate of the Sevenfold Veil can create a warding. She can choose one veil she knows to be imbued in the warding. A warding lasts for a certain amount of time as indicated in its description, unless it is dismissed. When she creates a warding, she can choose one of three types. Personal: This warding is a sphere whose diameter is equal to an initiate's space (5 feet for Small or Medium creatures, 10 feet for Large, and so on) and encapsulates the initiate. It moves with her, but she cannot force another creature to pass through it (for example, by attempting to grapple an enemy). If she does force a creature to pass through, the warding has no effect on that creature. Any creature striking at her with a melee weapon or natural attack is subject to the veil's effect (although creatures using reach weapons are not). The warding provides concealment to the initiate, but she can see out with no hindrance. It lasts for 1 minute per level or until dismissed. Area: An area warding affects an initiate's space and all adjacent squares (a sphere 15 feet in diameter for a Small or Medium initiate, 20 feet in diameter for a Large initiate, and so on). Any creature who remains adjacent to the initiate gains the benefit of the warding's protection, even if part of its body lies outside the sphere. Moving out of the warding (stepping away from the initiate) is completely safe, but anyone attempting to enter the warding-even someone who was formerly inside it and left-becomes subject to the effects of the chosen veil. The warding moves with the initiate, but she cannot force another creature to pass through it (for example, by moving adjacent to an enemy). If she does force a creature to pass through, the warding has no effect on that creature. This warding provides concealment to all within from creatures outside, but anyone inside the warding can see out with no hindrance. It lasts for 1 minute per level or until dismissed. Wall: This warding takes the form of a wall, up to 10 feet long and 5 feet high per initiate class level. For example, a 3rd-level Initiate of the Sevenfold Veil could create a warding wall 30 feet long and 15 feet high. The wall can be made smaller, but it is not otherwise shapeable. The wall must begin within 30 feet of the initiate, but can extend beyond that distance. The wall is immobile once created. An initiate may choose to make crossing through the wall in one direction safe, if she chooses. In any event, she can pass through her own warding wall with no danger. This warding provides concealment to creatures on either side. It lasts for 10 minutes per level or until dismissed. The save DC for an initiate's warding is equal to 18 + her primary spellcasting ability modifier (Intelligence for wizards, Charisma for sorcerers and bards, and so on). The spell level equivalent of a warding depends on which veil is integrated into it.",
+        "name": "Warding",
+        "type": "(Sp)"
+      },
+      {
+        "description": "An initiate's abjuration spells are particularly difficult to defeat with spells or effects that dispel them. An initiate can add her class level to the DC to dispel any abjuration spell or effect she creates.",
+        "name": "Unimpeachable Abjuration",
+        "type": "(Ex)"
+      },
+      {
+        "description": "The first veil an initiate learns is the red veil. A warding imbued with this veil blocks all nonmagical ranged attacks and missiles. A creature crossing a red veil takes 20 points of fire damage (Reflex half). A cone of cold spell or effect destroys a warding with this veil but is negated in the process. A warding with this veil is the equivalent of a 4th-level spell.",
+        "name": "Red Veil"
+      },
+      {
+        "description": "Due to her study of magical defenses, an initiate learns how to defeat them more easily. At 2nd level and higher, she gains a +2 bonus on caster level checks to counter or dispel abjuration spells. At 6th level, this bonus increases to a +4 bonus. Reactive Warding (Sp): At 4th level, an initiate learns to create a warding in response to an attack. She can raise a warding as an immediate action, after an opponent begins an action but before it is completed. For example, if she sees an enemy warrior charging her, she can raise a warding to protect herself. The opponent can choose to continue the charge through the warding or can halt outside it.",
+        "name": "Unanswerable Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, an initiate learns the secret of the orange veil. A warding with this veil halts magical ranged attacks, including spells that conjure missiles (such as Melf's acid arrow) or create rays (such as disintegrate or a beholder's eye rays) but not spells that do not require a ranged attack (such as magic missile). A creature crossing an orange veil takes 40 points of acid damage (Reflex half). A gust of wind spell or similar effect destroys the veil but is negated in the process. A warding with this veil is the equivalent of a 5th-level spell.",
+        "name": "Orange Veil"
+      },
+      {
+        "description": "An initiate of 3rd level or higher can create a yellow veil. This veil prevents gases or clouds from entering the warded area, and it defeats petrification attacks. In addition, a character inside a personal or area warding imbued with a yellow veil has immunity to poison introduced from outside the warding (such as from a creature with an envenomed weapon striking through the barrier). A creature crossing a yellow veil takes 80 points of electricity damage (Reflex half). A disintegrate spell destroys the veil but is negated in the process. A warding with this veil is the equivalent of a 6th-level spell.",
+        "name": "Yellow Veil"
+      },
+      {
+        "description": "",
+        "name": "Reactivating Warding"
+      },
+      {
+        "description": "A 4th-level initiate masters the green veil. This veil stops the passage of breath weapons. A creature crossing a green veil must succeed on a Fortitude save or die; on a successful save, the creature takes 1d6 points of Constitution damage. This veil is a poison effect. A passwall spell destroys a green veil. A warding with this veil is the equivalent of a 6th-level spell.",
+        "name": "Green Veil"
+      },
+      {
+        "description": "At 5th level, an initiate learns the blue veil. This veil blocks all divinations and mind-affecting spells and abilities. Any creature crossing a blue veil must succeed on a Fortitude save or be petrified. A magic missile spell destroys a blue veil but is negated by it. A warding with this is the equivalent of a 6th-level spell.",
+        "name": "Blue Veil"
+      },
+      {
+        "description": "At 6th level and higher, an initiate can raise two veils at once any time she creates a warding. This still counts as only one use of her warding ability. The less powerful effect (progressing from red up through violet) is always considered to be \"outside\" the more powerful effect, so a double warding consisting of a blue veil and a green veil would subject any creature passing through to the green veil first, followed by the blue veil. To negate the entire warding, the outermost veil must be negated before the inner veil can be negated.",
+        "name": "Double Warding"
+      },
+      {
+        "description": "A 6th-level initiate can create the mighty indigo veil. This veil prevents the passage of all spells or spell-like abilities. Any creature crossing an indigo veil must succeed on a Will save or become confused, as if by an insanity spell. A daylight spell negates and is negated by an indigo veil. A warding with this veil is the equivalent of a 7th-level spell.Violet Veil: At 7th level, an initiate masters the seventh and final veil: the violet veil. This barrier destroys all objects and effects that cross it, as if they were disintegrated. Living creatures passing a violet veil must succeed on a Will save or be shifted to a random place on a random plane (as the plane shift spell). A violet veil is destroyed by a successful dispel magic spell. A warding with this veil is the equivalent of an 8th-level spell.",
+        "name": "Indigo Veil"
+      },
+      {
+        "description": "At 7th level, an Initiate of the Sevenfold Veil learns the secret of the awesome kaleidoscopic doom. Once per day as a standard action, she designates one creature within 60 feet and turns magical effects currently affecting the creature against it. This effect functions like a targeted greater dispel magic, except that for every spell or effect negated on the target, the effect of one veil is visited on the victim as if the subject had crossed it. The veils created around the victim proceed through the spectrum from red to violet, with one veil activated per spell negated. Thus, a creature with three spells negated would be subject to the effects of the red, orange, and yellow veils. The subject is still entitled to the normal saving throws allowed by each veil. This ability is the equivalent of a 9th level spell.",
+        "name": "Kaleidoscopic Doom",
+        "type": "(Sp)"
+      },
+      {
+        "description": "",
+        "name": "Violet Veil"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "A master of defensive magic, the Initiate of the Sevenfold Veil approaches the prismatic barrier by mastering one by one its constituent veils or layers.",
+    "hitDie": "d4",
+    "name": "Initiate of the Sevenfold Veil",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Greater Spell Focus (abjuration)",
+          "Spell Focus (abjuration)",
+          "Skill Focus (spellcraft)"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 12
+          },
+          {
+            "name": "Knowledge (nature)",
+            "ranks": 4
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 12
+          }
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 12 ranks, Knowledge (nature) 4 ranks, Spellcraft 12 ranks Feats: Greater Spell Focus (abjuration), Spell Focus (abjuration), Skill Focus (spellcraft) Spells: Able to cast five abjuration spells, including at least two of 4th level or higher."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Warding 1/day",
+          "unimpeachable abjuration",
+          "red veil"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Unanswerable strike +2",
+          "orange veil"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Warding 2/day",
+          "yellow veil"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Reactivating warding",
+          "green veil"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Warding 3/day",
+          "blue veil"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Unanswerable strike +4",
+          "double warding",
+          "indigo veil"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Kaleidoscopic doom",
+          "violet veil",
+          "warding 4/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

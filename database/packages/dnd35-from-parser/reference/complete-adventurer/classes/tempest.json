@@ -1,0 +1,292 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-26T19:36:49.448Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/tempest/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "dodge": "Dodge",
+      "improvedtwoweaponfighting": "Improved Two-Weapon Fighting",
+      "mobility": "Mobility",
+      "springattack": "Spring Attack",
+      "twoweaponfighting": "Two-Weapon Fighting"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "name": "Tempest Defense"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Ambidexterity (?3/?1)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Two-Weapon Versatility"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Ambidexterity (?2/+0)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Two-Weapon Spring Attack"
+      }
+    ],
+    "hd": 10,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.dodge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.twoweaponfighting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedtwoweaponfighting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mobility.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.springattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Tempest Class Feature",
+    "features": {
+      "Ambidexterity": {
+        "description": "For a tempest of 2nd level or higher, her attack penalties for fighting with two weapons are lessened by 1 (from ?4 to ?3, or from ?2 to ?1 if the off-hand weapon is a light weapon). At 4th level, the attack penalties are lessened by another 1 (from ?3 to ?2, or to +0 if the off-hand weapon is a light weapon). The character loses this ability when fighting in medium or heavy armor.",
+        "level": 2,
+        "seedName": "Ambidexterity (Tempest)",
+        "stackable": true
+      },
+      "Tempest Defense": {
+        "description": "When wielding a double weapon or two weapons (not including natural weapons or unarmed strikes), a tempest gains a +1 bonus to Armor Class. This bonus increases to +2 at 3rd level and +3 at 5th level. The character loses this ability when fighting in medium or heavy armor.",
+        "level": 1,
+        "seedName": "Tempest Defense (Tempest)",
+        "stackable": true
+      },
+      "Two-weapon Spring Attack": {
+        "description": "When a 5th-level tempest makes a spring attack, she can attack once each with two different weapons as an attack action. The character loses this ability when fighting in medium or heavy armo",
+        "level": 5,
+        "seedName": "Two-weapon Spring Attack (Tempest)"
+      },
+      "Two-weapon Versatility": {
+        "description": "When a tempest of 3rd level or higher fights with two weapons, she can apply the effects of certain feats from one weapon to the other weapon as well, as long as those effects can be applied legally. She can use this ability only with the following feats: Greater Weapon Focus, Greater Weapon Specialization, Improved Critical, Weapon Focus, and Weapon Specialization. For example, a tempest who wields a longsword and a short sword and who has the Weapon Focus (longsword) feat can apply the effect of Weapon Focus to her short sword as well as to her longsword. If a tempest already has the feat with both weapons, she gains no additional effect.",
+        "level": 3,
+        "seedName": "Two-weapon Versatility (Tempest)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Tempests gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Tempest)"
+      }
+    },
+    "occurrenceMap": {
+      "Ambidexterity (?2/+0)": "Ambidexterity",
+      "Ambidexterity (?3/?1)": "Ambidexterity",
+      "Tempest Defense": "Tempest Defense",
+      "Two-Weapon Spring Attack": "Two-weapon Spring Attack",
+      "Two-Weapon Versatility": "Two-weapon Versatility"
+    },
+    "overrides": {
+      "classSkills": [
+        "Balance",
+        "Climb",
+        "Craft",
+        "Intimidate",
+        "Jump",
+        "Swim",
+        "Tumble"
+      ],
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "combat.bab",
+          "value": "6",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.dodge.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.twoweaponfighting.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.improvedtwoweaponfighting.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.mobility.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.springattack.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Tempests gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When wielding a double weapon or two weapons (not including natural weapons or unarmed strikes), a tempest gains a +1 bonus to Armor Class. This bonus increases to +2 at 3rd level and +3 at 5th level. The character loses this ability when fighting in medium or heavy armor.",
+        "name": "Tempest Defense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "For a tempest of 2nd level or higher, her attack penalties for fighting with two weapons are lessened by 1 (from ?4 to ?3, or from ?2 to ?1 if the off-hand weapon is a light weapon). At 4th level, the attack penalties are lessened by another 1 (from ?3 to ?2, or to +0 if the off-hand weapon is a light weapon). The character loses this ability when fighting in medium or heavy armor.",
+        "name": "Ambidexterity",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a tempest of 3rd level or higher fights with two weapons, she can apply the effects of certain feats from one weapon to the other weapon as well, as long as those effects can be applied legally. She can use this ability only with the following feats: Greater Weapon Focus, Greater Weapon Specialization, Improved Critical, Weapon Focus, and Weapon Specialization. For example, a tempest who wields a longsword and a short sword and who has the Weapon Focus (longsword) feat can apply the effect of Weapon Focus to her short sword as well as to her longsword. If a tempest already has the feat with both weapons, she gains no additional effect.",
+        "name": "Two-weapon Versatility",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a 5th-level tempest makes a spring attack, she can attack once each with two different weapons as an attack action. The character loses this ability when fighting in medium or heavy armo",
+        "name": "Two-weapon Spring Attack",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "1st",
+      "2nd",
+      "3rd",
+      "4th",
+      "5th"
+    ],
+    "description": "A tempest is the point of calm within a whirling barrier of deadly blades.",
+    "hitDie": "d10",
+    "name": "Tempest",
+    "prerequisites": {
+      "parsed": {
+        "bab": 6,
+        "feats": [
+          "Dodge",
+          "Two-Weapon Fighting",
+          "Improved Two-Weapon Fighting",
+          "Mobility",
+          "Spring Attack"
+        ]
+      },
+      "text": "Base Attack Bonus: +6 Feats: Dodge, Two-Weapon Fighting, Improved Two-Weapon Fighting, Mobility, Spring Attack"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Tempest defense +1"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Ambidexterity (?3/?1)"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Tempest defense +2",
+          "two-weapon versatility"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Ambidexterity (?2/+0)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Tempest defense +3",
+          "two-weapon spring attack"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

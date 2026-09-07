@@ -1,0 +1,386 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:09:30.334Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/enlightened-fist/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "combatcasting": "Combat Casting",
+      "improvedunarmedstrike": "Improved Unarmed Strike"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Ki Strike (Magic)"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Monk Abilities"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Fist Of Energy"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Arcane Fist"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Arcane Rejuvination"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Fist Of Energy (Burst)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Hold Ray"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Diamond Soul"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatcasting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.improvedunarmedstrike.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Enlightened Fist Class Feature",
+    "features": {
+      "Arcane Fist": {
+        "description": "Beginning at 3rd level, an enlightened fist can spend one of her daily stunning attempts to cast and deliver a touch spell as part of an unarmed full attack action. She can choose to deliver the touch spell with any single unarmed strike attack she makes during the action. Arcane Rejuvenation (Su): An enlightened fist of 5th level or higher can channel arcane energy to heal her own wounds. As a standard action, she can acrifice one of her prepared spells or unused spell slots; doing this heals a number of hit points of damage equal to the spell's level.",
+        "level": 3,
+        "seedName": "Arcane Fist (Enlightened Fist)"
+      },
+      "Arcane Rejuvination": {
+        "description": "",
+        "level": 5,
+        "seedName": "Arcane Rejuvination (Enlightened Fist)"
+      },
+      "Diamond Soul": {
+        "description": "At 9th level, an enlightened fist gains spell resistance equal to 10 + the total of her monk levels and enlightened fist levels.",
+        "level": 9,
+        "seedName": "Diamond Soul (Enlightened Fist)"
+      },
+      "Fist of Energy": {
+        "description": "Once per round as a free action, an enlightened fist of 2nd level or higher can spend one of her daily stunning attempts to imbue her unarmed strikes with either electricity or fire. The enlightened fist chooses the energy type each time she activates. For 1 round, each of her unarmed strike that hits deals an extra 1d6 points of damage (electricity or fire, depending on the choice). At 6th level and higher, an enlightened fist can cause her energy-imbued unarmed strikes to burst with flame or lightning on a critical hit. In addition to dealing an extra 1d6 points of energy damage, her unarmed attacks deal an extra 1d10 points of energy damage on a successful critical hit. If the enlightened fist's unarmed critical multiplier is Ã-3, she adds an extra 2d10 points of energy damage instead, and if the multiplier is Ã-4, she adds an extra 3d10 points of energy damage. An enlightened fist with monk levels can use this ability to channel energy through wielded monk weapons just as she can through her unarmed attacks.",
+        "level": 2,
+        "seedName": "Fist of Energy (Enlightened Fist)",
+        "stackable": true
+      },
+      "Fist of Energy (Burst)": {
+        "description": "",
+        "level": 6,
+        "seedName": "Fist of Energy (Burst) (Enlightened Fist)"
+      },
+      "Hold Ray": {
+        "description": "At 7th level or higher, an enlightened fist can cast any spell that produces a ray effect as a touch spell instead. The spell's range is reduced to touch, and its Effect entry is replaced with \"Target: Creature touched.\" She can deliver the spell with a touch attack or with a normal attack, and she can hold the charge as with a normal touch spell. An enlightened fist can combine this ability with arcane fist to deliver a ray-effect spell as part of an unarmed full attack action.",
+        "level": 7,
+        "seedName": "Hold Ray (Enlightened Fist)"
+      },
+      "Ki Strike": {
+        "description": "An enlightened fist's unarmed attacks are empowered with ki. Her unarmed attacks are treated as magic weapons for the purpose of dealing damage to creatures with damage reduction.",
+        "level": 1,
+        "seedName": "Ki Strike (Enlightened Fist)"
+      },
+      "Monk Abilities": {
+        "description": "An enlightened fist adds her class level to her monk level to determine her class-based AC bonus, her unarmed damage, her unarmored speed bonus, and the number of daily attempts of her Stunning Fist feat. If she has no monk levels, she gains the AC bonus, unarmed damage, and unarmored speed bonus of a monk whose level equals her enlightened fist level, but she can't add her Wisdom bonus to her AC. An enlightened fist does not count her class levels for the purpose of determining when she gains any other monk class features, such as reduced penalties for flurry of blows attack rolls, bonus feats, evasion, or other special abilities.",
+        "level": 1,
+        "seedName": "Monk Abilities (Enlightened Fist)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Except at 1st level and 6th level, an enlightened fist gains new spells per day (and spells known, if applicable) as if she had also gained a level in an arcane spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If she had more than one arcane spellcasting class before becoming an enlightened fist, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Enlightened Fist)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Enlightened fists gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Enlightened Fist)"
+      }
+    },
+    "occurrenceMap": {
+      "Arcane Fist": "Arcane Fist",
+      "Arcane Rejuvination": "Arcane Rejuvination",
+      "Diamond Soul": "Diamond Soul",
+      "Fist Of Energy": "Fist of Energy",
+      "Fist Of Energy (Burst)": "Fist of Energy",
+      "Hold Ray": "Hold Ray",
+      "Ki Strike (Magic)": "Ki Strike",
+      "Monk Abilities": "Monk Abilities"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Enlightened fists gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Except at 1st level and 6th level, an enlightened fist gains new spells per day (and spells known, if applicable) as if she had also gained a level in an arcane spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If she had more than one arcane spellcasting class before becoming an enlightened fist, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "An enlightened fist's unarmed attacks are empowered with ki. Her unarmed attacks are treated as magic weapons for the purpose of dealing damage to creatures with damage reduction.",
+        "name": "Ki Strike",
+        "type": "(Su)"
+      },
+      {
+        "description": "An enlightened fist adds her class level to her monk level to determine her class-based AC bonus, her unarmed damage, her unarmored speed bonus, and the number of daily attempts of her Stunning Fist feat. If she has no monk levels, she gains the AC bonus, unarmed damage, and unarmored speed bonus of a monk whose level equals her enlightened fist level, but she can't add her Wisdom bonus to her AC. An enlightened fist does not count her class levels for the purpose of determining when she gains any other monk class features, such as reduced penalties for flurry of blows attack rolls, bonus feats, evasion, or other special abilities.",
+        "name": "Monk Abilities"
+      },
+      {
+        "description": "Once per round as a free action, an enlightened fist of 2nd level or higher can spend one of her daily stunning attempts to imbue her unarmed strikes with either electricity or fire. The enlightened fist chooses the energy type each time she activates. For 1 round, each of her unarmed strike that hits deals an extra 1d6 points of damage (electricity or fire, depending on the choice). At 6th level and higher, an enlightened fist can cause her energy-imbued unarmed strikes to burst with flame or lightning on a critical hit. In addition to dealing an extra 1d6 points of energy damage, her unarmed attacks deal an extra 1d10 points of energy damage on a successful critical hit. If the enlightened fist's unarmed critical multiplier is Ã-3, she adds an extra 2d10 points of energy damage instead, and if the multiplier is Ã-4, she adds an extra 3d10 points of energy damage. An enlightened fist with monk levels can use this ability to channel energy through wielded monk weapons just as she can through her unarmed attacks.",
+        "name": "Fist of Energy",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 3rd level, an enlightened fist can spend one of her daily stunning attempts to cast and deliver a touch spell as part of an unarmed full attack action. She can choose to deliver the touch spell with any single unarmed strike attack she makes during the action. Arcane Rejuvenation (Su): An enlightened fist of 5th level or higher can channel arcane energy to heal her own wounds. As a standard action, she can acrifice one of her prepared spells or unused spell slots; doing this heals a number of hit points of damage equal to the spell's level.",
+        "name": "Arcane Fist",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Arcane Rejuvination"
+      },
+      {
+        "description": "",
+        "name": "Fist of Energy (Burst)"
+      },
+      {
+        "description": "At 7th level or higher, an enlightened fist can cast any spell that produces a ray effect as a touch spell instead. The spell's range is reduced to touch, and its Effect entry is replaced with \"Target: Creature touched.\" She can deliver the spell with a touch attack or with a normal attack, and she can hold the charge as with a normal touch spell. An enlightened fist can combine this ability with arcane fist to deliver a ray-effect spell as part of an unarmed full attack action.",
+        "name": "Hold Ray",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 9th level, an enlightened fist gains spell resistance equal to 10 + the total of her monk levels and enlightened fist levels.",
+        "name": "Diamond Soul",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Listen",
+      "Move Silently",
+      "Profession",
+      "Spellcraft",
+      "Spot",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "Enlightened fists master the use of touch spells, creating new forms of combat with their fists.",
+    "hitDie": "d8",
+    "name": "Enlightened Fist",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Combat Casting",
+          "Improved Unarmed Strike"
+        ],
+        "skills": [
+          {
+            "name": "Concentration",
+            "ranks": 8
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 5
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 5
+          }
+        ]
+      },
+      "text": "Skills: Concentration 8 ranks, Knowledge (arcana) 5 ranks, Spellcraft 5 ranks Feats: Combat Casting, Improved Unarmed Strike, Stunning Fist Spells or Spell-Like Abilities: Arcane caster level 3rd."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Ki strike (magic)",
+          "monk abilities"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Fist of energy"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Arcane fist"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Arcane rejuvination"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Fist of energy (burst)"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Hold ray"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Diamond soul"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

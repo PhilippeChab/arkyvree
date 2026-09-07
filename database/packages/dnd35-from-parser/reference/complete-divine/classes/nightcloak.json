@@ -1,0 +1,479 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T19:29:09.731Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/nightcloak/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {
+      "evildomain": "Evil Domain",
+      "illusion": "Illusion",
+      "ironwill": "Iron Will",
+      "ornecro": "or Necro.)",
+      "spellfocusenchantment": "Spell Focus (Enchantment"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Might Of Darkness"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Eyes Of Night"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Shadow Talk"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "True Lies"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Grace Of The Dark"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Minions Of Night"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Voice Of Ineffable Evil"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.bluff.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ironwill.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.spellfocusenchantment.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.illusion.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ornecro.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "equal",
+        "target": "feats.evildomain.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Nightcloak Class Feature",
+    "features": {
+      "Eyes of Night": {
+        "description": "At 2nd level, the nightcloak's eyes turn completely black. She gains darkvision with a 60-foot range and can perceive through magical darkness out to 10 feet using the same monochrome sight that darkvision provides. Additionally, she becomes immune to magical blindness effects.",
+        "level": 2,
+        "seedName": "Eyes of Night (Nightcloak)"
+      },
+      "Grace of the Dark": {
+        "description": "Starting at 7th level, the nightcloak draws on her intellect for self-preservation. She applies her Intelligence modifier (if positive) as a bonus to all saving throws.",
+        "level": 7,
+        "seedName": "Grace of the Dark (Nightcloak)"
+      },
+      "Might of Darkness": {
+        "description": "Starting at 1st level, whenever a nightcloak casts a spell that has the darkness descriptor, her effective caster level for that spell increases by 2.",
+        "level": 1,
+        "seedName": "Might of Darkness (Nightcloak)"
+      },
+      "Minions of Night": {
+        "description": "A nightcloak of 8th level or higher may use a standard action once per week to call forth a number of shadows equal to her nightcloak level. These shadows serve her commands for a number of rounds equal to her nightcloak level. Shadows spawned by the summoned shadows through Strength drain also fall under the nightcloak's control, but they disappear when the original shadows' duration ends. The nightcloak can speak to the shadows as though she understood their language, or she can use her shadow talk ability to communicate with them.",
+        "level": 8,
+        "seedName": "Minions of Night (Nightcloak)"
+      },
+      "Shadow Talk": {
+        "description": "Starting at 4th level, a nightcloak gains the power to communicate telepathically through mental shadows. As a free action, she can whisper brief messages that are heard as mental whispers by all followers of her patron deity within 500 feet. Bystanders can overhear these words if they are close enough to detect the nightcloak's physical whispers (DC 15 Listen check within 10 feet, with the DC increasing by +1 for every 5 additional feet). This is a sonic, language-dependent effect.",
+        "level": 4,
+        "seedName": "Shadow Talk (Nightcloak)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Each time a nightcloak gains a new level, she receives additional spells per day (and spells known, if relevant) as though she had also advanced one level in a spellcasting class she belonged to before entering this prestige class. She does not, however, receive any other class benefits that would normally accompany such a level gain (such as improved turning or rebuking of undead, bonus metamagic or item creation feats, and so forth). Her nightcloak level stacks with her prior spellcasting class level for the purpose of calculating spells per day, spells known, and caster level. If she had multiple spellcasting classes before becoming a nightcloak, she must choose which class receives each nightcloak level for spellcasting progression.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Nightcloak)"
+      },
+      "True Lies": {
+        "description": "From 5th level onward, a nightcloak can delve into a target's mind and alter its memories, replicating the effect of modify memory as a 4th-level bard spell. Her caster level for this ability equals her total character level, and the save DC is 10 + half her character level + her Charisma modifier. She may use this ability once per day.",
+        "level": 5,
+        "seedName": "True Lies (Nightcloak)"
+      },
+      "Voice of Ineffable Evil": {
+        "description": "Upon reaching 10th level, a nightcloak can exert total mental dominion over a single creature, duplicating the effect of dominate monster with a caster level equal to her character level. This ability can be used once per day and persists for 24 hours unless dismissed sooner. Unusually for a spell-like ability, it requires a verbal component.",
+        "level": 10,
+        "seedName": "Voice of Ineffable Evil (Nightcloak)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Nightcloaks do not receive proficiency with any weapons, armor, or shields.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Nightcloak)"
+      }
+    },
+    "occurrenceMap": {
+      "Eyes Of Night": "Eyes of Night",
+      "Grace Of The Dark": "Grace of the Dark",
+      "Might Of Darkness": "Might of Darkness",
+      "Minions Of Night": "Minions of Night",
+      "Shadow Talk": "Shadow Talk",
+      "True Lies": "True Lies",
+      "Voice Of Ineffable Evil": "Voice of Ineffable Evil"
+    },
+    "overrides": {
+      "description": "Nightcloaks are the most favored servants of their dark deity, wholly committed to her cause, safeguarding her mysteries, and wielding her corrupted magic.",
+      "features": {
+        "Eyes of Night": {
+          "description": "At 2nd level, the nightcloak's eyes turn completely black. She gains darkvision with a 60-foot range and can perceive through magical darkness out to 10 feet using the same monochrome sight that darkvision provides. Additionally, she becomes immune to magical blindness effects."
+        },
+        "Grace of the Dark": {
+          "description": "Starting at 7th level, the nightcloak draws on her intellect for self-preservation. She applies her Intelligence modifier (if positive) as a bonus to all saving throws."
+        },
+        "Might of Darkness": {
+          "description": "Starting at 1st level, whenever a nightcloak casts a spell that has the darkness descriptor, her effective caster level for that spell increases by 2."
+        },
+        "Minions of Night": {
+          "description": "A nightcloak of 8th level or higher may use a standard action once per week to call forth a number of shadows equal to her nightcloak level. These shadows serve her commands for a number of rounds equal to her nightcloak level. Shadows spawned by the summoned shadows through Strength drain also fall under the nightcloak's control, but they disappear when the original shadows' duration ends. The nightcloak can speak to the shadows as though she understood their language, or she can use her shadow talk ability to communicate with them."
+        },
+        "Shadow Talk": {
+          "description": "Starting at 4th level, a nightcloak gains the power to communicate telepathically through mental shadows. As a free action, she can whisper brief messages that are heard as mental whispers by all followers of her patron deity within 500 feet. Bystanders can overhear these words if they are close enough to detect the nightcloak's physical whispers (DC 15 Listen check within 10 feet, with the DC increasing by +1 for every 5 additional feet). This is a sonic, language-dependent effect."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "Each time a nightcloak gains a new level, she receives additional spells per day (and spells known, if relevant) as though she had also advanced one level in a spellcasting class she belonged to before entering this prestige class. She does not, however, receive any other class benefits that would normally accompany such a level gain (such as improved turning or rebuking of undead, bonus metamagic or item creation feats, and so forth). Her nightcloak level stacks with her prior spellcasting class level for the purpose of calculating spells per day, spells known, and caster level. If she had multiple spellcasting classes before becoming a nightcloak, she must choose which class receives each nightcloak level for spellcasting progression."
+        },
+        "True Lies": {
+          "description": "From 5th level onward, a nightcloak can delve into a target's mind and alter its memories, replicating the effect of modify memory as a 4th-level bard spell. Her caster level for this ability equals her total character level, and the save DC is 10 + half her character level + her Charisma modifier. She may use this ability once per day."
+        },
+        "Voice of Ineffable Evil": {
+          "description": "Upon reaching 10th level, a nightcloak can exert total mental dominion over a single creature, duplicating the effect of dominate monster with a caster level equal to her character level. This ability can be used once per day and persists for 24 hours unless dismissed sooner. Unusually for a spell-like ability, it requires a verbal component."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Nightcloaks do not receive proficiency with any weapons, armor, or shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Nightcloaks gain no proficiency with any weapon, armor, or shield.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new level of nightcloak is gained, the character gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of turning or rebuking undead, metamagic or item creation feats, and so on). The level of nightcloak is added to the level of whatever other spellcasting class the character has, then spells per day, spells known, and caster level are determined accordingly. If the character had more than one spellcasting class before she became a nightcloak, the player must decide to which class to add each level of nightcloak for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "At 1st level, a nightcloak casts any spell with the darkness descriptor at +2 caster level.",
+        "name": "Might of Darkness",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When the nightcloak reaches 2nd level, her eyes become totally black, granting her darkvision to a 60-foot range. She can also see through magical darkness to a range of 10 feet with the same black-and-white vision that darkvision provides. The nightcloak also cannot be blinded by magical effects.",
+        "name": "Eyes of Night",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level, a nightcloak gains the ability to communicate mystically through the shadows of the mind. As a free action, she can whisper short messages to other worshipers of her patron deity, and each such creature within 500 feet hears the message as a whisper in its mind. Observers can also hear the words if they are close enough to hear the nightcloak's actual whispers (a DC 15 Listen check if the listener is within 10 feet of the nightcloak, +1 per 5 feet beyond that). Shadow talk is a sonic, language-dependent effect.",
+        "name": "Shadow Talk",
+        "type": "(Su)"
+      },
+      {
+        "description": "Beginning at 5th level, a nightcloak can reach into a creature's mind and modify its memories as if using the 4th-level bard spell modify memory (caster level equals nightcloak's character level; save DC 10 + 1/2 nightcloak's character level + nightcloak's Charisma modifier). This ability is usable once per day.",
+        "name": "True Lies",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 7th level, the nightcloak can use the power of her mind to protect herself. She adds her Intelligence bonus (if any) to all saving throws.",
+        "name": "Grace of the Dark",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Once per week as a standard action, an 8th-level or higher nightcloak can summon one shadow per nightcloak level she possesses. The summoned shadows do her bidding for a number of rounds equal to her nightcloak level. Any shadows they create by draining Strength are likewise under the control of the nightcloak, but they vanish along with the originals when the duration of the effect expires. The nightcloak can verbally communicate with the shadows as if she knew their language or use her shadow talk ability to communicate with them.",
+        "name": "Minions of Night",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 10th level, a nightcloak can command a creature as though using the dominate monster spell (caster level equals nightcloak's character level). This ability is usable once per day and lasts for 24 hours unless ended earlier. Unlike most spell-like abilities, voice of ineffable evil has a verbal component.",
+        "name": "Voice of Ineffable Evil",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Heal",
+      "Hide",
+      "Knowledge (Arcana)",
+      "Knowledge (History)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "Nightcloaks are the apple of Shar's eye - devoted to her vision, preserving her secrets, practicing her magic, as twisted and bitter as it is.",
+    "hitDie": "d8",
+    "name": "Nightcloak",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any evil",
+        "bab": 3,
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Iron Will",
+          "Spell Focus (Enchantment",
+          "Illusion",
+          "or Necro.)"
+        ],
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 2
+          },
+          {
+            "name": "Hide",
+            "ranks": 4
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 2
+          },
+          {
+            "name": "Perform (any)",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "access to the Evil domain"
+        ]
+      },
+      "text": "Base Attack Bonus: +3 Alignment: Any evil Skills: Bluff 2 ranks, Hide 4 ranks, Move Silently 2 ranks, Perform (any) 4 ranks Feats: Iron Will, Spell Focus (Enchantment, Illusion, or Necro.) Spells: Ability to cast 3rd-level divine spells. A cleric candidate must have access to the Evil domain."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Might of darkness"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Eyes of night"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Shadow talk"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "True lies"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Grace of the dark"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Minions of night"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Voice of ineffable evil"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

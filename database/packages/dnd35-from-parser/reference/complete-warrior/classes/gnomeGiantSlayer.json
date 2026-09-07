@@ -1,0 +1,441 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-18T13:17:22.726Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/gnome-giant-slayer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "dodge": "Dodge",
+      "mobility": "Mobility",
+      "springattack": "Spring Attack"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Favored Enemy (Giant)"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Crafty Fighter"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Slippery"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Close Shot"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Fast Movement"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Improved Mobility"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Annoying Strike"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Defensive Roll"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.escapeartist.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.tumble.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.dodge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mobility.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.springattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Gnome",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2,
+    "lockedFavoredEnemies": [
+      {
+        "creatureType": "Giant",
+        "featureName": "Favored Enemy (Giant)",
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ]
+      }
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Gnome Giant-slayer Class Feature",
+    "features": {
+      "Annoying Strike": {
+        "description": "When a gnome giant-slayer of 9th level or higher deals melee damage to a giant, that giant becomes shaken for 1 round.",
+        "level": 9,
+        "seedName": "Annoying Strike (Gnome Giant-slayer)"
+      },
+      "Close Shot": {
+        "description": "At 5th level and beyond, the gnome giant-slayer no longer provokes attacks of opportunity from giants when making ranged weapon attacks while within their threatened area.",
+        "level": 5,
+        "seedName": "Close Shot (Gnome Giant-slayer)"
+      },
+      "Crafty Fighter": {
+        "description": "Starting at 2nd level, the gnome giant-slayer receives a +4 dodge bonus to Armor Class against giants, or a +2 dodge bonus against any nongiant creature that is at least two size categories larger. This bonus is forfeited whenever the character would lose his Dexterity bonus to AC, and it does not apply while wearing heavy armor.",
+        "level": 2,
+        "seedName": "Crafty Fighter (Gnome Giant-slayer)"
+      },
+      "Defensive Roll": {
+        "description": "At 10th level, the gnome giant-slayer learns to absorb the impact of a devastating blow, reducing the damage taken. Once per day, when a weapon attack or physical blow from a giant (not a spell or special ability) would reduce him to 0 or fewer hit points, he may attempt a Reflex saving throw with a DC equal to the damage dealt, adding his class level as a bonus to the save. On a success, he takes only half damage; on a failure, he suffers the full amount. The giant-slayer must be aware of the incoming attack and able to react - if he is denied his Dexterity bonus to AC, this ability cannot be used. Because this saving throw would not normally be allowed, evasion and improved evasion do not apply to it.",
+        "level": 10,
+        "seedName": "Defensive Roll (Gnome Giant-slayer)"
+      },
+      "Fast Movement": {
+        "description": "Upon reaching 6th level, the gnome giant-slayer's base land speed is increased by 10 feet. This speed increase only functions when wearing no armor, light armor, or medium armor, and when not carrying a heavy load. This bonus is applied before any adjustments for armor or encumbrance.",
+        "level": 6,
+        "seedName": "Fast Movement (Gnome Giant-slayer)"
+      },
+      "Favored Enemy (Giant)": {
+        "description": "The gnome giant-slayer receives a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks made against giants, as well as a +2 bonus on weapon damage rolls targeting giants. This stacks with the ranger's favored enemy class feature if the ranger has selected giants as a favored enemy. The bonus grows by an additional +2 at every third class level after 1st.",
+        "level": 1,
+        "seedName": "Favored Enemy (Giant) (Gnome Giant-slayer)",
+        "stackable": true
+      },
+      "Improved Mobility": {
+        "description": "At 8th level and higher, the gnome giant-slayer gains a +4 dodge bonus to AC whenever he moves out of or through a giant's threatened area. Because this is a dodge bonus, it stacks with the bonus provided by the Mobility feat.",
+        "level": 8,
+        "seedName": "Improved Mobility (Gnome Giant-slayer)"
+      },
+      "Slippery": {
+        "description": "From 3rd level onward, when a gnome giant-slayer is grappled by a creature at least two size categories larger, he may add his class level as a bonus on any grapple checks or Escape Artist checks made to break free. Additionally, the giant-slayer can move through spaces occupied by creatures two or more size categories larger than himself. This does not work against creatures that completely fill their space, such as a gelatinous cube. Under normal rules, a character can only pass through a space occupied by a creature at least three size categories larger.",
+        "level": 3,
+        "seedName": "Slippery (Gnome Giant-slayer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Members of this prestige class are proficient with all simple and martial weapons, light and medium armor, and shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Gnome Giant-slayer)"
+      }
+    },
+    "occurrenceMap": {
+      "Annoying Strike": "Annoying Strike",
+      "Close Shot": "Close Shot",
+      "Crafty Fighter": "Crafty Fighter",
+      "Defensive Roll": "Defensive Roll",
+      "Fast Movement": "Fast Movement",
+      "Favored Enemy (Giant)": "Favored Enemy (Giant)",
+      "Improved Mobility": "Improved Mobility",
+      "Slippery": "Slippery"
+    },
+    "overrides": {
+      "description": "A gnome giant-slayer combines nimbleness, martial skill, and cunning tactics to overcome larger opponents.",
+      "features": {
+        "Annoying Strike": {
+          "description": "When a gnome giant-slayer of 9th level or higher deals melee damage to a giant, that giant becomes shaken for 1 round."
+        },
+        "Close Shot": {
+          "description": "At 5th level and beyond, the gnome giant-slayer no longer provokes attacks of opportunity from giants when making ranged weapon attacks while within their threatened area."
+        },
+        "Crafty Fighter": {
+          "description": "Starting at 2nd level, the gnome giant-slayer receives a +4 dodge bonus to Armor Class against giants, or a +2 dodge bonus against any nongiant creature that is at least two size categories larger. This bonus is forfeited whenever the character would lose his Dexterity bonus to AC, and it does not apply while wearing heavy armor."
+        },
+        "Defensive Roll": {
+          "description": "At 10th level, the gnome giant-slayer learns to absorb the impact of a devastating blow, reducing the damage taken. Once per day, when a weapon attack or physical blow from a giant (not a spell or special ability) would reduce him to 0 or fewer hit points, he may attempt a Reflex saving throw with a DC equal to the damage dealt, adding his class level as a bonus to the save. On a success, he takes only half damage; on a failure, he suffers the full amount. The giant-slayer must be aware of the incoming attack and able to react - if he is denied his Dexterity bonus to AC, this ability cannot be used. Because this saving throw would not normally be allowed, evasion and improved evasion do not apply to it."
+        },
+        "Fast Movement": {
+          "description": "Upon reaching 6th level, the gnome giant-slayer's base land speed is increased by 10 feet. This speed increase only functions when wearing no armor, light armor, or medium armor, and when not carrying a heavy load. This bonus is applied before any adjustments for armor or encumbrance."
+        },
+        "Favored Enemy (Giant)": {
+          "description": "The gnome giant-slayer receives a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks made against giants, as well as a +2 bonus on weapon damage rolls targeting giants. This stacks with the ranger's favored enemy class feature if the ranger has selected giants as a favored enemy. The bonus grows by an additional +2 at every third class level after 1st."
+        },
+        "Improved Mobility": {
+          "description": "At 8th level and higher, the gnome giant-slayer gains a +4 dodge bonus to AC whenever he moves out of or through a giant's threatened area. Because this is a dodge bonus, it stacks with the bonus provided by the Mobility feat."
+        },
+        "Slippery": {
+          "description": "From 3rd level onward, when a gnome giant-slayer is grappled by a creature at least two size categories larger, he may add his class level as a bonus on any grapple checks or Escape Artist checks made to break free. Additionally, the giant-slayer can move through spaces occupied by creatures two or more size categories larger than himself. This does not work against creatures that completely fill their space, such as a gelatinous cube. Under normal rules, a character can only pass through a space occupied by a creature at least three size categories larger."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Members of this prestige class are proficient with all simple and martial weapons, light and medium armor, and shields."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Gnome giant-slayers have proficiency with all simple and martial weapons, with light and medium armor, and with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 6th level, a gnome giant-slayer's base land speed increases by 10 feet. This benefit applies only when he is wearing no armor, light armor, or medium armor and not carrying a heavy load. Apply this bonus before modifying the giant-slayer's speed because of any load carried or armor worn.",
+        "name": "Fast Movement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A gnome giant-slayer gains a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks when using these skills against giants. He gets the same bonus on weapon damage rolls against giants. This benefit stacks with the ranger favored enemy class feature if giant is the ranger's favored enemy. This bonus increases by an extra +2 for every three gnome giant-slayer levels beyond 1st.",
+        "name": "Favored Enemy (Giant)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a gnome giant-slayer gains a +4 dodge bonus to his Armor Class against giants, or a +2 dodge bonus against any other (nongiant) creature at least two size categories larger than himself. This benefit is lost in any situation in which the gnome giant-slayer would lose his Dexterity bonus to Armor Class. He also loses this bonus in heavy armor.",
+        "name": "Crafty Fighter",
+        "type": "(Ex)"
+      },
+      {
+        "description": "If a gnome giant-slayer of 3rd level or higher is grappled by a creature at least two size categories larger than himself, he can add his gnome giant-slayer level as a bonus on any checks (whether grapple checks or Escape Artist checks) made to escape grappling. In addition, a gnome giant-slayer can move through an area occupied by a creature two size categories larger than he is. This doesn't apply against creatures that completely fill their area, such as a gelatinous cube. (Normally, a character can only move through an area occupied by another creature if it is at least three size categories larger than the character.)",
+        "name": "Slippery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level and higher, a gnome giant-slayer does not provoke attacks of opportunity from giants for using a ranged weapon while threatened by them.",
+        "name": "Close Shot",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 8th level and higher, a gnome giant-slayer gains a +4 dodge bonus to his Armor Class when moving out of or within a giant's threatened area. As with all dodge bonuses, this benefit stacks with the bonus granted by the Mobility feat.",
+        "name": "Improved Mobility",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Whenever a gnome giant-slayer of 9th level or higher damages a giant in melee, that giant is shaken for 1 round.",
+        "name": "Annoying Strike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level gnome giant-slayer can roll with a potentially lethal blow to take less damage from it than he otherwise would. Once per day, when he would be reduced to 0 or fewer hit points by damage in combat (from a weapon or other blow struck by a giant, not a spell or special ability), he can attempt to roll with the damage. To use this ability, he makes a Reflex saving throw (DC = damage dealt; the gnome giant-slayer adds his class level as a bonus on this saving throw). If the save succeeds, he takes only half damage from the blow; if it fails, he takes full damage. He must be aware of the attack and able to react to it in order to execute his defensive roll-if he is denied his Dexterity bonus to AC, he can't use this ability. Since this effect would not normally allow a character to make a Reflex save for half damage, the character's evasion or improved evasion ability (if applicable) does not apply to the defensive roll.",
+        "name": "Defensive Roll",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Craft",
+      "Escape Artist",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Move Silently",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "The gnome giant-slayer relies on a combination of agility, combat prowess, and pure craftiness to deal with foes.",
+    "hitDie": "d10",
+    "name": "Gnome Giant-slayer",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Dodge",
+          "Mobility",
+          "Spring Attack"
+        ],
+        "skills": [
+          {
+            "name": "Escape Artist",
+            "ranks": 3
+          },
+          {
+            "name": "Tumble",
+            "ranks": 3
+          }
+        ],
+        "special": [
+          "Race: Gnome"
+        ]
+      },
+      "text": "Race: Gnome Skills: Escape Artist 3 ranks, Tumble 3 ranks Feats: Dodge, Mobility, Spring Attack Speak Language: Giant."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Favored enemy (giant) +2"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Crafty fighter"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Slippery"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Favored enemy (giant) +4"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Close shot"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Fast movement"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Favored enemy (giant) +6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Improved mobility"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Annoying strike"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Favored enemy (giant) +8",
+          "defensive roll"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

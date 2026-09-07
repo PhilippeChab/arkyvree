@@ -1,0 +1,447 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-03-23T18:43:44.067Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/malconvoker/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "type": "any"
+    },
+    "featNameMap": {
+      "augmentsummoning": "Augment Summoning",
+      "infernal": "Infernal",
+      "spellfocusconjurationlanguagescelestial": "Spell Focus (conjuration) Languages: Celestial"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Deceptive Summons"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Unrestricted Conjuration"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Planar Binding"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Skill Focus (Bluff)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Deceptive Summons (Fury)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Fiendish Legion"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Deceitful Bargaining"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Deceptive Summons (Resistance)"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Improved Calling"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Safe Summoning"
+      }
+    ],
+    "hd": 4,
+    "levels": 9,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.bluff.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.augmentsummoning.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.spellfocusconjurationlanguagescelestial.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.infernal.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.arcane",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.divine",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Malconvoker Class Feature",
+    "features": {
+      "Deceitful Bargaining": {
+        "description": "Starting at 6th level, you become exceptionally adept at convincing evil creatures you call that your intentions parallel their own. Upon calling an evil outsider using a planar binding spell, you can make a Bluff check opposed by the creature's Sense Motive skill check. If you succeed on this check, the called creature becomes more amenable to your cause, taking a -5 penalty on the opposed Charisma check made to refuse serving you. If you fail, the creature immediately makes a new Will saving throw against your spell. On a failure, the spell functions as normal. If it succeeds on this save, the creature breaks free of your control and can either flee or attack you.",
+        "level": 6,
+        "seedName": "Deceitful Bargaining (Malconvoker)"
+      },
+      "Deceptive Summons": {
+        "description": "At 1st level, you can attempt to trick evil creatures you conjure into serving you for longer than they normally would. When casting a summon monster spell to summon an evil-aligned creature, you can attempt a Bluff check as a free action, opposed by the creature's Sense Motive check. If your check succeeds, the duration of the effect is doubled (as if by the Extend Spell feat), and the summoned creature might be subject to additional effects as described below. If it fails, the duration remains as normal and no additional effects can be applied. If you fail the check by 5 or more, the creature breaks free of your control and is hostile toward you (though it still disappears as normal when the spell's duration ends). If you use this ability when summoning multiple creatures, you must attempt an opposed skill check separately against each creature you wish to affect. Beginning at 4th level, you can whip the deceived creatures into an infernal fury. If your Bluff check to extend the duration of summoning succeeds, the creatures get a +2 bonus on weapon damage rolls and 2 extra hit points per Hit Die (in addition to the bonuses conferred by Augment Summoning). Beginning at 7th level, you can instill the deceived creatures with exceptional resistance to your enemies' attempts to control or dismiss them. If your Bluff check to extend the duration of summoning succeeds, the creatures get a +2 bonus on Will saves, and your effective caster level is increased by 2 for the purpose of resisting dispel magic and similar effects against those creatures.",
+        "level": 1,
+        "seedName": "Deceptive Summons (Malconvoker)",
+        "stackable": true
+      },
+      "Deceptive Summons (Fury)": {
+        "description": "",
+        "level": 4,
+        "seedName": "Deceptive Summons (Fury) (Malconvoker)"
+      },
+      "Deceptive Summons (Resistance)": {
+        "description": "",
+        "level": 7,
+        "seedName": "Deceptive Summons (Resistance) (Malconvoker)"
+      },
+      "Fiendish Legion": {
+        "description": "Once you attain 5th level, whenever you use a summon monster spell to summon one or more evil-aligned creatures, you summon one extra creature of the same kind.",
+        "level": 5,
+        "seedName": "Fiendish Legion (Malconvoker)"
+      },
+      "Improved Calling": {
+        "description": "At 8th level, your understanding of the ways of fiends shows you how to tempt even more powerful beings into your service. The normal HD limit for your planar ally and planar binding spells (including lesser and greater versions) increases by 2.",
+        "level": 8,
+        "seedName": "Improved Calling (Malconvoker)"
+      },
+      "Planar Binding": {
+        "description": "Beginning at 2nd level, you can add the following spells to your class spell list and your list of known spells (or your spellbook) at the indicated levels. If you already have one or more of these spells on your class list at a different level, treat it as being of the lower level. 5th: lesser planar binding6th: planar binding8th: greater planar binding",
+        "level": 2,
+        "seedName": "Planar Binding (Malconvoker)"
+      },
+      "Safe Summoning": {
+        "description": "At 9th level, you can dismiss any evil creature that you have summoned as an immediate action rather than as a standard action.",
+        "level": 9,
+        "seedName": "Safe Summoning (Malconvoker)"
+      },
+      "Skill Focus (Bluff)": {
+        "description": "At 3rd level, you gain Skill Focus (Bluff) as a bonus feat. If you already have this feat, you can select any other feat for which you meet the prerequisite.",
+        "level": 3,
+        "seedName": "Skill Focus (Bluff) (Malconvoker)"
+      },
+      "Unrestricted Conjuration": {
+        "description": "For the purpose only of casting conjuration spells, you can ignore any restrictions that forbid you from casting spells of certain alignments. In addition, regular use of conjuration spells with the evil descriptor does not threaten to change your alignment. For example, a good cleric who becomes a malconvoker could cast summon monster I to summon a fiendish raven (whose alignment gives the spell the evil descriptor). The cleric could not cast death knell, though, which has the evil descriptor but is not of the conjuration school.",
+        "level": 1,
+        "seedName": "Unrestricted Conjuration (Malconvoker)"
+      }
+    },
+    "occurrenceMap": {
+      "Deceitful Bargaining": "Deceitful Bargaining",
+      "Deceptive Summons": "Deceptive Summons",
+      "Deceptive Summons (Fury)": "Deceptive Summons",
+      "Deceptive Summons (Resistance)": "Deceptive Summons",
+      "Fiendish Legion": "Fiendish Legion",
+      "Improved Calling": "Improved Calling",
+      "Planar Binding": "Planar Binding",
+      "Safe Summoning": "Safe Summoning",
+      "Skill Focus (Bluff)": "Skill Focus (Bluff)",
+      "Unrestricted Conjuration": "Unrestricted Conjuration"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "At 1st level, you can attempt to trick evil creatures you conjure into serving you for longer than they normally would. When casting a summon monster spell to summon an evil-aligned creature, you can attempt a Bluff check as a free action, opposed by the creature's Sense Motive check. If your check succeeds, the duration of the effect is doubled (as if by the Extend Spell feat), and the summoned creature might be subject to additional effects as described below. If it fails, the duration remains as normal and no additional effects can be applied. If you fail the check by 5 or more, the creature breaks free of your control and is hostile toward you (though it still disappears as normal when the spell's duration ends). If you use this ability when summoning multiple creatures, you must attempt an opposed skill check separately against each creature you wish to affect. Beginning at 4th level, you can whip the deceived creatures into an infernal fury. If your Bluff check to extend the duration of summoning succeeds, the creatures get a +2 bonus on weapon damage rolls and 2 extra hit points per Hit Die (in addition to the bonuses conferred by Augment Summoning). Beginning at 7th level, you can instill the deceived creatures with exceptional resistance to your enemies' attempts to control or dismiss them. If your Bluff check to extend the duration of summoning succeeds, the creatures get a +2 bonus on Will saves, and your effective caster level is increased by 2 for the purpose of resisting dispel magic and similar effects against those creatures.",
+        "name": "Deceptive Summons",
+        "type": "(Su)"
+      },
+      {
+        "description": "For the purpose only of casting conjuration spells, you can ignore any restrictions that forbid you from casting spells of certain alignments. In addition, regular use of conjuration spells with the evil descriptor does not threaten to change your alignment. For example, a good cleric who becomes a malconvoker could cast summon monster I to summon a fiendish raven (whose alignment gives the spell the evil descriptor). The cleric could not cast death knell, though, which has the evil descriptor but is not of the conjuration school.",
+        "name": "Unrestricted Conjuration"
+      },
+      {
+        "description": "Beginning at 2nd level, you can add the following spells to your class spell list and your list of known spells (or your spellbook) at the indicated levels. If you already have one or more of these spells on your class list at a different level, treat it as being of the lower level. 5th: lesser planar binding6th: planar binding8th: greater planar binding",
+        "name": "Planar Binding"
+      },
+      {
+        "description": "At 3rd level, you gain Skill Focus (Bluff) as a bonus feat. If you already have this feat, you can select any other feat for which you meet the prerequisite.",
+        "name": "Skill Focus (Bluff)"
+      },
+      {
+        "description": "",
+        "name": "Deceptive Summons (Fury)"
+      },
+      {
+        "description": "Once you attain 5th level, whenever you use a summon monster spell to summon one or more evil-aligned creatures, you summon one extra creature of the same kind.",
+        "name": "Fiendish Legion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 6th level, you become exceptionally adept at convincing evil creatures you call that your intentions parallel their own. Upon calling an evil outsider using a planar binding spell, you can make a Bluff check opposed by the creature's Sense Motive skill check. If you succeed on this check, the called creature becomes more amenable to your cause, taking a -5 penalty on the opposed Charisma check made to refuse serving you. If you fail, the creature immediately makes a new Will saving throw against your spell. On a failure, the spell functions as normal. If it succeeds on this save, the creature breaks free of your control and can either flee or attack you.",
+        "name": "Deceitful Bargaining",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Deceptive Summons (Resistance)"
+      },
+      {
+        "description": "At 8th level, your understanding of the ways of fiends shows you how to tempt even more powerful beings into your service. The normal HD limit for your planar ally and planar binding spells (including lesser and greater versions) increases by 2.",
+        "name": "Improved Calling",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 9th level, you can dismiss any evil creature that you have summoned as an immediate action rather than as a standard action.",
+        "name": "Safe Summoning",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Disguise",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "Daring summoners known as malconvokers bargain with their lives.",
+    "hitDie": "d4",
+    "name": "Malconvoker",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonevil",
+        "feats": [
+          "Augment Summoning",
+          "Spell Focus (conjuration) Languages: Celestial",
+          "Infernal"
+        ],
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 4
+          }
+        ],
+        "special": [
+          "Ability to cast summon monster III"
+        ]
+      },
+      "text": "Alignment: Any nonevil Skills: Bluff 4 ranks, Knowledge (the planes) 4 ranks Feats: Augment Summoning, Spell Focus (conjuration) Languages: Celestial, Infernal.Special: Ability to cast summon monster III"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Deceptive summons",
+          "unrestricted conjuration"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Planar binding"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Skill Focus (Bluff)"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Deceptive summons (fury)"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Fiendish legion"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Deceitful bargaining"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Deceptive summons (resistance)"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Improved calling"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Safe summoning"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

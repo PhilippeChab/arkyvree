@@ -1,0 +1,256 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-04-01T02:22:19.989Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/spellwarp-sniper/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Spellwarp"
+      },
+      {
+        "levels": [
+          2,
+          4
+        ],
+        "name": "Sudden Raystrike"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Precise Shot"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Ray Mastery"
+      }
+    ],
+    "hd": 6,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.arcane",
+            "value": "3",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.divine",
+            "value": "3",
+            "valueType": "number"
+          }
+        ]
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "feats.sneakattack.count",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "feats.suddenstrike.count",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Spellwarp Sniper Class Feature",
+    "features": {
+      "Precise Shot": {
+        "description": "At 3rd level, you gain Precise Shot as a bonus feat. If you already have Precise Shot, you can select any other feat that has Point Blank Shot as a prerequisite, as long as you meet the prerequisite for the chosen feat.",
+        "level": 3,
+        "seedName": "Precise Shot (Spellwarp Sniper)"
+      },
+      "Ray Mastery": {
+        "description": "At 5th level, you attain unequaled control over your ray spells. This control manifests in three ways:",
+        "level": 5,
+        "seedName": "Ray Mastery (Spellwarp Sniper)"
+      },
+      "Spellwarp": {
+        "description": "You can alter the form of certain area spells into rays as you cast them. As a free action, you can warp a 1st-level area spell with instantaneous duration and a range greater than touch. The spell's level, components, range, and damage (if any) remain unchanged. However, the spell's area entry is replaced by an effect entry of \"ray.\" The spell acts in all ways as a ray, and is considered a ray for the purpose of effects that modify or depend on rays (such as the other abilities of this prestige class). You must succeed on a ranged touch attack to affect an opponent with the spell. Even if the original spell allowed a Reflex save to reduce or negate its effect, the ray does not. However, if the original spell allowed a Fortitude or Will save to reduce or negate the spell's effect, the save still applies. You must decide to warp the spell as you cast it. You do not need to prepare it as a warped spell. You can apply metamagic feats as normal to the spell, as long as they can affect ray spells. Each time you advance a level in this class, the maximum level of spell that you can affect increases by one. For example, a 3rd-level spellwarp sniper can warp spells of up to 3rd level.",
+        "level": 1,
+        "seedName": "Spellwarp (Spellwarp Sniper)"
+      },
+      "Sudden Raystrike": {
+        "description": "If you can catch an opponent when he is unable to defend himself effectively from your ray attack, you can strike a vital spot for extra damage. Whenever the target of one of your ray spells is denied a Dexterity bonus to AC (whether the target actually has a Dexterity bonus of not), you deal an extra 1d6 points of damage with your ray spell. (If your ray spell doesn't deal hit point damage, this extra damage doesn't apply.) At 4th level, the extra damage increases to 2d6. If you get a sneak attack or sudden strike bonus from another source (such as rogue or ninja levels), the bonuses on damage stack whenever both abilities would apply to the same target. This damage applies only to targets within 30 feet. Creatures with concealment, creatures without discernible anatomies, and creatures immune to extra damage from critical hits are all immune to your sudden raystrikes.",
+        "level": 2,
+        "seedName": "Sudden Raystrike (Spellwarp Sniper)",
+        "stackable": true
+      }
+    },
+    "occurrenceMap": {
+      "Precise Shot": "Precise Shot",
+      "Ray Mastery": "Ray Mastery",
+      "Spellwarp": "Spellwarp",
+      "Sudden Raystrike": "Sudden Raystrike"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "You can alter the form of certain area spells into rays as you cast them. As a free action, you can warp a 1st-level area spell with instantaneous duration and a range greater than touch. The spell's level, components, range, and damage (if any) remain unchanged. However, the spell's area entry is replaced by an effect entry of \"ray.\" The spell acts in all ways as a ray, and is considered a ray for the purpose of effects that modify or depend on rays (such as the other abilities of this prestige class). You must succeed on a ranged touch attack to affect an opponent with the spell. Even if the original spell allowed a Reflex save to reduce or negate its effect, the ray does not. However, if the original spell allowed a Fortitude or Will save to reduce or negate the spell's effect, the save still applies. You must decide to warp the spell as you cast it. You do not need to prepare it as a warped spell. You can apply metamagic feats as normal to the spell, as long as they can affect ray spells. Each time you advance a level in this class, the maximum level of spell that you can affect increases by one. For example, a 3rd-level spellwarp sniper can warp spells of up to 3rd level.",
+        "name": "Spellwarp",
+        "type": "(Ex)"
+      },
+      {
+        "description": "If you can catch an opponent when he is unable to defend himself effectively from your ray attack, you can strike a vital spot for extra damage. Whenever the target of one of your ray spells is denied a Dexterity bonus to AC (whether the target actually has a Dexterity bonus of not), you deal an extra 1d6 points of damage with your ray spell. (If your ray spell doesn't deal hit point damage, this extra damage doesn't apply.) At 4th level, the extra damage increases to 2d6. If you get a sneak attack or sudden strike bonus from another source (such as rogue or ninja levels), the bonuses on damage stack whenever both abilities would apply to the same target. This damage applies only to targets within 30 feet. Creatures with concealment, creatures without discernible anatomies, and creatures immune to extra damage from critical hits are all immune to your sudden raystrikes.",
+        "name": "Sudden Raystrike",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, you gain Precise Shot as a bonus feat. If you already have Precise Shot, you can select any other feat that has Point Blank Shot as a prerequisite, as long as you meet the prerequisite for the chosen feat.",
+        "name": "Precise Shot"
+      },
+      {
+        "description": "At 5th level, you attain unequaled control over your ray spells. This control manifests in three ways:",
+        "name": "Ray Mastery",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Hide",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Move Silently",
+      "Profession",
+      "Spellcraft",
+      "Spot"
+    ],
+    "description": "The spellwarp sniper contorts spells, changing area effects into rays that deliver precise, devastating attacks.",
+    "hitDie": "d6",
+    "name": "Spellwarp Sniper",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "any"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Concentration",
+            "ranks": 8
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Sneak attack or sudden strike +1d6."
+        ]
+      },
+      "text": "Skills: Concentration 8 ranks, Spellcraft 8 ranks Feats: Point Blank Shot Spellcasting: Ability to cast 3rd-level spells.Special: Sneak attack or sudden strike +1d6."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Spellwarp"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Sudden raystrike +1d6"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Precise Shot"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Sudden raystrike +2d6"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Ray mastery"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

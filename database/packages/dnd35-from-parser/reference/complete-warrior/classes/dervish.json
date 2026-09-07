@@ -1,0 +1,470 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:43:25.302Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/dervish/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "combatexpertise": "Combat Expertise",
+      "dodge": "Dodge",
+      "mobility": "Mobility"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        "name": "Dervish Dance"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Movement Mastery"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Slashing Blades"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Fast Movement +"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Spring Attack"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Dance Of Death"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Improved Reaction"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Elaborate Parry"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Tireless Dance"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "A Thousand Cuts"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.tumble.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatexpertise.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.dodge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.mobility.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Dervish Class Feature",
+    "features": {
+      "A Thousand Cuts": {
+        "description": "At 10th level, once per day the dervish can double the total number of melee attacks she makes during a full attack action, whether or not she is performing a dervish dance. When combined with the dervish dance, she may deliver up to two attacks between each required movement. She also benefits from the Great Cleave feat with slashing weapons while using this ability, regardless of prerequisites, and need not move 5 feet before making any of the bonus attacks it provides. A haste spell can still grant an additional attack while this ability is active, but the spell's bonuses do not stack with those provided by this class feature.",
+        "level": 10,
+        "seedName": "A Thousand Cuts (Dervish)"
+      },
+      "AC Bonus": {
+        "description": "A dervish receives a defensive bonus to AC provided she wears no armor or only light armor and does not carry a shield. This bonus applies even to touch attacks and when the dervish is caught flat-footed. The bonus is lost if the dervish becomes immobilized or helpless, dons armor heavier than light, uses a shield, or bears a medium or heavy load.",
+        "level": 1,
+        "seedName": "AC Bonus (Dervish)"
+      },
+      "Dance of Death": {
+        "description": "Beginning at 4th level, a dervish gains the benefit of the Cleave feat whenever she is performing a dervish dance, even without meeting the normal prerequisites. The usual requirement to move 5 feet before making the extra attack from this ability does not apply.",
+        "level": 4,
+        "seedName": "Dance of Death (Dervish)"
+      },
+      "Dervish Dance": {
+        "description": "A dervish can enter a state of fluid, deadly motion a limited number of times each day. During this dance, she may execute a full attack action using only melee attacks while also moving up to her full speed. She must travel at least 5 feet between each individual attack, and she may not immediately re-enter a square she has just left (though she can return to it later in the same full attack). Attacks of opportunity can still be provoked while dancing, but the dervish may use Tumble checks as part of her movement. If her movement is interrupted, the remaining attacks in the full attack are also lost. While wielding a slashing weapon during the dance, she receives a bonus to attack and damage rolls starting at +1 at 1st level, increasing by +1 at each subsequent odd-numbered level. The dance can only be performed with slashing weapons (if using a double weapon or multiple weapons, all must be slashing type). It cannot be used while wearing armor heavier than light or while using a shield. During the dance, the dervish is unable to employ skills or abilities requiring concentration or stillness, such as Move Silently, Hide, or Search. However, a dervish who has bardic music may sing while dancing, and the Combat Expertise feat can also be used during the dance. The dance is incompatible with any rage or frenzy effect. Only one dervish dance can be performed per encounter. Its duration equals 1 round per two ranks the character has in Perform (dance). When the dance concludes, the dervish becomes fatigued for the rest of the encounter (this penalty is removed upon reaching 9th level).",
+        "level": 1,
+        "seedName": "Dervish Dance (Dervish)",
+        "stackable": true
+      },
+      "Elaborate Parry": {
+        "description": "Starting at 7th level, a dervish receives an additional +4 bonus to AC whenever she opts to fight defensively or use the total defense action in melee.",
+        "level": 7,
+        "seedName": "Elaborate Parry (Dervish)"
+      },
+      "Fast Movement": {
+        "description": "Starting at 2nd level, a dervish receives an enhancement bonus to her movement speed. Wearing armor heavier than light or carrying a medium or heavy load negates this benefit.",
+        "level": 2,
+        "seedName": "Fast Movement (Dervish)",
+        "stackable": true
+      },
+      "Fast Movement +": {
+        "description": "",
+        "level": 2,
+        "seedName": "Fast Movement + (Dervish)",
+        "stackable": true
+      },
+      "Improved Reaction": {
+        "description": "At 6th level, a dervish receives a +2 bonus to initiative checks.",
+        "level": 6,
+        "seedName": "Improved Reaction (Dervish)"
+      },
+      "Movement Mastery": {
+        "description": "A dervish possesses such confidence in her physical movements that unfavorable circumstances do not hinder her. She can take 10 on Jump, Perform (dance), and Tumble checks even when stress or distractions would normally make this impossible.",
+        "level": 1,
+        "seedName": "Movement Mastery (Dervish)"
+      },
+      "Slashing Blades": {
+        "description": "For a dervish, the scimitar counts as a light weapon instead of a one-handed weapon for all purposes, including two-weapon fighting.",
+        "level": 1,
+        "seedName": "Slashing Blades (Dervish)"
+      },
+      "Spring Attack": {
+        "description": "Upon reaching 3rd level, a dervish receives the Spring Attack feat as a bonus, regardless of whether she meets its prerequisites.",
+        "level": 3,
+        "seedName": "Spring Attack (Dervish)"
+      },
+      "Tireless Dance": {
+        "description": "Upon reaching 9th level, the dervish is no longer subject to fatigue at the conclusion of a dervish dance.",
+        "level": 9,
+        "seedName": "Tireless Dance (Dervish)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Dervish)"
+      }
+    },
+    "occurrenceMap": {
+      "A Thousand Cuts": "A Thousand Cuts",
+      "Dance Of Death": "Dance of Death",
+      "Dervish Dance": "Dervish Dance",
+      "Elaborate Parry": "Elaborate Parry",
+      "Fast Movement +": "Fast Movement",
+      "Improved Reaction": "Improved Reaction",
+      "Movement Mastery": "Movement Mastery",
+      "Slashing Blades": "Slashing Blades",
+      "Spring Attack": "Spring Attack",
+      "Tireless Dance": "Tireless Dance"
+    },
+    "overrides": {
+      "description": "The dervish is the embodiment of swiftness, agility, and reckless fury in combat.",
+      "features": {
+        "A Thousand Cuts": {
+          "description": "At 10th level, once per day the dervish can double the total number of melee attacks she makes during a full attack action, whether or not she is performing a dervish dance. When combined with the dervish dance, she may deliver up to two attacks between each required movement. She also benefits from the Great Cleave feat with slashing weapons while using this ability, regardless of prerequisites, and need not move 5 feet before making any of the bonus attacks it provides. A haste spell can still grant an additional attack while this ability is active, but the spell's bonuses do not stack with those provided by this class feature."
+        },
+        "AC Bonus": {
+          "description": "A dervish receives a defensive bonus to AC provided she wears no armor or only light armor and does not carry a shield. This bonus applies even to touch attacks and when the dervish is caught flat-footed. The bonus is lost if the dervish becomes immobilized or helpless, dons armor heavier than light, uses a shield, or bears a medium or heavy load."
+        },
+        "Dance of Death": {
+          "description": "Beginning at 4th level, a dervish gains the benefit of the Cleave feat whenever she is performing a dervish dance, even without meeting the normal prerequisites. The usual requirement to move 5 feet before making the extra attack from this ability does not apply."
+        },
+        "Dervish Dance": {
+          "description": "A dervish can enter a state of fluid, deadly motion a limited number of times each day. During this dance, she may execute a full attack action using only melee attacks while also moving up to her full speed. She must travel at least 5 feet between each individual attack, and she may not immediately re-enter a square she has just left (though she can return to it later in the same full attack). Attacks of opportunity can still be provoked while dancing, but the dervish may use Tumble checks as part of her movement. If her movement is interrupted, the remaining attacks in the full attack are also lost. While wielding a slashing weapon during the dance, she receives a bonus to attack and damage rolls starting at +1 at 1st level, increasing by +1 at each subsequent odd-numbered level. The dance can only be performed with slashing weapons (if using a double weapon or multiple weapons, all must be slashing type). It cannot be used while wearing armor heavier than light or while using a shield. During the dance, the dervish is unable to employ skills or abilities requiring concentration or stillness, such as Move Silently, Hide, or Search. However, a dervish who has bardic music may sing while dancing, and the Combat Expertise feat can also be used during the dance. The dance is incompatible with any rage or frenzy effect. Only one dervish dance can be performed per encounter. Its duration equals 1 round per two ranks the character has in Perform (dance). When the dance concludes, the dervish becomes fatigued for the rest of the encounter (this penalty is removed upon reaching 9th level)."
+        },
+        "Elaborate Parry": {
+          "description": "Starting at 7th level, a dervish receives an additional +4 bonus to AC whenever she opts to fight defensively or use the total defense action in melee."
+        },
+        "Fast Movement": {
+          "description": "Starting at 2nd level, a dervish receives an enhancement bonus to her movement speed. Wearing armor heavier than light or carrying a medium or heavy load negates this benefit."
+        },
+        "Improved Reaction": {
+          "description": "At 6th level, a dervish receives a +2 bonus to initiative checks."
+        },
+        "Movement Mastery": {
+          "description": "A dervish possesses such confidence in her physical movements that unfavorable circumstances do not hinder her. She can take 10 on Jump, Perform (dance), and Tumble checks even when stress or distractions would normally make this impossible."
+        },
+        "Slashing Blades": {
+          "description": "For a dervish, the scimitar counts as a light weapon instead of a one-handed weapon for all purposes, including two-weapon fighting."
+        },
+        "Spring Attack": {
+          "description": "Upon reaching 3rd level, a dervish receives the Spring Attack feat as a bonus, regardless of whether she meets its prerequisites."
+        },
+        "Tireless Dance": {
+          "description": "Upon reaching 9th level, the dervish is no longer subject to fatigue at the conclusion of a dervish dance."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Dervishes gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A dervish gains this bonus to Armor Class as long as she is wearing no armor or light armor and not carrying a shield. This bonus to AC applies even against touch attacks or when the dervish is fl at-footed. She loses this bonus when she is immobilized or helpless, when she wears any armor heavier than light, when she carries a shield, or when she carries a medium or heavy load.",
+        "name": "AC Bonus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level and higher, a dervish gains an enhancement bonus to her speed. A dervish in any armor heavier than light or carrying a medium or heavy load loses this bonus.",
+        "name": "Fast Movement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dervish can become a whirling dancer of death a certain number of times per day. While in this dervish dance, she can take a full attack action (for melee attacks only) and still move up to her speed. However, the dervish must move a minimum of 5 feet between each attack when using this ability, and she cannot return to a square she just exited (though she may return to that square later during her full attack). The dervish is subject to attacks of opportunity while dancing, but may tumble normally as part of her move. A dervish prevented from completing her move is also prevented from fi nishing her full attack. If a dervish wields a slashing weapon while in a dervish dance, she gains a bonus on her attack and damage rolls. This bonus is +1 at 1st level, and it increases by an extra +1 at every odd-numbered level thereafter. A dervish may only perform a dervish dance while wielding a slashing weapon (she may use a double weapon, or multiple weapons, only if both ends of the weapon or all weapons are of the slashing type). She cannot perform a dervish dance in any armor heavier than light or if she is using a shield. While dancing, a dervish cannot use skills or abilities that involve concentration or require her to remain still, such as Move Silently, Hide, or Search. A dervish with the bardic music ability can, however, sing while she dances, and a dervish can also use the Combat Expertise feat while in a dance. A dervish cannot perform a dervish dance while under the effect of a rage or frenzy ability. A dervish can perform a dervish dance only once per encounter. A dervish dance lasts 1 round for every two ranks of Perform (dance) that the character has. At the end of a dervish dance, the character becomes fatigued for the duration of the encounter (unless she is a 9th-level dervish, at which point this limitation no longer applies).",
+        "name": "Dervish Dance",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dervish is so certain of her movements that she is unaffected by adverse conditions. When making a Jump, Perform (dance), or Tumble check, she may take 10 even if stress and distraction would normally prevent her from doing so.",
+        "name": "Movement Mastery",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A dervish treats the scimitar as a light weapon (rather than a one-handed weapon) for all purposes, including fighting with two weapons.",
+        "name": "Slashing Blades"
+      },
+      {
+        "description": "",
+        "name": "Fast Movement +"
+      },
+      {
+        "description": "At 3rd level, a dervish gains the Spring Attack feat, even if she does not meet the prerequisites.",
+        "name": "Spring Attack"
+      },
+      {
+        "description": "At 4th level, a dervish gains the benefit of the Cleave feat while performing a dervish dance, even if she does not meet the prerequisites for the feat. She does not have to move 5 feet before making the extra attack granted by this ability.",
+        "name": "Dance of Death"
+      },
+      {
+        "description": "When she attains 6th level, a dervish gains a +2 bonus on initiative rolls.",
+        "name": "Improved Reaction",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When she attains 7th level, a dervish gains an extra +4 bonus to Armor Class when she chooses to fight defensively or use all-out defense in melee combat.",
+        "name": "Elaborate Parry",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a dervish reaches 9th level, the character no longer becomes fatigued for the duration of the encounter at the end of a dervish dance.",
+        "name": "Tireless Dance"
+      },
+      {
+        "description": "When a dervish reaches 10th level, once per day she may double the number of melee attacks she makes while performing a full attack action (whether in a dervish dance or not). If a dervish uses this ability in conjunction with her dervish dance, she can make up to two attacks between moves. The dervish also gains the benefit of the Great Cleave feat with slashing weapons while performing a thousand cuts, even if she does not meet the prerequisites. She does not have to move 5 feet before making any extra attacks granted by this ability. A dervish using this ability can receive an extra attack from the haste spell, but the bonuses provided by the spell do not stack with the bonuses granted by the class.",
+        "name": "A Thousand Cuts",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Craft",
+      "Escape Artist",
+      "Jump",
+      "Listen",
+      "Perform",
+      "Profession",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "The dervish epitomizes speeds, quickness, and abandon.",
+    "hitDie": "d10",
+    "name": "Dervish",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Combat Expertise",
+          "Dodge",
+          "Mobility",
+          "Weapon Focus (any slashing melee weapon)"
+        ],
+        "skills": [
+          {
+            "name": "Perform (Dance)",
+            "ranks": 3
+          },
+          {
+            "name": "Tumble",
+            "ranks": 3
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Perform (Dance) 3 ranks, Tumble 3 ranks Feats: Combat Expertise, Dodge, Mobility, Weapon Focus (any slashing melee weapon)"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Dervish dance 1/day",
+          "movement mastery",
+          "slashing blades"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Fast movement +5 ft."
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Spring Attack",
+          "dervish dance 2/day"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Dance of death"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Fast movement +10 ft.",
+          "dervish dance 3/day"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Improved reaction"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Elaborate parry",
+          "dervish dance 4/day"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Fast movement +15 ft."
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Tireless dance",
+          "dervish dance 5/day"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "A thousand cuts"
+        ],
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

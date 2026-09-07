@@ -1,0 +1,535 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T01:27:26.556Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/consecrated-harrier/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterType": "Divine",
+    "featNameMap": {
+      "track": "Track"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5,
+          10
+        ],
+        "name": "Blessing Of Scripture"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Chaos"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Sanctified Sight"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Dispel Magic"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Crushing Despair"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "False Vision"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Implacable Hunt"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Faultless Hunt"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disguise.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.gatherinformation.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.track.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Consecrated Harrier Class Feature",
+    "features": {
+      "Blessing of Scripture": {
+        "description": "Every consecrated harrier gains a +2 sacred bonus to Bluff, Listen, Sense Motive, Spot, and Survival checks while actively pursuing a target assigned by her church. When the designated target is a group, the bonus applies against the group's leader. The same bonus is also added to weapon damage rolls (including unarmed strikes) against the assigned target. At 5th level this bonus rises to +4, and at 10th level it increases to +6.",
+        "level": 1,
+        "seedName": "Blessing of Scripture (Consecrated Harrier)",
+        "stackable": true
+      },
+      "Crushing Despair": {
+        "description": "From 4th level onward, the consecrated harrier gains the ability to use crushing despair as a spell-like ability. The number of daily uses equals her Wisdom modifier (minimum of 1).",
+        "level": 4,
+        "seedName": "Crushing Despair (Consecrated Harrier)"
+      },
+      "Detect Chaos": {
+        "description": "The consecrated harrier may use detect chaos at will, functioning as a cleric of her consecrated harrier level.",
+        "level": 1,
+        "seedName": "Detect Chaos (Consecrated Harrier)"
+      },
+      "Dispel Magic": {
+        "description": "At 3rd level, the consecrated harrier can employ dispel magic as a spell-like ability. When making dispel checks with this ability, she may add her blessing of scripture bonus to the roll. Daily uses of this ability equal her Wisdom modifier (minimum of 1).",
+        "level": 3,
+        "seedName": "Dispel Magic (Consecrated Harrier)"
+      },
+      "False Vision": {
+        "description": "Upon reaching 6th level, the consecrated harrier can use false vision as a spell-like ability. The effect must be centered on herself. She can use this ability a number of times per day equal to her Wisdom modifier (minimum of 1).",
+        "level": 6,
+        "seedName": "False Vision (Consecrated Harrier)"
+      },
+      "Faultless Hunt": {
+        "description": "At 10th level, a consecrated harrier who has an active implacable hunt may elevate it into a faultless hunt, which allows her to track her quarry even across different planes of existence. Unlike implacable hunt, which can track multiple individuals simultaneously, a faultless hunt can only be directed against a single individual at a time. To initiate a new faultless hunt, the consecrated harrier must first end any faultless hunt already in progress.",
+        "level": 10,
+        "seedName": "Faultless Hunt (Consecrated Harrier)"
+      },
+      "Implacable Hunt": {
+        "description": "Starting at 8th level, whenever the consecrated harrier inflicts a wound on a target who then escapes, she automatically knows the direction toward that target and the approximate distance (accurate to within 10% of the actual distance) separating them. If the target is within 50 feet, the harrier can determine the target's exact location. This ability functions only when the harrier and her target occupy the same plane of existence. Multiple targets can be tracked simultaneously through implacable hunt, provided each individual target belongs to a group that collectively constitutes the harrier's assigned mission target.",
+        "level": 8,
+        "seedName": "Implacable Hunt (Consecrated Harrier)"
+      },
+      "Sanctified Sight": {
+        "description": "Starting at 2nd level, the consecrated harrier gains a +4 bonus on all saving throws made against illusion effects.",
+        "level": 2,
+        "seedName": "Sanctified Sight (Consecrated Harrier)"
+      },
+      "Spells per Day": {
+        "description": "The consecrated harrier can cast a limited selection of divine spells. Casting a spell requires a Wisdom score of at least 10 + the spell's level, meaning a harrier with a Wisdom of 10 or lower cannot cast any spells. Bonus spells and saving throw DCs are based on Wisdom (DC equals 10 + spell level + Wisdom modifier). At levels where the harrier has 0 spells of a given level, she can only cast bonus spells granted by a sufficiently high Wisdom score. The consecrated harrier draws from the ranger spell list, supplemented by the following spells: 1st - animate rope, calm emotions, command, disguise self, doom; 2nd - charm person, daylight, detect thoughts, hold person; 3rd - clairaudience/clairvoyance, death ward, discern lies, see invisibility; 4th - dismissal, dominate person, legend lore, mark of justice.",
+        "level": 1,
+        "seedName": "Spells per Day (Consecrated Harrier)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "The consecrated harrier does not gain any additional weapon or armor proficiencies.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Consecrated Harrier)"
+      }
+    },
+    "occurrenceMap": {
+      "Blessing Of Scripture": "Blessing of Scripture",
+      "Crushing Despair": "Crushing Despair",
+      "Detect Chaos": "Detect Chaos",
+      "Dispel Magic": "Dispel Magic",
+      "False Vision": "False Vision",
+      "Faultless Hunt": "Faultless Hunt",
+      "Implacable Hunt": "Implacable Hunt",
+      "Sanctified Sight": "Sanctified Sight"
+    },
+    "overrides": {
+      "description": "A consecrated harrier serves as a sanctioned hunter on behalf of her faith or religious institution, tracking down designated enemies.",
+      "features": {
+        "Blessing of Scripture": {
+          "description": "Every consecrated harrier gains a +2 sacred bonus to Bluff, Listen, Sense Motive, Spot, and Survival checks while actively pursuing a target assigned by her church. When the designated target is a group, the bonus applies against the group's leader. The same bonus is also added to weapon damage rolls (including unarmed strikes) against the assigned target. At 5th level this bonus rises to +4, and at 10th level it increases to +6."
+        },
+        "Crushing Despair": {
+          "description": "From 4th level onward, the consecrated harrier gains the ability to use crushing despair as a spell-like ability. The number of daily uses equals her Wisdom modifier (minimum of 1)."
+        },
+        "Detect Chaos": {
+          "description": "The consecrated harrier may use detect chaos at will, functioning as a cleric of her consecrated harrier level."
+        },
+        "Dispel Magic": {
+          "description": "At 3rd level, the consecrated harrier can employ dispel magic as a spell-like ability. When making dispel checks with this ability, she may add her blessing of scripture bonus to the roll. Daily uses of this ability equal her Wisdom modifier (minimum of 1)."
+        },
+        "False Vision": {
+          "description": "Upon reaching 6th level, the consecrated harrier can use false vision as a spell-like ability. The effect must be centered on herself. She can use this ability a number of times per day equal to her Wisdom modifier (minimum of 1)."
+        },
+        "Faultless Hunt": {
+          "description": "At 10th level, a consecrated harrier who has an active implacable hunt may elevate it into a faultless hunt, which allows her to track her quarry even across different planes of existence. Unlike implacable hunt, which can track multiple individuals simultaneously, a faultless hunt can only be directed against a single individual at a time. To initiate a new faultless hunt, the consecrated harrier must first end any faultless hunt already in progress."
+        },
+        "Implacable Hunt": {
+          "description": "Starting at 8th level, whenever the consecrated harrier inflicts a wound on a target who then escapes, she automatically knows the direction toward that target and the approximate distance (accurate to within 10% of the actual distance) separating them. If the target is within 50 feet, the harrier can determine the target's exact location. This ability functions only when the harrier and her target occupy the same plane of existence. Multiple targets can be tracked simultaneously through implacable hunt, provided each individual target belongs to a group that collectively constitutes the harrier's assigned mission target."
+        },
+        "Sanctified Sight": {
+          "description": "Starting at 2nd level, the consecrated harrier gains a +4 bonus on all saving throws made against illusion effects."
+        },
+        "Spells per Day": {
+          "description": "The consecrated harrier can cast a limited selection of divine spells. Casting a spell requires a Wisdom score of at least 10 + the spell's level, meaning a harrier with a Wisdom of 10 or lower cannot cast any spells. Bonus spells and saving throw DCs are based on Wisdom (DC equals 10 + spell level + Wisdom modifier). At levels where the harrier has 0 spells of a given level, she can only cast bonus spells granted by a sufficiently high Wisdom score. The consecrated harrier draws from the ranger spell list, supplemented by the following spells: 1st - animate rope, calm emotions, command, disguise self, doom; 2nd - charm person, daylight, detect thoughts, hold person; 3rd - clairaudience/clairvoyance, death ward, discern lies, see invisibility; 4th - dismissal, dominate person, legend lore, mark of justice."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "The consecrated harrier does not gain any additional weapon or armor proficiencies."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "consecratedharrierspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Consecrated harriers gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A consecrated harrier gains the ability to cast a small number of divine spells. To cast a spell, the consecrated harrier must have a Wisdom score of at least 10 + the spell's level, so a consecrated harrier with a Wisdom of 10 or lower cannot cast spells. Consecrated harrier bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + Wis modifier. When the consecrated harrier gets 0 spells of a given level (for instance 0 1st-level spells at 1st level), the harrier gets only the bonus spells she would be entitled to based on her Wisdom score for that spell level. The consecrated harrier uses the ranger spell list, with the following additions: 1st - animate rope, calm emotions, command, disguise self, doom; 2nd - charm person, daylight, detect thoughts, hold person; 3rd - clairaudience/clairvoyance, death ward, discern lies, see invisibility; 4th - dismissal, dominate person, legend lore, mark of justice.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "All consecrated harriers receive a +2 sacred bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks when in pursuit of their church-assigned target. If the assigned target is a group, this bonus applies to the group's leader. They receive the same bonus on weapon (or unarmed) damage rolls against their targets. This bonus increases to +4 at 5th level, and to +6 at 10th level.",
+        "name": "Blessing of Scripture",
+        "type": "(Su)"
+      },
+      {
+        "description": "A consecrated harrier can use detect chaos at will as a cleric of equal level.",
+        "name": "Detect Chaos",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 2nd level, a consecrated harrier receives a +4 bonus on all saves against illusions.",
+        "name": "Sanctified Sight",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 3rd-level consecrated harrier can use dispel magic as a spell-like ability. She may add her blessing of scripture bonus on dispel checks when using this spell-like ability. She may use this ability a number of times per day equal to her Wisdom modifier (minimum 1).",
+        "name": "Dispel Magic",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Starting at 4th level, a consecrated harrier can use crushing despair as a spell-like ability. She may use this ability a number of times per day equal to her Wisdom modifier (minimum 1).",
+        "name": "Crushing Despair",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A 6th-level consecrated harrier can use false vision as a spell-like ability. The effect must be centered on the consecrated harrier. She may use this ability a number of times per day equal to her Wisdom modifier (minimum 1).",
+        "name": "False Vision",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 8th level, if the consecrated harrier wounds a target and the target escapes, the consecrated harrier always knows the direction in which her target lies and the approximate distance (within 10% of the total distance) between her and her target. If the target is within 50 feet, the consecrated harrier can pinpoint the target's precise location. This ability only works if the consecrated harrier and her target are on the same plane of existence. Implacable hunt can be used simultaneously against different targets, as long as each of those individual targets is part of a group that is, in total, the harrier's target for her current mission.",
+        "name": "Implacable Hunt",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 10th level, a consecrated harrier who establishes an implacable hunt can intensify this to a_faultless hunt_, enabling her to locate her quarry even across planar boundaries. Unlike an implacable hunt, which can affect several individuals at the same time, only one faultless hunt against a single individual can be pursued at one time. For the consecrated harrier to begin a faultless hunt, she must abandon any faultless hunt that she is already conducting.",
+        "name": "Faultless Hunt",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Diplomacy",
+      "Disguise",
+      "Gather Information",
+      "Intimidate",
+      "Knowledge (Local)",
+      "Profession",
+      "Ride",
+      "Search",
+      "Use Rope"
+    ],
+    "description": "The consecrated harrier acts as a bounty hunter for her religion or organization.",
+    "hitDie": "d10",
+    "name": "Consecrated Harrier",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any lawful",
+        "bab": 5,
+        "feats": [
+          "Track"
+        ],
+        "skills": [
+          {
+            "name": "Disguise",
+            "ranks": 5
+          },
+          {
+            "name": "Gather Information",
+            "ranks": 5
+          }
+        ],
+        "special": [
+          "The candidate must accept an assignment from her church to locate and destroy some specific, individual enemy of the church. A character who fails must wait a year and a day before applying again. If she succeeds, the church accepts her as a consecrated harrier and she may gain levels in the class."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Any lawful Skills: Disguise 5 ranks, Gather Information 5 ranks Feats: Track Special: The candidate must accept an assignment from her church to locate and destroy some specific, individual enemy of the church. A character who fails must wait a year and a day before applying again. If she succeeds, the church accepts her as a consecrated harrier and she may gain levels in the class."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Blessing of scripture +2",
+          "detect chaos"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Sanctified sight"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Dispel magic"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Crushing despair"
+        ],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Blessing of scripture +4"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 4
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "False vision"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 5
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 5
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Implacable hunt"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 6
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 6
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Blessing of scripture +6",
+          "faultless hunt"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

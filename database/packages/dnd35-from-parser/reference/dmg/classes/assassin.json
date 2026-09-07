@@ -1,0 +1,713 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-23T01:27:20.673Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/assassin/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Death Attack"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Poison Use"
+      },
+      {
+        "levels": [
+          2,
+          4,
+          6,
+          8,
+          10
+        ],
+        "name": "Save Against Poison"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Uncanny Dodge"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Improved Uncanny Dodge"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Hide In Plain Sight"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disguise.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4,
+    "spellsKnown": [
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        4
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Intelligence",
+    "classFeatureAptitude": "Assassin Class Feature",
+    "features": {
+      "Death Attack": {
+        "description": "After observing a target for 3 consecutive rounds, if the assassin then lands a damaging melee sneak attack, the blow can potentially kill or paralyze the victim (the assassin chooses which effect to attempt). During the observation period, the assassin may take other actions provided their focus remains on the target and the target neither detects nor identifies the assassin as a threat. A victim who fails a Fortitude saving throw (DC 10 + assassin class level + assassin's Int modifier) against the lethal effect dies instantly. If the save fails against the paralysis effect, the victim becomes helpless and unable to act for 1d6 rounds + 1 round per assassin class level. On a successful save, the attack deals normal sneak attack damage only. The strike must be made within 3 rounds after finishing the observation period. If the attempt fails (the target succeeds on its save) or if the assassin does not attack within 3 rounds of completing the study, another full 3 rounds of observation are needed before a new death attack can be attempted.",
+        "level": 1,
+        "seedName": "Death Attack (Assassin)"
+      },
+      "Hide in Plain Sight": {
+        "description": "Upon reaching 8th level, an assassin gains the ability to use the Hide skill while being directly observed. The only requirement is being within 10 feet of any area of shadow; with that condition met, the assassin can conceal themselves in the open without any object to hide behind. The assassin's own shadow does not count for this purpose.",
+        "level": 8,
+        "seedName": "Hide in Plain Sight (Assassin)"
+      },
+      "Improved Uncanny Dodge": {
+        "description": "At 5th level, an assassin becomes immune to flanking, responding to attackers on all sides as effectively as to a single opponent. This prevents rogues from using flanking to deliver sneak attacks against the assassin. However, a rogue whose level exceeds the assassin's by four or more can still flank (and sneak attack) the assassin. When a character has uncanny dodge from multiple classes, the levels from all such classes stack for the purpose of calculating the minimum rogue level needed to flank them.",
+        "level": 5,
+        "seedName": "Improved Uncanny Dodge (Assassin)"
+      },
+      "Poison Use": {
+        "description": "Assassins receive specialized training in handling poisons and never accidentally expose themselves to their own toxins when coating a weapon.",
+        "level": 1,
+        "seedName": "Poison Use (Assassin)"
+      },
+      "Save Against Poison": {
+        "description": "",
+        "level": 2,
+        "seedName": "Save Against Poison (Assassin)",
+        "stackable": true
+      },
+      "Sneak Attack": {
+        "description": "This functions identically to the rogue's sneak attack ability. The bonus damage increases by +1d6 at every odd class level (1st, 3rd, 5th, 7th, and 9th). If the assassin has sneak attack damage from another source (such as rogue levels), the damage bonuses stack.",
+        "level": 1,
+        "seedName": "Sneak Attack (Assassin)",
+        "stackable": true
+      },
+      "Spells": {
+        "description": "From 1st level onward, an assassin can cast a limited number of arcane spells. Casting a spell requires an Intelligence score of at least 10 + the spell's level; an assassin whose Intelligence is 10 or lower cannot cast these spells at all. Bonus spells and saving throw DCs are based on Intelligence (DC = 10 + spell level + Intelligence modifier). At a given spell level where the assassin receives 0 spells per day (such as 1st-level spells at 1st class level), only bonus spells from a high Intelligence score are available. The assassin's spellcasting works like a bard's. Starting at 6th level, and again at every even-numbered level thereafter (8th and 10th), the assassin may exchange one known spell for a different spell of the same level. The replacement spell must be at least two levels lower than the highest-level assassin spell the character can cast. For example, at 6th level the assassin could swap a single 1st-level spell (two levels below the maximum of 3rd) for another 1st-level spell. At 8th and 10th level, a 1st-level or 2nd-level spell could be exchanged (since 4th-level assassin spells are now accessible). Only one spell can be swapped per level, and the decision must be made at the same time new spells known are gained.",
+        "level": 1,
+        "seedName": "Spells (Assassin)"
+      },
+      "Uncanny Dodge": {
+        "description": "Beginning at 2nd level, an assassin develops an instinctive awareness of danger that operates faster than normal perception. The assassin keeps their Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. (Being immobilized still causes the loss of any Dexterity bonus to AC.) A character who gains this ability from more than one class automatically upgrades to improved uncanny dodge.",
+        "level": 2,
+        "seedName": "Uncanny Dodge (Assassin)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "An assassin is trained with weapons suited to covert operations and surprise attacks. They are proficient with crossbows (hand, light, and heavy), daggers (all varieties), darts, rapiers, saps, shortbows (including composite), and short swords. They are also proficient with light armor but have no shield proficiency.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencyhandcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencylightcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyheavycrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencypunchingdagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencycompositeshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortsword.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyrapier.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydart.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencysap.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Assassin)"
+      }
+    },
+    "occurrenceMap": {
+      "Death Attack": "Death Attack",
+      "Hide In Plain Sight": "Hide in Plain Sight",
+      "Improved Uncanny Dodge": "Improved Uncanny Dodge",
+      "Poison Use": "Poison Use",
+      "Save Against Poison": "Save Against Poison",
+      "Sneak Attack": "Sneak Attack",
+      "Uncanny Dodge": "Uncanny Dodge"
+    },
+    "overrides": {
+      "description": "The assassin specializes in swift, deadly strikes that dispatch targets with ruthless efficiency.",
+      "features": {
+        "Death Attack": {
+          "description": "After observing a target for 3 consecutive rounds, if the assassin then lands a damaging melee sneak attack, the blow can potentially kill or paralyze the victim (the assassin chooses which effect to attempt). During the observation period, the assassin may take other actions provided their focus remains on the target and the target neither detects nor identifies the assassin as a threat. A victim who fails a Fortitude saving throw (DC 10 + assassin class level + assassin's Int modifier) against the lethal effect dies instantly. If the save fails against the paralysis effect, the victim becomes helpless and unable to act for 1d6 rounds + 1 round per assassin class level. On a successful save, the attack deals normal sneak attack damage only. The strike must be made within 3 rounds after finishing the observation period. If the attempt fails (the target succeeds on its save) or if the assassin does not attack within 3 rounds of completing the study, another full 3 rounds of observation are needed before a new death attack can be attempted."
+        },
+        "Hide in Plain Sight": {
+          "description": "Upon reaching 8th level, an assassin gains the ability to use the Hide skill while being directly observed. The only requirement is being within 10 feet of any area of shadow; with that condition met, the assassin can conceal themselves in the open without any object to hide behind. The assassin's own shadow does not count for this purpose."
+        },
+        "Improved Uncanny Dodge": {
+          "description": "At 5th level, an assassin becomes immune to flanking, responding to attackers on all sides as effectively as to a single opponent. This prevents rogues from using flanking to deliver sneak attacks against the assassin. However, a rogue whose level exceeds the assassin's by four or more can still flank (and sneak attack) the assassin. When a character has uncanny dodge from multiple classes, the levels from all such classes stack for the purpose of calculating the minimum rogue level needed to flank them."
+        },
+        "Poison Use": {
+          "description": "Assassins receive specialized training in handling poisons and never accidentally expose themselves to their own toxins when coating a weapon."
+        },
+        "Sneak Attack": {
+          "description": "This functions identically to the rogue's sneak attack ability. The bonus damage increases by +1d6 at every odd class level (1st, 3rd, 5th, 7th, and 9th). If the assassin has sneak attack damage from another source (such as rogue levels), the damage bonuses stack."
+        },
+        "Spells": {
+          "description": "From 1st level onward, an assassin can cast a limited number of arcane spells. Casting a spell requires an Intelligence score of at least 10 + the spell's level; an assassin whose Intelligence is 10 or lower cannot cast these spells at all. Bonus spells and saving throw DCs are based on Intelligence (DC = 10 + spell level + Intelligence modifier). At a given spell level where the assassin receives 0 spells per day (such as 1st-level spells at 1st class level), only bonus spells from a high Intelligence score are available. The assassin's spellcasting works like a bard's. Starting at 6th level, and again at every even-numbered level thereafter (8th and 10th), the assassin may exchange one known spell for a different spell of the same level. The replacement spell must be at least two levels lower than the highest-level assassin spell the character can cast. For example, at 6th level the assassin could swap a single 1st-level spell (two levels below the maximum of 3rd) for another 1st-level spell. At 8th and 10th level, a 1st-level or 2nd-level spell could be exchanged (since 4th-level assassin spells are now accessible). Only one spell can be swapped per level, and the decision must be made at the same time new spells known are gained."
+        },
+        "Uncanny Dodge": {
+          "description": "Beginning at 2nd level, an assassin develops an instinctive awareness of danger that operates faster than normal perception. The assassin keeps their Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. (Being immobilized still causes the loss of any Dexterity bonus to AC.) A character who gains this ability from more than one class automatically upgrades to improved uncanny dodge."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "An assassin is trained with weapons suited to covert operations and surprise attacks. They are proficient with crossbows (hand, light, and heavy), daggers (all varieties), darts, rapiers, saps, shortbows (including composite), and short swords. They are also proficient with light armor but have no shield proficiency."
+        }
+      }
+    },
+    "spells": {
+      "known": [
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "slug": "assassinspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Intelligence",
+    "classFeatures": [
+      {
+        "description": "An assassin's weapon training focuses on weapons suitable for stealth and sneak attacks. Assassins are proficient with the crossbow (hand, light, or heavy), dagger (any type), dart, rapier, sap, shortbow (normal and composite), and short sword. Assassins are proficient with light armor but not with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 1st level, an assassin gains the ability to cast a number of arcane spells. To cast a spell, an assassin must have an Intelligence score of at least 10 + the spell's level, so an assassin with an Intelligence of 10 or lower cannot cast these spells. Assassin bonus spells are based on Intelligence, and saving throws against these spells have a DC of 10 + spell level + the assassin's Intelligence bonus (if any). When the assassin gets 0 spells per day of a given spell level (for instance, 1st-level spells for a 1st-level assassin), he gains only the bonus spells he would be entitled to based on his Intelligence score for that spell level. The assassin's spell list appears below. An assassin casts spells just as a bard does. Upon reaching 6th level, at every even-numbered level after that (8th and 10th), an assassin can choose to learn a new spell in place of one he already knows. The new spell's level must be the same as that of the spell being exchanged, and it must be at least two levels lower than the highest-level assassin spell the assassin can cast. For instance, upon reaching 6th level, an assassin could trade in a single 1st-level spell (two spell levels below the highest-level sorcerer spell he can cast, which is 3rd) for a different 1st-level spell. At 8th and 10th levels, he could trade in a single 1st-level or 2nd-level spell (since he now can cast 4th-level assassin spells) for a different spell of the same level. An assassin may swap only a single spell at any given level, and must choose whether ornot to swap the spell at the same time that he gains new spells known for that level.",
+        "name": "Spells"
+      },
+      {
+        "description": "This is exactly like the rogue ability of the same name. The extra damage dealt increases by +1d6 every other level (1st, 3rd, 5th, 7th, and 9th). If an assassin gets a sneak attack bonus from another source (such as rogue levels), the bonuses on damage stack.",
+        "name": "Sneak Attack"
+      },
+      {
+        "description": "If an assassin studies his victim for 3 rounds and then makes a sneak attack with a melee weapon that successfully deals damage, the sneak attack has the additional effect of possibly either paralyzing or killing the target (assassin's choice). While studying the victim, the assassin can undertake other actions so long as his attention stays focused on the target and the target does not detect the assassin or recognize the assassin as an enemy. If the victim of such an attack fails a Fortitude save (DC 10 + the assassin's class level + the assassin's Int modifier) against the kill effect, she dies. If the saving throw fails against the paralysis effect, the victim's mind and body become enervated, rendering her helpless and unable to act for 1d6 rounds plus 1 round per level of the assassin. If the victim's saving throw succeeds, the attack is just a normal sneak attack. Once the assassin has completed the 3 rounds of study, he must make the death attack within the next 3 rounds. If a death attack is attempted and fails (the victim makes her save) or if the assassin does not launch the attack within 3 rounds of completing the study, 3 new rounds of study are required before he can attempt another death attack.",
+        "name": "Death Attack"
+      },
+      {
+        "description": "Assassins are trained in the use of poison and never risk accidentally poisoning themselves when applying poison to a blade.",
+        "name": "Poison Use"
+      },
+      {
+        "description": "",
+        "name": "Save Against Poison"
+      },
+      {
+        "description": "Starting at 2nd level, an assassin gains the ability to react to danger before his senses would normally allow him to even be aware of it. He retains his Dexterity bonus to AC (if any) regardless of being caught flat-footed or struck by an invisible attacker. (He still loses any Dexterity bonus to AC if immobilized.) If a character gains uncanny dodge from a second class (such as a barbarian/rogue), the character automatically gains improved uncanny dodge.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, an assassin can no longer be flanked, since he can react to opponents on opposite sides of him as easily as he can react to a single attacker. This defense denies rogues the ability to use flank attacks to sneak attack the assassin. The exception to this defense is that a rogue at least four levels higher than the assassin can flank him (and thus sneak attack him). If a character gains uncanny dodge from a second class (such as a barbarian/rogue), the character automatically gains improved uncanny dodge, and the levels from those classes stack to determine the minimum rogue level required to flank the character.",
+        "name": "Improved Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 8th level, an assassin can use the Hide skill even while being observed. As long as he is within 10 feet of some sort of shadow, an assassin can hide himself from view in the open without having anything to actually hide behind. He cannot, however, hide in his own shadow.",
+        "name": "Hide in Plain Sight",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disguise",
+      "Escape Artist",
+      "Forgery",
+      "Gather Information",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "The assassin is the master of dealing quick, lethal blows.",
+    "hitDie": "d6",
+    "name": "Assassin",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any evil",
+        "skills": [
+          {
+            "name": "Disguise",
+            "ranks": 4
+          },
+          {
+            "name": "Hide",
+            "ranks": 8
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "The character must kill someone for no other reason than to join the assassins."
+        ]
+      },
+      "text": "Alignment: Any evil Skills: Disguise 4 ranks, Hide 8 ranks, Move Silently 8 ranks Special: The character must kill someone for no other reason than to join the assassins."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Sneak attack +1d6",
+          "death attack",
+          "poison use",
+          "spells"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "+1 save against poison",
+          "uncanny dodge"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "spellsPerDay": "2,0,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "+2 save against poison"
+        ],
+        "spellsPerDay": "3,1,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Improved uncanny dodge",
+          "sneak attack +3d6"
+        ],
+        "spellsPerDay": "3,2,0,-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "+3 save against poison"
+        ],
+        "spellsPerDay": "3,3,1,-",
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +4d6"
+        ],
+        "spellsPerDay": "3,3,2,0",
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "+4 save against poison",
+          "hide in plain sight"
+        ],
+        "spellsPerDay": "3,3,3,1",
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Sneak attack +5d6"
+        ],
+        "spellsPerDay": "3,3,3,2",
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "+5 save against poison"
+        ],
+        "spellsPerDay": "3,3,3,3",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier",
+    "spellsKnown": [
+      "2,-,-,-",
+      "3,-,-,-",
+      "3,2,-,-",
+      "4,3,-,-",
+      "4,3,2,-",
+      "4,4,3,-",
+      "4,4,3,2",
+      "4,4,4,3",
+      "4,4,4,3",
+      "4,4,4,4"
+    ]
+  }
+}

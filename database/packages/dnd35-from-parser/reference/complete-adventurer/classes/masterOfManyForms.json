@@ -1,0 +1,423 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.312Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/master-of-many-forms/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "alertness": "Alertness",
+      "endurance": "Endurance",
+      "wildshape": "Wild Shape"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Shifter's Speech"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Improved Wild Shape (Humanoid)"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Improved Wild Shape (Giant; Large)"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Fast Wild Shape"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Improved Wild Shape (Monstrous Humanoid)"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Improved Wild Shape (Fey; Tiny)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Improved Wild Shape (Vermin)"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Improved Wild Shape (Aberration; Huge)"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Extraordinary Wild Shape"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Improved Wild Shape (Plant)"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Improved Wild Shape (Ooze; Diminutive)"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Improved Wild Shape (Elemental)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Evershifting Form"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Improved Wild Shape (Dragon; Gargantuan)"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "equal",
+        "target": "feats.alertness.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.endurance.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.wildshape.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Master of Many Forms Class Feature",
+    "features": {
+      "Evershifting Form": {
+        "description": "A 10th-level master of many forms has reached the pinnacle of her shapechanging abilities. She gains the shapechanger subtype and becomes immune to any transmutation effect unless she is willing to accept it. In addition, she no longer takes ability penalties for aging and is not subject to magical aging, though any aging penalties she already may have taken remain in place. Bonuses still accrue, and a master of many forms still dies of old age when her time is up.",
+        "level": 10,
+        "seedName": "Evershifting Form (Master of Many Forms)"
+      },
+      "Extraordinary Wild Shape": {
+        "description": "Starting at 7th level, a master of many forms gains the extraordinary special qualities of any form she assumes with wild shape.",
+        "level": 7,
+        "seedName": "Extraordinary Wild Shape (Master of Many Forms)"
+      },
+      "Fast Wild Shape": {
+        "description": "Starting at 3rd level, a master of many forms can use her wild shape ability as a move action, rather than as a standard action.",
+        "level": 3,
+        "seedName": "Fast Wild Shape (Master of Many Forms)"
+      },
+      "Improved Wild Shape": {
+        "description": "A master of many forms knows how to use her wild shape ability to assume a wider range of forms. At 1st level, she can assume a humanoid form with wild shape. She later gains the ability to assume the form of a giant (at 2nd level), a monstrous humanoid (at 3rd level), a fey (at 4th level), a vermin (at 5th level), an aberration (at 6th level), a plant (at 7th level), an ooze (at 8th level), an elemental (at 9th level), and a dragon (at 10th level). The size limit of the shapes she can assume also increases as she gains levels. At 2nd level, she can assume the form of a Large creature; at 4th level, a Tiny creature; at 6th level, a Huge creature; at 8th level, a Diminutive creature; and at 10th level, a Gargantuan creature. A master of many forms also gains one additional daily use of her wild shape ability per class level gained. The master of many forms' class levels stack with other class levels that grant wild shape for the purpose of determining the maximum Hit Dice of a form.",
+        "level": 1,
+        "seedName": "Improved Wild Shape (Master of Many Forms)",
+        "stackable": true
+      },
+      "Improved Wild Shape (Aberration; Huge)": {
+        "description": "",
+        "level": 6,
+        "seedName": "Improved Wild Shape (Aberration; Huge) (Master of Many Forms)"
+      },
+      "Improved Wild Shape (Dragon; Gargantuan)": {
+        "description": "",
+        "level": 10,
+        "seedName": "Improved Wild Shape (Dragon; Gargantuan) (Master of Many Forms)"
+      },
+      "Improved Wild Shape (Fey; Tiny)": {
+        "description": "",
+        "level": 4,
+        "seedName": "Improved Wild Shape (Fey; Tiny) (Master of Many Forms)"
+      },
+      "Improved Wild Shape (Giant; Large)": {
+        "description": "",
+        "level": 2,
+        "seedName": "Improved Wild Shape (Giant; Large) (Master of Many Forms)"
+      },
+      "Improved Wild Shape (Humanoid)": {
+        "description": "",
+        "level": 1,
+        "seedName": "Improved Wild Shape (Humanoid) (Master of Many Forms)"
+      },
+      "Improved Wild Shape (Monstrous Humanoid)": {
+        "description": "",
+        "level": 3,
+        "seedName": "Improved Wild Shape (Monstrous Humanoid) (Master of Many Forms)"
+      },
+      "Improved Wild Shape (Ooze; Diminutive)": {
+        "description": "",
+        "level": 8,
+        "seedName": "Improved Wild Shape (Ooze; Diminutive) (Master of Many Forms)"
+      },
+      "Improved Wild Shape (Vermin)": {
+        "description": "",
+        "level": 5,
+        "seedName": "Improved Wild Shape (Vermin) (Master of Many Forms)"
+      },
+      "Shifter's Speech": {
+        "description": "A master of many forms maintains her ability to speak normally (including verbal components of spells) regardless of the form she takes. Furthermore, she can communicate with other creatures of the same kind while in wild shape, as long as such creatures are normally capable of communicating with each other using natural methods.",
+        "level": 1,
+        "seedName": "Shifter's Speech (Master of Many Forms)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Masters of many forms gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Master of Many Forms)"
+      }
+    },
+    "occurrenceMap": {
+      "Evershifting Form": "Evershifting Form",
+      "Extraordinary Wild Shape": "Extraordinary Wild Shape",
+      "Fast Wild Shape": "Fast Wild Shape",
+      "Improved Wild Shape (Aberration; Huge)": "Improved Wild Shape (Aberration; Huge)",
+      "Improved Wild Shape (Dragon; Gargantuan)": "Improved Wild Shape",
+      "Improved Wild Shape (Elemental)": "Improved Wild Shape",
+      "Improved Wild Shape (Fey; Tiny)": "Improved Wild Shape (Fey; Tiny)",
+      "Improved Wild Shape (Giant; Large)": "Improved Wild Shape (Giant; Large)",
+      "Improved Wild Shape (Humanoid)": "Improved Wild Shape (Humanoid)",
+      "Improved Wild Shape (Monstrous Humanoid)": "Improved Wild Shape (Monstrous Humanoid)",
+      "Improved Wild Shape (Ooze; Diminutive)": "Improved Wild Shape",
+      "Improved Wild Shape (Plant)": "Improved Wild Shape",
+      "Improved Wild Shape (Vermin)": "Improved Wild Shape (Vermin)",
+      "Shifter's Speech": "Shifter's Speech"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Masters of many forms gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A master of many forms maintains her ability to speak normally (including verbal components of spells) regardless of the form she takes. Furthermore, she can communicate with other creatures of the same kind while in wild shape, as long as such creatures are normally capable of communicating with each other using natural methods.",
+        "name": "Shifter's Speech",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Humanoid)"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Giant; Large)"
+      },
+      {
+        "description": "Starting at 3rd level, a master of many forms can use her wild shape ability as a move action, rather than as a standard action.",
+        "name": "Fast Wild Shape",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Monstrous Humanoid)"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Fey; Tiny)"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Vermin)"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Aberration; Huge)"
+      },
+      {
+        "description": "Starting at 7th level, a master of many forms gains the extraordinary special qualities of any form she assumes with wild shape.",
+        "name": "Extraordinary Wild Shape",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A master of many forms knows how to use her wild shape ability to assume a wider range of forms. At 1st level, she can assume a humanoid form with wild shape. She later gains the ability to assume the form of a giant (at 2nd level), a monstrous humanoid (at 3rd level), a fey (at 4th level), a vermin (at 5th level), an aberration (at 6th level), a plant (at 7th level), an ooze (at 8th level), an elemental (at 9th level), and a dragon (at 10th level). The size limit of the shapes she can assume also increases as she gains levels. At 2nd level, she can assume the form of a Large creature; at 4th level, a Tiny creature; at 6th level, a Huge creature; at 8th level, a Diminutive creature; and at 10th level, a Gargantuan creature. A master of many forms also gains one additional daily use of her wild shape ability per class level gained. The master of many forms' class levels stack with other class levels that grant wild shape for the purpose of determining the maximum Hit Dice of a form.",
+        "name": "Improved Wild Shape",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Ooze; Diminutive)"
+      },
+      {
+        "description": "A 10th-level master of many forms has reached the pinnacle of her shapechanging abilities. She gains the shapechanger subtype and becomes immune to any transmutation effect unless she is willing to accept it. In addition, she no longer takes ability penalties for aging and is not subject to magical aging, though any aging penalties she already may have taken remain in place. Bonuses still accrue, and a master of many forms still dies of old age when her time is up.",
+        "name": "Evershifting Form"
+      },
+      {
+        "description": "",
+        "name": "Improved Wild Shape (Dragon; Gargantuan)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Disguise",
+      "Handle Animal",
+      "Hide",
+      "Jump",
+      "Knowledge (Nature)",
+      "Listen",
+      "Spot",
+      "Survival",
+      "Swim"
+    ],
+    "description": "A master of many forms has no shape that she calls her own. Instead, she occupies whatever body is most expedient for her at the time. While others base their identities largely on their external forms, a master of many forms actually comes closer to her true self through her transformations. Of necessity, her sense of self is based not on her outward form, but on her soul, which is truly the only constant about her. It is the inner strength of that soul that enables her to take on any shape and remain herself within. The path of the master of many forms is ideal for a spellcaster of any race who has experienced shapechanging and yearns for more of it. Such a character can be a great force for either good or ill in the world. An evil master of many forms in particular poses a terrible threat, for she can appear anywhere, in any body. The same opponents may face her again and again, in one shape after another, never realizing that they are actually facing a single enemy.",
+    "hitDie": "d8",
+    "name": "Master of Many Forms",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Alertness",
+          "Endurance"
+        ],
+        "special": [
+          "Wild shape class feature."
+        ]
+      },
+      "text": "Feats: Alertness, Endurance Special: Wild shape class feature."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Shifter's speech",
+          "improved wild shape (humanoid)"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Improved wild shape (giant; Large)"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Fast wild shape",
+          "improved wild shape (monstrous humanoid)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Improved wild shape (fey; Tiny)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Improved wild shape (vermin)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Improved wild shape (aberration; Huge)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Extraordinary wild shape",
+          "improved wild shape (plant)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Improved wild shape (ooze; Diminutive)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Improved wild shape (elemental)"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Evershifting form",
+          "improved wild shape (dragon; Gargantuan)"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

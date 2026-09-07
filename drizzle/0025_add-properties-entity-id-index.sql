@@ -1,0 +1,1 @@
+CREATE INDEX "properties_entity_id_idx" ON "customization"."properties" USING btree ("entity_id");

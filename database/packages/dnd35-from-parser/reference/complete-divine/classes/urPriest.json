@@ -1,0 +1,595 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T19:32:36.654Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/ur-priest/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Divine",
+    "featNameMap": {
+      "ironwill": "Iron Will",
+      "spellfocusevil": "Spell Focus (evil)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          2
+        ],
+        "name": "Rebuke Undead"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Divine Spell Resistance 15"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Siphon Spell Power"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Divine Spell Resistance 20"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Steal Spell-Like Ability"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.bluff.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.ironwill.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.spellfocusevil.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "1",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "saves.fortitude.base",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "saves.will.base",
+        "value": "3",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        4,
+        2
+      ],
+      [
+        5,
+        3,
+        0
+      ],
+      [
+        5,
+        3,
+        1,
+        0
+      ],
+      [
+        6,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        4,
+        4,
+        3,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        5,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1,
+        0
+      ],
+      [
+        6,
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Ur-priest Class Feature",
+    "features": {
+      "Divine Spell Resistance 15": {
+        "description": "Upon reaching 4th level, an ur-priest gains spell resistance 15 that functions exclusively against divine spells and the spell-like abilities of outsiders. This resistance improves to 20 at 8th level.",
+        "level": 4,
+        "seedName": "Divine Spell Resistance 15 (Ur-priest)"
+      },
+      "Divine Spell Resistance 20": {
+        "description": "",
+        "level": 8,
+        "seedName": "Divine Spell Resistance 20 (Ur-priest)"
+      },
+      "Rebuke Undead": {
+        "description": "Beginning at 2nd level, an ur-priest can rebuke undead in the same fashion as an evil cleric. His ur-priest class level serves as his effective cleric level when determining the result and damage of the rebuke attempt.",
+        "level": 2,
+        "seedName": "Rebuke Undead (Ur-priest)"
+      },
+      "Siphon Spell Power": {
+        "description": "Drawing on their talent for appropriating magical energy, ur-priests of 6th level or higher learn to recombine their spell slots in ways that baffle other casters. Once per day, the ur-priest may give up two or more lower-level spell slots to gain a single higher-level slot. The higher-level slot must be of a level the ur-priest is capable of casting. To determine the level of the resulting slot, add together the levels of the sacrificed slots and multiply by three-quarters, rounding down. For instance, surrendering a 3rd-level and a 5th-level slot yields a 6th-level slot (3 + 5 = 8; 8 x 3/4 = 6).",
+        "level": 6,
+        "seedName": "Siphon Spell Power (Ur-priest)"
+      },
+      "Spells per Day": {
+        "description": "An ur-priest acquires the capacity to cast divine spells. Casting a spell requires a minimum Wisdom score equal to 10 plus the spell's level; an ur-priest whose Wisdom is 10 or below cannot cast any of these spells. Bonus spells and save DCs are derived from Wisdom (DC equals 10 + spell level + Wisdom modifier). When the class grants 0 spells of a particular level, the ur-priest may still cast bonus spells for that level if his Wisdom is high enough. The ur-priest draws from the same spell list as the cleric. He has access to every spell on that list and prepares spells in the same manner a cleric would, with the exception that he seizes divine power rather than praying for it. Unlike a cleric, the ur-priest cannot spontaneously convert prepared spells into cure or inflict spells, has no domain spell slots, and receives no domain granted powers. Alignment-based spell restrictions do not apply to an ur-priest. To calculate caster level, combine the character's ur-priest levels with half of his levels in any other spellcasting classes (levels from the cleric class held by a former cleric are excluded from this calculation).",
+        "level": 1,
+        "seedName": "Spells per Day (Ur-priest)"
+      },
+      "Steal Spell-like Ability": {
+        "description": "At 10th level, an ur-priest can turn the same power-siphoning techniques he uses against the gods toward individual creatures, stealing their spell-like abilities. Once per day, when a creature possessing spell-like abilities is within 50 feet, the ur-priest may select one of that creature's spell-like abilities and claim it for his own use. He may use the stolen ability a number of times equal to the creature's normal usage or three times per day, whichever is lower, employing the creature's caster level and save DCs. The stolen ability lasts for 24 hours. The original creature retains full use of its ability despite the theft. If the ur-priest targets an ability the creature does not actually possess, or attempts to steal a supernatural ability rather than a spell-like one, the attempt fails automatically.",
+        "level": 10,
+        "seedName": "Steal Spell-like Ability (Ur-priest)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "An ur-priest gains proficiency with all simple weapons but receives no proficiency with any type of armor or shields.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Ur-priest)"
+      }
+    },
+    "occurrenceMap": {
+      "Divine Spell Resistance 15": "Divine Spell Resistance 15",
+      "Divine Spell Resistance 20": "Divine Spell Resistance 20",
+      "Rebuke Undead": "Rebuke Undead",
+      "Siphon Spell Power": "Siphon Spell Power",
+      "Steal Spell-Like Ability": "Steal Spell-like Ability"
+    },
+    "overrides": {
+      "description": "A rare few individuals known as ur-priests have discovered how to channel divine magical energy directly, bypassing the need to worship or petition any deity.",
+      "features": {
+        "Divine Spell Resistance 15": {
+          "description": "Upon reaching 4th level, an ur-priest gains spell resistance 15 that functions exclusively against divine spells and the spell-like abilities of outsiders. This resistance improves to 20 at 8th level."
+        },
+        "Rebuke Undead": {
+          "description": "Beginning at 2nd level, an ur-priest can rebuke undead in the same fashion as an evil cleric. His ur-priest class level serves as his effective cleric level when determining the result and damage of the rebuke attempt."
+        },
+        "Siphon Spell Power": {
+          "description": "Drawing on their talent for appropriating magical energy, ur-priests of 6th level or higher learn to recombine their spell slots in ways that baffle other casters. Once per day, the ur-priest may give up two or more lower-level spell slots to gain a single higher-level slot. The higher-level slot must be of a level the ur-priest is capable of casting. To determine the level of the resulting slot, add together the levels of the sacrificed slots and multiply by three-quarters, rounding down. For instance, surrendering a 3rd-level and a 5th-level slot yields a 6th-level slot (3 + 5 = 8; 8 x 3/4 = 6)."
+        },
+        "Spells per Day": {
+          "description": "An ur-priest acquires the capacity to cast divine spells. Casting a spell requires a minimum Wisdom score equal to 10 plus the spell's level; an ur-priest whose Wisdom is 10 or below cannot cast any of these spells. Bonus spells and save DCs are derived from Wisdom (DC equals 10 + spell level + Wisdom modifier). When the class grants 0 spells of a particular level, the ur-priest may still cast bonus spells for that level if his Wisdom is high enough. The ur-priest draws from the same spell list as the cleric. He has access to every spell on that list and prepares spells in the same manner a cleric would, with the exception that he seizes divine power rather than praying for it. Unlike a cleric, the ur-priest cannot spontaneously convert prepared spells into cure or inflict spells, has no domain spell slots, and receives no domain granted powers. Alignment-based spell restrictions do not apply to an ur-priest. To calculate caster level, combine the character's ur-priest levels with half of his levels in any other spellcasting classes (levels from the cleric class held by a former cleric are excluded from this calculation)."
+        },
+        "Steal Spell-like Ability": {
+          "description": "At 10th level, an ur-priest can turn the same power-siphoning techniques he uses against the gods toward individual creatures, stealing their spell-like abilities. Once per day, when a creature possessing spell-like abilities is within 50 feet, the ur-priest may select one of that creature's spell-like abilities and claim it for his own use. He may use the stolen ability a number of times equal to the creature's normal usage or three times per day, whichever is lower, employing the creature's caster level and save DCs. The stolen ability lasts for 24 hours. The original creature retains full use of its ability despite the theft. If the ur-priest targets an ability the creature does not actually possess, or attempts to steal a supernatural ability rather than a spell-like one, the attempt fails automatically."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "An ur-priest gains proficiency with all simple weapons but receives no proficiency with any type of armor or shields."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "perDay": [
+        [
+          4,
+          2
+        ],
+        [
+          5,
+          3,
+          0
+        ],
+        [
+          5,
+          3,
+          1,
+          0
+        ],
+        [
+          6,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          4,
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          5,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1,
+          0
+        ],
+        [
+          6,
+          5,
+          5,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "slug": "ur-priestspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Ur-priests are proficient with simple weapons, but not with armor or shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "An ur-priest gains the ability to cast a number of divine spells. To cast a spell, an ur-priest must have a Wisdom score of at least 10 + the spell's level, so an ur-priest with a Wisdom of 10 or lower cannot cast these spells. Ur-priest bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + Wisdom modifier. When the table indicates that the ur-priest gets 0 spells per day of a given spell level, such as 0 2nd-level spells at 2nd level, the ur-priest gains only the bonus spells he would be entitled to based on his Wisdom score for that spell level. The ur-priest spell list is identical to the cleric spell list. An ur-priest has access to any spell on the list and prepares those spells as a cleric, except that he does not pray for spells, he just takes them. An ur-priest casts spells as a cleric does, except that unlike a cleric, he does not have the ability to spontaneously cast cure or inflict spells, nor does he have domain spells or associated domain granted powers. He does not have restrictions on spells with alignments. To determine the caster level of an ur-priest, add the character's ur-priest levels to one-half of his levels in other spellcasting classes. (Any levels gained in the cleric class by an ex-cleric don't count.)",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "Like an evil cleric, an ur-priest of 2nd level or higher can rebuke undead. He uses his ur-priest level as the cleric level for determining success and damage.",
+        "name": "Rebuke Undead"
+      },
+      {
+        "description": "At 4th level, an ur-priest gains spell resistance 15, but only against divine spells and the spell-like abilities of outsiders. At 8th level, the ur-priest's spell resistance increases to 20.",
+        "name": "Divine Spell Resistance 15",
+        "type": "(Su)"
+      },
+      {
+        "description": "Because they steal whatever power they can, ur-priests learn to manipulate their energy in ways that confound other casters. An ur-priest of 6th level or higher can temporarily sacrifice two (or more) lower-level spell slots and use those slots to prepare a higher-level spell. The higher-level spell must be of a level the ur-priest can cast. Only one exchange of this sort can be made each day. The levels of the lower-level slots are totaled, then reduced to three-quarters (round down) to determine the level of the extra higher-level spell slot. For example, an ur-priest who sacrifices a 3rd-level spell and a 5th-level spell can use that spell slot to prepare an additional 6th-level spell (3 + 5 = 8, and 8 Ã- 3/4 = 6).",
+        "name": "Siphon Spell Power",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Divine Spell Resistance 20"
+      },
+      {
+        "description": "The most powerful ur-priests can use the same techniques that siphon off the gods' spell power to steal the spell-like abilities of another creature. Once each day, when a creature with spell-like abilities is within 50 feet of a 10th-level ur-priest, the ur-priest can choose one of the spell-like abilities of the creature to steal for himself. The ur-priest can use the spell-like ability as often as the creature can, or three times per day, whichever is less. The ur-priest uses the ability as the creature does with regard to caster level and save DCs. This ability only lasts 24 hours. The creature with the spell-like ability does not lose the ability when the urpriest steals it. If an ur-priest tries to steal a spell-like ability that the creature doesn't have, or tries to steal an ability that is supernatural rather than spell-like, the attempt automatically fails. For example, if an ur-priest is near a noble salamander, he can steal fireball and use it three times that day or steal dispel magic and use it once that day. If he is near a pit fiend, he could steal teleport without error (self plus 50 pounds of objects only) and use it three times per day, because the pit fiend can do it at will. He could even steal the pit fiend's wish ability, but because a pit fiend can only use wish once per year, the ur-priest would be similarly limited. He could not steal that power again from any creature for one y",
+        "name": "Steal Spell-like Ability",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "A small number of ur-priests have learned to tap into divine power and use it without praying to or worshiping a god.",
+    "hasCantrips": true,
+    "hitDie": "d8",
+    "name": "Ur-priest",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any evil",
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Iron Will",
+          "Spell Focus (evil)"
+        ],
+        "saves": [
+          {
+            "base": 3,
+            "name": "fortitude"
+          },
+          {
+            "base": 3,
+            "name": "will"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 6
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 5
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 8
+          },
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 5
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "The character must have no ability to cast divine spells. If such spellcasting ability was previously possessed (as with an ex-cleric), that ability is forever forsaken. The character must be trained by another ur-priest.",
+          "no ability to cast divine spells",
+          "trained by another ur-priest"
+        ]
+      },
+      "text": "Alignment: Any evil Skills: Bluff 6 ranks, Knowledge (arcana) 5 ranks, Knowledge (religion) 8 ranks, Knowledge (the planes) 5 ranks, Spellcraft 8 ranks Feats: Iron Will, Spell Focus (evil) Base Save Bonus: Fort +3, Will +3.Special: The character must have no ability to cast divine spells. If such spellcasting ability was previously possessed (as with an ex-cleric), that ability is forever forsaken. The character must be trained by another ur-priest."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "4,2,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Rebuke undead"
+        ],
+        "spellsPerDay": "5,3,0,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "5,3,1,0,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Divine spell resistance 15"
+        ],
+        "spellsPerDay": "6,3,2,1,0,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "6,3,3,2,1,0,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Siphon spell power"
+        ],
+        "spellsPerDay": "6,3,3,3,2,1,0,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "6,4,3,3,3,2,1,0,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Divine spell resistance 20"
+        ],
+        "spellsPerDay": "6,4,4,3,3,3,2,1,0,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "6,5,4,4,4,4,3,2,1,0",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Steal spell-like ability"
+        ],
+        "spellsPerDay": "6,5,5,4,4,4,4,3,2,1",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

@@ -1,0 +1,593 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-20T23:13:37.638Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/rogue/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          10,
+          13,
+          16,
+          19
+        ],
+        "target": "aptitudes.roguespecialability.allowed"
+      }
+    ],
+    "bab": "medium",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Trapfinding"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9,
+          12,
+          15,
+          18
+        ],
+        "name": "Trap Sense"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Uncanny Dodge"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Improved Uncanny Dodge"
+      },
+      {
+        "levels": [
+          10,
+          13,
+          16,
+          19
+        ],
+        "name": "Special Ability"
+      }
+    ],
+    "hd": 6,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 8
+  },
+  "mapping": {
+    "classFeatureAptitude": "Rogue Class Feature",
+    "features": {
+      "Crippling Strike": {
+        "aptitude": "Rogue Special Ability",
+        "description": "A rogue who possesses this ability strikes with such accuracy during sneak attacks that her blows debilitate the target. Any opponent who takes damage from one of her sneak attacks also suffers 2 points of Strength damage. Ability score points lost this way recover naturally at a rate of 1 point per day per affected ability.",
+        "level": 10,
+        "selectable": true
+      },
+      "Defensive Roll": {
+        "aptitude": "Rogue Special Ability",
+        "description": "The rogue learns to absorb the impact of a potentially fatal strike. Once per day, when a weapon or physical blow (not a spell or special ability) in combat would reduce her to 0 or fewer hit points, she may attempt to roll with the impact. She makes a Reflex saving throw with a DC equal to the damage dealt. On a success, she suffers only half the damage; on a failure, she takes the full amount. She must be aware of the incoming attack and able to respond - if her Dexterity bonus to AC is denied, she cannot use this ability. Because this situation would not ordinarily permit a Reflex save for half damage, her evasion ability has no effect on the defensive roll.",
+        "level": 10,
+        "selectable": true
+      },
+      "Evasion": {
+        "description": "Beginning at 2nd level, a rogue gains the agility to completely avoid certain magical and extraordinary attacks. When she succeeds on a Reflex saving throw against an effect that would normally deal half damage on a successful save (such as a dragon's breath or an explosion spell), she takes no damage whatsoever. This ability only functions while the rogue wears light armor or no armor at all. A rogue who is helpless (for example, unconscious or paralyzed) cannot benefit from this ability.",
+        "level": 2,
+        "seedName": "Evasion (Rogue)"
+      },
+      "Feat": {
+        "aptitude": "Rogue Special Ability",
+        "description": "A rogue may choose to gain a bonus feat instead of selecting a special ability.",
+        "level": 10,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.general.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Improved Evasion": {
+        "aptitude": "Rogue Special Ability",
+        "description": "This functions identically to evasion, with the additional benefit that on a failed Reflex saving throw against effects like dragon breath or explosion spells, the rogue takes only half damage rather than full damage. A helpless rogue (such as one who is unconscious or paralyzed) gains no benefit from improved evasion.",
+        "level": 10,
+        "selectable": true
+      },
+      "Improved Uncanny Dodge": {
+        "description": "At 8th level or higher, a rogue can no longer be flanked. She responds to enemies positioned on opposite sides of her just as readily as to a single opponent. This means other rogues cannot use flanking to sneak attack her, unless the attacking rogue has at least four more rogue levels than she does. If the character previously gained uncanny dodge through a different class, she automatically receives improved uncanny dodge instead, and levels from all classes that provide uncanny dodge are combined when determining the minimum rogue level needed to flank her.",
+        "level": 8,
+        "seedName": "Improved Uncanny Dodge (Rogue)"
+      },
+      "Opportunist": {
+        "aptitude": "Rogue Special Ability",
+        "description": "Once each round, the rogue may take an attack of opportunity against a foe who has just been hit for damage in melee by another character. This uses up the rogue's attack of opportunity for the round. Even if the rogue has the Combat Reflexes feat, she can only use this ability once per round.",
+        "level": 10,
+        "selectable": true
+      },
+      "Skill Mastery": {
+        "aptitude": "Rogue Special Ability",
+        "description": "The rogue attains such proficiency with certain skills that she can perform them reliably under any circumstances. When she gains this ability, she chooses a number of skills equal to 3 + her Intelligence modifier. For those chosen skills, she may take 10 on skill checks even when stress or distractions would normally make that impossible. This special ability can be selected multiple times, with new skills chosen each time.",
+        "level": 10,
+        "selectable": true
+      },
+      "Slippery Mind": {
+        "aptitude": "Rogue Special Ability",
+        "description": "The rogue develops a mental resilience that helps her escape magical compulsions. If she is subjected to an enchantment spell or effect and fails her saving throw, she may attempt the save again 1 round later at the same DC. She receives only this single additional attempt.",
+        "level": 10,
+        "selectable": true
+      },
+      "Sneak Attack": {
+        "description": "When a rogue catches a foe who cannot effectively defend against her strike, she can target a vulnerable point to inflict additional damage. Specifically, the rogue deals extra damage whenever her target would be denied its Dexterity bonus to AC (regardless of whether the target actually possesses such a bonus) or whenever she is flanking the target. This bonus damage starts at 1d6 at 1st level and increases by an additional 1d6 for every two rogue levels gained after that. If a sneak attack results in a critical hit, the extra damage dice are not multiplied. For ranged attacks to qualify as sneak attacks, the target must be within 30 feet; beyond that distance, the rogue cannot aim with sufficient precision. Using a sap (blackjack) or an unarmed strike, a rogue may choose to deal nonlethal damage with a sneak attack instead of lethal damage. She cannot, however, use a lethal weapon to deal nonlethal sneak attack damage, even by accepting the normal -4 penalty, since executing a sneak attack requires her to use her weapon to its fullest capability. Sneak attacks are only effective against living creatures that have identifiable anatomies - undead, constructs, oozes, plants, and incorporeal creatures have no vital areas to target. Creatures immune to critical hits are likewise immune to sneak attacks. The rogue needs clear enough sight of the target to identify a weak point and must be able to physically reach it. She cannot perform a sneak attack against a creature that has concealment or against body parts of a creature whose vital organs are out of reach.",
+        "level": 1,
+        "seedName": "Sneak Attack (Rogue)",
+        "stackable": true
+      },
+      "Special Ability": {
+        "description": "Upon reaching 10th level, and again every three levels afterward (13th, 16th, and 19th), a rogue selects one special ability from the available options. Crippling Strike: A rogue who possesses this ability strikes with such accuracy during sneak attacks that her blows debilitate the target. Any opponent who takes damage from one of her sneak attacks also suffers 2 points of Strength damage. Ability score points lost this way recover naturally at a rate of 1 point per day per affected ability. Defensive Roll: The rogue learns to absorb the impact of a potentially fatal strike. Once per day, when a weapon or physical blow (not a spell or special ability) in combat would reduce her to 0 or fewer hit points, she may attempt to roll with the impact. She makes a Reflex saving throw with a DC equal to the damage dealt. On a success, she suffers only half the damage; on a failure, she takes the full amount. She must be aware of the incoming attack and able to respond - if her Dexterity bonus to AC is denied, she cannot use this ability. Because this situation would not ordinarily permit a Reflex save for half damage, her evasion ability has no effect on the defensive roll. Improved Evasion: This functions identically to evasion, with the additional benefit that on a failed Reflex saving throw against effects like dragon breath or explosion spells, the rogue takes only half damage rather than full damage. A helpless rogue (such as one who is unconscious or paralyzed) gains no benefit from improved evasion. Opportunist: Once each round, the rogue may take an attack of opportunity against a foe who has just been hit for damage in melee by another character. This uses up the rogue's attack of opportunity for the round. Even if the rogue has the Combat Reflexes feat, she can only use this ability once per round. Skill Mastery: The rogue attains such proficiency with certain skills that she can perform them reliably under any circumstances. When she gains this ability, she chooses a number of skills equal to 3 + her Intelligence modifier. For those chosen skills, she may take 10 on skill checks even when stress or distractions would normally make that impossible. This special ability can be selected multiple times, with new skills chosen each time. Slippery Mind: The rogue develops a mental resilience that helps her escape magical compulsions. If she is subjected to an enchantment spell or effect and fails her saving throw, she may attempt the save again 1 round later at the same DC. She receives only this single additional attempt. Feat: A rogue may choose to gain a bonus feat instead of selecting a special ability.",
+        "level": 10,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.roguespecialability.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Special Ability (Rogue)",
+        "stackable": true
+      },
+      "Trap Sense": {
+        "description": "Starting at 3rd level, a rogue develops a heightened awareness of danger posed by traps. She receives a +1 bonus on Reflex saves to avoid traps and a +1 dodge bonus to AC against trap attacks. These bonuses increase to +2 at 6th level, +3 at 9th level, +4 at 12th level, +5 at 15th level, and +6 at 18th level. Trap sense bonuses from different classes stack with one another.",
+        "level": 3,
+        "seedName": "Trap Sense (Rogue)",
+        "stackable": true
+      },
+      "Trapfinding": {
+        "description": "Only rogues are able to use the Search skill to detect traps with a Difficulty Class above 20. Locating a nonmagical trap requires a DC of at least 20, potentially higher for particularly well-concealed ones. Detecting a magical trap has a DC equal to 25 + the spell level used in its creation. Likewise, only rogues can employ the Disable Device skill to disarm magical traps. A magical trap typically has a Disable Device DC of 25 + the spell level that created it. If a rogue exceeds a trap's DC by 10 or more on her Disable Device check, she can analyze the trap's mechanism and lead her companions past it safely without actually disarming it.",
+        "level": 1,
+        "seedName": "Trapfinding (Rogue)"
+      },
+      "Uncanny Dodge": {
+        "description": "From 4th level onward, a rogue can instinctively react to threats before she would normally perceive them. She keeps her Dexterity bonus to AC (if she has one) even when caught flat-footed or attacked by an unseen assailant. She does, however, lose this bonus if she is rendered immobile. If the rogue has already gained uncanny dodge from another class (such as having at least two barbarian levels), she instead automatically receives improved uncanny dodge.",
+        "level": 4,
+        "seedName": "Uncanny Dodge (Rogue)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Rogues have proficiency with all simple weapons, as well as the hand crossbow, rapier, sap, shortbow, and short sword. They are proficient with light armor but not with any type of shield.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencyhandcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortsword.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyrapier.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencysap.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Rogue)"
+      }
+    },
+    "occurrenceMap": {
+      "Evasion": "Evasion",
+      "Improved Uncanny Dodge": "Improved Uncanny Dodge",
+      "Sneak Attack": "Sneak Attack",
+      "Special Ability": "Special Ability",
+      "Trap Sense": "Trap Sense",
+      "Trapfinding": "Trapfinding",
+      "Uncanny Dodge": "Uncanny Dodge"
+    },
+    "overrides": {
+      "description": "No two rogues are exactly alike. Some operate as stealthy burglars, while others rely on charm and deception. Still others serve as scouts, spies, diplomats, or enforcers. What unites them is their exceptional versatility, quick thinking, and natural resourcefulness. Generally speaking, rogues excel at obtaining things others would rather keep hidden: access to secured vaults, safe navigation through lethal traps, confidential military plans, a sentry's confidence, or the coins in a stranger's pouch. Rogues take up adventuring for the same reasons they pursue most endeavors: personal gain. Some seek treasure; others desire the growth that comes from experience. A few chase renown, while others prefer notoriety. Many simply relish a good challenge. Working out how to circumvent a trap or bypass a warning system is deeply satisfying for a number of rogues. They are exceptionally skilled individuals who can focus their training across a wide variety of disciplines. Although they cannot match many other classes in direct combat, rogues know precisely where to strike for maximum effect, and their sneak attacks can inflict devastating damage. Rogues possess an almost supernatural instinct for sensing and avoiding danger. As they advance in skill, veteran rogues develop near-mystical abilities rooted in their mastery of stealth, evasion, and precision strikes. Furthermore, while rogues lack the ability to cast spells innately, they can convincingly improvise well enough to activate scrolls, wands, and nearly any other magical item.",
+      "features": {
+        "Crippling Strike": {
+          "description": "A rogue who possesses this ability strikes with such accuracy during sneak attacks that her blows debilitate the target. Any opponent who takes damage from one of her sneak attacks also suffers 2 points of Strength damage. Ability score points lost this way recover naturally at a rate of 1 point per day per affected ability."
+        },
+        "Defensive Roll": {
+          "description": "The rogue learns to absorb the impact of a potentially fatal strike. Once per day, when a weapon or physical blow (not a spell or special ability) in combat would reduce her to 0 or fewer hit points, she may attempt to roll with the impact. She makes a Reflex saving throw with a DC equal to the damage dealt. On a success, she suffers only half the damage; on a failure, she takes the full amount. She must be aware of the incoming attack and able to respond - if her Dexterity bonus to AC is denied, she cannot use this ability. Because this situation would not ordinarily permit a Reflex save for half damage, her evasion ability has no effect on the defensive roll."
+        },
+        "Evasion": {
+          "description": "Beginning at 2nd level, a rogue gains the agility to completely avoid certain magical and extraordinary attacks. When she succeeds on a Reflex saving throw against an effect that would normally deal half damage on a successful save (such as a dragon's breath or an explosion spell), she takes no damage whatsoever. This ability only functions while the rogue wears light armor or no armor at all. A rogue who is helpless (for example, unconscious or paralyzed) cannot benefit from this ability."
+        },
+        "Feat": {
+          "description": "A rogue may choose to gain a bonus feat instead of selecting a special ability.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "target": "aptitudes.general.allowed",
+              "value": "1",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Improved Evasion": {
+          "description": "This functions identically to evasion, with the additional benefit that on a failed Reflex saving throw against effects like dragon breath or explosion spells, the rogue takes only half damage rather than full damage. A helpless rogue (such as one who is unconscious or paralyzed) gains no benefit from improved evasion."
+        },
+        "Improved Uncanny Dodge": {
+          "description": "At 8th level or higher, a rogue can no longer be flanked. She responds to enemies positioned on opposite sides of her just as readily as to a single opponent. This means other rogues cannot use flanking to sneak attack her, unless the attacking rogue has at least four more rogue levels than she does. If the character previously gained uncanny dodge through a different class, she automatically receives improved uncanny dodge instead, and levels from all classes that provide uncanny dodge are combined when determining the minimum rogue level needed to flank her."
+        },
+        "Opportunist": {
+          "description": "Once each round, the rogue may take an attack of opportunity against a foe who has just been hit for damage in melee by another character. This uses up the rogue's attack of opportunity for the round. Even if the rogue has the Combat Reflexes feat, she can only use this ability once per round."
+        },
+        "Skill Mastery": {
+          "description": "The rogue attains such proficiency with certain skills that she can perform them reliably under any circumstances. When she gains this ability, she chooses a number of skills equal to 3 + her Intelligence modifier. For those chosen skills, she may take 10 on skill checks even when stress or distractions would normally make that impossible. This special ability can be selected multiple times, with new skills chosen each time."
+        },
+        "Slippery Mind": {
+          "description": "The rogue develops a mental resilience that helps her escape magical compulsions. If she is subjected to an enchantment spell or effect and fails her saving throw, she may attempt the save again 1 round later at the same DC. She receives only this single additional attempt."
+        },
+        "Sneak Attack": {
+          "description": "When a rogue catches a foe who cannot effectively defend against her strike, she can target a vulnerable point to inflict additional damage. Specifically, the rogue deals extra damage whenever her target would be denied its Dexterity bonus to AC (regardless of whether the target actually possesses such a bonus) or whenever she is flanking the target. This bonus damage starts at 1d6 at 1st level and increases by an additional 1d6 for every two rogue levels gained after that. If a sneak attack results in a critical hit, the extra damage dice are not multiplied. For ranged attacks to qualify as sneak attacks, the target must be within 30 feet; beyond that distance, the rogue cannot aim with sufficient precision. Using a sap (blackjack) or an unarmed strike, a rogue may choose to deal nonlethal damage with a sneak attack instead of lethal damage. She cannot, however, use a lethal weapon to deal nonlethal sneak attack damage, even by accepting the normal -4 penalty, since executing a sneak attack requires her to use her weapon to its fullest capability. Sneak attacks are only effective against living creatures that have identifiable anatomies - undead, constructs, oozes, plants, and incorporeal creatures have no vital areas to target. Creatures immune to critical hits are likewise immune to sneak attacks. The rogue needs clear enough sight of the target to identify a weak point and must be able to physically reach it. She cannot perform a sneak attack against a creature that has concealment or against body parts of a creature whose vital organs are out of reach."
+        },
+        "Special Ability": {
+          "description": "Upon reaching 10th level, and again every three levels afterward (13th, 16th, and 19th), a rogue selects one special ability from the available options. Crippling Strike: A rogue who possesses this ability strikes with such accuracy during sneak attacks that her blows debilitate the target. Any opponent who takes damage from one of her sneak attacks also suffers 2 points of Strength damage. Ability score points lost this way recover naturally at a rate of 1 point per day per affected ability. Defensive Roll: The rogue learns to absorb the impact of a potentially fatal strike. Once per day, when a weapon or physical blow (not a spell or special ability) in combat would reduce her to 0 or fewer hit points, she may attempt to roll with the impact. She makes a Reflex saving throw with a DC equal to the damage dealt. On a success, she suffers only half the damage; on a failure, she takes the full amount. She must be aware of the incoming attack and able to respond - if her Dexterity bonus to AC is denied, she cannot use this ability. Because this situation would not ordinarily permit a Reflex save for half damage, her evasion ability has no effect on the defensive roll. Improved Evasion: This functions identically to evasion, with the additional benefit that on a failed Reflex saving throw against effects like dragon breath or explosion spells, the rogue takes only half damage rather than full damage. A helpless rogue (such as one who is unconscious or paralyzed) gains no benefit from improved evasion. Opportunist: Once each round, the rogue may take an attack of opportunity against a foe who has just been hit for damage in melee by another character. This uses up the rogue's attack of opportunity for the round. Even if the rogue has the Combat Reflexes feat, she can only use this ability once per round. Skill Mastery: The rogue attains such proficiency with certain skills that she can perform them reliably under any circumstances. When she gains this ability, she chooses a number of skills equal to 3 + her Intelligence modifier. For those chosen skills, she may take 10 on skill checks even when stress or distractions would normally make that impossible. This special ability can be selected multiple times, with new skills chosen each time. Slippery Mind: The rogue develops a mental resilience that helps her escape magical compulsions. If she is subjected to an enchantment spell or effect and fails her saving throw, she may attempt the save again 1 round later at the same DC. She receives only this single additional attempt. Feat: A rogue may choose to gain a bonus feat instead of selecting a special ability."
+        },
+        "Trap Sense": {
+          "description": "Starting at 3rd level, a rogue develops a heightened awareness of danger posed by traps. She receives a +1 bonus on Reflex saves to avoid traps and a +1 dodge bonus to AC against trap attacks. These bonuses increase to +2 at 6th level, +3 at 9th level, +4 at 12th level, +5 at 15th level, and +6 at 18th level. Trap sense bonuses from different classes stack with one another."
+        },
+        "Trapfinding": {
+          "description": "Only rogues are able to use the Search skill to detect traps with a Difficulty Class above 20. Locating a nonmagical trap requires a DC of at least 20, potentially higher for particularly well-concealed ones. Detecting a magical trap has a DC equal to 25 + the spell level used in its creation. Likewise, only rogues can employ the Disable Device skill to disarm magical traps. A magical trap typically has a Disable Device DC of 25 + the spell level that created it. If a rogue exceeds a trap's DC by 10 or more on her Disable Device check, she can analyze the trap's mechanism and lead her companions past it safely without actually disarming it."
+        },
+        "Uncanny Dodge": {
+          "description": "From 4th level onward, a rogue can instinctively react to threats before she would normally perceive them. She keeps her Dexterity bonus to AC (if she has one) even when caught flat-footed or attacked by an unseen assailant. She does, however, lose this bonus if she is rendered immobile. If the rogue has already gained uncanny dodge from another class (such as having at least two barbarian levels), she instead automatically receives improved uncanny dodge."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Rogues have proficiency with all simple weapons, as well as the hand crossbow, rapier, sap, shortbow, and short sword. They are proficient with light armor but not with any type of shield."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Rogues are proficient with all simple weapons, plus the hand crossbow, rapier, sap, shortbow, and short sword. Rogues are proficient with light armor, but not with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "If a rogue can catch an opponent when he is unable to defend himself effectively from her attack, she can strike a vital spot for extra damage. Basically, the rogue's attack deals extra damage any time her target would be denied a Dexterity bonus to AC (whether the target actually has a Dexterity bonus or not), or when the rogue flanks her target. This extra damage is 1d6 at 1st level, and it increases by 1d6 every two rogue levels thereafter. Should the rogue score a critical hit with a sneak attack, this extra damage is not multiplied. Ranged attacks can count as sneak attacks only if the target is within 30 feet. A rogue can't strike with deadly accuracy from beyond that range. With a sap (blackjack) or an unarmed strike, a rogue can make a sneak attack that deals nonlethal damage instead of lethal damage. She cannot use a weapon that deals lethal damage to deal nonlethal damage in a sneak attack, not even with the usual -4 penalty, because she must make optimal use of her weapon in order to execute a sneak attack. A rogue can sneak attack only living creatures with discernible anatomies-undead, constructs, oozes, plants, and incorporeal creatures lack vital areas to attack. Any creature that is immune to critical hits is not vulnerable to sneak attacks. The rogue must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. A rogue cannot sneak attack while striking a creature with concealment or striking the limbs of a creature whose vitals are beyond reach.",
+        "name": "Sneak Attack"
+      },
+      {
+        "description": "Rogues (and only rogues) can use the Search skill to locate traps when the task has a Difficulty Class higher than 20. Finding a nonmagical trap has a DC of at least 20, or higher if it is well hidden. Finding a magic trap has a DC of 25 + the level of the spell used to create it. Rogues (and only rogues) can use the Disable Device skill to disarm magic traps. A magic trap generally has a DC of 25 + the level of the spell used to create it. A rogue who beats a trap's DC by 10 or more with a Disable Device check can study a trap, figure out how it works, and bypass it (with her party) without disarming it.",
+        "name": "Trapfinding"
+      },
+      {
+        "description": "At 2nd level and higher, a rogue can avoid even magical and unusual attacks with great agility. If she makes a successful Reflex saving throw against an attack that normally deals half damage on a successful save (such as a red dragon's fiery breath or a fireball), she instead takes no damage. Evasion can be used only if the rogue is wearing light armor or no armor. A helpless rogue (such as one who is unconscious or paralyzed) does not gain the benefit of evasion.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a rogue gains an intuitive sense that alerts her to danger from traps, giving her a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to AC against attacks made by traps. These bonuses rise to +2 when the rogue reaches 6th level, to +3 when she reaches 9th level, to +4 when she reaches 12th level, to +5 at 15th, and to +6 at 18th level. Trap sense bonuses gained from multiple classes stack.",
+        "name": "Trap Sense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 4th level, a rogue can react to danger before her senses would normally allow her to do so. She retains her Dexterity bonus to AC (if any) even if she is caught flat-footed or struck by an invisible attacker. However, she still loses her Dexterity bonus to AC if immobilized. If a rogue already has uncanny dodge from a different class (a rogue with at least two levels of barbarian, for example), she automatically gains improved uncanny dodge instead.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A rogue of 8th level or higher can no longer be flanked; she can react to opponents on opposite sides of her as easily as she can react to a single attacker. This defense denies another rogue the ability to sneak attack the character by flanking her, unless the attacker has at least four more rogue levels than the target does. If a character already has uncanny dodge from a second class, the character automatically gains improved uncanny dodge instead, and the levels from the classes that grant uncanny dodge stack to determine the minimum rogue level required to flank the character.",
+        "name": "Improved Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "On attaining 10th level, and at every three levels thereafter (13th, 16th, and 19th), a rogue gains a special ability of her choice from among the following options. Crippling Strike (Ex): A rogue with this ability can sneak attack opponents with such precision that her blows weaken and hamper them. An opponent damaged by one of her sneak attacks also takes 2 points of Strength damage. Ability points lost to damage return on their own at the rate of 1 point per day for each damaged ability. Defensive Roll (Ex): The rogue can roll with a potentially lethal blow to take less damage from it than she otherwise would. Once per day, when she would be reduced to 0 or fewer hit points by damage in combat (from a weapon or other blow, not a spell or special ability), the rogue can attempt to roll with the damage. To use this ability, the rogue must attempt a Reflex saving throw (DC = damage dealt). If the save succeeds, she takes only half damage from the blow; if it fails, she takes full damage. She must be aware of the attack and able to react to it in order to execute her defensive roll- if she is denied her Dexterity bonus to AC, she can't use this ability. Since this effect would not normally allow a character to make a Reflex save for half damage, the rogue's evasion ability does not apply to the defensive roll. Improved Evasion (Ex): This ability works like evasion, except that while the rogue still takes no damage on a successful Reflex saving throw against attacks such as a dragon's breath weapon or a fireball, henceforth she henceforth takes only half damage on a failed save. A helpless rogue (such as one who is unconscious or paralyzed) does not gain the benefit of improved evasion. Opportunist (Ex): Once per round, the rogue can make an attack of opportunity against an opponent who has just been struck for damage in melee by another character. This attack counts as the rogue's attack of opportunity for that round. Even a rogue with the Combat Reflexes feat can't use the opportunist ability more than once per round. Skill Mastery: The rogue becomes so certain in the use of certain skills that she can use them reliably even under adverse conditions. Upon gaining this ability, she selects a number of skills equal to 3 + her Intelligence modifier. When making a skill check with one of these skills, she may take 10 even if stress and distractions would normally prevent her from doing so. A rogue may gain this special ability multiple times, selecting additional skills for it to apply to each time. Slippery Mind (Ex): This ability represents the rogue's ability to wriggle free from magical effects that would otherwise control or compel her. If a rogue with slippery mind is affected by an enchantment spell or effect and fails her saving throw, she can attempt it again 1 round later at the same DC. She gets only this one extra chance to succeed on her saving throw. Feat: A rogue may gain a bonus feat in place of a special ability.",
+        "name": "Special Ability"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Forgery",
+      "Gather Information",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Local)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Perform",
+      "Profession",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "",
+    "hitDie": "d6",
+    "name": "Rogue",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Sneak attack +1d6",
+          "trapfinding"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Evasion"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +2d6",
+          "trap sense +1"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Uncanny dodge"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Sneak attack +3d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Trap sense +2"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +4d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Improved uncanny dodge"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Sneak attack +5d6",
+          "trap sense +3"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Special ability"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 8,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 7,
+        "special": [
+          "Sneak attack +6d6"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 8,
+        "special": [
+          "Trap sense +4"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 8,
+        "special": [
+          "Sneak attack +7d6",
+          "special ability"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 10,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 9,
+        "special": [],
+        "willSave": 4
+      },
+      {
+        "bab": 11,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 9,
+        "special": [
+          "Sneak attack +8d6",
+          "trap sense +5"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 10,
+        "special": [
+          "Special ability"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 10,
+        "special": [
+          "Sneak attack +9d6"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 13,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 11,
+        "special": [
+          "Trap sense +6"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 14,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 11,
+        "special": [
+          "Sneak attack +10d6",
+          "special ability"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 15,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 12,
+        "special": [],
+        "willSave": 6
+      }
+    ],
+    "skillPointsPerLevel": "8 + Int modifier"
+  }
+}

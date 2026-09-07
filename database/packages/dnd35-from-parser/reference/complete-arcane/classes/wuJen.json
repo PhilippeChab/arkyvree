@@ -1,0 +1,742 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T19:42:17.112Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/wu-jen/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          3,
+          9,
+          12,
+          15,
+          18
+        ],
+        "target": "aptitudes.wujenspellsecret.allowed"
+      }
+    ],
+    "bab": "poor",
+    "bonusFeatLists": [
+      {
+        "aptitude": "Wu Jen Spell Secret (3rd)",
+        "feats": [
+          "one spell known to her that then becomes permanently modified as though affected by one of the following metamagic feats: Enlarge Spell",
+          "Extend Spell",
+          "Still Spell",
+          "Silent Spell"
+        ],
+        "levels": [
+          3
+        ]
+      }
+    ],
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Watchful Spirit"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          3,
+          9,
+          12,
+          15,
+          18
+        ],
+        "name": "Spell Secret"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Elemental Mastery"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 4,
+    "levels": 20,
+    "requirements": [],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        2,
+        1
+      ],
+      [
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Intelligence",
+    "classFeatureAptitude": "Wu Jen Class Feature",
+    "features": {
+      "Bonus Feat": {
+        "description": "A wu jen begins play with a bonus metamagic feat.",
+        "level": 1,
+        "seedName": "Bonus Feat (Wu Jen)"
+      },
+      "Elemental Mastery": {
+        "description": "Many of the wu jen's spells are divided into five elemental groups: earth, fire, metal, water, and wood. At 6th level, instead of receiving a spell secret, a wu jen becomes a master of one of these five elements (her choice). Thereafter, whenever a wu jen casts a spell of that element, her effective caster level (for purposes of deter- mining level-dependent spell variables and for caster level checks) is increased by two. In addition, the wu jen herself gets a +2 competence bonus on saving throws against spells of that element. Certain spells on the wu jen spell list are designated \"All\"; this means they belong to all elemental groups, and a wu jen who is a master of any element gains the mastery bonuses with respect to those spells.",
+        "level": 6,
+        "seedName": "Elemental Mastery (Wu Jen)"
+      },
+      "Spell Secret": {
+        "description": "At 3rd level, and every three levels thereafter, a wu jen can choose one spell known to her that then becomes permanently modified as though affected by one of the following metamagic feats: Enlarge Spell, Extend Spell, Still Spell, or Silent Spell. The spell's level does not change, and once the choice of spell and modification are chosen, they cannot be changed. As the wu jen goes up in level, she can choose the same spell to be modified in different ways with multiple spell secrets. She does not need to know the feat she applies to the spell.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.wujenspellsecret.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Spell Secret (Wu Jen)"
+      },
+      "Spellbooks": {
+        "description": "A wu jen must study her spellbooks each day to prepare her spells, much like a wizard. She cannot prepare any spell not recorded in her spellbook (except for read magic, which all wu jen can prepare from memory). A wu jen begins play with a spellbook containing all 0- level wu jen spells plus three 1st-level spells of your choice. For each point of Intelligence bonus the wu jen has, the spellbook holds one additional 1st-level spell of your choice. At each new wu jen level, she gains two new spells of any spell level or levels that she can cast (based on her new wu jen level). For example, when Hide-yori achieves 5th level, she can cast 3rd-level spells. At this point, she can add two 3rd-level spells to her spellbook, or one 2nd-level spell and one 3rd-level spell, or any combination of two spells between 1st and 3rd level. At any time, a wu jen can also add spells found in other wu jen's spellbooks to her own, much like a wizard.",
+        "level": 1,
+        "seedName": "Spellbooks (Wu Jen)"
+      },
+      "Spells": {
+        "description": "A wu jen casts arcane spells, which are drawn from the wu jen spell list. She is limited to a certain number of spells of each spell level per day, according to her class level. A wu jen must choose and prepare spells ahead of time like a wizard. To learn, prepare, or cast a spell, a wu jen must have an Intelligence score of at least 10 + the spell's level. A wu jen's bonus spells are based on Intelligence. The Difficulty Class for saving throws against wu jen spells is 10 + the spell's level + the wu jen's Intelligence modifier. A wu jen's base daily spell allotment is given in the class table. In addition, she receives bonus spells per day if she has a high Intelligence score.",
+        "level": 1,
+        "seedName": "Spells (Wu Jen)"
+      },
+      "Watchful Spirit": {
+        "description": "Once per day, a wu jen can reroll an initiative roll she has just made before she knows her place in the initiative order. She takes the better of the two rolls.",
+        "level": 1,
+        "seedName": "Watchful Spirit (Wu Jen)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Wu jen are proficient with all simple weapons. They are not proficient with any type of armor or shield. Armor of any type interferes with a wu jen's arcane gestures, which can cause her spells with somatic components to fail.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Wu Jen)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Feat": "Bonus Feat",
+      "Elemental Mastery": "Elemental Mastery",
+      "Spell Secret": "Spell Secret",
+      "Watchful Spirit": "Watchful Spirit"
+    },
+    "spells": {
+      "knowAll": true,
+      "perDay": [
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2,
+          1
+        ],
+        [
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "slug": "wujenspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Intelligence",
+    "classFeatures": [
+      {
+        "description": "Wu jen are proficient with all simple weapons. They are not proficient with any type of armor or shield. Armor of any type interferes with a wu jen's arcane gestures, which can cause her spells with somatic components to fail.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A wu jen casts arcane spells, which are drawn from the wu jen spell list. She is limited to a certain number of spells of each spell level per day, according to her class level. A wu jen must choose and prepare spells ahead of time like a wizard. To learn, prepare, or cast a spell, a wu jen must have an Intelligence score of at least 10 + the spell's level. A wu jen's bonus spells are based on Intelligence. The Difficulty Class for saving throws against wu jen spells is 10 + the spell's level + the wu jen's Intelligence modifier. A wu jen's base daily spell allotment is given in the class table. In addition, she receives bonus spells per day if she has a high Intelligence score.",
+        "name": "Spells"
+      },
+      {
+        "description": "A wu jen must study her spellbooks each day to prepare her spells, much like a wizard. She cannot prepare any spell not recorded in her spellbook (except for read magic, which all wu jen can prepare from memory). A wu jen begins play with a spellbook containing all 0- level wu jen spells plus three 1st-level spells of your choice. For each point of Intelligence bonus the wu jen has, the spellbook holds one additional 1st-level spell of your choice. At each new wu jen level, she gains two new spells of any spell level or levels that she can cast (based on her new wu jen level). For example, when Hide-yori achieves 5th level, she can cast 3rd-level spells. At this point, she can add two 3rd-level spells to her spellbook, or one 2nd-level spell and one 3rd-level spell, or any combination of two spells between 1st and 3rd level. At any time, a wu jen can also add spells found in other wu jen's spellbooks to her own, much like a wizard.",
+        "name": "Spellbooks"
+      },
+      {
+        "description": "Once per day, a wu jen can reroll an initiative roll she has just made before she knows her place in the initiative order. She takes the better of the two rolls.",
+        "name": "Watchful Spirit"
+      },
+      {
+        "description": "A wu jen begins play with a bonus metamagic feat.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "At 3rd level, and every three levels thereafter, a wu jen can choose one spell known to her that then becomes permanently modified as though affected by one of the following metamagic feats: Enlarge Spell, Extend Spell, Still Spell, or Silent Spell. The spell's level does not change, and once the choice of spell and modification are chosen, they cannot be changed. As the wu jen goes up in level, she can choose the same spell to be modified in different ways with multiple spell secrets. She does not need to know the feat she applies to the spell.",
+        "name": "Spell Secret"
+      },
+      {
+        "description": "Many of the wu jen's spells are divided into five elemental groups: earth, fire, metal, water, and wood. At 6th level, instead of receiving a spell secret, a wu jen becomes a master of one of these five elements (her choice). Thereafter, whenever a wu jen casts a spell of that element, her effective caster level (for purposes of deter- mining level-dependent spell variables and for caster level checks) is increased by two. In addition, the wu jen herself gets a +2 competence bonus on saving throws against spells of that element. Certain spells on the wu jen spell list are designated \"All\"; this means they belong to all elemental groups, and a wu jen who is a master of any element gains the mastery bonuses with respect to those spells.",
+        "name": "Elemental Mastery"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft"
+    ],
+    "description": "A mysterious wizard of the eastern world, whose arcane lore revolves around mastery of the elements.",
+    "hasCantrips": true,
+    "hitDie": "d4",
+    "name": "Wu Jen",
+    "prerequisites": {
+      "parsed": {},
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Watchful spirit",
+          "bonus feat"
+        ],
+        "spellsPerDay": "3,1,-,-,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "4,2,-,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Spell secret"
+        ],
+        "spellsPerDay": "4,2,1,-,-,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "4,3,2,-,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "4,3,2,1,-,-,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Elemental mastery"
+        ],
+        "spellsPerDay": "4,3,3,2,-,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "4,4,3,2,1,-,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "4,4,3,3,2,-,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Spell secret"
+        ],
+        "spellsPerDay": "4,4,4,3,2,1,-,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "4,4,4,3,3,2,-,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,3,2,1,-,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 4,
+        "special": [
+          "Spell secret"
+        ],
+        "spellsPerDay": "4,4,4,4,3,3,2,-,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 6,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,3,2,1,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 7,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,3,3,2,-,-",
+        "willSave": 9
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 5,
+        "special": [
+          "Spell secret"
+        ],
+        "spellsPerDay": "4,4,4,4,4,4,3,2,1,-",
+        "willSave": 9
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,3,3,2,-",
+        "willSave": 10
+      },
+      {
+        "bab": 8,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,4,3,2,1",
+        "willSave": 10
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 6,
+        "special": [
+          "Spell secret"
+        ],
+        "spellsPerDay": "4,4,4,4,4,4,4,3,3,2",
+        "willSave": 11
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,4,4,3,2",
+        "willSave": 11
+      },
+      {
+        "bab": 10,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,4,4,4,4",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

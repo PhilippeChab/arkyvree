@@ -1,0 +1,260 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-03-23T19:39:28.046Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/fortunes-friend/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Easy Luck"
+      },
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "name": "Extra Fortune"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "More Luck Than Skill"
+      },
+      {
+        "levels": [
+          2,
+          4
+        ],
+        "name": "Bonus Luck Feat"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Fortune's Favorite"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Lucky Strike"
+      }
+    ],
+    "hd": 6,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.luck.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Fortune's Friend Class Feature",
+    "features": {
+      "Bonus Luck Feat": {
+        "description": "At 2nd and 4th level, you gain a bonus luck feat for which you meet the prerequisite. Complete Scoundrel for a complete list of luck feats.",
+        "level": 2,
+        "seedName": "Bonus Luck Feat (Fortune's Friend)",
+        "stackable": true
+      },
+      "Easy Luck": {
+        "description": "Luck comes to you naturally. The swift or immediate action to use a luck feat does not count against your limit of one swift action per turn. However, you still can't expend a luck reroll more than once per turn to influence the same result.",
+        "level": 1,
+        "seedName": "Easy Luck (Fortune's Friend)"
+      },
+      "Extra Fortune": {
+        "description": "At each odd-numbered level, you gain one extra luck reroll per day. This reroll is in addition to those granted by luck feats.",
+        "level": 1,
+        "seedName": "Extra Fortune (Fortune's Friend)",
+        "stackable": true
+      },
+      "Fortune's Favorite": {
+        "description": "By 3rd level, you have learned to rely on your luck to stay alive. Once per day as an immediate action, you can add your class level as a luck bonus on all saving throws you make until the start of your next turn.",
+        "level": 3,
+        "seedName": "Fortune's Favorite (Fortune's Friend)"
+      },
+      "Lucky Strike": {
+        "description": "Even the greatest warriors, those who train and drill constantly, occasionally win through sheer luck, so why shouldn't you' Beginning at 5th level, once per day as a swift action, you can add your class level as a luck bonus on all attack rolls you make until the start of your next turn.",
+        "level": 5,
+        "seedName": "Lucky Strike (Fortune's Friend)"
+      },
+      "More Luck Than Skill": {
+        "description": "Even if you have some talent in a particular area, you still depend on your luck to see you through. Once per day as a swift action, you can add your class level as a luck bonus on all skill checks you make until the start of your next turn.",
+        "level": 1,
+        "seedName": "More Luck Than Skill (Fortune's Friend)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Luck Feat": "Bonus Luck Feat",
+      "Easy Luck": "Easy Luck",
+      "Extra Fortune": "Extra Fortune",
+      "Fortune's Favorite": "Fortune's Favorite",
+      "Lucky Strike": "Lucky Strike",
+      "More Luck Than Skill": "More Luck Than Skill"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Luck comes to you naturally. The swift or immediate action to use a luck feat does not count against your limit of one swift action per turn. However, you still can't expend a luck reroll more than once per turn to influence the same result.",
+        "name": "Easy Luck",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At each odd-numbered level, you gain one extra luck reroll per day. This reroll is in addition to those granted by luck feats.",
+        "name": "Extra Fortune",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Even if you have some talent in a particular area, you still depend on your luck to see you through. Once per day as a swift action, you can add your class level as a luck bonus on all skill checks you make until the start of your next turn.",
+        "name": "More Luck Than Skill",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd and 4th level, you gain a bonus luck feat for which you meet the prerequisite. Complete Scoundrel for a complete list of luck feats.",
+        "name": "Bonus Luck Feat"
+      },
+      {
+        "description": "By 3rd level, you have learned to rely on your luck to stay alive. Once per day as an immediate action, you can add your class level as a luck bonus on all saving throws you make until the start of your next turn.",
+        "name": "Fortune's Favorite",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Even the greatest warriors, those who train and drill constantly, occasionally win through sheer luck, so why shouldn't you' Beginning at 5th level, once per day as a swift action, you can add your class level as a luck bonus on all attack rolls you make until the start of your next turn.",
+        "name": "Lucky Strike",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Gather Information",
+      "Hide",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Perform",
+      "Profession",
+      "Search",
+      "Sleight of Hand",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "The fortune's friend lives by his luck.",
+    "hitDie": "d6",
+    "name": "Fortune's Friend",
+    "prerequisites": {
+      "parsed": {
+        "bab": 3,
+        "feats": [
+          "Any luck feat"
+        ]
+      },
+      "text": "Base Attack Bonus: +3 Skills: Any skill 8 ranks.Feats: Any luck feat."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Easy luck",
+          "extra fortune",
+          "more luck than skill"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Bonus luck feat"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Extra fortune",
+          "fortune's favorite"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Bonus luck feat"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Extra fortune",
+          "lucky strike"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

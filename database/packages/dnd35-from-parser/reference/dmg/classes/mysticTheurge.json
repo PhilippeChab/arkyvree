@@ -1,0 +1,232 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-20T23:14:17.182Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/mystic-theurge/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "dual"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "2",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Mystic Theurge Class Feature",
+    "features": {
+      "Spells per Day": {
+        "description": "Each time a mystic theurge advances in level, the character's spellcasting ability improves as though he had also gained a level in one arcane spellcasting class and one divine spellcasting class that he belonged to prior to entering this prestige class. This advancement grants additional spells per day and raises his caster level in both classes accordingly, but does not confer any other class-specific benefits those classes would normally provide (such as bonus metamagic or item creation feats, bard or assassin special abilities, and similar features). In practical terms, the mystic theurge level stacks with the character's existing arcane and divine spellcasting class levels for the purpose of calculating spells per day and caster level. For instance, a 3rd-level cleric/3rd-level wizard who gains a mystic theurge level casts spells as a 4th-level cleric and a 4th-level wizard, but still turns undead as a 3rd-level cleric, and his wizard familiar gains no new abilities. If a character possesses multiple arcane spellcasting classes or multiple divine spellcasting classes before becoming a mystic theurge, he must choose which one arcane class and which one divine class benefits from each mystic theurge level for spells per day purposes.",
+        "level": 1,
+        "seedName": "Spells per Day (Mystic Theurge)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "A mystic theurge does not receive proficiency with any additional weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Mystic Theurge)"
+      }
+    },
+    "occurrenceMap": {},
+    "overrides": {
+      "description": "Mystic theurges bridge the gap between arcane and divine magic, channeling power drawn from both scholarly study and sacred devotion.",
+      "features": {
+        "Spells per Day": {
+          "description": "Each time a mystic theurge advances in level, the character's spellcasting ability improves as though he had also gained a level in one arcane spellcasting class and one divine spellcasting class that he belonged to prior to entering this prestige class. This advancement grants additional spells per day and raises his caster level in both classes accordingly, but does not confer any other class-specific benefits those classes would normally provide (such as bonus metamagic or item creation feats, bard or assassin special abilities, and similar features). In practical terms, the mystic theurge level stacks with the character's existing arcane and divine spellcasting class levels for the purpose of calculating spells per day and caster level. For instance, a 3rd-level cleric/3rd-level wizard who gains a mystic theurge level casts spells as a 4th-level cleric and a 4th-level wizard, but still turns undead as a 3rd-level cleric, and his wizard familiar gains no new abilities. If a character possesses multiple arcane spellcasting classes or multiple divine spellcasting classes before becoming a mystic theurge, he must choose which one arcane class and which one divine class benefits from each mystic theurge level for spells per day purposes."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "A mystic theurge does not receive proficiency with any additional weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Mystic theurges gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new mystic theurge level is gained, the character gains new spells per day as if he had also gained a level in any one arcane spellcasting class he belonged to before he added the prestige class and any one divine spellcasting class he belonged to previously. He does not, however, gain any other benefit a character of that class would have gained (bonus metamagic or item creation feats, bard or assassin abilities, and so on). This essentially means that he adds the level of mystic theurge to the level of whatever other arcane spellcasting class and divine spellcasting class the character has, then determines spells per day and caster level accordingly. For example, a 3rd-level cleric/3rd-level wizard who takes a level in mystic theurge has the same access to spells as a 4th-level cleric and a 4th-level wizard. But he continues to turn undead as a 3rdlevel cleric, and his wizard familiar won't gain any new abilities. If a character had more than one arcane spellcasting class or more than one divine spellcasting class before he became a mystic theurge, he must decide to which class he adds each level of mystic theurge for the purpose of determining spells per day.",
+        "name": "Spells per Day"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Profession",
+      "Sense Motive",
+      "Spellcraft"
+    ],
+    "description": "Blurring the line between divine and arcane, mystic theurges draw power from divine sources and musty tomes alike.",
+    "hitDie": "d4",
+    "name": "Mystic Theurge",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 2,
+            "type": "divine"
+          },
+          {
+            "level": 2,
+            "type": "arcane"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 6
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 6
+          }
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 6 ranks, Knowledge (religion) 6 ranks Spells: Able to cast 2nd-level divine spells and 2nd-level arcane spells."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

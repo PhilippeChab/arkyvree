@@ -1,0 +1,338 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.230Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/beastmaster/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "skillfocushandleanimal": "Skill Focus (Handle Animal)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Animal Companion"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wild Empathy"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Alertness"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Speak With Animals"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Extra Animal Companion (-3)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Low-Light Vision"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Extra Animal Companion (-6)"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Scent"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Extra Animal Companion (-9)"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.handleanimal.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.skillfocushandleanimal.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Beastmaster Class Feature",
+    "features": {
+      "Alertness": {
+        "description": "A beastmaster's senses grow keen as she learns some of the tricks of the animal kingdom. Accordingly, she gains Alertness as a bonus feat at 2nd level.",
+        "level": 2,
+        "seedName": "Alertness (Beastmaster)"
+      },
+      "Animal Companion": {
+        "description": "A beastmaster gains the service of a loyal animal companion. See the druid class feature of the Player's Handbook. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level + 3. A beastmaster can select one of the animals available to a 1st-level druid and then apply the modifications as appropriate for a 4th-level druid's animal companion, or she can select a typical version of one of the animals available to a 4th-level druid. As a beastmaster gains class levels, her animal companion gains Hit Dice and other special abilities just as a druid's animal companion does. Use the beastmaster's class level + 3 to determine the animal companion's special abilities. If a beastmaster already has an animal companion from another class, her beastmaster class levels stack with class levels from all other classes that grant an animal companion. For example, a 5th-level druid/2nd-level beastmaster would be treated as a 10th-level druid for the purpose of improving the statistics of her animal companion (and which alternative animal companions she could select).",
+        "level": 1,
+        "seedName": "Animal Companion (Beastmaster)"
+      },
+      "Extra Animal Companion": {
+        "description": "At 4th level, a beastmaster gains a second animal companion, chosen from the list of animal companions available to a 1st-level druid. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level - 3 for the purpose of improving the animal companion's statistics (or of selecting an alternative companion at higher levels). At 7th level, a beastmaster gains a third animal companion, chosen from the list of animal companions available to a 1st-level druid. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level - 6 for the purpose of improving the animal companion's statistics (or of selecting an alternative companion at higher levels). At 10th level, a beastmaster gains a fourth animal companion, chosen from the list of animal companions available to a 1st-level druid. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level - 9 for the purpose of improving the animal companion's statistics (or of selecting an alternative companion at higher levels). Other class levels in classes that offer an animal companion don't stack for the purpose of determining the power of a beastmaster's additional animal companions, nor do they allow her to choose additional animal companions from the alternative lists.",
+        "level": 1,
+        "seedName": "Extra Animal Companion (Beastmaster)",
+        "stackable": true
+      },
+      "Low-light Vision": {
+        "description": "At 5th level, a beastmaster gains low-light vision, allowing her to see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of shadowy illumination. She retains the ability to distinguish color and detail under these conditions. If she already has low-light vision from another source (such as her race), her low-light vision improves, allowing her to see three times as far as a human in conditions of shadowy illumination.",
+        "level": 5,
+        "seedName": "Low-light Vision (Beastmaster)"
+      },
+      "Scent": {
+        "description": "At 8th level, a beastmaster gains the scent ability.",
+        "level": 8,
+        "seedName": "Scent (Beastmaster)"
+      },
+      "Speak With Animals": {
+        "description": "Starting at 3rd level, a beastmaster can use speak with animals once per day as the spell cast by a caster of her class level. She can use this ability twice per day at 6th level and three times per day at 9th level.",
+        "level": 3,
+        "seedName": "Speak With Animals (Beastmaster)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Beastmasters gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Beastmaster)"
+      },
+      "Wild Empathy": {
+        "description": "A beastmaster can improve the attitude of an animal. See the druid class feature of the Player's Handbook. If a beastmaster has wild empathy from another class, her levels stack for determining the bonus.",
+        "level": 1,
+        "seedName": "Wild Empathy (Beastmaster)"
+      }
+    },
+    "occurrenceMap": {
+      "Alertness": "Alertness",
+      "Animal Companion": "Animal Companion",
+      "Extra Animal Companion (-3)": "Extra Animal Companion",
+      "Extra Animal Companion (-6)": "Extra Animal Companion",
+      "Extra Animal Companion (-9)": "Extra Animal Companion",
+      "Low-Light Vision": "Low-light Vision",
+      "Scent": "Scent",
+      "Speak With Animals": "Speak With Animals",
+      "Wild Empathy": "Wild Empathy"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Beastmasters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A beastmaster gains the service of a loyal animal companion. See the druid class feature of the Player's Handbook. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level + 3. A beastmaster can select one of the animals available to a 1st-level druid and then apply the modifications as appropriate for a 4th-level druid's animal companion, or she can select a typical version of one of the animals available to a 4th-level druid. As a beastmaster gains class levels, her animal companion gains Hit Dice and other special abilities just as a druid's animal companion does. Use the beastmaster's class level + 3 to determine the animal companion's special abilities. If a beastmaster already has an animal companion from another class, her beastmaster class levels stack with class levels from all other classes that grant an animal companion. For example, a 5th-level druid/2nd-level beastmaster would be treated as a 10th-level druid for the purpose of improving the statistics of her animal companion (and which alternative animal companions she could select).",
+        "name": "Animal Companion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A beastmaster can improve the attitude of an animal. See the druid class feature of the Player's Handbook. If a beastmaster has wild empathy from another class, her levels stack for determining the bonus.",
+        "name": "Wild Empathy",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A beastmaster's senses grow keen as she learns some of the tricks of the animal kingdom. Accordingly, she gains Alertness as a bonus feat at 2nd level.",
+        "name": "Alertness"
+      },
+      {
+        "description": "Starting at 3rd level, a beastmaster can use speak with animals once per day as the spell cast by a caster of her class level. She can use this ability twice per day at 6th level and three times per day at 9th level.",
+        "name": "Speak With Animals",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 4th level, a beastmaster gains a second animal companion, chosen from the list of animal companions available to a 1st-level druid. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level - 3 for the purpose of improving the animal companion's statistics (or of selecting an alternative companion at higher levels). At 7th level, a beastmaster gains a third animal companion, chosen from the list of animal companions available to a 1st-level druid. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level - 6 for the purpose of improving the animal companion's statistics (or of selecting an alternative companion at higher levels). At 10th level, a beastmaster gains a fourth animal companion, chosen from the list of animal companions available to a 1st-level druid. Treat the beastmaster as a druid whose level is equal to the beastmaster's class level - 9 for the purpose of improving the animal companion's statistics (or of selecting an alternative companion at higher levels). Other class levels in classes that offer an animal companion don't stack for the purpose of determining the power of a beastmaster's additional animal companions, nor do they allow her to choose additional animal companions from the alternative lists.",
+        "name": "Extra Animal Companion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, a beastmaster gains low-light vision, allowing her to see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of shadowy illumination. She retains the ability to distinguish color and detail under these conditions. If she already has low-light vision from another source (such as her race), her low-light vision improves, allowing her to see three times as far as a human in conditions of shadowy illumination.",
+        "name": "Low-light Vision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 8th level, a beastmaster gains the scent ability.",
+        "name": "Scent",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Handle Animal",
+      "Heal",
+      "Hide",
+      "Jump",
+      "Knowledge (Nature)",
+      "Listen",
+      "Ride",
+      "Spot",
+      "Survival",
+      "Swim"
+    ],
+    "description": "A beastmaster feels more at home among the animals of nature than fellow sentient beings. Over time, these wanderers befriend a wide variety of animals, from mighty dire lions to tiny weasels. Eventually, a beastmaster takes on aspects of her animal companions, becoming almost as much animal as humanoid. Druids and rangers are the most common beastmasters, thanks to those characters' natural link with the animal world. Some barbarians, ?ghters, or scouts also become beastmasters, particularly those with a strong af?nity for nature (such as elves or hal?ings). Characters of other classes rarely pursue this path. NPC beastmasters are typically loners, relying on their animal companions for friendship on their travels. Good-aligned beastmasters might use their powers to right injustices, even allying themselves with rural villages for a time. Evil-aligned beastmasters are often openly hostile to civilization, becoming reclusive xenophobes.",
+    "hitDie": "d10",
+    "name": "Beastmaster",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Skill Focus (Handle Animal)"
+        ],
+        "skills": [
+          {
+            "name": "Handle Animal",
+            "ranks": 8
+          },
+          {
+            "name": "Survival",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Skills: Handle Animal 8 ranks, Survival 4 ranks Feats: Skill Focus (Handle Animal)"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Animal companion",
+          "wild empathy"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Alertness"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Speak with animals 1/day"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Extra animal companion (-3)"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Low-light vision"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Speak with animals 2/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Extra animal companion (-6)"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Scent"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Speak with animals 3/day"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Extra animal companion (-9)"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

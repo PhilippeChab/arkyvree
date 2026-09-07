@@ -1,0 +1,1048 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-23T01:56:26.570Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/monk/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          2,
+          6
+        ],
+        "target": "aptitudes.monkbonusfeat.allowed"
+      }
+    ],
+    "bab": "medium",
+    "bonusFeatLists": [
+      {
+        "aptitude": "Monk Bonus Feat (1st)",
+        "feats": [
+          "Improved Grapple",
+          "Stunning Fist"
+        ],
+        "levels": [
+          1
+        ]
+      },
+      {
+        "aptitude": "Monk Bonus Feat (2nd)",
+        "feats": [
+          "Combat Reflexes",
+          "Deflect Arrows"
+        ],
+        "levels": [
+          2
+        ]
+      },
+      {
+        "aptitude": "Monk Bonus Feat (6th)",
+        "feats": [
+          "Improved Disarm",
+          "Improved Trip"
+        ],
+        "levels": [
+          6
+        ]
+      }
+    ],
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          2,
+          6
+        ],
+        "name": "Bonus Feat"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Flurry Of Blows"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Unarmed Strike"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Evasion"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Still Mind"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Ki Strike (Magic)"
+      },
+      {
+        "levels": [
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18
+        ],
+        "name": "Slow Fall"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Purity Of Body"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Wholeness Of Body"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Improved Evasion"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Ki Strike (Lawful)"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Diamond Body"
+      },
+      {
+        "levels": [
+          11
+        ],
+        "name": "Greater Flurry"
+      },
+      {
+        "levels": [
+          12
+        ],
+        "name": "Abundant Step"
+      },
+      {
+        "levels": [
+          13
+        ],
+        "name": "Diamond Soul"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Quivering Palm"
+      },
+      {
+        "levels": [
+          16
+        ],
+        "name": "Ki Strike (Adamantine)"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Timeless Body"
+      },
+      {
+        "levels": [
+          17
+        ],
+        "name": "Tongue Of The Sun And Moon"
+      },
+      {
+        "levels": [
+          19
+        ],
+        "name": "Empty Body"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Perfect Self"
+      },
+      {
+        "levels": [
+          20
+        ],
+        "name": "Slow Fall Any Distance"
+      }
+    ],
+    "hd": 8,
+    "levels": 20,
+    "requirements": [
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Monk Class Feature",
+    "features": {
+      "AC Bonus": {
+        "description": "Through rigorous training in defensive movement, a monk develops an instinctive ability to evade attacks, even those she cannot see coming. While wearing no armor and carrying no more than a light load, the monk adds her Wisdom bonus (if any) to her Armor Class. Furthermore, at 5th level she gains a +1 bonus to AC that increases by 1 for every five additional monk levels (+2 at 10th, +3 at 15th, and +4 at 20th level). These AC bonuses remain effective against touch attacks and even when the monk is caught flat-footed. However, she loses all of these bonuses if she becomes immobilized or helpless, dons any armor, uses a shield, or carries a medium or heavy load.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "combat.ac.armor",
+                "value": "0",
+                "valueType": "number"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.ac.shield",
+                "value": "0",
+                "valueType": "number"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ [abilities.wisdom.modifier] }}",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "AC Bonus (Monk)"
+      },
+      "Abundant Step": {
+        "description": "At 12th level, a monk gains the ability to step magically between locations, functioning as the spell dimension door, usable once per day. Her effective caster level for this ability equals one-half her monk level (rounded down).",
+        "level": 12,
+        "seedName": "Abundant Step (Monk)"
+      },
+      "Bonus Feat": {
+        "description": "At 1st level, a monk chooses one bonus feat from either Improved Grapple or Stunning Fist. At 2nd level, she selects from either Combat Reflexes or Deflect Arrows. At 6th level, she picks from either Improved Disarm or Improved Trip. The monk does not need to satisfy any of the normal prerequisites for these feats.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.monkbonusfeat.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Bonus Feat (Monk)"
+      },
+      "Diamond Body": {
+        "description": "Upon reaching 11th level, a monk has achieved such complete control over her metabolism that she becomes immune to all forms of poison.",
+        "level": 11,
+        "seedName": "Diamond Body (Monk)"
+      },
+      "Diamond Soul": {
+        "description": "At 13th level, a monk develops spell resistance equal to her current monk level + 10. Any spellcaster attempting to affect her with a spell must succeed on a caster level check meeting or exceeding the monk's spell resistance.",
+        "level": 13,
+        "seedName": "Diamond Soul (Monk)"
+      },
+      "Empty Body": {
+        "description": "At 19th level, a monk can shift into an ethereal state for a total of 1 round per monk level each day, replicating the effects of the etherealness spell. She can split this duration across multiple uses in a single day, so long as the combined rounds spent ethereal do not exceed her monk level.",
+        "level": 19,
+        "seedName": "Empty Body (Monk)"
+      },
+      "Evasion": {
+        "description": "Starting at 2nd level, a monk can evade even supernatural and extraordinary attacks through sheer agility. When she succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save (such as a red dragon's fiery breath or a fireball spell), she takes no damage whatsoever. This ability functions only when the monk wears light armor or no armor. A monk who is helpless (for instance, unconscious or paralyzed) cannot benefit from evasion.",
+        "level": 2,
+        "seedName": "Evasion (Monk)"
+      },
+      "Fast Movement": {
+        "description": "Beginning at 3rd level, a monk receives an enhancement bonus to her base land speed as indicated in the class table. Wearing any armor (including light armor) or carrying a medium or heavy load negates this bonus speed.",
+        "level": 3,
+        "seedName": "Fast Movement (Monk)"
+      },
+      "Flurry of Blows": {
+        "aliases": [
+          "Greater Flurry"
+        ],
+        "description": "While unarmored, a monk can trade precision for volume of attacks by unleashing a rapid barrage of strikes. This grants one additional attack per round at her highest base attack bonus, but every attack that round (including the extra one) suffers a -2 penalty. The adjusted attack bonuses appear in the Flurry of Blows Attack Bonus column of the class table. Because this penalty persists for the full round, it also applies to any attacks of opportunity the monk takes before her next turn. At 5th level the penalty decreases to -1, and at 9th level it vanishes entirely. Executing a flurry of blows requires a full attack action. During a flurry, the monk may only use unarmed strikes or special monk weapons (kama, nunchaku, quarterstaff, sai, shuriken, and siangham), and she can freely mix unarmed strikes with monk weapon attacks in any combination she chooses. When wielding weapons during a flurry of blows, the monk uses her Strength bonus (not 1-1/2 times or 1/2 times her Strength bonus) for damage on all hits, regardless of whether she holds the weapon in one or both hands. No weapon other than a special monk weapon may be employed as part of a flurry. The quarterstaff is treated as two separate weapons (one for each end) for flurry of blows purposes. Despite requiring two hands, a monk can still alternate between quarterstaff strikes and unarmed strikes within a single flurry, provided she has sufficient attacks to do so. However, she cannot wield any additional weapon simultaneously with a quarterstaff. At 11th level, the flurry of blows ability advances further: in addition to the single extra attack normally granted, the monk gains a second extra attack at her full base attack bonus.",
+        "level": 1,
+        "seedName": "Flurry of Blows (Monk)"
+      },
+      "Greater Flurry": {
+        "description": "",
+        "level": 11,
+        "seedName": "Greater Flurry (Monk)"
+      },
+      "Improved Evasion": {
+        "description": "At 9th level, a monk's evasion ability becomes even more effective. She continues to take no damage when she succeeds on a Reflex save against effects like dragon breath or a fireball spell, and now she takes only half damage even on a failed save. A helpless monk (such as one who is unconscious or paralyzed) does not benefit from improved evasion.",
+        "level": 9,
+        "seedName": "Improved Evasion (Monk)"
+      },
+      "Ki Strike": {
+        "description": "Starting at 4th level, a monk channels ki energy through her unarmed attacks. Her strikes count as magic weapons for the purpose of overcoming damage reduction. This ability grows stronger as she advances: at 10th level, her unarmed attacks are additionally treated as lawful weapons for bypassing damage reduction, and at 16th level they are treated as adamantine weapons for overcoming damage reduction and bypassing hardness.",
+        "level": 4,
+        "seedName": "Ki Strike (Monk)",
+        "stackable": true
+      },
+      "Perfect Self": {
+        "description": "At 20th level, a monk's relentless self-refinement and near-supernatural abilities transform her into a magical being. She is henceforth considered an outsider (extraplanar creature) rather than a humanoid for all spell and magical effect interactions - for example, charm person no longer works on her. She also gains damage reduction 10/magic, meaning she ignores the first 10 points of damage from any nonmagical weapon strike or natural attack from a creature lacking equivalent damage reduction. Despite her outsider status, the monk can still be raised or resurrected as though she were still a member of her original creature type.",
+        "level": 20,
+        "seedName": "Perfect Self (Monk)"
+      },
+      "Purity of Body": {
+        "description": "At 5th level, a monk achieves sufficient mastery over her body's natural defenses to become immune to all diseases, with the exception of supernatural and magical diseases (such as mummy rot and lycanthropy).",
+        "level": 5,
+        "seedName": "Purity of Body (Monk)"
+      },
+      "Quivering Palm": {
+        "description": "Upon reaching 15th level, a monk learns to transmit lethal vibrations into a living target's body through a single strike. This ability is usable once per week and must be declared before the attack roll is made. It has no effect on constructs, oozes, plants, undead, incorporeal creatures, or creatures immune to critical hits. If the attack lands and deals damage, the quivering palm takes hold. The monk may then choose to trigger the lethal vibrations at any point within a number of days equal to her monk level, simply by willing the target to die (a free action). The target must succeed on a Fortitude saving throw (DC 10 + 1/2 the monk's level + the monk's Wisdom modifier) or perish. A successful save neutralizes that particular quivering palm, though the target remains vulnerable to future uses of the ability.",
+        "level": 15,
+        "seedName": "Quivering Palm (Monk)"
+      },
+      "Slow Fall": {
+        "description": "From 4th level onward, a monk who is within arm's reach of a wall can use it to control her descent. Initially, she treats any fall as though it were 20 feet shorter for the purpose of calculating fall damage. This damage reduction improves as she gains monk levels, until at 20th level she can fall any distance without taking harm as long as a wall is within reach.",
+        "level": 4,
+        "seedName": "Slow Fall (Monk)",
+        "stackable": true
+      },
+      "Still Mind": {
+        "description": "From 3rd level onward, a monk's disciplined meditation and mental conditioning grant her a +2 bonus on saving throws against enchantment spells and effects, reflecting her strengthened resistance to mind-influencing attacks.",
+        "level": 3,
+        "seedName": "Still Mind (Monk)"
+      },
+      "Timeless Body": {
+        "description": "At 17th level, a monk ceases to suffer ability score penalties from aging and becomes immune to magical aging effects. Any aging penalties already accrued remain, however. She continues to gain aging bonuses normally and still dies of old age when her natural lifespan expires.",
+        "level": 17,
+        "seedName": "Timeless Body (Monk)"
+      },
+      "Tongue of the Sun and Moon": {
+        "description": "At 17th level, a monk gains the capacity to communicate verbally with any living creature.",
+        "level": 17,
+        "seedName": "Tongue of the Sun and Moon (Monk)"
+      },
+      "Unarmed Strike": {
+        "description": "Monks undergo extensive training in weaponless combat, granting them significant advantages when fighting barehanded. At 1st level, the monk receives Improved Unarmed Strike as a bonus feat. Her unarmed attacks can be delivered with any part of her body - fists, elbows, knees, or feet - allowing her to make unarmed strikes even while her hands are occupied. A monk has no off-hand when attacking unarmed, so she applies her full Strength bonus to damage on every unarmed strike. By default her unarmed attacks inflict lethal damage, though she may opt to deal nonlethal damage instead without any attack roll penalty. The same lethal/nonlethal choice applies while grappling. A monk's unarmed strike counts as both a manufactured weapon and a natural weapon for purposes of spells and effects that improve either category (such as magic fang and magic weapon). Additionally, a monk inflicts greater unarmed damage than an ordinary person, with the damage increasing as she gains levels as shown in the class table. A Small monk deals reduced unarmed damage compared to the listed values, while a Large monk deals increased damage.",
+        "level": 1,
+        "seedName": "Unarmed Strike (Monk)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Monks have proficiency with a limited selection of common and specialized weapons associated with their training traditions. Their proficient weapons include the club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling. Monks lack proficiency with all armor and shields - indeed, much of their unique capabilities depend on unrestricted movement. While wearing armor, wielding a shield, or bearing a medium or heavy load, a monk forfeits her AC bonus, fast movement, and flurry of blows capabilities.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencylightcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyheavycrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyquarterstaff.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencynunchaku.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencysiangham.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencyshuriken.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyjavelin.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyhandaxe.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencysling.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyclub.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencykama.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencysai.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Monk)"
+      },
+      "Wholeness of Body": {
+        "description": "Beginning at 7th level, a monk can mend her own injuries through focused will. Each day she can restore a total number of hit points equal to twice her current monk level, and she may divide this healing across multiple uses throughout the day.",
+        "level": 7,
+        "seedName": "Wholeness of Body (Monk)"
+      }
+    },
+    "occurrenceMap": {
+      "Abundant Step": "Abundant Step",
+      "Bonus Feat": "Bonus Feat",
+      "Diamond Body": "Diamond Body",
+      "Diamond Soul": "Diamond Soul",
+      "Empty Body": "Empty Body",
+      "Evasion": "Evasion",
+      "Flurry Of Blows": "Flurry of Blows",
+      "Greater Flurry": "Flurry of Blows",
+      "Improved Evasion": "Improved Evasion",
+      "Ki Strike (Adamantine)": "Ki Strike",
+      "Ki Strike (Lawful)": "Ki Strike",
+      "Ki Strike (Magic)": "Ki Strike",
+      "Perfect Self": "Perfect Self",
+      "Purity Of Body": "Purity of Body",
+      "Quivering Palm": "Quivering Palm",
+      "Slow Fall": "Slow Fall",
+      "Slow Fall Any Distance": "Slow Fall",
+      "Still Mind": "Still Mind",
+      "Timeless Body": "Timeless Body",
+      "Tongue Of The Sun And Moon": "Tongue of the Sun and Moon",
+      "Unarmed Strike": "Unarmed Strike",
+      "Wholeness Of Body": "Wholeness of Body"
+    },
+    "overrides": {
+      "alignment": "Any lawful",
+      "description": "Scattered throughout the world are isolated monasteries - small, fortified enclaves where monks devote themselves to achieving personal excellence through disciplined action and focused meditation. They hone their bodies into versatile fighting instruments, mastering combat without reliance on weapons or armor. Those who study under virtuous masters serve as guardians of the common folk, blending seamlessly into crowds while remaining ever-ready to confront bandits, tyrants, and corrupt officials. Conversely, monks trained under sinister masters use fear to dominate nearby territories, functioning much like warlords with loyal retinues. Such monks excel as spies, saboteurs, and assassins. Most individual monks care little for crusading on behalf of the downtrodden or accumulating riches. Their primary concern is the mastery of their discipline and, through that mastery, the perfection of themselves. They aspire to transcend mortal limitations entirely. A monk treats every adventure as a crucible for self-improvement. Though not inclined toward ostentatious displays, monks readily pit their abilities against any challenge that presents itself. Material wealth holds little appeal for them, but they eagerly pursue anything that furthers their art.",
+      "features": {
+        "AC Bonus": {
+          "description": "Through rigorous training in defensive movement, a monk develops an instinctive ability to evade attacks, even those she cannot see coming. While wearing no armor and carrying no more than a light load, the monk adds her Wisdom bonus (if any) to her Armor Class. Furthermore, at 5th level she gains a +1 bonus to AC that increases by 1 for every five additional monk levels (+2 at 10th, +3 at 15th, and +4 at 20th level). These AC bonuses remain effective against touch attacks and even when the monk is caught flat-footed. However, she loses all of these bonuses if she becomes immobilized or helpless, dons any armor, uses a shield, or carries a medium or heavy load.",
+          "modifiers": [
+            {
+              "operator": "add",
+              "requirements": [
+                {
+                  "operator": "equal",
+                  "target": "combat.ac.armor",
+                  "value": "0",
+                  "valueType": "number"
+                },
+                {
+                  "operator": "equal",
+                  "target": "combat.ac.shield",
+                  "value": "0",
+                  "valueType": "number"
+                }
+              ],
+              "target": "combat.ac.misc",
+              "value": "{{ [abilities.wisdom.modifier] }}",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Abundant Step": {
+          "description": "At 12th level, a monk gains the ability to step magically between locations, functioning as the spell dimension door, usable once per day. Her effective caster level for this ability equals one-half her monk level (rounded down)."
+        },
+        "Bonus Feat": {
+          "description": "At 1st level, a monk chooses one bonus feat from either Improved Grapple or Stunning Fist. At 2nd level, she selects from either Combat Reflexes or Deflect Arrows. At 6th level, she picks from either Improved Disarm or Improved Trip. The monk does not need to satisfy any of the normal prerequisites for these feats."
+        },
+        "Diamond Body": {
+          "description": "Upon reaching 11th level, a monk has achieved such complete control over her metabolism that she becomes immune to all forms of poison."
+        },
+        "Diamond Soul": {
+          "description": "At 13th level, a monk develops spell resistance equal to her current monk level + 10. Any spellcaster attempting to affect her with a spell must succeed on a caster level check meeting or exceeding the monk's spell resistance."
+        },
+        "Empty Body": {
+          "description": "At 19th level, a monk can shift into an ethereal state for a total of 1 round per monk level each day, replicating the effects of the etherealness spell. She can split this duration across multiple uses in a single day, so long as the combined rounds spent ethereal do not exceed her monk level."
+        },
+        "Evasion": {
+          "description": "Starting at 2nd level, a monk can evade even supernatural and extraordinary attacks through sheer agility. When she succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save (such as a red dragon's fiery breath or a fireball spell), she takes no damage whatsoever. This ability functions only when the monk wears light armor or no armor. A monk who is helpless (for instance, unconscious or paralyzed) cannot benefit from evasion."
+        },
+        "Fast Movement": {
+          "description": "Beginning at 3rd level, a monk receives an enhancement bonus to her base land speed as indicated in the class table. Wearing any armor (including light armor) or carrying a medium or heavy load negates this bonus speed.",
+          "level": 3
+        },
+        "Flurry of Blows": {
+          "aliases": [
+            "Greater Flurry"
+          ],
+          "description": "While unarmored, a monk can trade precision for volume of attacks by unleashing a rapid barrage of strikes. This grants one additional attack per round at her highest base attack bonus, but every attack that round (including the extra one) suffers a -2 penalty. The adjusted attack bonuses appear in the Flurry of Blows Attack Bonus column of the class table. Because this penalty persists for the full round, it also applies to any attacks of opportunity the monk takes before her next turn. At 5th level the penalty decreases to -1, and at 9th level it vanishes entirely. Executing a flurry of blows requires a full attack action. During a flurry, the monk may only use unarmed strikes or special monk weapons (kama, nunchaku, quarterstaff, sai, shuriken, and siangham), and she can freely mix unarmed strikes with monk weapon attacks in any combination she chooses. When wielding weapons during a flurry of blows, the monk uses her Strength bonus (not 1-1/2 times or 1/2 times her Strength bonus) for damage on all hits, regardless of whether she holds the weapon in one or both hands. No weapon other than a special monk weapon may be employed as part of a flurry. The quarterstaff is treated as two separate weapons (one for each end) for flurry of blows purposes. Despite requiring two hands, a monk can still alternate between quarterstaff strikes and unarmed strikes within a single flurry, provided she has sufficient attacks to do so. However, she cannot wield any additional weapon simultaneously with a quarterstaff. At 11th level, the flurry of blows ability advances further: in addition to the single extra attack normally granted, the monk gains a second extra attack at her full base attack bonus."
+        },
+        "Improved Evasion": {
+          "description": "At 9th level, a monk's evasion ability becomes even more effective. She continues to take no damage when she succeeds on a Reflex save against effects like dragon breath or a fireball spell, and now she takes only half damage even on a failed save. A helpless monk (such as one who is unconscious or paralyzed) does not benefit from improved evasion."
+        },
+        "Ki Strike": {
+          "description": "Starting at 4th level, a monk channels ki energy through her unarmed attacks. Her strikes count as magic weapons for the purpose of overcoming damage reduction. This ability grows stronger as she advances: at 10th level, her unarmed attacks are additionally treated as lawful weapons for bypassing damage reduction, and at 16th level they are treated as adamantine weapons for overcoming damage reduction and bypassing hardness."
+        },
+        "Perfect Self": {
+          "description": "At 20th level, a monk's relentless self-refinement and near-supernatural abilities transform her into a magical being. She is henceforth considered an outsider (extraplanar creature) rather than a humanoid for all spell and magical effect interactions - for example, charm person no longer works on her. She also gains damage reduction 10/magic, meaning she ignores the first 10 points of damage from any nonmagical weapon strike or natural attack from a creature lacking equivalent damage reduction. Despite her outsider status, the monk can still be raised or resurrected as though she were still a member of her original creature type."
+        },
+        "Purity of Body": {
+          "description": "At 5th level, a monk achieves sufficient mastery over her body's natural defenses to become immune to all diseases, with the exception of supernatural and magical diseases (such as mummy rot and lycanthropy)."
+        },
+        "Quivering Palm": {
+          "description": "Upon reaching 15th level, a monk learns to transmit lethal vibrations into a living target's body through a single strike. This ability is usable once per week and must be declared before the attack roll is made. It has no effect on constructs, oozes, plants, undead, incorporeal creatures, or creatures immune to critical hits. If the attack lands and deals damage, the quivering palm takes hold. The monk may then choose to trigger the lethal vibrations at any point within a number of days equal to her monk level, simply by willing the target to die (a free action). The target must succeed on a Fortitude saving throw (DC 10 + 1/2 the monk's level + the monk's Wisdom modifier) or perish. A successful save neutralizes that particular quivering palm, though the target remains vulnerable to future uses of the ability."
+        },
+        "Slow Fall": {
+          "description": "From 4th level onward, a monk who is within arm's reach of a wall can use it to control her descent. Initially, she treats any fall as though it were 20 feet shorter for the purpose of calculating fall damage. This damage reduction improves as she gains monk levels, until at 20th level she can fall any distance without taking harm as long as a wall is within reach."
+        },
+        "Still Mind": {
+          "description": "From 3rd level onward, a monk's disciplined meditation and mental conditioning grant her a +2 bonus on saving throws against enchantment spells and effects, reflecting her strengthened resistance to mind-influencing attacks."
+        },
+        "Timeless Body": {
+          "description": "At 17th level, a monk ceases to suffer ability score penalties from aging and becomes immune to magical aging effects. Any aging penalties already accrued remain, however. She continues to gain aging bonuses normally and still dies of old age when her natural lifespan expires."
+        },
+        "Tongue of the Sun and Moon": {
+          "description": "At 17th level, a monk gains the capacity to communicate verbally with any living creature."
+        },
+        "Unarmed Strike": {
+          "description": "Monks undergo extensive training in weaponless combat, granting them significant advantages when fighting barehanded. At 1st level, the monk receives Improved Unarmed Strike as a bonus feat. Her unarmed attacks can be delivered with any part of her body - fists, elbows, knees, or feet - allowing her to make unarmed strikes even while her hands are occupied. A monk has no off-hand when attacking unarmed, so she applies her full Strength bonus to damage on every unarmed strike. By default her unarmed attacks inflict lethal damage, though she may opt to deal nonlethal damage instead without any attack roll penalty. The same lethal/nonlethal choice applies while grappling. A monk's unarmed strike counts as both a manufactured weapon and a natural weapon for purposes of spells and effects that improve either category (such as magic fang and magic weapon). Additionally, a monk inflicts greater unarmed damage than an ordinary person, with the damage increasing as she gains levels as shown in the class table. A Small monk deals reduced unarmed damage compared to the listed values, while a Large monk deals increased damage."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Monks have proficiency with a limited selection of common and specialized weapons associated with their training traditions. Their proficient weapons include the club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling. Monks lack proficiency with all armor and shields - indeed, much of their unique capabilities depend on unrestricted movement. While wearing armor, wielding a shield, or bearing a medium or heavy load, a monk forfeits her AC bonus, fast movement, and flurry of blows capabilities."
+        },
+        "Wholeness of Body": {
+          "description": "Beginning at 7th level, a monk can mend her own injuries through focused will. Each day she can restore a total number of hit points equal to twice her current monk level, and she may divide this healing across multiple uses throughout the day."
+        }
+      },
+      "modifiers": [
+        {
+          "level": 3,
+          "operator": "add",
+          "target": "combat.speed.misc",
+          "value": "10",
+          "valueType": "number"
+        },
+        {
+          "level": 6,
+          "operator": "add",
+          "target": "combat.speed.misc",
+          "value": "10",
+          "valueType": "number"
+        },
+        {
+          "level": 9,
+          "operator": "add",
+          "target": "combat.speed.misc",
+          "value": "10",
+          "valueType": "number"
+        },
+        {
+          "level": 12,
+          "operator": "add",
+          "target": "combat.speed.misc",
+          "value": "10",
+          "valueType": "number"
+        },
+        {
+          "level": 15,
+          "operator": "add",
+          "target": "combat.speed.misc",
+          "value": "10",
+          "valueType": "number"
+        },
+        {
+          "level": 18,
+          "operator": "add",
+          "target": "combat.speed.misc",
+          "value": "10",
+          "valueType": "number"
+        },
+        {
+          "level": 5,
+          "operator": "add",
+          "target": "combat.ac.misc",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "level": 10,
+          "operator": "add",
+          "target": "combat.ac.misc",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "level": 15,
+          "operator": "add",
+          "target": "combat.ac.misc",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "level": 20,
+          "operator": "add",
+          "target": "combat.ac.misc",
+          "value": "1",
+          "valueType": "number"
+        },
+        {
+          "level": 1,
+          "operator": "set",
+          "target": "items.weapons.unarmedstrike.damage.base",
+          "value": "1d6",
+          "valueType": "string"
+        },
+        {
+          "level": 4,
+          "operator": "set",
+          "target": "items.weapons.unarmedstrike.damage.base",
+          "value": "1d8",
+          "valueType": "string"
+        },
+        {
+          "level": 8,
+          "operator": "set",
+          "target": "items.weapons.unarmedstrike.damage.base",
+          "value": "1d10",
+          "valueType": "string"
+        },
+        {
+          "level": 12,
+          "operator": "set",
+          "target": "items.weapons.unarmedstrike.damage.base",
+          "value": "2d6",
+          "valueType": "string"
+        },
+        {
+          "level": 16,
+          "operator": "set",
+          "target": "items.weapons.unarmedstrike.damage.base",
+          "value": "2d8",
+          "valueType": "string"
+        },
+        {
+          "level": 20,
+          "operator": "set",
+          "target": "items.weapons.unarmedstrike.damage.base",
+          "value": "2d10",
+          "valueType": "string"
+        }
+      ],
+      "reviewed": [
+        "Unarmed Strike"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Monks are proficient with certain basic peasant weapons and some special weapons that are part of monk training. The weapons with which a monk is proficient are club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling. Monks are not proficient with any armor or shields-in fact, many of the monk's special powers require unfettered movement. When wearing armor, using a shield, or carrying a medium or heavy load, a monk loses her AC bonus, as well as her fast movement and flurry of blows abilities.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A monk is highly trained at dodging blows, and she has a sixth sense that lets her avoid even unanticipated attacks. When unarmored and unencumbered, the monk adds her Wisdom bonus (if any) to her AC. In addition, a monk gains a +1 bonus to AC at 5th level. This bonus increases by 1 for every five monk levels thereafter (+2 at 10th, +3 at 15th, and +4 at 20th level). These bonuses to AC apply even against touch attacks or when the monk is flat-footed. She loses these bonuses when she is immobilized or helpless, when she wears any armor, when she carries a shield, or when she carries a medium or heavy load.",
+        "name": "AC Bonus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a monk gains an enhancement bonus to her speed, as shown in the class table. A monk in armor (even light armor) or carrying a medium or heavy load loses this extra speed.",
+        "name": "Fast Movement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When unarmored, a monk may strike with a flurry of blows at the expense of accuracy. When doing so, she may make one extra attack in a round at her highest base attack bonus, but this attack takes a -2 penalty, as does each other attack made that round. The resulting modified base attack bonuses are shown in the Flurry of Blows Attack Bonus column in the class table. This penalty applies for 1 round, so it also affects attacks of opportunity the monk might make before her next action. When a monk reaches 5th level, the penalty lessens to -1, and at 9th level it disappears. A monk must use a full attack action to strike with a flurry of blows. When using flurry of blows, a monk may attack only with unarmed strikes or with special monk weapons (kama, nunchaku, quarterstaff, sai, shuriken, and siangham). She may attack with unarmed strikes and special monk weapons interchangeably as desired. For example, at 6th level, the monk Ember could make one attack with her unarmed strike at an attack bonus of +3 and one attack with a special monk weapon at an attack bonus of +3. When using weapons as part of a flurry of blows, a monk applies her Strength bonus (not Str bonus Ã- 1-1/2 or Ã- 1/2) to her damage rolls for all successful attacks, whether she wields a weapon in one or both hands. The monk can't use any weapon other than a special monk weapon as part of a flurry of blows. In the case of the quarterstaff, each end counts as a separate weapon for the purpose of using the flurry of blows ability. Even though the quarterstaff requires two hands to use, a monk may still intersperse unarmed strikes with quarterstaff strikes, assuming that she has enough attacks in her flurry of blows routine to do so. For example, an 8th-level monk could make two attacks with the quarterstaff (one with each end) at a +5 attack bonus and one with an unarmed strike at a +0 attack bonus, or she could attack with one end of the quarterstaff and one unarmed strike each at a +5 attack bonus, and with the other end of the quarterstaff at a +0 attack bonus, or she could attack with one end of the quarterstaff and one unarmed strike at a +5 attack bonus each, and with the other end of the quarterstaff at a +0 attack bonus. She cannot, however, wield any other weapon at the same time that she uses a quarterstaff. When a monk reaches 11th level, her flurry of blows ability improves. In addition to the standard single extra attack she gets from flurry of blows, she gets a second extra attack at her full base attack bonus.",
+        "name": "Flurry of Blows",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 1st level, a monk may select either Improved Grapple or Stunning Fist as a bonus feat. At 2nd level, she may select either Combat Reflexes or Deflect Arrows as a bonus feat. At 6th level, she may select either Improved Disarm or Improved Trip as a bonus feat. A monk need not have any of the prerequisites normally required for these feats to select them.",
+        "name": "Bonus Feat"
+      },
+      {
+        "description": "Monks are highly trained in fighting unarmed, giving them considerable advantages when doing so. At 1st level, a monk gains Improved Unarmed Strike as a bonus feat. A monk's attacks may be with either fist interchangeably or even from elbows, knees, and feet. This means that a monk may even make unarmed strikes with her hands full. There is no such thing as an off-hand attack for a monk striking unarmed. A monk may thus apply her full Strength bonus on damage rolls for all her unarmed strikes. Usually a monk's unarmed strikes deal lethal damage, but she can choose to deal nonlethal damage instead with no penalty on her attack roll. She has the same choice to deal lethal or nonlethal damage while grappling. A monk's unarmed strike is treated both as a manufactured weapon and a natural weapon for the purpose of spells and effects that enhance or improve either manufactured weapons or natural weapons (such as the magic fang and magic weapon spells). A monk also deals more damage with her unarmed strikes than a normal person would, as shown in the class table. The unarmed damage in the class table. A Small monk deals less damage than the amount given there with her unarmed attacks, while a Large monk deals more damage; see Table: Small or Large Monk Unarmed Damage.",
+        "name": "Unarmed Strike"
+      },
+      {
+        "description": "A monk of 2nd level or higher can avoid even magical and unusual attacks with great agility. If she makes a successful Reflex saving throw against an attack that normally deals half damage on a successful save (such as a red dragon's fiery breath or a fireball), she instead takes no damage. Evasion can be used only if a monk is wearing light armor or no armor. A helpless monk (such as one who is unconscious or paralysed) does not gain the benefit of evasion.",
+        "name": "Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A monk of 3rd level or higher gains a +2 bonus on saving throws against spells and effects from the school of enchantment, since her meditation and training improve her resistance to mind-affecting attacks.",
+        "name": "Still Mind",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level, a monk's unarmed attacks are empowered with ki. Her unarmed attacks are treated as magic weapons for the purpose of dealing damage to creatures with damage reduction. Ki strike improves with the character's monk level. At 10th level, her unarmed attacks are also treated as lawful weapons for the purpose of dealing damage to creatures with damage reduction. At 16th level, her unarmed attacks are treated as adamantine weapons for the purpose of dealing damage to creatures with damage reduction and bypassing hardness.",
+        "name": "Ki Strike",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 4th level or higher, a monk within arm's reach of a wall can use it to slow her descent. When first using this ability, she takes damage as if the fall were 20 feet shorter than it actually is. The monk's ability to slow her fall (that is, to reduce the effective distance of the fall when next to a wall) improves with her monk level until at 20th level she can use a nearby wall to slow her descent and fall any distance without harm. See the Special column in the class table.",
+        "name": "Slow Fall",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level, a monk gains control over her body's immune system. She gains immunity to all diseases except for supernatural and magical diseases (such as mummy rot and lycanthropy).",
+        "name": "Purity of Body",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 7th level or higher, a monk can heal her own wounds. She can heal a number of hit points of damage equal to twice her current monk level each day, and she can spread this healing out among several uses.",
+        "name": "Wholeness of Body",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 9th level, a monk's evasion ability improves. She still takes no damage on a successful Reflex saving throw against attacks such as a dragon's breath weapon or a fireball, but henceforth she takes only half damage on a failed save. A helpless monk (such as one who is unconscious or paralysed) does not gain the benefit of improved evasion.",
+        "name": "Improved Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 11th level, a monk is in such firm control of her own metabolism that she gains immunity to poisons of all kinds.",
+        "name": "Diamond Body",
+        "type": "(Su)"
+      },
+      {
+        "description": "",
+        "name": "Greater Flurry"
+      },
+      {
+        "description": "At 12th level or higher, a monk can slip magically between spaces, as if using the spell dimension door, once per day. Her caster level for this effect is one-half her monk level (rounded down).",
+        "name": "Abundant Step",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 13th level, a monk gains spell resistance equal to her current monk level + 10. In order to affect the monk with a spell, a spellcaster must get a result on a caster level check that equals or exceeds the monk's spell resistance.",
+        "name": "Diamond Soul",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 15th level, a monk can set up vibrations within the body of another creature that can thereafter be fatal if the monk so desires. She can use this quivering palm attack once a week, and she must announce her intent before making her attack roll. Constructs, oozes, plants, undead, incorporeal creatures, and creatures immune to critical hits cannot be affected. Otherwise, if the monk strikes successfully and the target takes damage from the blow, the quivering palm attack succeeds. Thereafter the monk can try to slay the victim at any later time, as long as the attempt is made within a number of days equal to her monk level. To make such an attempt, the monk merely wills the target to die (a free action), and unless the target makes a Fortitude saving throw (DC 10 + 1/2 the monk's level + the monk's Wis modifier), it dies. If the saving throw is successful, the target is no longer in danger from that particular quivering palm attack, but it may still be affected by another one at a later time.",
+        "name": "Quivering Palm",
+        "type": "(Su)"
+      },
+      {
+        "description": "Upon attaining 17th level, a monk no longer takes penalties to her ability scores for aging and cannot be magically aged. Any such penalties that she has already taken, however, remain in place. Bonuses still accrue, and the monk still dies of old age when her time is up.",
+        "name": "Timeless Body",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A monk of 17th level or higher can speak with any living creature.",
+        "name": "Tongue of the Sun and Moon",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 19th level, a monk gains the ability to assume an ethereal state for 1 round per monk level per day, as though using the spell etherealness. She may go ethereal on a number of different occasions during any single day, as long as the total number of rounds spent in an ethereal state does not exceed her monk level.",
+        "name": "Empty Body",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 20th level, a monk has tuned her body with skill and quasi-magical abilities to the point that she becomes a magical creature. She is forevermore treated as an outsider (an extraplanar creature) rather than as a humanoid for the purpose of spells and magical effects. For instance, charm person does not affect her. Additionally, the monk gains damage reduction 10/magic, which allows her to ignore the first 10 points of damage from any attackmade by a nonmagical weapon or by any natural attack made by a creature that doesn't have similar damage reduction. Unlike other outsiders, the monk can still be brought back from the dead as if she were a member of her previous creature type.",
+        "name": "Perfect Self"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Listen",
+      "Move Silently",
+      "Perform",
+      "Profession",
+      "Sense Motive",
+      "Spot",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "",
+    "hitDie": "d8",
+    "name": "Monk",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any lawful"
+      },
+      "text": ""
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Bonus feat",
+          "flurry of blows",
+          "unarmed strike"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Bonus feat",
+          "evasion"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Still mind"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Ki strike (magic)",
+          "slow fall 20 ft."
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Purity of body"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Bonus feat",
+          "slow fall 30 ft."
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Wholeness of body"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Slow fall 40 ft."
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Improved evasion"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Ki strike (lawful)",
+          "slow fall 50 ft."
+        ],
+        "willSave": 7
+      },
+      {
+        "bab": 8,
+        "fortSave": 7,
+        "level": 11,
+        "refSave": 7,
+        "special": [
+          "Diamond body",
+          "greater flurry"
+        ],
+        "willSave": 7
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 12,
+        "refSave": 8,
+        "special": [
+          "Abundant step",
+          "slow fall 60 ft."
+        ],
+        "willSave": 8
+      },
+      {
+        "bab": 9,
+        "fortSave": 8,
+        "level": 13,
+        "refSave": 8,
+        "special": [
+          "Diamond soul"
+        ],
+        "willSave": 8
+      },
+      {
+        "bab": 10,
+        "fortSave": 9,
+        "level": 14,
+        "refSave": 9,
+        "special": [
+          "Slow fall 70 ft."
+        ],
+        "willSave": 9
+      },
+      {
+        "bab": 11,
+        "fortSave": 9,
+        "level": 15,
+        "refSave": 9,
+        "special": [
+          "Quivering palm"
+        ],
+        "willSave": 9
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 16,
+        "refSave": 10,
+        "special": [
+          "Ki strike (adamantine)",
+          "slow fall 80 ft."
+        ],
+        "willSave": 10
+      },
+      {
+        "bab": 12,
+        "fortSave": 10,
+        "level": 17,
+        "refSave": 10,
+        "special": [
+          "Timeless body",
+          "tongue of the sun and moon"
+        ],
+        "willSave": 10
+      },
+      {
+        "bab": 13,
+        "fortSave": 11,
+        "level": 18,
+        "refSave": 11,
+        "special": [
+          "Slow fall 90 ft."
+        ],
+        "willSave": 11
+      },
+      {
+        "bab": 14,
+        "fortSave": 11,
+        "level": 19,
+        "refSave": 11,
+        "special": [
+          "Empty body"
+        ],
+        "willSave": 11
+      },
+      {
+        "bab": 15,
+        "fortSave": 12,
+        "level": 20,
+        "refSave": 12,
+        "special": [
+          "Perfect self",
+          "slow fall any distance"
+        ],
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

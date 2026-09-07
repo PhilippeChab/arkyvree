@@ -1,0 +1,11 @@
+import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+const APT = "Tempest Class Feature";
+
+export const TEMPEST_FEATS: FeatSeed[] = [
+  { name: "Ambidexterity (Tempest)", description: "For a tempest of 2nd level or higher, her attack penalties for fighting with two weapons are lessened by 1 (from ?4 to ?3, or from ?2 to ?1 if the off-hand weapon is a light weapon). At 4th level, the attack penalties are lessened by another 1 (from ?3 to ?2, or to +0 if the off-hand weapon is a light weapon). The character loses this ability when fighting in medium or heavy armor.", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Tempest Defense (Tempest)", description: "When wielding a double weapon or two weapons (not including natural weapons or unarmed strikes), a tempest gains a +1 bonus to Armor Class. This bonus increases to +2 at 3rd level and +3 at 5th level. The character loses this ability when fighting in medium or heavy armor.", stackable: true, selectable: false, aptitudes: [APT] },
+  { name: "Two-weapon Spring Attack (Tempest)", description: "When a 5th-level tempest makes a spring attack, she can attack once each with two different weapons as an attack action. The character loses this ability when fighting in medium or heavy armo", selectable: false, aptitudes: [APT] },
+  { name: "Two-weapon Versatility (Tempest)", description: "When a tempest of 3rd level or higher fights with two weapons, she can apply the effects of certain feats from one weapon to the other weapon as well, as long as those effects can be applied legally. She can use this ability only with the following feats: Greater Weapon Focus, Greater Weapon Specialization, Improved Critical, Weapon Focus, and Weapon Specialization. For example, a tempest who wields a longsword and a short sword and who has the Weapon Focus (longsword) feat can apply the effect of Weapon Focus to her short sword as well as to her longsword. If a tempest already has the feat with both weapons, she gains no additional effect.", selectable: false, aptitudes: [APT] },
+  { name: "Weapon and Armor Proficiency (Tempest)", description: "Tempests gain no proficiency with any weapon or armor.", selectable: false, aptitudes: [APT] },
+];

@@ -1,0 +1,440 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.353Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/shadowbane-inquisitor/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "powerattack": "Power Attack",
+      "turnorrebukeundead": "Turn or Rebuke Undead"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Absolute Conviction"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Pierce Shadows"
+      },
+      {
+        "levels": [
+          2,
+          7
+        ],
+        "name": "Sacred Stealth"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Smite"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Improved Sunder"
+      },
+      {
+        "levels": [
+          4,
+          7,
+          10
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Merciless Purity"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Righteous Fervor"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Burning Light"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.gatherinformation.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sensemotive.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.powerattack.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.beliefs.alignment",
+        "value": "Lawful Good",
+        "valueType": "string"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.turnorrebukeundead.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Shadowbane Inquisitor Class Feature",
+    "features": {
+      "Absolute Conviction": {
+        "description": "Should a shadowbane inquisitor's alignment ever change from lawful good for any reason, he may not take additional levels in this prestige class, but he does not lose any class abilities from levels already attained.",
+        "level": 1,
+        "seedName": "Absolute Conviction (Shadowbane Inquisitor)"
+      },
+      "Burning Light": {
+        "description": "At 9th level and higher, an inquisitor can spend one of his daily uses of his turn undead ability to deal damage to creatures around him. To do this, he must already have his pierce shadows ability active. All creatures within the illuminated area (except for the inquisitor) take 4d6 points of damage. This damage results directly from divine power and is not subject to being reduced by energy resistance. Using this ability requires a standard action.",
+        "level": 9,
+        "seedName": "Burning Light (Shadowbane Inquisitor)"
+      },
+      "Improved Sunder": {
+        "description": "At 3rd level, a shadowbane becomes accomplished at shattering the weapons of his foes and tainted magic items. He gains the Improved Sunder feat as a bonus feat.",
+        "level": 3,
+        "seedName": "Improved Sunder (Shadowbane Inquisitor)"
+      },
+      "Merciless Purity": {
+        "description": "Beginning at 5th level, a shadowbane inquisitor benefits when his enemies perish. Upon the death of a creature that the inquisitor has designated as corrupt, he gains a +1 sacred bonus on his Fortitude and Reflex saves for the next 24 hours. An inquisitor designates a creature as corrupt in his eyes by using his smite ability as part of a melee attack against the creature. The inquisitor need not kill the creature himself. An inquisitor can benefit from this ability only once per day; subsequent deaths of creatures that he has designated as corrupt grant no special benefit.",
+        "level": 5,
+        "seedName": "Merciless Purity (Shadowbane Inquisitor)"
+      },
+      "Pierce Shadows": {
+        "description": "A shadowbane inquisitor can spend one of his daily uses of his turn undead ability to shed a holy radiance. This light brightly illuminates an area in a radius of 20 feet plus 5 feet per class level of the inquisitor. The light is centered on the inquisitor and sheds no shadowy illumination beyond its border. This radiance lasts for 10 minutes per inquisitor class level.",
+        "level": 1,
+        "seedName": "Pierce Shadows (Shadowbane Inquisitor)"
+      },
+      "Righteous Fervor": {
+        "description": "When an inquisitor of 8th level or higher designates a creature as corrupt, he gains a +1 sacred bonus on attack and damage rolls against that creature for the rest of the encounter. The inquisitor designates a creature as corrupt by using his smite ability as part of a melee attack against the creature. This bonus does not apply to the smite attempt itself, only to subsequent attacks against the same creature made in that encounter.",
+        "level": 8,
+        "seedName": "Righteous Fervor (Shadowbane Inquisitor)"
+      },
+      "Sacred Stealth": {
+        "description": "Starting at 2nd level, a shadowbane inquisitor can channel some of his divine spell power to become stealthier. To do this, he must lose a prepared divine spell from memory (or give up a potential spell slot for the day if he casts spells as a sorcerer). He gains a +4 sacred bonus on Hide and Move Silently checks for a number of minutes equal to his Charisma bonus (if any) plus the level of spell given up in this manner. At 7th level, the bonus increases to +8. Using this ability is a swift action that does not provoke attacks of opportunity.",
+        "level": 2,
+        "seedName": "Sacred Stealth (Shadowbane Inquisitor)",
+        "stackable": true
+      },
+      "Smite": {
+        "description": "Once per day, a shadowbane inquisitor of 2nd level or higher can attempt to smite a creature that he judges to be corrupt with one normal melee attack. He adds his Charisma bonus (if any) to his attack roll and deals an extra 1 point of damage per inquisitor class level. Unlike with a paladin's smite evil ability, an inquisitor relies only on his own judgment when determining what creatures to use this ability against. How an inquisitor uses this ability exemplifies his outlook on the world. The more suspicious and uncompromising an inquisitor is, the more likely he is to feel that a creature should be struck down. An inquisitor can use this ability twice per day at 6th level and three times per day at 10th level.",
+        "level": 2,
+        "seedName": "Smite (Shadowbane Inquisitor)",
+        "stackable": true
+      },
+      "Sneak Attack": {
+        "description": "Beginning at 4th level, a shadowbane inquisitor deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 7th level and 3d6 points at 10th level. See the rogue class feature of the Player's Handbook. If a shadowbane inquisitor gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "level": 4,
+        "seedName": "Sneak Attack (Shadowbane Inquisitor)",
+        "stackable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Shadowbane inquisitors are proficient with all simple and martial weapons, with all types of armor, and with shields (except tower shields).",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Shadowbane Inquisitor)"
+      }
+    },
+    "occurrenceMap": {
+      "Absolute Conviction": "Absolute Conviction",
+      "Burning Light": "Burning Light",
+      "Improved Sunder": "Improved Sunder",
+      "Merciless Purity": "Merciless Purity",
+      "Pierce Shadows": "Pierce Shadows",
+      "Righteous Fervor": "Righteous Fervor",
+      "Sacred Stealth": "Sacred Stealth",
+      "Smite": "Smite",
+      "Sneak Attack": "Sneak Attack"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Shadowbane inquisitors are proficient with all simple and martial weapons, with all types of armor, and with shields (except tower shields).",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Should a shadowbane inquisitor's alignment ever change from lawful good for any reason, he may not take additional levels in this prestige class, but he does not lose any class abilities from levels already attained.",
+        "name": "Absolute Conviction",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A shadowbane inquisitor can spend one of his daily uses of his turn undead ability to shed a holy radiance. This light brightly illuminates an area in a radius of 20 feet plus 5 feet per class level of the inquisitor. The light is centered on the inquisitor and sheds no shadowy illumination beyond its border. This radiance lasts for 10 minutes per inquisitor class level.",
+        "name": "Pierce Shadows",
+        "type": "(Su)"
+      },
+      {
+        "description": "Starting at 2nd level, a shadowbane inquisitor can channel some of his divine spell power to become stealthier. To do this, he must lose a prepared divine spell from memory (or give up a potential spell slot for the day if he casts spells as a sorcerer). He gains a +4 sacred bonus on Hide and Move Silently checks for a number of minutes equal to his Charisma bonus (if any) plus the level of spell given up in this manner. At 7th level, the bonus increases to +8. Using this ability is a swift action that does not provoke attacks of opportunity.",
+        "name": "Sacred Stealth",
+        "type": "(Su)"
+      },
+      {
+        "description": "Once per day, a shadowbane inquisitor of 2nd level or higher can attempt to smite a creature that he judges to be corrupt with one normal melee attack. He adds his Charisma bonus (if any) to his attack roll and deals an extra 1 point of damage per inquisitor class level. Unlike with a paladin's smite evil ability, an inquisitor relies only on his own judgment when determining what creatures to use this ability against. How an inquisitor uses this ability exemplifies his outlook on the world. The more suspicious and uncompromising an inquisitor is, the more likely he is to feel that a creature should be struck down. An inquisitor can use this ability twice per day at 6th level and three times per day at 10th level.",
+        "name": "Smite",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 3rd level, a shadowbane becomes accomplished at shattering the weapons of his foes and tainted magic items. He gains the Improved Sunder feat as a bonus feat.",
+        "name": "Improved Sunder"
+      },
+      {
+        "description": "Beginning at 4th level, a shadowbane inquisitor deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 7th level and 3d6 points at 10th level. See the rogue class feature of the Player's Handbook. If a shadowbane inquisitor gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 5th level, a shadowbane inquisitor benefits when his enemies perish. Upon the death of a creature that the inquisitor has designated as corrupt, he gains a +1 sacred bonus on his Fortitude and Reflex saves for the next 24 hours. An inquisitor designates a creature as corrupt in his eyes by using his smite ability as part of a melee attack against the creature. The inquisitor need not kill the creature himself. An inquisitor can benefit from this ability only once per day; subsequent deaths of creatures that he has designated as corrupt grant no special benefit.",
+        "name": "Merciless Purity",
+        "type": "(Su)"
+      },
+      {
+        "description": "When an inquisitor of 8th level or higher designates a creature as corrupt, he gains a +1 sacred bonus on attack and damage rolls against that creature for the rest of the encounter. The inquisitor designates a creature as corrupt by using his smite ability as part of a melee attack against the creature. This bonus does not apply to the smite attempt itself, only to subsequent attacks against the same creature made in that encounter.",
+        "name": "Righteous Fervor",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 9th level and higher, an inquisitor can spend one of his daily uses of his turn undead ability to deal damage to creatures around him. To do this, he must already have his pierce shadows ability active. All creatures within the illuminated area (except for the inquisitor) take 4d6 points of damage. This damage results directly from divine power and is not subject to being reduced by energy resistance. Using this ability requires a standard action.",
+        "name": "Burning Light",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Gather Information",
+      "Heal",
+      "Hide",
+      "Jump",
+      "Knowledge (Religion)",
+      "Move Silently",
+      "Profession",
+      "Search",
+      "Sense Motive",
+      "Swim"
+    ],
+    "description": "Shadowbane inquisitors battle incessantly against evil in whatever form it takes.",
+    "hitDie": "d10",
+    "name": "Shadowbane Inquisitor",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Lawful good",
+        "bab": 5,
+        "feats": [
+          "Power Attack"
+        ],
+        "skills": [
+          {
+            "name": "Gather Information",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 2
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Detect evil class feature or ability to cast detect evil as a divine spell, Turn undead class feature, Sneak attack class feature."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Lawful good Skills: Gather Information 4 ranks, Knowledge (religion) 2 ranks, Sense Motive 8 ranks Feats: Power Attack Special: Detect evil class feature or ability to cast detect evil as a divine spell, Turn undead class feature, Sneak attack class feature."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Absolute conviction",
+          "pierce shadows"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Sacred stealth (+4)",
+          "smite 1/day"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Improved Sunder"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Merciless purity"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Smite 2/day"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Sacred stealth (+8)",
+          "sneak attack +2d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Righteous fervor"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Burning light"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Smite 3/day",
+          "sneak attack +3d6"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

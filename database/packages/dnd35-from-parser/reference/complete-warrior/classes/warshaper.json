@@ -1,0 +1,255 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:27:10.616Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/warshaper/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Morphic Immunities"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Morphic Weapons"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Morphic Body"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Morphic Reach"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Morphic Healing"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Flashmorph/Multimorph"
+      }
+    ],
+    "hd": 8,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Warshaper Class Feature",
+    "features": {
+      "Flashmorph/multimorph": {
+        "description": "Upon reaching 5th level, a warshaper receives one of two abilities depending on how she changes form. If the warshaper possesses an at-will form-changing capability - such as the change shape ability, the shapechanger subtype, or an at-will polymorph spell-like ability - she gains flashmorph, which lets her shift form as a move action. If instead she uses the polymorph spell, has polymorph as a spell-like ability with limited daily uses, or possesses wild shape, she gains multimorph. Multimorph permits the warshaper to assume different forms multiple times within a single use of whatever spell, spell-like ability, or class feature grants her shapeshifting. For instance, a wizard/warshaper could spend 2 minutes as a troll, then switch to a red dragon for 4 minutes, and use the remaining duration as a hill giant. Each subsequent transformation requires a standard action, and only the initial change restores hit points. If the warshaper reverts to her natural form, the spell, spell-like ability, or wild shape usage ends immediately.",
+        "level": 5,
+        "seedName": "Flashmorph/multimorph (Warshaper)"
+      },
+      "Morphic Body": {
+        "description": "Starting at 2nd level, a warshaper exercises fine-tuned command over her physical structure to enhance her power and endurance. She receives a +4 bonus to Strength and a +4 bonus to Constitution.",
+        "level": 2,
+        "seedName": "Morphic Body (Warshaper)"
+      },
+      "Morphic Healing": {
+        "description": "At 4th level, a warshaper learns to reshape her flesh around injuries, smoothing damaged tissue back into wholeness. She gains fast healing 2. Additionally, by spending a full-round action and succeeding on a Concentration check (DC equal to her total damage sustained), she can restore 10 hit points.",
+        "level": 4,
+        "seedName": "Morphic Healing (Warshaper)"
+      },
+      "Morphic Immunities": {
+        "description": "A warshaper becomes skilled at relocating and redistributing vital organs throughout her body to protect them from targeted strikes. She is immune to stunning and critical hits.",
+        "level": 1,
+        "seedName": "Morphic Immunities (Warshaper)"
+      },
+      "Morphic Reach": {
+        "description": "At 3rd level or higher, a warshaper can abruptly extend her limbs, neck, or other body parts, increasing her reach by 5 feet beyond that of the creature whose form she has taken. Other creatures cannot tell the warshaper has extended reach until she actually uses it.",
+        "level": 3,
+        "seedName": "Morphic Reach (Warshaper)"
+      },
+      "Morphic Weapons": {
+        "description": "By spending a move action, a warshaper can sprout natural weapons like claws or fangs, gaining a natural attack that deals damage appropriate for her current form's size. These grown weapons do not need to be ones the assumed creature naturally has. For instance, a warshaper in the form of an ettin (Large giant) could produce claws dealing 1d6 damage, or horns for a gore attack dealing 1d8 damage. If the warshaper's current shape already includes a natural weapon of that type, the weapon inflicts damage as though the creature were one size category larger. As an example, a warshaper who used wild shape to become a dire wolf (Large animal) could enlarge her jaws, making her bite deal 2d6 damage (as for a Huge animal) rather than the standard 1d8. The warshaper may alter her morphic weapons as frequently as she wishes, even when using a shapeshifting method like polymorph or wild shape that normally prevents further changes after the first transformation.",
+        "level": 1,
+        "seedName": "Morphic Weapons (Warshaper)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Warshaper)"
+      }
+    },
+    "occurrenceMap": {
+      "Flashmorph/Multimorph": "Flashmorph/multimorph",
+      "Morphic Body": "Morphic Body",
+      "Morphic Healing": "Morphic Healing",
+      "Morphic Immunities": "Morphic Immunities",
+      "Morphic Reach": "Morphic Reach",
+      "Morphic Weapons": "Morphic Weapons"
+    },
+    "overrides": {
+      "description": "A warshaper develops and reshapes her own body, growing custom natural weaponry and defenses tailored to whatever challenge she faces.",
+      "features": {
+        "Flashmorph/multimorph": {
+          "description": "Upon reaching 5th level, a warshaper receives one of two abilities depending on how she changes form. If the warshaper possesses an at-will form-changing capability - such as the change shape ability, the shapechanger subtype, or an at-will polymorph spell-like ability - she gains flashmorph, which lets her shift form as a move action. If instead she uses the polymorph spell, has polymorph as a spell-like ability with limited daily uses, or possesses wild shape, she gains multimorph. Multimorph permits the warshaper to assume different forms multiple times within a single use of whatever spell, spell-like ability, or class feature grants her shapeshifting. For instance, a wizard/warshaper could spend 2 minutes as a troll, then switch to a red dragon for 4 minutes, and use the remaining duration as a hill giant. Each subsequent transformation requires a standard action, and only the initial change restores hit points. If the warshaper reverts to her natural form, the spell, spell-like ability, or wild shape usage ends immediately."
+        },
+        "Morphic Body": {
+          "description": "Starting at 2nd level, a warshaper exercises fine-tuned command over her physical structure to enhance her power and endurance. She receives a +4 bonus to Strength and a +4 bonus to Constitution."
+        },
+        "Morphic Healing": {
+          "description": "At 4th level, a warshaper learns to reshape her flesh around injuries, smoothing damaged tissue back into wholeness. She gains fast healing 2. Additionally, by spending a full-round action and succeeding on a Concentration check (DC equal to her total damage sustained), she can restore 10 hit points."
+        },
+        "Morphic Immunities": {
+          "description": "A warshaper becomes skilled at relocating and redistributing vital organs throughout her body to protect them from targeted strikes. She is immune to stunning and critical hits."
+        },
+        "Morphic Reach": {
+          "description": "At 3rd level or higher, a warshaper can abruptly extend her limbs, neck, or other body parts, increasing her reach by 5 feet beyond that of the creature whose form she has taken. Other creatures cannot tell the warshaper has extended reach until she actually uses it."
+        },
+        "Morphic Weapons": {
+          "description": "By spending a move action, a warshaper can sprout natural weapons like claws or fangs, gaining a natural attack that deals damage appropriate for her current form's size. These grown weapons do not need to be ones the assumed creature naturally has. For instance, a warshaper in the form of an ettin (Large giant) could produce claws dealing 1d6 damage, or horns for a gore attack dealing 1d8 damage. If the warshaper's current shape already includes a natural weapon of that type, the weapon inflicts damage as though the creature were one size category larger. As an example, a warshaper who used wild shape to become a dire wolf (Large animal) could enlarge her jaws, making her bite deal 2d6 damage (as for a Huge animal) rather than the standard 1d8. The warshaper may alter her morphic weapons as frequently as she wishes, even when using a shapeshifting method like polymorph or wild shape that normally prevents further changes after the first transformation."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Warshapers gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A warshaper is adept at distributing her form's vital organs around her body to keep them safe from harm. Warshapers are immune to stunning and critical hits.",
+        "name": "Morphic Immunities",
+        "type": "(Ex)"
+      },
+      {
+        "description": "As a move action, a warshaper can grow natural weapons such as claws or fangs, allowing a natural attack that deals the appropriate amount of damage according to the size of the new form. These morphic weapons need not be natural weapons that the creature already possesses. For example, a warshaper polymorphed into an ettin (Large giant) could grow a claw that deals 1d6 points of damage, or horns for a gore attack that deals 1d8 points of damage. If the warshaper's form already has a natural weapon of that type, the weapon deals damage as if it were one category larger. For example, a warshaper who used wild shape to become a dire wolf (Large animal) could grow its jaw and snout, enabling a bite attack that deals 2d6 points of damage (as a for Huge animal), not the normal 1d8. A warshaper can change morphic weapons as often as it likes, even if it is using a shapechanging technique such as the polymorph spell or the wild shape class feature that doesn't allow subsequent changes after the initial transformation.",
+        "name": "Morphic Weapons",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level and higher, a warshaper can use its precise control over its form to make itself stronger and heartier. It gains +4 to Strength and +4 to Constitution.",
+        "name": "Morphic Body",
+        "type": "(Su)"
+      },
+      {
+        "description": "A warshaper of 3rd level or higher can suddenly stretch its limbs, neck, or other appendages outward, giving it 5 more feet of reach than the creature it's emulating. Unlike most creatures, warshapers don't appear to have a longer reach until they actually use it.",
+        "name": "Morphic Reach",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 4th level, a warshaper becomes able to change its form where wounds appear, creating smooth skin where once were wounds. The warshaper gains fast healing 2, and if it spends a full-round action and succeeds on a Concentration check (DC equal to the total damage it has sustained), it heals 10 points of damage.",
+        "name": "Morphic Healing",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 5th-level warshaper gains one of two class features. If the warshaper has the ability to change form at will, such as from the change shape ability, the shapechanger subtype, or a polymorph spell-like ability, it gains the flashmorph class feature, allowing it to change form as a move action. If it casts the polymorph spell, has polymorph as a spell-like ability usable less often than at will, or has the wild shape class feature, it instead gains the multimorph class feature. Multimorph allows a warshaper to change forms multiple times during the duration of the spell, spell-like ability, or class feature that enables her to change form. For example, a wizard/warshaper could polymorph into a troll for 2 minutes, then change into a red dragon for 4 minutes, and then spend the rest of the spell's duration in the form of a hill giant. Each change requires a standard action, and only the first transformation heals the warshaper. If the warshaper changes into its natural form, the spell, spell-like ability, or use of wild shape ends.",
+        "name": "Flashmorph/multimorph",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Disguise",
+      "Escape Artist",
+      "Jump",
+      "Swim"
+    ],
+    "description": "The warshaper grows and evolves her own weapons and armor to suit the threat at hand.",
+    "hitDie": "d8",
+    "name": "Warshaper",
+    "prerequisites": {
+      "parsed": {
+        "bab": 4,
+        "special": [
+          "Race: Any (but see below)",
+          "Must be able to change shape in one of the following five ways:"
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Race: Any (but see below).Special: Must be able to change shape in one of the following five ways: Change shape supernatural ability (aranea, hound archon, barghest, doppelganger, rakshasa, slaad). Shapechanger subtype (lycanthropes, phasm). Polymorph as a spell-like ability (astral deva, planetar, solar, couatl, marilith, bronze dragon, gold dragon, silver dragon, efreeti, leonal guardinal, night hag, ogre mage, pixie). Able to cast the Polymorph spell. Wild shape or similar class feature (bear warrior, druid). The alternate form ability (possesed by quasits, vampires, and others) is insufficient to become a warshaper."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Morphic immunities",
+          "morphic weapons"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 1,
+        "special": [
+          "Morphic body"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Morphic reach"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Morphic healing"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Flashmorph/multimorph"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

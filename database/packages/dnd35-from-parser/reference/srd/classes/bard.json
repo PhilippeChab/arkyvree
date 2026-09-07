@@ -1,0 +1,1217 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-03-23T01:56:26.279Z",
+    "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/bard/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterType": "Arcane",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bardic Music"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bardic Knowledge"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Countersong"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Fascinate"
+      },
+      {
+        "levels": [
+          1,
+          8,
+          14,
+          20
+        ],
+        "name": "Inspire Courage"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Inspire Competence"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Suggestion"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Inspire Greatness"
+      },
+      {
+        "levels": [
+          12
+        ],
+        "name": "Song Of Freedom"
+      },
+      {
+        "levels": [
+          15
+        ],
+        "name": "Inspire Heroics"
+      },
+      {
+        "levels": [
+          18
+        ],
+        "name": "Mass Suggestion"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 6,
+    "levels": 20,
+    "requirements": [
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "good"
+    },
+    "skillPoints": 6,
+    "spellsKnown": [
+      [
+        4
+      ],
+      [
+        5,
+        2
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        6,
+        3,
+        2
+      ],
+      [
+        6,
+        4,
+        3
+      ],
+      [
+        6,
+        4,
+        3
+      ],
+      [
+        6,
+        4,
+        4,
+        2
+      ],
+      [
+        6,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        4,
+        4,
+        4,
+        2
+      ],
+      [
+        6,
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        4,
+        4,
+        4,
+        4,
+        2
+      ],
+      [
+        6,
+        4,
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        4,
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        5,
+        4,
+        4,
+        4,
+        4,
+        2
+      ],
+      [
+        6,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        4,
+        4,
+        3
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        5,
+        4,
+        4
+      ],
+      [
+        6,
+        5,
+        5,
+        5,
+        5,
+        5,
+        4
+      ]
+    ],
+    "spellsPerDay": [
+      [
+        2
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        1
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        4,
+        3,
+        3,
+        3,
+        3,
+        1
+      ],
+      [
+        4,
+        4,
+        3,
+        3,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        3,
+        3,
+        2,
+        0
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        1
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        2
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatureAptitude": "Bard Class Feature",
+    "features": {
+      "Bardic Knowledge": {
+        "description": "Through years of travel and swapping tales with fellow performers, a bard accumulates a wide assortment of miscellaneous lore. The bard can attempt a special bardic knowledge check, adding his bard level + his Intelligence modifier to the roll, to determine whether he recalls useful information about notable local figures, legendary artifacts, or remarkable locations. (A bard who possesses 5 or more ranks in Knowledge (history) gains an additional +2 bonus on this check.) Taking 10 or taking 20 is not permitted on this check, as this type of knowledge is inherently unpredictable.",
+        "level": 1,
+        "seedName": "Bardic Knowledge (Bard)"
+      },
+      "Bardic Music": {
+        "description": "A number of times per day equal to his bard level, a bard can channel magical effects through song or spoken performance. Although these abilities are collectively called bardic music, they can be activated through any combination of singing, chanting, reciting poetry, whistling, or playing a musical instrument. Each bardic music ability has both a minimum bard level requirement and a minimum number of Perform skill ranks; a bard who lacks the required ranks in at least one Perform skill cannot use that ability until he acquires them. Initiating a bardic music effect requires a standard action. Certain bardic music abilities demand concentration, requiring a standard action each round to sustain. Even when using bardic music that does not need concentration, a bard is unable to cast spells, use spell completion items (like scrolls), spell trigger items (like wands), or command word items. Similar to casting a spell with a verbal component, a deaf bard has a 20% chance of failing when attempting bardic music. A failed attempt still counts against the bard's daily uses.",
+        "level": 1,
+        "seedName": "Bardic Music (Bard)"
+      },
+      "Countersong": {
+        "description": "A bard who has at least 3 ranks in a Perform skill can use his performance to disrupt magical effects that rely on sound (though not spells that merely have verbal components). Each round he maintains the countersong, the bard makes a Perform check. Any creature within 30 feet of him (the bard included) that is targeted by a sonic or language-dependent magical attack (such as sound burst or command) can substitute the bard's Perform check result for its own saving throw, provided the Perform result is higher than the saving throw roll. A creature already suffering from an ongoing (non-instantaneous) sonic or language-dependent magical effect gains a new saving throw each round it can hear the countersong, using the bard's Perform check result in place of its normal save. Effects that do not permit saving throws are unaffected by countersong. The bard can sustain the countersong for up to 10 rounds.",
+        "level": 1,
+        "seedName": "Countersong (Bard)"
+      },
+      "Fascinate": {
+        "description": "A bard who has at least 3 ranks in a Perform skill can captivate one or more creatures through his performance. Each target must be within 90 feet, capable of seeing and hearing the bard, and able to give him its attention. The bard must be able to see the target as well. Nearby combat or other immediate dangers prevent this ability from taking effect. For every three bard levels beyond 1st, the bard can affect one additional creature per use of this ability. When activating fascinate, the bard makes a Perform check; the result serves as the DC for each target's Will save. A creature that succeeds on its save is immune to that bard's fascinate for 24 hours. On a failed save, the creature sits quietly and listens, taking no other actions, for as long as the bard continues performing and concentrating (to a maximum duration of 1 round per bard level). A fascinated creature suffers a -4 penalty on reactive skill checks such as Listen and Spot. If a potential threat arises, the bard must make a new Perform check, and each fascinated creature receives another Will save against the new result. An obvious threat -- such as someone drawing a weapon, casting a spell, or aiming a ranged weapon at the creature -- automatically ends the effect. Fascinate is an enchantment (compulsion), mind-affecting ability.",
+        "level": 1,
+        "seedName": "Fascinate (Bard)"
+      },
+      "Inspire Competence": {
+        "description": "Starting at 3rd level, a bard who has at least 6 ranks in a Perform skill can use his performance to aid an ally with a specific task. The ally must be within 30 feet and able to both see and hear the bard, and the bard must be able to see the ally. Through uplifting music or focused encouragement, the bard grants the ally a +2 competence bonus on checks with one particular skill, lasting as long as the ally continues to hear the performance. The GM may determine that certain applications are impractical -- for instance, chanting to help a rogue sneak more quietly would be self-defeating. The bard must concentrate to maintain this effect, up to a maximum of 2 minutes. A bard cannot use inspire competence on himself. This is a mind-affecting ability.",
+        "level": 3,
+        "seedName": "Inspire Competence (Bard)"
+      },
+      "Inspire Courage": {
+        "description": "A bard who has at least 3 ranks in a Perform skill can rally his allies (and himself) through song or poetry, strengthening their resolve against fear and sharpening their combat prowess. An ally must be able to hear the bard perform to benefit. The effect persists for as long as the ally can hear the performance and continues for 5 rounds after it ends. Each affected ally gains a +1 morale bonus on saving throws against charm and fear effects, as well as a +1 morale bonus on attack rolls and weapon damage rolls. This bonus improves by +1 at 8th level and again every six bard levels after that (+2 at 8th, +3 at 14th, +4 at 20th). Inspire courage is a mind-affecting ability.",
+        "level": 1,
+        "seedName": "Inspire Courage (Bard)",
+        "stackable": true
+      },
+      "Inspire Greatness": {
+        "description": "At 9th level or higher, a bard who has at least 12 ranks in a Perform skill can use his performance to bestow enhanced combat ability upon himself or one willing ally within 30 feet. Every three bard levels beyond 9th allow him to affect one additional ally per use (two at 12th, three at 15th, four at 18th). The bard must be singing, and the target must be able to hear the performance. The effect lasts as long as the target hears the song, plus 5 rounds afterward. A creature benefiting from inspire greatness receives 2 bonus Hit Dice (d10s) along with the corresponding temporary hit points (applying the target's Constitution modifier, if any, to these bonus Hit Dice), a +2 competence bonus on attack rolls, and a +1 competence bonus on Fortitude saves. These bonus Hit Dice are treated as regular Hit Dice when determining how spells like sleep interact with the creature. Inspire greatness is a mind-affecting ability.",
+        "level": 9,
+        "seedName": "Inspire Greatness (Bard)"
+      },
+      "Inspire Heroics": {
+        "description": "At 15th level or higher, a bard who has at least 18 ranks in a Perform skill can stir extraordinary heroism in himself or one willing ally within 30 feet. For every three bard levels beyond 15th, the bard may inspire heroics in one additional creature. The bard must sing, and the target must listen for a full round. A creature so inspired receives a +4 morale bonus on saving throws and a +4 dodge bonus to AC. The effect persists as long as the target hears the bard's song and for up to 5 rounds after it ends. Inspire heroics is a mind-affecting ability.",
+        "level": 15,
+        "seedName": "Inspire Heroics (Bard)"
+      },
+      "Mass Suggestion": {
+        "description": "This ability works identically to suggestion, except that a bard of 18th level or higher who has at least 21 ranks in a Perform skill can deliver the suggestion to any number of creatures he has already fascinated, all at once. Mass suggestion is an enchantment (compulsion), mind-affecting, language-dependent ability.",
+        "level": 18,
+        "seedName": "Mass Suggestion (Bard)"
+      },
+      "Song of Freedom": {
+        "description": "At 12th level or higher, a bard who has at least 15 ranks in a Perform skill can perform a song or recitation that produces an effect identical to break enchantment (using the bard's class level as the caster level). This requires 1 minute of unbroken concentration and music, and affects a single target within 30 feet. The bard cannot use song of freedom on himself.",
+        "level": 12,
+        "seedName": "Song of Freedom (Bard)"
+      },
+      "Spells": {
+        "description": "Bards cast arcane spells of the same type used by sorcerers and wizards, selected from the bard spell list. A bard casts spells spontaneously, without needing to prepare them in advance as wizards and clerics do. All bard spells include a verbal component, whether singing, recitation, or instrumental music. To learn or cast a given spell, a bard needs a Charisma score of at least 10 + the spell's level (Charisma 10 for 0-level spells, Charisma 11 for 1st-level spells, and so on). The saving throw DC against a bard's spell equals 10 + the spell's level + the bard's Charisma modifier. Like other spellcasters, a bard has a limited number of spell slots per day for each spell level, as shown in the class table. A high Charisma score grants bonus spells per day, though the bard only receives bonus spells for levels he can already cast. The bard's repertoire of known spells is quite narrow. A bard starts play knowing four 0-level spells (cantrips) of the player's choice. At most subsequent levels, the bard learns one or more additional spells as indicated in the class table. (The number of spells a bard knows is not influenced by Charisma; only the values in the class table apply.) Beginning at 5th level, and again every three bard levels thereafter (8th, 11th, and so on), a bard may exchange one previously known spell for a different spell of the same level. The replacement spell must be at least two levels lower than the highest-level bard spell the bard is able to cast. For example, at 5th level a bard could swap a single 0-level spell (two levels below his maximum of 2nd) for another 0-level spell. At 8th level, he could replace a 0-level or 1st-level spell (since he can now cast 3rd-level bard spells) with a different spell of the same level. Only one spell may be swapped at a given level, and the choice must be made at the same time the bard gains new spells known for that level. Because bards cast spontaneously, a bard can use any spell he knows at any time, provided he has remaining spell slots for that spell's level.",
+        "level": 1,
+        "seedName": "Spells (Bard)"
+      },
+      "Suggestion": {
+        "description": "Beginning at 6th level, a bard who has at least 9 ranks in a Perform skill can implant a suggestion (functioning as the spell) in the mind of a creature he has already fascinated. Doing so does not interrupt his concentration on the fascinate effect, and the target does not receive a second saving throw against fascinate. Using suggestion does not count against the bard's daily bardic music uses. The target may attempt a Will save (DC 10 + 1/2 the bard's level + the bard's Charisma modifier) to negate the effect. Only a single creature can be targeted at a time (though see mass suggestion). Suggestion is an enchantment (compulsion), mind-affecting, language-dependent ability.",
+        "level": 6,
+        "seedName": "Suggestion (Bard)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Bards are trained in all simple weapons as well as the longsword, rapier, sap, short sword, shortbow, and whip. They can wear light armor and use shields (but not tower shields). Because bard spells involve only minimal somatic gestures, a bard may cast bard spells in light armor without risking arcane spell failure. When wearing medium or heavy armor or carrying a shield, however, a bard faces the standard arcane spell failure chance for any spell with a somatic component (which most spells have). A bard who multiclasses still suffers the normal arcane spell failure chance when casting arcane spells gained from other classes.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortsword.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencylongsword.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyshortbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyrapier.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencywhip.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencysap.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Bard)"
+      }
+    },
+    "occurrenceMap": {
+      "Bardic Knowledge": "Bardic Knowledge",
+      "Bardic Music": "Bardic Music",
+      "Countersong": "Countersong",
+      "Fascinate": "Fascinate",
+      "Inspire Competence": "Inspire Competence",
+      "Inspire Courage": "Inspire Courage",
+      "Inspire Greatness": "Inspire Greatness",
+      "Inspire Heroics": "Inspire Heroics",
+      "Mass Suggestion": "Mass Suggestion",
+      "Song Of Freedom": "Song of Freedom",
+      "Suggestion": "Suggestion"
+    },
+    "overrides": {
+      "alignment": "Any nonlawful",
+      "description": "Traveling performers and lore-keepers who weave arcane magic through music, poetry, and oral tradition. Bards blend artistic talent with supernatural power, drawing on a broad base of knowledge picked up during their wanderings. Their versatility allows them to fill many roles: inspiring allies in battle, unraveling ancient mysteries, and charming both friends and foes with their performances.",
+      "features": {
+        "Bardic Knowledge": {
+          "description": "Through years of travel and swapping tales with fellow performers, a bard accumulates a wide assortment of miscellaneous lore. The bard can attempt a special bardic knowledge check, adding his bard level + his Intelligence modifier to the roll, to determine whether he recalls useful information about notable local figures, legendary artifacts, or remarkable locations. (A bard who possesses 5 or more ranks in Knowledge (history) gains an additional +2 bonus on this check.) Taking 10 or taking 20 is not permitted on this check, as this type of knowledge is inherently unpredictable."
+        },
+        "Bardic Music": {
+          "description": "A number of times per day equal to his bard level, a bard can channel magical effects through song or spoken performance. Although these abilities are collectively called bardic music, they can be activated through any combination of singing, chanting, reciting poetry, whistling, or playing a musical instrument. Each bardic music ability has both a minimum bard level requirement and a minimum number of Perform skill ranks; a bard who lacks the required ranks in at least one Perform skill cannot use that ability until he acquires them. Initiating a bardic music effect requires a standard action. Certain bardic music abilities demand concentration, requiring a standard action each round to sustain. Even when using bardic music that does not need concentration, a bard is unable to cast spells, use spell completion items (like scrolls), spell trigger items (like wands), or command word items. Similar to casting a spell with a verbal component, a deaf bard has a 20% chance of failing when attempting bardic music. A failed attempt still counts against the bard's daily uses."
+        },
+        "Countersong": {
+          "description": "A bard who has at least 3 ranks in a Perform skill can use his performance to disrupt magical effects that rely on sound (though not spells that merely have verbal components). Each round he maintains the countersong, the bard makes a Perform check. Any creature within 30 feet of him (the bard included) that is targeted by a sonic or language-dependent magical attack (such as sound burst or command) can substitute the bard's Perform check result for its own saving throw, provided the Perform result is higher than the saving throw roll. A creature already suffering from an ongoing (non-instantaneous) sonic or language-dependent magical effect gains a new saving throw each round it can hear the countersong, using the bard's Perform check result in place of its normal save. Effects that do not permit saving throws are unaffected by countersong. The bard can sustain the countersong for up to 10 rounds."
+        },
+        "Fascinate": {
+          "description": "A bard who has at least 3 ranks in a Perform skill can captivate one or more creatures through his performance. Each target must be within 90 feet, capable of seeing and hearing the bard, and able to give him its attention. The bard must be able to see the target as well. Nearby combat or other immediate dangers prevent this ability from taking effect. For every three bard levels beyond 1st, the bard can affect one additional creature per use of this ability. When activating fascinate, the bard makes a Perform check; the result serves as the DC for each target's Will save. A creature that succeeds on its save is immune to that bard's fascinate for 24 hours. On a failed save, the creature sits quietly and listens, taking no other actions, for as long as the bard continues performing and concentrating (to a maximum duration of 1 round per bard level). A fascinated creature suffers a -4 penalty on reactive skill checks such as Listen and Spot. If a potential threat arises, the bard must make a new Perform check, and each fascinated creature receives another Will save against the new result. An obvious threat -- such as someone drawing a weapon, casting a spell, or aiming a ranged weapon at the creature -- automatically ends the effect. Fascinate is an enchantment (compulsion), mind-affecting ability."
+        },
+        "Inspire Competence": {
+          "description": "Starting at 3rd level, a bard who has at least 6 ranks in a Perform skill can use his performance to aid an ally with a specific task. The ally must be within 30 feet and able to both see and hear the bard, and the bard must be able to see the ally. Through uplifting music or focused encouragement, the bard grants the ally a +2 competence bonus on checks with one particular skill, lasting as long as the ally continues to hear the performance. The GM may determine that certain applications are impractical -- for instance, chanting to help a rogue sneak more quietly would be self-defeating. The bard must concentrate to maintain this effect, up to a maximum of 2 minutes. A bard cannot use inspire competence on himself. This is a mind-affecting ability."
+        },
+        "Inspire Courage": {
+          "description": "A bard who has at least 3 ranks in a Perform skill can rally his allies (and himself) through song or poetry, strengthening their resolve against fear and sharpening their combat prowess. An ally must be able to hear the bard perform to benefit. The effect persists for as long as the ally can hear the performance and continues for 5 rounds after it ends. Each affected ally gains a +1 morale bonus on saving throws against charm and fear effects, as well as a +1 morale bonus on attack rolls and weapon damage rolls. This bonus improves by +1 at 8th level and again every six bard levels after that (+2 at 8th, +3 at 14th, +4 at 20th). Inspire courage is a mind-affecting ability."
+        },
+        "Inspire Greatness": {
+          "description": "At 9th level or higher, a bard who has at least 12 ranks in a Perform skill can use his performance to bestow enhanced combat ability upon himself or one willing ally within 30 feet. Every three bard levels beyond 9th allow him to affect one additional ally per use (two at 12th, three at 15th, four at 18th). The bard must be singing, and the target must be able to hear the performance. The effect lasts as long as the target hears the song, plus 5 rounds afterward. A creature benefiting from inspire greatness receives 2 bonus Hit Dice (d10s) along with the corresponding temporary hit points (applying the target's Constitution modifier, if any, to these bonus Hit Dice), a +2 competence bonus on attack rolls, and a +1 competence bonus on Fortitude saves. These bonus Hit Dice are treated as regular Hit Dice when determining how spells like sleep interact with the creature. Inspire greatness is a mind-affecting ability."
+        },
+        "Inspire Heroics": {
+          "description": "At 15th level or higher, a bard who has at least 18 ranks in a Perform skill can stir extraordinary heroism in himself or one willing ally within 30 feet. For every three bard levels beyond 15th, the bard may inspire heroics in one additional creature. The bard must sing, and the target must listen for a full round. A creature so inspired receives a +4 morale bonus on saving throws and a +4 dodge bonus to AC. The effect persists as long as the target hears the bard's song and for up to 5 rounds after it ends. Inspire heroics is a mind-affecting ability."
+        },
+        "Mass Suggestion": {
+          "description": "This ability works identically to suggestion, except that a bard of 18th level or higher who has at least 21 ranks in a Perform skill can deliver the suggestion to any number of creatures he has already fascinated, all at once. Mass suggestion is an enchantment (compulsion), mind-affecting, language-dependent ability."
+        },
+        "Song of Freedom": {
+          "description": "At 12th level or higher, a bard who has at least 15 ranks in a Perform skill can perform a song or recitation that produces an effect identical to break enchantment (using the bard's class level as the caster level). This requires 1 minute of unbroken concentration and music, and affects a single target within 30 feet. The bard cannot use song of freedom on himself."
+        },
+        "Spells": {
+          "description": "Bards cast arcane spells of the same type used by sorcerers and wizards, selected from the bard spell list. A bard casts spells spontaneously, without needing to prepare them in advance as wizards and clerics do. All bard spells include a verbal component, whether singing, recitation, or instrumental music. To learn or cast a given spell, a bard needs a Charisma score of at least 10 + the spell's level (Charisma 10 for 0-level spells, Charisma 11 for 1st-level spells, and so on). The saving throw DC against a bard's spell equals 10 + the spell's level + the bard's Charisma modifier. Like other spellcasters, a bard has a limited number of spell slots per day for each spell level, as shown in the class table. A high Charisma score grants bonus spells per day, though the bard only receives bonus spells for levels he can already cast. The bard's repertoire of known spells is quite narrow. A bard starts play knowing four 0-level spells (cantrips) of the player's choice. At most subsequent levels, the bard learns one or more additional spells as indicated in the class table. (The number of spells a bard knows is not influenced by Charisma; only the values in the class table apply.) Beginning at 5th level, and again every three bard levels thereafter (8th, 11th, and so on), a bard may exchange one previously known spell for a different spell of the same level. The replacement spell must be at least two levels lower than the highest-level bard spell the bard is able to cast. For example, at 5th level a bard could swap a single 0-level spell (two levels below his maximum of 2nd) for another 0-level spell. At 8th level, he could replace a 0-level or 1st-level spell (since he can now cast 3rd-level bard spells) with a different spell of the same level. Only one spell may be swapped at a given level, and the choice must be made at the same time the bard gains new spells known for that level. Because bards cast spontaneously, a bard can use any spell he knows at any time, provided he has remaining spell slots for that spell's level."
+        },
+        "Suggestion": {
+          "description": "Beginning at 6th level, a bard who has at least 9 ranks in a Perform skill can implant a suggestion (functioning as the spell) in the mind of a creature he has already fascinated. Doing so does not interrupt his concentration on the fascinate effect, and the target does not receive a second saving throw against fascinate. Using suggestion does not count against the bard's daily bardic music uses. The target may attempt a Will save (DC 10 + 1/2 the bard's level + the bard's Charisma modifier) to negate the effect. Only a single creature can be targeted at a time (though see mass suggestion). Suggestion is an enchantment (compulsion), mind-affecting, language-dependent ability."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Bards are trained in all simple weapons as well as the longsword, rapier, sap, short sword, shortbow, and whip. They can wear light armor and use shields (but not tower shields). Because bard spells involve only minimal somatic gestures, a bard may cast bard spells in light armor without risking arcane spell failure. When wearing medium or heavy armor or carrying a shield, however, a bard faces the standard arcane spell failure chance for any spell with a somatic component (which most spells have). A bard who multiclasses still suffers the normal arcane spell failure chance when casting arcane spells gained from other classes."
+        }
+      }
+    },
+    "spells": {
+      "known": [
+        [
+          4
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          3,
+          2
+        ],
+        [
+          6,
+          4,
+          3
+        ],
+        [
+          6,
+          4,
+          3
+        ],
+        [
+          6,
+          4,
+          4,
+          2
+        ],
+        [
+          6,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          4,
+          4,
+          4,
+          2
+        ],
+        [
+          6,
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          4,
+          4,
+          4,
+          4,
+          2
+        ],
+        [
+          6,
+          4,
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          4,
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          5,
+          4,
+          4,
+          4,
+          4,
+          2
+        ],
+        [
+          6,
+          5,
+          5,
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          4,
+          4,
+          3
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          5,
+          4,
+          4
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          5,
+          5,
+          4
+        ]
+      ],
+      "perDay": [
+        [
+          2
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "slug": "bardspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Charisma",
+    "classFeatures": [
+      {
+        "description": "A bard is proficient with all simple weapons, plus the longsword, rapier, sap, short sword, shortbow, and whip. Bards are proficient with light armor and shields (except tower shields). Because the somantic components required for bard spells are relatively simple, a bard can cast bard spells while wearing light armor without incurring the normal arcane spell failure chance. However, like any other arcane spellcaster, a bard wearing medium or heavy armor or using a shield incurs a chance of arcane spell failure if the spell in question has a somatic component (most do). A multiclass bard still incurs the normal arcane spell failure chance for arcane spells received from other classes.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A bard casts arcane spells (the same type of spells available to sorcerers and wizards), which are drawn from the bard spell list. He can cast any spell he knows without preparing it ahead of time the way a wizard or cleric must. Every bard spell has a verbal component (singing, reciting, or music). To learn or cast a spell, a bard must have a Charisma score equal to at least 10 + the spell level (Cha 10 for 0-level spells, Cha 11 fro 1st-level spells and so forth). The Difficulty Class for a saving throw against a bard's spell is 10 + the spell level + the bard's Charisma modifier. Like other spellcasters, a bard can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given on Table: 3-4 The Bard. In addition, he receives bonus spells per day if he has a high Charisma score. When the class table, he gains only the bonus spells he would be entitled to based on his Charisma score for that spell level. The bard's selection of spells is extremely limited. A bard begins play knowing four 0-level spells (all called cantrips) of your choice. At most new bard levels, he gains one or more new spells, as indicated in the class table. (Unlike spells per day, the number of spells a bard knows is not affected by his Charisma score; the numbers in the class table.) Upon reaching 5th level, and at every third bard level after that (8th, 11th, and so on), a bard can choose to learn a new spell in place of one he already knows. In effect, the bard \"loses\" the old spell in exchange for the new one. The new spell's level must be the same as that of the spell being exchanged, and it must be at least two levels lower than the highest-level bard spell the bard can cast. For instance, upon reaching 5th-level, a bard could trade in a single 0-level spell (two levels lower than the highest level he can cast, which is 2nd) for a different 0-level spell. At 8t level, he could trade in a single 0-level or 1st-level spell (since he can now cast 3rd-level bard spells) for a different spell of the same level. A bard may swap only a single spell at any given level, and must choose whether or not to swap the spell at the same time that he gains new spells known for the level. As noted above, a bard need not prepare his spells in advance. He can cast any spell he knows at any time, assuming he has not yet used up his allotment of spells per day for the spell's level. For example, at 1st level, Gimble the bard can cast two 0-level spells per day for being 1st level (. However, knows four 0-level spells: detect magic, ghost sound, light, and read magic (. Thus on any given day, he can cast some combination of those four spells a total of two times. He does not have to decide ahead of time which spells he can cast.",
+        "name": "Spells"
+      },
+      {
+        "description": "Once per day per bard level, a bard can use his song or poetics to produce magical effects on those around him (usually including himself, if desired). While these abilities fall under the category of bardic music and the descriptions discuss singing or playing instruments, they can all be activated by reciting poetry, chanting, singing lyrical songs, singing melodies, whistling, playing an instrument, or playing an instrument in combination with some spoken performance. Each ability requires both a minimum bard level and a minimum number of ranks in the Perform skill to qualify; if a bard does not have the required number of ranks in at least one Perform skill, he does not gain the bardic music ability until he acquires the needed ranks. Starting a bardic music effect is a standard action. Some bardic music abilities require concentration, which means the bard must take a standard action each round to maintain the ability. Even while using bardic music that doesn't require concentration, a bard cannot cast spells, activate magic items by spell completion (such as scrolls), spell trigger (such as wands), or command word. Just as for casting a spell with a verbal component, a deaf bard has a 20% chance to fail when attempting to use bardic music. If he fails, the attempt still counts against his daily limit.",
+        "name": "Bardic Music"
+      },
+      {
+        "description": "A bard picks up a lot of stray knowledge while wondering the land and learning stories from other bards. He may make a special bardic knowledge check with a bonus equal to his bard level + his Intelligence modifier to see whether he knows some relevant information about local notable people, legendary items, or noteworthy places. (If the bard has 5 or more ranks in Knowledge (history), he gains a +2 bonus on this check.) A bard may not take 10 or take 20 on this check; this sort of knowledge is essentially random.",
+        "name": "Bardic Knowledge"
+      },
+      {
+        "description": "A bard with 3 or more ranks in a Perform skill can use his music or poetics to counter magical effects that depend on sound (but not spells that simply have verbal components). Each round of the countersong, he makes a Perform check. Any creature within 30 feet of the bard (including the bard himself) that is affected by a sonic or language-dependent magical attack (such as sound burst or command spell) may use the bard's Perform check result in place of its saving throw if, after the saving throw is rolled, the Perform check result proves to be higher. If a creature within range of the countersong is already under the effect of a non-instantaneous sonic or language-dependent magical attack, it gains another saving throw against the effect each round it hears the countersong, but it must use the bard's Perform check result for the save. Countersong has no effect against effects that don't allow saves. The bard may keep up the countersong for 10 rounds.",
+        "name": "Countersong",
+        "type": "(Su)"
+      },
+      {
+        "description": "A bard with 3 or more ranks in a Perform skill can use his music or poetics to cause one or more creatures to become fascinated with him. Each creature to be fascinated must be within 90 feet, able to see and hear the bard, and able to pay attention to him. The bard must also be able to see the creature. The distraction of a nearby combat or other dangers prevents the ability from working. For every three levels a bard attains beyond 1st, he can target one additional creature with a single use of this ability. To use the ability, a bard makes a Perform check. His check result is the DC for each affected creature's Will save against the effect. If a creature's saving throw succeeds, the bard cannot attempt to fascinate that creature again for 24 hours. If its saving throw fails, the creature sits quietly and listens to the song, taking no other actions, for as long as the bard continues to play and concentrate (up to a maximum of 1 round per bard level). While fascinated, a target takes a -4 penalty on skill checks made as reactions, such as Listen and Spot checks. Any potential threat requires the bard to make another Perform check and allows the creature a new saving throw against a DC equal to the new Perform check result. Any obvious threat, such as someone drawing a weapon, casting a spell, or aiming a ranged weapon at the target, automatically breaks the effect. Fascinate is an enchantment (compulsion), mind-affecting ability.",
+        "name": "Fascinate",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A bard with 3 or more ranks in a Perform skill can use song or poetics to inspire courage in his allies (including himself), bolstering them against fear and improving their combat abilities. To be affected, an ally must be able to hear the bard sing. The effect lasts for as long as the ally hears the bard sing and for 5 rounds thereafter. An affected ally receives a +1 morale bonus on saving throws against charm and fear effects and a +1 morale bonus on attack and weapon damage rolls. At 8th level, and every six bard levels thereafter, this bonus increases by 1 (+2 at 8th, +3 at 14th, and +4 at 20th). Inspire courage is a mind-affecting ability.",
+        "name": "Inspire Courage",
+        "type": "(Su)"
+      },
+      {
+        "description": "A bard of 3rd level or higher with 6 or more ranks in a Perform skill can use his music or poetics to help an ally succeed at a task. The ally must be within 30 feet and able to see and hear the bard. The bard must also be able to see the ally. Depending on the task the ally has at hand, the bard may use his bardic music to lift the ally's spirits, to help him or her focus mentally or in some other way. The ally gets a +2 competence bonus on skill checks with a particular skill as long as he or she continues to hear the bard's music. The DM may rule that certain uses of this ability are infeasible - chanting to make the rogue move more quietly, for example, is self-defeating. The effect lasts as long as the bard concentrates, up to a maximum of 2 minutes. A bard can't inspire competence in himself. Inspire competence is a mind-affecting ability.",
+        "name": "Inspire Competence",
+        "type": "(Su)"
+      },
+      {
+        "description": "A bard of 6th level or higher with 9 or more ranks in a Perform skill can make a suggestion (as the spell) to a creature that he has already fascinated. Using this ability does not break the bard's concentration on the fascinate effect, nor does it allow a second saving throw against the fascinate effect. Making a suggestion doesn't count against a bard's daily limit on bardic music performances. A Will saving throw (DC 10 + Â½ bard's level + bard's Cha modifier) negates the effect. This ability affects only a single creature (but see mass suggestion, below). Suggestion is an enchantment (compulsion), mind-affecting, language dependent ability.",
+        "name": "Suggestion",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A bard of 9th level or higher with 12 or more ranks in a Perform skill can use music or poetics to inspire greatness in himself or a single willing ally within 30 feet, granting him or her extra fighting capability. For every three levels a bard attains beyond 9th, he can target one additional ally with a single use of this ability (two at 12th level, three at 15th, four at 18th). To inspire greatness, a bard must sing and an ally must hear him sing. The effect lasts for as long as the ally hears the bard sing and for 5 rounds thereafter. A creature inspired with greatness gains 2 bonus Hit Dice (d10s), the commensurate number of temporary hit points (apply the target's Constitution modifier, if any, to these bonus Hit Dice), a +2 competence bonus on attack rolls, and a +1 competence bonus on Fortitude saves. The bonus Hit Dice count as regular Hit Dice for determining the effect of spells such as sleep. Inspire greatness is a mind-affecting ability.",
+        "name": "Inspire Greatness",
+        "type": "(Su)"
+      },
+      {
+        "description": "A bard of 12th level or higher with 15 or more ranks in a Perform skill can use music or poetics to create an effect equivalent to the break enchantment spell (caster level equals the character's bard level). Using this ability requires 1 minute of uninterrupted concentration and music, and it functions on a single target within 30 feet. A bard can't use song of freedom on himself.",
+        "name": "Song of Freedom",
+        "type": "(Sp)"
+      },
+      {
+        "description": "A bard of 15th level or higher with 18 or more ranks in a Perform skill can use music or poetics to inspire tremendous heroism in himself or a single willing ally within 30 feet. For every three bard levels the character attains beyond 15th, he can inspire heroics in one additional creature. To inspire heroics, a bard must sing and an ally must hear the bard sing for a full round. A creature so inspired gains a +4 morale bonus on saving throws and a +4 dodge bonus to AC. The effect lasts for as long as the ally hears the bard sing and for up to 5 rounds thereafter. Inspire heroics is a mind-affecting ability.",
+        "name": "Inspire Heroics",
+        "type": "(Su)"
+      },
+      {
+        "description": "This ability functions like suggestion, above, except that a bard of 18th level or higher with 21 or more ranks in a Perform skill can make the suggestion simultaneously to any number of creatures that he has already fascinated. Mass suggestion is an enchantment (compulsion), mind-affecting, language-dependent ability.",
+        "name": "Mass Suggestion",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disguise",
+      "Escape Artist",
+      "Gather Information",
+      "Hide",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Move Silently",
+      "Perform",
+      "Profession",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Speak Language",
+      "Spellcraft",
+      "Swim",
+      "Tumble",
+      "Use Magic Device"
+    ],
+    "description": "Wanderers who rely upon their knowledge and use performing skills for magic.",
+    "hasCantrips": true,
+    "hitDie": "d6",
+    "name": "Bard",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonlawful",
+        "special": [
+          "0th",
+          "within 90 feet, able to see and hear the bard, and able to pay attention to him",
+          "able to hear the bard sing",
+          "within 30 feet and able to see and hear the bard"
+        ]
+      },
+      "text": "Starting a bardic music effect is a standard action. Some bardic music abilities require concentration, which means the bard must take a standard action each round to maintain the ability. Even while using bardic music that doesn't require concentration, a bard cannot cast spells, activate magic items by spell completion (such as scrolls), spell trigger (such as wands), or command word. Just as for casting a spell with a verbal component, a deaf bard has a 20% chance to fail when attempting to use bardic music. If he fails, the attempt still counts against his daily limit. Countersong (Su): A bard with 3 or more ranks in a Perform skill can use his music or poetics to counter magical effects that depend on sound (but not spells that simply have verbal components). Each round of the countersong, he makes a Perform check. Any creature within 30 feet of the bard (including the bard himself) that is affected by a sonic or language-dependent magical attack (such as sound burst or command spell) may use the bard's Perform check result in place of its saving throw if, after the saving throw is rolled, the Perform check result proves to be higher. If a creature within range of the countersong is already under the effect of a non-instantaneous sonic or language-dependent magical attack, it gains another saving throw against the effect each round it hears the countersong, but it must use the bard's Perform check result for the save. Countersong has no effect against effects that don't allow saves. The bard may keep up the countersong for 10 rounds. Fascinate (Sp): A bard with 3 or more ranks in a Perform skill can use his music or poetics to cause one or more creatures to become fascinated with him. Each creature to be fascinated must be within 90 feet, able to see and hear the bard, and able to pay attention to him. The bard must also be able to see the creature. The distraction of a nearby combat or other dangers prevents the ability from working. For every three levels a bard attains beyond 1st, he can target one additional creature with a single use of this ability. To use the ability, a bard makes a Perform check. His check result is the DC for each affected creature's Will save against the effect. If a creature's saving throw succeeds, the bard cannot attempt to fascinate that creature again for 24 hours. If its saving throw fails, the creature sits quietly and listens to the song, taking no other actions, for as long as the bard continues to play and concentrate (up to a maximum of 1 round per bard level). While fascinated, a target takes a -4 penalty on skill checks made as reactions, such as Listen and Spot checks. Any potential threat requires the bard to make another Perform check and allows the creature a new saving throw against a DC equal to the new Perform check result. Any obvious threat, such as someone drawing a weapon, casting a spell, or aiming a ranged weapon at the target, automatically breaks the effect. Fascinate is an enchantment (compulsion), mind-affecting ability. Inspire Courage (Su): A bard with 3 or more ranks in a Perform skill can use song or poetics to inspire courage in his allies (including himself), bolstering them against fear and improving their combat abilities. To be affected, an ally must be able to hear the bard sing. The effect lasts for as long as the ally hears the bard sing and for 5 rounds thereafter. An affected ally receives a +1 morale bonus on saving throws against charm and fear effects and a +1 morale bonus on attack and weapon damage rolls. At 8th level, and every six bard levels thereafter, this bonus increases by 1 (+2 at 8th, +3 at 14th, and +4 at 20th). Inspire courage is a mind-affecting ability. Inspire Competence (Su): A bard of 3rd level or higher with 6 or more ranks in a Perform skill can use his music or poetics to help an ally succeed at a task. The ally must be within 30 feet and able to see and hear the bard. The bard must also be able to see the ally. Depending on the task the ally has at hand, the bard may use his bardic music to lift the ally's spirits, to help him or her focus mentally or in some other way. The ally gets a +2 competence bonus on skill checks with a particular skill as long as he or she continues to hear the bard's music. The DM may rule that certain uses of this ability are infeasible - chanting to make the rogue move more quietly, for example, is self-defeating. The effect lasts as long as the bard concentrates, up to a maximum of 2 minutes. A bard can't inspire competence in himself. Inspire competence is a mind-affecting ability. Suggestion (Sp): A bard of 6th level or higher with 9 or more ranks in a Perform skill can make a suggestion (as the spell) to a creature that he has already fascinated. Using this ability does not break the bard's concentration on the fascinate effect, nor does it allow a second saving throw against the fascinate effect. Making a suggestion doesn't count against a bard's daily limit on bardic music performances. A Will saving throw (DC 10 + Â½ bard's level + bard's Cha modifier) negates the effect. This ability affects only a single creature (but see mass suggestion, below). Suggestion is an enchantment (compulsion), mind-affecting, language dependent ability. Inspire Greatness (Su): A bard of 9th level or higher with 12 or more ranks in a Perform skill can use music or poetics to inspire greatness in himself or a single willing ally within 30 feet, granting him or her extra fighting capability. For every three levels a bard attains beyond 9th, he can target one additional ally with a single use of this ability (two at 12th level, three at 15th, four at 18th). To inspire greatness, a bard must sing and an ally must hear him sing. The effect lasts for as long as the ally hears the bard sing and for 5 rounds thereafter. A creature inspired with greatness gains 2 bonus Hit Dice (d10s), the commensurate number of temporary hit points (apply the target's Constitution modifier, if any, to these bonus Hit Dice), a +2 competence bonus on attack rolls, and a +1 competence bonus on Fortitude saves. The bonus Hit Dice count as regular Hit Dice for determining the effect of spells such as sleep. Inspire greatness is a mind-affecting ability. Song of Freedom (Sp): A bard of 12th level or higher with 15 or more ranks in a Perform skill can use music or poetics to create an effect equivalent to the break enchantment spell (caster level equals the character's bard level). Using this ability requires 1 minute of uninterrupted concentration and music, and it functions on a single target within 30 feet. A bard can't use song of freedom on himself. Inspire Heroics (Su): A bard of 15th level or higher with 18 or more ranks in a Perform skill can use music or poetics to inspire tremendous heroism in himself or a single willing ally within 30 feet. For every three bard levels the character attains beyond 15th, he can inspire heroics in one additional creature. To inspire heroics, a bard must sing and an ally must hear the bard sing for a full round. A creature so inspired gains a +4 morale bonus on saving throws and a +4 dodge bonus to AC. The effect lasts for as long as the ally hears the bard sing and for up to 5 rounds thereafter. Inspire heroics is a mind-affecting ability. Mass Suggestion (Sp): This ability functions like suggestion, above, except that a bard of 18th level or higher with 21 or more ranks in a Perform skill can make the suggestion simultaneously to any number of creatures that he has already fascinated. Mass suggestion is an enchantment (compulsion), mind-affecting, language-dependent ability. Ex-Bard A bard who becomes lawful in alignment cannot progress in levels as a bard, though he retains all his bard abilities. Advancement Spells per Day Level BAB Fort Ref Will Special 0th 1st 2nd 3rd 4th 5th 6th 1st +0 +0 +2 +2 Bardic music, bardic knowledge, countersong, fascinate, inspire courage +1 2 - - - - - - 2nd +1 +0 +3 +3 3 0 - - - - - 3rd +2 +1 +3 +3 Inspire competence 3 1 - - - - - 4th +3 +1 +4 +4 3 2 0 - - - - 5th +3 +1 +4 +4 3 3 1 - - - - 6th +4 +2 +5 +5 Suggestion 3 3 2 - - - - 7th +5 +2 +5 +5 3 3 2 0 - - - 8th +6/+1 +2 +6 +6 Inspire courage +2 3 3 3 1 - - - 9th +6/+1 +3 +6 +6 Inspire greatness 3 3 3 2 - - - 10th +7/+2 +3 +7 +7 3 3 3 2 0 - - 11th +8/+3 +3 +7 +7 3 3 3 3 1 - - 12th +9/+4 +4 +8 +8 Song of freedom 3 3 3 3 2 - - 13th +9/+4 +4 +8 +8 3 3 3 3 2 0 - 14th +10/+5 +4 +9 +9 Inspire courage +3 4 3 3 3 3 1 - 15th +11/+6/+1 +5 +9 +9 Inspire heroics 4 4 3 3 3 2 - 16th +12/+7/+2 +5 +10 +10 4 4 4 3 3 2 0 17th +12/+7/+2 +5 +10 +10 4 4 4 4 3 3 1 18th +13/+8/+3 +6 +11 +11 Mass suggestion 4 4 4 4 4 3 2 19th +14/+9/+4 +6 +11 +11 4 4 4 4 4 4 3 20th +15/+10/+5 +6 +12 +12 Inspire courage+4 4 4 4 4 4 4 4"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Bardic music",
+          "bardic knowledge",
+          "countersong",
+          "fascinate",
+          "inspire courage +1"
+        ],
+        "spellsPerDay": "2,-,-,-,-,-,-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "3,0,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Inspire competence"
+        ],
+        "spellsPerDay": "3,1,-,-,-,-,-",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "3,2,0,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "3,3,1,-,-,-,-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Suggestion"
+        ],
+        "spellsPerDay": "3,3,2,-,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "3,3,2,0,-,-,-",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Inspire courage +2"
+        ],
+        "spellsPerDay": "3,3,3,1,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Inspire greatness"
+        ],
+        "spellsPerDay": "3,3,3,2,-,-,-",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [],
+        "spellsPerDay": "3,3,3,2,0,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 8,
+        "fortSave": 3,
+        "level": 11,
+        "refSave": 7,
+        "special": [],
+        "spellsPerDay": "3,3,3,3,1,-,-",
+        "willSave": 7
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 12,
+        "refSave": 8,
+        "special": [
+          "Song of freedom"
+        ],
+        "spellsPerDay": "3,3,3,3,2,-,-",
+        "willSave": 8
+      },
+      {
+        "bab": 9,
+        "fortSave": 4,
+        "level": 13,
+        "refSave": 8,
+        "special": [],
+        "spellsPerDay": "3,3,3,3,2,0,-",
+        "willSave": 8
+      },
+      {
+        "bab": 10,
+        "fortSave": 4,
+        "level": 14,
+        "refSave": 9,
+        "special": [
+          "Inspire courage +3"
+        ],
+        "spellsPerDay": "4,3,3,3,3,1,-",
+        "willSave": 9
+      },
+      {
+        "bab": 11,
+        "fortSave": 5,
+        "level": 15,
+        "refSave": 9,
+        "special": [
+          "Inspire heroics"
+        ],
+        "spellsPerDay": "4,4,3,3,3,2,-",
+        "willSave": 9
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 16,
+        "refSave": 10,
+        "special": [],
+        "spellsPerDay": "4,4,4,3,3,2,0",
+        "willSave": 10
+      },
+      {
+        "bab": 12,
+        "fortSave": 5,
+        "level": 17,
+        "refSave": 10,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,3,3,1",
+        "willSave": 10
+      },
+      {
+        "bab": 13,
+        "fortSave": 6,
+        "level": 18,
+        "refSave": 11,
+        "special": [
+          "Mass suggestion"
+        ],
+        "spellsPerDay": "4,4,4,4,4,3,2",
+        "willSave": 11
+      },
+      {
+        "bab": 14,
+        "fortSave": 6,
+        "level": 19,
+        "refSave": 11,
+        "special": [],
+        "spellsPerDay": "4,4,4,4,4,4,3",
+        "willSave": 11
+      },
+      {
+        "bab": 15,
+        "fortSave": 6,
+        "level": 20,
+        "refSave": 12,
+        "special": [
+          "Inspire courage+4"
+        ],
+        "spellsPerDay": "4,4,4,4,4,4,4",
+        "willSave": 12
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier",
+    "spellsKnown": [
+      "4,-,-,-,-,-,-",
+      "5,2,-,-,-,-,-",
+      "6,3,-,-,-,-,-",
+      "6,3,2,-,-,-,-",
+      "6,4,3,-,-,-,-",
+      "6,4,3,-,-,-,-",
+      "6,4,4,2,-,-,-",
+      "6,4,4,3,-,-,-",
+      "6,4,4,3,-,-,-",
+      "6,4,4,4,2,-,-",
+      "6,4,4,4,3,-,-",
+      "6,4,4,4,3,-,-",
+      "6,4,4,4,4,2,-",
+      "6,4,4,4,4,3,-",
+      "6,4,4,4,4,3,-",
+      "6,5,4,4,4,4,2",
+      "6,5,5,4,4,4,3",
+      "6,5,5,5,4,4,3",
+      "6,5,5,5,5,4,4",
+      "6,5,5,5,5,5,4"
+    ]
+  }
+}

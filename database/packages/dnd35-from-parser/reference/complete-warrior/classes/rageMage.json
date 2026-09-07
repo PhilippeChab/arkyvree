@@ -1,0 +1,404 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T18:43:36.090Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/rage-mage/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "combatcasting": "Combat Casting"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          5,
+          10
+        ],
+        "name": "Spell Rage"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Overcome Spell Failure"
+      },
+      {
+        "levels": [
+          3,
+          8
+        ],
+        "name": "Rage +1 Use/Day"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Spell Fury"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Tireless Rage"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Warrior Cry"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatcasting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "equal",
+        "target": "feats.rage.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Rage Mage Class Feature",
+    "features": {
+      "Overcome Spell Failure": {
+        "description": "Starting at 2nd level, a rage mage adapts to wearing protective gear while casting. Her arcane spell failure chance is reduced by 10% when she wears light or medium armor.",
+        "level": 2,
+        "seedName": "Overcome Spell Failure (Rage Mage)"
+      },
+      "Rage +1 Use/day": {
+        "description": "A rage mage receives one extra daily use of rage at 3rd level, and a second extra daily use at 8th level. Angry Spell (Ex): From 5th level onward, whenever a rage mage casts an abjuration, conjuration, evocation, necromancy, or transmutation spell during a rage, the saving throw DC of that spell is raised by +2. This bonus increases to +4 at 10th level.",
+        "level": 3,
+        "seedName": "Rage +1 Use/day (Rage Mage)",
+        "stackable": true
+      },
+      "Spell Fury": {
+        "description": "At 7th level, a rage mage gains the ability to quicken a single spell of 4th level or below, as though applying the Quicken Spell feat, without increasing the spell level or altering its casting time. This can be done once per rage.",
+        "level": 7,
+        "seedName": "Spell Fury (Rage Mage)"
+      },
+      "Spell Rage": {
+        "description": "A rage mage retains the ability to cast spells during a rage, provided the spell has a casting time of 1 full round or less. While in a spell rage, casting a spell from the abjuration, conjuration, evocation, necromancy, or transmutation school allows her to use her total character level as her caster level. This benefit applies only during a spell rage. During a spell rage, the rage mage fights recklessly and suffers a -2 penalty to Armor Class. She may make Concentration checks to maintain spells, but cannot use any other skills based on Charisma, Dexterity, or Intelligence (with the exceptions of Balance, Escape Artist, Intimidate, and Ride). A spell rage persists for a number of rounds equal to 3 + the character's Constitution modifier, and the rage mage may choose to end it early. When the rage concludes, she becomes fatigued (-2 Strength, -2 Dexterity, unable to charge or run) for the rest of the encounter, unless she has reached 10th level, at which point this drawback no longer applies. Only one spell rage may be entered per encounter, and the total number of daily uses is determined by class level. Initiating a spell rage is a free action that can only be performed on the rage mage's own turn, not as a reaction to another creature's action.",
+        "level": 1,
+        "seedName": "Spell Rage (Rage Mage)",
+        "stackable": true
+      },
+      "Spells per Day": {
+        "description": "Each time a rage mage gains an even-numbered class level, she advances her spellcasting as though she had also gained a level in an arcane spellcasting class she previously belonged to. She does not, however, receive any other class benefits from that advancement besides increased effective caster level. If she had multiple arcane spellcasting classes before entering this prestige class, she must select one to receive the spellcasting progression.",
+        "level": 1,
+        "seedName": "Spells per Day (Rage Mage)"
+      },
+      "Tireless Rage": {
+        "description": "From 9th level onward, a rage mage is no longer fatigued when her rage ends.",
+        "level": 9,
+        "seedName": "Tireless Rage (Rage Mage)"
+      },
+      "Warrior Cry": {
+        "description": "Once per day, a 10th-level rage mage can unleash a mighty battle shout as a free action during her turn. This grants her the effects of the Transformation spell, except that she retains full access to her spellcasting for the duration. Her caster level for this effect equals her total character level.",
+        "level": 10,
+        "seedName": "Warrior Cry (Rage Mage)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Rage Mage)"
+      }
+    },
+    "occurrenceMap": {
+      "Overcome Spell Failure": "Overcome Spell Failure",
+      "Rage +1 Use/Day": "Rage +1 Use/day",
+      "Spell Fury": "Spell Fury",
+      "Spell Rage": "Spell Rage",
+      "Tireless Rage": "Tireless Rage",
+      "Warrior Cry": "Warrior Cry"
+    },
+    "overrides": {
+      "description": "Rage mages tap into the raw, instinctive essence of arcane power rather than relying on methodical, scholarly techniques of spellcasting.",
+      "features": {
+        "Overcome Spell Failure": {
+          "description": "Starting at 2nd level, a rage mage adapts to wearing protective gear while casting. Her arcane spell failure chance is reduced by 10% when she wears light or medium armor."
+        },
+        "Rage +1 Use/day": {
+          "description": "A rage mage receives one extra daily use of rage at 3rd level, and a second extra daily use at 8th level. Angry Spell (Ex): From 5th level onward, whenever a rage mage casts an abjuration, conjuration, evocation, necromancy, or transmutation spell during a rage, the saving throw DC of that spell is raised by +2. This bonus increases to +4 at 10th level."
+        },
+        "Spell Fury": {
+          "description": "At 7th level, a rage mage gains the ability to quicken a single spell of 4th level or below, as though applying the Quicken Spell feat, without increasing the spell level or altering its casting time. This can be done once per rage."
+        },
+        "Spell Rage": {
+          "description": "A rage mage retains the ability to cast spells during a rage, provided the spell has a casting time of 1 full round or less. While in a spell rage, casting a spell from the abjuration, conjuration, evocation, necromancy, or transmutation school allows her to use her total character level as her caster level. This benefit applies only during a spell rage. During a spell rage, the rage mage fights recklessly and suffers a -2 penalty to Armor Class. She may make Concentration checks to maintain spells, but cannot use any other skills based on Charisma, Dexterity, or Intelligence (with the exceptions of Balance, Escape Artist, Intimidate, and Ride). A spell rage persists for a number of rounds equal to 3 + the character's Constitution modifier, and the rage mage may choose to end it early. When the rage concludes, she becomes fatigued (-2 Strength, -2 Dexterity, unable to charge or run) for the rest of the encounter, unless she has reached 10th level, at which point this drawback no longer applies. Only one spell rage may be entered per encounter, and the total number of daily uses is determined by class level. Initiating a spell rage is a free action that can only be performed on the rage mage's own turn, not as a reaction to another creature's action."
+        },
+        "Spells per Day": {
+          "description": "Each time a rage mage gains an even-numbered class level, she advances her spellcasting as though she had also gained a level in an arcane spellcasting class she previously belonged to. She does not, however, receive any other class benefits from that advancement besides increased effective caster level. If she had multiple arcane spellcasting classes before entering this prestige class, she must select one to receive the spellcasting progression."
+        },
+        "Tireless Rage": {
+          "description": "From 9th level onward, a rage mage is no longer fatigued when her rage ends."
+        },
+        "Warrior Cry": {
+          "description": "Once per day, a 10th-level rage mage can unleash a mighty battle shout as a free action during her turn. This grants her the effects of the Transformation spell, except that she retains full access to her spellcasting for the duration. Her caster level for this effect equals her total character level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Rage mages gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At every even-numbered level gained in the rage mage class, the character gains new spells per day as if she had also gained a level in an arcane spellcasting class she belonged to before adding the prestige class. In no case, however, does she gain any other benefit a character of that class would have gained, except for an increased effective level of spellcasting (but see spell rage, below). If a character had more than one arcane spellcasting class before becoming a rage mage, she must decide to which class she adds the new level for purposes of determining spells per day.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "A rage mage can cast spells while in a rage, as long as the spell's casting time is no more than 1 full round. When she casts a spell of the abjuration, conjuration, evocation, necromancy, or transmutation school while in a rage, the rage mage uses her character level as her caster level. This ability only works when the rage mage is in a spell rage. While in a spell rage, a rage mage becomes reckless and loses her some of her ability to defend herself. She temporarily takes a -2 penalty to Armor Class. She can attempt Concentration checks to avoid having a spell disrupted, but can't use any other Charisma-, Dexterity-, or Intelligence-based skills (except for Balance, Escape Artist, Intimidate, and Ride) while in a spell rage. A fit of rage lasts for a number of rounds equal to 3 + the character's Constitution modifier. A rage mage can end her rage voluntarily. At the end of the rage, the character is fatigued (-2 Strength, -2 Dexterity, can't charge or run) for the duration of the current encounter (unless the rage mage is 10th level, when this limitation no longer applies). A rage mage can only fly into a rage once per encounter, and only a certain number of times per day (determined by level). Entering a rage takes no time itself, but a rage mage can only do it during her action, not in response to somebody else's action.",
+        "name": "Spell Rage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 2nd level, a rage mage learns to ignore some of the restrictive nature of armor. Her arcane spell failure chance when wearing light or medium armor decreases by 10%.",
+        "name": "Overcome Spell Failure",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A rage mage can enter a rage one additional time per day at 3rd level and another time per day at 8th level. Angry Spell (Ex): Beginning at 5th level, when a rage mage casts a spell of the abjuration, conjuration, evocation, necromancy, or transmutation school while raging, the save DC for the spell increases by +2. At 10th level, this increase becomes +4.",
+        "name": "Rage +1 Use/day",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Upon reaching 7th level, a rage mage can quicken one spell of 4th level or lower (as if she had used the Quicken Spell feat), but without adjusting the spell's level or casting time. She may use this ability once during each rage.",
+        "name": "Spell Fury",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 9th level and higher, a rage mage no longer becomes fatigued at the end of her rage.",
+        "name": "Tireless Rage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 10th-level rage mage may scream out a cry once per day as a free action on her turn and gain the benefit of the Transformation spell, with one exception: She does not lose her spellcasting ability for the duration of this effect. The rage mage's caster level for the purpose of this effect is equal to her character level.",
+        "name": "Warrior Cry",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Profession",
+      "Spellcraft",
+      "Survival"
+    ],
+    "description": "The rage mage's approach to magic is based on the primal passion of magic more than the studious quasi-scientific approach.",
+    "hitDie": "d8",
+    "name": "Rage Mage",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonlawful",
+        "bab": 4,
+        "casterLevel": [
+          {
+            "level": 2,
+            "type": "arcane"
+          }
+        ],
+        "feats": [
+          "Combat Casting"
+        ],
+        "special": [
+          "Rage or frenzy ability."
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Alignment: Any nonlawful Feats: Combat Casting Spells: Able to cast 2nd-level arcane spells.Special: Rage or frenzy ability."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Spell rage 1/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Overcome spell failure"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Rage +1 use/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Spell rage 2/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Spell fury"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Rage +1 use/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Tireless rage"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Warrior cry",
+          "spell rage 3/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

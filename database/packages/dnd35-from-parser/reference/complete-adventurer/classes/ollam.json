@@ -1,0 +1,279 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-26T23:05:08.083Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/ollam/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        3,
+        4
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Lore"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Inspire Competence"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Inspire Resilience"
+      }
+    ],
+    "hd": 8,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgehistory.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledge.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.beliefs.alignment",
+        "value": "Lawful Good",
+        "valueType": "string"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Dwarf",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 6
+  },
+  "mapping": {
+    "classFeatureAptitude": "Ollam Class Feature",
+    "features": {
+      "Inspire Competence": {
+        "description": "An ollam of 3rd level or higher can use oratory to help an ally succeed at a task. The ally gets a +2 competence bonus on checks with a particular skill. If the ally is a dwarf, the competence bonus increases to +3. See the bardic music class feature of the Player's Handbook. If an ollam has the inspire competence bardic music ability, she can expend one daily use of her bardic music to increase the competence bonus to +4 (or +6 if the ally is a dwarf).",
+        "level": 3,
+        "seedName": "Inspire Competence (Ollam)"
+      },
+      "Inspire Resilience": {
+        "description": "From an early age, dwarves learn to approach life with steadfast resolution and endurance. A 5th-level ollam can spend a standard action to use oratory to tap into this power, granting a single dwarf ally a +4 competence bonus on Constitution checks and Fortitude saves, as well as damage reduction 5/-. The ally must be within 30 feet and able to see and hear the ollam. The ollam must also be able to see the ally. The effect lasts for as long as the ollam orates and for 1 minute thereafter. Allies who are not dwarves instead gain a +2 competence bonus on Constitution checks and Fortitude saves, gain no damage reduction, and are fatigued at the end of the duration. (Dwarves suffer no ill effect.)",
+        "level": 5,
+        "seedName": "Inspire Resilience (Ollam)"
+      },
+      "Lore": {
+        "description": "An ollam has the ability to recall legends or information regarding various topics, just as a bard can with bardic knowledge. See the bardic knowledge class feature of the Player's Handbook. An ollam adds her class level and her Intelligence modifier to her lore check. If the character has a similar ability from another class (such as bardic knowledge), her ollam levels stack with class levels from that other class to determine the success of the lore check.",
+        "level": 1,
+        "seedName": "Lore (Ollam)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At 2nd, 3rd, and 4th level, an ollam gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained. If she had more than one spellcasting class before becoming an ollam, she must decide to which class to add each level for the purpose of determining spells per day and spells known. If an ollam had no levels in a spellcasting class before taking the prestige class, at 2nd level she gains the spellcasting abilities of a cleric whose caster level is one lower than her class level.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Ollam)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Ollams are proficient with all simple weapons, with all types of armor, and with shields.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Ollam)"
+      }
+    },
+    "occurrenceMap": {
+      "Inspire Competence": "Inspire Competence",
+      "Inspire Resilience": "Inspire Resilience",
+      "Lore": "Lore"
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Ollams are proficient with all simple weapons, with all types of armor, and with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 2nd, 3rd, and 4th level, an ollam gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained. If she had more than one spellcasting class before becoming an ollam, she must decide to which class to add each level for the purpose of determining spells per day and spells known. If an ollam had no levels in a spellcasting class before taking the prestige class, at 2nd level she gains the spellcasting abilities of a cleric whose caster level is one lower than her class level.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "An ollam has the ability to recall legends or information regarding various topics, just as a bard can with bardic knowledge. See the bardic knowledge class feature of the Player's Handbook. An ollam adds her class level and her Intelligence modifier to her lore check. If the character has a similar ability from another class (such as bardic knowledge), her ollam levels stack with class levels from that other class to determine the success of the lore check.",
+        "name": "Lore",
+        "type": "(Ex)"
+      },
+      {
+        "description": "An ollam of 3rd level or higher can use oratory to help an ally succeed at a task. The ally gets a +2 competence bonus on checks with a particular skill. If the ally is a dwarf, the competence bonus increases to +3. See the bardic music class feature of the Player's Handbook. If an ollam has the inspire competence bardic music ability, she can expend one daily use of her bardic music to increase the competence bonus to +4 (or +6 if the ally is a dwarf).",
+        "name": "Inspire Competence",
+        "type": "(Su)"
+      },
+      {
+        "description": "From an early age, dwarves learn to approach life with steadfast resolution and endurance. A 5th-level ollam can spend a standard action to use oratory to tap into this power, granting a single dwarf ally a +4 competence bonus on Constitution checks and Fortitude saves, as well as damage reduction 5/-. The ally must be within 30 feet and able to see and hear the ollam. The ollam must also be able to see the ally. The effect lasts for as long as the ollam orates and for 1 minute thereafter. Allies who are not dwarves instead gain a +2 competence bonus on Constitution checks and Fortitude saves, gain no damage reduction, and are fatigued at the end of the duration. (Dwarves suffer no ill effect.)",
+        "name": "Inspire Resilience",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Gather Information",
+      "Heal",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Listen",
+      "Perform",
+      "Search",
+      "Sense Motive",
+      "Speak Language",
+      "Spellcraft"
+    ],
+    "description": "In Dwarven, the word ?ollam' means teacher. The education of the dwarf people is considered a sacred duty, and those who are considered knowledgeable in dwarf history and legend - and thought to possess above-average common sense - are often called upon to take up the respected role of teacher in the community. While other cultures might see this as a job for young girls or old men, the dwarves see an ollam as a protector of their cherished culture. No one in the dwarf community takes that position lightly. An ollam is granted a special position in the temple hierarchy - Moradin gives her spells that allow her not only to delve into the secrets of the universe but also to heal and keep an eye on her charges. While most ollams are clerics or bards, individuals of other classes are welcomed, as long as they possess the knowledge needed to teach the children properly.",
+    "hitDie": "d8",
+    "name": "Ollam",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Lawful good",
+        "skills": [
+          {
+            "name": "Knowledge (history)",
+            "ranks": 10
+          },
+          {
+            "name": "Knowledge (any other)",
+            "ranks": 10
+          },
+          {
+            "name": "Perform (oratory)",
+            "ranks": 5
+          }
+        ],
+        "special": [
+          "Race: Dwarf"
+        ]
+      },
+      "text": "Alignment: Lawful good Skills: Knowledge (history) 10 ranks, Knowledge (any other) 10 ranks, Perform (oratory) 5 ranks Race: Dwarf"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Lore"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Inspire competence"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Inspire resilience"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "6 + Int modifier"
+  }
+}

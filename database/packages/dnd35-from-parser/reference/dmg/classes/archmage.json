@@ -1,0 +1,318 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-20T23:14:16.494Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/archmage/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "target": "aptitudes.archmagehigharcana.allowed"
+      }
+    ],
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "skillfocusspellcraft": "Skill Focus (Spellcraft)"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "name": "High Arcana"
+      }
+    ],
+    "hd": 4,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "15",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "15",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.skillfocusspellcraft.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.spellfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "7",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Archmage Class Feature",
+    "features": {
+      "Arcane Fire": {
+        "aptitude": "Archmage High Arcana",
+        "description": "The archmage gains the power to convert arcane spell energy into a bolt of raw magical force. This bolt functions as a ranged touch attack with a long range of 400 feet + 40 feet per archmage class level. It inflicts 1d6 damage per archmage class level plus an additional 1d6 per level of the spell slot expended to fuel it. Acquiring this ability requires sacrificing one 9th-level spell slot.",
+        "level": 1,
+        "selectable": true
+      },
+      "Arcane Reach": {
+        "aptitude": "Archmage High Arcana",
+        "description": "The archmage may deliver touch-range spells at a distance of up to 30 feet, requiring a ranged touch attack to hit. This ability may be chosen a second time, which extends the range to 60 feet. Acquiring this ability requires sacrificing one 7th-level spell slot.",
+        "level": 1,
+        "selectable": true,
+        "stackable": true
+      },
+      "High Arcana": {
+        "description": "At each archmage level, the character may select one special ability from the options listed below. To gain a high arcana ability, the archmage must permanently sacrifice an existing spell slot (the slot cannot exceed the highest spell level the archmage can currently cast). Each ability specifies the minimum spell slot level required, though a higher-level slot may be sacrificed instead.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.archmagehigharcana.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "High Arcana (Archmage)",
+        "stackable": true
+      },
+      "Mastery of Counterspelling": {
+        "aptitude": "Archmage High Arcana",
+        "description": "Whenever the archmage successfully counterspells an opponent's spell, that spell is reflected back at its caster as though affected by spell turning. If the countered spell is not eligible to be turned (such as an area-affecting spell), it is simply negated instead. Acquiring this ability requires sacrificing one 7th-level spell slot.",
+        "level": 1,
+        "selectable": true
+      },
+      "Mastery of Elements": {
+        "aptitude": "Archmage High Arcana",
+        "description": "The archmage may change the energy type of an arcane spell at the time of casting. Only spells bearing the acid, cold, fire, electricity, or sonic descriptor can be modified in this way. The casting time remains unchanged, and the caster selects the replacement energy type when beginning to cast. Acquiring this ability requires sacrificing one 8th-level spell slot.",
+        "level": 1,
+        "selectable": true
+      },
+      "Mastery of Shaping": {
+        "aptitude": "Archmage High Arcana",
+        "description": "The archmage gains the ability to sculpt area and effect spells that use one of the following forms: burst, cone, cylinder, emanation, or spread. The archmage can exclude portions of the spell's area, carving out safe zones that are unaffected. The smallest such excluded zone is a 5-foot cube. Additionally, all shapeable spells gain a reduced minimum dimension of 5 feet rather than 10 feet. Acquiring this ability requires sacrificing one 6th-level spell slot.",
+        "level": 1,
+        "selectable": true
+      },
+      "Spell Power": {
+        "aptitude": "Archmage High Arcana",
+        "description": "The archmage's effective caster level increases by +1 for the purposes of level-dependent spell variables (such as damage dice and range) and for caster level checks. Acquiring this ability requires sacrificing one 5th-level spell slot.",
+        "level": 1,
+        "selectable": true
+      },
+      "Spell-Like Ability": {
+        "aptitude": "Archmage High Arcana",
+        "description": "By selecting this high arcana, the archmage permanently converts one of her arcane spell slots (other than any slot already sacrificed for a high arcana ability) into a spell-like ability usable twice per day. No components are needed to activate it, though spells requiring XP expenditure still cost XP, and those with expensive material components instead cost 10 times the material cost in XP. Acquiring this ability requires sacrificing one 5th-level spell slot. The spell-like ability occupies a slot equal to the spell's level, but a metamagic-modified version may be chosen at the correspondingly higher slot level. A higher-level slot may also be used to increase daily uses: a slot three levels above the spell allows four uses per day, and a slot six levels above allows six uses per day. If this high arcana is selected multiple times, each subsequent selection may either increase the daily uses of a previously chosen spell or apply to an entirely different spell.",
+        "level": 1,
+        "selectable": true,
+        "stackable": true
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Each time an archmage gains a new level, the character receives additional spells per day (and spells known, where applicable) as though having also advanced one level in an arcane spellcasting class capable of casting 7th-level spells prior to taking this prestige class. No other class benefits from that prior class are gained. If the character previously had multiple arcane spellcasting classes able to cast 7th-level spells, the character must select which class gains the effective level increase for spells per day each time a new archmage level is attained.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Archmage)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Archmages do not gain proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Archmage)"
+      }
+    },
+    "occurrenceMap": {
+      "High Arcana": "High Arcana"
+    },
+    "overrides": {
+      "description": "Those who reach the pinnacle of arcane spellcasting mastery often pursue the path of the archmage.",
+      "features": {
+        "Arcane Fire": {
+          "description": "The archmage gains the power to convert arcane spell energy into a bolt of raw magical force. This bolt functions as a ranged touch attack with a long range of 400 feet + 40 feet per archmage class level. It inflicts 1d6 damage per archmage class level plus an additional 1d6 per level of the spell slot expended to fuel it. Acquiring this ability requires sacrificing one 9th-level spell slot."
+        },
+        "Arcane Reach": {
+          "description": "The archmage may deliver touch-range spells at a distance of up to 30 feet, requiring a ranged touch attack to hit. This ability may be chosen a second time, which extends the range to 60 feet. Acquiring this ability requires sacrificing one 7th-level spell slot."
+        },
+        "High Arcana": {
+          "description": "At each archmage level, the character may select one special ability from the options listed below. To gain a high arcana ability, the archmage must permanently sacrifice an existing spell slot (the slot cannot exceed the highest spell level the archmage can currently cast). Each ability specifies the minimum spell slot level required, though a higher-level slot may be sacrificed instead."
+        },
+        "Mastery of Counterspelling": {
+          "description": "Whenever the archmage successfully counterspells an opponent's spell, that spell is reflected back at its caster as though affected by spell turning. If the countered spell is not eligible to be turned (such as an area-affecting spell), it is simply negated instead. Acquiring this ability requires sacrificing one 7th-level spell slot."
+        },
+        "Mastery of Elements": {
+          "description": "The archmage may change the energy type of an arcane spell at the time of casting. Only spells bearing the acid, cold, fire, electricity, or sonic descriptor can be modified in this way. The casting time remains unchanged, and the caster selects the replacement energy type when beginning to cast. Acquiring this ability requires sacrificing one 8th-level spell slot."
+        },
+        "Mastery of Shaping": {
+          "description": "The archmage gains the ability to sculpt area and effect spells that use one of the following forms: burst, cone, cylinder, emanation, or spread. The archmage can exclude portions of the spell's area, carving out safe zones that are unaffected. The smallest such excluded zone is a 5-foot cube. Additionally, all shapeable spells gain a reduced minimum dimension of 5 feet rather than 10 feet. Acquiring this ability requires sacrificing one 6th-level spell slot."
+        },
+        "Spell Power": {
+          "description": "The archmage's effective caster level increases by +1 for the purposes of level-dependent spell variables (such as damage dice and range) and for caster level checks. Acquiring this ability requires sacrificing one 5th-level spell slot."
+        },
+        "Spell-Like Ability": {
+          "description": "By selecting this high arcana, the archmage permanently converts one of her arcane spell slots (other than any slot already sacrificed for a high arcana ability) into a spell-like ability usable twice per day. No components are needed to activate it, though spells requiring XP expenditure still cost XP, and those with expensive material components instead cost 10 times the material cost in XP. Acquiring this ability requires sacrificing one 5th-level spell slot. The spell-like ability occupies a slot equal to the spell's level, but a metamagic-modified version may be chosen at the correspondingly higher slot level. A higher-level slot may also be used to increase daily uses: a slot three levels above the spell allows four uses per day, and a slot six levels above allows six uses per day. If this high arcana is selected multiple times, each subsequent selection may either increase the daily uses of a previously chosen spell or apply to an entirely different spell."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "Each time an archmage gains a new level, the character receives additional spells per day (and spells known, where applicable) as though having also advanced one level in an arcane spellcasting class capable of casting 7th-level spells prior to taking this prestige class. No other class benefits from that prior class are gained. If the character previously had multiple arcane spellcasting classes able to cast 7th-level spells, the character must select which class gains the effective level increase for spells per day each time a new archmage level is attained."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Archmages do not gain proficiency with any weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Archmages gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new archmage level is gained, the character gains new spells per day (and spells known, if applicable) as if he had also gained a level in whatever arcane spellcasting class in which he could cast 7th-level spells before he added the prestige class level. He does not, however, gain any other benefit a character of that class would have gained. If a character had more than one arcane spellcasting class in which he could cast 7th-level spells before he became an archmage, he must decide to which class he adds each level of archmage for the purpose of determining spells per day.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "An archmage gains the opportunity to select a special ability from among those described below by permanently eliminating one existing spell slot (she cannot eliminate a spell slot of higher level than the highest-level spell she can cast). Each special ability has a minimum required spell slot level, as specified in its description. An archmage may choose to eliminate a spell slot of a higher level than that required to gain a type of high arcana. Arcane Fire (Su): The archmage gains the ability to change arcane spell energy into arcane fire, manifesting it as a bolt of raw magical energy. The bolt is a ranged touch attack with long range (400 feet + 40 feet/level of archmage) that deals 1d6 points of damage per class level of the archmage plus 1d6 points of damage per level of the spell used to create the effect. This ability costs one 9th-level spell slot. Arcane Reach (Su): The archmage can use spells with a range of touch on a target up to 30 feet away. The archmage must make a ranged touch attack. Arcane reach can be selected a second time as a special ability, in which case the range increases to 60 feet. This ability costs one 7th-level spell slot. Mastery of Counterspelling: When the archmage counterspells a spell, it is turned back upon the caster as if it were fully affected by a spell turning spell. If the spell cannot be affected by spell turning (for example, if it is a spell that affects an area), then it is merely counterspelled. This ability costs one 7th-level spell slot. Mastery of Elements: The archmage can alter an arcane spell when cast so that it utilizes a different element from the one it normally uses. This ability can only alter a spell with the acid, cold, fire, electricity, or sonic descriptor. The spell's casting time is unaffected. The caster decides whether to alter the spell's energy type and chooses the new energy type when he begins casting. This ability costs one 8th-level spell slot. Mastery of Shaping: The archmage can alter area and effect spells that use one of the following shapes: burst, cone, cylinder, emanation, or spread. The alteration consists of creating spaces within the spell's area or effect that are not subject to the spell. The minimum dimension for these spaces is a 5-foot cube. Furthermore, any shapeable spells have a minimum dimension of 5 feet instead of 10 feet. This ability costs one 6th-level spell slot. Spell Power: This ability increases the archmage's effective caster level by +1 (for purposes of determining level-dependent spell variables such as damage dice or range, and caster level checks only). This ability costs one 5th-level spell slot. Spell-Like Ability: An archmage who selects this type of high arcana can use one of her arcane spell slots (other than a slot expended to learn this or any other type of high arcana) to permanently prepare one of her arcane spells as a spell-like ability that can be used twice per day. The archmage does not use any components when casting the spell, although a spell that costs XP to cast still does so and a spell with a costly material component instead costs her 10 times that amount in XP. This ability costs one 5th-level spell slot. The spell-like ability normally uses a spell slot of the spell's level, although the archmage can choose to make a spell modified by a metamagic feat into a spell-like ability at the appropriate spell level. The archmage may use an available higher-level spell slot in order to use the spell-like ability more often. Using a slot three levels higher than the chosen spell allows her to use the spell-like ability four times per day, and a slot six levels higher lets her use it six times per day. If spell-like ability is selected more than one time as a high arcana choice, this ability can apply to the same spell chosen the first time (increasing the number of times per day it can be used) or to a different spell",
+        "name": "High Arcana"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Search",
+      "Spellcraft"
+    ],
+    "description": "The most advanced practitioners of arcane magic are frequently archmages.",
+    "hitDie": "d4",
+    "name": "Archmage",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 7,
+            "type": "arcane"
+          }
+        ],
+        "feats": [
+          "Skill Focus (Spellcraft)",
+          "Spell Focus (two schools of magic)"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 15
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 15
+          }
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 15 ranks, Spellcraft 15 ranks Feats: Skill Focus (Spellcraft), Spell Focus (two schools of magic) Spells: Ability to cast 7th-level arcane spells, knowledge of 5th-level or higher spells from at least five schools."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "High Arcana"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "High Arcana"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "High Arcana"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "High Arcana"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "High Arcana"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

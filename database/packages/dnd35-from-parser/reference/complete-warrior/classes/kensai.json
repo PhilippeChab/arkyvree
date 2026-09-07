@@ -1,0 +1,381 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T02:41:04.990Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/kensai/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "medium",
+    "featNameMap": {
+      "combatexpertise": "Combat Expertise"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Signature Weapon"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Power Surge"
+      },
+      {
+        "levels": [
+          4,
+          7
+        ],
+        "name": "Ki Projection"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Withstand"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Instill"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Ki Warlord"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.concentration.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.diplomacy.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.ride.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatexpertise.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4,
+    "unresolvedAptitudePicks": [
+      "Signature Weapon"
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Kensai Class Feature",
+    "features": {
+      "Instill": {
+        "description": "Once per day, a kensai of 8th level or higher can use a full-round action to attempt a Concentration check (DC 10 + the target's HD or character level) while touching a willing ally. On a success, the kensai transfers a portion of his combat ability to that ally, reducing his own base attack bonus and/or any combination of his base save bonuses by up to 1 point per class level and granting the same values to the recipient. After 1 hour, the transferred power automatically returns to the kensai. If the ally dies before the power returns, the kensai must succeed on a Fortitude save (DC 5 + the target's HD or character level) or die as well. On a successful save, the kensai immediately recovers all transferred bonuses.",
+        "level": 8,
+        "seedName": "Instill (Kensai)"
+      },
+      "Ki Projection": {
+        "description": "From 4th level onward, a kensai applies half his class level (rounded down) as a bonus to Bluff, Diplomacy, Gather Information, and Intimidate checks. At 8th level, this bonus increases to his full class level. However, if a creature discovers it was deceived by one of the kensai's Bluff checks, that creature receives a +10 bonus on any future check or saving throw against the kensai's Bluff, Diplomacy, Gather Information, or Intimidate attempts. The kensai can restore the creature's trust by improving its attitude from unfriendly to friendly.",
+        "level": 4,
+        "seedName": "Ki Projection (Kensai)",
+        "stackable": true
+      },
+      "Ki Warlord": {
+        "description": "Upon reaching 10th level, a kensai earns widespread renown as a ki warlord. Fellow kensai who share his alignment hold the ki warlord in high esteem, and even those of different alignments show a degree of deference. A ki warlord who serves an NPC master typically receives greater authority and responsibility within that master's domain, potentially being granted control of a castle, monastery, or martial academy. One who serves a deity may find that deity taking a more direct interest, communicating wishes personally or through agents. Beyond these narrative benefits, a ki warlord gains practical advantages. He may call upon lower-level members of the prestige class for aid in his quests or in fulfilling his oath of service, provided such requests do not conflict with those members' own oaths or alignment. Lower-level kensai are expected to provide reasonable assistance, including food, shelter, and access to minor resources that other characters might need to negotiate for. Furthermore, a ki warlord radiates an inspiring presence in battle: allies fighting within 30 feet of him gain a +1 morale bonus on Will saves, Concentration checks, and attack rolls. Lawful allies receive a +2 morale bonus on these same checks instead.",
+        "level": 10,
+        "seedName": "Ki Warlord (Kensai)"
+      },
+      "Power Surge": {
+        "description": "Starting at 2nd level, a kensai can spend a move action to attempt a DC 15 Concentration check, focusing his inner energy. On a success, he receives a +8 bonus to Strength lasting a number of rounds equal to half his class level. If he activates this ability more than once within the same 24-hour period, the DC rises by 5 for each subsequent use after the first.",
+        "level": 2,
+        "seedName": "Power Surge (Kensai)"
+      },
+      "Signature Weapon": {
+        "description": "A kensai selects one weapon he wields (which must be a weapon for which he possesses the Weapon Focus feat) as his signature weapon. Swords and bows are common choices, though even natural weapons are valid selections. Manufactured weapons must be at least masterwork quality. When entering this prestige class, the kensai develops a supernatural bond with his chosen signature weapon, channeling a portion of his life force into it. This bond enhances the weapon's effectiveness, but only when wielded by the kensai himself.",
+        "level": 1,
+        "seedName": "Signature Weapon (Kensai)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Kensai)"
+      },
+      "Withstand": {
+        "description": "At 5th level and beyond, whenever a kensai must attempt a Reflex save against an area-effect spell (such as fireball), he may substitute a Concentration check in place of the Reflex save to avoid taking full damage. If the kensai possesses evasion or improved evasion, those abilities function normally with this Concentration check.",
+        "level": 5,
+        "seedName": "Withstand (Kensai)"
+      }
+    },
+    "occurrenceMap": {
+      "Instill": "Instill",
+      "Ki Projection": "Ki Projection",
+      "Ki Warlord": "Ki Warlord",
+      "Power Surge": "Power Surge",
+      "Signature Weapon": "Signature Weapon",
+      "Withstand": "Withstand"
+    },
+    "overrides": {
+      "aptitudePicks": [],
+      "description": "The kensai achieves unity of physical prowess, mental discipline, martial skill, and inner resolve.",
+      "features": {
+        "Instill": {
+          "description": "Once per day, a kensai of 8th level or higher can use a full-round action to attempt a Concentration check (DC 10 + the target's HD or character level) while touching a willing ally. On a success, the kensai transfers a portion of his combat ability to that ally, reducing his own base attack bonus and/or any combination of his base save bonuses by up to 1 point per class level and granting the same values to the recipient. After 1 hour, the transferred power automatically returns to the kensai. If the ally dies before the power returns, the kensai must succeed on a Fortitude save (DC 5 + the target's HD or character level) or die as well. On a successful save, the kensai immediately recovers all transferred bonuses."
+        },
+        "Ki Projection": {
+          "description": "From 4th level onward, a kensai applies half his class level (rounded down) as a bonus to Bluff, Diplomacy, Gather Information, and Intimidate checks. At 8th level, this bonus increases to his full class level. However, if a creature discovers it was deceived by one of the kensai's Bluff checks, that creature receives a +10 bonus on any future check or saving throw against the kensai's Bluff, Diplomacy, Gather Information, or Intimidate attempts. The kensai can restore the creature's trust by improving its attitude from unfriendly to friendly."
+        },
+        "Ki Warlord": {
+          "description": "Upon reaching 10th level, a kensai earns widespread renown as a ki warlord. Fellow kensai who share his alignment hold the ki warlord in high esteem, and even those of different alignments show a degree of deference. A ki warlord who serves an NPC master typically receives greater authority and responsibility within that master's domain, potentially being granted control of a castle, monastery, or martial academy. One who serves a deity may find that deity taking a more direct interest, communicating wishes personally or through agents. Beyond these narrative benefits, a ki warlord gains practical advantages. He may call upon lower-level members of the prestige class for aid in his quests or in fulfilling his oath of service, provided such requests do not conflict with those members' own oaths or alignment. Lower-level kensai are expected to provide reasonable assistance, including food, shelter, and access to minor resources that other characters might need to negotiate for. Furthermore, a ki warlord radiates an inspiring presence in battle: allies fighting within 30 feet of him gain a +1 morale bonus on Will saves, Concentration checks, and attack rolls. Lawful allies receive a +2 morale bonus on these same checks instead."
+        },
+        "Power Surge": {
+          "description": "Starting at 2nd level, a kensai can spend a move action to attempt a DC 15 Concentration check, focusing his inner energy. On a success, he receives a +8 bonus to Strength lasting a number of rounds equal to half his class level. If he activates this ability more than once within the same 24-hour period, the DC rises by 5 for each subsequent use after the first."
+        },
+        "Signature Weapon": {
+          "description": "A kensai selects one weapon he wields (which must be a weapon for which he possesses the Weapon Focus feat) as his signature weapon. Swords and bows are common choices, though even natural weapons are valid selections. Manufactured weapons must be at least masterwork quality. When entering this prestige class, the kensai develops a supernatural bond with his chosen signature weapon, channeling a portion of his life force into it. This bond enhances the weapon's effectiveness, but only when wielded by the kensai himself."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        },
+        "Withstand": {
+          "description": "At 5th level and beyond, whenever a kensai must attempt a Reflex save against an area-effect spell (such as fireball), he may substitute a Concentration check in place of the Reflex save to avoid taking full damage. If the kensai possesses evasion or improved evasion, those abilities function normally with this Concentration check."
+        }
+      },
+      "reviewed": [
+        "Signature Weapon"
+      ]
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Kensai gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "The kensai chooses one of his weapons (it must be one for which he has the Weapon Focus feat) to become a signature weapon. Most kensai choose either a sword or bow for this weapon, but even a kensai's natural weapons can be chosen. If the weapon is a manufactured one, it must be of at least masterwork quality. Upon qualifying for the class, a kensai gains the ability to establish a link with his signature weapon. The character focuses part of his life energy on the weapon, making it more effective in his hands and his hands alone.",
+        "name": "Signature Weapon",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level, a kensai gains the ability to make a DC 15 Concentration check as a move action to focus his energy and spirit. If he succeeds, he gains +8 to his Strength for a number of rounds equal to one-half his class level. Each time after the first that a kensai successfully uses this ability in a single 24-hour period, the check DC increases by 5.",
+        "name": "Power Surge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level and higher, a kensai adds one half his class level (round down) to any Bluff, Diplomacy, Gather Information, or Intimidate checks he makes. At 8th level and higher, the kensai adds his full class level to such checks. A target that realizes it has been fooled by a kensai's successful Bluff check gains a +10 bonus on any check or saving throw involving the kensai's use of Bluff, Diplomacy, Gather Information, or Intimidate against that target in the future. The kensai can regain the creature's trust by changing its attitude from unfriendly to friendly.",
+        "name": "Ki Projection"
+      },
+      {
+        "description": "When a kensai of 5th level or higher is forced to make a Reflex save to avoid damage from an area effect spell (such as a fireball), he can make a Concentration check instead of a Reflex save to resist taking full damage. If a kensai has the evasion or improved evasion ability, those benefits apply on this Concentration check as well.",
+        "name": "Withstand",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Once per day, a kensai of 8th level or higher may take a full-round action to make a Concentration check (DC 10 + target's HD or character level) to impart some of his own ability into a willing ally he can touch. The kensai then transfers some of his power to the ally: He subtracts up to 1 point per class level from his base attack bonus and/or any or all of his base save bonuses and transfers the same amount to the recipient. The kensai regains the instilled power 1 hour later, when it transfers back out of the ally. If the ally dies before the instilled power is transferred back, the kensai must make a Fortitude save (DC 5 + target's HD or character level) or die as well. If he succeeds, he immediately gets his instilled powers back.",
+        "name": "Instill",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a kensai attains 10th level, he gains great notoriety and becomes known as a ki warlord. Other kensai of the same alignment revere the ki warlord, and even those of differing alignments treat him with some measure of respect. If the ki warlord has an NPC master, this master likely assigns the ki warlord more responsibility and authority within his domain (perhaps giving him a castle, monastery, or military school). If the ki warlord serves a deity, that deity may take a personal interest in giving the ki warlord more responsibility, perhaps actually contacting the ki warlord directly or through intermediaries and making the deity's wishes known. In addition to this added responsibility, a ki warlord gains some tangible benefits. He has the right to petition other (lower-level) members of the prestige class for assistance on adventures or in the fulfillment of his oath. As long as a ki warlord's requests do not violate the other members' own oaths of service or alignment, lower-level kensai have a responsibility to assist a ki warlord in any reasonable manner - such as providing food and shelter, access to minor resources, and other things another character might have to barter for. Ki warlords inspire those around them. When fighting within 30 feet of a ki warlord, allies gain a +1 morale bonus on Will saves, Concentration checks, and attack rolls. Lawful allies gain a +2 morale bonus on these checks.",
+        "name": "Ki Warlord"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Local)",
+      "Knowledge (Nobility and Royalty)",
+      "Ride",
+      "Sense Motive"
+    ],
+    "description": "The kensai masters body, mind, weapon, and will.",
+    "hitDie": "d10",
+    "name": "Kensai",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any lawful",
+        "bab": 5,
+        "feats": [
+          "Combat Expertise",
+          "Weapon Focus (any weapon)"
+        ],
+        "skills": [
+          {
+            "name": "Concentration",
+            "ranks": 5
+          },
+          {
+            "name": "Diplomacy",
+            "ranks": 5
+          },
+          {
+            "name": "Ride",
+            "ranks": 5
+          }
+        ],
+        "special": [
+          "Must complete an other of service sidebar) to either an overlord or an ideal."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Any lawful Skills: Concentration 5 ranks, Diplomacy 5 ranks, Ride 5 ranks Feats: Combat Expertise, Weapon Focus (any weapon) Special: Must complete an other of service sidebar) to either an overlord or an ideal."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Signature weapon"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Power surge"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Ki projection"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Withstand"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Ki projection"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Instill"
+        ],
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Ki warlord"
+        ],
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

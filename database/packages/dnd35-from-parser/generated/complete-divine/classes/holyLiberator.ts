@@ -1,0 +1,66 @@
+import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import { eq, eqStr, gte } from "@/database/packages/dnd35/v1/feats/types.ts";
+
+export const HOLY_LIBERATOR: ClassSeed = {
+  name: "Holy Liberator",
+  description: "The holy liberator is a sacred champion dedicated to the cause of freedom, sharing a spiritual kinship with the paladin.",
+  hd: 10, levels: 10, skillPoints: 2,
+  bab: "good",
+  saves: { fortitude: "good", reflex: "poor", will: "poor" },
+  classSkills: [
+    "Concentration",
+    "Craft",
+    "Diplomacy",
+    "Handle Animal",
+    "Heal",
+    "Intimidate",
+    "Knowledge (Religion)",
+    "Profession",
+    "Ride",
+    "Sense Motive",
+  ],
+  requirements: [
+    gte("combat.bab", 5),
+    gte("skills.diplomacy.rank", 5),
+    gte("skills.sensemotive.rank", 5),
+    eq("feats.ironwill.possessed"),
+    eqStr("identity.beliefs.alignment", "Chaotic Good"),
+  ],
+  classFeatureAptitude: "Holy Liberator Class Feature",
+  classFeatures: [
+    [1, "Aura of Good (Holy Liberator)"],
+    [1, "Detect Evil (Holy Liberator)"],
+    [1, "Smite Evil (Holy Liberator)"],
+    [1, "Spells per Day (Holy Liberator)"],
+    [1, "Weapon and Armor Proficiency (Holy Liberator)"],
+    [2, "Remove Fatigue (Holy Liberator)"],
+    [3, "Aura of Resolve (Holy Liberator)"],
+    [4, "Break Enchantment (Holy Liberator)"],
+    [4, "Divine Grace (Holy Liberator)"],
+    [5, "Smite Evil (Holy Liberator)"],
+    [6, "Celestial Companion (Holy Liberator)"],
+    [8, "Break Enchantment (Holy Liberator)"],
+    [10, "Smite Evil (Holy Liberator)"],
+  ],
+  bonusSpellAbility: "Wisdom",
+  casterType: "Divine",
+  spells: {
+    slug: "holyliberatorspells",
+    perDay: [
+      [0],
+      [1],
+      [1, 0],
+      [1, 1],
+      [1, 1, 0],
+      [1, 1, 1],
+      [2, 1, 1],
+      [2, 1, 1, 1],
+      [2, 2, 1, 1],
+      [2, 2, 2, 1],
+    ],
+    knowAll: true,
+    noCantrips: true,
+  },
+};
+
+// TODO: No modifiers defined — review if this class needs any

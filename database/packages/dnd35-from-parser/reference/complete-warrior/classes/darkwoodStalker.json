@@ -1,0 +1,431 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:11.428Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/darkwood-stalker/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "featNameMap": {
+      "dodge": "Dodge",
+      "track": "Track"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "name": "Ancient Foe"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Uncanny Dodge"
+      },
+      {
+        "levels": [
+          3,
+          6,
+          9
+        ],
+        "name": "Sneak Attack"
+      },
+      {
+        "levels": [
+          4,
+          7
+        ],
+        "name": "Darkvision"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Improved Uncanny Dodge"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Dodge Critical"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Death Attack"
+      }
+    ],
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.hide.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.listen.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.movesilently.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spot.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.dodge.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.track.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "identity.physiology.race.name",
+        "value": "Elf",
+        "valueType": "string"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 4,
+    "lockedFavoredEnemies": [
+      {
+        "creatureType": "Humanoid (Orc)",
+        "featureName": "Ancient Foe",
+        "levels": [
+          1,
+          4,
+          7,
+          10
+        ]
+      }
+    ]
+  },
+  "mapping": {
+    "classFeatureAptitude": "Darkwood Stalker Class Feature",
+    "features": {
+      "Ancient Foe": {
+        "description": "Through rigorous study of orcs and specialized combat training against them, a darkwood stalker receives a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks made against orcs. The same +2 bonus applies to weapon damage rolls against such creatures. This damage bonus extends to ranged weapons, though only for targets within 30 feet; beyond that distance, the stalker lacks the precision for the extra damage. The bonus damage has no effect on creatures immune to critical hits. At 4th, 7th, and 10th level, this bonus increases by an additional +2. This bonus stacks with any favored enemy bonus gained from ranger levels.",
+        "level": 1,
+        "seedName": "Ancient Foe (Darkwood Stalker)",
+        "stackable": true
+      },
+      "Darkvision": {
+        "description": "Despite their stealth and sharp senses, darkwood stalkers often find themselves disadvantaged when battling orcs in darkness. Ancient elven scholars devised a ritual that grants the most devoted stalkers the ability to overcome this limitation. As the stalker advances, his night vision steadily improves, ultimately rivaling the darkvision of orcs themselves. At 4th level, the darkwood stalker gains darkvision with a range of 30 feet, and at 7th level this range extends to 60 feet. If the darkwood stalker already possesses darkvision as a racial trait, this ability does not further extend it.",
+        "level": 4,
+        "seedName": "Darkvision (Darkwood Stalker)",
+        "stackable": true
+      },
+      "Death Attack": {
+        "description": "A 10th-level darkwood stalker who observes a specific orc for 3 rounds and then lands a sneak attack with a melee weapon that deals damage may potentially slay the target outright. During the observation period, the stalker may take other actions provided he maintains focus on the target, and the target neither detects the stalker nor identifies him as a threat. If the victim fails a Fortitude save (DC 10 + the darkwood stalker's class level + his Wisdom modifier), the victim dies. On a successful save, the attack counts as an ordinary sneak attack. After completing 3 rounds of observation, the stalker must execute the death attack within the following 3 rounds. If the attempt fails (the target makes the save) or the stalker does not strike within 3 rounds of finishing the observation, another 3 rounds of study are needed before a new death attack can be made.",
+        "level": 10,
+        "seedName": "Death Attack (Darkwood Stalker)"
+      },
+      "Dodge Critical": {
+        "description": "Darkwood stalkers, while typically more skilled than the orcs they fight, have witnessed too many battles decided by a single fortunate strike. At 8th level, a darkwood stalker learns to deflect even the most well-placed blow into a glancing hit. Once per day, when struck by a critical hit, the darkwood stalker may attempt a Reflex saving throw (DC 20 + the weapon's enhancement bonus, if any) to convert that critical hit into a normal hit. The stalker must be aware of the incoming attack and not flat-footed, and he must declare his intention to mitigate the critical hit before damage is rolled.",
+        "level": 8,
+        "seedName": "Dodge Critical (Darkwood Stalker)"
+      },
+      "Improved Uncanny Dodge": {
+        "description": "Beginning at 5th level, a darkwood stalker cannot be flanked, as he responds to attackers on all sides with equal ease. This prevents other creatures from using flanking to deliver sneak attacks against him. However, a rogue whose level exceeds the darkwood stalker's by at least four can still flank him (and therefore sneak attack him). If the darkwood stalker obtains uncanny dodge from another class, levels from all classes granting uncanny dodge are combined when calculating the minimum rogue level needed to flank him.",
+        "level": 5,
+        "seedName": "Improved Uncanny Dodge (Darkwood Stalker)"
+      },
+      "Sneak Attack": {
+        "description": "When a darkwood stalker catches a foe who cannot effectively defend against his strike, he can target a vulnerable point to inflict an additional 1d6 points of damage.",
+        "level": 3,
+        "seedName": "Sneak Attack (Darkwood Stalker)",
+        "stackable": true
+      },
+      "Uncanny Dodge": {
+        "description": "From 2nd level onward, a darkwood stalker gains an instinctive awareness of danger that surpasses normal perception. He keeps his Dexterity bonus to Armor Class (if any) even when caught flat-footed or targeted by an invisible attacker. However, he still forfeits his Dexterity bonus to AC if rendered immobile. If the darkwood stalker previously acquired uncanny dodge from a different class, he instead automatically gains improved uncanny dodge.",
+        "level": 2,
+        "seedName": "Uncanny Dodge (Darkwood Stalker)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "A darkwood stalker does not gain proficiency with any additional weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Darkwood Stalker)"
+      }
+    },
+    "occurrenceMap": {
+      "Ancient Foe": "Ancient Foe",
+      "Darkvision": "Darkvision",
+      "Death Attack": "Death Attack",
+      "Dodge Critical": "Dodge Critical",
+      "Improved Uncanny Dodge": "Improved Uncanny Dodge",
+      "Sneak Attack": "Sneak Attack",
+      "Uncanny Dodge": "Uncanny Dodge"
+    },
+    "overrides": {
+      "description": "Certain elves dedicate themselves to becoming specialist orc hunters, known as darkwood stalkers.",
+      "features": {
+        "Ancient Foe": {
+          "description": "Through rigorous study of orcs and specialized combat training against them, a darkwood stalker receives a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks made against orcs. The same +2 bonus applies to weapon damage rolls against such creatures. This damage bonus extends to ranged weapons, though only for targets within 30 feet; beyond that distance, the stalker lacks the precision for the extra damage. The bonus damage has no effect on creatures immune to critical hits. At 4th, 7th, and 10th level, this bonus increases by an additional +2. This bonus stacks with any favored enemy bonus gained from ranger levels."
+        },
+        "Darkvision": {
+          "description": "Despite their stealth and sharp senses, darkwood stalkers often find themselves disadvantaged when battling orcs in darkness. Ancient elven scholars devised a ritual that grants the most devoted stalkers the ability to overcome this limitation. As the stalker advances, his night vision steadily improves, ultimately rivaling the darkvision of orcs themselves. At 4th level, the darkwood stalker gains darkvision with a range of 30 feet, and at 7th level this range extends to 60 feet. If the darkwood stalker already possesses darkvision as a racial trait, this ability does not further extend it."
+        },
+        "Death Attack": {
+          "description": "A 10th-level darkwood stalker who observes a specific orc for 3 rounds and then lands a sneak attack with a melee weapon that deals damage may potentially slay the target outright. During the observation period, the stalker may take other actions provided he maintains focus on the target, and the target neither detects the stalker nor identifies him as a threat. If the victim fails a Fortitude save (DC 10 + the darkwood stalker's class level + his Wisdom modifier), the victim dies. On a successful save, the attack counts as an ordinary sneak attack. After completing 3 rounds of observation, the stalker must execute the death attack within the following 3 rounds. If the attempt fails (the target makes the save) or the stalker does not strike within 3 rounds of finishing the observation, another 3 rounds of study are needed before a new death attack can be made."
+        },
+        "Dodge Critical": {
+          "description": "Darkwood stalkers, while typically more skilled than the orcs they fight, have witnessed too many battles decided by a single fortunate strike. At 8th level, a darkwood stalker learns to deflect even the most well-placed blow into a glancing hit. Once per day, when struck by a critical hit, the darkwood stalker may attempt a Reflex saving throw (DC 20 + the weapon's enhancement bonus, if any) to convert that critical hit into a normal hit. The stalker must be aware of the incoming attack and not flat-footed, and he must declare his intention to mitigate the critical hit before damage is rolled."
+        },
+        "Improved Uncanny Dodge": {
+          "description": "Beginning at 5th level, a darkwood stalker cannot be flanked, as he responds to attackers on all sides with equal ease. This prevents other creatures from using flanking to deliver sneak attacks against him. However, a rogue whose level exceeds the darkwood stalker's by at least four can still flank him (and therefore sneak attack him). If the darkwood stalker obtains uncanny dodge from another class, levels from all classes granting uncanny dodge are combined when calculating the minimum rogue level needed to flank him."
+        },
+        "Sneak Attack": {
+          "description": "When a darkwood stalker catches a foe who cannot effectively defend against his strike, he can target a vulnerable point to inflict an additional 1d6 points of damage."
+        },
+        "Uncanny Dodge": {
+          "description": "From 2nd level onward, a darkwood stalker gains an instinctive awareness of danger that surpasses normal perception. He keeps his Dexterity bonus to Armor Class (if any) even when caught flat-footed or targeted by an invisible attacker. However, he still forfeits his Dexterity bonus to AC if rendered immobile. If the darkwood stalker previously acquired uncanny dodge from a different class, he instead automatically gains improved uncanny dodge."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "A darkwood stalker does not gain proficiency with any additional weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Darkwood stalkers gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Due to his extensive study of orcs and training in the proper techniques for combating them, a darkwood stalker gains a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks when using these skills against orcs. He gets the same bonus on weapon damage rolls against these creatures. A darkwood stalker also gets the bonus on damage with ranged weapons, but only against targets within 30 feet (the darkwood stalker cannot strike with deadly accuracy beyond that range). The bonus on damage does not apply against creatures that are im mune to critical hits. At 4th, 7th, and 10th level, the darkwood stalker's bonus goes up by +2. This bonus stacks with a favored enemy bonus (if any) acquired through ranger levels.",
+        "name": "Ancient Foe",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, a darkwood stalker gains the ability to react to danger before his senses would normally allow him to do so. He retains his Dexterity bonus to Armor Class (if any) regardless of being caught flat-footed or struck by an invisible attacker. He still loses his Dexterity bonus to AC if immobilized. If a darkwood stalker already had the uncanny dodge ability from another class, the character automatically gains improved uncanny dodge instead.",
+        "name": "Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "If a darkwood stalker can catch an opponent when she is unable to defend herself effectively from his attack, he can strike a vital spot for an extra 1d6 points of damage. For complete details on the sneak attack ability, see the description of the dark hunter earlier in this chapter.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Although stealthy and keen-eyed, the darkwood stalker is often at a disadvantage against orcs when fighting in the darkness. Long ago, elven sages developed a ritual to allow the most dedicated stalkers to overcome this disadvantage. Now, as they grow in experience, their night vision continually improves, eventually matching the darkvision of their hated foes. At 4th level, a darkwood stalker gains darkvision out to 30 feet, and at 7th level, the range increases to 60 feet. If the darkwood stalker already has darkvision as a racial ability, this ability does not increase it.",
+        "name": "Darkvision",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level and higher, a darkwood stalker can no longer be flanked, since he can react to opponents on opposite sides of him as easily as he can react to a single attacker. This defense denies other characters the ability to use flank attacks to sneak attack him. The exception to this defense is that a rogue of at least four levels higher than the character can flank him (and thus sneak attack him). If a darkwood stalker gains the uncanny dodge ability from another class, the levels from the classes that grant uncanny dodge stack to determine the minimum rogue level required to flank the character.",
+        "name": "Improved Uncanny Dodge",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Although often more skilled than their orc foes, darkwood stalkers have seen too many battles won by one lucky blow from a falchion. At 8th level, a darkwood stalker becomes able to turn even the luckiest blow into a grazing strike. Once per day, a darkwood stalker can make a Reflex saving throw (DC 20 + the enhancement bonus, if any, possessed by the weapon) to turn a critical hit dealt upon him into a normal hit. The darkwood stalker must be aware of the attack and not flat-footed, and he must declare his attempt to reduce the effect of the critical hit before the damage from the hit is rolled.",
+        "name": "Dodge Critical",
+        "type": "(Ex)"
+      },
+      {
+        "description": "If a 10th-level darkwood stalker studies a particular orc for 3 rounds and then makes a sneak attack with a melee weapon that successfully deals damage, the sneak attack has the additional effect of possibly killing the target. While studying the orc, the darkwood hunter can undertake other actions as long as his attention stays focused on the target and the target does not detect the darkwood stalker or recognize the darkwood stalker as an enemy. If the victim of such an attack fails a Fortitude save (DC 10 + the darkwood stalker's class level + the darkwood stalker's Wis modifier), he dies. If the victim's saving throw succeeds, the attack is just a normal sneak attack. Once the darkwood stalker has completed the 3 rounds of study, he must make the death attack within the next 3 rounds. If a death attack is attempted and fails (the victim makes his save) or if the darkwood stalker does not launch the attack within 3 rounds of completing the study, 3 new rounds of study are required before he can attempt another death attack.",
+        "name": "Death Attack",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Craft",
+      "Heal",
+      "Hide",
+      "Jump",
+      "Knowledge (Nature)",
+      "Listen",
+      "Move Silently",
+      "Profession",
+      "Ride",
+      "Search",
+      "Spot",
+      "Survival",
+      "Swim",
+      "Use Rope"
+    ],
+    "description": "Some elves train as elite hunters of orcs; these hunters are called darkwood stalkers.",
+    "hitDie": "d8",
+    "name": "Darkwood Stalker",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Dodge",
+          "Track"
+        ],
+        "skills": [
+          {
+            "name": "Hide",
+            "ranks": 5
+          },
+          {
+            "name": "Listen",
+            "ranks": 5
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 5
+          },
+          {
+            "name": "Spot",
+            "ranks": 5
+          },
+          {
+            "name": "Survival",
+            "ranks": 5
+          }
+        ],
+        "special": [
+          "Race: Elf"
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Race: Elf or Half-elf Skills: Hide 5 ranks, Listen 5 ranks, Move Silently 5 ranks, Spot 5 ranks, Survival 5 ranks Feats: Dodge, Track Speak Language: Orc"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Ancient foe +2"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Uncanny dodge"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Ancient foe +4",
+          "darkvision 30 ft."
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Improved uncanny dodge"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Ancient foe +6",
+          "darkvision 60 ft."
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Dodge critical"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Sneak attack +3d6"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Ancient foe +8",
+          "death attack"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

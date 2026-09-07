@@ -1,0 +1,1 @@
+ALTER TABLE "campaign"."campaigns" ALTER COLUMN "description" DROP NOT NULL;

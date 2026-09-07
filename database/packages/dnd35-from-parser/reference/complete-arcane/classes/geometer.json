@@ -1,0 +1,333 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:10:48.622Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/geometer/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "scribescroll": "Scribe Scroll"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Glyph Of Warding"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Draw Spellglyph"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Book Of Geometry"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Sigilsight"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Pass Sigil"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Powerful Spellglyph"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Greater Glyph Of Warding"
+      }
+    ],
+    "hd": 4,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.decipherscript.rank",
+        "value": "9",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.disabledevice.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "9",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.search.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.scribescroll.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "3",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Geometer Class Feature",
+    "features": {
+      "Book of Geometry": {
+        "description": "At 2nd level and higher, a geometer uses a unique system for recording the details of a spell that drastically reduces the expense of maintaining spellbooks. Every spell he learns from now on requires only a single page in his spellbook. It still takes 24 hours to scribe a spell into a spellbook and materials costing 100 gp per page. A geometer's spellbook is difficult for nongeometers to decipher and use. The Spellcraft DC to decipher or prepare spells from a geometer's spellbook is increased by 5 for nongeometers.",
+        "level": 2,
+        "seedName": "Book of Geometry (Geometer)"
+      },
+      "Draw Spellglyph": {
+        "description": "",
+        "level": 1,
+        "seedName": "Draw Spellglyph (Geometer)"
+      },
+      "Glyph of Warding": {
+        "description": "A geometer adds glyph of warding to his spellbook as a 3rd-level arcane spell. He can prepare and cast the spell just like any other spell he knows. Spellglyph (Su): A spellglyph is an arcane diagram that substitutes for a specific spell's verbal and material components (if any). When a geometer casts a prepared spell in conjunction with a spellglyph scribed for that spell, he can cast the spell as if it were affected by the Silent Spell feat. The spellglyph replaces any material components (other than a focus) normally required by the spell. A geometer chooses at the time of casting whether to use a spellglyph. An expended spellglyph disappears, just like any other material component. Spellglyphs are normally scribed on parchment, much like scrolls. Preparing a spellglyph requires 1 hour and the use of rare inks costing 25 gp per spell level. If the spell normally requires an expensive material component (with a value of more than 1 gp), exotic inks and treatments of equal cost must be used in the preparation of the spellglyph.",
+        "level": 1,
+        "seedName": "Glyph of Warding (Geometer)"
+      },
+      "Greater Glyph of Warding": {
+        "description": "A 5th-level geometer adds greater glyph of warding to his spellbook as a 6th-level arcane spell. He can prepare and cast the spell just like any other spell he knows",
+        "level": 5,
+        "seedName": "Greater Glyph of Warding (Geometer)"
+      },
+      "Pass Sigil": {
+        "description": "Beginning at 3rd level, a geometer can temporarily negate magical wards based on written symbols, sigils, runes, or glyphs. As a standard action, a geometer can attempt to pass such a sigil. He must succeed on a level check (DC 6 + the sigil creator's caster level). If successful, he can suppress the effects of the device for as long as he maintains concentration (which might make it possible for others to pass the sigil safely, too). A geometer must be able to see the device to be passed.",
+        "level": 4,
+        "seedName": "Pass Sigil (Geometer)"
+      },
+      "Powerful Spellglyph": {
+        "description": "When a 5th-level geometer prepares a spellglyph for a spell, he knows how to strengthen the spell beyond its normal effects. His caster level is treated as 1 higher for any spell he casts with the use of a spellglyph.",
+        "level": 5,
+        "seedName": "Powerful Spellglyph (Geometer)"
+      },
+      "Sigilsight": {
+        "description": "A geometer of 3rd level or higher can use a Search check to find magic traps based on runes, glyphs, sigils, symbols, and other writings as a rogue can. He gains a bonus equal to his caster level on all Search checks to find traps of this sort. A geometer who merely comes within 10 feet of a magic rune, glyph, sigil, or symbol, or the threshold of danger for such a device, is entitled to make a Search check as if he were actively searching for a magic trap.",
+        "level": 3,
+        "seedName": "Sigilsight (Geometer)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level, a geometer gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a geometer, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Geometer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Geometers gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Geometer)"
+      }
+    },
+    "occurrenceMap": {
+      "Book Of Geometry": "Book of Geometry",
+      "Draw Spellglyph": "Draw Spellglyph",
+      "Glyph Of Warding": "Glyph of Warding",
+      "Greater Glyph Of Warding": "Greater Glyph of Warding",
+      "Pass Sigil": "Pass Sigil",
+      "Powerful Spellglyph": "Powerful Spellglyph",
+      "Sigilsight": "Sigilsight"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Geometers gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level, a geometer gains new spells per day (and spells known, if applicable) as if he had also gained a level in an arcane spellcasting class to which he belonged before adding the prestige class level. He does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If he had more than one arcane spellcasting class before becoming a geometer, he must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A geometer adds glyph of warding to his spellbook as a 3rd-level arcane spell. He can prepare and cast the spell just like any other spell he knows. Spellglyph (Su): A spellglyph is an arcane diagram that substitutes for a specific spell's verbal and material components (if any). When a geometer casts a prepared spell in conjunction with a spellglyph scribed for that spell, he can cast the spell as if it were affected by the Silent Spell feat. The spellglyph replaces any material components (other than a focus) normally required by the spell. A geometer chooses at the time of casting whether to use a spellglyph. An expended spellglyph disappears, just like any other material component. Spellglyphs are normally scribed on parchment, much like scrolls. Preparing a spellglyph requires 1 hour and the use of rare inks costing 25 gp per spell level. If the spell normally requires an expensive material component (with a value of more than 1 gp), exotic inks and treatments of equal cost must be used in the preparation of the spellglyph.",
+        "name": "Glyph of Warding"
+      },
+      {
+        "description": "",
+        "name": "Draw Spellglyph"
+      },
+      {
+        "description": "At 2nd level and higher, a geometer uses a unique system for recording the details of a spell that drastically reduces the expense of maintaining spellbooks. Every spell he learns from now on requires only a single page in his spellbook. It still takes 24 hours to scribe a spell into a spellbook and materials costing 100 gp per page. A geometer's spellbook is difficult for nongeometers to decipher and use. The Spellcraft DC to decipher or prepare spells from a geometer's spellbook is increased by 5 for nongeometers.",
+        "name": "Book of Geometry",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A geometer of 3rd level or higher can use a Search check to find magic traps based on runes, glyphs, sigils, symbols, and other writings as a rogue can. He gains a bonus equal to his caster level on all Search checks to find traps of this sort. A geometer who merely comes within 10 feet of a magic rune, glyph, sigil, or symbol, or the threshold of danger for such a device, is entitled to make a Search check as if he were actively searching for a magic trap.",
+        "name": "Sigilsight",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Beginning at 3rd level, a geometer can temporarily negate magical wards based on written symbols, sigils, runes, or glyphs. As a standard action, a geometer can attempt to pass such a sigil. He must succeed on a level check (DC 6 + the sigil creator's caster level). If successful, he can suppress the effects of the device for as long as he maintains concentration (which might make it possible for others to pass the sigil safely, too). A geometer must be able to see the device to be passed.",
+        "name": "Pass Sigil",
+        "type": "(Su)"
+      },
+      {
+        "description": "When a 5th-level geometer prepares a spellglyph for a spell, he knows how to strengthen the spell beyond its normal effects. His caster level is treated as 1 higher for any spell he casts with the use of a spellglyph.",
+        "name": "Powerful Spellglyph",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A 5th-level geometer adds greater glyph of warding to his spellbook as a 6th-level arcane spell. He can prepare and cast the spell just like any other spell he knows",
+        "name": "Greater Glyph of Warding"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Disable Device",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Search",
+      "Spellcraft"
+    ],
+    "description": "The geometer is the master of written magic and spells inscribed within a perfectly rendered diagram.",
+    "hitDie": "d4",
+    "name": "Geometer",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "arcane"
+          }
+        ],
+        "feats": [
+          "Scribe Scroll"
+        ],
+        "skills": [
+          {
+            "name": "Decipher Script",
+            "ranks": 9
+          },
+          {
+            "name": "Disable Device",
+            "ranks": 4
+          },
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 9
+          },
+          {
+            "name": "Search",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Skills: Decipher Script 9 ranks, Disable Device 4 ranks, Knowledge (arcana) 9 ranks, Search 4 ranks Feats: Scribe Scroll Spells: Able to prepare and cast 3rd-level arcane spells."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Glyph of warding",
+          "draw spellglyph"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Book of geometry"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Sigilsight"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Pass sigil"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Powerful spellglyph",
+          "greater glyph of warding"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 4
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

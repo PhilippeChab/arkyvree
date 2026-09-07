@@ -1,0 +1,502 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-20T23:14:13.158Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/warpriest/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {
+      "combatcasting": "Combat Casting",
+      "turnorrebukeundead": "Turn or Rebuke Undead"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Bonus Domain"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Rally"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Turn Or Rebuke Undead"
+      },
+      {
+        "levels": [
+          2,
+          4,
+          6,
+          10
+        ],
+        "name": "Inflame"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Mass Cure Light Wounds"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Fear Aura"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Heroes' Feast"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Haste"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Mass Heal"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Implacable Foe"
+      }
+    ],
+    "hd": 10,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.diplomacy.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.sensemotive.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.combatcasting.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.turnorrebukeundead.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Warpriest Class Feature",
+    "features": {
+      "Bonus Domain": {
+        "description": "Upon reaching 1st level, the warpriest receives an additional domain: Glory if he turns undead, or Domination if he rebukes undead.",
+        "level": 1,
+        "seedName": "Bonus Domain (Warpriest)"
+      },
+      "Fear Aura": {
+        "description": "Starting at 5th level, the warpriest can project a frightening aura once per day. This aura extends in a 20-foot radius and lasts for 1 round per warpriest level. Enemies within the area must succeed on a Will save (DC 10 + warpriest class level + Charisma modifier) or suffer the effects of a fear spell.",
+        "level": 5,
+        "seedName": "Fear Aura (Warpriest)"
+      },
+      "Haste": {
+        "description": "Upon reaching 7th level, the warpriest gains the ability to use haste as a spell-like ability three times per day.",
+        "level": 7,
+        "seedName": "Haste (Warpriest)"
+      },
+      "Heroes' Feast": {
+        "description": "Once per day, a warpriest of 6th level or higher can use heroes' feast as a spell-like ability.",
+        "level": 6,
+        "seedName": "Heroes' Feast (Warpriest)"
+      },
+      "Implacable Foe": {
+        "description": "At 10th level, the warpriest can channel positive or negative energy to sustain his allies through otherwise fatal injuries. Activating this power requires a move action, and the warpriest must concentrate each subsequent round to maintain it. While active, the warpriest radiates a 100-foot aura. Allies within this area can ignore the effects of being at 0 or fewer hit points; however, any creature reduced to -20 hit points or below dies instantly. Once the effect ceases or an ally moves beyond the 100-foot radius, the full effects of any accumulated damage take hold immediately. If the warpriest normally turns undead, this ability benefits living allies; if he normally rebukes undead, it benefits undead allies instead.",
+        "level": 10,
+        "seedName": "Implacable Foe (Warpriest)"
+      },
+      "Inflame": {
+        "description": "By spending a full-round action, the warpriest can stir the resolve of his companions. Every creature that can hear him receives a morale bonus on saving throws against charm and fear effects. This bonus starts at +2 at 2nd level and grows by +2 at every subsequent even-numbered level (+4 at 4th, +6 at 6th, and so on). The effect persists for 5 minutes after the warpriest finishes speaking, plus an additional 1 minute per warpriest level. The warpriest himself also benefits from this bonus.",
+        "level": 2,
+        "seedName": "Inflame (Warpriest)",
+        "stackable": true
+      },
+      "Mass Cure Light Wounds": {
+        "description": "Beginning at 3rd level, the warpriest can use mass cure light wounds once per day as a spell-like ability. His caster level for this effect equals his highest divine caster level.",
+        "level": 3,
+        "seedName": "Mass Cure Light Wounds (Warpriest)"
+      },
+      "Mass Heal": {
+        "description": "At 9th level or higher, the warpriest can use mass heal once per day as a spell-like ability. His caster level for this effect equals his highest divine caster level.",
+        "level": 9,
+        "seedName": "Mass Heal (Warpriest)"
+      },
+      "Rally": {
+        "description": "As a standard action, a warpriest who is not currently affected by any fear effect can bolster his allies. Each ally within 60 feet who can hear the warpriest and is suffering from a fear effect receives an additional saving throw against that effect, gaining a +1 morale bonus to the roll for each warpriest class level.",
+        "level": 1,
+        "seedName": "Rally (Warpriest)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "The warpriest's divine spellcasting continues to advance as he gains levels. At every even-numbered warpriest level (2nd, 4th, 6th, 8th, and 10th), the character receives new divine spells per day (and spells known, where applicable) as though he had gained an additional level in a divine spellcasting class he possessed prior to entering this prestige class. No other class benefits from that earlier class are gained, such as improved undead turning or more frequent use of remove disease. A character who had multiple divine spellcasting classes before becoming a warpriest must choose which class benefits from the spellcasting advancement each time he reaches an even-numbered warpriest level.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Warpriest)"
+      },
+      "Turn or Rebuke Undead": {
+        "description": "Warpriest levels stack with the character's cleric or paladin levels for the purpose of turning or rebuking undead.",
+        "level": 1,
+        "seedName": "Turn or Rebuke Undead (Warpriest)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "A warpriest is proficient with every simple and martial weapon, all armor categories (light, medium, and heavy), and all shields, tower shields included.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencylight.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencymedium.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.armorproficiencyheavy.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.shieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.towershieldproficiency.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ],
+        "seedName": "Weapon and Armor Proficiency (Warpriest)"
+      }
+    },
+    "occurrenceMap": {
+      "Bonus Domain": "Bonus Domain",
+      "Fear Aura": "Fear Aura",
+      "Haste": "Haste",
+      "Heroes' Feast": "Heroes' Feast",
+      "Implacable Foe": "Implacable Foe",
+      "Inflame": "Inflame",
+      "Mass Cure Light Wounds": "Mass Cure Light Wounds",
+      "Mass Heal": "Mass Heal",
+      "Rally": "Rally",
+      "Turn Or Rebuke Undead": "Turn or Rebuke Undead"
+    },
+    "overrides": {
+      "description": "Warpriests are battle-hardened divine spellcasters who desire peace yet stand ever ready for combat.",
+      "features": {
+        "Bonus Domain": {
+          "description": "Upon reaching 1st level, the warpriest receives an additional domain: Glory if he turns undead, or Domination if he rebukes undead."
+        },
+        "Fear Aura": {
+          "description": "Starting at 5th level, the warpriest can project a frightening aura once per day. This aura extends in a 20-foot radius and lasts for 1 round per warpriest level. Enemies within the area must succeed on a Will save (DC 10 + warpriest class level + Charisma modifier) or suffer the effects of a fear spell."
+        },
+        "Haste": {
+          "description": "Upon reaching 7th level, the warpriest gains the ability to use haste as a spell-like ability three times per day."
+        },
+        "Implacable Foe": {
+          "description": "At 10th level, the warpriest can channel positive or negative energy to sustain his allies through otherwise fatal injuries. Activating this power requires a move action, and the warpriest must concentrate each subsequent round to maintain it. While active, the warpriest radiates a 100-foot aura. Allies within this area can ignore the effects of being at 0 or fewer hit points; however, any creature reduced to -20 hit points or below dies instantly. Once the effect ceases or an ally moves beyond the 100-foot radius, the full effects of any accumulated damage take hold immediately. If the warpriest normally turns undead, this ability benefits living allies; if he normally rebukes undead, it benefits undead allies instead."
+        },
+        "Inflame": {
+          "description": "By spending a full-round action, the warpriest can stir the resolve of his companions. Every creature that can hear him receives a morale bonus on saving throws against charm and fear effects. This bonus starts at +2 at 2nd level and grows by +2 at every subsequent even-numbered level (+4 at 4th, +6 at 6th, and so on). The effect persists for 5 minutes after the warpriest finishes speaking, plus an additional 1 minute per warpriest level. The warpriest himself also benefits from this bonus."
+        },
+        "Mass Cure Light Wounds": {
+          "description": "Beginning at 3rd level, the warpriest can use mass cure light wounds once per day as a spell-like ability. His caster level for this effect equals his highest divine caster level."
+        },
+        "Mass Heal": {
+          "description": "At 9th level or higher, the warpriest can use mass heal once per day as a spell-like ability. His caster level for this effect equals his highest divine caster level."
+        },
+        "Rally": {
+          "description": "As a standard action, a warpriest who is not currently affected by any fear effect can bolster his allies. Each ally within 60 feet who can hear the warpriest and is suffering from a fear effect receives an additional saving throw against that effect, gaining a +1 morale bonus to the roll for each warpriest class level."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "The warpriest's divine spellcasting continues to advance as he gains levels. At every even-numbered warpriest level (2nd, 4th, 6th, 8th, and 10th), the character receives new divine spells per day (and spells known, where applicable) as though he had gained an additional level in a divine spellcasting class he possessed prior to entering this prestige class. No other class benefits from that earlier class are gained, such as improved undead turning or more frequent use of remove disease. A character who had multiple divine spellcasting classes before becoming a warpriest must choose which class benefits from the spellcasting advancement each time he reaches an even-numbered warpriest level."
+        },
+        "Turn or Rebuke Undead": {
+          "description": "Warpriest levels stack with the character's cleric or paladin levels for the purpose of turning or rebuking undead."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "A warpriest is proficient with every simple and martial weapon, all armor categories (light, medium, and heavy), and all shields, tower shields included."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Warpriests gain proficiency with all simple and martial weapons, with all types of armor, and shields (including tower shields).",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A warpriest continues advancing in divine spellcasting ability. When a warpriest gains a new even-numbered level, the character gains new divine spells per day (and spells known, if applicable) as if he had also gained a level in whatever divine spellcasting class he belonged to before he added the prestige class. He does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, more frequent remove disease, and so on). If a character had more than one divine spellcasting class before he became a warpriest, the player must decide which class to assign each even-numbered level of warpriest for the purpose of determining divine spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "At 1st level, a warpriest gains the Glory domain (if he turns undead) or the Domination domain (if he rebukes undead).",
+        "name": "Bonus Domain"
+      },
+      {
+        "description": "A warpriest who currently is not suffering from a fear effect can use this ability as a standard action. Allies within 60 feet who are suffering from any fear effect and who can hear the warpriest are allowed another saving throw against the fear effect, with a +1 morale bonus per warpriest level.",
+        "name": "Rally",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Levels of warpriest stack with any of the character's cleric or paladin levels when turning or rebuking undead.",
+        "name": "Turn or Rebuke Undead",
+        "type": "(Su)"
+      },
+      {
+        "description": "As a full-round action, the warpriest can inflame the passions of his allies. All who can hear the warpriest gain a morale bonus on saving throws against any charm or fear effect. The bonus begins at +2 for a 2nd-level warpriest and increases by +2 at each even-numbered level thereafter (+4 at 4th level, +6 at 6th level, and so on). This effect lasts for 5 minutes after the speech ends, plus 1 minute per level of the warpriest. The warpriest also gains the bonus.",
+        "name": "Inflame",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 3rd level, a warpriest can use mass cure light wounds once per day as aspell-like ability. Treat the warpriest's caster level for this effect as equal to his highest divine caster level.",
+        "name": "Mass Cure Light Wounds",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Once per day starting at 5th level, a warpriest can emanate a fear aura in a 20-foot radius for 1 round per level. Foes must make a Will save (DC 10 + warpriest's class level + warpriest's Cha modifier) or be affected as if by a fear spell.",
+        "name": "Fear Aura",
+        "type": "(Su)"
+      },
+      {
+        "description": "Once per day, a warpriest of 6th level or higher can use heroes' feast as a spell-like ability.",
+        "name": "Heroes' Feast",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 7th level, a warpriest gains the ability to use haste three times per day as a spell-like ability.",
+        "name": "Haste",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Once per day, a warpriest of 9th level or higher can use mass heal as a spell-like ability. Treat the warpriest's caster level for this effect as equal to his highest divine caster level.",
+        "name": "Mass Heal",
+        "type": "(Sp)"
+      },
+      {
+        "description": "At 10th level, a warpriest can channel positive (or negative) energy to keep allies fighting even after suffering mortal wounds. Activating this ability requires only a move action, but the warpriest must concentrate to maintain it each round after that. While active, the warpriest emanates an aura with a 100- foot radius. Allies within the radius may ignore the effects of being reduced to 0 or less hp. However, any creature reduced to ?20 hp dies immediately. When the effect ends, or if a creature moves more than 100 feet from the warpriest, the normal effects of the damage apply immediately. If the warpriest normally turns undead, this ability affects living allies. If the warpriest normally rebukes undead, this ability affects undead all",
+        "name": "Implacable Foe",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Handle Animal",
+      "Knowledge (History)",
+      "Ride",
+      "Sense Motive",
+      "Spellcraft",
+      "Swim"
+    ],
+    "description": "Warpriests are fierce, earthy clerics who pray for peace but prepare for war.",
+    "hitDie": "d10",
+    "name": "Warpriest",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Combat Casting"
+        ],
+        "skills": [
+          {
+            "name": "Diplomacy",
+            "ranks": 8
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 5
+          }
+        ],
+        "special": [
+          "Ability to turn or rebuke undead."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Diplomacy 8 ranks, Sense Motive 5 ranks Feats: Combat Casting Spells: Able to cast at least one divine spell from one of the following domains' spell lists: Destruction, Protection, Strength, or War. A character who can cast at least one spell from a domain counts as having access for this purpose.Special: Ability to turn or rebuke undead."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bonus domain",
+          "rally",
+          "turn or rebuke undead"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Inflame +2"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Mass cure light wounds"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Inflame +4"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Fear aura"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Heroes' feast",
+          "inflame +6"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Haste"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Mass heal"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Implacable foe",
+          "inflame +8"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

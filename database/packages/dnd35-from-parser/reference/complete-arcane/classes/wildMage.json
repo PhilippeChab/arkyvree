@@ -1,0 +1,384 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:09:30.437Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/wild-mage/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "arcane"
+    },
+    "featNameMap": {
+      "magicalaptitude": "Magical Aptitude"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wild Magic"
+      },
+      {
+        "levels": [
+          2,
+          5,
+          8
+        ],
+        "name": "Random Deflector"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Student Of Chaos"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Chaotic Mind"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Reckless Dweomer"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Wildstrike"
+      }
+    ],
+    "hd": 4,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.spellcraft.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.usemagicdevice.rank",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.magicalaptitude.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.metamagic.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ]
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "good",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Wild Mage Class Feature",
+    "features": {
+      "Chaotic Mind": {
+        "description": "When a wild mage reaches 6th level, the power of chaos infuses her mind. She gains immunity to confusion and insanity spells and effects, and she is shielded by a continuous nondetection effect (as the spell).",
+        "level": 6,
+        "seedName": "Chaotic Mind (Wild Mage)"
+      },
+      "Random Deflector": {
+        "description": "At 2nd level and higher, a wild mage has the ability to protect herself from certain attacks with this ability. Using this ability is an immediate action, which means that a wild mage activates it when it is not her turn. When activated, the random deflector lasts until the beginning of the wild mage's next turn. The random deflector redirects ranged attacks, ranged touch attacks, and individually targeted spells (spells designating the wild mage as the sole target, but not area spells striking an area in which she happens to be the sole target) so that they instead attack or affect a random target within 20 feet of the wild mage. A wild mage includes herself and her allies among the possible new targets. Any creature targeted by a deflected attack is attacked or affected normally, so an attack roll is made normally against the new target's AC, the new target receives a saving throw if a spell or effect allows one, and so on. A wild mage can use this ability once per day at 2nd level, two times per day at 5th level, and three times per day at 8th level.",
+        "level": 2,
+        "seedName": "Random Deflector (Wild Mage)",
+        "stackable": true
+      },
+      "Reckless Dweomer": {
+        "description": "At 9th level and higher, a wild mage knows how to spontaneously convert her own spell energy into random, unpredictable results. As a standard action, she can eliminate a prepared spell or spell slot of at least 1st level to create an effect similar to that of activating a rod of wonder. The character's student of chaos ability applies when she uses her reckless dweomer ability.",
+        "level": 9,
+        "seedName": "Reckless Dweomer (Wild Mage)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "At each level, a wild mage gains new spells per day (and spells known, if applicable) as if she had also gained a level in an arcane spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If she had more than one arcane spellcasting class before becoming a wild mage, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Wild Mage)"
+      },
+      "Student of Chaos": {
+        "description": "Whenever a wild mage of 3rd level or higher uses a magic item that offers a randomly determined effect (such as a bag of tricks or rod of wonder), she can roll twice and choose between the two results. If a random roll is made only once to determine the nature or contents of a device (for example, a robe of useful items or an iron flask), a wild mage gains no special advantage.",
+        "level": 3,
+        "seedName": "Student of Chaos (Wild Mage)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Wild mages gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Wild Mage)"
+      },
+      "Wild Magic": {
+        "description": "A wild mage casts spells differently from any other arcane spellcaster. She reduces her caster level by 3 for all spells she casts from now on. However, every time she casts a spell, her use of wild magic adds 1d6 to her adjusted caster level. For example, an 8th-level sorcerer/1st-level wild mage has a base caster level of 6th, not 9th, but her actual caster level varies from 7th to 12th for every spell she casts. Caster level affects all level-based variables of a spell, including spell penetration checks.",
+        "level": 1,
+        "seedName": "Wild Magic (Wild Mage)"
+      },
+      "Wildstrike": {
+        "description": "At 10th level, a wild mage gains the ability to make a wildstrike once per day. A wildstrike affects a single creature within 60 feet, surrounding the creature in an aura of shimmering rainbow colors for 2d6 rounds. Spell resistance applies, but the target receives no saving throw. While a wildstrike is in effect, there is a 50% chance each time the affected creature casts a spell or uses a spell-like ability that its intended action fails. Instead, the creature rolls as if it had activated a rod of wonder",
+        "level": 10,
+        "seedName": "Wildstrike (Wild Mage)"
+      }
+    },
+    "occurrenceMap": {
+      "Chaotic Mind": "Chaotic Mind",
+      "Random Deflector": "Random Deflector",
+      "Reckless Dweomer": "Reckless Dweomer",
+      "Student Of Chaos": "Student of Chaos",
+      "Wild Magic": "Wild Magic",
+      "Wildstrike": "Wildstrike"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Wild mages gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level, a wild mage gains new spells per day (and spells known, if applicable) as if she had also gained a level in an arcane spellcasting class to which she belonged before adding the prestige class level. She does not, however, gain any other benefit a character of that class would have gained (such as the bonus feat sometimes gained by a wizard). If she had more than one arcane spellcasting class before becoming a wild mage, she must decide to which class to add each level for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A wild mage casts spells differently from any other arcane spellcaster. She reduces her caster level by 3 for all spells she casts from now on. However, every time she casts a spell, her use of wild magic adds 1d6 to her adjusted caster level. For example, an 8th-level sorcerer/1st-level wild mage has a base caster level of 6th, not 9th, but her actual caster level varies from 7th to 12th for every spell she casts. Caster level affects all level-based variables of a spell, including spell penetration checks.",
+        "name": "Wild Magic"
+      },
+      {
+        "description": "At 2nd level and higher, a wild mage has the ability to protect herself from certain attacks with this ability. Using this ability is an immediate action, which means that a wild mage activates it when it is not her turn. When activated, the random deflector lasts until the beginning of the wild mage's next turn. The random deflector redirects ranged attacks, ranged touch attacks, and individually targeted spells (spells designating the wild mage as the sole target, but not area spells striking an area in which she happens to be the sole target) so that they instead attack or affect a random target within 20 feet of the wild mage. A wild mage includes herself and her allies among the possible new targets. Any creature targeted by a deflected attack is attacked or affected normally, so an attack roll is made normally against the new target's AC, the new target receives a saving throw if a spell or effect allows one, and so on. A wild mage can use this ability once per day at 2nd level, two times per day at 5th level, and three times per day at 8th level.",
+        "name": "Random Deflector",
+        "type": "(Su)"
+      },
+      {
+        "description": "Whenever a wild mage of 3rd level or higher uses a magic item that offers a randomly determined effect (such as a bag of tricks or rod of wonder), she can roll twice and choose between the two results. If a random roll is made only once to determine the nature or contents of a device (for example, a robe of useful items or an iron flask), a wild mage gains no special advantage.",
+        "name": "Student of Chaos",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a wild mage reaches 6th level, the power of chaos infuses her mind. She gains immunity to confusion and insanity spells and effects, and she is shielded by a continuous nondetection effect (as the spell).",
+        "name": "Chaotic Mind",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 9th level and higher, a wild mage knows how to spontaneously convert her own spell energy into random, unpredictable results. As a standard action, she can eliminate a prepared spell or spell slot of at least 1st level to create an effect similar to that of activating a rod of wonder. The character's student of chaos ability applies when she uses her reckless dweomer ability.",
+        "name": "Reckless Dweomer",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 10th level, a wild mage gains the ability to make a wildstrike once per day. A wildstrike affects a single creature within 60 feet, surrounding the creature in an aura of shimmering rainbow colors for 2d6 rounds. Spell resistance applies, but the target receives no saving throw. While a wildstrike is in effect, there is a 50% chance each time the affected creature casts a spell or uses a spell-like ability that its intended action fails. Instead, the creature rolls as if it had activated a rod of wonder",
+        "name": "Wildstrike",
+        "type": "(Sp)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Profession",
+      "Spellcraft",
+      "Use Magic Device"
+    ],
+    "description": "Wild mages aspire to cast spells without structure.",
+    "hitDie": "d4",
+    "name": "Wild Mage",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "any chaotic",
+        "feats": [
+          "Magical Aptitude",
+          "any metamagic feat"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 4
+          },
+          {
+            "name": "Spellcraft",
+            "ranks": 8
+          },
+          {
+            "name": "Use Magic Device",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Alignment: any chaotic Skills: Knowledge (the planes) 4 ranks, Spellcraft 8 ranks, Use Magic Device 4 ranks Feats: Magical Aptitude, Metamagic School Focus (or any other metamagic feat)"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Wild magic"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Random deflector 1/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Student of chaos"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Random deflector 2/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Chaotic mind"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Random deflector 3/day"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Reckless dweomer"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Wildstrike"
+        ],
+        "spellsPerDay": "+1 level of existing arcane spellcasting class",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

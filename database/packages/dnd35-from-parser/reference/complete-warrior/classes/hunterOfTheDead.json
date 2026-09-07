@@ -1,0 +1,513 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T18:43:35.473Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/hunter-of-the-dead/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "good",
+    "casterType": "Divine",
+    "featNameMap": {
+      "turnorrebukeundead": "Turn or Rebuke Undead"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Detect Undead"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Smite Undead"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Spurn Death's Touch"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "True Death"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Extra Turning"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Positive Energy Burst"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Sealed Life"
+      }
+    ],
+    "hasOwnSpells": true,
+    "hd": 8,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgereligion.rank",
+        "value": "5",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "True Neutral",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Neutral",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "operator": "equal",
+        "target": "feats.turnorrebukeundead.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2,
+    "spellsPerDay": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        1,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        1,
+        1
+      ],
+      [
+        2,
+        2,
+        2,
+        1
+      ]
+    ]
+  },
+  "mapping": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatureAptitude": "Hunter of the Dead Class Feature",
+    "features": {
+      "Detect Undead": {
+        "description": "A hunter of the dead can sense the presence of undead at will, functioning identically to the detect undead spell.",
+        "level": 1,
+        "seedName": "Detect Undead (Hunter of the Dead)"
+      },
+      "Extra Turning": {
+        "description": "Upon reaching 6th level, a hunter of the dead gains Extra Turning as a bonus feat, granting four additional turn undead attempts per day. This stacks with turning ability gained from any other class.",
+        "level": 6,
+        "seedName": "Extra Turning (Hunter of the Dead)"
+      },
+      "Positive Energy Burst": {
+        "description": "At 8th level or higher, a hunter of the dead can expend two turn undead attempts as a standard action to unleash a wave of positive energy. This burst inflicts 1d6 points of damage per class level to every undead creature within a 20-foot radius. Affected undead may attempt a Reflex save (DC 10 + hunter's class level + hunter's Charisma modifier) to take only half damage.",
+        "level": 8,
+        "seedName": "Positive Energy Burst (Hunter of the Dead)"
+      },
+      "Sealed Life": {
+        "description": "At 10th level, a hunter of the dead becomes immune to level loss caused by energy drain. Other effects that reduce levels or experience, including death itself, still function normally.",
+        "level": 10,
+        "seedName": "Sealed Life (Hunter of the Dead)"
+      },
+      "Smite Undead": {
+        "description": "Starting at 2nd level, a hunter of the dead can attempt to smite an undead creature once per day with a single melee attack. She adds her Wisdom modifier (if positive) to the attack roll and inflicts 1 additional point of damage per class level. If the target turns out not to be undead, the smite is wasted with no effect. A character who is both a paladin and a hunter of the dead may use smite evil and smite undead on the same day, and even against the same target if it qualifies as both evil and undead.",
+        "level": 2,
+        "seedName": "Smite Undead (Hunter of the Dead)",
+        "stackable": true
+      },
+      "Spells": {
+        "description": "Starting at 1st level, a hunter of the dead can cast a small number of divine spells. Casting a spell requires a Wisdom score of at least 10 + the spell's level, meaning a hunter with Wisdom 10 or lower has no access to these spells. Bonus spells and save DCs are determined by Wisdom (DC equals 10 + spell level + Wisdom modifier). At a given spell level where the hunter has 0 base spells per day, she receives only the bonus spells her Wisdom grants for that level. The hunter has access to her full spell list and may freely select which spells to prepare each day. Spell preparation and casting follow the same process as a cleric, except that a hunter of the dead cannot spontaneously swap a prepared spell for a cure spell.",
+        "level": 1,
+        "seedName": "Spells (Hunter of the Dead)"
+      },
+      "Spurn Death's Touch": {
+        "description": "From 3rd level onward, a hunter of the dead adds her Wisdom modifier (if positive) as a bonus to all saving throws made against spells and abilities employed by undead. This benefit is cumulative with the Wisdom modifier that already applies to Will saves.",
+        "level": 3,
+        "seedName": "Spurn Death's Touch (Hunter of the Dead)"
+      },
+      "True Death": {
+        "description": "Any undead creature killed by a hunter of the dead of 5th level or higher - whether through weapon strikes or spells - is permanently destroyed and can never be reanimated as undead again.",
+        "level": 5,
+        "seedName": "True Death (Hunter of the Dead)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Hunter of the Dead)"
+      }
+    },
+    "occurrenceMap": {
+      "Detect Undead": "Detect Undead",
+      "Extra Turning": "Extra Turning",
+      "Positive Energy Burst": "Positive Energy Burst",
+      "Sealed Life": "Sealed Life",
+      "Smite Undead": "Smite Undead",
+      "Spurn Death's Touch": "Spurn Death's Touch",
+      "True Death": "True Death"
+    },
+    "overrides": {
+      "description": "A hunter of the dead devotes every waking moment to pursuing undead creatures, seeking out their hiding places and purging the world of their unholy taint.",
+      "features": {
+        "Detect Undead": {
+          "description": "A hunter of the dead can sense the presence of undead at will, functioning identically to the detect undead spell."
+        },
+        "Extra Turning": {
+          "description": "Upon reaching 6th level, a hunter of the dead gains Extra Turning as a bonus feat, granting four additional turn undead attempts per day. This stacks with turning ability gained from any other class."
+        },
+        "Positive Energy Burst": {
+          "description": "At 8th level or higher, a hunter of the dead can expend two turn undead attempts as a standard action to unleash a wave of positive energy. This burst inflicts 1d6 points of damage per class level to every undead creature within a 20-foot radius. Affected undead may attempt a Reflex save (DC 10 + hunter's class level + hunter's Charisma modifier) to take only half damage."
+        },
+        "Sealed Life": {
+          "description": "At 10th level, a hunter of the dead becomes immune to level loss caused by energy drain. Other effects that reduce levels or experience, including death itself, still function normally."
+        },
+        "Smite Undead": {
+          "description": "Starting at 2nd level, a hunter of the dead can attempt to smite an undead creature once per day with a single melee attack. She adds her Wisdom modifier (if positive) to the attack roll and inflicts 1 additional point of damage per class level. If the target turns out not to be undead, the smite is wasted with no effect. A character who is both a paladin and a hunter of the dead may use smite evil and smite undead on the same day, and even against the same target if it qualifies as both evil and undead."
+        },
+        "Spells": {
+          "description": "Starting at 1st level, a hunter of the dead can cast a small number of divine spells. Casting a spell requires a Wisdom score of at least 10 + the spell's level, meaning a hunter with Wisdom 10 or lower has no access to these spells. Bonus spells and save DCs are determined by Wisdom (DC equals 10 + spell level + Wisdom modifier). At a given spell level where the hunter has 0 base spells per day, she receives only the bonus spells her Wisdom grants for that level. The hunter has access to her full spell list and may freely select which spells to prepare each day. Spell preparation and casting follow the same process as a cleric, except that a hunter of the dead cannot spontaneously swap a prepared spell for a cure spell."
+        },
+        "Spurn Death's Touch": {
+          "description": "From 3rd level onward, a hunter of the dead adds her Wisdom modifier (if positive) as a bonus to all saving throws made against spells and abilities employed by undead. This benefit is cumulative with the Wisdom modifier that already applies to Will saves."
+        },
+        "True Death": {
+          "description": "Any undead creature killed by a hunter of the dead of 5th level or higher - whether through weapon strikes or spells - is permanently destroyed and can never be reanimated as undead again."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        }
+      }
+    },
+    "spells": {
+      "knowAll": true,
+      "noCantrips": true,
+      "perDay": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          1
+        ]
+      ],
+      "slug": "hunterofthedeadspells"
+    }
+  },
+  "raw": {
+    "bonusSpellAbility": "Wisdom",
+    "classFeatures": [
+      {
+        "description": "Hunters of the dead gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "Beginning at 1st level, a hunter of the dead gains the ability to cast a number of divine spells. To cast a spell, a hunter of the dead must have a Wisdom score of at least 10 + the spell's level, so a hunter of the dead with a Wisdom of 10 or lower cannot cast these spells. Hunter of the dead bonus spells are based on Wisdom, and saving throws against these spells have a DC of 10 + spell level + the hunter of the dead's Wisdom bonus (if any). When the hunter of the dead gets 0 spells per day of a given spell level (for instance, 1st-level spells for a 1st-level hunter of the dead), she gains only the bonus spells she would be entitled to based on her Wisdom score for that spell level. The hunter of the dead's spell list appears below; she has access to any spell on the list and can freely choose which to prepare. A hunter of the dead prepares and casts spells just as a cleric does (though a hunter of the dead cannot lose a spell to cast a cure spell in its place).",
+        "name": "Spells"
+      },
+      {
+        "description": "At will, a hunter of the dead can use detect undead as if casting the spell of the same name.",
+        "name": "Detect Undead",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Once per day, a hunter of the dead of 2nd level or higher can attempt to smite undead with one normal melee attack. She adds her Wisdom modifier (if positive) to her attack roll and deals 1 extra point of damage per level. For example, an 8th-level hunter of the dead armed with a longsword would deal 1d8+8 points of damage, plus any additional bonuses for Strength and magical effects that normally apply. If a hunter of the dead accidentally smites a creature that is not undead, the smite has no effect but it is still used up for that day. Note: A paladin/hunter of the dead can both smite evil and smite undead in the same day, potentially against the same target (if it's an evil undead).",
+        "name": "Smite Undead",
+        "type": "(Su)"
+      },
+      {
+        "description": "A hunter of the dead of 3rd level or higher applies her Wisdom modifier (if positive) as an additional bonus on all saving throws against effects and spells used by undead. This bonus stacks with the Wisdom modifier already applied to Will saves.",
+        "name": "Spurn Death's Touch",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Undead slain by a hunter of the dead of 5th level or higher, either by melee attacks or spells, can never rise again as undead. They are forever destroyed.",
+        "name": "True Death",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 6th level, a hunter of the dead receives Extra Turning as a bonus feat. This benefit allows the hunter to turn undead four more times per day than normal. It stacks with any turning ability the character has from another class.",
+        "name": "Extra Turning"
+      },
+      {
+        "description": "At the cost of two normal turning attempts, a hunter of the dead of at least 8th level can use a standard action to create a positive energy burst that deals 1d6 points of damage per class level to all undead creatures within 20 feet. Undead are allowed a Reflex save (DC 10 + the hunter's class level + the hunter's Cha modifier) for half damage.",
+        "name": "Positive Energy Burst",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 10th level hunter of the dead cannot lose levels due to energy drain effects (although death still results in level loss, as do other level- or experience-draining effects).",
+        "name": "Sealed Life",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Concentration",
+      "Heal",
+      "Knowledge (Religion)",
+      "Profession",
+      "Ride",
+      "Search"
+    ],
+    "description": "The hunter of the dead spends each restless night tracking undead to their lairs and cleansing the land of their foul presence.",
+    "hitDie": "d8",
+    "name": "Hunter of the Dead",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any nonevil",
+        "bab": 5,
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 5
+          }
+        ],
+        "special": [
+          "Able to turn undead. Special: Scar of Unlife: The character must have lost one level or had an ability score point drained by an undead creature. Even if the loss is later offset by magic, this is the scar of unlife that all hunters of the dead carry.",
+          "lost one level or had an ability score point drained by an undead creature"
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Alignment: Any nonevil Skills: Knowledge (religion) 5 ranks Special: Able to turn undead. Special: Scar of Unlife: The character must have lost one level or had an ability score point drained by an undead creature. Even if the loss is later offset by magic, this is the scar of unlife that all hunters of the dead carry."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Detect undead"
+        ],
+        "spellsPerDay": "0,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Smite undead 1/day"
+        ],
+        "spellsPerDay": "1,-,-,-",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Spurn death's touch"
+        ],
+        "spellsPerDay": "1,0,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [],
+        "spellsPerDay": "1,1,-,-",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "True death"
+        ],
+        "spellsPerDay": "1,1,0,-",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Extra Turning",
+          "Smite undead 2/day"
+        ],
+        "spellsPerDay": "1,1,1,-",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [],
+        "spellsPerDay": "2,1,1,0",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Positive energy burst"
+        ],
+        "spellsPerDay": "2,1,1,1",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "2,2,1,1",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Sealed life",
+          "Smite undead 3/day"
+        ],
+        "spellsPerDay": "2,2,2,1",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

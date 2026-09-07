@@ -1,0 +1,355 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-20T23:14:10.138Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/natures-warrior/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "target": "aptitudes.natureswarriornaturesarmament.allowed"
+      }
+    ],
+    "bab": "good",
+    "casterLevelAdvancement": {
+      "levels": [
+        2,
+        4
+      ],
+      "type": "divine"
+    },
+    "featNameMap": {
+      "track": "Track",
+      "wildshape": "Wild Shape"
+    },
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          3,
+          5
+        ],
+        "name": "Nature's Armament"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Wilding"
+      }
+    ],
+    "hd": 10,
+    "levels": 5,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgenature.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgetheplanes.rank",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.survival.rank",
+        "value": "8",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.track.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.wildshape.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Nature's Warrior Class Feature",
+    "features": {
+      "Armor of the Crocodile": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "The character's natural armor increases by +1 for each nature's warrior class level. This represents a true increase to natural armor, not an enhancement bonus.",
+        "level": 1,
+        "selectable": true
+      },
+      "Blaze of Power": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "When assuming fire elemental shape, the character becomes wreathed in supernatural flames that operate as a warm fire shield. The caster level for this effect equals the sum of her druid levels (if any) and nature's warrior levels.",
+        "level": 1,
+        "selectable": true
+      },
+      "Claws of the Grizzly": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "The character receives a +3 damage bonus on all attacks made with natural weapons.",
+        "level": 1,
+        "selectable": true
+      },
+      "Earth's Resilience": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "The character obtains damage reduction 3/-.",
+        "level": 1,
+        "selectable": true
+      },
+      "Nature's Armament": {
+        "description": "Each time the character reaches an odd-numbered level in this prestige class, she selects one supernatural ability from the list below. Unless stated otherwise, these abilities function only while the character is using wild shape. Armor of the Crocodile: The character's natural armor increases by +1 for each nature's warrior class level. This represents a true increase to natural armor, not an enhancement bonus. Blaze of Power: When assuming fire elemental shape, the character becomes wreathed in supernatural flames that operate as a warm fire shield. The caster level for this effect equals the sum of her druid levels (if any) and nature's warrior levels. Claws of the Grizzly: The character receives a +3 damage bonus on all attacks made with natural weapons. Earth's Resilience: The character obtains damage reduction 3/-. Nature's Weapon: The character receives a +1 enhancement bonus on attack rolls with natural weapons, and those attacks count as magical for purposes of bypassing damage reduction. Robe of Clouds: While in air elemental shape, the character can surround herself in fog and vapor as a free action. This effect lasts 1 minute per class level or until voluntarily ended and grants concealment without hindering the character's own vision or actions. Serpent's Coils: When shaped into a creature that possesses the improved grab ability, the character gains a +4 bonus on grapple checks and inflicts 1d8 + Strength modifier damage each time she wins an opposed grapple check. Water's Flow: This ability requires the capacity to assume elemental form via wild shape. Up to three times per day, as part of a move action, the character can shift into a surging torrent of water. In this state she moves at her normal land speed without provoking attacks of opportunity, but can take no action other than movement. At the conclusion of the move she reverts to whichever form she occupied beforehand. This ability can be used outside of wild shape. Wild Growth: The character gains fast healing 1. Wings of the Hurricane: While in bird form or air elemental shape, the character's base flying speed increases by 30 feet and her maneuverability improves by one step (for example, good becomes perfect).",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.natureswarriornaturesarmament.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Nature's Armament (Nature's Warrior)",
+        "stackable": true
+      },
+      "Nature's Weapon": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "The character receives a +1 enhancement bonus on attack rolls with natural weapons, and those attacks count as magical for purposes of bypassing damage reduction.",
+        "level": 1,
+        "selectable": true
+      },
+      "Robe of Clouds": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "While in air elemental shape, the character can surround herself in fog and vapor as a free action. This effect lasts 1 minute per class level or until voluntarily ended and grants concealment without hindering the character's own vision or actions.",
+        "level": 1,
+        "selectable": true
+      },
+      "Serpent's Coils": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "When shaped into a creature that possesses the improved grab ability, the character gains a +4 bonus on grapple checks and inflicts 1d8 + Strength modifier damage each time she wins an opposed grapple check.",
+        "level": 1,
+        "selectable": true
+      },
+      "Spells per Day": {
+        "description": "At each even-numbered nature's warrior level, the character gains additional spells per day as though she had also advanced one level in a divine spellcasting class she possessed before entering this prestige class. If she had no divine spellcasting class prior to reaching 2nd level in this class, she gains druid spellcasting progression instead. She does not receive any other class benefits from this advancement beyond improved spellcasting ability. A character with multiple divine spellcasting classes must choose which one benefits each time she gains this advancement.",
+        "level": 1,
+        "seedName": "Spells per Day (Nature's Warrior)"
+      },
+      "Water's Flow": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "This ability requires the capacity to assume elemental form via wild shape. Up to three times per day, as part of a move action, the character can shift into a surging torrent of water. In this state she moves at her normal land speed without provoking attacks of opportunity, but can take no action other than movement. At the conclusion of the move she reverts to whichever form she occupied beforehand. This ability can be used outside of wild shape.",
+        "level": 1,
+        "selectable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Nature's Warrior)"
+      },
+      "Wild Growth": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "The character gains fast healing 1.",
+        "level": 1,
+        "selectable": true
+      },
+      "Wilding": {
+        "description": "Levels in this prestige class stack with druid levels (and levels in other prestige classes that also stack for these purposes) when determining wild shape capabilities and wild empathy modifiers. For instance, a druid 8/nature's warrior 3 would use an effective druid level of 11 for wild shape Hit Dice, size, type, and daily uses (qualifying for 4/day and Tiny forms). Her wild empathy checks against animals and qualifying magical beasts would likewise use +11 from class levels rather than +8.",
+        "level": 1,
+        "seedName": "Wilding (Nature's Warrior)"
+      },
+      "Wings of the Hurricane": {
+        "aptitude": "Nature's Warrior Nature's Armament",
+        "description": "While in bird form or air elemental shape, the character's base flying speed increases by 30 feet and her maneuverability improves by one step (for example, good becomes perfect).",
+        "level": 1,
+        "selectable": true
+      }
+    },
+    "occurrenceMap": {
+      "Nature's Armament": "Nature's Armament",
+      "Wilding": "Wilding"
+    },
+    "overrides": {
+      "description": "Nature's warriors champion the untamed wilderness, serving as guardians of the natural order. Many are druids who have embraced their wild shape so deeply that the boundary between their civilized and bestial selves has blurred.",
+      "features": {
+        "Armor of the Crocodile": {
+          "description": "The character's natural armor increases by +1 for each nature's warrior class level. This represents a true increase to natural armor, not an enhancement bonus."
+        },
+        "Blaze of Power": {
+          "description": "When assuming fire elemental shape, the character becomes wreathed in supernatural flames that operate as a warm fire shield. The caster level for this effect equals the sum of her druid levels (if any) and nature's warrior levels."
+        },
+        "Claws of the Grizzly": {
+          "description": "The character receives a +3 damage bonus on all attacks made with natural weapons."
+        },
+        "Earth's Resilience": {
+          "description": "The character obtains damage reduction 3/-."
+        },
+        "Nature's Armament": {
+          "description": "Each time the character reaches an odd-numbered level in this prestige class, she selects one supernatural ability from the list below. Unless stated otherwise, these abilities function only while the character is using wild shape. Armor of the Crocodile: The character's natural armor increases by +1 for each nature's warrior class level. This represents a true increase to natural armor, not an enhancement bonus. Blaze of Power: When assuming fire elemental shape, the character becomes wreathed in supernatural flames that operate as a warm fire shield. The caster level for this effect equals the sum of her druid levels (if any) and nature's warrior levels. Claws of the Grizzly: The character receives a +3 damage bonus on all attacks made with natural weapons. Earth's Resilience: The character obtains damage reduction 3/-. Nature's Weapon: The character receives a +1 enhancement bonus on attack rolls with natural weapons, and those attacks count as magical for purposes of bypassing damage reduction. Robe of Clouds: While in air elemental shape, the character can surround herself in fog and vapor as a free action. This effect lasts 1 minute per class level or until voluntarily ended and grants concealment without hindering the character's own vision or actions. Serpent's Coils: When shaped into a creature that possesses the improved grab ability, the character gains a +4 bonus on grapple checks and inflicts 1d8 + Strength modifier damage each time she wins an opposed grapple check. Water's Flow: This ability requires the capacity to assume elemental form via wild shape. Up to three times per day, as part of a move action, the character can shift into a surging torrent of water. In this state she moves at her normal land speed without provoking attacks of opportunity, but can take no action other than movement. At the conclusion of the move she reverts to whichever form she occupied beforehand. This ability can be used outside of wild shape. Wild Growth: The character gains fast healing 1. Wings of the Hurricane: While in bird form or air elemental shape, the character's base flying speed increases by 30 feet and her maneuverability improves by one step (for example, good becomes perfect)."
+        },
+        "Nature's Weapon": {
+          "description": "The character receives a +1 enhancement bonus on attack rolls with natural weapons, and those attacks count as magical for purposes of bypassing damage reduction."
+        },
+        "Robe of Clouds": {
+          "description": "While in air elemental shape, the character can surround herself in fog and vapor as a free action. This effect lasts 1 minute per class level or until voluntarily ended and grants concealment without hindering the character's own vision or actions."
+        },
+        "Serpent's Coils": {
+          "description": "When shaped into a creature that possesses the improved grab ability, the character gains a +4 bonus on grapple checks and inflicts 1d8 + Strength modifier damage each time she wins an opposed grapple check."
+        },
+        "Spells per Day": {
+          "description": "At each even-numbered nature's warrior level, the character gains additional spells per day as though she had also advanced one level in a divine spellcasting class she possessed before entering this prestige class. If she had no divine spellcasting class prior to reaching 2nd level in this class, she gains druid spellcasting progression instead. She does not receive any other class benefits from this advancement beyond improved spellcasting ability. A character with multiple divine spellcasting classes must choose which one benefits each time she gains this advancement."
+        },
+        "Water's Flow": {
+          "description": "This ability requires the capacity to assume elemental form via wild shape. Up to three times per day, as part of a move action, the character can shift into a surging torrent of water. In this state she moves at her normal land speed without provoking attacks of opportunity, but can take no action other than movement. At the conclusion of the move she reverts to whichever form she occupied beforehand. This ability can be used outside of wild shape."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "This prestige class does not grant proficiency with any weapons or armor."
+        },
+        "Wild Growth": {
+          "description": "The character gains fast healing 1."
+        },
+        "Wilding": {
+          "description": "Levels in this prestige class stack with druid levels (and levels in other prestige classes that also stack for these purposes) when determining wild shape capabilities and wild empathy modifiers. For instance, a druid 8/nature's warrior 3 would use an effective druid level of 11 for wild shape Hit Dice, size, type, and daily uses (qualifying for 4/day and Tiny forms). Her wild empathy checks against animals and qualifying magical beasts would likewise use +11 from class levels rather than +8."
+        },
+        "Wings of the Hurricane": {
+          "description": "While in bird form or air elemental shape, the character's base flying speed increases by 30 feet and her maneuverability improves by one step (for example, good becomes perfect)."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Nature's warriors gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At every even-numbered level gained in the nature's warrior class, the character gains new spells per day as if she had also gained a level in a divine spellcasting class she belonged to before adding the prestige class. If the character did not belong to a divine spellcasting class before attaining 2nd level in the prestige class, she gains a druid spellcasting level. In no case, however, does she gain any other benefit a character of that class would have gained, except for an increased effective level of spellcasting. If a character had more than one divine spellcasting class before becoming a nature's warrior, she must decide to which class she adds the new level for purposes of determining spells per day.",
+        "name": "Spells per Day"
+      },
+      {
+        "description": "Upon attaining an odd-numbered level in this prestige class, a nature's warrior may choose one of the following abilities. These abilities, unless otherwise noted, are only applicable while the nature's warrior is in wild shape form. Armor of the Crocodile: The nature's warrior's natural armor bonus is improved by +1 per class level. This is an actual improvement, not an enhancement bonus. Blaze of Power: While in fire elemental form, the nature's warrior is covered in a blaze of power, which functions as a warm fire shield at a caster level equal to her druid level (if any) plus her nature's warrior level. Claws of the Grizzly: The nature's warrior gains a +3 bonus on damage when using her natural weapons. Earth's Resilience: The nature's warrior gains damage reduction 3/-. Nature's Weapon: The nature's warrior gains a +1 enhancement bonus on attack rolls when using her natural weapons, and her attacks are treated as magic weapons for the purpose of overcoming damage reduction. Robe of Clouds: While in air elemental form, the nature's warrior may as a free action wreathe her body in mist and clouds for 1 minute per class level (or until she dismisses the effect). This gives her concealment, though it does not affect her ability to see or act at all. Serpent's Coils: When in the form of a creature that normally has the improved grab ability, the nature's warrior gains a +4 bonus on all grapple checks and does damage equal to 1d8 + her Strength bonus after winning an opposed grapple check. Water's Flow: To use this ability, the nature's warrior must be able to use wild shape to take the form of an elemental. Three times per day as part of a move action, the character may transform her body into a flowing rush of water. She may move at her base land speed while in this form but does not provoke attacks of opportunity while doing so. She may do nothing but move while in this form. At the end of her move, she immediately changes back into whatever form she was in prior to activating this ability. She may use this ability while not in wild shape form. Wild Growth: The nature's warrior gains fast healing 1. Wings of the Hurricane: If the nature's warrior is in an avian form or air elemental form, she increases her base fly speed by 30 feet and improves her maneuverability by one category (thus good maneuverability becomes perfect).",
+        "name": "Nature's Armament",
+        "type": "(Su)"
+      },
+      {
+        "description": "Nature's warrior class levels stack with druid levels (as well as levels in other prestige classes that allow these abilities to stack) to determine wild shape abilities and for wild empathy checks. For example, a druid 8/nature's warrior 3 would be considered an 11th-level druid for purposes of wild shape HD, size, type, and frequency (she could assume wild shape form 4/day and could become a Tiny creature). She would add +11 for her class levels (instead of +8) to her wild empathy checks against animals and certain magical beasts.",
+        "name": "Wilding",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Diplomacy",
+      "Handle Animal",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Nature)",
+      "Listen",
+      "Survival",
+      "Swim"
+    ],
+    "description": "Nature's warriors are defenders of the wild, protectors of the natural world.. and often druids who have spent \"too much time\" in wild shape form.",
+    "hitDie": "d10",
+    "name": "Nature's Warrior",
+    "prerequisites": {
+      "parsed": {
+        "alignment": "Any neutral",
+        "bab": 4,
+        "feats": [
+          "Track"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (nature)",
+            "ranks": 8
+          },
+          {
+            "name": "Knowledge (the planes)",
+            "ranks": 2
+          },
+          {
+            "name": "Survival",
+            "ranks": 8
+          }
+        ],
+        "special": [
+          "Wild shape ability"
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Alignment: Any neutral Skills: Knowledge (nature) 8 ranks, Knowledge (the planes) 2 ranks, Survival 8 ranks Feats: Track Special: Wild shape ability"
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Nature's armament",
+          "wilding"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "+1 level of existing divine spellcasting class"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Nature's armament"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "+1 level of existing divine spellcasting class"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Nature's armament"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

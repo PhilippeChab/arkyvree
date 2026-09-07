@@ -1,0 +1,339 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-03-23T01:27:09.971Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/exotic-weapon-master/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          2,
+          3
+        ],
+        "target": "aptitudes.exoticweaponmasterexoticweaponstunt.allowed"
+      }
+    ],
+    "bab": "good",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          2,
+          3
+        ],
+        "name": "Exotic Weapon Stunt"
+      }
+    ],
+    "hd": 10,
+    "levels": 3,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.craft.rank",
+        "value": "3",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.exoticweaponproficiency.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.weaponfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "poor"
+    },
+    "skillPoints": 2
+  },
+  "mapping": {
+    "classFeatureAptitude": "Exotic Weapon Master Class Feature",
+    "features": {
+      "Close-Quarters Ranged Combat": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "A character trained in this technique no longer provokes attacks of opportunity when firing an exotic ranged weapon.",
+        "level": 1,
+        "selectable": true
+      },
+      "Double Weapon Defense": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "While holding an exotic double weapon in both hands, the character receives a +1 shield bonus to Armor Class.",
+        "level": 1,
+        "selectable": true
+      },
+      "Exotic Reach": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "While using an exotic reach weapon, the character may take attacks of opportunity against enemies who provoke them even if those enemies benefit from cover (though not total cover).",
+        "level": 1,
+        "selectable": true
+      },
+      "Exotic Sunder": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "While attacking with a one-handed or two-handed exotic weapon, the character inflicts an additional 1d6 points of damage whenever he successfully sunders an item.",
+        "level": 1,
+        "selectable": true
+      },
+      "Exotic Weapon Stunt": {
+        "description": "Each time the exotic weapon master advances a level, he selects one specialized technique usable with any exotic weapon he has chosen as a Weapon Focus. This selection is permanent and cannot be changed once made, and no stunt may be picked more than once. Close-Quarters Ranged Combat: A character trained in this technique no longer provokes attacks of opportunity when firing an exotic ranged weapon. Double Weapon Defense: While holding an exotic double weapon in both hands, the character receives a +1 shield bonus to Armor Class. Exotic Reach: While using an exotic reach weapon, the character may take attacks of opportunity against enemies who provoke them even if those enemies benefit from cover (though not total cover). Exotic Sunder: While attacking with a one-handed or two-handed exotic weapon, the character inflicts an additional 1d6 points of damage whenever he successfully sunders an item. Flurry of Strikes: While gripping an exotic double weapon or a spiked chain in both hands, the character may choose to perform a flurry of strikes as a full attack action, gaining one additional attack at his highest base attack bonus. However, every attack during that round and until his next turn suffers a -2 penalty. The bonus attack can use either end of a double weapon. Ranged Disarm: The character may attempt a disarm using a ranged attack. This does not provoke an attack of opportunity beyond the normal one for making a ranged attack. The ranged weapon counts as a light weapon for this disarm attempt. If the disarm fails, the defender cannot make a reciprocal disarm attempt. Show Off: By spending a standard action to perform an impressive display of weapon skill, the character can demoralize a single foe within 30 feet who can observe him. He makes an Intimidate check, adding his base attack bonus to the roll. If the total exceeds the target's modified level check, the target becomes shaken (suffering a -2 penalty on attack rolls, ability checks, and saving throws) for a number of rounds equal to the exotic weapon master's class level. Stunning Blow: A character who possesses the Stunning Fist feat may apply its effects when striking with an exotic melee weapon. Throw Exotic Weapon: The character can hurl any exotic weapon without suffering an attack roll penalty, regardless of whether the weapon was designed for throwing (for example, an orc double axe or spiked chain). Only one end of a thrown double weapon can hit the target (wielder's choice). Weapons thrown this way have a range increment of 10 feet. Twin Exotic Weapon Fighting: When holding identical light exotic weapons in each hand, the character is treated as possessing the Two-Weapon Fighting feat. If he already has that feat, the attack roll penalties for fighting with two weapons are reduced to -1 for both the primary and off hand. Trip Attack: The character may use a one-handed or two-handed exotic weapon to attempt trip attacks. If he would be tripped by a failed trip attempt, he may release the weapon to avoid falling. If the exotic weapon already permits trip attacks, the character instead gains a +2 bonus on trip attempts made with it. Uncanny Blow: When gripping a one-handed exotic melee weapon in both hands, the character applies twice his Strength bonus to damage rather than the usual 1-1/2 times. If he possesses the Power Attack feat, the weapon is treated as two-handed for calculating bonus damage from Power Attack.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.exoticweaponmasterexoticweaponstunt.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Exotic Weapon Stunt (Exotic Weapon Master)",
+        "stackable": true
+      },
+      "Flurry of Strikes": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "While gripping an exotic double weapon or a spiked chain in both hands, the character may choose to perform a flurry of strikes as a full attack action, gaining one additional attack at his highest base attack bonus. However, every attack during that round and until his next turn suffers a -2 penalty. The bonus attack can use either end of a double weapon.",
+        "level": 1,
+        "selectable": true
+      },
+      "Ranged Disarm": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "The character may attempt a disarm using a ranged attack. This does not provoke an attack of opportunity beyond the normal one for making a ranged attack. The ranged weapon counts as a light weapon for this disarm attempt. If the disarm fails, the defender cannot make a reciprocal disarm attempt.",
+        "level": 1,
+        "selectable": true
+      },
+      "Show Off": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "By spending a standard action to perform an impressive display of weapon skill, the character can demoralize a single foe within 30 feet who can observe him. He makes an Intimidate check, adding his base attack bonus to the roll. If the total exceeds the target's modified level check, the target becomes shaken (suffering a -2 penalty on attack rolls, ability checks, and saving throws) for a number of rounds equal to the exotic weapon master's class level.",
+        "level": 1,
+        "selectable": true
+      },
+      "Stunning Blow": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "A character who possesses the Stunning Fist feat may apply its effects when striking with an exotic melee weapon.",
+        "level": 1,
+        "selectable": true
+      },
+      "Throw Exotic Weapon": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "The character can hurl any exotic weapon without suffering an attack roll penalty, regardless of whether the weapon was designed for throwing (for example, an orc double axe or spiked chain). Only one end of a thrown double weapon can hit the target (wielder's choice). Weapons thrown this way have a range increment of 10 feet.",
+        "level": 1,
+        "selectable": true
+      },
+      "Trip Attack": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "The character may use a one-handed or two-handed exotic weapon to attempt trip attacks. If he would be tripped by a failed trip attempt, he may release the weapon to avoid falling. If the exotic weapon already permits trip attacks, the character instead gains a +2 bonus on trip attempts made with it.",
+        "level": 1,
+        "selectable": true
+      },
+      "Twin Exotic Weapon Fighting": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "When holding identical light exotic weapons in each hand, the character is treated as possessing the Two-Weapon Fighting feat. If he already has that feat, the attack roll penalties for fighting with two weapons are reduced to -1 for both the primary and off hand.",
+        "level": 1,
+        "selectable": true
+      },
+      "Uncanny Blow": {
+        "aptitude": "Exotic Weapon Master Exotic Weapon Stunt",
+        "description": "When gripping a one-handed exotic melee weapon in both hands, the character applies twice his Strength bonus to damage rather than the usual 1-1/2 times. If he possesses the Power Attack feat, the weapon is treated as two-handed for calculating bonus damage from Power Attack.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "set",
+            "requirements": [
+              {
+                "chainingOperator": "or",
+                "children": [
+                  {
+                    "operator": "equal",
+                    "target": "items.weapons.exotic.slot",
+                    "value": "twohanded",
+                    "valueType": "string"
+                  },
+                  {
+                    "operator": "equal",
+                    "target": "feats.powerattack.possessed",
+                    "value": "true",
+                    "valueType": "boolean"
+                  }
+                ]
+              }
+            ],
+            "target": "items.weapons.exotic.damage.strmultiplier",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "selectable": true
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Characters who take levels in this prestige class do not gain proficiency with any additional weapons or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Exotic Weapon Master)"
+      }
+    },
+    "occurrenceMap": {
+      "Exotic Weapon Stunt": "Exotic Weapon Stunt"
+    },
+    "overrides": {
+      "description": "Becoming an exotic weapon master demands nothing more than dedication and relentless practice with unusual armaments.",
+      "features": {
+        "Close-Quarters Ranged Combat": {
+          "description": "A character trained in this technique no longer provokes attacks of opportunity when firing an exotic ranged weapon."
+        },
+        "Double Weapon Defense": {
+          "description": "While holding an exotic double weapon in both hands, the character receives a +1 shield bonus to Armor Class."
+        },
+        "Exotic Reach": {
+          "description": "While using an exotic reach weapon, the character may take attacks of opportunity against enemies who provoke them even if those enemies benefit from cover (though not total cover)."
+        },
+        "Exotic Sunder": {
+          "description": "While attacking with a one-handed or two-handed exotic weapon, the character inflicts an additional 1d6 points of damage whenever he successfully sunders an item."
+        },
+        "Exotic Weapon Stunt": {
+          "description": "Each time the exotic weapon master advances a level, he selects one specialized technique usable with any exotic weapon he has chosen as a Weapon Focus. This selection is permanent and cannot be changed once made, and no stunt may be picked more than once. Close-Quarters Ranged Combat: A character trained in this technique no longer provokes attacks of opportunity when firing an exotic ranged weapon. Double Weapon Defense: While holding an exotic double weapon in both hands, the character receives a +1 shield bonus to Armor Class. Exotic Reach: While using an exotic reach weapon, the character may take attacks of opportunity against enemies who provoke them even if those enemies benefit from cover (though not total cover). Exotic Sunder: While attacking with a one-handed or two-handed exotic weapon, the character inflicts an additional 1d6 points of damage whenever he successfully sunders an item. Flurry of Strikes: While gripping an exotic double weapon or a spiked chain in both hands, the character may choose to perform a flurry of strikes as a full attack action, gaining one additional attack at his highest base attack bonus. However, every attack during that round and until his next turn suffers a -2 penalty. The bonus attack can use either end of a double weapon. Ranged Disarm: The character may attempt a disarm using a ranged attack. This does not provoke an attack of opportunity beyond the normal one for making a ranged attack. The ranged weapon counts as a light weapon for this disarm attempt. If the disarm fails, the defender cannot make a reciprocal disarm attempt. Show Off: By spending a standard action to perform an impressive display of weapon skill, the character can demoralize a single foe within 30 feet who can observe him. He makes an Intimidate check, adding his base attack bonus to the roll. If the total exceeds the target's modified level check, the target becomes shaken (suffering a -2 penalty on attack rolls, ability checks, and saving throws) for a number of rounds equal to the exotic weapon master's class level. Stunning Blow: A character who possesses the Stunning Fist feat may apply its effects when striking with an exotic melee weapon. Throw Exotic Weapon: The character can hurl any exotic weapon without suffering an attack roll penalty, regardless of whether the weapon was designed for throwing (for example, an orc double axe or spiked chain). Only one end of a thrown double weapon can hit the target (wielder's choice). Weapons thrown this way have a range increment of 10 feet. Twin Exotic Weapon Fighting: When holding identical light exotic weapons in each hand, the character is treated as possessing the Two-Weapon Fighting feat. If he already has that feat, the attack roll penalties for fighting with two weapons are reduced to -1 for both the primary and off hand. Trip Attack: The character may use a one-handed or two-handed exotic weapon to attempt trip attacks. If he would be tripped by a failed trip attempt, he may release the weapon to avoid falling. If the exotic weapon already permits trip attacks, the character instead gains a +2 bonus on trip attempts made with it. Uncanny Blow: When gripping a one-handed exotic melee weapon in both hands, the character applies twice his Strength bonus to damage rather than the usual 1-1/2 times. If he possesses the Power Attack feat, the weapon is treated as two-handed for calculating bonus damage from Power Attack."
+        },
+        "Flurry of Strikes": {
+          "description": "While gripping an exotic double weapon or a spiked chain in both hands, the character may choose to perform a flurry of strikes as a full attack action, gaining one additional attack at his highest base attack bonus. However, every attack during that round and until his next turn suffers a -2 penalty. The bonus attack can use either end of a double weapon."
+        },
+        "Ranged Disarm": {
+          "description": "The character may attempt a disarm using a ranged attack. This does not provoke an attack of opportunity beyond the normal one for making a ranged attack. The ranged weapon counts as a light weapon for this disarm attempt. If the disarm fails, the defender cannot make a reciprocal disarm attempt."
+        },
+        "Show Off": {
+          "description": "By spending a standard action to perform an impressive display of weapon skill, the character can demoralize a single foe within 30 feet who can observe him. He makes an Intimidate check, adding his base attack bonus to the roll. If the total exceeds the target's modified level check, the target becomes shaken (suffering a -2 penalty on attack rolls, ability checks, and saving throws) for a number of rounds equal to the exotic weapon master's class level."
+        },
+        "Stunning Blow": {
+          "description": "A character who possesses the Stunning Fist feat may apply its effects when striking with an exotic melee weapon."
+        },
+        "Throw Exotic Weapon": {
+          "description": "The character can hurl any exotic weapon without suffering an attack roll penalty, regardless of whether the weapon was designed for throwing (for example, an orc double axe or spiked chain). Only one end of a thrown double weapon can hit the target (wielder's choice). Weapons thrown this way have a range increment of 10 feet."
+        },
+        "Trip Attack": {
+          "description": "The character may use a one-handed or two-handed exotic weapon to attempt trip attacks. If he would be tripped by a failed trip attempt, he may release the weapon to avoid falling. If the exotic weapon already permits trip attacks, the character instead gains a +2 bonus on trip attempts made with it."
+        },
+        "Twin Exotic Weapon Fighting": {
+          "description": "When holding identical light exotic weapons in each hand, the character is treated as possessing the Two-Weapon Fighting feat. If he already has that feat, the attack roll penalties for fighting with two weapons are reduced to -1 for both the primary and off hand."
+        },
+        "Uncanny Blow": {
+          "description": "When gripping a one-handed exotic melee weapon in both hands, the character applies twice his Strength bonus to damage rather than the usual 1-1/2 times. If he possesses the Power Attack feat, the weapon is treated as two-handed for calculating bonus damage from Power Attack.",
+          "modifiers": [
+            {
+              "operator": "set",
+              "requirements": [
+                {
+                  "chainingOperator": "or",
+                  "children": [
+                    {
+                      "operator": "equal",
+                      "target": "items.weapons.exotic.slot",
+                      "value": "twohanded",
+                      "valueType": "string"
+                    },
+                    {
+                      "operator": "equal",
+                      "target": "feats.powerattack.possessed",
+                      "value": "true",
+                      "valueType": "boolean"
+                    }
+                  ]
+                }
+              ],
+              "target": "items.weapons.exotic.damage.strmultiplier",
+              "value": "2",
+              "valueType": "number"
+            }
+          ]
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Characters who take levels in this prestige class do not gain proficiency with any additional weapons or armor."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Exotic weapon masters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each level, an exotic weapon master learns a special trick that he can use with any exotic weapon for which he has the Weapon Focus feat. He must select the trick learned when he gains the level, and once selected, the choice cannot later be changed. He can't select the same stunt more than once. Close-Quarters Ranged Combat: A character who knows this stunt doesn't provoke an attack of opportunity when using an exotic ranged weapon. Double Weapon Defense: When wielding an exotic double weapon with both hands, the character gains a +1 shield bonus to AC. Exotic Reach: When wielding an exotic weapon with reach, the character may make an attack of opportunity against a foe that provokes such an attack even if the foe has cover (but not total cover). Exotic Sunder: When wielding a one-handed or two-handed exotic weapon, the character deals an extra 1d6 points of damage on any successful sunder attempt. Flurry of Strikes: When wielding an exotic double weapon or a spiked chain with both hands, the character can elect to use a full attack action to make a flurry of strikes. When doing so, he may make one extra attack in the round at his full base attack bonus, but this attack takes a -2 penalty, as does each other attack made in that round and until the exotic weapon master's next turn. The extra attack may be with either end of the double weapon. Ranged Disarm: The character can make a disarm at tempt even on a ranged attack. Such an attack provokes no attack of opportunity (except as normal for using a ranged weapon). For the purpose of this disarm attempt, treat the character's ranged weapon as a light weapon. If the character fails this disarm attempt, the defender can't attempt to disarm him. Show Off: As a standard action, the character can display his mastery with an exotic weapon and confound his opponent. The character may make an Intimidate check against a single opponent within 30 feet that can see him, adding his base attack bonus to the result. If the result exceeds the opponent's modified level check, the opponent becomes shaken (-2 penalty on attack rolls, ability checks, and saving throws) for 1 round per class level of the exotic weapon master. Stunning Blow: If the character has the Stunning Fist feat, he can utilize the feat while wielding an exotic melee weapon. Throw Exotic Weapon: The character can throw an exotic weapon with no penalty on the attack roll, even if it isn't designed to be thrown (such as an orc double axe or a spiked chain). When he throws a double weapon, only one end of the weapon (character's choice) can strike the target. Exotic weapons thrown in this way have a range increment of 10 feet. Twin Exotic Weapon Fighting: When wielding the same light exotic weapon in each hand, the character is treated as having the Two-Weapon Fighting feat. If he already has the feat, the penalties on attack rolls are lessened to -1 for both the primary hand and the off hand when fighting in this manner. Trip Attack: The character can use a one-handed or twohanded exotic weapon to make a trip attack. If he is tripped during his own trip attempt, he can drop the weapon to avoid being tripped. If the exotic weapon already allows its wielder to make trip attacks, the character instead adds a +2 bonus on any trip attempt. Uncanny Blow: When wielding a one-handed exotic melee weapon in two hands, the character can focus the power of his attack so that he deals extra damage equal to his Strength bonus Ã-2 instead of his Strength bonus Ã-1-1/2. If he has the Power Attack feat, he treats the weapon as twohanded for purposes of determining his bonus on damage rolls.",
+        "name": "Exotic Weapon Stunt",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Craft",
+      "Intimidate",
+      "Profession"
+    ],
+    "description": "The only real requirement for exotic weapon master is commitment and perseverance.",
+    "hitDie": "d10",
+    "name": "Exotic Weapon Master",
+    "prerequisites": {
+      "parsed": {
+        "bab": 6,
+        "feats": [
+          "Exotic Weapon Proficiency (any exotic weapon)",
+          "Weapon Focus (any exotic weapon)"
+        ],
+        "skills": [
+          {
+            "name": "Craft (Weaponsmithing)",
+            "ranks": 3
+          }
+        ],
+        "special": [
+          "Races that have familiarity with an exotic weapon (such as the dwarf's familiarity with the dwarven waraxe and the dwarven urgrosh) are considered to have the Exotic Weapon Proficiency feat for the purpose of meeting the requirements for this class."
+        ]
+      },
+      "text": "Base Attack Bonus: +6 Skills: Craft (Weaponsmithing) 3 ranks Feats: Exotic Weapon Proficiency (any exotic weapon), Weapon Focus (any exotic weapon) Special: Races that have familiarity with an exotic weapon (such as the dwarf's familiarity with the dwarven waraxe and the dwarven urgrosh) are considered to have the Exotic Weapon Proficiency feat for the purpose of meeting the requirements for this class."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Exotic weapon stunt"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Exotic weapon stunt"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Exotic weapon stunt"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "2 + Int modifier"
+  }
+}

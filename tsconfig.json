@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+
+    // Strict mode
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    // Module resolution
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+
+    // Path aliases (matching deno.jsonc imports)
+    "paths": {
+      "@/*": ["./*"],
+      "@/server/*": ["./server/*"],
+      "@/client/*": ["./client/*"],
+      "@/shared/*": ["./shared/*"],
+      "@/scripts/*": ["./scripts/*"],
+      "@/emails/*": ["./emails/*"],
+      "@/database/*": ["./database/*"]
+    },
+
+    // Types
+    "types": ["bun-types", "react", "react-dom"]
+  },
+  "include": [
+    "server/**/*",
+    "client/**/*",
+    "shared/**/*",
+    "scripts/**/*",
+    "tests/**/*",
+    "emails/**/*",
+    "database/**/*"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

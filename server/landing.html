@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, width=device-width">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="theme-color" content="#8d1e1e">
+
+  <title>Arkyvree | Programmable Ruleset Engine & Character Creator</title>
+  <meta name="description" content="A programmable ruleset engine and character creator for tabletop RPGs. Build characters, manage campaigns, and customize game systems.">
+
+  <meta property="og:title" content="Arkyvree | Programmable Ruleset Engine & Character Creator">
+  <meta property="og:description" content="A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="__APP_URL__/">
+  <meta property="og:image" content="__APP_URL__/og-image.png">
+  <link rel="canonical" href="__APP_URL__/">
+
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="help" type="text/plain" href="/llms.txt">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Arkyvree",
+    "url": "__APP_URL__",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Any",
+    "description": "A programmable ruleset engine and character creator for tabletop RPGs. Build characters, manage campaigns, and customize game systems.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Arkyvree",
+    "url": "__APP_URL__",
+    "logo": "__APP_URL__/og-image.png",
+    "description": "Arkyvree is a programmable ruleset engine and character creator for tabletop RPGs.",
+    "sameAs": []
+  }
+  </script>
+
+  <style>
+    @font-face {
+      font-family: 'Lora Variable';
+      font-style: normal;
+      font-display: swap;
+      font-weight: 400 700;
+      src: url(/public/fonts/lora-latin-ext-wght-normal.woff2) format('woff2-variations');
+      unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'Lora Variable';
+      font-style: normal;
+      font-display: swap;
+      font-weight: 400 700;
+      src: url(/public/fonts/lora-latin-wght-normal.woff2) format('woff2-variations');
+      unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+    @font-face {
+      font-family: 'Lora Variable';
+      font-style: italic;
+      font-display: swap;
+      font-weight: 400 700;
+      src: url(/public/fonts/lora-latin-ext-wght-italic.woff2) format('woff2-variations');
+      unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'Lora Variable';
+      font-style: italic;
+      font-display: swap;
+      font-weight: 400 700;
+      src: url(/public/fonts/lora-latin-wght-italic.woff2) format('woff2-variations');
+      unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+  </style>
+
+  <script>
+    (function() {
+      try {
+        var m = localStorage.getItem('themeMode');
+        if (m === 'light' || (m !== 'dark' && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+          document.documentElement.classList.add('light');
+        }
+      } catch(e) {}
+    })();
+  </script>
+
+  <script>
+    (function() {
+      try {
+        var d = JSON.parse(localStorage.getItem('auth-storage'));
+        if (d && d.state && d.state.isAuthenticated) location.replace('/dashboard');
+      } catch(e) {}
+    })();
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-default: #2a251e;
+      --bg-paper: #3d352a;
+      --bg-section-alt: #3b3630;
+      --text-primary: #f4f0e8;
+      --text-secondary: #e0d4b8;
+      --gold: #f5c542;
+      --gold-light: #ffe082;
+      --gold-cc: #f5c542cc;
+      --gold-dd: #f5c542dd;
+      --gold-44: #f5c54244;
+      --gold-88: #f5c54288;
+      --gold-0a: #f5c5420a;
+      --gold-99: #f5c54299;
+      --secondary: #f57f17;
+      --divider: rgba(255, 255, 255, 0.12);
+      --card-bg: linear-gradient(145deg, #3d352a, #2a251e);
+      --appbar-bg: linear-gradient(135deg, #d2b48c, #a0522d);
+      --appbar-shadow: 0px 2px 8px rgba(0, 0, 0, 0.25);
+      --appbar-border: #f57f17;
+      --hero-bg:
+        radial-gradient(ellipse at 50% 40%, rgba(245,197,66,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 80%, rgba(141,30,30,0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 10%, rgba(100,30,30,0.20) 0%, transparent 45%),
+        linear-gradient(160deg, #1a0f0f 0%, #2a1515 50%, #1a0f0f 100%);
+      --logo-glow: rgba(245,197,66,0.4);
+      --glow-shadow: 0 0 60px rgba(245,197,66,0.25);
+      --glow-shadow-hover: 0 0 80px rgba(245,197,66,0.35);
+      --gold-faint: rgba(245,197,66,0.10);
+      --card-hover-shadow: 0 4px 20px #f5c54218, 0 8px 40px #f5c54210;
+      --feature-top-bar: linear-gradient(90deg, #d2b48c, #a0522d);
+      --cta-glow: 0 0 50px rgba(245,197,66,0.2);
+      --cta-glow-hover: 0 0 70px rgba(245,197,66,0.3);
+      --btn-border: rgba(141, 30, 30, 0.4);
+      --btn-contained-bg: linear-gradient(145deg, #f57f17, #bf9000);
+      --btn-contained-hover: linear-gradient(145deg, #ffb300, #f57f17);
+    }
+
+    html.light {
+      --bg-default: #f5f1e8;
+      --bg-paper: #ede7d9;
+      --bg-section-alt: #ebe7df;
+      --text-primary: #3e2723;
+      --text-secondary: #5d4037;
+      --gold: #d4a017;
+      --gold-light: #f5c542;
+      --gold-cc: #d4a017cc;
+      --gold-dd: #d4a017dd;
+      --gold-44: #d4a01744;
+      --gold-88: #d4a01788;
+      --gold-0a: #d4a0170a;
+      --gold-99: #d4a01799;
+      --secondary: #bf9000;
+      --divider: rgba(0, 0, 0, 0.12);
+      --card-bg: linear-gradient(145deg, #ede7d9, #e8dcc6);
+      --appbar-bg: linear-gradient(135deg, #8d1e1e, #5d1313);
+      --appbar-shadow: 0px 2px 8px rgba(62, 39, 35, 0.2);
+      --appbar-border: #bf9000;
+      --hero-bg:
+        radial-gradient(ellipse at 50% 40%, rgba(212,160,23,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 80%, rgba(141,30,30,0.20) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 10%, rgba(100,30,30,0.15) 0%, transparent 45%),
+        linear-gradient(160deg, #4a1010 0%, #6b1717 50%, #4a1010 100%);
+      --logo-glow: rgba(245,197,66,0.25);
+      --glow-shadow: 0 0 60px rgba(245,197,66,0.15);
+      --glow-shadow-hover: 0 0 80px rgba(245,197,66,0.2);
+      --gold-faint: rgba(191,144,0,0.08);
+      --card-hover-shadow: 0 4px 20px #d4a01718, 0 8px 40px #d4a01710;
+      --feature-top-bar: linear-gradient(90deg, #8d1e1e, #5d1313);
+      --cta-glow: 0 0 50px rgba(245,197,66,0.12);
+      --cta-glow-hover: 0 0 70px rgba(245,197,66,0.18);
+      --btn-border: rgba(141, 30, 30, 0.2);
+      --btn-contained-bg: linear-gradient(145deg, #bf9000, #8f6800);
+      --btn-contained-hover: linear-gradient(145deg, #f57f17, #bf9000);
+    }
+
+    /* ── Base ── */
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Lora Variable', Georgia, serif;
+      color: var(--text-primary);
+      background: var(--bg-default);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    img { display: block; }
+
+    /* ── AppBar ── */
+
+    .appbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1100;
+      background: var(--appbar-bg);
+      box-shadow: var(--appbar-shadow);
+      border-bottom: 2px solid var(--appbar-border);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      padding: 0 24px;
+      max-width: 100%;
+    }
+
+    .logo-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .logo-link img {
+      width: 28px;
+      height: 28px;
+    }
+
+    .sign-in-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      font-family: 'Lora Variable', Georgia, serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #fff;
+      background: none;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 200ms;
+    }
+
+    .sign-in-btn:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .sign-in-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* ── Buttons ── */
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9.6px 36px;
+      font-family: 'Lora Variable', Georgia, serif;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid var(--btn-border);
+      text-shadow: 0px 1px 2px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: all 200ms ease;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--btn-contained-bg);
+      color: #1a0f0f;
+      box-shadow: var(--glow-shadow);
+    }
+
+    .btn-primary:hover {
+      background: var(--btn-contained-hover);
+      box-shadow: var(--glow-shadow-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--gold-dd);
+      border-color: var(--gold-44);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--gold-88);
+      background: var(--gold-0a);
+    }
+
+    .btn-cta { padding: 9.6px 40px; }
+
+    /* ── Container ── */
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* ── Filigrees ── */
+
+    .filigree {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      border-style: solid;
+      border-color: var(--gold);
+      border-width: 0;
+      opacity: 0.3;
+      z-index: 1;
+    }
+
+    .filigree-tl { top: 12px; left: 12px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 6px; }
+    .filigree-tr { top: 12px; right: 12px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 6px; }
+    .filigree-bl { bottom: 12px; left: 12px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 6px; }
+    .filigree-br { bottom: 12px; right: 12px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 6px; }
+
+    /* ── Noise overlay ── */
+
+    .noise-bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.035;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+
+    /* ── Hero ── */
+
+    .hero {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      text-align: center;
+      background: var(--hero-bg);
+      overflow: hidden;
+    }
+
+    .hero-logo {
+      width: 100px;
+      height: 100px;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 0 24px var(--logo-glow));
+    }
+
+    .hero-title {
+      margin-top: 24px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      position: relative;
+      z-index: 1;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .hero-tagline {
+      margin-top: 12px;
+      color: rgba(255,255,255,0.7);
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      font-size: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-divider {
+      margin-top: 24px;
+      width: 100px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-99), transparent);
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-subtitle {
+      margin-top: 24px;
+      color: rgba(255,255,255,0.6);
+      max-width: 460px;
+      line-height: 1.8;
+      font-size: 0.875rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-ctas {
+      margin-top: 32px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Section helpers ── */
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .section-subtitle {
+      font-size: 1rem;
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .gold-divider {
+      height: 1px;
+      max-width: 400px;
+      margin: 0 auto 48px;
+      background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+      opacity: 0.4;
+    }
+
+    /* ── Features ── */
+
+    .features {
+      background: var(--bg-default);
+      padding: 64px 0;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .feature-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--divider);
+      border-radius: 24px;
+      background: var(--card-bg);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--feature-top-bar);
+    }
+
+    @media (hover: hover) {
+      .feature-card:hover {
+        border-color: var(--secondary);
+        box-shadow: var(--card-hover-shadow);
+        transform: translateY(-4px);
+      }
+    }
+
+    .feature-content {
+      padding: 24px;
+      text-align: center;
+    }
+
+    .feature-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gold-faint);
+      margin: 0 auto 20px;
+    }
+
+    .feature-icon svg {
+      width: 32px;
+      height: 32px;
+      fill: var(--secondary);
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ── Customization ── */
+
+    .customization {
+      background: var(--bg-section-alt);
+      padding: 64px 0;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .info-box {
+      text-align: center;
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid var(--divider);
+      background: var(--bg-paper);
+    }
+
+    .info-box h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 8px;
+    }
+
+    .info-box p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .example-callout {
+      margin-top: 48px;
+      padding: 24px;
+      border-radius: 24px;
+      background: var(--bg-paper);
+      border-left: 3px solid var(--gold);
+    }
+
+    .example-callout p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      line-height: 1.7;
+    }
+
+    /* ── CTA ── */
+
+    .cta {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--hero-bg);
+      overflow: hidden;
+      padding: 64px 24px;
+      text-align: center;
+    }
+
+    .cta-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .cta-subtitle {
+      color: rgba(255,255,255,0.7);
+      margin-top: 12px;
+      margin-bottom: 32px;
+      font-size: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Animations ── */
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim-1 { animation: fadeInUp 250ms cubic-bezier(0, 0, 0.2, 1) 0ms both; }
+    .anim-2 { animation: fadeInUp 250ms cubic-bezier(0, 0, 0.2, 1) 60ms both; }
+    .anim-3 { animation: fadeInUp 250ms cubic-bezier(0, 0, 0.2, 1) 120ms both; }
+    .anim-4 { animation: fadeInUp 250ms cubic-bezier(0, 0, 0.2, 1) 180ms both; }
+    .anim-5 { animation: fadeInUp 250ms cubic-bezier(0, 0, 0.2, 1) 240ms both; }
+    .anim-6 { animation: fadeInUp 250ms cubic-bezier(0, 0, 0.2, 1) 300ms both; }
+
+    .hero .anim-1 { animation-duration: 400ms; animation-delay: 0ms; }
+    .hero .anim-2 { animation-duration: 400ms; animation-delay: 90ms; }
+    .hero .anim-3 { animation-duration: 400ms; animation-delay: 180ms; }
+    .hero .anim-4 { animation-duration: 400ms; animation-delay: 270ms; }
+    .hero .anim-5 { animation-duration: 400ms; animation-delay: 360ms; }
+    .hero .anim-6 { animation-duration: 400ms; animation-delay: 450ms; }
+
+    /* ── Responsive ── */
+
+    @media (min-width: 600px) {
+      .toolbar { min-height: 64px; }
+      main { padding-top: 64px !important; }
+      .container { padding: 0 24px; }
+      .hero { padding: 112px 24px; }
+      .hero-logo { width: 130px; height: 130px; }
+      .hero-title { font-size: 1.75rem; }
+    }
+
+    @media (min-width: 900px) {
+      .hero { padding: 128px 24px; }
+      .hero-logo { width: 150px; height: 150px; }
+      .hero-title { font-size: 2rem; margin-top: 32px; }
+      .hero-tagline { font-size: 1rem; font-weight: 500; }
+      .hero-subtitle { font-size: 1rem; line-height: 1.6; }
+      .hero-ctas { margin-top: 40px; }
+      .hero-divider { width: 160px; }
+
+      .filigree { width: 70px; height: 70px; }
+      .filigree-tl { top: 28px; left: 28px; }
+      .filigree-tr { top: 28px; right: 28px; }
+      .filigree-bl { bottom: 28px; left: 28px; }
+      .filigree-br { bottom: 28px; right: 28px; }
+
+      .features { padding: 96px 0; }
+      .features-grid { grid-template-columns: repeat(3, 1fr); }
+      .feature-content { padding: 32px; }
+
+      .customization { padding: 96px 0; }
+      .info-grid { grid-template-columns: repeat(3, 1fr); }
+
+      .cta { padding: 80px 24px; }
+      .cta-title { font-size: 1.5rem; }
+    }
+
+    /* ── Reduced motion ── */
+
+    @media (prefers-reduced-motion: reduce) {
+      [class*="anim-"] { animation: none !important; }
+      .feature-card { transition: none; }
+      .btn:active { transform: none; }
+      @media (hover: hover) {
+        .feature-card:hover { transform: none; }
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="appbar">
+    <div class="toolbar">
+      <a href="/" class="logo-link">
+        <img src="/pwa-192x192.png" alt="" width="28" height="28">
+        Arkyvree
+      </a>
+      <a href="/sign-in" class="sign-in-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+        Sign In
+      </a>
+    </div>
+  </header>
+
+  <main style="padding-top:56px">
+    <!-- Hero -->
+    <section class="hero noise-bg">
+      <div class="filigree filigree-tl"></div>
+      <div class="filigree filigree-tr"></div>
+      <div class="filigree filigree-bl"></div>
+      <div class="filigree filigree-br"></div>
+
+      <img src="/pwa-512x512.png" alt="Arkyvree" class="hero-logo anim-1">
+      <h1 class="hero-title anim-2">Arkyvree</h1>
+      <p class="hero-tagline anim-3">A programmable engine for tabletop rulesets</p>
+      <div class="hero-divider anim-4"></div>
+      <p class="hero-subtitle anim-5">
+        Fork any community ruleset, customize every mechanic,<br>
+        and let the engine enforce the rest.
+      </p>
+      <div class="hero-ctas anim-6">
+        <a href="/sign-up" class="btn btn-primary">Get Started</a>
+        <button type="button" class="btn btn-primary" data-demo-cta>Try the demo</button>
+        <a href="https://arkyvree.featurebase.app/help" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Learn More</a>
+        <a href="https://arkyvree.featurebase.app/changelog" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Changelog</a>
+        <a href="https://github.com/PhilippeChab/arkyvree" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Source</a>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <div class="container">
+        <h2 class="section-title anim-1">How It Works</h2>
+        <div class="gold-divider anim-1"></div>
+        <div class="features-grid">
+          <div class="feature-card anim-2">
+            <div class="feature-content">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L16 18l2.5-1.4L21 18l-1.4-2.5L21 13zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.996.996 0 0 0-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zM5.71 21.29L2.71 18.29l8.95-8.95 3 3-8.95 8.95z"/></svg>
+              </div>
+              <h3>Programmable Rulesets</h3>
+              <p>Fork any community ruleset into your own editable copy. Customize classes, feats, spells, and mechanics with modifiers, requirements, and properties. Subscribe to content packages to expand your game.</p>
+            </div>
+          </div>
+          <div class="feature-card anim-3">
+            <div class="feature-content">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+              </div>
+              <h3>Characters That Follow the Rules</h3>
+              <p>A guided wizard walks through class, skills, and feats, validating every choice against your ruleset.</p>
+            </div>
+          </div>
+          <div class="feature-card anim-4">
+            <div class="feature-content">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V18h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4 3.43c0-.81-.48-1.53-1.22-1.85-.85-.37-1.79-.58-2.78-.58-.39 0-.76.04-1.13.1.4.68.63 1.46.63 2.29V18H24v-1.57zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
+              </div>
+              <h3>Campaigns &amp; Collaboration</h3>
+              <p>Create campaigns, invite players, and share a common ruleset. Every character in the campaign is built against the same rules.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Customization -->
+    <section class="customization">
+      <div class="container">
+        <h2 class="section-title anim-1">The Customization System</h2>
+        <p class="section-subtitle anim-2">The building blocks behind every rule in your game.</p>
+        <div class="gold-divider anim-2"></div>
+        <div class="info-grid">
+          <div class="info-box anim-3">
+            <h3>Properties</h3>
+            <p>Typed attributes on any entity. A spell's school, a weapon's proficiency type, a class level's base attack bonus.</p>
+          </div>
+          <div class="info-box anim-4">
+            <h3>Requirements</h3>
+            <p>Prerequisite trees with and/or logic. Gate access based on level, attributes, or other entities.</p>
+          </div>
+          <div class="info-box anim-5">
+            <h3>Modifiers</h3>
+            <p>Mechanical effects — add, subtract, multiply, set. Toughness adds 3 HP. A magic sword adds +1 to attack.</p>
+          </div>
+        </div>
+        <div class="example-callout anim-6">
+          <p><strong>Example:</strong> &ldquo;Greater Weapon Specialization&rdquo; requires Weapon Specialization, which requires Weapon Focus, which requires proficiency with that weapon — a chain of <em>prerequisites</em> across four entities. Change the proficiency rules in your fork, and the entire chain adapts.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta noise-bg">
+      <div class="filigree filigree-tl"></div>
+      <div class="filigree filigree-tr"></div>
+      <div class="filigree filigree-bl"></div>
+      <div class="filigree filigree-br"></div>
+
+      <h2 class="cta-title anim-1">Ready to build your ruleset?</h2>
+      <p class="cta-subtitle anim-2">Create your free account and start building.</p>
+      <div class="cta-buttons anim-3">
+        <a href="/sign-up" class="btn btn-primary btn-cta">Get Started</a>
+        <button type="button" class="btn btn-outline btn-cta" data-demo-cta>Try the demo</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var buttons = document.querySelectorAll('[data-demo-cta]');
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          if (btn.disabled) return;
+          var original = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Starting…';
+          try {
+            var res = await fetch('/api/demo/start', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            if (!res.ok) throw new Error('Failed');
+            var user = await res.json();
+            try {
+              localStorage.setItem('auth-storage', JSON.stringify({
+                state: { user: user, isAuthenticated: true },
+                version: 0,
+              }));
+            } catch (e) {}
+            location.replace('/dashboard');
+          } catch (e) {
+            btn.disabled = false;
+            btn.textContent = original;
+            alert('Could not start the demo. Please try again.');
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

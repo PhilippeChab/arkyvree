@@ -1,0 +1,593 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-03-23T14:00:11.362Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/geomancer/",
+    "type": "class"
+  },
+  "detected": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1,
+          2
+        ],
+        "target": "aptitudes.geomancerdrift1.allowed"
+      }
+    ],
+    "bab": "medium",
+    "bonusFeatLists": [
+      {
+        "aptitude": "Geomancer Ley Lines (6th)",
+        "feats": [
+          "a new terrain in which to receive the benefit (at +1)",
+          "increase his effective caster level in a previously chosen terrain by an additional +1"
+        ],
+        "levels": [
+          6
+        ]
+      }
+    ],
+    "casterLevelAdvancement": {
+      "levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "type": "any"
+    },
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1,
+          2
+        ],
+        "name": "Drift 1"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Spell Versatility 0"
+      },
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "name": "Ley Lines"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Spell Versatility 1"
+      },
+      {
+        "levels": [
+          3,
+          4
+        ],
+        "name": "Drift 2"
+      },
+      {
+        "levels": [
+          3
+        ],
+        "name": "Spell Versatility 2"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Spell Versatility 3"
+      },
+      {
+        "levels": [
+          5,
+          6
+        ],
+        "name": "Drift 3"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Spell Versatility 4"
+      },
+      {
+        "levels": [
+          6
+        ],
+        "name": "Spell Versatility 5"
+      },
+      {
+        "levels": [
+          7,
+          8
+        ],
+        "name": "Drift 4"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Spell Versatility 6"
+      },
+      {
+        "levels": [
+          8
+        ],
+        "name": "Spell Versatility 7"
+      },
+      {
+        "levels": [
+          9,
+          10
+        ],
+        "name": "Drift 5"
+      },
+      {
+        "levels": [
+          9
+        ],
+        "name": "Spell Versatility 8"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Spell Versatility 9"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgenature.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.divine",
+        "value": "2",
+        "valueType": "number"
+      }
+    ],
+    "saves": {
+      "fortitude": "good",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Geomancer Class Feature",
+    "features": {
+      "Drift 1": {
+        "description": "As the geomancer advances, his body gradually transforms to reflect his bond with the natural world. At every geomancer level, select one drift from the stage corresponding to that level.",
+        "level": 1,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.geomancerdrift1.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "seedName": "Drift 1 (Geomancer)",
+        "stackable": true
+      },
+      "Drift 2": {
+        "description": "",
+        "level": 3,
+        "seedName": "Drift 2 (Geomancer)",
+        "stackable": true
+      },
+      "Drift 3": {
+        "description": "",
+        "level": 5,
+        "seedName": "Drift 3 (Geomancer)",
+        "stackable": true
+      },
+      "Drift 4": {
+        "description": "",
+        "level": 7,
+        "seedName": "Drift 4 (Geomancer)",
+        "stackable": true
+      },
+      "Drift 5": {
+        "description": "",
+        "level": 9,
+        "seedName": "Drift 5 (Geomancer)",
+        "stackable": true
+      },
+      "Ley Lines": {
+        "description": "Beginning at 2nd level, the geomancer forges a mystical link to a particular kind of terrain. Select one terrain type from the following: aquatic, desert, forest, hills, marsh, mountains, or plains. While in that terrain, the geomancer's effective caster level for all spells is increased by +1. At 6th level and once more at 10th level, the geomancer may either pick an additional terrain to gain the +1 caster level bonus, or raise his effective caster level in a terrain he has already chosen by a further +1.",
+        "level": 2,
+        "seedName": "Ley Lines (Geomancer)",
+        "stackable": true
+      },
+      "Spell Versatility 0": {
+        "description": "Starting at 1st level, the geomancer gains the ability to merge his arcane and divine magical traditions. He continues to learn and prepare spells normally for each of his spellcasting classes. However, when casting spells, he may freely combine spellcasting parameters from any of his classes to achieve the best possible outcome for any spell whose level does not exceed his current spell versatility score. For instance, a 4th-level geomancer can cast his 3rd-level or lower arcane spells without incurring arcane spell failure from worn armor. (The druid's prohibition on metal armor still applies to druid/geomancers, as this restriction arises from a spiritual commitment rather than a mechanical limitation.) The geomancer may apply his Wisdom modifier to determine the save DC of arcane spells, or use his Charisma or Intelligence modifier (whichever normally governs his arcane casting) for the save DC of divine spells. When a spell calls for either an arcane material component or a divine focus, the geomancer may substitute one for the other. A cleric/geomancer who also possesses levels in wizard, sorcerer, or bard may spontaneously convert any prepared arcane or divine spell (other than a domain spell) of a suitable level into a cure or inflict spell of equal or lower level, provided he is able to cast that cure or inflict spell as a cleric.",
+        "level": 1,
+        "seedName": "Spell Versatility 0 (Geomancer)"
+      },
+      "Spell Versatility 1": {
+        "description": "",
+        "level": 2,
+        "seedName": "Spell Versatility 1 (Geomancer)"
+      },
+      "Spell Versatility 2": {
+        "description": "",
+        "level": 3,
+        "seedName": "Spell Versatility 2 (Geomancer)"
+      },
+      "Spell Versatility 3": {
+        "description": "",
+        "level": 4,
+        "seedName": "Spell Versatility 3 (Geomancer)"
+      },
+      "Spell Versatility 4": {
+        "description": "",
+        "level": 5,
+        "seedName": "Spell Versatility 4 (Geomancer)"
+      },
+      "Spell Versatility 5": {
+        "description": "",
+        "level": 6,
+        "seedName": "Spell Versatility 5 (Geomancer)"
+      },
+      "Spell Versatility 6": {
+        "description": "",
+        "level": 7,
+        "seedName": "Spell Versatility 6 (Geomancer)"
+      },
+      "Spell Versatility 7": {
+        "description": "",
+        "level": 8,
+        "seedName": "Spell Versatility 7 (Geomancer)"
+      },
+      "Spell Versatility 8": {
+        "description": "",
+        "level": 9,
+        "seedName": "Spell Versatility 8 (Geomancer)"
+      },
+      "Spell Versatility 9": {
+        "description": "",
+        "level": 10,
+        "seedName": "Spell Versatility 9 (Geomancer)"
+      },
+      "Spells per Day/Spells Known": {
+        "description": "With each geomancer level gained, the character receives additional spells per day (and spells known, where relevant) as though he had also advanced one level in a spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other benefits that class would normally grant (such as additional wild shape forms, metamagic feats, item creation feats, or similar abilities). Because the character must have had multiple spellcasting classes prior to becoming a geomancer, the player chooses which class receives the spellcasting advancement at each new geomancer level.",
+        "level": 1,
+        "seedName": "Spells per Day/Spells Known (Geomancer)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Geomancers do not gain any additional weapon or armor proficiencies.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Geomancer)"
+      }
+    },
+    "occurrenceMap": {
+      "Drift 1": "Drift 1",
+      "Drift 2": "Drift 2",
+      "Drift 3": "Drift 3",
+      "Drift 4": "Drift 4",
+      "Drift 5": "Drift 5",
+      "Ley Lines": "Ley Lines",
+      "Spell Versatility 0": "Spell Versatility 0",
+      "Spell Versatility 1": "Spell Versatility 1",
+      "Spell Versatility 2": "Spell Versatility 2",
+      "Spell Versatility 3": "Spell Versatility 3",
+      "Spell Versatility 4": "Spell Versatility 4",
+      "Spell Versatility 5": "Spell Versatility 5",
+      "Spell Versatility 6": "Spell Versatility 6",
+      "Spell Versatility 7": "Spell Versatility 7",
+      "Spell Versatility 8": "Spell Versatility 8",
+      "Spell Versatility 9": "Spell Versatility 9"
+    },
+    "overrides": {
+      "classSkills": [
+        "Climb",
+        "Concentration",
+        "Craft",
+        "Diplomacy",
+        "Handle Animal",
+        "Heal",
+        "Knowledge (Arcana)",
+        "Knowledge (Geography)",
+        "Knowledge (Nature)",
+        "Spellcraft",
+        "Survival",
+        "Swim"
+      ],
+      "description": "A geomancer views all forms of magic as fundamentally identical.",
+      "features": {
+        "Drift 1": {
+          "description": "As the geomancer advances, his body gradually transforms to reflect his bond with the natural world. At every geomancer level, select one drift from the stage corresponding to that level."
+        },
+        "Ley Lines": {
+          "description": "Beginning at 2nd level, the geomancer forges a mystical link to a particular kind of terrain. Select one terrain type from the following: aquatic, desert, forest, hills, marsh, mountains, or plains. While in that terrain, the geomancer's effective caster level for all spells is increased by +1. At 6th level and once more at 10th level, the geomancer may either pick an additional terrain to gain the +1 caster level bonus, or raise his effective caster level in a terrain he has already chosen by a further +1."
+        },
+        "Spell Versatility 0": {
+          "description": "Starting at 1st level, the geomancer gains the ability to merge his arcane and divine magical traditions. He continues to learn and prepare spells normally for each of his spellcasting classes. However, when casting spells, he may freely combine spellcasting parameters from any of his classes to achieve the best possible outcome for any spell whose level does not exceed his current spell versatility score. For instance, a 4th-level geomancer can cast his 3rd-level or lower arcane spells without incurring arcane spell failure from worn armor. (The druid's prohibition on metal armor still applies to druid/geomancers, as this restriction arises from a spiritual commitment rather than a mechanical limitation.) The geomancer may apply his Wisdom modifier to determine the save DC of arcane spells, or use his Charisma or Intelligence modifier (whichever normally governs his arcane casting) for the save DC of divine spells. When a spell calls for either an arcane material component or a divine focus, the geomancer may substitute one for the other. A cleric/geomancer who also possesses levels in wizard, sorcerer, or bard may spontaneously convert any prepared arcane or divine spell (other than a domain spell) of a suitable level into a cure or inflict spell of equal or lower level, provided he is able to cast that cure or inflict spell as a cleric."
+        },
+        "Spells per Day/Spells Known": {
+          "description": "With each geomancer level gained, the character receives additional spells per day (and spells known, where relevant) as though he had also advanced one level in a spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other benefits that class would normally grant (such as additional wild shape forms, metamagic feats, item creation feats, or similar abilities). Because the character must have had multiple spellcasting classes prior to becoming a geomancer, the player chooses which class receives the spellcasting advancement at each new geomancer level."
+        },
+        "Weapon and Armor Proficiency": {
+          "description": "Geomancers do not gain any additional weapon or armor proficiencies."
+        }
+      }
+    }
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Geomancers gain no weapon or armor proficiencies.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At each geomancer level, the character gains new spells per day (and spells known, if applicable) as if he had also gained a level in a spellcasting class to which he belonged before adding the prestige class. He does not, however, gain any other benefit a character of that class would have gained (additional wild shape options, metamagic or item creation feats, or the like). Since the character had more than one spellcasting class before becoming a geomancer, the player must decide to which class to add each geomancer level for determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "The character slowly becomes closer to nature. At each geomancer level, choose a drift from the appropriate stage Drift, below).",
+        "name": "Drift 1"
+      },
+      {
+        "description": "At 1st level, the geomancer learns to blend divine and arcane magic. He still acquires and prepares his spells in the normal manner for his individual spellcasting classes. When he casts them, however, he can mix or match spellcasting parameters from any of his classes to gain the maximum possible advantage for any spell with a spell level equal to or less than his spell versatility score. Thus, as a 4th-level geomancer, he can cast any of his 3rd-level or lower sorcerer/wizard spells with no chance of arcane spell failure from armor. (The druidic prohibition against metal armor still applies to druid/geomancers, however, since this stricture stems from a spiritual oath rather than a practical limitation.) The geomancer may use his Wisdom modifier to set the save DC for arcane spells, or his Charisma or Intelligence modifier (whichever he would normally use for arcane spells) to set the save DC for divine spells. If a spell requires either an arcane material component or a divine focus, he may use either. A cleric/geomancer who also has levels of wizard, sorcerer, or bard can spontaneously convert any prepared arcane or divine spell (except a domain spell) of an appropriate level into a cure or inflict spell of equal or lower level, though he must be capable of casting the latter as a cleric.",
+        "name": "Spell Versatility 0"
+      },
+      {
+        "description": "At 2nd level, the geomancer learns to create magical connections with a specific type of terrain. Choose one of the following terrain types: aquatic, desert, forest, hills, marsh, mountains, or plains. In that terrain, the geomancer's effective caster level for all spells increases by +1. At 6th level and again at 10th level, the character may either choose a new terrain in which to receive the benefit (at +1), or increase his effective caster level in a previously chosen terrain by an additional +1.",
+        "name": "Ley Lines"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 1"
+      },
+      {
+        "description": "",
+        "name": "Drift 2"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 2"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 3"
+      },
+      {
+        "description": "",
+        "name": "Drift 3"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 4"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 5"
+      },
+      {
+        "description": "",
+        "name": "Drift 4"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 6"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 7"
+      },
+      {
+        "description": "",
+        "name": "Drift 5"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 8"
+      },
+      {
+        "description": "",
+        "name": "Spell Versatility 9"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Handle Animal",
+      "Heal",
+      "Knowledge (Arcana)",
+      "Knowledge (Geography)",
+      "Knowledge (Nature)",
+      "Scry",
+      "Spellcraft",
+      "Survival",
+      "Swim"
+    ],
+    "description": "To the geomancer, all magic is the same.",
+    "hitDie": "d6",
+    "name": "Geomancer",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 2,
+            "type": "arcane"
+          },
+          {
+            "level": 2,
+            "type": "divine"
+          }
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 6
+          },
+          {
+            "name": "Knowledge (nature)",
+            "ranks": 6
+          }
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 6 ranks, Knowledge (nature) 6 ranks Spells: Able to cast 2nd-level arcane spells and 2nd-level divine spells."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Drift 1",
+          "spell versatility 0"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Drift 1",
+          "ley lines +1",
+          "spell versatility 1"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Drift 2",
+          "spell versatility 2"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Drift 2",
+          "spell versatility 3"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Drift 3",
+          "spell versatility 4"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Drift 3",
+          "ley lines +2",
+          "spell versatility 5"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Drift 4",
+          "spell versatility 6"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Drift 4",
+          "spell versatility 7"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Drift 5",
+          "spell versatility 8"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Drift 5",
+          "ley lines +3",
+          "spell versatility 9"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

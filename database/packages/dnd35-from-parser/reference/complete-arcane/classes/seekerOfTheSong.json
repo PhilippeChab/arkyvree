@@ -1,0 +1,297 @@
+{
+  "_meta": {
+    "book": "complete-arcane",
+    "scrapedAt": "2026-03-31T22:10:46.614Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/seeker-of-the-song/",
+    "type": "class"
+  },
+  "detected": {
+    "bab": "poor",
+    "featNameMap": {},
+    "featureOccurrences": [
+      {
+        "levels": [
+          1
+        ],
+        "name": "Rapture Of The Song (+2 AC)"
+      },
+      {
+        "levels": [
+          1
+        ],
+        "name": "Seeker Music"
+      },
+      {
+        "levels": [
+          2
+        ],
+        "name": "Combine Songs"
+      },
+      {
+        "levels": [
+          4
+        ],
+        "name": "Rapture Of The Song (+2 Saves)"
+      },
+      {
+        "levels": [
+          5
+        ],
+        "name": "Subvocalize"
+      },
+      {
+        "levels": [
+          7
+        ],
+        "name": "Rapture Of The Song (DR 2/-)"
+      },
+      {
+        "levels": [
+          10
+        ],
+        "name": "Rapture Of The Song (Freedom Of Movement)"
+      }
+    ],
+    "hd": 6,
+    "levels": 10,
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "13",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.perform.rank",
+        "value": "13",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.skillfocus.*.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      }
+    ],
+    "saves": {
+      "fortitude": "poor",
+      "reflex": "poor",
+      "will": "good"
+    },
+    "skillPoints": 4
+  },
+  "mapping": {
+    "classFeatureAptitude": "Seeker of the Song Class Feature",
+    "features": {
+      "Combine Songs": {
+        "description": "A seeker of the song of 2nd level or higher can combine two types of bardic music or seeker music to provide the benefits of both. The seeker chooses two music abilities and activates both using the same standard action. If either or both require concentration, the seeker can maintain concentration on both by using one standard action each round to concentrate. The normal stacking rules for bonus types apply to music abilities combined with this ability.",
+        "level": 2,
+        "seedName": "Combine Songs (Seeker of the Song)"
+      },
+      "Rapture of the Song": {
+        "description": "A seeker of the song is so in tune with the power of the primal music that she gains special insight, physical fortitude, and resistance to magic while in the throes of her song. A seeker gains a +2 insight bonus to Armor Class whenever she uses her bardic music ability, seeker music, or a similar ability. At 4th level and higher, a seeker also gains a +2 insight bonus on saving throws whenever she uses her bardic music ability, seeker music, or a similar ability. At 7th level and higher, a seeker also gains damage reduction 2/? whenever she uses her bardic music ability, seeker music, or a similar ability. At 10th level, a seeker gains these abilities and also acts as though affected by a freedom of movement spell whenever she uses her bardic music ability, seeker music, or a similar ability.",
+        "level": 1,
+        "seedName": "Rapture of the Song (Seeker of the Song)",
+        "stackable": true
+      },
+      "Rapture of the Song (Freedom of Movement)": {
+        "description": "",
+        "level": 10,
+        "seedName": "Rapture of the Song (Freedom of Movement) (Seeker of the Song)"
+      },
+      "Seeker Music": {
+        "description": "A seeker of the song can use music or poetics to produce magical effects. Seeker music follows the same rules as bardic music. Each use of seeker music costs one daily use of bardic music to activate. Seeker of the song levels stack with bard levels for purposes of determining how many daily uses of bardic music and seeker music the character has. Some seeker music effects include a secondary effect, called a refrain. In any round when a seeker concentrates on a seeker music effect and expends another use of bardic music, she can activate the refrain associated with that seeker music effect. Using a refrain is a swift action that does not provoke attacks of opportunity. The original effects of the song do not end; the seeker can maintain the song and activate the refrain simultaneously.",
+        "level": 1,
+        "seedName": "Seeker Music (Seeker of the Song)"
+      },
+      "Subvocalize": {
+        "description": "At 5th level and higher, a seeker of the song can begin a new bardic music or seeker music song as a swift action. A seeker can use this ability only if he already has one (and only one) bardic music or seeker music ability already active. A seeker can use this ability in conjunction with the combine songs ability to start a second song and then maintain both as a standard action each round (as per the combine songs ability).",
+        "level": 5,
+        "seedName": "Subvocalize (Seeker of the Song)"
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "Seekers of the song gain no proficiency with any weapon or armor.",
+        "level": 1,
+        "seedName": "Weapon and Armor Proficiency (Seeker of the Song)"
+      }
+    },
+    "occurrenceMap": {
+      "Combine Songs": "Combine Songs",
+      "Rapture Of The Song (+2 AC)": "Rapture of the Song",
+      "Rapture Of The Song (+2 Saves)": "Rapture of the Song",
+      "Rapture Of The Song (DR 2/-)": "Rapture of the Song",
+      "Rapture Of The Song (Freedom Of Movement)": "Rapture of the Song",
+      "Seeker Music": "Seeker Music",
+      "Subvocalize": "Subvocalize"
+    },
+    "overrides": {}
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Seekers of the song gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A seeker of the song is so in tune with the power of the primal music that she gains special insight, physical fortitude, and resistance to magic while in the throes of her song. A seeker gains a +2 insight bonus to Armor Class whenever she uses her bardic music ability, seeker music, or a similar ability. At 4th level and higher, a seeker also gains a +2 insight bonus on saving throws whenever she uses her bardic music ability, seeker music, or a similar ability. At 7th level and higher, a seeker also gains damage reduction 2/? whenever she uses her bardic music ability, seeker music, or a similar ability. At 10th level, a seeker gains these abilities and also acts as though affected by a freedom of movement spell whenever she uses her bardic music ability, seeker music, or a similar ability.",
+        "name": "Rapture of the Song",
+        "type": "(Su)"
+      },
+      {
+        "description": "A seeker of the song can use music or poetics to produce magical effects. Seeker music follows the same rules as bardic music. Each use of seeker music costs one daily use of bardic music to activate. Seeker of the song levels stack with bard levels for purposes of determining how many daily uses of bardic music and seeker music the character has. Some seeker music effects include a secondary effect, called a refrain. In any round when a seeker concentrates on a seeker music effect and expends another use of bardic music, she can activate the refrain associated with that seeker music effect. Using a refrain is a swift action that does not provoke attacks of opportunity. The original effects of the song do not end; the seeker can maintain the song and activate the refrain simultaneously.",
+        "name": "Seeker Music"
+      },
+      {
+        "description": "A seeker of the song of 2nd level or higher can combine two types of bardic music or seeker music to provide the benefits of both. The seeker chooses two music abilities and activates both using the same standard action. If either or both require concentration, the seeker can maintain concentration on both by using one standard action each round to concentrate. The normal stacking rules for bonus types apply to music abilities combined with this ability.",
+        "name": "Combine Songs",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level and higher, a seeker of the song can begin a new bardic music or seeker music song as a swift action. A seeker can use this ability only if he already has one (and only one) bardic music or seeker music ability already active. A seeker can use this ability in conjunction with the combine songs ability to start a second song and then maintain both as a standard action each round (as per the combine songs ability).",
+        "name": "Subvocalize",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Rapture of the Song (Freedom of Movement)"
+      }
+    ],
+    "classSkills": [
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Listen",
+      "Perform",
+      "Profession",
+      "Ride",
+      "Sense Motive",
+      "Spot",
+      "Swim"
+    ],
+    "description": "Seekers of the song wield the power of music in ways that amaze even the most skilled bards.",
+    "hitDie": "d6",
+    "name": "Seeker of the Song",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Skill Focus (Perform [any one])"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (arcana)",
+            "ranks": 13
+          },
+          {
+            "name": "Perform",
+            "ranks": 13
+          }
+        ],
+        "special": [
+          "Bardic music ability.",
+          "been exposed to the primal music by hearing another seeker of the song use a seeker music ability"
+        ]
+      },
+      "text": "Skills: Knowledge (arcana) 13 ranks, Perform 13 ranks Feats: Skill Focus (Perform [any one]) Special: Bardic music ability. Special: Must have been exposed to the primal music by hearing another seeker of the song use a seeker music ability."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Rapture of the song (+2 AC)",
+          "seeker music"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Combine songs"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [],
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Rapture of the song (+2 saves)"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Subvocalize"
+        ],
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [],
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Rapture of the song (DR 2/-)"
+        ],
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [],
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [],
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "Rapture of the song (freedom of movement)"
+        ],
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}
