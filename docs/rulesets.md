@@ -319,8 +319,7 @@ if (isInherited) {
 
 ## Legal
 
-Original application code is licensed under [GPL version 3 only](../LICENSE). Third-party game
-content is separate: material actually released as Open Game Content retains
+Material actually released as Open Game Content retains
 the [Open Game License v1.0a](../OGL.md).
 Neither a package's name nor its inclusion in the repository establishes
 licensing coverage for every entry.
