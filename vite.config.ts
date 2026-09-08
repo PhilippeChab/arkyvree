@@ -47,7 +47,7 @@ const baseConfig: UserConfig = {
   },
   plugins: [
     {
-      name: "mit-license",
+      name: "application-license",
       apply: "build",
       generateBundle() {
         this.emitFile({

@@ -2,7 +2,7 @@
   "name": "arkyvree",
   "private": true,
   "version": "0.0.0",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "type": "module",
   "overrides": {
     "react": "^19.2.4",

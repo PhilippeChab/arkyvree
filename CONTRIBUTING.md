@@ -98,7 +98,8 @@ a second lockfile.
 ## Contribution licensing
 
 By submitting original code or documentation for inclusion, you agree to license
-that contribution under the project's MIT license and confirm that you have
+that contribution under the project's GNU General Public License version 3 only
+(`GPL-3.0-only`, see [LICENSE](./LICENSE)) and confirm that you have
 the right to do so. This does not transfer ownership of your contribution.
 
 Third-party content must keep its own compatible license and attribution.
@@ -107,5 +108,5 @@ reuse grant, and the required notices. A publicly accessible website, scraped
 text, or a claim of rules compatibility is not a substitute for permission.
 Do not submit material you cannot authorize us to redistribute.
 
-See [README.md](./README.md#licensing) and [OGL.md](./OGL.md) for the distinction
-between software licensing and game-content licensing.
+See [LICENSE](./LICENSE) for software licensing and [OGL.md](./OGL.md) for
+game-content licensing.
