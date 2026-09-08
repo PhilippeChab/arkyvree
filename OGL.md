@@ -10,12 +10,11 @@ It is not a blanket designation of every scraped or generated entry as open cont
 The relevant upstream grant, exclusions, and copyright notices determine coverage.
 
 Game data is stored under `database/packages/dnd35/` and
-`database/packages/dnd35-from-parser/`. See [README.md](./README.md#licensing)
-for the boundary between third-party game content and original MIT-licensed code.
+`database/packages/dnd35-from-parser/`.
 
 ## Software and other material
 
-The original application code is licensed separately under [MIT](./LICENSE).
+The original application code is licensed separately under [GPL version 3 only](./LICENSE).
 This OGL notice does not license third-party Product Identity, artwork, or
 independent user-created material. Forking content does not remove its existing
 license obligations.
