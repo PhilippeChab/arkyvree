@@ -128,3 +128,5 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | `server/routers/authentication/index.ts` | `/auth/*` routes |
 | `server/routers/api/demo/index.ts` | `/api/demo/start` route |
 | `server/routers/api/shared/index.tsx` | `/api/shared/*` public routes (no auth middleware) |
+
+Password recovery revokes every existing session in the same transaction as the password update. An authenticated password change revokes other sessions while preserving the current session. Invalid reset codes and failed password changes do not revoke sessions.

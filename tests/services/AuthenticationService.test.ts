@@ -988,6 +988,15 @@ describe("AuthenticationService", () => {
   });
 
   describe("updatePassword", () => {
+    test("revokes other sessions and keeps the current authenticated session", async () => {
+      const testData = createTestData();
+      const { session } = await signUpAndVerify(testData);
+      const [other] = await Sessions.create(db, { userId: session.userId });
+      await AuthenticationMethods.updatePassword(session, { currentPassword: testData.password, newPassword: "replacement1234", newPasswordConfirmation: "replacement1234" });
+      expect(await Sessions.findOne(db, { id: other.id })).toBeUndefined();
+      expect(await Sessions.findOne(db, { id: session.id })).toBeDefined();
+    });
+
     test("should update password successfully", async () => {
       const testData = createTestData();
       const newPassword = "newpassword1234";
@@ -1211,6 +1220,20 @@ describe("AuthenticationService", () => {
   });
 
   describe("resetPassword", () => {
+    test("revokes all user sessions but preserves other accounts", async () => {
+      const testData = createTestData();
+      const { session, user } = await signUpAndVerify(testData);
+      const [second] = await Sessions.create(db, { userId: user.id });
+      const unrelated = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+      await AuthenticationMethods.forgotPassword({ emailAddress: testData.emailAddress });
+      const reset = (await PasswordResets.findOne(db, { userId: user.id }))!;
+      await AuthenticationMethods.resetPassword({ emailAddress: testData.emailAddress, code: reset.code, newPassword: "replacement1234", newPasswordConfirmation: "replacement1234" });
+      expect(await Sessions.findOne(db, { id: session.id })).toBeUndefined();
+      expect(await Sessions.findOne(db, { id: second.id })).toBeUndefined();
+      expect(await Sessions.findOne(db, { id: unrelated.id })).toBeDefined();
+      expect((await AuthenticationMethods.signIn({ emailAddress: testData.emailAddress, password: "replacement1234" })).session).toBeDefined();
+    });
+
     test("should reset password with valid code", async () => {
       const testData = createTestData();
       await signUpAndVerify(testData);
