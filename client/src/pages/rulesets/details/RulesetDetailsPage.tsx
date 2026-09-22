@@ -1,3 +1,4 @@
+import type { ClientResponse } from "hono/client";
 import { faqTooltip, Modal, PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
 import {
   ArchiveRulesetDialog,
@@ -263,9 +264,9 @@ export default function RulesetDetailsPage() {
   }, [setSearchParams]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [extensionsAnchor, setExtensionsAnchor] = useState<null | HTMLElement>(null);
-  useEffect(() => {
-    if (!subscribedExtensions?.length) setExtensionsAnchor(null);
-  }, [subscribedExtensions?.length]);
+  if (!subscribedExtensions?.length && extensionsAnchor !== null) {
+    setExtensionsAnchor(null);
+  }
   const { isOwner, isContributor, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
   const showContributorsMenu = (isOwner || isContributor) && ruleset?.status !== "Archived";
@@ -301,7 +302,7 @@ export default function RulesetDetailsPage() {
   const prefetchSection = useCallback((sectionKey: TabSection) => {
     if (!id) return;
     const childOnlyQuery = childOnly ? "true" as const : undefined;
-    const makeFn = (fetcher: () => Promise<Response>) => async () => {
+    const makeFn = (fetcher: () => Promise<ClientResponse<unknown>>) => async () => {
       const response = await fetcher();
       if (!response.ok) throw new Error(`Failed to fetch ${sectionKey}`);
       return response.json();
@@ -314,7 +315,7 @@ export default function RulesetDetailsPage() {
       return;
     }
     const queryKey = [...queryKeys.rulesets.section(id, sectionKey), "", childOnly];
-    const sectionFetchers: Record<Exclude<TabSection, "abilities">, () => Promise<Response>> = {
+    const sectionFetchers: Record<Exclude<TabSection, "abilities">, () => Promise<ClientResponse<unknown>>> = {
       saves: () => rpc.api.rulesets[":id"].saves.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
       mechanics: () => rpc.api.rulesets[":id"].mechanics.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
       races: () => rpc.api.rulesets[":id"].races.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),

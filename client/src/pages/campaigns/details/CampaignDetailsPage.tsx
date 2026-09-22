@@ -1,3 +1,4 @@
+import type { ClientResponse } from "hono/client";
 import {
   DeleteCampaignDialog,
   EditCampaignDialog,
@@ -183,7 +184,7 @@ export default function CampaignDetailsPage() {
 
   const prefetchSection = useCallback((sectionKey: TabSection) => {
     if (!id) return;
-    const sectionFetchers: Record<TabSection, () => Promise<Response>> = {
+    const sectionFetchers: Record<TabSection, () => Promise<ClientResponse<unknown>>> = {
       characters: () => rpc.api.campaigns[":id"].characters.$get({ param: { id }, query: { page: "1", limit: "10" } }),
       players: () => rpc.api.campaigns[":id"].players.$get({ param: { id }, query: { page: "1", limit: "10" } }),
     };
