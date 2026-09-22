@@ -47,11 +47,13 @@ events.on("job:failed", ({ job, error }) => {
 });
 
 let workerHealthy = true;
-events.on("worker:fatalError", ({ error }) => {
+const onFatalError = ({ error }: { error: unknown }) => {
   console.error("[worker] Fatal error:", error);
   Sentry.captureException(error, { level: "fatal" });
   workerHealthy = false;
-});
+};
+events.on("worker:fatalError", onFatalError);
+events.on("pool:fatalError", onFatalError);
 
 events.on("pool:listen:error", ({ error }) => {
   console.error("[worker] Listen connection error:", error);
@@ -95,6 +97,12 @@ const workerPool = new Pool({
 });
 workerPool.on("error", (err) => {
   console.error("[worker] Pool client error:", err.message);
+});
+// Checked-out clients also need a listener while idle between queries.
+workerPool.on("connect", (client) => {
+  client.on("error", (err) => {
+    console.error("[worker] Active database client error:", err.message);
+  });
 });
 
 const runner: Runner = await run({
