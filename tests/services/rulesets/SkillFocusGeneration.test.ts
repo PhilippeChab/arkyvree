@@ -1,3 +1,4 @@
+import { createSeededTestRuleset } from "@/tests/helpers.ts";
 import { SkillsMethods } from "@/server/services/rulesets/SkillsService.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -7,6 +8,8 @@ import {
   FeatsAptitudes,
   Modifiers,
   Rulesets,
+  Sessions,
+  Skills,
   Users,
 } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -318,4 +321,28 @@ describe("Skill Focus Auto-Generation", () => {
       expect(parentFeat).toBeDefined();
     });
   });
+});
+
+describe("inherited Skill Focus isolation", () => {
+  for (const operation of ["rename", "delete"] as const) {
+    test(`${operation} leaves the ancestor feat and modifiers intact`, async () => {
+      const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+      const fork = await createSeededTestRuleset(session.userId);
+      const skill = (await Skills.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Climb" }))!;
+      const feat = (await Feats.findOne(db, { rulesetId: skill.rulesetId, name: "Skill Focus: Climb" }))!;
+      const modifiers = await Modifiers.findManyBySource(db, { sourceIds: [feat.id], sourceType: "feats" });
+      if (operation === "rename") {
+        await SkillsMethods.updateRulesetSkill(session, fork.id, skill.id, {
+          name: "Mountaineering", description: skill.description, primaryAbilityId: skill.primaryAbilityId,
+          impactedByWeight: true, usableWithoutTraining: true,
+        });
+        expect(await Feats.findOne(db, { rulesetId: fork.id, name: "Skill Focus: Mountaineering" })).toBeDefined();
+      } else {
+        await SkillsMethods.deleteRulesetSkill(session, fork.id, skill.id);
+      }
+      expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
+      expect(await Modifiers.findManyBySource(db, { sourceIds: [feat.id], sourceType: "feats" })).toEqual(modifiers);
+      expect(await Skills.findOne(db, { id: skill.id })).toEqual(skill);
+    });
+  }
 });

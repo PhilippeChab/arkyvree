@@ -113,14 +113,10 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     }]);
   }
 
-  async deleteSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void> {
-    let feat = await Feats.findOne(tx, { name: `Skill Focus: ${skillName}`, rulesetId });
-    if (!feat) {
-      for (const ancestorId of sourceChain) {
-        feat = await Feats.findOne(tx, { name: `Skill Focus: ${skillName}`, rulesetId: ancestorId });
-        if (feat) break;
-      }
-    }
+  async deleteSkillFeat(tx: Db, rulesetId: string, _sourceChain: string[], skillName: string): Promise<void> {
+    // Generated feats in ancestors are shared by other forks and characters.
+    // Only remove a feat owned by the ruleset being edited.
+    const feat = await Feats.findOne(tx, { name: `Skill Focus: ${skillName}`, rulesetId });
     if (!feat) return;
 
     await deleteModifiersWithCascade(tx, { sourceIds: [feat.id], sourceType: "feats" });

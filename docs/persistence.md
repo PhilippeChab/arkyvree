@@ -27,7 +27,7 @@ Repos in this category define `archive` as a throwing stub (matching the pattern
 
 ### Why ruleset entities are hard-delete
 
-User-initiated deletion of a ruleset entity in a draft hard-deletes the row. FK CASCADE wipes the entity's junctions, class-structure references, and character-side picks. The protections live one layer up:
+User-initiated deletion of a ruleset entity in a draft hard-deletes the row. FK CASCADE removes the entity's junctions and class-structure references. Character feat picks use RESTRICT, so deleting a selected feat fails and rolls back rather than erasing the pick. The protections live one layer up:
 
 - `canDeleteEntity({ inUse })` blocks deletion when a character on the **current ruleset** has picked the entity (see `RulesetsPolicy.canDeleteEntity` and the section in [rulesets.md](./rulesets.md)).
 - COW + tombstone snapshots handle the inherited-entity-in-a-fork case: deleting an inherited entity creates a COW first, then hard-deletes it; the snapshot stays as a tombstone so the source is hidden in the fork's view.
@@ -118,3 +118,5 @@ If you're adding a new repository that doesn't fit any of these, prefer hard-del
 ## When to update this doc
 
 If you add a new repository or change an existing service's removal pattern, update the relevant section. The categorization is intentionally derived-from-code, not aspirational — if something here doesn't match what the code actually does, the doc is wrong, not the code.
+
+Generated Skill Focus cleanup only deletes feats owned by the edited ruleset. Renaming or removing an inherited skill must never delete an ancestor’s generated feat.
