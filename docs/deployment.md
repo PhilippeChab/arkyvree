@@ -9,7 +9,7 @@ Arkyvree runs on **Fly.io** as two apps sharing one `Dockerfile`. CI handles bui
 | `arkyvree` | Hono API + WebSocket + static client | Yes, `rpg.arkyvree.com` via Cloudflare | `suspend` on idle, `min = 0` |
 | `arkyvree-worker` | graphile-worker (PDFs, email, cron) | No — Flycast only | `stop` on idle, `min = 0` |
 
-Why two apps: the worker is Flycast-only so it never has a public attack surface, and the web process doesn't need the PDF/email task code in its binary. Shared `Dockerfile` uses build targets (`web`, `worker`) so deps + build stages cache across both.
+Why two apps: the worker is Flycast-only so it never has a public attack surface, and queued PDF and email tasks execute outside the web process. Public shared-sheet PDF requests still render in the web process. Shared `Dockerfile` uses build targets (`web`, `worker`) so deps + build stages cache across both.
 
 ## Waking the worker
 
@@ -86,6 +86,8 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted.
 | `DATABASE_URL` | both | Neon pooled connection |
 | `DIRECT_DATABASE_URL` | both | Neon direct connection (no `-pooler`). Required for LISTEN/NOTIFY — pgbouncer doesn't support session features |
 | `RESEND_API_KEY` | both | Email via Resend |
+| `SIGNING_SECRET` | web | Signs upload attachment tokens; required at startup |
+| `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage and cleanup; required by web startup |
 | `GOOGLE_CLIENT_ID` | web | OAuth |
 | `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME` | web | Feedback → GitHub issues |
 | `APP_URL` | both | Email links + logo image (worker — `EmailLayout` reads it at render time), CORS allowed origin and OG meta (web), canonical-host redirect (web) |
@@ -131,11 +133,12 @@ build ─┐
 tests ─┘
 ```
 
-- `build`, `api-tests-*`, `e2e-tests` run in parallel
+- `build` (including TypeScript and the compiled PDF smoke check) and `api-tests-*` run in parallel
 - API tests split by trigger:
   - **Push** to main/develop → `api-tests-full`, sharded 3× via `bun test --shard` (matrix jobs in parallel)
   - **PR** → `api-tests-changed`, single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
-- `deploy` needs `build`, `api-tests-full`, `e2e-tests` and runs on push to `main` only
+- `deploy` needs successful `build` and all `api-tests-full` shards from the same `main` push. It never substitutes a green result from another branch or revision. E2E tests are run separately; this workflow does not run them.
+- Both API test commands include `tests/jobs` alongside routers, services, characters, seeds, and cache tests. Dependencies are installed from the frozen lockfile.
 - Deploy is a matrix over `{fly.web.toml, fly.worker.toml}` — both apps deploy in parallel
 
 `FLY_API_TOKEN` must be at **repository-level** secrets (Settings → Secrets and variables → Actions → Repository secrets). The deploy job doesn't declare an `environment:`, so environment-scoped secrets won't be visible.
