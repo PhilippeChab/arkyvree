@@ -22,7 +22,7 @@ export function toItemPayload(data: ItemFormInternal): ItemFormData {
     ...rest,
     weight: parseNumericField(data.weight),
     costGp: parseNumericField(data.costGp),
-    ...(sourceItemId ? { sourceItemId } : {}),
+    ...(!data.isTemplate && sourceItemId ? { sourceItemId } : {}),
   };
 }
 

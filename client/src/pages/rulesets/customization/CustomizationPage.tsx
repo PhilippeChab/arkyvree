@@ -62,6 +62,8 @@ type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]
 type SavesPaginated = Exclude<SavesResponse, { error: string }>;
 type Save = SavesPaginated["items"][number];
 
+type ItemResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$get"], 200>;
+
 type ClassLevelFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"][":levelId"]["$put"]>["json"];
 
 type FeatAptitudeOption = {
@@ -354,15 +356,16 @@ export default function CustomizationPage() {
 
   useEffect(() => {
     if (entityData && entityType === "items") {
-      const item = entityData as { name: string; description: string; costGp: string | null; weight: string | null; type: string | null; slot: string | null; sourceItemId: string | null };
+      const item = entityData as ItemResponse;
       itemForm.reset({
         name: item.name,
-        description: item.description,
+        description: item.description ?? "",
         costGp: formatDecimal(item.costGp) ?? "",
         weight: formatDecimal(item.weight) ?? "",
         type: item.type,
         slot: (item.slot ?? undefined) as ItemFormInternal["slot"],
-        sourceItemId: item.sourceItemId ?? undefined,
+        isTemplate: item.isTemplate,
+        sourceItemId: item.isTemplate ? undefined : item.sourceItemId ?? undefined,
       });
     }
   }, [entityData, entityType, itemForm]);

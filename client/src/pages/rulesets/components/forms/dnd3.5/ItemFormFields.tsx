@@ -51,6 +51,7 @@ interface ItemFormFieldsProps {
 
 export function ItemFormFields({ form, rulesetId }: ItemFormFieldsProps) {
   const itemType = form.watch("type") as string | undefined;
+  const isTemplate = form.watch("isTemplate");
   const slot = form.watch("slot") as string | undefined;
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,7 +116,7 @@ export function ItemFormFields({ form, rulesetId }: ItemFormFieldsProps) {
         ))}
       </TextField>
       {isTypeWithTemplate(itemType)
-        ? <TemplateSelector form={form} rulesetId={rulesetId} type={itemType!} />
+        ? !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType!} />
         : (
           <TextField
             {...form.register("slot")}
