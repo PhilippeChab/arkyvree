@@ -118,9 +118,18 @@ const runner: Runner = await run({
     sweepPendingBlobs: sweepPendingBlobsTask,
   },
   crontab: [
-    "0 4 * * * runCleanup",
-    "0 * * * * sweepPendingBlobs",
+    "0 4 * * * runCleanup ?fill=2d&queue=maintenance&jobKey=maintenance-cleanup&jobKeyMode=preserve_run_at",
+    "0 * * * * sweepPendingBlobs ?fill=2h&queue=maintenance&jobKey=maintenance-blobs&jobKeyMode=preserve_run_at",
   ].join("\n"),
+});
+
+// A stopped worker misses cron, and first-start schedules cannot backfill.
+// These idempotent sweeps catch up on every cold start, including long sleeps.
+await runner.addJob("runCleanup", {}, {
+  queueName: "maintenance", jobKey: "maintenance-cleanup", jobKeyMode: "preserve_run_at",
+});
+await runner.addJob("sweepPendingBlobs", {}, {
+  queueName: "maintenance", jobKey: "maintenance-blobs", jobKeyMode: "preserve_run_at",
 });
 
 console.log("[worker] Started");

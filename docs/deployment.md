@@ -22,7 +22,7 @@ graphile-worker runs in the worker app. Jobs are enqueued from the web process v
 - **Web uses `suspend`** (memory snapshot, ~200ms wake). Users wait on web, so cold-start speed matters. WS LISTEN client and DB pool both have reconnect logic for the stale-socket problem that suspend/resume produces.
 - **Worker uses `stop`** (full VM destroy, ~2-3s wake). graphile-worker's internal LISTEN client has wedged in testing after suspend/resume — reconnect fires but polling doesn't actually resume. `stop` avoids the problem by booting a fresh process every time.
 
-Worker wake is internal (Flycast ping from web), so the 2-3s cost is invisible to users.
+On-demand job wake uses Flycast; users receive a queued response while the worker starts.
 
 ## First-time setup
 
@@ -185,3 +185,9 @@ fly image show -a arkyvree-worker    # look for GH_SHA label
   ```
   A healthy origin negotiates a cipher; a broken one closes with `unexpected eof while reading` and `Cipher is (NONE)`. If `arkyvree.fly.dev` succeeds (Fly's own `*.fly.dev` cert) while the custom hostname fails, the origin cert for that hostname is missing or expired — check `fly certs list -a arkyvree`, not the app. `Verify return code: 21` against the Origin CA cert is expected: it isn't public-PKI, only Cloudflare trusts it.
 - **Scale-to-zero not kicking in** — web uses `requests`-based concurrency; open WS connections don't block idle. But if any client is actively making HTTP requests (including the PWA checking for updates), the idle timer resets. Close the browser tab.
+
+## Scheduled maintenance while idle
+
+Both apps may scale to zero, so worker cron alone cannot guarantee cleanup. `worker-maintenance.yml` runs hourly at minute 17 (and supports manual dispatch), using the existing repository `FLY_API_TOKEN` to start stopped worker machines. It does not restart running workers or deploy code. GitHub schedules run from the default branch and may be delayed; this is eventual cleanup, not a precise hourly SLA.
+
+On every cold start, the worker queues `runCleanup` and `sweepPendingBlobs`. Shared job keys coalesce pending runs and the `maintenance` queue serializes them. Cron continues while the worker is awake and backfills short outages; startup sweeps also cover first boot and longer sleeps. Scale-to-zero remains enabled. Workflow failures appear in GitHub Actions; the token needs start/list access to `arkyvree-worker`.

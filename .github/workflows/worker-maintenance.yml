@@ -1,0 +1,34 @@
+name: Wake worker for maintenance
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: worker-maintenance
+  cancel-in-progress: false
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Start stopped worker machines
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          machines=$(flyctl machine list --app arkyvree-worker --json)
+          workers=$(jq '[.[] | select(.config.metadata.fly_process_group == "worker")]' <<< "$machines")
+          if [ "$(jq length <<< "$workers")" -eq 0 ]; then
+            echo "::error::No worker machines found"
+            exit 1
+          fi
+          while IFS= read -r id; do
+            flyctl machine start "$id" --app arkyvree-worker
+          done < <(jq -r '.[] | select(.state == "stopped" or .state == "suspended") | .id' <<< "$workers")
