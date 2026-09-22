@@ -8,16 +8,18 @@ import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/helpers.ts";
 import { testClient } from "hono/testing";
+import type { ClientResponse } from "hono/client";
 import { expect, describe, test } from "bun:test";
 
+type SuccessBody<T extends ClientResponse<unknown>> = Exclude<Awaited<ReturnType<T["json"]>>, { error: string }>;
+
 /** Narrow a Hono test-client response to its success body, failing if not ok. */
-async function jsonOk<T extends Response>(response: T): Promise<T extends { json(): Promise<infer U> } ? Exclude<U, { error: string }> : never> {
+async function jsonOk<T extends ClientResponse<unknown>>(response: T): Promise<SuccessBody<T>> {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(`Request failed (${response.status}): ${JSON.stringify(error)}`);
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return response.json() as any;
+  return response.json() as Promise<SuccessBody<T>>;
 }
 
 describe("character levels", () => {

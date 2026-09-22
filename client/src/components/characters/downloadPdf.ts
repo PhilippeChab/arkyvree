@@ -1,5 +1,7 @@
+import type { ClientResponse } from "hono/client";
+
 export async function downloadPdf(
-  fetchResponse: () => Promise<Response>,
+  fetchResponse: () => Promise<ClientResponse<unknown>>,
   characterName: string | undefined,
   onError: (msg: string) => void,
 ): Promise<void> {
