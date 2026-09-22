@@ -1,6 +1,6 @@
 import { toPlainText } from "@react-email/render";
 import type { Task } from "graphile-worker";
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Resend } from "resend";
 
@@ -19,7 +19,7 @@ const env = process.env.NODE_ENV;
 const isProduction = env === "production";
 
 let resend: Resend | null = null;
-let smtpTransport: nodemailer.Transporter | null = null;
+let smtpTransport: Transporter | null = null;
 
 if (isProduction) {
   const apiKey = process.env.RESEND_API_KEY;

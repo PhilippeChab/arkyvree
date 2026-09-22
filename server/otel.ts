@@ -61,7 +61,7 @@ export function initOtel(component: "web" | "worker") {
   loggerProvider = new LoggerProvider({
     resource,
     processors: [
-      new BatchLogRecordProcessor(new OTLPLogExporter({ headers })),
+      new BatchLogRecordProcessor({ exporter: new OTLPLogExporter({ headers }) }),
     ],
   });
   logs.setGlobalLoggerProvider(loggerProvider);
