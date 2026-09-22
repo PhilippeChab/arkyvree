@@ -1,7 +1,7 @@
 import { addClassLevels, createCharacter, getSeedContext } from "@/database/seeds/helpers.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { createSeededTestRuleset } from "@/tests/helpers.ts";
 import { SkillsMethods } from "@/server/services/rulesets/SkillsService.ts";
 import { db } from "@/server/database/index.ts";
@@ -383,3 +383,29 @@ test("inherited Skill Focus selected in this fork cannot be hidden", async () =>
   await expect(SkillsMethods.deleteRulesetSkill(session, fork.id, ctx.skillMap.Climb)).rejects.toThrow("Skill Focus feat in use");
   expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
 });
+
+
+for (const operation of ["rename", "delete"] as const) {
+  test(`${operation} protects customized Skill Focus picks stored under its ancestor ID`, async () => {
+    const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+    const fork = await createSeededTestRuleset(session.userId);
+    const ctx = await getSeedContext(db);
+    const feat = (await Feats.findOne(db, { rulesetId: ctx.rulesetId, name: "Skill Focus: Climb" }))!;
+    const characterId = await createCharacter(db, ctx, {
+      rulesetId: fork.id, name: "COW Skill Focus pick", raceName: "Human", xp: 0,
+      alignment: "True Neutral", age: 25, gender: "Male", height: "180", weight: "80", description: "", languages: [],
+      abilities: Object.fromEntries(Object.keys(ctx.abilityMap).map(name => [name, 10])),
+    });
+    const levels = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+    await CharacterLevelFeats.create(db, { characterLevelId: levels[0], aptitudeId: ctx.aptMap.General, featId: feat.id });
+    const copy = await cowEntity(db, "feats", feat.id, fork.id, fork.ancestorRulesetIds);
+    const mutation = operation === "delete"
+      ? SkillsMethods.deleteRulesetSkill(session, fork.id, ctx.skillMap.Climb)
+      : SkillsMethods.updateRulesetSkill(session, fork.id, ctx.skillMap.Climb, {
+          name: "Mountaineering", primaryAbilityId: ctx.abilityMap.Strength,
+          impactedByWeight: true, usableWithoutTraining: true,
+        });
+    await expect(mutation).rejects.toThrow("Skill Focus feat in use");
+    expect(await Feats.findOne(db, { id: copy.id })).toBeDefined();
+  });
+}
