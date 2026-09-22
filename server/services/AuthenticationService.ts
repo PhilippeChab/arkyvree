@@ -467,6 +467,7 @@ export const AuthenticationMethods = {
       const newHash = await hashPassword(params.newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       await PasswordResets.archive(tx, { id: reset.id });
+      await Sessions.archiveAllForUser(tx, { userId: user.id });
 
       await Activities.create(tx, {
         userId: user.id,
@@ -612,6 +613,7 @@ export const AuthenticationMethods = {
       const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update password");
+      await Sessions.archiveAllForUser(tx, { userId: session.userId, exceptId: session.id });
 
       await Activities.create(tx, {
         userId: session.userId,

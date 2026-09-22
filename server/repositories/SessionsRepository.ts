@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { and, ne, eq, isNotNull, isNull, lt, or } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { sessionsInAccount } from "@/drizzle/schema.ts";
@@ -48,11 +48,15 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount, Sessio
       ]));
   }
 
-  async archiveAllForUser(db: Db, where: { userId: string }) {
+  async archiveAllForUser(db: Db, where: { userId: string; exceptId?: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .where(and(
+        eq(this.table.userId, where.userId),
+        isNull(this.table.deletedAt),
+        where.exceptId ? ne(this.table.id, where.exceptId) : undefined,
+      ))
       .returning();
   }
 
