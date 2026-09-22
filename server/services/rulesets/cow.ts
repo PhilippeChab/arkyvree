@@ -1429,46 +1429,46 @@ async function cowEntityForCustomization(
   entityId: string,
 ): Promise<string> {
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-  if (!ruleset) return entityId;
+  if (!ruleset) throw new NotFoundError("Customization source not found in this ruleset");
   const sourceChain = buildSourceChain(ruleset);
-  if (sourceChain.length === 0) return entityId; // Not a fork
 
   if (entityType === "klass_levels") {
     // Find which klass owns this level
     const level = await KlassLevels.findOne(tx, { id: entityId });
-    if (!level) return entityId;
+    if (!level) throw new NotFoundError("Customization source not found in this ruleset");
 
     const klass = await Klasses.findOne(tx, { id: level.klassId } as never);
-    if (!klass) return entityId;
+    if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (klass.rulesetId === rulesetId) return entityId; // Already owned
-    if (!sourceChain.includes(klass.rulesetId)) return entityId; // Not from source chain
+    if (!sourceChain.includes(klass.rulesetId)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
     // COW the klass (copies all levels)
     const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
     // Find the new level by matching level number (levels aren't individually snapshotted)
     const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id as string });
     const newLevel = newLevels.find((l) => l.level === level.level);
-    return newLevel?.id ?? entityId;
+    if (!newLevel) throw new NotFoundError("Copied class level not found");
+    return newLevel.id;
   }
 
   if (entityType === "modifiers") {
     // Trace the modifier to its owning entity and COW that entity
     const modifier = await Modifiers.findOne(tx, { id: entityId });
-    if (!modifier) return entityId;
+    if (!modifier) throw new NotFoundError("Customization source not found in this ruleset");
 
     const sourceType = modifier.sourceType;
 
     if (sourceType === "klass_levels") {
       // Find which klass owns this level
       const level = await KlassLevels.findOne(tx, { id: modifier.sourceId });
-      if (!level) return entityId;
+      if (!level) throw new NotFoundError("Customization source not found in this ruleset");
 
       const klass = await Klasses.findOne(tx, { id: level.klassId } as never);
-      if (!klass) return entityId;
+      if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
       if (klass.rulesetId === rulesetId) return entityId; // Already owned
-      if (!sourceChain.includes(klass.rulesetId)) return entityId;
+      if (!sourceChain.includes(klass.rulesetId)) throw new NotFoundError("Customization source not found in this ruleset");
 
       // COW the klass (copies all levels and their modifiers)
       const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
@@ -1476,7 +1476,7 @@ async function cowEntityForCustomization(
       // Find the new level by matching level number on the COW'd klass (levels aren't individually snapshotted)
       const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id as string });
       const newLevel = newLevels.find((l) => l.level === level.level);
-      if (!newLevel) return entityId;
+      if (!newLevel) throw new NotFoundError("Customization source not found in this ruleset");
 
       const newModifiers = await Modifiers.findManyBySource(tx, { sourceIds: [newLevel.id], sourceType: "klass_levels" });
       const match = newModifiers.find((m) =>
@@ -1485,7 +1485,8 @@ async function cowEntityForCustomization(
         m.operator === modifier.operator &&
         m.valueType === modifier.valueType,
       );
-      return match?.id ?? entityId;
+      if (!match) throw new NotFoundError("Copied modifier not found");
+      return match.id;
     }
 
     // Standard entity types (feats, powers, items, races, klasses)
@@ -1498,15 +1499,15 @@ async function cowEntityForCustomization(
     };
 
     const cowType = modifierEntityTypeMap[sourceType];
-    if (!cowType) return entityId;
+    if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
 
     const modifierRepo = ENTITY_REPOS[cowType];
     const ownerEntity = await modifierRepo.findOne(tx, { id: modifier.sourceId } as never);
-    if (!ownerEntity) return entityId;
+    if (!ownerEntity) throw new NotFoundError("Customization source not found in this ruleset");
 
     const ownerRecord = ownerEntity as Record<string, unknown>;
     if (ownerRecord.rulesetId === rulesetId) return entityId; // Already owned
-    if (!sourceChain.includes(ownerRecord.rulesetId as string)) return entityId;
+    if (!sourceChain.includes(ownerRecord.rulesetId as string)) throw new NotFoundError("Customization source not found in this ruleset");
 
     const cowResult = await cowEntity(tx, cowType, modifier.sourceId, rulesetId, sourceChain, ruleset.extensionRulesetIds);
 
@@ -1518,7 +1519,8 @@ async function cowEntityForCustomization(
       m.operator === modifier.operator &&
       m.valueType === modifier.valueType,
     );
-    return match?.id ?? entityId;
+    if (!match) throw new NotFoundError("Copied modifier not found");
+    return match.id;
   }
 
   // Standard entity types
@@ -1531,15 +1533,15 @@ async function cowEntityForCustomization(
   };
 
   const cowType = entityTypeMap[entityType];
-  if (!cowType) return entityId;
+  if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
 
   const repo = ENTITY_REPOS[cowType];
   const entity = await repo.findOne(tx, { id: entityId } as never);
-  if (!entity) return entityId;
+  if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
   const entityRecord = entity as Record<string, unknown>;
   if (entityRecord.rulesetId === rulesetId) return entityId; // Already owned
-  if (!sourceChain.includes(entityRecord.rulesetId as string)) return entityId; // Not from source chain
+  if (!sourceChain.includes(entityRecord.rulesetId as string)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
   const cowResult = await cowEntity(tx, cowType, entityId, rulesetId, sourceChain, ruleset.extensionRulesetIds);
   return cowResult.id;

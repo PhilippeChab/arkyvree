@@ -154,6 +154,7 @@ export const RequirementsMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
         const requirement = await Requirements.findOne(tx, { id: requirementId });
         if (
@@ -274,6 +275,7 @@ export const RequirementsMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
         const requirement = await Requirements.findOne(tx, { id: requirementId });
         if (

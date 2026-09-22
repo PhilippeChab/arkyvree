@@ -92,6 +92,7 @@ export const PropertiesMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
         const property = await Properties.findOne(tx, { id: propertyId });
         if (!property || property.entityType !== entityType) {
@@ -179,6 +180,7 @@ export const PropertiesMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
         const property = await Properties.findOne(tx, { id: propertyId });
         if (!property || property.entityType !== entityType) {
