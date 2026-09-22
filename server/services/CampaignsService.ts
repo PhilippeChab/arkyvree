@@ -1,8 +1,9 @@
+import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import { campaignsInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Activities, Campaigns, Players } from "@/server/repositories/index.ts";
+import { Activities, Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -48,6 +49,10 @@ export const CampaignsMethods = {
     rulesetId: string;
   }) {
     return await withTransaction(async (tx) => {
+      const ruleset = await Rulesets.findOne(tx, { id: body.rulesetId });
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
+      await (await getRulesetPolicy(tx, session, ruleset)).canCreateCampaign(tx);
+
       const campaignRows = await Campaigns.create(tx, body);
 
       const campaign = campaignRows[0];

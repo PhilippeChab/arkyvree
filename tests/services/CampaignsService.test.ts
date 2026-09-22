@@ -1,7 +1,8 @@
+import { createSeededTestRuleset } from "@/tests/helpers.ts";
 import { CampaignsMethods } from "@/server/services/CampaignsService.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { db } from "@/server/database/index.ts";
-import { Campaigns, Players, Users } from "@/server/repositories/index.ts";
+import { Campaigns, Players, Users, Sessions, Rulesets } from "@/server/repositories/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { campaignsInCampaign } from "@/drizzle/schema.ts";
 import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
@@ -653,4 +654,28 @@ describe("CampaignsService", () => {
     });
   });
 
+});
+
+describe("campaign ruleset authorization", () => {
+  test("an outsider cannot create their own access to a private ruleset", async () => {
+    const owner = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+    const other = (await Users.findOne(db, { emailAddress: "testuser2@example.com" }))!;
+    const session = { ...owner, userId: other.id };
+    const ruleset = await createSeededTestRuleset(owner.userId);
+    const before = await Campaigns.count(db, { userId: other.id });
+    await expect(CampaignsMethods.createCampaign(session, { name: "Unauthorized", rulesetId: ruleset.id })).rejects.toThrow(ForbiddenError);
+    expect(await Campaigns.count(db, { userId: other.id })).toBe(before);
+    const { campaign } = await CampaignsMethods.createCampaign(owner, { name: "Authorized", rulesetId: ruleset.id });
+    await Players.create(db, { campaignId: campaign.id, userId: other.id, role: "Player Character" });
+    expect((await CampaignsMethods.createCampaign(session, { name: "Existing access", rulesetId: ruleset.id })).campaign.rulesetId).toBe(ruleset.id);
+  });
+
+  test("owners cannot create campaigns using archived rulesets or extensions", async () => {
+    const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+    const archived = await createSeededTestRuleset(session.userId, { status: "Archived" });
+    await expect(CampaignsMethods.createCampaign(session, { name: "Archived", rulesetId: archived.id })).rejects.toThrow("active playable ruleset");
+    const extension = await createSeededTestRuleset(session.userId, { status: "Published" });
+    await Rulesets.update(db, { kind: "extension" }, { id: extension.id });
+    await expect(CampaignsMethods.createCampaign(session, { name: "Extension", rulesetId: extension.id })).rejects.toThrow("active playable ruleset");
+  });
 });
