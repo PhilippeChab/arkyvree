@@ -28,27 +28,58 @@ export default new Hono<SessionContext>()
 
       const data = result[1];
       const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
-      const bonded = buildBondedMap(data.bondedByKind ?? {});
+      const redactPrivateNotes = <T extends { identity: { background: { privateNotes: string } } }>(entry: T): T => ({
+        ...entry,
+        identity: {
+          ...entry.identity,
+          background: { ...entry.identity.background, privateNotes: data.canViewPrivateNotes ? entry.identity.background.privateNotes : "" },
+        },
+      });
+      const safeResponse = {
+        ...redactPrivateNotes(response),
+        shareToken: data.canEdit ? response.shareToken : null,
+      };
+      // Explicit allowlist: a new full-response field must be considered here.
+      const visibleResponse = data.isPartial ? {
+        id: safeResponse.id,
+        userId: safeResponse.userId,
+        kind: safeResponse.kind,
+        parentCharacterId: safeResponse.parentCharacterId,
+        name: safeResponse.name,
+        raceId: safeResponse.raceId,
+        rulesetId: safeResponse.rulesetId,
+        rulesetName: safeResponse.rulesetName,
+        baseRules: safeResponse.baseRules,
+        isCustomRuleset: safeResponse.isCustomRuleset,
+        deletedAt: safeResponse.deletedAt,
+        updatedAt: safeResponse.updatedAt,
+        shareToken: null,
+        identity: safeResponse.identity,
+        skillBudget: { available: 0, spent: 0, total: 0 },
+        abilities: {},
+        combat: {},
+        savingThrows: {},
+        classes: {},
+        skills: {},
+        inventory: {},
+        equipment: [],
+        powers: [],
+        virtualFeats: [],
+        virtualPowers: [],
+        aptitudes: {},
+        spellTags: {},
+        requirements: {},
+        modifiers: {},
+        validation: { valid: true, issues: [] },
+      } satisfies Record<keyof typeof response, unknown> : safeResponse;
 
       return c.json({
         visibility: data.visibility,
         isOwner: data.isOwner,
         canEdit: data.canEdit,
         isPartial: data.isPartial,
-        ...response,
-        bonded,
-        ...(data.isPartial && {
-          abilities: {},
-          combat: {},
-          savingThrows: {},
-          classes: {},
-          skills: {},
-          inventory: {},
-          powers: [],
-          aptitudes: {},
-          requirements: {},
-          modifiers: {},
-        }),
+        ...visibleResponse,
+        bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactPrivateNotes),
       }, 200);
     },
   )
