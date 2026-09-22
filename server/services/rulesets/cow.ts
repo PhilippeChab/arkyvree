@@ -1622,6 +1622,14 @@ const cowDataCache = new MemoryCache<CowData>();
 async function getOrBuildCowData(
   ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
 ): Promise<CowData> {
+  // COW maps are shared infrastructure; never build them through a caller's
+  // active map (notably during nested master/companion character builds).
+  return withCowContext(undefined, () => buildCowData(ruleset));
+}
+
+async function buildCowData(
+  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
+): Promise<CowData> {
   const generation = cowDataGeneration;
   const cached = cowDataCache.get(ruleset.id);
   if (cached) return cached;

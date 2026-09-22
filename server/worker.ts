@@ -1,6 +1,6 @@
-import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
 import "@/server/instrument-worker.ts";
 import "@/server/log.ts";
+import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
 import { shutdownOtel } from "@/server/otel.ts";
 import { Sentry } from "@/server/sentry.ts";
 

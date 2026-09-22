@@ -16,13 +16,12 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { CachedCowData } from "@/server/cache/index.ts";
 
-const storage = new AsyncLocalStorage<CachedCowData>();
+const storage = new AsyncLocalStorage<CachedCowData | undefined>();
 
 /**
  * Run `fn` inside a cowContext scoped to `cowData`. Passing `null` /
- * `undefined` / an empty overrideMap is a no-op — `fn` runs in the
- * ambient context (useful so call sites don't have to branch on whether
- * cowData is available).
+ * `undefined` clears the ambient context. An empty map is still a scope:
+ * nested reads must never inherit a different ruleset's resolution map.
  *
  * @internal — Use `withRulesetScope` from `./cow.ts` from application code.
  */
@@ -30,8 +29,7 @@ export function withCowContext<T>(
   cowData: CachedCowData | null | undefined,
   fn: () => Promise<T>,
 ): Promise<T> {
-  if (!cowData || cowData.idResolveMap.size === 0) return fn();
-  return storage.run(cowData, fn);
+  return storage.run(cowData ?? undefined, fn);
 }
 
 /**

@@ -484,3 +484,9 @@ The Proxy detects writes by matching method names against a prefix list (`create
 - `tests/services/characters/LevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
 
 The PDF worker disables process-wide MemoryCache reuse so each job reads current rules after web edits. Web requests keep their raw cache. Invalidations advance generation counters: fetches started before invalidation may finish for their caller but cannot repopulate a stale shared cache.
+
+Raw-tier and COW-map reads explicitly clear the ambient COW context. A nested
+character build (for example, a familiar loading its master) must load stored
+IDs before composing them for its own ruleset. Even a scope with an empty map
+replaces the outer scope. With process caching disabled, raw reads also bypass
+the process-wide in-flight map so separate worker jobs do not share old reads.

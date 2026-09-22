@@ -1,3 +1,4 @@
+import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -55,7 +56,7 @@ import type {
 } from "@/shared/relations.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
-import MemoryCache from "./MemoryCache.ts";
+import MemoryCache, { isCacheEnabled } from "./MemoryCache.ts";
 
 // ──────────────────────────────────────────────────────────────
 // COW data cache (delegates to cow.ts cache)
@@ -124,6 +125,11 @@ async function getOrFetchRulesetRawData(
   campaignId?: string,
 ): Promise<RulesetRawData> {
   const cacheKey = buildRawCacheKey(rulesetId, campaignId);
+  // Separate worker jobs must not reuse even an in-flight read started before
+  // a web mutation. Request-local deduplication remains available to callers.
+  if (!isCacheEnabled()) {
+    return withCowContext(undefined, () => fetchRulesetRawData(rulesetId, cacheKey, campaignId));
+  }
   const cached = rulesetRawDataCache.get(cacheKey);
   if (cached) return cached;
 
@@ -131,7 +137,7 @@ async function getOrFetchRulesetRawData(
   const inFlight = inFlightRawData.get(cacheKey);
   if (inFlight) return inFlight;
 
-  const promise = fetchRulesetRawData(rulesetId, cacheKey, campaignId);
+  const promise = withCowContext(undefined, () => fetchRulesetRawData(rulesetId, cacheKey, campaignId));
   inFlightRawData.set(cacheKey, promise);
   try {
     return await promise;
