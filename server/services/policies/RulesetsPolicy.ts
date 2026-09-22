@@ -255,7 +255,15 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
    * or any session against a public published ruleset. Async because the
    * campaign-membership branch is a DB lookup.
    */
+  async canCreateCampaign(tx: Db) {
+    return this.canCreateCharacter(tx);
+  }
+
   async canCreateCharacter(tx: Db) {
+    if (this.entity.kind === "extension" || this.entity.status === "Archived" || this.entity.deletedAt) {
+      throw new UnprocessableEntityError("Choose an active playable ruleset");
+    }
+
     const isPublic = !this.entity.private && this.entity.status === "Published";
     if (isPublic || this.isOwner || this.isContributor) {
       return true;

@@ -167,3 +167,5 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 | `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization), `CharacterModifiersService` |
 | `RulesetEntitiesPolicy` | nominal hook for ruleset entity services; real check is `getRulesetPolicy(...).canUpdateEntity()` |
 | `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
+
+Campaign creation validates ruleset access before inserting the campaign or GM membership. It uses the character-creation access policy: public published, owner, contributor, or existing active campaign membership. Archived rulesets and extensions cannot be used to create campaigns or characters. A newly requested campaign cannot grant its own ruleset access.
