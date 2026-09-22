@@ -119,7 +119,7 @@ testuser4–19 pool).
 | `journeys/character-identity-edit.e2e.ts` | Edit alignment / deity / age, add+remove a language, persist through reload |
 | `journeys/character-share.e2e.ts` | Generate share token; anonymous browser-context viewer sees the sheet; revoke kills the link (URL shows the "not available or revoked" Alert + 404 response) |
 | `journeys/character-share-pdf.e2e.ts` | Anonymous viewer downloads the PDF — file size > 0, content-type `application/pdf` |
-| `journeys/character-download-pdf-owner.e2e.ts` | Owner clicks Download PDF → POST `/characters/:id/pdf` returns 202 + queued snackbar (the worker tail is covered by `tests/services/CharactersService.test.ts`) |
+| `journeys/character-download-pdf-owner.e2e.ts` | Owner clicks Download PDF → POST `/characters/:id/pdf` returns 202 + queued snackbar (the service test verifies enqueueing; `bun run test:pdf-bundle` separately verifies compiled PDF rendering, not the complete worker → notification → download flow) |
 
 ### Inventory
 
@@ -243,5 +243,5 @@ Per project decisions, these are not e2e-tested:
 - WebSocket realtime updates beyond what's incidentally exercised
 - Mobile UI (no mobile-specific Playwright project)
 - Higher-level ability bumps (level 8 / 12 / 16 / 20 — level 4 covers the path)
-- The hosted PDF download tail (worker → notification → blob); covered by
-  `tests/services/CharactersService.test.ts`
+- The hosted PDF download tail (worker → notification → blob) is not covered end to end.
+  `tests/services/CharactersService.test.ts` checks enqueueing; `bun run test:pdf-bundle` checks compiled rendering.
