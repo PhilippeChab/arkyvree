@@ -5,7 +5,7 @@ Describe the problem and the change. Link any relevant issue.
 ## Verification
 
 List the checks you actually ran and their results. Explain any checks not run.
-For UI changes, include desktop and mobile screenshots with private data removed.
+For UI changes, attach desktop and mobile screenshots directly to the PR with private data removed. Never commit image files.
 
 ## Checklist
 

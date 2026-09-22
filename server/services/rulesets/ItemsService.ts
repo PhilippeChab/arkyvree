@@ -36,6 +36,12 @@ interface ItemBody {
   updatedAt?: string;
 }
 
+function validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
+  if (isTemplate && sourceItemId) {
+    throw new UnprocessableEntityError("Template items cannot have a source item");
+  }
+}
+
 export const ItemsMethods = {
   async getRulesetItems(
     rulesetId: string,
@@ -111,6 +117,8 @@ export const ItemsMethods = {
         const { sourceChain } = rulesetData.cow;
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
+
+        validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
 
         const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "items", body.name);
 
@@ -336,6 +344,8 @@ export const ItemsMethods = {
           throw new NotFoundError("Item not found in this ruleset");
         }
 
+        validateTemplateSource(item.isTemplate, body.sourceItemId);
+
         let targetId = item.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
@@ -352,7 +362,7 @@ export const ItemsMethods = {
           slot,
           weight: body.weight?.toString(),
           costGp: body.costGp?.toString(),
-          sourceItemId: body.sourceItemId,
+          sourceItemId: item.isTemplate ? null : body.sourceItemId,
         }, { id: targetId, expectedUpdatedAt });
         if (expectedUpdatedAt && rows.length === 0) {
           throw new ConflictError(STALE_ENTITY_MESSAGE);
@@ -364,7 +374,10 @@ export const ItemsMethods = {
           targetId,
           targetTable: getTableName(itemsInRules),
           type: "updateItem",
-          data: { entityName: body.name, changedFields: getChangedFields(item as Record<string, unknown>, body as unknown as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(item, { ...body, sourceItemId: updatedItem.sourceItemId }),
+          },
         });
 
         return updatedItem;

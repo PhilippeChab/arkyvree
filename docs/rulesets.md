@@ -89,6 +89,19 @@ Users can star published public rulesets to bookmark them. Star/unstar uses soft
 
 Eligibility: a ruleset is starrable iff it's a published, public **base** (`rulesetId IS NULL`) or **extension** (`kind = 'extension'`) — i.e. anything you might want to come back to as either a forking target or a subscription target. A user fork published as a playable ruleset (`kind = 'ruleset'`) is not starrable since you can neither fork nor subscribe to it.
 
+## Item templates
+
+Item templates (`isTemplate = true`) remain editable under the ruleset's normal
+permissions, but cannot have a `sourceItemId`. The item editor hides the source
+selector for templates, and the item service rejects sources on template creation
+or update using the stored template status. Saving a template without a source
+also clears any legacy source reference.
+
+Regular items can reference templates to inherit their properties and
+requirements. Duplicating a template creates a regular item referencing it.
+This item relationship is separate from ruleset inheritance: a local override of
+an inherited template is tracked by an entity snapshot, not `sourceItemId`.
+
 ## Source Chain & Entity Inheritance
 
 At query time, a combined **source chain** determines which entities are visible:

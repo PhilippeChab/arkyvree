@@ -121,6 +121,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 ## Git
 
+- Never commit image files. Screenshots may be attached directly to pull requests.
 - Never commit or push without explicitly being asked to
 - Always ask before committing and before pushing — these are separate confirmations
 
