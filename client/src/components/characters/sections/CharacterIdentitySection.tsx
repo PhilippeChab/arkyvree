@@ -429,13 +429,12 @@ export function CharacterIdentitySection({
         {!partial && (
           <Box sx={{ mb: 2 }}>
             {readOnly ? (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
                 <Typography
                   variant="body2"
                   sx={{
                     color: "text.secondary",
                     mr: 1,
-                    lineHeight: "32px"
                   }}>
                   Languages:
                 </Typography>
