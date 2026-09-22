@@ -103,6 +103,12 @@ export default class MemoryCache<T> {
     }
   }
 
+  invalidateWhere(matches: (value: T) => boolean): void {
+    for (const [key, entry] of this.store) {
+      if (matches(entry.value)) this.invalidate(key);
+    }
+  }
+
   invalidateAll(): void {
     this.store.clear();
     this.pinned.clear();
