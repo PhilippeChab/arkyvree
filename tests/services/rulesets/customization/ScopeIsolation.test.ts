@@ -98,7 +98,8 @@ describe("nested modifier customization ownership", () => {
     expect(copies).toHaveLength(2);
     expect(copies.some(r => r.level === "1" && r.chainingOperator === "and")).toBe(true);
     expect(await Modifiers.findOne(db, { id: grandchild.id })).toEqual(grandchild);
-    const second = await RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", grandchild.id, { level: "3", chainingOperator: "and" });
+    await expect(RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", grandchild.id, { level: "3", chainingOperator: "and" })).rejects.toThrow(NotFoundError);
+    const second = await RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", copiedGrandchild.id, { level: "3", chainingOperator: "and" });
     expect(second.entityId).toBe(copiedGrandchild.id);
     expect(await Requirements.findManyByEntity(db, { entityIds: [grandchild.id], entityType: "modifiers" })).toEqual([original]);
   });
@@ -119,4 +120,47 @@ describe("nested modifier customization ownership", () => {
     await Modifiers.update(db, { sourceId: crypto.randomUUID() }, { id: parent.id });
     await expect(cowEntityForCustomization(db, own.id, "modifiers", child.id)).rejects.toThrow(NotFoundError);
   });
+});
+
+
+describe("stale ancestor customization IDs", () => {
+  for (const action of ["update", "delete"] as const) {
+    test(`rejects ${action} through an ancestor property ID after the entity was copied`, async () => {
+      const { session, own } = await setup();
+      const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
+      const [original] = await Properties.create(db, { entityId: feat.id, entityType: "feats", type: "review", value: "ancestor" });
+      invalidateRuleset(feat.rulesetId);
+      const local = await PropertiesMethods.createEntityProperty(session, own.id, "feats", feat.id, { type: "local", value: "copy" });
+      const operation = action === "update"
+        ? PropertiesMethods.updateEntityProperty(session, own.id, "feats", local.resolvedEntityId, original.id, { type: "review", value: "changed" })
+        : PropertiesMethods.deleteEntityProperty(session, own.id, "feats", local.resolvedEntityId, original.id);
+      await expect(operation).rejects.toThrow(NotFoundError);
+      expect(await Properties.findOne(db, { id: original.id })).toEqual(original);
+    });
+    test(`rejects ${action} through an ancestor requirement ID after the entity was copied`, async () => {
+      const { session, own } = await setup();
+      const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
+      const [original] = await Requirements.create(db, { entityId: feat.id, entityType: "feats", level: "1", chainingOperator: "and" });
+      invalidateRuleset(feat.rulesetId);
+      const local = await PropertiesMethods.createEntityProperty(session, own.id, "feats", feat.id, { type: "local", value: "copy" });
+      const operation = action === "update"
+        ? RequirementsMethods.updateEntityRequirement(session, own.id, "feats", local.resolvedEntityId, original.id, { level: "2", chainingOperator: "or" })
+        : RequirementsMethods.deleteEntityRequirement(session, own.id, "feats", local.resolvedEntityId, original.id);
+      await expect(operation).rejects.toThrow(NotFoundError);
+      expect(await Requirements.findOne(db, { id: original.id })).toEqual(original);
+    });
+  }
+});
+
+
+test("editing the second identical inherited modifier keeps its own requirements", async () => {
+  const { session, own } = await setup();
+  const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
+  const [first, second] = await Modifiers.createMany(db, [1, 2].map(() => ({ sourceId: feat.id, sourceType: "feats", target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" })));
+  await Requirements.create(db, { entityId: first.id, entityType: "modifiers", level: "1", chainingOperator: "and" });
+  await Requirements.create(db, { entityId: second.id, entityType: "modifiers", level: "2", chainingOperator: "or" });
+  invalidateRuleset(feat.rulesetId);
+  const added = await RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", second.id, { level: "3", chainingOperator: "and" });
+  const requirements = await Requirements.findManyByEntity(db, { entityIds: [added.entityId], entityType: "modifiers" });
+  expect(requirements.map(r => r.level).sort()).toEqual(["2", "3"]);
 });

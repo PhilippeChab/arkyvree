@@ -305,3 +305,9 @@ All 11 core classes: fighter, barbarian, cleric, rogue, sorcerer, monk, wizard, 
 Ruleset customization endpoints require the source entity to belong to the composed ruleset. IDs outside that scope (including character IDs) are rejected before writes; inherited sources are copied before customization.
 
 Nested modifiers resolve ownership through their parent chain to a ruleset entity. Owned chains remain editable; inherited chains are copied with their requirements before mutation. Missing parents, cycles, and roots outside the ruleset source chain are rejected.
+
+Customization mutations validate the stored row owner in SQL. After a COW copy,
+clients must use the returned `resolvedEntityId` and reload its customizations;
+stale ancestor customization IDs are rejected. During the initial copy, mutations
+use the exact copied IDs, so identical modifiers with different requirements
+cannot be confused with one another.

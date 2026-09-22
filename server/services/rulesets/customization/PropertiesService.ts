@@ -12,10 +12,19 @@ import type { Session } from "@/shared/relations.ts";
 import type { Db } from "@/server/database/index.ts";
 import { getTableName } from "drizzle-orm";
 
-async function isTemplateProperty(db: Db, entityType: string, entityId: string, property: { entityId: string }) {
-  if (entityType !== "items" || property.entityId === entityId) return false;
-  const item = await Items.findOne(db, { id: entityId });
-  return !!item?.sourceItemId && property.entityId === item.sourceItemId;
+// Scope the SQL lookup to the stored owner. Proxy-resolved entityId fields
+// cannot prove ownership: an ancestor row's FK may resolve to a local copy.
+async function findPropertyForEntity(db: Db, entityType: string, entityId: string, propertyId: string) {
+  const own = await Properties.findOne(db, { id: propertyId, entityId, entityType });
+  if (own) return { property: own, fromTemplate: false };
+  if (entityType === "items") {
+    const item = await Items.findOne(db, { id: entityId });
+    if (item?.sourceItemId) {
+      const inherited = await Properties.findOne(db, { id: propertyId, entityId: item.sourceItemId, entityType });
+      if (inherited) return { property: inherited, fromTemplate: true };
+    }
+  }
+  throw new NotFoundError("Property not found for this entity");
 }
 
 export const PropertiesMethods = {
@@ -94,20 +103,13 @@ export const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const property = await Properties.findOne(tx, { id: propertyId });
-        if (!property || property.entityType !== entityType) {
-          throw new NotFoundError("Property not found for this entity");
-        }
-
-        const fromTemplate = await isTemplateProperty(tx, entityType, effectiveEntityId, property);
-        if (!fromTemplate && property.entityId !== effectiveEntityId) {
-          throw new NotFoundError("Property not found for this entity");
-        }
+        const { property, fromTemplate } = await findPropertyForEntity(tx, entityType, effectiveEntityId, propertyId);
 
         const customizationPolicy = new CustomizationsPolicy(session, property);
         await customizationPolicy.canUpdate();
 
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const customizationIds = new Map<string, string>();
+        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
 
         if (fromTemplate) {
           // Template property: create an override on the derived item
@@ -134,13 +136,9 @@ export const PropertiesMethods = {
 
         let resolvedPropertyId = propertyId;
         if (resolvedEntityId !== effectiveEntityId) {
-          const newProperties = await Properties.findManyByEntity(tx, { entityIds: [resolvedEntityId], entityType });
-          const match = newProperties.find(p =>
-            p.type === property.type &&
-            p.value === property.value &&
-            (p.description ?? null) === (property.description ?? null),
-          );
-          if (match) resolvedPropertyId = match.id;
+          const copiedId = customizationIds.get(propertyId);
+          if (!copiedId) throw new NotFoundError("Copied property not found");
+          resolvedPropertyId = copiedId;
         }
 
         const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
@@ -182,33 +180,22 @@ export const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const property = await Properties.findOne(tx, { id: propertyId });
-        if (!property || property.entityType !== entityType) {
-          throw new NotFoundError("Property not found for this entity");
-        }
-
-        const fromTemplate = await isTemplateProperty(tx, entityType, effectiveEntityId, property);
-        if (!fromTemplate && property.entityId !== effectiveEntityId) {
-          throw new NotFoundError("Property not found for this entity");
-        }
+        const { property, fromTemplate } = await findPropertyForEntity(tx, entityType, effectiveEntityId, propertyId);
 
         const customizationPolicy = new CustomizationsPolicy(session, property);
         await customizationPolicy.canDelete();
 
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const customizationIds = new Map<string, string>();
+        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
         let resolvedPropertyId = propertyId;
         if (fromTemplate) {
           // Template property: nothing to delete on the derived item since it doesn't own it.
           throw new BadRequestError("Cannot delete a property inherited from a template");
         }
         if (resolvedEntityId !== effectiveEntityId) {
-          const newProperties = await Properties.findManyByEntity(tx, { entityIds: [resolvedEntityId], entityType });
-          const match = newProperties.find(p =>
-            p.type === property.type &&
-            p.value === property.value &&
-            (p.description ?? null) === (property.description ?? null),
-          );
-          if (match) resolvedPropertyId = match.id;
+          const copiedId = customizationIds.get(propertyId);
+          if (!copiedId) throw new NotFoundError("Copied property not found");
+          resolvedPropertyId = copiedId;
         }
 
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });
