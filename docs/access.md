@@ -90,6 +90,9 @@ Constructed with `(session, character, isActiveContributor?)`. The boolean comes
 
 If none match → `ForbiddenError "You do not have access to this ruleset"`.
 
+
+Campaign character responses redact private notes for viewers without character edit rights or GM status. Share tokens are returned only to character editors. Partial responses explicitly allow identity and metadata, and clear equipment, skill budget, virtual abilities, spell tags, validation details, and bonded sheets as well as the normal build fields.
+
 ## Campaigns — `CampaignsPolicy`
 
 Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDelete` query `playersInCampaign` themselves.

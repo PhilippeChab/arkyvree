@@ -1,3 +1,4 @@
+import { Characters, Players, Users, PlayerCharacters, Sessions } from "@/server/repositories/index.ts";
 import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import type { Application } from "@/server/routers/application.ts";
@@ -79,6 +80,47 @@ describe("campaigns characters", () => {
       raceId,
       abilities,
     };
+  }
+
+  for (const visibility of ["Partial", "Public"] as const) {
+    test(`${visibility} hides private notes and share tokens from other players`, async () => {
+      const { campaignId, characterId } = await createTestData();
+      const owner = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+      const player = (await Players.findOne(db, { campaignId, userId: owner.userId }))!;
+      const viewer = (await Users.findOne(db, { emailAddress: "testuser2@example.com" }))!;
+      const [viewerSession] = await Sessions.create(db, { userId: viewer.id });
+      await Players.create(db, { campaignId, userId: viewer.id, role: "Player Character" });
+      await PlayerCharacters.create(db, { playerId: player.id, characterId, visibility });
+      const shareToken = crypto.randomUUID();
+      await Characters.update(db, { privateNotes: "Secret GM notes", shareToken }, { id: characterId });
+      const response = await api.api.campaigns[":id"].characters[":characterId"].$get(
+        { param: { id: campaignId, characterId } },
+        { headers: { cookie: `session-id=${viewerSession.id}` } },
+      );
+      expect(response.status).toBe(200);
+      if (!response.ok) throw new Error("Campaign character request failed");
+      const body = await response.json();
+      expect(body.shareToken).toBeNull();
+      expect(body.identity.background.privateNotes).toBe("");
+      expect(JSON.stringify(body)).not.toContain("Secret GM notes");
+      expect(JSON.stringify(body)).not.toContain(shareToken);
+      if (visibility === "Partial") {
+        expect(body.equipment).toEqual([]);
+        expect(body.virtualFeats).toEqual([]);
+        expect(body.virtualPowers).toEqual([]);
+        expect(body.skillBudget).toEqual({ available: 0, spent: 0, total: 0 });
+        expect(body.spellTags).toEqual({});
+        expect(body.validation).toEqual({ valid: true, issues: [] });
+        expect(body.bonded).toEqual({});
+      }
+      const ownResponse = await api.api.campaigns[":id"].characters[":characterId"].$get(
+        { param: { id: campaignId, characterId } }, { headers },
+      );
+      if (!ownResponse.ok) throw new Error("Owner request failed");
+      const ownBody = await ownResponse.json();
+      expect(ownBody.identity.background.privateNotes).toBe("Secret GM notes");
+      expect(ownBody.shareToken).toBe(shareToken);
+    });
   }
 
   test("should link a character to a campaign and list it", async () => {

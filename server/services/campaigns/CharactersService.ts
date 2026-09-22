@@ -282,6 +282,7 @@ export const PlayerCharactersMethods = {
       isOwner,
       canEdit,
       isPartial,
+      canViewPrivateNotes: isGM || canEdit,
       character,
       detailedCharacter,
       bondedByKind,
