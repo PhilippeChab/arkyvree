@@ -152,7 +152,7 @@ export const SkillsMethods = {
         await hooks.skills.syncProperties(tx, targetId, { impactedByWeight, usableWithoutTraining });
 
         if (skill.name !== body.name) {
-          await hooks.skills.deleteSkillFeat(tx, rulesetId, sourceChain, skill.name);
+          await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
           await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
         }
 
@@ -193,7 +193,7 @@ export const SkillsMethods = {
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        await hooks.skills.deleteSkillFeat(tx, rulesetId, sourceChain, skill.name);
+        await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
 
         // Customizations are polymorphic FKs — Postgres can't cascade these.
         await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "skills" });
