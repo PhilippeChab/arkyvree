@@ -82,7 +82,7 @@
     "@tanstack/react-query": "^5.103.2",
     "dotenv": "^18.0.3",
     "drizzle-orm": "^0.45.3",
-    "graphile-worker": "^0.16.6",
+    "graphile-worker": "^0.18.0",
     "hono": "^4.13.8",
     "hono-rate-limiter": "^0.5.4",
     "nodemailer": "^10.0.10",
