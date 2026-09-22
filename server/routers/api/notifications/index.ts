@@ -1,8 +1,7 @@
 import { toJson } from "@/server/errors/index.ts";
-import { sessionMiddleware } from "@/server/middlewares/index.ts";
+import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import NotificationsService from "@/server/services/NotificationsService.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 

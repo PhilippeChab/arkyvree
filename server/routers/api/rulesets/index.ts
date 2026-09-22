@@ -1,5 +1,5 @@
 import { toJson } from "@/server/errors/index.ts";
-import { denyDemoUser, sessionMiddleware } from "@/server/middlewares/index.ts";
+import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
 import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";
 import classes from "@/server/routers/api/rulesets/classes/index.ts";
@@ -18,7 +18,6 @@ import skills from "@/server/routers/api/rulesets/skills/index.ts";
 import powers from "@/server/routers/api/rulesets/powers/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
 import RulesetsService from "@/server/services/RulesetsService.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 

@@ -1,9 +1,8 @@
 import { toJson } from "@/server/errors/index.ts";
-import { denyDemoUser, exportRateLimit, sessionMiddleware } from "@/server/middlewares/index.ts";
+import { denyDemoUser, exportRateLimit, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import CharactersService from "@/server/services/CharactersService.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";

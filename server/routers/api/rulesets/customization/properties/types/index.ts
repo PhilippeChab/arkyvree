@@ -1,7 +1,7 @@
+import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/index.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 

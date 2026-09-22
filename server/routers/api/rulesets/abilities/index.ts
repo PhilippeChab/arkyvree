@@ -1,8 +1,8 @@
+import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { AbilitiesService } from "@/server/services/rulesets/index.ts";
 import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 

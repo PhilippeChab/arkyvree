@@ -1,7 +1,6 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { denyDemoUser, sessionMiddleware } from "@/server/middlewares/index.ts";
+import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 
 const GITHUB_OWNER = process.env.GITHUB_REPO_OWNER ?? "PhilippeChab";
