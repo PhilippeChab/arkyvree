@@ -142,37 +142,6 @@ tests ─┘
 
 Create a token: `fly tokens create deploy -o personal`.
 
-## Graphile Worker 0.16 → 0.18 cutover
-
-The 0.17 release changes job/queue lock ownership from an individual worker to
-its worker pool. All old worker processes must be stopped before the first 0.18
-worker starts and applies Graphile's internal migrations. See the
-[upstream release notes](https://worker.graphile.org/releases#v0170).
-This changes the `graphile_worker` schema, not our Drizzle schema.
-
-Before promoting this upgrade to `main` (which triggers deployment):
-
-1. Wait for active email/PDF jobs to finish and ensure no worker deployment is
-   already running. Record the currently deployed image and take a database
-   backup using the normal database recovery process.
-2. Scale the worker app to zero and confirm no old worker Machines remain:
-   `fly scale count worker=0 -a arkyvree-worker --yes`, then
-   `fly machine list -a arkyvree-worker`. Also stop any workers outside this app
-   that use the same database. Merely stopping a Machine is insufficient because
-   a Flycast request can wake it again.
-3. Promote the upgrade and let CI deploy the new worker image. Restore the single
-   worker with `fly scale count worker=1 -a arkyvree-worker --yes` if deployment
-   leaves it at zero. Confirm every worker Machine uses the new image before
-   starting it. The worker's `run()` call applies Graphile's migrations on boot.
-4. Verify `/health`, email delivery, and character PDF generation. Jobs queued by
-   the web app during the cutover remain in Postgres and resume when the worker
-   starts; email and PDF delivery are delayed during this window.
-
-After migration, do not roll the worker back to 0.16 against the migrated schema.
-Prefer a forward fix; a database restore requires a separate recovery plan that
-accounts for jobs and application writes created since the backup. Do not use
-`dev:db:reset` or `test:db:reset` for this production migration.
-
 ## Logging
 
 `console.*` is replaced at startup with synchronous `fs.writeSync` to stdout/stderr (`server/log.ts`). This prevents Bun's default pipe-buffering from dropping trailing lines on VM shutdown.
