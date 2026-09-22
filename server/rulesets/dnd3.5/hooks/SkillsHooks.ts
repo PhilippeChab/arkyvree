@@ -1,3 +1,4 @@
+import { ConflictError } from "@/server/errors/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { SkillsHooks, PropertyRecord } from "@/server/rulesets/hooks/SkillsHooks.ts";
 import {
@@ -8,7 +9,7 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { deleteModifiersWithCascade } from "@/server/services/rulesets/cow.ts";
+import { cowEntityForCustomization, deleteModifiersWithCascade, entityHasCharacterPicks, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
@@ -114,17 +115,23 @@ export class Dnd35SkillsHooks implements SkillsHooks {
   }
 
   async deleteSkillFeat(tx: Db, rulesetId: string, _sourceChain: string[], skillName: string): Promise<void> {
-    // Generated feats in ancestors are shared by other forks and characters.
-    // Only remove a feat owned by the ruleset being edited.
-    const feat = await Feats.findOne(tx, { name: `Skill Focus: ${skillName}`, rulesetId });
+    const feat = await withRulesetScope(tx, rulesetId, async ({ rulesetData }) =>
+      rulesetData.feats.find(f => f.name === `Skill Focus: ${skillName}`),
+    );
     if (!feat) return;
+    if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
+      throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
+    }
 
-    await deleteModifiersWithCascade(tx, { sourceIds: [feat.id], sourceType: "feats" });
-    await Requirements.deleteMany(tx, { entityIds: [feat.id], entityType: "feats" });
-    await Properties.deleteMany(tx, { entityIds: [feat.id], entityType: "feats" });
+    // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
+    // inherited feat disappears from this fork while its ancestor stays intact.
+    const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
+    await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "feats" });
+    await Requirements.deleteMany(tx, { entityIds: [targetId], entityType: "feats" });
+    await Properties.deleteMany(tx, { entityIds: [targetId], entityType: "feats" });
     // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link.
     // Soft-archive would block a future generateSkillFeat with the same name
     // (the unique index on feats doesn't filter deleted_at).
-    await Feats.delete(tx, { id: feat.id });
+    await Feats.delete(tx, { id: targetId });
   }
 }
