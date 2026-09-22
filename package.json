@@ -29,7 +29,7 @@
     "dev:email": "email dev",
     "dev": "bun dev:server & bun dev:worker & bun dev:client",
     "build": "vite build",
-    "build:deploy": "vite build && bun build server/main.ts --compile --outfile server-bin && bun build scripts/db/migrate.ts --compile --outfile migrate-bin",
+    "build:deploy": "vite build && bun build server/main.ts --compile --external pdfkit --compile-autoload-package-json --outfile server-bin && bun build scripts/db/migrate.ts --compile --outfile migrate-bin",
     "start": "bun server/main.ts",
     "serve": "bun run build && bun start",
     "test:db": "docker compose up postgres-test --wait",
@@ -126,8 +126,5 @@
       "oxlint",
       "bash -c 'bunx tsgo --noEmit'"
     ]
-  },
-  "patchedDependencies": {
-    "pdfkit@0.20.2": "patches/pdfkit@0.20.2.patch"
   }
 }

@@ -17,7 +17,7 @@ jobs:
           bun-version: latest
       - run: bun install
       - run: bun run build
-      - name: Verify standalone PDF generation
+      - name: Verify production PDF generation
         run: bun run test:pdf-bundle
 
   api-tests-full:

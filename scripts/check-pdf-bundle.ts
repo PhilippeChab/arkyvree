@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,11 +9,27 @@ const executable = join(directory, "pdf-probe");
 const fixture = fileURLToPath(new URL("../tests/fixtures/pdf/compiled-document.tsx", import.meta.url));
 
 try {
-  const build = Bun.spawn([process.execPath, "build", fixture, "--compile", "--outfile", executable], {
+  // Match the production image's isolated, frozen runtime dependency install.
+  for (const file of ["package.json", "bun.lock"]) {
+    await copyFile(new URL(`../runtime/${file}`, import.meta.url), join(directory, file));
+  }
+  const install = Bun.spawn([process.execPath, "install", "--frozen-lockfile", "--production", "--ignore-scripts"], {
+    cwd: directory,
     stdout: "pipe",
     stderr: "pipe",
     timeout: 120_000,
   });
+  const [installCode, installErrors] = await Promise.all([
+    install.exited,
+    new Response(install.stderr).text(),
+    new Response(install.stdout).text(),
+  ]);
+  assert.equal(installCode, 0, installErrors);
+
+  const build = Bun.spawn(
+    [process.execPath, "build", fixture, "--compile", "--external", "pdfkit", "--compile-autoload-package-json", "--outfile", executable],
+    { stdout: "pipe", stderr: "pipe", timeout: 120_000 },
+  );
   const [buildCode, buildErrors] = await Promise.all([
     build.exited,
     new Response(build.stderr).text(),
@@ -21,8 +37,7 @@ try {
   ]);
   assert.equal(buildCode, 0, buildErrors);
 
-  // Run outside the checkout so no node_modules or source assets can hide a
-  // missing dependency in the same standalone binary format used on Fly.
+  // Run outside the checkout with only the dependencies shipped in the image.
   const run = Bun.spawn([executable], { cwd: directory, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
   const [exitCode, output, errors] = await Promise.all([
     run.exited,

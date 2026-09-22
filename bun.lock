@@ -68,9 +68,6 @@
       },
     },
   },
-  "patchedDependencies": {
-    "pdfkit@0.20.2": "patches/pdfkit@0.20.2.patch",
-  },
   "overrides": {
     "pdfkit": "0.20.2",
     "react": "^19.2.4",
