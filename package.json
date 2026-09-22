@@ -62,7 +62,7 @@
     "@emotion/styled": "^11.14.1",
     "@fontsource-variable/lora": "^5.3.0",
     "@hono/otel": "^1.1.2",
-    "@hono/zod-validator": "^0.7.6",
+    "@hono/zod-validator": "^0.9.1",
     "@mui/icons-material": "^9.4.0",
     "@mui/material": "^9.4.0",
     "@mui/x-tree-view": "^9.14.0",

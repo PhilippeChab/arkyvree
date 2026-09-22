@@ -1,9 +1,8 @@
 import { toJson } from "@/server/errors/index.ts";
-import { denyDemoUser, type SessionContext } from "@/server/middlewares/index.ts";
+import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
 import { limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { sanitizeEmail } from "@/shared/utils.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 

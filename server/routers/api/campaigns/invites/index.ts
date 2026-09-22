@@ -1,8 +1,8 @@
+import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/index.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 

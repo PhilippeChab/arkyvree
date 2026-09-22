@@ -29,6 +29,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 - Services use `withTransaction()` for **all mutations** (create, update, delete) to ensure atomicity
 - Repositories accept `db` via dependency injection
 - Schema is defined in `/drizzle/schema.ts`
+- Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference.
 - `deletedAt IS NOT NULL` means **archived**. The codebase has two row-removal primitives — `repo.archive()` (soft) and `repo.delete()` (hard). Which one to use depends on the table. See [docs/persistence.md](./docs/persistence.md) for the full policy and decision rule. Quick rule: first-class user-facing entities archive by default; junctions, character-state, and customization rows always hard-delete.
 
 **Service Conventions:**

@@ -1,4 +1,3 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
@@ -11,6 +10,7 @@ import {
   getSessionCookie,
   sessionMiddleware,
   setSessionCookie,
+  zValidator,
 } from "@/server/middlewares/index.ts";
 import {
   DeleteAccountJson,

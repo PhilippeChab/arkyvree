@@ -1,8 +1,8 @@
+import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { location } from "@/drizzle/schema.ts";
 import { CharacterInventoryService } from "@/server/services/characters/index.ts";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 
