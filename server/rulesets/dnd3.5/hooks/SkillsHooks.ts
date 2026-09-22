@@ -1,3 +1,4 @@
+import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { SkillsHooks, PropertyRecord } from "@/server/rulesets/hooks/SkillsHooks.ts";
@@ -9,7 +10,7 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { cowEntityForCustomization, deleteModifiersWithCascade, entityHasCharacterPicks, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { cowEntityForCustomization, deleteModifiersWithCascade, entityHasCharacterPicks } from "@/server/services/rulesets/cow.ts";
 import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
@@ -114,10 +115,8 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     }]);
   }
 
-  async deleteSkillFeat(tx: Db, rulesetId: string, _sourceChain: string[], skillName: string): Promise<void> {
-    const feat = await withRulesetScope(tx, rulesetId, async ({ rulesetData }) =>
-      rulesetData.feats.find(f => f.name === `Skill Focus: ${skillName}`),
-    );
+  async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
+    const feat = rulesetData.feats.find(f => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
     if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
       throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
