@@ -6,7 +6,8 @@
   "type": "module",
   "overrides": {
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "pdfkit": "0.20.2"
   },
   "scripts": {
     "dev:db": "docker compose up postgres-dev --wait",
@@ -55,7 +56,8 @@
     "parser:validate": "bun database/packages/dnd35-from-parser/tools/validate.ts",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:pdf-bundle": "bun scripts/check-pdf-bundle.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -124,5 +126,8 @@
       "oxlint",
       "bash -c 'bunx tsgo --noEmit'"
     ]
+  },
+  "patchedDependencies": {
+    "pdfkit@0.20.2": "patches/pdfkit@0.20.2.patch"
   }
 }

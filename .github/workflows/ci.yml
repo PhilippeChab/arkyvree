@@ -17,6 +17,8 @@ jobs:
           bun-version: latest
       - run: bun install
       - run: bun run build
+      - name: Verify standalone PDF generation
+        run: bun run test:pdf-bundle
 
   api-tests-full:
     name: API Tests (shard ${{ matrix.shard }}/3)
