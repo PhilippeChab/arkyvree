@@ -1,3 +1,4 @@
+import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
 import "@/server/instrument-worker.ts";
 import "@/server/log.ts";
 import { shutdownOtel } from "@/server/otel.ts";
@@ -75,6 +76,10 @@ const warmUp = async (attempts = 4, delayMs = 500) => {
   console.error("[db] Unreachable after all retries — exiting");
   process.exit(1);
 };
+
+// Web mutations cannot invalidate this process’s in-memory cache. Each job
+// must build its sheet from current committed rules instead of a previous job.
+setCacheEnabled(false);
 
 await warmUp();
 

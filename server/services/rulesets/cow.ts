@@ -1608,6 +1608,7 @@ export interface CowData {
   siblingIds: Set<string>;
 }
 
+let cowDataGeneration = 0;
 const cowDataCache = new MemoryCache<CowData>();
 
 /**
@@ -1621,6 +1622,7 @@ const cowDataCache = new MemoryCache<CowData>();
 async function getOrBuildCowData(
   ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
 ): Promise<CowData> {
+  const generation = cowDataGeneration;
   const cached = cowDataCache.get(ruleset.id);
   if (cached) return cached;
 
@@ -1708,15 +1710,17 @@ async function getOrBuildCowData(
     siblingMap,
     siblingIds: new Set(Array.from(siblingMap.values()).flat()),
   };
-  cowDataCache.set(ruleset.id, cowData);
+  if (generation === cowDataGeneration) cowDataCache.set(ruleset.id, cowData);
   return cowData;
 }
 
 function invalidateCowData(rulesetId: string): void {
+  cowDataGeneration++;
   cowDataCache.invalidate(rulesetId);
 }
 
 function invalidateAllCowData(): void {
+  cowDataGeneration++;
   cowDataCache.invalidateAll();
 }
 

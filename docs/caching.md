@@ -215,21 +215,21 @@ Safety: if everything in the cache is pinned and you try to insert a non-pinned 
 
 ```mermaid
 flowchart LR
-    Mut[Mutation on ruleset X] -->|invalidateRuleset x| IR[Clear cow-data cache for X]
+    Mut[Mutation on ruleset X] -->|invalidateRuleset x| IR[Clear all derived cow-data caches]
     IR --> CR[Clear raw-tier entry for X]
-    CR --> TP[Clear target-paths cache for X]
-    Note[Forks that inherit from X<br/>re-compose on next read] -.->|no explicit<br/>propagation needed| CR
+    CR --> TP[Clear all composed target-path caches]
+    Note[Forks that inherit from X<br/>re-compose on next read] -.->|derived caches<br/>cleared globally| CR
 ```
 
-One-liner semantics: `invalidateRuleset(id)` clears exactly that ruleset's entries. Forks don't need cascading invalidation — they re-compose from the now-updated raw entry on their next read.
+One-liner semantics: `invalidateRuleset(id)` clears that ruleset's raw entries and all derived COW/target-path entries. Raw entries are invalidated only for the edited ruleset. All derived COW maps are cleared because they include ancestor and extension snapshots; target-path invalidation likewise clears composed paths for all rulesets.
 
 Three granularities:
 
 | Call | Clears | Use when |
 |---|---|---|
-| `invalidateTargetPaths(id)` | Target paths + segment labels only | Entity property edited (spell school, weapon type) but entity list unchanged |
-| `invalidateRulesetEntities(id)` | Raw entities + COW data; not target paths | Entity data (description, stats) edited |
-| `invalidateRuleset(id)` | Everything for that ruleset | Entities added/removed/renamed (target paths change) |
+| `invalidateTargetPaths(id)` | All composed target paths + segment labels | Entity property edited (spell school, weapon type) but entity list unchanged |
+| `invalidateRulesetEntities(id)` | Raw entities for this ruleset + all derived COW data; not target paths | Entity data (description, stats) edited |
+| `invalidateRuleset(id)` | Raw entities for this ruleset + all derived COW data and target paths | Entities added/removed/renamed (target paths change) |
 | `invalidateAll()` | Every ruleset's everything | Test teardown, rare |
 
 ### Lookup indices (accessor maps)
@@ -482,3 +482,5 @@ The Proxy detects writes by matching method names against a prefix list (`create
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries
 - `tests/cache/requestCache.test.ts` — dedup semantics + tx bypass + post-mutation invalidation
 - `tests/services/characters/LevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
+
+The PDF worker disables process-wide MemoryCache reuse so each job reads current rules after web edits. Web requests keep their raw cache. Invalidations advance generation counters: fetches started before invalidation may finish for their caller but cannot repopulate a stale shared cache.

@@ -28,7 +28,6 @@ import {
   dedupAgainstExisting,
   getOrBuildCowData as getOrBuildCowDataFromCow,
   invalidateAllCowData,
-  invalidateCowData,
   resolveOverrides,
   serializeReqNode,
   type IdResolveMap,
@@ -108,6 +107,7 @@ interface RulesetRawData {
 const rulesetRawDataCache = new MemoryCache<RulesetRawData>();
 /** Coalesces concurrent cache-miss fetches for the same key so only one 4-round
  *  DB trip runs at a time. Cleared once the fetch completes and the result is cached. */
+let rawDataGeneration = 0;
 const inFlightRawData = new Map<string, Promise<RulesetRawData>>();
 
 function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
@@ -136,7 +136,7 @@ async function getOrFetchRulesetRawData(
   try {
     return await promise;
   } finally {
-    inFlightRawData.delete(cacheKey);
+    if (inFlightRawData.get(cacheKey) === promise) inFlightRawData.delete(cacheKey);
   }
 }
 
@@ -146,6 +146,7 @@ async function fetchRulesetRawData(
   campaignId?: string,
 ): Promise<RulesetRawData> {
 
+  const generation = rawDataGeneration;
   const findManyByRulesetId = campaignId
     ? { rulesetId, campaignId, ancestorRulesetIds: [] }
     : { rulesetId, ancestorRulesetIds: [] };
@@ -286,10 +287,10 @@ async function fetchRulesetRawData(
   // orphaned user forks (userId nulled out by orphanByUser) can't accidentally slip
   // into the pinned set. Only the non-campaign entry is eligible (system rulesets
   // are not campaign-scoped).
-  if (ruleset?.system) {
-    rulesetRawDataCache.pin(cacheKey);
+  if (generation === rawDataGeneration) {
+    if (ruleset?.system) rulesetRawDataCache.pin(cacheKey);
+    rulesetRawDataCache.set(cacheKey, data);
   }
-  rulesetRawDataCache.set(cacheKey, data);
 
   return data;
 }
@@ -1053,6 +1054,7 @@ async function getOrFetchRulesetData(
 // Target paths + segment labels cache (combined)
 // ──────────────────────────────────────────────────────────────
 
+let targetPathsGeneration = 0;
 const targetPathsAndLabelsCache = new MemoryCache<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>();
 
 async function getOrFetchTargetPathsAndLabels(
@@ -1064,8 +1066,9 @@ async function getOrFetchTargetPathsAndLabels(
   const cached = targetPathsAndLabelsCache.get(cacheKey);
   if (cached) return cached;
 
+  const generation = targetPathsGeneration;
   const data = await fetcher();
-  targetPathsAndLabelsCache.set(cacheKey, data);
+  if (generation === targetPathsGeneration) targetPathsAndLabelsCache.set(cacheKey, data);
   return data;
 }
 
@@ -1078,8 +1081,10 @@ async function getOrFetchTargetPathsAndLabels(
  * Call after mutations that change entity properties (weapon types, spell schools, etc.)
  * but don't affect the entity list itself.
  */
-function invalidateTargetPaths(rulesetId: string): void {
-  targetPathsAndLabelsCache.invalidateByPrefix(rulesetId);
+function invalidateTargetPaths(_rulesetId: string): void {
+  // Composed target paths can depend on this ruleset through any subscriber.
+  targetPathsGeneration++;
+  targetPathsAndLabelsCache.invalidateAll();
 }
 
 /**
@@ -1088,7 +1093,10 @@ function invalidateTargetPaths(rulesetId: string): void {
  * the set of target paths (e.g. updating an entity's description).
  */
 function invalidateRulesetEntities(rulesetId: string): void {
-  invalidateCowData(rulesetId);
+  // Derived maps include ancestor/extension snapshots, so clear all of them.
+  invalidateAllCowData();
+  rawDataGeneration++;
+  inFlightRawData.clear();
   rulesetRawDataCache.invalidate(rulesetId);
   rulesetRawDataCache.invalidateByPrefix(`${rulesetId}:`);
 }
@@ -1104,6 +1112,9 @@ function invalidateRuleset(rulesetId: string): void {
 }
 
 function invalidateAll(): void {
+  rawDataGeneration++;
+  targetPathsGeneration++;
+  inFlightRawData.clear();
   invalidateAllCowData();
   rulesetRawDataCache.invalidateAll();
   targetPathsAndLabelsCache.invalidateAll();
