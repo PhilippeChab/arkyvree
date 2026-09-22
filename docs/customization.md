@@ -303,3 +303,5 @@ Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude s
 All 11 core classes: fighter, barbarian, cleric, rogue, sorcerer, monk, wizard, druid, ranger, paladin, bard.
 
 Ruleset customization endpoints require the source entity to belong to the composed ruleset. IDs outside that scope (including character IDs) are rejected before writes; inherited sources are copied before customization.
+
+Nested modifiers resolve ownership through their parent chain to a ruleset entity. Owned chains remain editable; inherited chains are copied with their requirements before mutation. Missing parents, cycles, and roots outside the ruleset source chain are rejected.
