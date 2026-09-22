@@ -240,14 +240,12 @@ export default class DetailedCharacterDataLoader {
     const klassLevelIds = allCharacterLevels.map((level) => level.klassLevelId);
     const allCharacterLevelIds = allCharacterLevels.map((level) => level.id);
 
-    // Resolve COW on inventory items (eagerly loaded via join, same pattern as feats/powers)
-    const resolvedInventory =
-      overrideMap.size > 0
-        ? inventory.map((inv) => ({
-            ...inv,
-            itemsInRule: resolveOverrides([inv.itemsInRule], overrideMap)[0],
-          }))
-        : inventory;
+    // The join uses the stored item ID. Load the effective item so COW changes
+    // refresh its name and other fields, not just its ID.
+    const resolvedInventory = inventory.map((inv) => ({
+      ...inv,
+      itemsInRule: rulesetData.itemsById.get(inv.itemId) ?? inv.itemsInRule,
+    }));
 
     // Derive IDs for Round 4. languagesById is wrapped by cowResolvingMap —
     // stored pre-COW language ids auto-resolve on lookup.

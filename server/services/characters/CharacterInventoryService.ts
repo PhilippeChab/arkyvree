@@ -33,7 +33,8 @@ export const CharacterInventoryMethods = {
       if (inventory.length === 0) return [];
 
       return inventory.map((entry) => {
-        const item = entry.itemsInRule;
+        // The join still contains the stored parent row after itemId resolves.
+        const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
         const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
         const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
         const templateProperties = item.sourceItemId
