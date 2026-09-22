@@ -311,3 +311,5 @@ clients must use the returned `resolvedEntityId` and reload its customizations;
 stale ancestor customization IDs are rejected. During the initial copy, mutations
 use the exact copied IDs, so identical modifiers with different requirements
 cannot be confused with one another.
+
+Nested modifier copying fetches customization rows in batches by tree depth. Sibling trees share each read batch instead of performing separate reads per node.
