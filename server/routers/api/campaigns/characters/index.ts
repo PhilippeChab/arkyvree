@@ -1,3 +1,4 @@
+import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
@@ -28,15 +29,10 @@ export default new Hono<SessionContext>()
 
       const data = result[1];
       const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
-      const redactPrivateNotes = <T extends { identity: { background: { privateNotes: string } } }>(entry: T): T => ({
-        ...entry,
-        identity: {
-          ...entry.identity,
-          background: { ...entry.identity.background, privateNotes: data.canViewPrivateNotes ? entry.identity.background.privateNotes : "" },
-        },
-      });
+      const redactForViewer = <T extends { identity: { background: { privateNotes?: string } } }>(entry: T): T =>
+        data.canViewPrivateNotes ? entry : redactPrivateNotes(entry, "");
       const safeResponse = {
-        ...redactPrivateNotes(response),
+        ...redactForViewer(response),
         shareToken: data.canEdit ? response.shareToken : null,
       };
       // Explicit allowlist: a new full-response field must be considered here.
@@ -79,7 +75,7 @@ export default new Hono<SessionContext>()
         canEdit: data.canEdit,
         isPartial: data.isPartial,
         ...visibleResponse,
-        bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactPrivateNotes),
+        bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
       }, 200);
     },
   )

@@ -1,5 +1,11 @@
+import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import { pgSchema, index, foreignKey, timestamp, uuid, text, uniqueIndex, check, numeric, json, unique, integer, boolean, primaryKey, pgEnum, smallint, customType } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
+
+// Inline constants for schema DDL; runtime API validation uses the same lists.
+function operatorValues(operators: readonly string[]) {
+  return sql.join(operators.map(operator => sql`${operator}::text`), sql`, `).inlineParams();
+}
 
 const bytea = customType<{ data: Buffer }>({
 	dataType() { return "bytea"; },
@@ -452,7 +458,7 @@ export const modifiersInCustomization = customization.table("modifiers", {
 	index("modifiers_source_id_idx").using("btree", table.sourceId.asc().nullsLast()),
 	index("modifiers_source_type_idx").using("btree", table.sourceType.asc().nullsLast()),
 	check("modifiers_value_type_check", sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`),
-	check("modifiers_operator_check", sql`operator = ANY (ARRAY['add'::text, 'subtract'::text, 'multiply'::text, 'divide'::text, 'set'::text])`),
+	check("modifiers_operator_check", sql`operator = ANY (ARRAY[${operatorValues(MODIFIER_OPERATORS)}])`),
 ]);
 
 export const propertiesInCustomization = customization.table("properties", {
@@ -564,8 +570,8 @@ export const requirementsInCustomization = customization.table("requirements", {
 	index("requirements_entity_type_idx").using("btree", table.entityType.asc().nullsLast()),
 	unique("requirements_entity_id_entity_type_level_key").on(table.entityId, table.entityType, table.level),
 	check("requirements_value_type_check", sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`),
-	check("requirements_operator_check", sql`operator = ANY (ARRAY['equal'::text, 'not_equal'::text, 'greater_than'::text, 'less_than'::text, 'greater_than_or_equal'::text, 'less_than_or_equal'::text, 'contains'::text, 'not_contains'::text, 'starts_with'::text, 'ends_with'::text, 'matches_regex'::text, 'not_matches_regex'::text, 'is_empty'::text, 'not_empty'::text])`),
-	check("requirements_check", sql`(chaining_operator = ANY (ARRAY['and'::text, 'or'::text])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))`),
+	check("requirements_operator_check", sql`operator = ANY (ARRAY[${operatorValues(REQUIREMENT_OPERATORS)}])`),
+	check("requirements_check", sql`(chaining_operator = ANY (ARRAY[${operatorValues(CHAINING_OPERATORS)}])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))`),
 ]);
 
 export const racesInRules = rules.table("races", {

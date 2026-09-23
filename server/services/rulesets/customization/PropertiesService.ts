@@ -1,3 +1,4 @@
+import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -134,12 +135,9 @@ export const PropertiesMethods = {
           return { ...newProperty, resolvedEntityId };
         }
 
-        let resolvedPropertyId = propertyId;
-        if (resolvedEntityId !== effectiveEntityId) {
-          const copiedId = customizationIds.get(propertyId);
-          if (!copiedId) throw new NotFoundError("Copied property not found");
-          resolvedPropertyId = copiedId;
-        }
+        const resolvedPropertyId = resolveCustomizationId(
+          effectiveEntityId, resolvedEntityId, propertyId, customizationIds, "property",
+        );
 
         const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
         const { updatedAt: _u, ...propertyData } = body;
@@ -187,16 +185,13 @@ export const PropertiesMethods = {
 
         const customizationIds = new Map<string, string>();
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
-        let resolvedPropertyId = propertyId;
         if (fromTemplate) {
           // Template property: nothing to delete on the derived item since it doesn't own it.
           throw new BadRequestError("Cannot delete a property inherited from a template");
         }
-        if (resolvedEntityId !== effectiveEntityId) {
-          const copiedId = customizationIds.get(propertyId);
-          if (!copiedId) throw new NotFoundError("Copied property not found");
-          resolvedPropertyId = copiedId;
-        }
+        const resolvedPropertyId = resolveCustomizationId(
+          effectiveEntityId, resolvedEntityId, propertyId, customizationIds, "property",
+        );
 
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });
         const deletedProperty = rows[0];

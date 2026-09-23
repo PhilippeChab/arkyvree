@@ -1,3 +1,4 @@
+import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -171,12 +172,9 @@ export const RequirementsMethods = {
         const customizationIds = new Map<string, string>();
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
 
-        let resolvedRequirementId = requirementId;
-        if (resolvedEntityId !== effectiveEntityId) {
-          const copiedId = customizationIds.get(requirementId);
-          if (!copiedId) throw new NotFoundError("Copied requirement not found");
-          resolvedRequirementId = copiedId;
-        }
+        const resolvedRequirementId = resolveCustomizationId(
+          effectiveEntityId, resolvedEntityId, requirementId, customizationIds, "requirement",
+        );
 
         let updatedRequirement;
         if (body.target) {
@@ -283,12 +281,9 @@ export const RequirementsMethods = {
         const customizationIds = new Map<string, string>();
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
 
-        let resolvedRequirementId = requirementId;
-        if (resolvedEntityId !== effectiveEntityId) {
-          const copiedId = customizationIds.get(requirementId);
-          if (!copiedId) throw new NotFoundError("Copied requirement not found");
-          resolvedRequirementId = copiedId;
-        }
+        const resolvedRequirementId = resolveCustomizationId(
+          effectiveEntityId, resolvedEntityId, requirementId, customizationIds, "requirement",
+        );
 
         const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
         const deletedRequirement = rows[0];

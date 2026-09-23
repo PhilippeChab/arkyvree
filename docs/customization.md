@@ -4,6 +4,8 @@
 
 Entities (feats, powers, items, klass_levels) can have **modifiers**, **requirements**, and **properties** attached via junction tables in the `customization` schema.
 
+The complete operator definitions live in `shared/customization/operators.ts`. API validators and the Drizzle CHECK constraints consume those lists. When changing the allowed values, generate the corresponding database migration; `tests/routers/operatorConstraints.test.ts` verifies that schema expressions still match the migrated database.
+
 ## Modifier Operators
 
 `add`, `subtract`, `multiply`, `divide`, `set`

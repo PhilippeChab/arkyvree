@@ -70,6 +70,12 @@ class ModifiersRepository
     });
   }
 
+  // The shared repository proxy exempts this read from COW remapping. Ownership
+  // resolution needs stored IDs, even when an ancestor has a local override.
+  async findStoredOne(db: Db, where: { id: string }) {
+    return this.findOne(db, where);
+  }
+
   async findManyBySource(db: Db, where: { sourceIds: string[]; sourceType: string }) {
     return await db.query.modifiersInCustomization.findMany({
       where: and(

@@ -1,3 +1,4 @@
+import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
@@ -27,17 +28,9 @@ const shared = new Hono()
 
       const { character, detailedCharacter, bondedByKind, portraitUrl } = result[1];
       const response = buildFullCharacterResponse(character, detailedCharacter);
-      const stripPrivate = <T extends { identity: { background: { privateNotes?: string } } }>(r: T): T => ({
-        ...r,
-        identity: {
-          ...r.identity,
-          background: { ...r.identity.background, privateNotes: undefined },
-        },
-      });
-
       return c.json({
-        ...stripPrivate(response),
-        bonded: buildBondedMap(bondedByKind, stripPrivate),
+        ...redactPrivateNotes(response, undefined),
+        bonded: buildBondedMap(bondedByKind, entry => redactPrivateNotes(entry, undefined)),
         portraitUrl,
       }, 200);
     },
