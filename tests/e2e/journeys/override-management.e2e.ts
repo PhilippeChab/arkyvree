@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /**
  * Override management on a fork:
@@ -23,7 +23,7 @@ test.describe('Fork override management', () => {
     const renamedHuman = `Override Test ${Date.now()}`;
 
     // Fork SRD
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Fork\b/ }).click();

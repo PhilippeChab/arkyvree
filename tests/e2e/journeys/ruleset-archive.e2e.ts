@@ -1,9 +1,9 @@
 import { type Page } from '@playwright/test';
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 async function forkSrd(page: Page, name: string) {
-  await page.goto('/rulesets');
+  await visitCoreRulesetList(page);
   await page.locator('h6:has-text("Core SRD 3.5")').first().click();
   await page.locator('[data-testid="MoreVertIcon"]').first().click();
   await page.getByRole('menuitem', { name: /^Fork\b/ }).click();
@@ -32,7 +32,7 @@ test.describe('Ruleset Archive / Unarchive', () => {
     await archiveResponse;
 
     await expect(page).toHaveURL(/\/rulesets$/, { timeout: 15_000 });
-    await expect(page.locator('h6:has-text("Core SRD 3.5")')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Search rulesets...' })).toBeVisible();
     await expect(page.locator(`h6:has-text("${name}")`)).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Filter' }).click();

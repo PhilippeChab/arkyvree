@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /**
  * End-to-end ruleset contributor invite REJECT flow (via /notifications):
@@ -21,7 +21,7 @@ test.describe('Ruleset Contributor Invite Reject Flow', () => {
     const ownerPage = await ownerContext.newPage();
     await signIn(ownerPage, ownerUser.email, ownerUser.password);
 
-    await ownerPage.goto('/rulesets');
+    await visitCoreRulesetList(ownerPage);
     await ownerPage.locator('h6:has-text("Core SRD 3.5")').first().click();
     await ownerPage.locator('[data-testid="MoreVertIcon"]').first().click();
     await ownerPage.getByRole('menuitem', { name: /^Fork\b/ }).click();

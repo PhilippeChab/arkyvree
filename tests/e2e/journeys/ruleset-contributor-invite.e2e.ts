@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /**
  * Ruleset contributor invite flow — full journey:
@@ -20,7 +20,7 @@ test.describe('Ruleset Contributor Invite Flow', () => {
     const renamedRace = `Editor Touched ${Date.now()}`;
 
     // ── Owner forks the SRD ────────────────────────────────────
-    await ownerPage.goto('/rulesets');
+    await visitCoreRulesetList(ownerPage);
     await ownerPage.locator('h6:has-text("Core SRD 3.5")').first().click();
     await ownerPage.locator('[data-testid="MoreVertIcon"]').first().click();
     await ownerPage.getByRole('menuitem', { name: /^Fork\b/ }).click();

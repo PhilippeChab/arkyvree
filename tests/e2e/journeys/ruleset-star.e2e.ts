@@ -1,12 +1,12 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 test.describe('Ruleset Star / Starred filter', () => {
   test('owner stars a ruleset, sees it in the Starred filter, and unstars it', async ({ page, ownerUser }) => {
     test.setTimeout(60_000);
 
     await signIn(page, ownerUser.email, ownerUser.password);
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
 
     // Locate the Core SRD 3.5 card via its heading. The whole card is clickable
     // (navigates to the detail page on bare click), so we scope the star

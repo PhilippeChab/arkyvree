@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn, createCharacter } from '@/tests/e2e/helpers.ts';
+import { signIn, createCharacter, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /**
  * Contributor revocation flows:
@@ -16,7 +16,7 @@ test.describe('Contributor Revocation', () => {
     const forkName = `Leave Fork ${Date.now()}`;
 
     // Owner forks SRD
-    await ownerPage.goto('/rulesets');
+    await visitCoreRulesetList(ownerPage);
     await ownerPage.locator('h6:has-text("Core SRD 3.5")').first().click();
     await ownerPage.locator('[data-testid="MoreVertIcon"]').first().click();
     await ownerPage.getByRole('menuitem', { name: /^Fork\b/ }).click();
