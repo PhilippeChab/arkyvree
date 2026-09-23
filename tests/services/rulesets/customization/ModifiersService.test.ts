@@ -4,7 +4,6 @@ import { db } from "@/server/database/index.ts";
 import {
   Abilities,
   Activities,
-  Modifiers,
   Rulesets,
   Users,
   Feats,
@@ -1099,26 +1098,6 @@ describe("ModifiersService", () => {
       );
       const remaining = activitiesAfter.items.filter((a) => a.targetId === req.id);
       expect(remaining.length).toBe(0);
-    });
-  });
-
-  describe("unsupported modifier sources", () => {
-    test("rejects creating a modifier on a modifier", async () => {
-      const { ruleset, session } = await createTestUserAndRuleset();
-      const feat = await createTestFeat(ruleset.id);
-      const values = { target: "abilities.strength.misc", value: "2", operator: "add" };
-      const modifier = await ModifiersMethods.createEntityModifier(session, ruleset.id, "feats", feat.id, values);
-      await expect(ModifiersMethods.createEntityModifier(session, ruleset.id, "modifiers", modifier.id, values)).rejects.toThrow("Modifiers cannot be attached to modifiers");
-      expect(await Modifiers.findManyBySource(db, { sourceIds: [modifier.id], sourceType: "modifiers" })).toHaveLength(0);
-    });
-
-    test("rejects duplicating a modifier onto a modifier", async () => {
-      const { ruleset, session } = await createTestUserAndRuleset();
-      const feat = await createTestFeat(ruleset.id);
-      const values = { target: "abilities.strength.misc", value: "2", operator: "add" };
-      const modifier = await ModifiersMethods.createEntityModifier(session, ruleset.id, "feats", feat.id, values);
-      await expect(ModifiersMethods.duplicateEntityModifier(session, ruleset.id, "modifiers", modifier.id, modifier.id, values)).rejects.toThrow("Modifiers cannot be attached to modifiers");
-      expect(await Modifiers.findManyBySource(db, { sourceIds: [modifier.id], sourceType: "modifiers" })).toHaveLength(0);
     });
   });
 

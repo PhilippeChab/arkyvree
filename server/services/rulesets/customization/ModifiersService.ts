@@ -1,7 +1,7 @@
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
@@ -13,13 +13,8 @@ import type { Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
 import TargetPathsService from "./TargetPathsService.ts";
 
-function assertModifierSource(entityType: string): void {
-  if (entityType === "modifiers") throw new BadRequestError("Modifiers cannot be attached to modifiers");
-}
-
 export const ModifiersMethods = {
   async getEntityModifiers(rulesetId: string, entityType: string, entityId: string) {
-    assertModifierSource(entityType);
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
       await CustomizationsPolicy.sourceExists(resolvedId, entityType, rulesetData);
@@ -77,7 +72,6 @@ export const ModifiersMethods = {
       operator: string;
     },
   ) {
-    assertModifierSource(entityType);
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
 
@@ -130,7 +124,6 @@ export const ModifiersMethods = {
       operator: string;
     },
   ) {
-    assertModifierSource(entityType);
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
 
@@ -195,7 +188,6 @@ export const ModifiersMethods = {
       updatedAt?: string;
     },
   ) {
-    assertModifierSource(entityType);
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
 
@@ -261,7 +253,6 @@ export const ModifiersMethods = {
     entityId: string,
     modifierId: string,
   ) {
-    assertModifierSource(entityType);
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
 
