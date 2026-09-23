@@ -1,11 +1,9 @@
 import { z } from "zod";
+import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 
-const requirementOperators = new Set([
-  "equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal",
-  "less_than_or_equal", "contains", "not_contains", "starts_with", "ends_with",
-  "matches_regex", "not_matches_regex", "is_empty", "not_empty",
-]);
-const modifierOperators = new Set(["add", "subtract", "multiply", "divide", "set"]);
+const requirementOperators = new Set<string>(REQUIREMENT_OPERATORS);
+const modifierOperators = new Set<string>(MODIFIER_OPERATORS);
+const chainingOperators = new Set<string>(CHAINING_OPERATORS);
 
 // Keep RPC input types as strings, matching the existing form schemas.
 export const requirementOperator = z.string().refine(
@@ -15,5 +13,5 @@ export const modifierOperator = z.string().refine(
   (value) => modifierOperators.has(value), "Invalid modifier operator",
 );
 export const chainingOperator = z.string().refine(
-  (value) => value === "and" || value === "or", "Invalid chaining operator",
+  (value) => chainingOperators.has(value), "Invalid chaining operator",
 );

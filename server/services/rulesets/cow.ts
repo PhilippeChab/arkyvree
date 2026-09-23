@@ -1487,9 +1487,7 @@ async function cowModifierForCustomization(
   visited.add(modifierId);
   // Keep the stored source ID: the repository proxy remaps it after COW,
   // which would make an ancestor modifier appear locally owned on repeat edits.
-  const modifier = await tx.query.modifiersInCustomization.findFirst({
-    where: and(eq(modifiersInCustomization.id, modifierId), isNull(modifiersInCustomization.deletedAt)),
-  });
+  const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
   if (!modifier) throw new NotFoundError("Customization source not found in this ruleset");
 
   const resolvedSourceId = modifier.sourceType === "modifiers"
