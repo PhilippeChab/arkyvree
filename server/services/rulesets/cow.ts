@@ -1384,6 +1384,11 @@ async function cowEntity(
   const repo = ENTITY_REPOS[entityType];
   const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
 
+  // A second first edit must wait for the copying transaction, then see its
+  // committed snapshot. Keep this separate from the SELECT: under READ
+  // COMMITTED, a SELECT started before the wait retains its old snapshot.
+  await EntitySnapshots.lockForCopy(tx, childRulesetId, entityId);
+
   // 0. Idempotency: if a COW copy already exists, return it.
   // If the snapshot is a tombstone (the COW row was hard-deleted by a
   // user-initiated delete on an overridden entity), drop the snapshot so
