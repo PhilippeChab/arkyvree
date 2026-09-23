@@ -160,10 +160,10 @@ DC formula: `base (10) + spell level + ability modifier + misc`
 
 | Path | Type | Description |
 |------|------|-------------|
-| `powers.<group>.dc.misc` | number | DC misc modifier |
-| `powers.<group>.dc.total` | number | DC total (read-only, recomputed) |
+| `powers.groups.<group>.*.dc.misc` | number | DC misc modifier |
+| `powers.groups.<group>.*.dc.total` | number | DC total (read-only, recomputed) |
 
-`<group>` can be a spell school (e.g., `evocation`), spell descriptor (e.g., `fire`), or individual power name (e.g., `fireball`). Only powers with a spell level and ability DC get DC entries.
+`<group>` is a spell school (e.g., `evocation`) or descriptor (e.g., `fire`). Individual spells use `powers.<spell>.dc.misc` and `powers.<spell>.dc.total`, for example `powers.fireball.dc.misc`, without the `groups` namespace or wildcard. Only powers with a spell level and ability DC get DC entries.
 
 ## identity
 
