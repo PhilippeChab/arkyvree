@@ -1,3 +1,4 @@
+import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -56,7 +57,7 @@ import type {
 } from "@/shared/relations.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
-import MemoryCache from "./MemoryCache.ts";
+import DependentCache from "./DependentCache.ts";
 
 // ──────────────────────────────────────────────────────────────
 // COW data cache (delegates to cow.ts cache)
@@ -105,10 +106,7 @@ interface RulesetRawData {
   requirements: Requirement[];
 }
 
-const rulesetRawDataCache = new MemoryCache<RulesetRawData>();
-/** Coalesces concurrent cache-miss fetches for the same key so only one 4-round
- *  DB trip runs at a time. Cleared once the fetch completes and the result is cached. */
-const inFlightRawData = new Map<string, Promise<RulesetRawData>>();
+const rulesetRawDataCache = new DependentCache<RulesetRawData>();
 
 function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
   return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
@@ -124,28 +122,15 @@ async function getOrFetchRulesetRawData(
   campaignId?: string,
 ): Promise<RulesetRawData> {
   const cacheKey = buildRawCacheKey(rulesetId, campaignId);
-  const cached = rulesetRawDataCache.get(cacheKey);
-  if (cached) return cached;
-
-  // Coalesce concurrent misses — second request piggybacks on the first's promise.
-  const inFlight = inFlightRawData.get(cacheKey);
-  if (inFlight) return inFlight;
-
-  const promise = fetchRulesetRawData(rulesetId, cacheKey, campaignId);
-  inFlightRawData.set(cacheKey, promise);
-  try {
-    return await promise;
-  } finally {
-    inFlightRawData.delete(cacheKey);
-  }
+  return rulesetRawDataCache.getOrFetch(cacheKey, [rulesetId], () =>
+    withCowContext(undefined, () => fetchRulesetRawData(rulesetId, campaignId)),
+  );
 }
 
 async function fetchRulesetRawData(
   rulesetId: string,
-  cacheKey: string,
   campaignId?: string,
-): Promise<RulesetRawData> {
-
+): Promise<{ data: RulesetRawData; pinned: boolean }> {
   const findManyByRulesetId = campaignId
     ? { rulesetId, campaignId, ancestorRulesetIds: [] }
     : { rulesetId, ancestorRulesetIds: [] };
@@ -286,12 +271,8 @@ async function fetchRulesetRawData(
   // orphaned user forks (userId nulled out by orphanByUser) can't accidentally slip
   // into the pinned set. Only the non-campaign entry is eligible (system rulesets
   // are not campaign-scoped).
-  if (ruleset?.system) {
-    rulesetRawDataCache.pin(cacheKey);
-  }
-  rulesetRawDataCache.set(cacheKey, data);
+  return { data, pinned: !!ruleset?.system };
 
-  return data;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -1053,20 +1034,15 @@ async function getOrFetchRulesetData(
 // Target paths + segment labels cache (combined)
 // ──────────────────────────────────────────────────────────────
 
-const targetPathsAndLabelsCache = new MemoryCache<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>();
+const targetPathsAndLabelsCache = new DependentCache<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>();
 
 async function getOrFetchTargetPathsAndLabels(
   rulesetId: string,
   kind: "modifier" | "requirement",
   fetcher: () => Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>,
+  sourceChain: readonly string[] = [],
 ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
-  const cacheKey = `${rulesetId}:${kind}`;
-  const cached = targetPathsAndLabelsCache.get(cacheKey);
-  if (cached) return cached;
-
-  const data = await fetcher();
-  targetPathsAndLabelsCache.set(cacheKey, data);
-  return data;
+  return targetPathsAndLabelsCache.getOrFetch(`${rulesetId}:${kind}`, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -1079,7 +1055,7 @@ async function getOrFetchTargetPathsAndLabels(
  * but don't affect the entity list itself.
  */
 function invalidateTargetPaths(rulesetId: string): void {
-  targetPathsAndLabelsCache.invalidateByPrefix(rulesetId);
+  targetPathsAndLabelsCache.invalidate(rulesetId);
 }
 
 /**
@@ -1090,7 +1066,6 @@ function invalidateTargetPaths(rulesetId: string): void {
 function invalidateRulesetEntities(rulesetId: string): void {
   invalidateCowData(rulesetId);
   rulesetRawDataCache.invalidate(rulesetId);
-  rulesetRawDataCache.invalidateByPrefix(`${rulesetId}:`);
 }
 
 /**

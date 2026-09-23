@@ -27,7 +27,7 @@ export const TargetPathsMethods = {
       const result = await getOrFetchTargetPathsAndLabels(rulesetId, kind, async () => {
         const generator = RulesetFactory.fromBaseRules(ruleset.baseRules).createTargetPaths();
         return generator.getTargetPathsAndLabels(rulesetData, kind);
-      });
+      }, rulesetData.cow.sourceChain);
       if (!entityType) return result;
       return {
         paths: result.paths.filter((p) => !p.allowedEntityTypes || p.allowedEntityTypes.includes(entityType)),

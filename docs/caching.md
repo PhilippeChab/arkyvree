@@ -215,21 +215,21 @@ Safety: if everything in the cache is pinned and you try to insert a non-pinned 
 
 ```mermaid
 flowchart LR
-    Mut[Mutation on ruleset X] -->|invalidateRuleset x| IR[Clear cow-data cache for X]
+    Mut[Mutation on ruleset X] -->|invalidateRuleset x| IR[Clear affected cow-data caches]
     IR --> CR[Clear raw-tier entry for X]
-    CR --> TP[Clear target-paths cache for X]
-    Note[Forks that inherit from X<br/>re-compose on next read] -.->|no explicit<br/>propagation needed| CR
+    CR --> TP[Clear affected target-path caches]
+    Note[Forks that inherit from X<br/>re-compose on next read] -.->|tracked source-chain<br/>dependencies| CR
 ```
 
-One-liner semantics: `invalidateRuleset(id)` clears exactly that ruleset's entries. Forks don't need cascading invalidation — they re-compose from the now-updated raw entry on their next read.
+`invalidateRuleset(id)` clears that ruleset's raw entries (including campaign variants), plus COW and target-path entries whose source chain contains it. Unrelated cached entries and in-flight reads remain reusable. `DependentCache` records source-chain IDs alongside each bounded cache entry and pending read; invalidation requires no database lookup and scans at most 200 cached entries per tier plus active reads.
 
 Three granularities:
 
 | Call | Clears | Use when |
 |---|---|---|
-| `invalidateTargetPaths(id)` | Target paths + segment labels only | Entity property edited (spell school, weapon type) but entity list unchanged |
-| `invalidateRulesetEntities(id)` | Raw entities + COW data; not target paths | Entity data (description, stats) edited |
-| `invalidateRuleset(id)` | Everything for that ruleset | Entities added/removed/renamed (target paths change) |
+| `invalidateTargetPaths(id)` | Dependent target paths + segment labels | Entity property edited (spell school, weapon type) but entity list unchanged |
+| `invalidateRulesetEntities(id)` | Raw entities for this ruleset + dependent COW data; not target paths | Entity data (description, stats) edited |
+| `invalidateRuleset(id)` | Raw entities for this ruleset + dependent COW data and target paths | Entities added/removed/renamed (target paths change) |
 | `invalidateAll()` | Every ruleset's everything | Test teardown, rare |
 
 ### Lookup indices (accessor maps)
@@ -482,3 +482,11 @@ The Proxy detects writes by matching method names against a prefix list (`create
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries
 - `tests/cache/requestCache.test.ts` — dedup semantics + tx bypass + post-mutation invalidation
 - `tests/services/characters/LevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
+
+The PDF worker disables process-wide MemoryCache reuse so each job reads current rules after web edits. Web requests keep their raw cache. Each in-flight read uses its promise identity as a token for its cache key. Invalidation removes only reads depending on the edited ruleset; a late completion may finish for its caller but cannot repopulate the cache or remove a newer pending read. This replaces global generation counters without an unbounded per-ruleset counter registry.
+
+Raw-tier and COW-map reads explicitly clear the ambient COW context. A nested
+character build (for example, a familiar loading its master) must load stored
+IDs before composing them for its own ruleset. Even a scope with an empty map
+replaces the outer scope. With process caching disabled, raw reads also bypass
+the process-wide in-flight map so separate worker jobs do not share old reads.

@@ -194,6 +194,7 @@ export const ModifiersMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
         const modifier = rulesetData.modifiersById.get(modifierId);
         if (!modifier || modifier.sourceId !== effectiveEntityId || modifier.sourceType !== entityType) {
@@ -258,6 +259,7 @@ export const ModifiersMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
         const modifier = rulesetData.modifiersById.get(modifierId);
         if (!modifier || modifier.sourceId !== effectiveEntityId || modifier.sourceType !== entityType) {

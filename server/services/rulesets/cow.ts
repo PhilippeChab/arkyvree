@@ -9,7 +9,7 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import MemoryCache from "@/server/cache/MemoryCache.ts";
+import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -65,6 +65,7 @@ const ENTITY_TYPE_TO_SOURCE_TYPE: Record<string, string> = {
   items: "items",
   races: "races",
   klass_levels: "klass_levels",
+  modifiers: "modifiers",
 };
 
 // Tables that participate in the name-based sibling fallback. Limited to
@@ -288,6 +289,24 @@ async function fetchKlassLevelCustomizations(
   return map;
 }
 
+// Fetch a whole depth at a time: copying many sibling modifier trees must not
+// issue a separate customization query for every node in those trees.
+async function fetchNestedModifierCustomizations(tx: Db, modifierIds: string[]): Promise<Map<string, EntityCustomizations>> {
+  const result = new Map<string, EntityCustomizations>();
+  let frontier = modifierIds;
+  while (frontier.length > 0) {
+    if (frontier.some(id => result.has(id))) throw new NotFoundError("Cyclic modifier source");
+    const level = await fetchEntityCustomizations(tx, frontier, "modifiers", "modifiers");
+    const next: string[] = [];
+    for (const [id, customizations] of level) {
+      result.set(id, customizations);
+      next.push(...customizations.modifiers.map(modifier => modifier.id));
+    }
+    frontier = next;
+  }
+  return result;
+}
+
 // Copy customizations from source entity to target entity
 async function copyEntityCustomizations(
   tx: Db,
@@ -295,8 +314,9 @@ async function copyEntityCustomizations(
   targetEntityId: string,
   entityType: string,
   sourceCust: EntityCustomizations,
+  customizationIds?: Map<string, string>,
 ): Promise<void> {
-  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust);
+  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, undefined, new Set(), customizationIds);
 }
 
 async function copyEntityCustomizationsToMany(
@@ -304,8 +324,17 @@ async function copyEntityCustomizationsToMany(
   targetEntityIds: string[],
   entityType: string,
   sourceCust: EntityCustomizations,
+  nested: ReadonlyMap<string, EntityCustomizations> | undefined = undefined,
+  ancestorModifierIds: ReadonlySet<string> = new Set(),
+  customizationIds?: Map<string, string>,
 ): Promise<void> {
   if (targetEntityIds.length === 0) return;
+  const nestedCustomizations = nested ?? await fetchNestedModifierCustomizations(tx, sourceCust.modifiers.map(modifier => modifier.id));
+  const visited = new Set(ancestorModifierIds);
+  for (const modifier of sourceCust.modifiers) {
+    if (visited.has(modifier.id)) throw new NotFoundError("Cyclic modifier source");
+    visited.add(modifier.id);
+  }
   const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
 
   const modifiersPerTarget = sourceCust.modifiers.length;
@@ -322,8 +351,14 @@ async function copyEntityCustomizationsToMany(
       )
     : [];
 
+  // Record identities at copy time; equal modifier values do not imply the
+  // same modifier (their requirements and nested children may differ).
+  for (let i = 0; i < modifiersPerTarget; i++) {
+    customizationIds?.set(sourceCust.modifiers[i].id, newModifiers[i].id);
+  }
+
   if (sourceCust.properties.length > 0) {
-    await Properties.createMany(
+    const copies = await Properties.createMany(
       tx,
       targetEntityIds.flatMap((targetId) =>
         sourceCust.properties.map((p) => ({
@@ -333,9 +368,12 @@ async function copyEntityCustomizationsToMany(
         })),
       ),
     );
+    for (let i = 0; i < sourceCust.properties.length; i++) {
+      customizationIds?.set(sourceCust.properties[i].id, copies[i].id);
+    }
   }
   if (sourceCust.requirements.length > 0) {
-    await Requirements.createMany(
+    const copies = await Requirements.createMany(
       tx,
       targetEntityIds.flatMap((targetId) =>
         sourceCust.requirements.map((r) => ({
@@ -345,10 +383,13 @@ async function copyEntityCustomizationsToMany(
         })),
       ),
     );
+    for (let i = 0; i < sourceCust.requirements.length; i++) {
+      customizationIds?.set(sourceCust.requirements[i].id, copies[i].id);
+    }
   }
 
   if (sourceCust.modifierRequirements.length > 0 && newModifiers.length > 0) {
-    await Requirements.createMany(
+    const copies = await Requirements.createMany(
       tx,
       targetEntityIds.flatMap((_targetId, targetIndex) => {
         const modifierIdMap = new Map<string, string>();
@@ -365,6 +406,19 @@ async function copyEntityCustomizationsToMany(
         }));
       }),
     );
+    for (let i = 0; i < sourceCust.modifierRequirements.length; i++) {
+      customizationIds?.set(sourceCust.modifierRequirements[i].id, copies[i].id);
+    }
+  }
+
+  if (newModifiers.length > 0) {
+    for (let i = 0; i < modifiersPerTarget; i++) {
+      const child = nestedCustomizations.get(sourceCust.modifiers[i].id);
+      if (!child || (child.modifiers.length === 0 && child.properties.length === 0)) continue;
+      const targets = targetEntityIds.map((_id, targetIndex) => newModifiers[targetIndex * modifiersPerTarget + i].id);
+      // Direct requirements were copied above via modifierRequirements.
+      await copyEntityCustomizationsToMany(tx, targets, "modifiers", { ...child, requirements: [] }, nestedCustomizations, visited, customizationIds);
+    }
   }
 }
 
@@ -375,6 +429,7 @@ async function copyEntityRelationships(
   sourceEntityId: string,
   targetEntityId: string,
   idMap: Record<string, string>,
+  customizationIds?: Map<string, string>,
 ): Promise<void> {
   if (entityType === "feats") {
     const featsAptitudes = await FeatsAptitudes.findMany(tx, { featId: sourceEntityId });
@@ -438,7 +493,7 @@ async function copyEntityRelationships(
       const newLevelId = levelIdMapLocal[oldLevelId];
       const cust = levelCusts.get(oldLevelId);
       if (cust && newLevelId) {
-        await copyEntityCustomizations(tx, oldLevelId, newLevelId, "klass_levels", cust);
+        await copyEntityCustomizations(tx, oldLevelId, newLevelId, "klass_levels", cust, customizationIds);
       }
     }
 
@@ -1324,6 +1379,7 @@ async function cowEntity(
   childRulesetId: string,
   ancestorRulesetIds?: string[],
   extensionRulesetIds?: string[],
+  customizationIds?: Map<string, string>,
 ): Promise<EntityWithId> {
   const repo = ENTITY_REPOS[entityType];
   const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
@@ -1359,7 +1415,7 @@ async function cowEntity(
   // 3. Copy customizations
   const customizations = await fetchEntityCustomizations(tx, [entityId], entityType, sourceType);
   const cust = customizations.get(entityId) ?? { modifiers: [], properties: [], requirements: [], modifierRequirements: [] };
-  await copyEntityCustomizations(tx, entityId, newEntity.id, entityType, cust);
+  await copyEntityCustomizations(tx, entityId, newEntity.id, entityType, cust, customizationIds);
 
   // 4. Copy relationships (aptitudes, klass levels, etc.)
   // idResolveMap (true overrides + sibling-loser aliases) is what we want for
@@ -1370,7 +1426,7 @@ async function cowEntity(
   for (const [sourceId, forkedId] of idResolveMap) {
     idMap[sourceId] = forkedId;
   }
-  await copyEntityRelationships(tx, entityType, entityId, newEntity.id, idMap);
+  await copyEntityRelationships(tx, entityType, entityId, newEntity.id, idMap, customizationIds);
 
   // 4b. Merge sibling data when multiple extensions COW the same base entity
   const siblingIds = siblingMap.get(entityId);
@@ -1414,6 +1470,35 @@ async function cowEntity(
   return newEntity;
 }
 
+/** Resolve the owning entity through nested modifiers before allowing a write. */
+async function cowModifierForCustomization(
+  tx: Db,
+  rulesetId: string,
+  modifierId: string,
+  visited: Set<string>,
+  customizationIds: Map<string, string>,
+): Promise<string> {
+  if (visited.has(modifierId)) throw new NotFoundError("Cyclic modifier source");
+  visited.add(modifierId);
+  // Keep the stored source ID: the repository proxy remaps it after COW,
+  // which would make an ancestor modifier appear locally owned on repeat edits.
+  const modifier = await tx.query.modifiersInCustomization.findFirst({
+    where: and(eq(modifiersInCustomization.id, modifierId), isNull(modifiersInCustomization.deletedAt)),
+  });
+  if (!modifier) throw new NotFoundError("Customization source not found in this ruleset");
+
+  const resolvedSourceId = modifier.sourceType === "modifiers"
+    ? await cowModifierForCustomization(tx, rulesetId, modifier.sourceId, visited, customizationIds)
+    : await cowEntityForCustomization(tx, rulesetId, modifier.sourceType, modifier.sourceId, customizationIds);
+  if (resolvedSourceId === modifier.sourceId) return modifier.id;
+  const copiedId = customizationIds.get(modifier.id);
+  if (copiedId) return copiedId;
+
+  // There is no persisted customization-ID mapping. Once the owning entity
+  // was copied, matching stale modifiers by value can select a different row.
+  throw new NotFoundError("Modifier has been copied; refresh the entity");
+}
+
 /**
  * COW helper for customization mutations. Given an entityType and entityId,
  * checks if the entity belongs to the parent ruleset and COWs it if needed.
@@ -1427,98 +1512,34 @@ async function cowEntityForCustomization(
   rulesetId: string,
   entityType: string,
   entityId: string,
+  customizationIds: Map<string, string> = new Map(),
 ): Promise<string> {
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-  if (!ruleset) return entityId;
+  if (!ruleset) throw new NotFoundError("Customization source not found in this ruleset");
   const sourceChain = buildSourceChain(ruleset);
-  if (sourceChain.length === 0) return entityId; // Not a fork
 
   if (entityType === "klass_levels") {
     // Find which klass owns this level
     const level = await KlassLevels.findOne(tx, { id: entityId });
-    if (!level) return entityId;
+    if (!level) throw new NotFoundError("Customization source not found in this ruleset");
 
     const klass = await Klasses.findOne(tx, { id: level.klassId } as never);
-    if (!klass) return entityId;
+    if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
-    if (klass.rulesetId === rulesetId) return entityId; // Already owned
-    if (!sourceChain.includes(klass.rulesetId)) return entityId; // Not from source chain
+    if (klass.rulesetId === rulesetId) return level.id; // Already owned
+    if (!sourceChain.includes(klass.rulesetId)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
     // COW the klass (copies all levels)
-    const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+    const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
     // Find the new level by matching level number (levels aren't individually snapshotted)
     const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id as string });
     const newLevel = newLevels.find((l) => l.level === level.level);
-    return newLevel?.id ?? entityId;
+    if (!newLevel) throw new NotFoundError("Copied class level not found");
+    return newLevel.id;
   }
 
   if (entityType === "modifiers") {
-    // Trace the modifier to its owning entity and COW that entity
-    const modifier = await Modifiers.findOne(tx, { id: entityId });
-    if (!modifier) return entityId;
-
-    const sourceType = modifier.sourceType;
-
-    if (sourceType === "klass_levels") {
-      // Find which klass owns this level
-      const level = await KlassLevels.findOne(tx, { id: modifier.sourceId });
-      if (!level) return entityId;
-
-      const klass = await Klasses.findOne(tx, { id: level.klassId } as never);
-      if (!klass) return entityId;
-
-      if (klass.rulesetId === rulesetId) return entityId; // Already owned
-      if (!sourceChain.includes(klass.rulesetId)) return entityId;
-
-      // COW the klass (copies all levels and their modifiers)
-      const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-
-      // Find the new level by matching level number on the COW'd klass (levels aren't individually snapshotted)
-      const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id as string });
-      const newLevel = newLevels.find((l) => l.level === level.level);
-      if (!newLevel) return entityId;
-
-      const newModifiers = await Modifiers.findManyBySource(tx, { sourceIds: [newLevel.id], sourceType: "klass_levels" });
-      const match = newModifiers.find((m) =>
-        m.target === modifier.target &&
-        m.value === modifier.value &&
-        m.operator === modifier.operator &&
-        m.valueType === modifier.valueType,
-      );
-      return match?.id ?? entityId;
-    }
-
-    // Standard entity types (feats, powers, items, races, klasses)
-    const modifierEntityTypeMap: Record<string, EntityType> = {
-      feats: "feats",
-      powers: "powers",
-      items: "items",
-      races: "races",
-      klasses: "klasses",
-    };
-
-    const cowType = modifierEntityTypeMap[sourceType];
-    if (!cowType) return entityId;
-
-    const modifierRepo = ENTITY_REPOS[cowType];
-    const ownerEntity = await modifierRepo.findOne(tx, { id: modifier.sourceId } as never);
-    if (!ownerEntity) return entityId;
-
-    const ownerRecord = ownerEntity as Record<string, unknown>;
-    if (ownerRecord.rulesetId === rulesetId) return entityId; // Already owned
-    if (!sourceChain.includes(ownerRecord.rulesetId as string)) return entityId;
-
-    const cowResult = await cowEntity(tx, cowType, modifier.sourceId, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-
-    // Find the new modifier by matching properties on the COW'd entity
-    const newModifiers = await Modifiers.findManyBySource(tx, { sourceIds: [cowResult.id], sourceType });
-    const match = newModifiers.find((m) =>
-      m.target === modifier.target &&
-      m.value === modifier.value &&
-      m.operator === modifier.operator &&
-      m.valueType === modifier.valueType,
-    );
-    return match?.id ?? entityId;
+    return cowModifierForCustomization(tx, rulesetId, entityId, new Set(), customizationIds);
   }
 
   // Standard entity types
@@ -1531,17 +1552,17 @@ async function cowEntityForCustomization(
   };
 
   const cowType = entityTypeMap[entityType];
-  if (!cowType) return entityId;
+  if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
 
   const repo = ENTITY_REPOS[cowType];
   const entity = await repo.findOne(tx, { id: entityId } as never);
-  if (!entity) return entityId;
+  if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
   const entityRecord = entity as Record<string, unknown>;
-  if (entityRecord.rulesetId === rulesetId) return entityId; // Already owned
-  if (!sourceChain.includes(entityRecord.rulesetId as string)) return entityId; // Not from source chain
+  if (entityRecord.rulesetId === rulesetId) return entity.id; // Already owned
+  if (!sourceChain.includes(entityRecord.rulesetId as string)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
-  const cowResult = await cowEntity(tx, cowType, entityId, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+  const cowResult = await cowEntity(tx, cowType, entityId, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
   return cowResult.id;
 }
 
@@ -1608,7 +1629,7 @@ export interface CowData {
   siblingIds: Set<string>;
 }
 
-const cowDataCache = new MemoryCache<CowData>();
+const cowDataCache = new DependentCache<CowData>();
 
 /**
  * Get or build cached COW data for a ruleset: sourceChain + overrideMap + klass level mappings.
@@ -1621,9 +1642,16 @@ const cowDataCache = new MemoryCache<CowData>();
 async function getOrBuildCowData(
   ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
 ): Promise<CowData> {
-  const cached = cowDataCache.get(ruleset.id);
-  if (cached) return cached;
+  // COW maps are shared infrastructure; never build them through a caller's
+  // active map (notably during nested master/companion character builds).
+  return cowDataCache.getOrFetch(ruleset.id, [ruleset.id, ...buildSourceChain(ruleset)], async () => ({
+    data: await withCowContext(undefined, () => buildCowData(ruleset)),
+  }));
+}
 
+async function buildCowData(
+  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
+): Promise<CowData> {
   const sourceChain = buildSourceChain(ruleset);
 
   let overrideMap: OverrideMap;
@@ -1708,7 +1736,6 @@ async function getOrBuildCowData(
     siblingMap,
     siblingIds: new Set(Array.from(siblingMap.values()).flat()),
   };
-  cowDataCache.set(ruleset.id, cowData);
   return cowData;
 }
 

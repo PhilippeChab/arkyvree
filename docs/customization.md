@@ -230,8 +230,8 @@ On update: deletes all existing properties, regenerates from updated form. Handl
 On delete: cleans up properties and checks if Spell Focus feats should be removed (only if no remaining spells use that school).
 
 Feats auto-generated per unique school in `hooks/generators/spellGenerator.generateSpellFocusFeats()`:
-- `Spell Focus: <school>` — +1 `powers.<stripped_school>.dc.misc`, linked to General aptitude
-- `Greater Spell Focus: <school>` — +1 `powers.<stripped_school>.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
+- `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
+- `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)
 - Deleted when last spell of a school is removed from the ruleset
 
@@ -242,8 +242,8 @@ Feats auto-generated per unique school in `hooks/generators/spellGenerator.gener
 - Weapon Focus: +1 `items.weapons.{w}.tohit.misc`
 - Weapon Specialization: +2 `items.weapons.{w}.damage.misc`
 - Greater variants: same pattern, stacks
-- Spell Focus: +1 `powers.{school}.dc.misc`
-- Greater Spell Focus: +1 `powers.{school}.dc.misc` (stacks with Spell Focus)
+- Spell Focus: +1 `powers.groups.{school}.*.dc.misc`
+- Greater Spell Focus: +1 `powers.groups.{school}.*.dc.misc` (stacks with Spell Focus)
 - Skill Focus: +3 `skills.{skill}.misc` (auto-generated per skill, linked to General aptitude)
 - Skill bonus feats (Acrobatic, Alertness, etc.): +2 to `skills.{skill}.misc`
 - Save bonus feats (Great Fortitude, etc.): +2 to `saves.{save}.misc`
@@ -301,3 +301,15 @@ Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude s
 ### Seeded classes (for class-level requirements):
 
 All 11 core classes: fighter, barbarian, cleric, rogue, sorcerer, monk, wizard, druid, ranger, paladin, bard.
+
+Ruleset customization endpoints require the source entity to belong to the composed ruleset. IDs outside that scope (including character IDs) are rejected before writes; inherited sources are copied before customization.
+
+Nested modifiers resolve ownership through their parent chain to a ruleset entity. Owned chains remain editable; inherited chains are copied with their requirements before mutation. Missing parents, cycles, and roots outside the ruleset source chain are rejected.
+
+Customization mutations validate the stored row owner in SQL. After a COW copy,
+clients must use the returned `resolvedEntityId` and reload its customizations;
+stale ancestor customization IDs are rejected. During the initial copy, mutations
+use the exact copied IDs, so identical modifiers with different requirements
+cannot be confused with one another.
+
+Nested modifier copying fetches customization rows in batches by tree depth. Sibling trees share each read batch instead of performing separate reads per node.

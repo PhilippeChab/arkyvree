@@ -64,9 +64,14 @@ class RequirementsRepository
       .returning();
   }
 
-  async findOne(db: Db, where: { id: string }) {
+  async findOne(db: Db, where: { id: string } | { id: string; entityId: string; entityType: string }) {
     return await db.query.requirementsInCustomization.findFirst({
-      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
+      where: this.where([
+        eq(this.table.id, where.id),
+        "entityId" in where && eq(this.table.entityId, where.entityId),
+        "entityType" in where && eq(this.table.entityType, where.entityType),
+        isNull(this.table.deletedAt),
+      ]),
     });
   }
 

@@ -154,8 +154,9 @@ export const RequirementsMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = await Requirements.findOne(tx, { id: requirementId });
+        const requirement = await Requirements.findOne(tx, { id: requirementId, entityId: effectiveEntityId, entityType });
         if (
           !requirement || requirement.entityId !== effectiveEntityId || requirement.entityType !== entityType
         ) {
@@ -167,22 +168,14 @@ export const RequirementsMethods = {
         await customizationPolicy.canUpdate();
 
         // COW the owning entity if this requirement is inherited
-        const resolvedEntityId = entityType === "modifiers"
-          ? await cowEntityForCustomization(tx, rulesetId, "modifiers", effectiveEntityId)
-          : await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const customizationIds = new Map<string, string>();
+        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
 
         let resolvedRequirementId = requirementId;
         if (resolvedEntityId !== effectiveEntityId) {
-          const newRequirements = await Requirements.findManyByEntity(tx, { entityIds: [resolvedEntityId], entityType });
-          const match = newRequirements.find(r =>
-            r.level === requirement.level &&
-            (r.target ?? null) === (requirement.target ?? null) &&
-            (r.value ?? null) === (requirement.value ?? null) &&
-            (r.valueType ?? null) === (requirement.valueType ?? null) &&
-            (r.operator ?? null) === (requirement.operator ?? null) &&
-            (r.chainingOperator ?? null) === (requirement.chainingOperator ?? null),
-          );
-          if (match) resolvedRequirementId = match.id;
+          const copiedId = customizationIds.get(requirementId);
+          if (!copiedId) throw new NotFoundError("Copied requirement not found");
+          resolvedRequirementId = copiedId;
         }
 
         let updatedRequirement;
@@ -274,8 +267,9 @@ export const RequirementsMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = await Requirements.findOne(tx, { id: requirementId });
+        const requirement = await Requirements.findOne(tx, { id: requirementId, entityId: effectiveEntityId, entityType });
         if (
           !requirement || requirement.entityId !== effectiveEntityId || requirement.entityType !== entityType
         ) {
@@ -286,22 +280,14 @@ export const RequirementsMethods = {
         const customizationPolicy = new CustomizationsPolicy(session, requirement);
         await customizationPolicy.canDelete();
 
-        const resolvedEntityId = entityType === "modifiers"
-          ? await cowEntityForCustomization(tx, rulesetId, "modifiers", effectiveEntityId)
-          : await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const customizationIds = new Map<string, string>();
+        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
 
         let resolvedRequirementId = requirementId;
         if (resolvedEntityId !== effectiveEntityId) {
-          const newRequirements = await Requirements.findManyByEntity(tx, { entityIds: [resolvedEntityId], entityType });
-          const match = newRequirements.find(r =>
-            r.level === requirement.level &&
-            (r.target ?? null) === (requirement.target ?? null) &&
-            (r.value ?? null) === (requirement.value ?? null) &&
-            (r.valueType ?? null) === (requirement.valueType ?? null) &&
-            (r.operator ?? null) === (requirement.operator ?? null) &&
-            (r.chainingOperator ?? null) === (requirement.chainingOperator ?? null),
-          );
-          if (match) resolvedRequirementId = match.id;
+          const copiedId = customizationIds.get(requirementId);
+          if (!copiedId) throw new NotFoundError("Copied requirement not found");
+          resolvedRequirementId = copiedId;
         }
 
         const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
