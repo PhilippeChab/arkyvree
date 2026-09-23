@@ -4,6 +4,7 @@ import { db } from "@/server/database/index.ts";
 import {
   Abilities,
   Activities,
+  Modifiers,
   Rulesets,
   Users,
   Feats,
@@ -1101,83 +1102,23 @@ describe("ModifiersService", () => {
     });
   });
 
-  describe("modifier on modifier (nested modifiers)", () => {
-    test("should create a modifier on another modifier", async () => {
+  describe("unsupported modifier sources", () => {
+    test("rejects creating a modifier on a modifier", async () => {
       const { ruleset, session } = await createTestUserAndRuleset();
       const feat = await createTestFeat(ruleset.id);
-
-      // Create base modifier on feat
-      const baseModifier = await ModifiersMethods.createEntityModifier(
-        session,
-        ruleset.id,
-        "feats",
-        feat.id,
-        {
-          target: "abilities.strength.misc",
-          value: "2",
-          operator: "add",
-        }
-      );
-
-      // Create modifier on the modifier
-      const nestedModifier = await ModifiersMethods.createEntityModifier(
-        session,
-        ruleset.id,
-        "modifiers",
-        baseModifier.id,
-        {
-          target: "abilities.dexterity.misc",
-          value: "1",
-          operator: "add",
-        }
-      );
-
-      expect(nestedModifier).toBeDefined();
-      expect(nestedModifier.sourceId).toBe(baseModifier.id);
-      expect(nestedModifier.sourceType).toBe("modifiers");
+      const values = { target: "abilities.strength.misc", value: "2", operator: "add" };
+      const modifier = await ModifiersMethods.createEntityModifier(session, ruleset.id, "feats", feat.id, values);
+      await expect(ModifiersMethods.createEntityModifier(session, ruleset.id, "modifiers", modifier.id, values)).rejects.toThrow("Modifiers cannot be attached to modifiers");
+      expect(await Modifiers.findManyBySource(db, { sourceIds: [modifier.id], sourceType: "modifiers" })).toHaveLength(0);
     });
 
-    test("should get modifiers of a modifier", async () => {
+    test("rejects duplicating a modifier onto a modifier", async () => {
       const { ruleset, session } = await createTestUserAndRuleset();
       const feat = await createTestFeat(ruleset.id);
-
-      // Create base modifier
-      const baseModifier = await ModifiersMethods.createEntityModifier(
-        session,
-        ruleset.id,
-        "feats",
-        feat.id,
-        {
-          target: "abilities.strength.misc",
-          value: "2",
-          operator: "add",
-        }
-      );
-
-      // Create nested modifier
-      await ModifiersMethods.createEntityModifier(
-        session,
-        ruleset.id,
-        "modifiers",
-        baseModifier.id,
-        {
-          target: "abilities.dexterity.misc",
-          value: "1",
-          operator: "add",
-        }
-      );
-
-      // Get modifiers of the modifier
-      const modifiers = await ModifiersMethods.getEntityModifiers(
-        ruleset.id,
-        "modifiers",
-        baseModifier.id
-      );
-
-      expect(modifiers).toBeDefined();
-      expect(modifiers.length).toBeGreaterThan(0);
-      expect(modifiers[0].sourceId).toBe(baseModifier.id);
-      expect(modifiers[0].sourceType).toBe("modifiers");
+      const values = { target: "abilities.strength.misc", value: "2", operator: "add" };
+      const modifier = await ModifiersMethods.createEntityModifier(session, ruleset.id, "feats", feat.id, values);
+      await expect(ModifiersMethods.duplicateEntityModifier(session, ruleset.id, "modifiers", modifier.id, modifier.id, values)).rejects.toThrow("Modifiers cannot be attached to modifiers");
+      expect(await Modifiers.findManyBySource(db, { sourceIds: [modifier.id], sourceType: "modifiers" })).toHaveLength(0);
     });
   });
 

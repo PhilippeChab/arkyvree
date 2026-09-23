@@ -179,7 +179,7 @@ describe("CustomizationsPolicy", () => {
       expect(result).toBe("Level 1");
     });
 
-    test("should validate modifier exists (nested modifiers)", async () => {
+    test("should validate a modifier as a requirement owner", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
       // Create aptitude and feat first

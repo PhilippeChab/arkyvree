@@ -7,6 +7,26 @@ import { expect, describe, test } from "bun:test";
 describe("rulesets customization modifiers", () => {
   const api = testClient<Application>(application);
 
+  test("rejects modifiers as a parent through the HTTP API", async () => {
+    const rulesetId = await createTestRuleset();
+    const featId = await createTestFeat(rulesetId);
+    const body = { target: "abilities.strength.misc", value: "2", operator: "add" };
+    const created = await api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$post({
+      param: { id: rulesetId, entityType: "feats", entityId: featId }, json: body,
+    }, { headers: { cookie: "session-id=00000000-0000-4000-8000-000000000123" } });
+    expect(created.status).toBe(201);
+    const modifier = await created.json();
+    if (!("id" in modifier)) throw new Error("Modifier creation failed");
+    for (const suffix of ["", `/${modifier.id}/duplicate`]) {
+      const response = await application.request(`/api/rulesets/${rulesetId}/customization/modifiers/${modifier.id}/modifiers${suffix}`, {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie: "session-id=00000000-0000-4000-8000-000000000123" },
+        body: JSON.stringify(body),
+      });
+      expect(response.status).toBe(400);
+    }
+  });
+
   // Helper to create test ruleset
   async function createTestRuleset(): Promise<string> {
     const ruleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456");

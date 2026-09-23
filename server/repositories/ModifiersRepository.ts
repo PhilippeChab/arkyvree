@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { InternalError } from "@/server/errors/index.ts";
@@ -62,25 +62,6 @@ class ModifiersRepository
         ]),
       )
       .returning();
-  }
-
-  /** Delete the selected roots and every nested modifier in one query.
-   * UNION (not UNION ALL) also terminates safely on malformed cyclic trees.
-   */
-  async deleteTree(db: Db, where: { ids: string[] } | { sourceIds: string[]; sourceType: string }) {
-    const roots = db.select({ id: this.table.id }).from(this.table).where(this.where([
-      "ids" in where && inArray(this.table.id, where.ids),
-      "sourceIds" in where && inArray(this.table.sourceId, where.sourceIds),
-      "sourceType" in where && eq(this.table.sourceType, where.sourceType),
-    ]));
-    const treeIds = sql`(with recursive modifier_tree(id) as (
-      ${roots}
-      union
-      select child.id from ${this.table} as child
-      join modifier_tree as parent on child.source_id = parent.id
-      where child.source_type = 'modifiers'
-    ) select id from modifier_tree)`;
-    return await db.delete(this.table).where(inArray(this.table.id, treeIds)).returning();
   }
 
   async findOne(db: Db, where: { id: string }) {
