@@ -37,7 +37,7 @@ Inside the scope:
   2. **Output FK resolution** — returned rows have every `*Id` field remapped to post-COW.
   3. **Composite-key expansion** — `CharacterAbilities.update(tx, values, { characterId, abilityId })` matches both the pre-COW stored row and post-COW client input through `BaseRepository.idMatches`.
 
-Ownership resolution sometimes needs the stored IDs. Use `Modifiers.findStoredOne(db, { id })` for that case: its shared-repository registration opts out of input and output COW remapping for this method only. It still participates in request deduplication, while ordinary `Modifiers.findOne` reads retain automatic resolution. Keep the SQL in the repository.
+COW ownership resolution needs stored IDs. Inside `cow.ts`, use `withCowContext(undefined, () => Modifiers.findOne(db, { id }))` for that lookup. This existing infrastructure scope disables remapping for the read and restores the caller's context afterward. SQL stays in the shared repository; ordinary service reads continue to use `withRulesetScope`.
 
 **Callers don't think about COW for lookups.** `rulesetData.featsById.get(id)` works whether `id` is pre-COW or post-COW. Character-scoped repo reads (`CharacterLevels.findMany`, etc.) return rows whose `*Id` fields are already post-COW when they happen inside a scope. The only place you reach past the scope is ruleset management (fork/publish in `RulesetsService`) and framework internals (`DetailedCharacterDataLoader` for PMR distribution, `TargetPathsService` for path generation) — both are covered by `@internal` helpers described below.
 

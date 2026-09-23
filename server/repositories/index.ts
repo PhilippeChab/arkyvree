@@ -174,7 +174,7 @@ import UsersRepository from "@/server/repositories/UsersRepository.ts";
  * Pagination, search, and filter args are all part of the key, so different
  * queries stay distinct. Identical calls (same method, same args) coalesce.
  */
-function withRequestCache<T extends object>(name: string, repo: T, opts?: { skipCow?: boolean; skipCowMethods?: readonly (keyof T)[] }): T {
+function withRequestCache<T extends object>(name: string, repo: T, opts?: { skipCow?: boolean }): T {
   // Output auto-resolve runs for every repo read inside a cowContext. Any row
   // returned — character-scoped, ruleset-entity, or join — may carry `*Id` FK
   // fields (or its own `id`) that point at pre-COW entities; we remap them to
@@ -223,22 +223,19 @@ function withRequestCache<T extends object>(name: string, repo: T, opts?: { skip
       if (isReadMethod(prop)) {
         return function (this: unknown, ...args: unknown[]) {
           const dbArg = args[0];
-          const skipCow = opts?.skipCow || opts?.skipCowMethods?.includes(prop as keyof T);
-          // Stored-identity reads opt out per method; ordinary methods on the
-          // same repository retain COW resolution and request deduplication.
           // Repos marked `skipCow` (EntitySnapshots — the COW mapping table
           // itself) skip both input canonicalization and output resolve.
           // Transforming queries against the mapping through the mapping is
           // self-referential: `sourceEntityId` stores raw pre-COW ids and
           // `forkedEntityId` stores raw post-COW ids by design, so either
           // direction's Proxy remap would corrupt the query.
-          const applyResolution = skipCow
+          const applyResolution = opts?.skipCow
             ? (p: Promise<unknown>) => p
             : (p: Promise<unknown>) => p.then(maybeResolveResult);
           // Canonicalize entity-id inputs (id, *Id, ids, *Ids) through the
           // active cowContext so callers can send pre- or post-COW ids and
           // hit the same query path. No-op outside cowContext.
-          const effectiveArgs = skipCow ? args : canonicalizeArgs(args);
+          const effectiveArgs = opts?.skipCow ? args : canonicalizeArgs(args);
           if (dbArg !== globalDb) {
             // Tx path — bypass dedup entirely.
             return applyResolution(value.apply(target, effectiveArgs) as Promise<unknown>);
@@ -325,7 +322,7 @@ export const KlassSkills = withRequestCache("KlassSkills", new KlassSkillsReposi
 export const KlassLevelFeats = withRequestCache("KlassLevelFeats", new KlassLevelFeatsRepository());
 export const KlassLevelPowers = withRequestCache("KlassLevelPowers", new KlassLevelPowersRepository());
 export const KlassLevelSaves = withRequestCache("KlassLevelSaves", new KlassLevelSavesRepository());
-export const Modifiers = withRequestCache("Modifiers", new ModifiersRepository(), { skipCowMethods: ["findStoredOne"] });
+export const Modifiers = withRequestCache("Modifiers", new ModifiersRepository());
 export const Properties = withRequestCache("Properties", new PropertiesRepository());
 export const Requirements = withRequestCache("Requirements", new RequirementsRepository());
 export const RulesetExtensions = withRequestCache("RulesetExtensions", new RulesetExtensionsRepository());

@@ -6,6 +6,7 @@ import { Modifiers } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { createSeededTestRuleset } from "@/tests/helpers.ts";
 import { timingStorage } from "@/server/timing.ts";
+import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 
 test("stored modifier reads preserve ownership without changing ordinary COW reads", async () => {
   const seed = await getSeedContext(db);
@@ -19,11 +20,11 @@ test("stored modifier reads preserve ownership without changing ordinary COW rea
     const timing = { dbTimeMs: 0, queryCount: 0, activeQueries: 0, dbWallStart: 0, slowQueries: [], cacheHits: 0, cacheMisses: 0, dedupHits: 0, dedupMisses: 0 };
     await timingStorage.run(timing, async () => {
       const resolved = await Modifiers.findOne(db, { id: modifier.id });
-      const stored = await Modifiers.findStoredOne(db, { id: modifier.id });
+      const stored = await withCowContext(undefined, () => Modifiers.findOne(db, { id: modifier.id }));
       expect(resolved?.sourceId).toBe(copy.id);
       expect(stored?.sourceId).toBe(sourceId);
       expect(stored?.id).toBe(modifier.id);
-      expect(await Modifiers.findStoredOne(db, { id: modifier.id })).toBe(stored);
+      expect(await withCowContext(undefined, () => Modifiers.findOne(db, { id: modifier.id }))).toBe(stored);
       expect(await Modifiers.findOne(db, { id: modifier.id })).toBe(resolved);
     });
     expect(timing.queryCount).toBe(2);
