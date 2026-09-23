@@ -8,7 +8,7 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { deleteModifiersWithCascade } from "@/server/services/rulesets/cow.ts";
+import { deleteModifiersWithCascade, lockEntityForMutation } from "@/server/services/rulesets/cow.ts";
 import {
   FEAT_FAMILY,
   SPELL_AREA_OF_EFFECT,
@@ -174,6 +174,7 @@ export async function deleteSpellFocusFeats(tx: Db, rulesetId: string, sourceCha
     }
     if (!feat) continue;
 
+    await lockEntityForMutation(tx, "feats", feat.id);
     await deleteModifiersWithCascade(tx, { sourceIds: [feat.id], sourceType: "feats" });
     await Requirements.deleteMany(tx, { entityIds: [feat.id], entityType: "feats" });
     await Properties.deleteMany(tx, { entityIds: [feat.id], entityType: "feats" });

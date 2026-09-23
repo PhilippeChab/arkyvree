@@ -4,6 +4,7 @@ import {
   type Column,
   desc,
   eq,
+  getTableColumns,
   ilike,
   inArray,
   type InferInsertModel,
@@ -61,6 +62,18 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
 
   async exists(db: Db, where: Record<string, unknown>) {
     return Boolean(await this.findOne(db, where));
+  }
+
+  /** Call inside a transaction to lock a stored row before changing its children.
+   * IDs are already resolved by the caller. Never memoize a locking read.
+   */
+  async lockById(db: Db, id: string, mode: "update" | "share" = "update"): Promise<boolean> {
+    const columns = getTableColumns(this.table);
+    if (!columns.id) throw new Error("Row locking requires an id column");
+    const rows = await db.select({ locked: sql<number>`1` }).from(sql`${this.table}`)
+      .where(and(eq(columns.id, id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
+      .for(mode);
+    return rows.length > 0;
   }
 
   abstract withInstance(instance: InferSelectModel<T>): I;

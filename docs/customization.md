@@ -315,3 +315,15 @@ use the exact copied IDs, so identical modifiers with different requirements
 cannot be confused with one another.
 
 Nested modifier copying fetches customization rows in batches by tree depth. Sibling trees share each read batch instead of performing separate reads per node.
+
+Customization writes hold a PostgreSQL row lock on their owning ruleset entity
+until the transaction ends. Deletion and override restoration acquire that same
+lock before removing child rows. Nested modifiers lock their root owner; class
+levels lock their class. After waiting, nested sources are checked again so a
+deleted modifier or level cannot receive a new customization. Ordinary reads
+do not take these locks, and different owners can be edited independently.
+
+First COW copies retain the fork/source advisory lock and hold a shared row lock
+on the source while copying. An existing copy is locked before reuse. Modifier
+deletion removes the whole descendant tree with one recursive repository query,
+then batches removal of its requirements, properties, and activity records.

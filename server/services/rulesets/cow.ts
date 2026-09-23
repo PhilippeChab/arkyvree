@@ -958,17 +958,18 @@ async function deleteModifiersWithCascade(
   tx: Db,
   where: { ids: string[] } | { sourceIds: string[]; sourceType: string },
 ) {
-  const deleted = await Modifiers.deleteMany(tx, where);
+  const deleted = await Modifiers.deleteTree(tx, where);
   if (deleted.length > 0) {
     const modifierIds = deleted.map((m) => m.id);
-    const deletedRequirements = await Requirements.deleteMany(tx, { entityIds: modifierIds, entityType: "modifiers" });
-
+    await deleteRequirementsWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
+    await deletePropertiesWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
     await Activities.deleteByTargets(tx, { targetIds: modifierIds, targetTable: getTableName(modifiersInCustomization) });
-    if (deletedRequirements.length > 0) {
-      await Activities.deleteByTargets(tx, { targetIds: deletedRequirements.map((r) => r.id), targetTable: getTableName(requirementsInCustomization) });
-    }
   }
-  return deleted;
+  // Callers return/log only the explicitly selected roots, not descendants.
+  const rootIds = new Set("ids" in where ? where.ids : where.sourceIds);
+  return "ids" in where
+    ? deleted.filter(modifier => rootIds.has(modifier.id))
+    : deleted.filter(modifier => modifier.sourceType === where.sourceType && rootIds.has(modifier.sourceId));
 }
 
 async function deletePropertiesWithCascade(
@@ -1366,6 +1367,13 @@ const ENTITY_REPOS = {
   mechanics: Mechanics,
 } as const;
 
+/** Serialize child writes with deletion/revert of their stored owner. */
+async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
+  if (!await ENTITY_REPOS[entityType].lockById(tx, entityId)) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
+}
+
 /**
  * COW trigger: copies a parent entity to the child fork, including all
  * customizations, relationships, and creates the entity_snapshot record.
@@ -1398,7 +1406,8 @@ async function cowEntity(
     rulesetId: childRulesetId,
   });
   if (existingSnapshot) {
-    const existing = await repo.findOne(tx, { id: existingSnapshot.forkedEntityId } as never);
+    const exists = await repo.lockById(tx, existingSnapshot.forkedEntityId);
+    const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId } as never) : undefined;
     if (existing) return existing as EntityWithId;
     await EntitySnapshots.deleteBySourceAndRuleset(tx, {
       sourceEntityId: entityId,
@@ -1407,6 +1416,9 @@ async function cowEntity(
   }
 
   // 1. Fetch the parent entity
+  if (!await repo.lockById(tx, entityId, "share")) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
   const parentEntity = await repo.findOne(tx, { id: entityId } as never);
   if (!parentEntity) {
     throw new Error(`Parent entity not found: ${entityType}/${entityId}`);
@@ -1493,7 +1505,12 @@ async function cowModifierForCustomization(
   const resolvedSourceId = modifier.sourceType === "modifiers"
     ? await cowModifierForCustomization(tx, rulesetId, modifier.sourceId, visited, customizationIds)
     : await cowEntityForCustomization(tx, rulesetId, modifier.sourceType, modifier.sourceId, customizationIds);
-  if (resolvedSourceId === modifier.sourceId) return modifier.id;
+  if (resolvedSourceId === modifier.sourceId) {
+    // The root lock may have waited for deletion of this modifier or a parent.
+    const current = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifier.id }));
+    if (!current) throw new NotFoundError("Customization source no longer exists; refresh the entity");
+    return current.id;
+  }
   const copiedId = customizationIds.get(modifier.id);
   if (copiedId) return copiedId;
 
@@ -1529,7 +1546,13 @@ async function cowEntityForCustomization(
     const klass = await Klasses.findOne(tx, { id: level.klassId } as never);
     if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
-    if (klass.rulesetId === rulesetId) return level.id; // Already owned
+    if (klass.rulesetId === rulesetId) {
+      await lockEntityForMutation(tx, "klasses", klass.id);
+      if (!await KlassLevels.findOne(tx, { id: level.id })) {
+        throw new NotFoundError("Customization source no longer exists; refresh the entity");
+      }
+      return level.id;
+    }
     if (!sourceChain.includes(klass.rulesetId)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
     // COW the klass (copies all levels)
@@ -1562,7 +1585,10 @@ async function cowEntityForCustomization(
   if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
   const entityRecord = entity as Record<string, unknown>;
-  if (entityRecord.rulesetId === rulesetId) return entity.id; // Already owned
+  if (entityRecord.rulesetId === rulesetId) {
+    await lockEntityForMutation(tx, cowType, entity.id);
+    return entity.id;
+  }
   if (!sourceChain.includes(entityRecord.rulesetId as string)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
   const cowResult = await cowEntity(tx, cowType, entityId, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
@@ -1818,7 +1844,7 @@ async function withRulesetScopes<T>(
  *   Consumer surface (any service or route):
  *     `withRulesetScope` / `withRulesetScopes` for single / multi-ruleset
  *     reads. `cowEntity` / `cowEntityForCustomization` and the
- *     `delete*WithCascade` helpers for admin CRUD mutations.
+ *     `lockEntityForMutation` / `delete*WithCascade` helpers for admin CRUD mutations.
  *
  *   Forking primitives (only `RulesetsService` fork/publish):
  *     `buildOverrideMap`, `copyEntity*`, `fetch*`,
@@ -1834,6 +1860,7 @@ async function withRulesetScopes<T>(
  * ──────────────────────────────────────────────────────────────────────────
  */
 export {
+  lockEntityForMutation,
   withRulesetScope,
   withRulesetScopes,
   cowEntity,

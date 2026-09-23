@@ -164,6 +164,9 @@ async function isExtensionInUseByHost(
 // (and, for klasses, its klass_levels). Used by revertOverride and
 // extension-uninstall flows.
 async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId: string) {
+  // A tombstone may already have no row. Still clean up any remaining children
+  // when restoring it; creation cannot succeed against an absent owner.
+  await ENTITY_REPOS[entityType].lockById(tx, entityId);
   const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
 
   // 1. Delete join tables
