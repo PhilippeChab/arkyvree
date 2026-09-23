@@ -154,7 +154,7 @@ export const ModifiersMethods = {
         });
         const modifier = rows[0];
 
-        const custMap = await fetchEntityCustomizations(tx, [sourceModifierId], "modifiers");
+        const custMap = await fetchEntityCustomizations(tx, [sourceModifierId], "modifiers", "modifiers");
         const cust = custMap.get(sourceModifierId);
         if (cust) {
           await copyEntityCustomizations(tx, sourceModifierId, modifier.id, "modifiers", cust);
