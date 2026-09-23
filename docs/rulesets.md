@@ -142,6 +142,8 @@ The child's own entities are always included. Ancestor entities are included onl
 
 ### COW for Complex Entities
 
+`cowEntity` must run inside the mutation transaction. It takes a transaction-scoped advisory lock for the target ruleset/source entity pair before reading the snapshot. Concurrent first edits then reuse the committed copy instead of racing to insert duplicate entities. The snapshot read is a separate statement so PostgreSQL's default READ COMMITTED isolation sees the preceding writer's commit after waiting. Commit and rollback release the lock automatically. This adds one query to COW writes; reads and edits to already-local entities do not acquire this lock, and different fork/source pairs can copy independently.
+
 - **Standard entities** (feats, powers, items, races, skills, etc.): COW copies the entity and all customizations
 - **Classes**: COW copies the entire class including all levels and their customizations/relationships
 - **Customizations on inherited entities**: `cowEntityForCustomization` traces the modifier/property/requirement back to its owning entity, COWs that entity, then finds the matching customization in the new copy via hash matching

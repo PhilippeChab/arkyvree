@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
@@ -9,6 +9,13 @@ import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInRules, EntitySnapshotInstance> {
   constructor() {
     super(entitySnapshotsInRules);
+  }
+
+  /** Call inside the copying transaction, before reading its snapshot. */
+  async lockForCopy(db: Db, rulesetId: string, sourceEntityId: string) {
+    // There may be no snapshot row to lock yet. Scope the advisory lock to
+    // this fork/source pair so unrelated copies can proceed independently.
+    await db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`cow:${rulesetId}:${sourceEntityId}`}, 0))`);
   }
 
   async create(db: Db, values: InferInsertModel<typeof entitySnapshotsInRules>) {
