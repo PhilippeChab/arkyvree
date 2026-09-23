@@ -59,3 +59,30 @@ describe("request validation", () => {
     expect(body.items).toHaveLength(1);
   });
 });
+
+for (const method of ["POST", "PUT"] as const) {
+  for (const [segment, body] of [
+    ["requirements", { level: "1", target: "abilities.strength.base", value: "13", operator: "invalid" }],
+    ["requirements", { level: "1", chainingOperator: "invalid" }],
+    ["modifiers", { target: "abilities.strength.misc", value: "2", operator: "invalid" }],
+  ] as const) {
+    test(`${method} ${segment} rejects invalid operators before a database mutation`, async () => {
+      const id = "00000000-0000-4000-8000-000000000001";
+      const response = await application.request(
+        `/api/rulesets/${id}/customization/feats/${id}/${segment}${method === "PUT" ? `/${id}` : ""}`,
+        { method, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) },
+      );
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ error: "BadRequestError", issues: expect.any(Array) });
+    });
+  }
+}
+
+test("modifier duplication rejects an invalid operator before a database mutation", async () => {
+  const id = "00000000-0000-4000-8000-000000000001";
+  const response = await application.request(`/api/rulesets/${id}/customization/feats/${id}/modifiers/${id}/duplicate`, {
+    method: "POST", headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ target: "abilities.strength.misc", value: "2", operator: "invalid" }),
+  });
+  expect(response.status).toBe(400);
+});

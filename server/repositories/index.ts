@@ -274,7 +274,7 @@ function withRequestCache<T extends object>(name: string, repo: T, opts?: { skip
           const effectiveArgs = opts?.skipCow ? args : canonicalizeArgs(args);
           const result = value.apply(target, effectiveArgs);
           if (result && typeof (result as Promise<unknown>).then === "function") {
-            (result as Promise<unknown>).finally(() => clearRequestCache());
+            return (result as Promise<unknown>).finally(() => clearRequestCache());
           }
           return result;
         };

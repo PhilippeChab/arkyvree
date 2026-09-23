@@ -1,3 +1,4 @@
+import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
@@ -78,7 +79,7 @@ export default new Hono<SessionContext>()
       z.object({
         target: z.string().min(1),
         value: z.string().min(1),
-        operator: z.string().min(1),
+        operator: modifierOperator,
       }),
     ),
     async (c) => {
@@ -120,7 +121,7 @@ export default new Hono<SessionContext>()
       z.object({
         target: z.string().min(1),
         value: z.string().min(1),
-        operator: z.string().min(1),
+        operator: modifierOperator,
       }),
     ),
     async (c) => {
@@ -163,7 +164,7 @@ export default new Hono<SessionContext>()
       z.object({
         target: z.string().min(1),
         value: z.string().min(1),
-        operator: z.string().min(1),
+        operator: modifierOperator,
         updatedAt: z.string().optional(),
       }),
     ),
