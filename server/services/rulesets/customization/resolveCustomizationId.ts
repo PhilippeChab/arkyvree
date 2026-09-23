@@ -6,7 +6,7 @@ export function resolveCustomizationId(
   resolvedEntityId: string,
   customizationId: string,
   copiedIds: ReadonlyMap<string, string>,
-  kind: "property" | "requirement",
+  kind: "property" | "requirement" | "modifier",
 ): string {
   if (resolvedEntityId === entityId) return customizationId;
   const copiedId = copiedIds.get(customizationId);

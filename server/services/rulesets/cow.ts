@@ -46,6 +46,7 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
+import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { hashEntity, type EntityCustomizations, type EntityType, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
 import { getOrFetchRulesetData, type CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 
@@ -1445,7 +1446,7 @@ async function cowEntity(
   return newEntity;
 }
 
-/** Resolve and lock a modifier's owner before changing its requirements. */
+/** Resolve and lock a modifier's owner before customization mutations. */
 async function cowModifierForCustomization(
   tx: Db,
   rulesetId: string,
@@ -1462,14 +1463,10 @@ async function cowModifierForCustomization(
     // The owner lock may have waited for deletion of this modifier.
     const current = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifier.id }));
     if (!current) throw new NotFoundError("Customization source no longer exists; refresh the entity");
-    return current.id;
   }
-  const copiedId = customizationIds.get(modifier.id);
-  if (copiedId) return copiedId;
-
-  // There is no persisted customization-ID mapping. Once the owning entity
-  // was copied, matching stale modifiers by value can select a different row.
-  throw new NotFoundError("Modifier has been copied; refresh the entity");
+  return resolveCustomizationId(
+    modifier.sourceId, resolvedSourceId, modifier.id, customizationIds, "modifier",
+  );
 }
 
 /**
