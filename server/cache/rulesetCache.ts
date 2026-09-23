@@ -1042,7 +1042,9 @@ async function getOrFetchTargetPathsAndLabels(
   fetcher: () => Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>,
   sourceChain: readonly string[] = [],
 ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
-  return targetPathsAndLabelsCache.getOrFetch(`${rulesetId}:${kind}`, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));
+  // Old subscription metadata must not populate the key for the new chain.
+  const key = JSON.stringify([rulesetId, kind, ...sourceChain]);
+  return targetPathsAndLabelsCache.getOrFetch(key, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));
 }
 
 // ──────────────────────────────────────────────────────────────
