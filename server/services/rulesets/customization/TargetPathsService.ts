@@ -1,9 +1,10 @@
 import { db } from "@/server/database/index.ts";
 import { getOrFetchTargetPathsAndLabels } from "@/server/cache/rulesetCache.ts";
-import { BadRequestError } from "@/server/errors/index.ts";
+import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { Rulesets } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { buildSourceChain, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type {
   PaginatedCompletions,
   PathCompletion,
@@ -23,17 +24,20 @@ export const TargetPathsMethods = {
     kind: "modifier" | "requirement",
     entityType?: string,
   ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const result = await getOrFetchTargetPathsAndLabels(rulesetId, kind, async () => {
+    const ruleset = await Rulesets.findOne(db, { id: rulesetId });
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
+    // Compose inside the registered cache fill: composing beforehand can carry
+    // a stale view across invalidation and later cache paths derived from it.
+    const result = await getOrFetchTargetPathsAndLabels(rulesetId, kind, () =>
+      withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
         const generator = RulesetFactory.fromBaseRules(ruleset.baseRules).createTargetPaths();
         return generator.getTargetPathsAndLabels(rulesetData, kind);
-      }, rulesetData.cow.sourceChain);
-      if (!entityType) return result;
-      return {
-        paths: result.paths.filter((p) => !p.allowedEntityTypes || p.allowedEntityTypes.includes(entityType)),
-        segmentLabels: result.segmentLabels,
-      };
-    });
+      }), buildSourceChain(ruleset));
+    if (!entityType) return result;
+    return {
+      paths: result.paths.filter((p) => !p.allowedEntityTypes || p.allowedEntityTypes.includes(entityType)),
+      segmentLabels: result.segmentLabels,
+    };
   },
 
   /**

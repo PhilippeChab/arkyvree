@@ -1,4 +1,5 @@
 import MemoryCache, { isCacheEnabled } from "./MemoryCache.ts";
+import { runWithRequestCache } from "@/server/database/requestCache.ts";
 
 interface Loaded<T> {
   data: T;
@@ -22,7 +23,10 @@ export default class DependentCache<T> {
     const dependencies = new Set(dependencyIds);
     // Register before invoking the loader, including loaders that throw before
     // their first await. Promise identity is the generation token for this key.
-    const promise: Promise<T> = Promise.resolve().then(fetcher).then(({ data, pinned }) => {
+    // A caller may have read before another request invalidated this entry.
+    // Never promote its old repository promises back into a shared cache.
+    // Keep deduplication within the fill, including concurrent reads it starts.
+    const promise: Promise<T> = Promise.resolve().then(() => runWithRequestCache(fetcher)).then(({ data, pinned }) => {
       if (this.pending.get(key)?.promise === promise) {
         this.cache.set(key, { data, dependencies });
         if (pinned) this.cache.pin(key);

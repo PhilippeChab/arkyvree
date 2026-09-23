@@ -1636,7 +1636,7 @@ const cowDataCache = new DependentCache<CowData>();
 
 /**
  * Get or build cached COW data for a ruleset: sourceChain + overrideMap + klass level mappings.
- * Cache key is the rulesetId; invalidated on mutations.
+ * Cache key includes the ruleset ID and ordered source chain; invalidated on mutations.
  *
  * Always reads via the imported `db` (committed state) — never accepts a tx
  * handle. Letting an in-progress mutation's uncommitted writes populate this
@@ -1647,7 +1647,10 @@ async function getOrBuildCowData(
 ): Promise<CowData> {
   // COW maps are shared infrastructure; never build them through a caller's
   // active map (notably during nested master/companion character builds).
-  return cowDataCache.getOrFetch(ruleset.id, [ruleset.id, ...buildSourceChain(ruleset)], async () => ({
+  const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];
+  // A request holding old ruleset metadata must not cache its old subscription
+  // chain under the same key used by readers of the newly committed chain.
+  return cowDataCache.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
     data: await withCowContext(undefined, () => buildCowData(ruleset)),
   }));
 }
@@ -1818,7 +1821,7 @@ async function withRulesetScopes<T>(
  *     `delete*WithCascade` helpers for admin CRUD mutations.
  *
  *   Forking primitives (only `RulesetsService` fork/publish):
- *     `buildSourceChain`, `buildOverrideMap`, `copyEntity*`, `fetch*`,
+ *     `buildOverrideMap`, `copyEntity*`, `fetch*`,
  *     `ENTITY_TYPE_TO_SOURCE_TYPE`. These live here because they share
  *     utilities with the runtime COW path; they aren't "internal" in any
  *     enforceable sense — they're just owned by the fork flow.
@@ -1826,7 +1829,8 @@ async function withRulesetScopes<T>(
  *   Framework internals (used by the cache compose step + the ruleset
  *     implementation layer — `DetailedCharacterDataLoader`, `TargetPaths`,
  *     `LevelUpProjector`): `getOrBuildCowData`, `invalidateCowData`,
- *     `invalidateAllCowData`, `refreshEntityData`, `resolveOverrides`.
+ *     `invalidateAllCowData`, `refreshEntityData`, `resolveOverrides`,
+ *     `buildSourceChain` (also shared with fork/publish).
  * ──────────────────────────────────────────────────────────────────────────
  */
 export {
@@ -1843,13 +1847,13 @@ export {
 
   // Forking primitives — RulesetsService only.
   buildOverrideMap,
-  buildSourceChain,
   ENTITY_TYPE_TO_SOURCE_TYPE,
   fetchEntityCustomizations,
   copyEntityCustomizations,
   copyEntityCustomizationsToMany,
 
   // Framework internals — cache compose step + ruleset implementations.
+  buildSourceChain,
   getOrBuildCowData,
   invalidateAllCowData,
   invalidateCowData,

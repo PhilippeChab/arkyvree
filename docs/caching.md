@@ -148,7 +148,8 @@ From `server/cache/rulesetCache.ts` (re-exported via `server/cache/index.ts`):
 
 Used by `RulesetsService` (fork/publish) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
-- **Forking** (`RulesetsService` only): `buildSourceChain`, `buildOverrideMap`, `buildRootResolver`, `copyEntityCustomizations`, `copyEntityRelationships`, `fetchEntityCustomizations`, `fetchKlassLevelCustomizations`, `fetchKlassRelationships`, `remapEntityFKs`, `archiveModifiersWithCascade`, `ENTITY_TYPE_TO_SOURCE_TYPE`.
+- **Forking** (`RulesetsService` only): `buildOverrideMap`, `buildRootResolver`, `copyEntityCustomizations`, `copyEntityRelationships`, `fetchEntityCustomizations`, `fetchKlassLevelCustomizations`, `fetchKlassRelationships`, `remapEntityFKs`, `archiveModifiersWithCascade`, `ENTITY_TYPE_TO_SOURCE_TYPE`.
+- **Source-chain construction**: `buildSourceChain`, shared by fork/publish and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `getOrFetchRulesetRawData`, `isRulesetRawDataPinned`.
@@ -492,3 +493,14 @@ character build (for example, a familiar loading its master) must load stored
 IDs before composing them for its own ruleset. Even a scope with an empty map
 replaces the outer scope. With process caching disabled, raw reads also bypass
 the process-wide in-flight map so separate worker jobs do not share old reads.
+
+Shared cache fills run in their own request-dedup scope. An older HTTP request
+must not refill an invalidated process cache from promises it cached before a
+concurrent edit. Reads within each fill still deduplicate. COW and target-path
+cache keys include the ordered source chain, so old subscription metadata cannot
+replace entries for a newly subscribed or unsubscribed ruleset.
+
+Target-path composition happens inside the registered cache fill, not before it.
+This lets invalidation reject a late fill throughout composition and generation.
+A path cache hit reads ruleset metadata but skips composition; entity-only
+invalidation still preserves paths, and unrelated rulesets remain cached.
