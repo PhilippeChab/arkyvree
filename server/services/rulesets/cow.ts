@@ -9,7 +9,7 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import MemoryCache from "@/server/cache/MemoryCache.ts";
+import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -1608,7 +1608,7 @@ export interface CowData {
   siblingIds: Set<string>;
 }
 
-const cowDataCache = new MemoryCache<CowData>();
+const cowDataCache = new DependentCache<CowData>();
 
 /**
  * Get or build cached COW data for a ruleset: sourceChain + overrideMap + klass level mappings.
@@ -1621,9 +1621,16 @@ const cowDataCache = new MemoryCache<CowData>();
 async function getOrBuildCowData(
   ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
 ): Promise<CowData> {
-  const cached = cowDataCache.get(ruleset.id);
-  if (cached) return cached;
+  // COW maps are shared infrastructure; never build them through a caller's
+  // active map (notably during nested master/companion character builds).
+  return cowDataCache.getOrFetch(ruleset.id, [ruleset.id, ...buildSourceChain(ruleset)], async () => ({
+    data: await withCowContext(undefined, () => buildCowData(ruleset)),
+  }));
+}
 
+async function buildCowData(
+  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
+): Promise<CowData> {
   const sourceChain = buildSourceChain(ruleset);
 
   let overrideMap: OverrideMap;
@@ -1708,7 +1715,6 @@ async function getOrBuildCowData(
     siblingMap,
     siblingIds: new Set(Array.from(siblingMap.values()).flat()),
   };
-  cowDataCache.set(ruleset.id, cowData);
   return cowData;
 }
 
