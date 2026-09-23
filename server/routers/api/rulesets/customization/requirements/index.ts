@@ -1,3 +1,4 @@
+import { requirementOperator, chainingOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
@@ -53,8 +54,8 @@ export default new Hono<SessionContext>()
         target: z.string().optional(),
         value: z.string().optional(),
         valueType: z.string().optional(),
-        operator: z.string().optional(),
-        chainingOperator: z.string().optional(),
+        operator: requirementOperator.optional(),
+        chainingOperator: chainingOperator.optional(),
       }),
     ),
     async (c) => {
@@ -98,8 +99,8 @@ export default new Hono<SessionContext>()
         target: z.string().optional(),
         value: z.string().optional(),
         valueType: z.string().optional(),
-        operator: z.string().optional(),
-        chainingOperator: z.string().optional(),
+        operator: requirementOperator.optional(),
+        chainingOperator: chainingOperator.optional(),
         updatedAt: z.string().optional(),
       }),
     ),
