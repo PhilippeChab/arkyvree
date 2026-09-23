@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /**
  * Customization page — Properties and Requirements tabs on the same fork's
@@ -16,7 +16,7 @@ test.describe('Customization — Properties and Requirements', () => {
     const forkName = `Feat Props/Reqs Fork ${Date.now()}`;
 
     // Fork the SRD
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Fork\b/ }).click();

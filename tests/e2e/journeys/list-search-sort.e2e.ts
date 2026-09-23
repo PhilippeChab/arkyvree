@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /**
  * Exercises the SearchBar search input on the Feats tab of the Core SRD
@@ -25,7 +25,7 @@ test.describe('List search + sort', () => {
     // Open the Core SRD ruleset detail page from the rulesets list. We
     // don't hard-code the SRD id — click into it from /rulesets and let
     // the URL settle.
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
     await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+/);
 

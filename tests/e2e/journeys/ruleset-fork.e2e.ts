@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 test.describe('Ruleset Fork', () => {
   test('forks the SRD ruleset and the fork shows up in the Forked filter', async ({ page, ownerUser }) => {
@@ -7,7 +7,7 @@ test.describe('Ruleset Fork', () => {
 
     const forkName = `My Fork ${Date.now()}`;
 
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
     await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+/);
 
@@ -33,7 +33,7 @@ test.describe('Ruleset Fork', () => {
   test('fork dialog blocks submit when the name is empty', async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
 
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
 
     await page.locator('[data-testid="MoreVertIcon"]').first().click();

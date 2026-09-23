@@ -1,5 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /**
  * Copy-on-write edit of a forked ruleset entity:
@@ -16,7 +16,7 @@ test.describe('COW Edit on a Forked Ruleset', () => {
     const renamedHuman = `Wandering Folk ${Date.now()}`;
 
     // ── Fork the SRD ─────────────────────────────────────────────
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Fork\b/ }).click();
@@ -54,7 +54,7 @@ test.describe('COW Edit on a Forked Ruleset', () => {
     await expect(page.locator(`text="${renamedHuman}"`).first()).toBeVisible({ timeout: 15_000 });
 
     // ── The base SRD is unaffected ──────────────────────────────
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     const coreCard = page.locator('h6:has-text("Core SRD 3.5")').first();
     await expect(coreCard).toBeVisible();
     await coreCard.click();

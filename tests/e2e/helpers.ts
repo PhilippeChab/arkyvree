@@ -13,6 +13,11 @@ export async function selectOption(page: Page, label: string, optionText?: strin
   }
 }
 
+/** Keep Core SRD reachable when forks push it beyond the first results page. */
+export async function visitCoreRulesetList(page: Page) {
+  await page.goto('/rulesets?search=Core%20SRD%203.5');
+}
+
 export async function signIn(page: Page, email: string, password: string) {
   await page.goto('/sign-in');
   await page.fill('input[name="emailAddress"]', email);

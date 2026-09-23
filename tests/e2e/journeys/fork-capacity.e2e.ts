@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getEmailVerificationCode, fillOtp } from '@/tests/e2e/helpers.ts';
+import { getEmailVerificationCode, fillOtp, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 test.describe('Account capacity — Forks', () => {
   test('a new account can create a second fork', async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe('Account capacity — Forks', () => {
     await page.getByRole('button', { name: /^Skip$/ }).click();
 
     // First public fork
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Fork\b/ }).click();
@@ -33,7 +33,7 @@ test.describe('Account capacity — Forks', () => {
     await expect(page.getByRole('heading', { name: /First Fork/ })).toBeVisible({ timeout: 10000 });
 
     // A second public fork also succeeds.
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await page.locator('h6:has-text("Core SRD 3.5")').first().click();
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Fork\b/ }).click();

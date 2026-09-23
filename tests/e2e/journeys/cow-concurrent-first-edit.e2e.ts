@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { test, expect } from "@/tests/e2e/fixtures.ts";
-import { signIn } from "@/tests/e2e/helpers.ts";
+import { signIn, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
 
 test("concurrent first edits preserve every property on one fork copy", async ({ page, ownerUser }) => {
   await signIn(page, ownerUser.email, ownerUser.password);
-  await page.goto("/rulesets?search=Core%20SRD%203.5");
+  await visitCoreRulesetList(page);
   await page.locator('h6:has-text("Core SRD 3.5")').first().click();
   const baseId = page.url().match(/\/rulesets\/([a-f0-9-]+)/)?.[1];
   expect(baseId).toBeTruthy();

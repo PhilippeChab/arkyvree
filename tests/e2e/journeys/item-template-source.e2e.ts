@@ -1,7 +1,7 @@
 import type { InferResponseType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { test, expect } from "@/tests/e2e/fixtures.ts";
-import { signIn } from "@/tests/e2e/helpers.ts";
+import { signIn, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
 
 type Templates = InferResponseType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"], 200>;
 type EditedItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$put"], 200>;
@@ -13,7 +13,7 @@ for (const width of [375, 1280]) {
 
     test("templates stay editable without a source selector, while variants retain it", async ({ page, ownerUser }) => {
       await signIn(page, ownerUser.email, ownerUser.password);
-      await page.goto("/rulesets");
+      await visitCoreRulesetList(page);
       await page.locator('h6:has-text("Core SRD 3.5")').first().click();
       await page.locator('[data-testid="MoreVertIcon"]').first().click();
       await page.getByRole("menuitem", { name: /^Fork\b/ }).click();

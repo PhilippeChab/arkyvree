@@ -1,11 +1,11 @@
 import { type Page } from '@playwright/test';
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { signIn } from '@/tests/e2e/helpers.ts';
+import { signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 test.setTimeout(60_000);
 
 async function forkSrd(page: Page, name: string) {
-  await page.goto('/rulesets');
+  await visitCoreRulesetList(page);
   await page.locator('h6:has-text("Core SRD 3.5")').first().click();
   await page.locator('[data-testid="MoreVertIcon"]').first().click();
   await page.getByRole('menuitem', { name: /^Fork\b/ }).click();

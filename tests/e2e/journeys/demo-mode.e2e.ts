@@ -1,3 +1,4 @@
+import { visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 import { test, expect } from '@playwright/test';
 
 /**
@@ -25,7 +26,7 @@ test.describe('Demo mode', () => {
     await expect(page.getByText(/Demo mode/)).toBeVisible({ timeout: 10_000 });
 
     // In-app navigation keeps the demo alive
-    await page.goto('/rulesets');
+    await visitCoreRulesetList(page);
     await expect(page.locator('h6:has-text("Core SRD 3.5")')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/Demo mode/)).toBeVisible();
 
