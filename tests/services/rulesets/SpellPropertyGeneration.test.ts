@@ -272,9 +272,9 @@ describe("Spell Property Auto-Generation", () => {
       expect(await Feats.findOne(db, { name: "Spell Focus: Conjuration", rulesetId: ruleset.id })).toBeDefined();
       expect(await Feats.findOne(db, { name: "Greater Spell Focus: Conjuration", rulesetId: ruleset.id })).toBeDefined();
 
-      // Evocation feats should be deleted (no remaining Evocation spells)
-      expect(await Feats.findOne(db, { name: "Spell Focus: Evocation", rulesetId: ruleset.id })).toBeUndefined();
-      expect(await Feats.findOne(db, { name: "Greater Spell Focus: Evocation", rulesetId: ruleset.id })).toBeUndefined();
+      // Evocation feats remain even after the last spell moves to another school.
+      expect(await Feats.findOne(db, { name: "Spell Focus: Evocation", rulesetId: ruleset.id })).toBeDefined();
+      expect(await Feats.findOne(db, { name: "Greater Spell Focus: Evocation", rulesetId: ruleset.id })).toBeDefined();
     });
   });
 
@@ -300,7 +300,7 @@ describe("Spell Property Auto-Generation", () => {
       expect(await Feats.findOne(db, { name: "Greater Spell Focus: Evocation", rulesetId: ruleset.id })).toBeDefined();
     });
 
-    test("should delete Spell Focus feats when last spell of school is removed", async () => {
+    test("should preserve Spell Focus feats when the last spell of a school is removed", async () => {
       const { ruleset, session, aptitudes } = await createTestUserAndRuleset();
 
       const power = await PowersMethods.createRulesetPower(session, ruleset.id, makeSpellBody(aptitudes.spellAptitude.id, {
@@ -314,9 +314,9 @@ describe("Spell Property Auto-Generation", () => {
       // Delete the only Evocation spell
       await PowersMethods.deleteRulesetPower(session, ruleset.id, power.id);
 
-      // Feats should be deleted
-      expect(await Feats.findOne(db, { name: "Spell Focus: Evocation", rulesetId: ruleset.id })).toBeUndefined();
-      expect(await Feats.findOne(db, { name: "Greater Spell Focus: Evocation", rulesetId: ruleset.id })).toBeUndefined();
+      // School feats remain even when no spell currently uses the school
+      expect(await Feats.findOne(db, { name: "Spell Focus: Evocation", rulesetId: ruleset.id })).toBeDefined();
+      expect(await Feats.findOne(db, { name: "Greater Spell Focus: Evocation", rulesetId: ruleset.id })).toBeDefined();
     });
 
     test("should re-create spell with same school after the last one was deleted (auto-feat unique constraint)", async () => {
@@ -328,10 +328,7 @@ describe("Spell Property Auto-Generation", () => {
       }));
       await PowersMethods.deleteRulesetPower(session, ruleset.id, power.id);
 
-      // Re-add a spell of the same school. The auto-generated Spell Focus +
-      // Greater Spell Focus feats must not collide with the just-deleted ones.
-      // Soft-archive on the auto-feats would have triggered a unique constraint
-      // violation here.
+      // Re-adding a spell must reuse the existing school feats without duplicates.
       const recreated = await PowersMethods.createRulesetPower(session, ruleset.id, makeSpellBody(aptitudes.spellAptitude.id, {
         name: "Lightning Bolt",
         school: "Evocation",

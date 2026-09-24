@@ -1,4 +1,3 @@
-import { powersInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import {
   Aptitudes,
@@ -8,7 +7,6 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { deleteModifiersWithCascade, lockEntityForMutation } from "@/server/services/rulesets/cow.ts";
 import {
   FEAT_FAMILY,
   SPELL_AREA_OF_EFFECT,
@@ -23,7 +21,6 @@ import {
   SPELL_TARGET,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-import { and, eq, inArray, isNull } from "drizzle-orm";
 
 export interface SpellFields {
   school: string;
@@ -142,45 +139,4 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
     value: "true",
     valueType: "boolean",
   }]);
-}
-
-export async function deleteSpellFocusFeats(tx: Db, rulesetId: string, sourceChain: string[], schoolName: string) {
-  // Check if any remaining powers in the ruleset (or ancestors) still have this school
-  const rulesetIds = [rulesetId, ...sourceChain];
-  const remainingSchoolProps = await tx
-    .select({ id: propertiesInCustomization.id })
-    .from(propertiesInCustomization)
-    .innerJoin(powersInRules, eq(propertiesInCustomization.entityId, powersInRules.id))
-    .where(and(
-      inArray(powersInRules.rulesetId, rulesetIds),
-      eq(propertiesInCustomization.entityType, "powers"),
-      eq(propertiesInCustomization.type, SPELL_SCHOOL),
-      eq(propertiesInCustomization.value, schoolName),
-      isNull(powersInRules.deletedAt),
-      isNull(propertiesInCustomization.deletedAt),
-    ))
-    .limit(1);
-
-  if (remainingSchoolProps.length > 0) return;
-
-  // No remaining spells with this school — delete both feats
-  for (const featName of [`Spell Focus: ${schoolName}`, `Greater Spell Focus: ${schoolName}`]) {
-    let feat = await Feats.findOne(tx, { name: featName, rulesetId });
-    if (!feat) {
-      for (const ancestorId of sourceChain) {
-        feat = await Feats.findOne(tx, { name: featName, rulesetId: ancestorId });
-        if (feat) break;
-      }
-    }
-    if (!feat) continue;
-
-    await lockEntityForMutation(tx, "feats", feat.id);
-    await deleteModifiersWithCascade(tx, { sourceIds: [feat.id], sourceType: "feats" });
-    await Requirements.deleteMany(tx, { entityIds: [feat.id], entityType: "feats" });
-    await Properties.deleteMany(tx, { entityIds: [feat.id], entityType: "feats" });
-    // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link.
-    // Soft-archive would block a future generateSpellFocusFeats for the same
-    // school (the unique index on feats doesn't filter deleted_at).
-    await Feats.delete(tx, { id: feat.id });
-  }
 }

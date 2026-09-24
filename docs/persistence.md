@@ -120,3 +120,10 @@ If you're adding a new repository that doesn't fit any of these, prefer hard-del
 If you add a new repository or change an existing service's removal pattern, update the relevant section. The categorization is intentionally derived-from-code, not aspirational — if something here doesn't match what the code actually does, the doc is wrong, not the code.
 
 Generated Skill Focus cleanup copies an inherited feat locally before deleting the copy. Its retained COW snapshot is a tombstone: the obsolete feat is hidden from the edited fork’s listings and level-up choices while the ancestor and sibling forks remain unchanged. Locally generated feats are deleted directly. Cleanup refuses to hide a feat already selected by a character in the edited ruleset or a subscribing descendant, including picks stored under an ancestor ID after the feat has been customized locally.
+
+Skill renames delete the old generated feat with its modifiers (and modifier
+requirements), requirements, properties, and junctions before generating its
+replacement. Generated feat names cannot be edited directly. Group membership
+does not own the group's feats: removing a spell or weapon does not delete the
+school's or weapon type's feats. Ordinary override restoration remains an explicit
+per-entity action; this adds no automatic restoration or dependency metadata.

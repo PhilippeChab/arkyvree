@@ -8,9 +8,8 @@ import {
   FeatsAptitudes,
   Modifiers,
   Properties,
-  Requirements,
 } from "@/server/repositories/index.ts";
-import { cowEntityForCustomization, deleteModifiersWithCascade, entityHasCharacterPicks } from "@/server/services/rulesets/cow.ts";
+import { cowEntityForCustomization, deleteModifiersWithCascade, deletePropertiesWithCascade, deleteRequirementsWithCascade, entityHasCharacterPicks } from "@/server/services/rulesets/cow.ts";
 import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
@@ -126,8 +125,8 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     // inherited feat disappears from this fork while its ancestor stays intact.
     const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
     await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "feats" });
-    await Requirements.deleteMany(tx, { entityIds: [targetId], entityType: "feats" });
-    await Properties.deleteMany(tx, { entityIds: [targetId], entityType: "feats" });
+    await deleteRequirementsWithCascade(tx, { entityIds: [targetId], entityType: "feats" });
+    await deletePropertiesWithCascade(tx, { entityIds: [targetId], entityType: "feats" });
     // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link.
     // Soft-archive would block a future generateSkillFeat with the same name
     // (the unique index on feats doesn't filter deleted_at).

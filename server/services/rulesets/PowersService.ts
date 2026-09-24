@@ -227,12 +227,7 @@ export const PowersMethods = {
 
             if (newGroupingValue !== oldGroupingValue) {
               await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, newGroupingValue);
-              if (oldGroupingValue) {
-                await hooks.powers.deleteGroupingFeats(tx, rulesetId, sourceChain, oldGroupingValue);
-              }
             }
-          } else if (oldGroupingValue) {
-            await hooks.powers.deleteGroupingFeats(tx, rulesetId, sourceChain, oldGroupingValue);
           }
         }
 
@@ -270,16 +265,6 @@ export const PowersMethods = {
           throw new NotFoundError("Power not found in this ruleset");
         }
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-
-        // Read grouping value before COW/deleting (from the resolved entity)
-        const groupingProps = await Properties.findManyByEntity(tx, {
-          entityIds: [power.id],
-          entityType: "powers",
-          type: hooks.powers.primaryGroupingType,
-        });
-        const groupingValue = groupingProps.length > 0 ? groupingProps[0].value : null;
-
         let targetId = power.id;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "powers", power.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
@@ -297,10 +282,6 @@ export const PowersMethods = {
         // wipes those join rows when the power row is deleted.
         const rows = await Powers.delete(tx, { id: targetId });
         const deletedPower = rows[0];
-
-        if (groupingValue) {
-          await hooks.powers.deleteGroupingFeats(tx, rulesetId, sourceChain, groupingValue);
-        }
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,

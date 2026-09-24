@@ -6,9 +6,11 @@ import { Dnd35SkillsHooks } from "./SkillsHooks.ts";
 import { Dnd35ClassLevelsHooks } from "./ClassLevelsHooks.ts";
 import { Dnd35LevelsHooks } from "./LevelsHooks.ts";
 import { Dnd35InventoryHooks } from "./InventoryHooks.ts";
+import { Dnd35FeatsHooks } from "./FeatsHooks.ts";
 
 export function createServiceHooks(): ServiceHooks {
   return {
+    feats: new Dnd35FeatsHooks(),
     classes: new Dnd35ClassesHooks(),
     items: new Dnd35ItemsHooks(),
     powers: new Dnd35PowersHooks(),
