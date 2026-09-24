@@ -320,6 +320,8 @@ it can proceed. After a COW copy, clients must use the returned `resolvedEntityI
 stale ancestor customization IDs are rejected. During the initial copy, mutations
 use the exact copied IDs, including sibling properties, modifiers, and modifier
 requirements, so equal values are never used to guess a copied row's identity.
+Sibling copying follows the same source-chain order as display when selecting
+duplicate contributions across extensions.
 
 Modifiers and their requirements are copied in batches, without recursive modifier queries.
 

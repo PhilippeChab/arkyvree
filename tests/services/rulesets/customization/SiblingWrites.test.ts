@@ -14,13 +14,13 @@ import { NotFoundError } from "@/server/errors/index.ts";
 type EntityType = "feats" | "powers";
 type Pairing = "snapshot" | "name";
 
-async function setup(entityType: EntityType, pairing: Pairing) {
+async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
   const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
   const host = await createSeededTestRuleset(session.userId);
   const repo = entityType === "feats" ? Feats : Powers;
   const base = (await repo.findOne(db, { rulesetId: host.ancestorRulesetIds[0], name: entityType === "feats" ? "Toughness" : "Magic Missile" }))!;
   const extensions: Array<{ extension: Awaited<ReturnType<typeof createSeededTestRuleset>>; copy: { id: string } }> = [];
-  for (let index = 0; index < 2; index++) {
+  for (let index = 0; index < extensionCount; index++) {
     const extension = await createSeededTestRuleset(session.userId);
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false, userId: null }, { id: extension.id });
     const copy = pairing === "snapshot"
@@ -31,7 +31,7 @@ async function setup(entityType: EntityType, pairing: Pairing) {
   await RulesetsMethods.subscribeExtension(session, host.id, extensions.map(e => e.extension.id));
   const winnerId = await withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.canonicalize(extensions[0].copy.id));
   const loser = extensions.find(e => e.copy.id !== winnerId)!.copy;
-  return { session, host, winnerId, loser, loserRulesetId: extensions.find(e => e.copy.id === loser.id)!.extension.id };
+  return { session, host, winnerId, loser, extensions, loserRulesetId: extensions.find(e => e.copy.id === loser.id)!.extension.id };
 }
 
 const modifierValues = { target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" };
@@ -148,3 +148,48 @@ test("installing another extension after a local copy retains its contributions"
   const visible = await PropertiesMethods.getEntityProperties(host.id, "feats", local.resolvedEntityId);
   expect(visible.some(p => p.id === property.id)).toBe(true);
 });
+
+for (const entityType of ["feats", "powers"] as const) {
+  for (const pairing of ["snapshot", "name"] as const) {
+    for (const kind of ["property", "modifier"] as const) {
+      test(`${pairing} ${entityType}: copying follows display precedence across three extensions (${kind})`, async () => {
+        const { session, extensions } = await setup(entityType, pairing, 3);
+        for (const [index, { copy }] of extensions.entries()) {
+          if (index === 0) continue;
+          await Properties.create(db, { entityId: copy.id, entityType, type: "PRECEDENCE", value: "same", description: `Extension ${index}` });
+          const [modifier] = await Modifiers.create(db, { ...modifierValues, sourceId: copy.id, sourceType: entityType });
+          await Requirements.create(db, { entityId: modifier.id, entityType: "modifiers", level: "1", chainingOperator: index === 1 ? "and" : "or" });
+        }
+        // Keep the same stored rows and reverse only subscription precedence.
+        for (const order of [[0, 2, 1], [0, 1, 2]]) {
+          const fork = await createSeededTestRuleset(session.userId);
+          await RulesetsMethods.subscribeExtension(session, fork.id, order.map(i => extensions[i].extension.id));
+          invalidateAll();
+          const winnerId = extensions[0].copy.id;
+          const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
+            property: rulesetData.propertiesByEntity.get(winnerId)!.find(p => p.type === "PRECEDENCE")!,
+            modifier: rulesetData.modifiersBySource.get(winnerId)!.find(m => m.target === modifierValues.target)!,
+          }));
+          expect(visible.property.description).toBe(`Extension ${order[1]}`);
+          const sourceRequirements = await Requirements.findManyByEntity(db, { entityIds: [visible.modifier.id], entityType: "modifiers" });
+          expect(sourceRequirements[0].chainingOperator).toBe(order[1] === 1 ? "and" : "or");
+          if (kind === "property") {
+            const original = await Properties.findOne(db, { id: visible.property.id });
+            const updated = await PropertiesMethods.updateEntityProperty(session, fork.id, entityType, winnerId, visible.property.id, { type: "PRECEDENCE", value: "changed" });
+            expect(updated.value).toBe("changed");
+            expect(updated.description).toBe(visible.property.description);
+            expect(updated.id).not.toBe(visible.property.id);
+            expect(await Properties.findOne(db, { id: visible.property.id })).toEqual(original);
+          } else {
+            const added = await RequirementsMethods.createEntityRequirement(session, fork.id, "modifiers", visible.modifier.id, { level: "2", chainingOperator: "and" });
+            expect(added.resolvedEntityId).not.toBe(visible.modifier.id);
+            const copiedRequirements = await Requirements.findManyByEntity(db, { entityIds: [added.resolvedEntityId], entityType: "modifiers" });
+            expect(copiedRequirements).toHaveLength(2);
+            expect(copiedRequirements.find(r => r.level === "1")?.chainingOperator).toBe(sourceRequirements[0].chainingOperator);
+            expect(await Requirements.findManyByEntity(db, { entityIds: [visible.modifier.id], entityType: "modifiers" })).toEqual(sourceRequirements);
+          }
+        }
+      });
+    }
+  }
+}

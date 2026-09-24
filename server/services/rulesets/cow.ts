@@ -1145,10 +1145,14 @@ async function buildOverrideMap(
 
   if (extensionSet.size > 0) {
     const bySource = new Map<string, typeof allSnapshots>();
-    for (const snap of allSnapshots) {
-      const group = bySource.get(snap.sourceEntityId) ?? [];
-      group.push(snap);
-      bySource.set(snap.sourceEntityId, group);
+    // Match compose's source-chain order when choosing duplicate sibling
+    // contributions. The snapshot query has no ordering guarantee.
+    for (const rid of allRulesetIds) {
+      for (const snap of byRuleset.get(rid) ?? []) {
+        const group = bySource.get(snap.sourceEntityId) ?? [];
+        group.push(snap);
+        bySource.set(snap.sourceEntityId, group);
+      }
     }
 
     for (const [sourceId, snaps] of bySource) {
