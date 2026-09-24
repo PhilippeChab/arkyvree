@@ -19,6 +19,7 @@ import {
   deleteRequirementsWithCascade,
   entityHasCharacterPicks,
   repointTombstoneSnapshot,
+  lockEntityForMutation,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
@@ -283,6 +284,8 @@ export const PowersMethods = {
         if (isInherited) {
           const cowResult = await cowEntity(tx, "powers", power.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
+        } else {
+          await lockEntityForMutation(tx, "powers", targetId);
         }
 
         // Customizations are polymorphic FKs — Postgres can't cascade these.

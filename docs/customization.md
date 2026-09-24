@@ -306,7 +306,7 @@ All 11 core classes: fighter, barbarian, cleric, rogue, sorcerer, monk, wizard, 
 
 Ruleset customization endpoints require the source entity to belong to the composed ruleset. IDs outside that scope (including character IDs) are rejected before writes; inherited sources are copied before customization.
 
-Nested modifiers resolve ownership through their parent chain to a ruleset entity. Owned chains remain editable; inherited chains are copied with their requirements before mutation. Missing parents, cycles, and roots outside the ruleset source chain are rejected.
+Modifiers belong directly to ruleset entities or class levels. A modifier can have requirements, but cannot have other modifiers. Editing an inherited modifier or its requirements copies its owning entity and preserves the modifier requirements. Missing owners and sources outside the ruleset source chain are rejected.
 
 Customization mutations validate the stored row owner in SQL. After a COW copy,
 clients must use the returned `resolvedEntityId` and reload its customizations;
@@ -314,4 +314,16 @@ stale ancestor customization IDs are rejected. During the initial copy, mutation
 use the exact copied IDs, so identical modifiers with different requirements
 cannot be confused with one another.
 
-Nested modifier copying fetches customization rows in batches by tree depth. Sibling trees share each read batch instead of performing separate reads per node.
+Modifiers and their requirements are copied in batches, without recursive modifier queries.
+
+Customization writes hold a PostgreSQL row lock on their owning ruleset entity
+until the transaction ends. Deletion and override restoration acquire that same
+lock before removing child rows. Requirements on modifiers lock the modifier's
+owner; class levels lock their class. After waiting, sources are checked again so a
+deleted modifier or level cannot receive a new customization. Ordinary reads
+do not take these locks, and different owners can be edited independently.
+
+First COW copies retain the fork/source advisory lock and hold a shared row lock
+on the source while copying. An existing copy is locked before reuse. Modifier
+deletion removes the selected modifiers and batches removal of their requirements
+and activity records.

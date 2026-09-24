@@ -15,6 +15,7 @@ import {
   deleteRequirementsWithCascade,
   entityHasCharacterPicks,
   repointTombstoneSnapshot,
+  lockEntityForMutation,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
@@ -190,6 +191,8 @@ export const SkillsMethods = {
         if (isInherited) {
           const cowResult = await cowEntity(tx, "skills", skill.id, rulesetId, sourceChain);
           targetId = cowResult.id as string;
+        } else {
+          await lockEntityForMutation(tx, "skills", targetId);
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;

@@ -202,7 +202,7 @@ async function fetchRulesetRawData(
     ...klassLevelIds,
   ];
   const propertyEntityIds = [...customizationEntityIds, rulesetId];
-  const [properties, firstPassModifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves] = await Promise.all([
+  const [properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves] = await Promise.all([
     propertyEntityIds.length > 0
       ? Properties.findManyByEntityIds(db, { entityIds: propertyEntityIds })
       : Promise.resolve<Property[]>([]),
@@ -219,22 +219,6 @@ async function fetchRulesetRawData(
       ? KlassLevelSaves.findMany(db, { klassLevelIds })
       : Promise.resolve<KlassLevelSave[]>([]),
   ]);
-
-  // Nested modifiers (sourceType='modifiers', sourceId=anotherModifier.id) aren't
-  // caught by the first pass since modifier IDs weren't in customizationEntityIds.
-  // Fetch them now so ModifiersService.getEntityModifiers(..., "modifiers", id)
-  // can resolve from the raw cache. Loop in case of deeper nesting.
-  const modifiers = [...firstPassModifiers];
-  const seenModifierIds = new Set(modifiers.map((m) => m.id));
-  let frontier = modifiers.map((m) => m.id);
-  while (frontier.length > 0) {
-    const nested = await Modifiers.findManyBySourceIds(db, { sourceIds: frontier });
-    const fresh = nested.filter((m) => !seenModifierIds.has(m.id));
-    if (fresh.length === 0) break;
-    for (const m of fresh) seenModifierIds.add(m.id);
-    modifiers.push(...fresh);
-    frontier = fresh.map((m) => m.id);
-  }
 
   // Round 4: requirements (need modifier IDs for entityType='modifiers' lookups).
   const requirementEntityIds = [...customizationEntityIds, ...modifiers.map((m) => m.id)];

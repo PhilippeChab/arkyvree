@@ -46,6 +46,7 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
+import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { hashEntity, type EntityCustomizations, type EntityType, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
 import { getOrFetchRulesetData, type CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 
@@ -65,7 +66,6 @@ const ENTITY_TYPE_TO_SOURCE_TYPE: Record<string, string> = {
   items: "items",
   races: "races",
   klass_levels: "klass_levels",
-  modifiers: "modifiers",
 };
 
 // Tables that participate in the name-based sibling fallback. Limited to
@@ -289,24 +289,6 @@ async function fetchKlassLevelCustomizations(
   return map;
 }
 
-// Fetch a whole depth at a time: copying many sibling modifier trees must not
-// issue a separate customization query for every node in those trees.
-async function fetchNestedModifierCustomizations(tx: Db, modifierIds: string[]): Promise<Map<string, EntityCustomizations>> {
-  const result = new Map<string, EntityCustomizations>();
-  let frontier = modifierIds;
-  while (frontier.length > 0) {
-    if (frontier.some(id => result.has(id))) throw new NotFoundError("Cyclic modifier source");
-    const level = await fetchEntityCustomizations(tx, frontier, "modifiers", "modifiers");
-    const next: string[] = [];
-    for (const [id, customizations] of level) {
-      result.set(id, customizations);
-      next.push(...customizations.modifiers.map(modifier => modifier.id));
-    }
-    frontier = next;
-  }
-  return result;
-}
-
 // Copy customizations from source entity to target entity
 async function copyEntityCustomizations(
   tx: Db,
@@ -316,7 +298,7 @@ async function copyEntityCustomizations(
   sourceCust: EntityCustomizations,
   customizationIds?: Map<string, string>,
 ): Promise<void> {
-  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, undefined, new Set(), customizationIds);
+  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, customizationIds);
 }
 
 async function copyEntityCustomizationsToMany(
@@ -324,17 +306,9 @@ async function copyEntityCustomizationsToMany(
   targetEntityIds: string[],
   entityType: string,
   sourceCust: EntityCustomizations,
-  nested: ReadonlyMap<string, EntityCustomizations> | undefined = undefined,
-  ancestorModifierIds: ReadonlySet<string> = new Set(),
   customizationIds?: Map<string, string>,
 ): Promise<void> {
   if (targetEntityIds.length === 0) return;
-  const nestedCustomizations = nested ?? await fetchNestedModifierCustomizations(tx, sourceCust.modifiers.map(modifier => modifier.id));
-  const visited = new Set(ancestorModifierIds);
-  for (const modifier of sourceCust.modifiers) {
-    if (visited.has(modifier.id)) throw new NotFoundError("Cyclic modifier source");
-    visited.add(modifier.id);
-  }
   const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
 
   const modifiersPerTarget = sourceCust.modifiers.length;
@@ -352,7 +326,7 @@ async function copyEntityCustomizationsToMany(
     : [];
 
   // Record identities at copy time; equal modifier values do not imply the
-  // same modifier (their requirements and nested children may differ).
+  // same modifier (their requirements may differ).
   for (let i = 0; i < modifiersPerTarget; i++) {
     customizationIds?.set(sourceCust.modifiers[i].id, newModifiers[i].id);
   }
@@ -408,16 +382,6 @@ async function copyEntityCustomizationsToMany(
     );
     for (let i = 0; i < sourceCust.modifierRequirements.length; i++) {
       customizationIds?.set(sourceCust.modifierRequirements[i].id, copies[i].id);
-    }
-  }
-
-  if (newModifiers.length > 0) {
-    for (let i = 0; i < modifiersPerTarget; i++) {
-      const child = nestedCustomizations.get(sourceCust.modifiers[i].id);
-      if (!child || (child.modifiers.length === 0 && child.properties.length === 0)) continue;
-      const targets = targetEntityIds.map((_id, targetIndex) => newModifiers[targetIndex * modifiersPerTarget + i].id);
-      // Direct requirements were copied above via modifierRequirements.
-      await copyEntityCustomizationsToMany(tx, targets, "modifiers", { ...child, requirements: [] }, nestedCustomizations, visited, customizationIds);
     }
   }
 }
@@ -961,12 +925,8 @@ async function deleteModifiersWithCascade(
   const deleted = await Modifiers.deleteMany(tx, where);
   if (deleted.length > 0) {
     const modifierIds = deleted.map((m) => m.id);
-    const deletedRequirements = await Requirements.deleteMany(tx, { entityIds: modifierIds, entityType: "modifiers" });
-
+    await deleteRequirementsWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
     await Activities.deleteByTargets(tx, { targetIds: modifierIds, targetTable: getTableName(modifiersInCustomization) });
-    if (deletedRequirements.length > 0) {
-      await Activities.deleteByTargets(tx, { targetIds: deletedRequirements.map((r) => r.id), targetTable: getTableName(requirementsInCustomization) });
-    }
   }
   return deleted;
 }
@@ -1366,6 +1326,13 @@ const ENTITY_REPOS = {
   mechanics: Mechanics,
 } as const;
 
+/** Serialize child writes with deletion/revert of their stored owner. */
+async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
+  if (!await ENTITY_REPOS[entityType].lockById(tx, entityId)) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
+}
+
 /**
  * COW trigger: copies a parent entity to the child fork, including all
  * customizations, relationships, and creates the entity_snapshot record.
@@ -1398,7 +1365,8 @@ async function cowEntity(
     rulesetId: childRulesetId,
   });
   if (existingSnapshot) {
-    const existing = await repo.findOne(tx, { id: existingSnapshot.forkedEntityId } as never);
+    const exists = await repo.lockById(tx, existingSnapshot.forkedEntityId);
+    const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId } as never) : undefined;
     if (existing) return existing as EntityWithId;
     await EntitySnapshots.deleteBySourceAndRuleset(tx, {
       sourceEntityId: entityId,
@@ -1407,6 +1375,9 @@ async function cowEntity(
   }
 
   // 1. Fetch the parent entity
+  if (!await repo.lockById(tx, entityId, "share")) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
   const parentEntity = await repo.findOne(tx, { id: entityId } as never);
   if (!parentEntity) {
     throw new Error(`Parent entity not found: ${entityType}/${entityId}`);
@@ -1475,31 +1446,27 @@ async function cowEntity(
   return newEntity;
 }
 
-/** Resolve the owning entity through nested modifiers before allowing a write. */
+/** Resolve and lock a modifier's owner before customization mutations. */
 async function cowModifierForCustomization(
   tx: Db,
   rulesetId: string,
   modifierId: string,
-  visited: Set<string>,
   customizationIds: Map<string, string>,
 ): Promise<string> {
-  if (visited.has(modifierId)) throw new NotFoundError("Cyclic modifier source");
-  visited.add(modifierId);
   // Keep the stored source ID: the repository proxy remaps it after COW,
   // which would make an ancestor modifier appear locally owned on repeat edits.
   const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
-  if (!modifier) throw new NotFoundError("Customization source not found in this ruleset");
+  if (!modifier || modifier.sourceType === "modifiers") throw new NotFoundError("Customization source not found in this ruleset");
 
-  const resolvedSourceId = modifier.sourceType === "modifiers"
-    ? await cowModifierForCustomization(tx, rulesetId, modifier.sourceId, visited, customizationIds)
-    : await cowEntityForCustomization(tx, rulesetId, modifier.sourceType, modifier.sourceId, customizationIds);
-  if (resolvedSourceId === modifier.sourceId) return modifier.id;
-  const copiedId = customizationIds.get(modifier.id);
-  if (copiedId) return copiedId;
-
-  // There is no persisted customization-ID mapping. Once the owning entity
-  // was copied, matching stale modifiers by value can select a different row.
-  throw new NotFoundError("Modifier has been copied; refresh the entity");
+  const resolvedSourceId = await cowEntityForCustomization(tx, rulesetId, modifier.sourceType, modifier.sourceId, customizationIds);
+  if (resolvedSourceId === modifier.sourceId) {
+    // The owner lock may have waited for deletion of this modifier.
+    const current = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifier.id }));
+    if (!current) throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
+  return resolveCustomizationId(
+    modifier.sourceId, resolvedSourceId, modifier.id, customizationIds, "modifier",
+  );
 }
 
 /**
@@ -1529,7 +1496,13 @@ async function cowEntityForCustomization(
     const klass = await Klasses.findOne(tx, { id: level.klassId } as never);
     if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
-    if (klass.rulesetId === rulesetId) return level.id; // Already owned
+    if (klass.rulesetId === rulesetId) {
+      await lockEntityForMutation(tx, "klasses", klass.id);
+      if (!await KlassLevels.findOne(tx, { id: level.id })) {
+        throw new NotFoundError("Customization source no longer exists; refresh the entity");
+      }
+      return level.id;
+    }
     if (!sourceChain.includes(klass.rulesetId)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
     // COW the klass (copies all levels)
@@ -1542,7 +1515,7 @@ async function cowEntityForCustomization(
   }
 
   if (entityType === "modifiers") {
-    return cowModifierForCustomization(tx, rulesetId, entityId, new Set(), customizationIds);
+    return cowModifierForCustomization(tx, rulesetId, entityId, customizationIds);
   }
 
   // Standard entity types
@@ -1562,7 +1535,10 @@ async function cowEntityForCustomization(
   if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
   const entityRecord = entity as Record<string, unknown>;
-  if (entityRecord.rulesetId === rulesetId) return entity.id; // Already owned
+  if (entityRecord.rulesetId === rulesetId) {
+    await lockEntityForMutation(tx, cowType, entity.id);
+    return entity.id;
+  }
   if (!sourceChain.includes(entityRecord.rulesetId as string)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
   const cowResult = await cowEntity(tx, cowType, entityId, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
@@ -1818,7 +1794,7 @@ async function withRulesetScopes<T>(
  *   Consumer surface (any service or route):
  *     `withRulesetScope` / `withRulesetScopes` for single / multi-ruleset
  *     reads. `cowEntity` / `cowEntityForCustomization` and the
- *     `delete*WithCascade` helpers for admin CRUD mutations.
+ *     `lockEntityForMutation` / `delete*WithCascade` helpers for admin CRUD mutations.
  *
  *   Forking primitives (only `RulesetsService` fork/publish):
  *     `buildOverrideMap`, `copyEntity*`, `fetch*`,
@@ -1834,6 +1810,7 @@ async function withRulesetScopes<T>(
  * ──────────────────────────────────────────────────────────────────────────
  */
 export {
+  lockEntityForMutation,
   withRulesetScope,
   withRulesetScopes,
   cowEntity,
