@@ -6,7 +6,7 @@ const GENERATED_FAMILIES = new Set([
   "Skill Focus", "Spell Focus", "Greater Spell Focus",
   "Weapon Focus", "Greater Weapon Focus", "Weapon Specialization", "Greater Weapon Specialization",
   "Improved Critical", "Simple Weapon Proficiency", "Martial Weapon Proficiency", "Exotic Weapon Proficiency",
-  "Rapid Reload", "Favored Enemy",
+  "Rapid Reload", "Favored Enemy", "Favored Enemy Specialization",
 ]);
 
 export class Dnd35FeatsHooks implements FeatsHooks {

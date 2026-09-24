@@ -18,6 +18,18 @@ async function setup() {
   return { session, fork };
 }
 
+test("Favored Enemy Specialization: Dragon cannot be renamed before or after COW", async () => {
+  const { session, fork } = await setup();
+  const feat = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Favored Enemy Specialization: Dragon" }))!;
+  expect(feat).toBeDefined();
+  await expect(FeatsMethods.updateRulesetFeat(session, fork.id, feat.id, { name: "Dragon Specialist" })).rejects.toThrow("Generated feats cannot be renamed");
+  expect(await EntitySnapshots.findBySourceAndRuleset(db, { rulesetId: fork.id, sourceEntityId: feat.id })).toBeUndefined();
+  const local = await FeatsMethods.updateRulesetFeat(session, fork.id, feat.id, { name: feat.name, description: "Customized description" });
+  expect(local.description).toBe("Customized description");
+  await expect(FeatsMethods.updateRulesetFeat(session, fork.id, local.id, { name: "Dragon Specialist" })).rejects.toThrow("Generated feats cannot be renamed");
+  expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
+});
+
 for (const family of ["Skill Focus", "Spell Focus", "Greater Spell Focus", "Weapon Focus", "Improved Critical", "Martial Weapon Proficiency", "Rapid Reload", "Favored Enemy"]) {
   test(`${family} names are protected on inherited and locally customized feats`, async () => {
     const { session, fork } = await setup();
