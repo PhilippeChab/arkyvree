@@ -28,7 +28,7 @@ async function subscribe(session: Awaited<ReturnType<typeof setup>>["session"], 
   return host;
 }
 
-for (const operation of ["delete", "property", "school"] as const) test(`inherited spell-school families clean up and restore after ${operation}`, async () => {
+for (const operation of ["delete", "property", "school"] as const) test(`inherited spell-school families clean up after ${operation} and require explicit feat restoration`, async () => {
   const { session, extension, wizard } = await setup();
   const spell = await PowersMethods.createRulesetPower(session, extension.id, { name: "Unique School Spell", school: "Lifecycle School", aptitudes: [{ id: wizard.id }] });
   const original = (await Feats.findOne(db, { rulesetId: extension.id, name: "Spell Focus: Lifecycle School" }))!;
@@ -48,9 +48,15 @@ for (const operation of ["delete", "property", "school"] as const) test(`inherit
   expect(await Feats.findOne(db, { id: original.id })).toEqual(original);
   await RulesetsMethods.revertOverride(session, host.id, "powers", spell.id);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
+    expect(rulesetData.featsById.has(original.id)).toBe(false);
+    expect(rulesetData.featsById.has(greater.id)).toBe(false);
+    expect(rulesetData.feats.some(feat => feat.name.includes("Replacement School"))).toBe(false);
+  });
+  await RulesetsMethods.revertOverride(session, host.id, "feats", original.id);
+  await RulesetsMethods.revertOverride(session, host.id, "feats", greater.id);
+  await withRulesetScope(db, host.id, async ({ rulesetData }) => {
     expect(rulesetData.featsById.get(original.id)?.id).toBe(original.id);
     expect(rulesetData.featsById.get(greater.id)?.id).toBe(greater.id);
-    expect(rulesetData.feats.some(feat => feat.name.includes("Replacement School"))).toBe(false);
   });
 });
 
@@ -65,6 +71,8 @@ test("another visible spell keeps the school's generated feats", async () => {
   await PowersMethods.deleteRulesetPower(session, host.id, second.id);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => expect(rulesetData.featsById.has(focus.id)).toBe(false));
   await RulesetsMethods.revertOverride(session, host.id, "powers", second.id);
+  await withRulesetScope(db, host.id, async ({ rulesetData }) => expect(rulesetData.featsById.has(focus.id)).toBe(false));
+  await RulesetsMethods.revertOverride(session, host.id, "feats", focus.id);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => expect(rulesetData.featsById.has(focus.id)).toBe(true));
 });
 
@@ -87,7 +95,6 @@ test("an independently authored feat occupying a generated name remains independ
   await PowersMethods.deleteRulesetPower(session, extension.id, spell.id);
   const remaining = await Feats.findOne(db, { id: independent.id });
   expect(remaining?.name).toBe("Spell Focus: Authored School");
-  expect(remaining?.generatedFrom).toBeNull();
 });
 
 for (const withVariant of [false, true]) test(`weapon families follow weapon type and restore (inherited variant: ${withVariant})`, async () => {
@@ -118,5 +125,7 @@ for (const withVariant of [false, true]) test(`weapon families follow weapon typ
   await ItemsMethods.deleteRulesetItem(session, host.id, second.id);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => expect(rulesetData.featsById.has(featId)).toBe(false));
   await RulesetsMethods.revertOverride(session, host.id, "items", weapon.id);
+  await withRulesetScope(db, host.id, async ({ rulesetData }) => expect(rulesetData.featsById.has(featId)).toBe(false));
+  await RulesetsMethods.revertOverride(session, host.id, "feats", featId);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => expect(rulesetData.featsById.get(featId)?.id).toBe(featId));
 });

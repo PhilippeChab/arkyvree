@@ -1,12 +1,38 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import type { GeneratedFeatDefinition, GeneratedFeatsHooks } from "@/server/rulesets/hooks/GeneratedFeatsHooks.ts";
+import type { GeneratedFeatDefinition, GeneratedFeatSource, GeneratedFeatsHooks } from "@/server/rulesets/hooks/GeneratedFeatsHooks.ts";
 import { FEAT_FAMILY, SPELL_SCHOOL, WEAPON_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { GeneratedFeatSource } from "@/shared/rulesets/generatedFeats.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 export class Dnd35GeneratedFeatsHooks implements GeneratedFeatsHooks {
   readonly entityTypes = ["skills", "powers", "items"];
   readonly propertyTypes = [SPELL_SCHOOL, WEAPON_TYPE];
+
+  names(source: GeneratedFeatSource): Map<string, string> {
+    const families = source.kind === "skills" ? ["Skill Focus"]
+      : source.kind === SPELL_SCHOOL ? ["Spell Focus", "Greater Spell Focus"]
+      : source.kind === WEAPON_TYPE ? [
+        "Weapon Focus", "Greater Weapon Focus", "Weapon Specialization", "Greater Weapon Specialization",
+        "Improved Critical", "Simple Weapon Proficiency", "Martial Weapon Proficiency", "Exotic Weapon Proficiency", "Rapid Reload",
+      ] : [];
+    return new Map(families.map(family => [`${family}: ${source.label}`, family]));
+  }
+
+  matchFamily(data: CachedRulesetData, feat: { id: string; name: string }, source: GeneratedFeatSource, names: ReadonlyMap<string, string>): string | undefined {
+    const namedFamily = names.get(feat.name);
+    const family = (data.propertiesByEntity.get(feat.id) ?? []).find(property => property.type === FEAT_FAMILY)?.value;
+    const isFamily = family != null && names.has(`${family}: ${source.label}`);
+    if (!namedFamily && !isFamily) return undefined;
+    if (namedFamily && family === namedFamily) return namedFamily;
+    const targetsSource = (data.modifiersBySource.get(feat.id) ?? []).some(modifier =>
+      source.kind === "skills" ? modifier.target === `skills.${stripSeparators(source.label)}.misc`
+        : source.kind === SPELL_SCHOOL ? modifier.target === `powers.groups.${source.key}.*.dc.misc`
+          : source.kind === WEAPON_TYPE && modifier.target.startsWith(`items.weapons.${source.key}.`));
+    if (namedFamily && targetsSource) return namedFamily;
+    // Locally created feats have no COW ancestry. Recognize a renamed one only
+    // while its existing family and target still establish the dependency.
+    if (isFamily && targetsSource) return family;
+    return undefined;
+  }
   source(entityType: string, entity: { id: string; name: string }, properties: { type: string; value: string | null }[]): GeneratedFeatSource | null {
     if (entityType === "skills") return { kind: "skills", key: entity.id, label: entity.name };
     const propertyType = entityType === "powers" ? SPELL_SCHOOL : entityType === "items" ? WEAPON_TYPE : null;
@@ -47,8 +73,7 @@ export class Dnd35GeneratedFeatsHooks implements GeneratedFeatsHooks {
         level: "1", target: `feats.spellfocus${source.key}.possessed`, operator: "equal", value: "true", valueType: "boolean",
       }] : [],
     }));
-    // Weapon families are supplied by content packages. Their identity and
-    // COW cleanup/restore use the same lifecycle; editing an item doesn't seed new families.
+    // Weapon families are supplied by content packages; editing an item doesn't seed new families.
     return [];
   }
 }

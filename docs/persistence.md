@@ -119,8 +119,23 @@ If you're adding a new repository that doesn't fit any of these, prefer hard-del
 
 If you add a new repository or change an existing service's removal pattern, update the relevant section. The categorization is intentionally derived-from-code, not aspirational — if something here doesn't match what the code actually does, the doc is wrong, not the code.
 
-Generated feats use the shared lifecycle in `server/services/rulesets/generatedFeats.ts`. `feats.generated_from` stores their family and source identity independently of their editable display name. Ruleset hooks define sources and generation recipes; the shared service applies COW, character-pick checks, cleanup, and restoration. An inherited feat is copied locally before deleting the copy. The snapshot remains a tombstone and records `generated_deletion` only for automatic cleanup. A source restored later can remove that automatic tombstone, while independent user deletions and ancestor/sibling data remain unchanged. Ordinary snapshot identity and content hashes remain immutable.
+Generated feats use the shared lifecycle in `server/services/rulesets/generatedFeats.ts`.
+Ruleset hooks identify families using existing names, `FEAT_FAMILY` properties,
+and modifier targets. Existing COW snapshot source names identify renamed inherited
+feats, even when their local customizations have changed. Locally created feats
+have no ancestry; once their name, family, and target no longer identify a generated
+relationship, cleanup leaves them alone rather than guessing.
 
-Skill sources use skill IDs (resolved through COW), spell schools use their grouping key, and weapon families use `WEAPON_TYPE`, not the item's display name. Shared grouping feats are removed only when no other composed source uses that group. Weapon recipes remain supplied by content packages; changing an item doesn't generate new weapon families. Entity deletion, source-property edits, and override restoration use the same lifecycle.
+Cleanup copies inherited feats locally before deleting the copies. The resulting
+ordinary tombstones remain hidden until explicitly restored. Restoring a skill,
+spell, or item does **not** restore its deleted feats; each restoration is separate.
+Recreating a skill or returning to its previous name also preserves existing feat
+tombstones. New generated families are still created when no matching feat or
+tombstone exists.
+Reverting a changed source still removes obsolete dependents of its discarded local
+version. Character-pick checks and transaction rollback protect selected feats.
 
-Migration 0070 assigns identities to existing conventionally named generated feats and propagates them through COW snapshots to renamed copies. It does not guess deletion provenance for historical tombstones or identity for historically renamed local feats without a source snapshot. Those ambiguous historical rows retain their previous state and can be restored/edited explicitly. New generated feats and new automatic deletions are tracked explicitly.
+Shared spell-school and weapon-type families are removed only when no other composed
+source uses that group. Weapon sources follow `WEAPON_TYPE`, including item-template
+inheritance, not item display names. Weapon recipes remain package-supplied. No new
+schema, persistent identity, or deletion-reason metadata is used.

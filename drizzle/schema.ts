@@ -1,6 +1,5 @@
 import { pgSchema, index, foreignKey, timestamp, uuid, text, uniqueIndex, check, numeric, json, unique, integer, boolean, primaryKey, pgEnum, smallint, customType } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
-import type { GeneratedFeatIdentity, GeneratedFeatSource } from "@/shared/rulesets/generatedFeats.ts";
 
 const bytea = customType<{ data: Buffer }>({
 	dataType() { return "bytea"; },
@@ -355,7 +354,6 @@ export const contributorsInCharacter = character.table("character_contributors",
 ]);
 
 export const featsInRules = rules.table("feats", {
-  generatedFrom: json("generated_from").$type<GeneratedFeatIdentity>(),
 	createdAt: timestamp("created_at", { mode: 'string', withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string', withTimezone: true }).defaultNow().notNull(),
 	deletedAt: timestamp("deleted_at", { mode: 'string', withTimezone: true }),
@@ -1137,7 +1135,6 @@ export const rulesetExtensionsInRules = rules.table("ruleset_extensions", {
 ]);
 
 export const entitySnapshotsInRules = rules.table("entity_snapshots", {
-  generatedDeletion: json("generated_deletion").$type<GeneratedFeatSource>(),
 	id: uuid().default(sql`public.gen_random_uuid()`).primaryKey().notNull(),
 	rulesetId: uuid("ruleset_id").notNull(),
 	entityType: text("entity_type").notNull(),

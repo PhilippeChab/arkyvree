@@ -1,8 +1,6 @@
 import {
   featsAptitudesInRules,
   featsInRules,
-  skillsInRules,
-  rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import {
   modifiersInCustomization,
@@ -12,8 +10,6 @@ import {
 import type { Db } from "@/server/database/index.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
 import { buildRequirements } from "@/database/packages/dnd35/seed-utils/helpers.ts";
-import { generatedFeatIdentity } from "@/server/rulesets/dnd3.5/generatedFeatIdentity.ts";
-import { eq, inArray } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
 // seedFeats — bulk feat insert with aptitudes, modifiers, requirements, properties
@@ -27,14 +23,6 @@ export async function seedFeats(
 ): Promise<Record<string, string>> {
   if (feats.length === 0) return {};
 
-  const ruleset = await db.query.rulesetsInRules.findFirst({ where: eq(rulesetsInRules.id, rulesetId) });
-  const chain = [rulesetId, ...(ruleset?.extensionRulesetIds ?? []), ...(ruleset?.ancestorRulesetIds ?? [])];
-  const skills = await db.select().from(skillsInRules).where(inArray(skillsInRules.rulesetId, chain));
-  const skillsByName = new Map<string, string>();
-  for (const id of chain) for (const skill of skills) {
-    if (skill.rulesetId === id && !skillsByName.has(skill.name)) skillsByName.set(skill.name, skill.id);
-  }
-
   // 1. Insert all feats
   const insertedFeats = await db
     .insert(featsInRules)
@@ -45,7 +33,6 @@ export async function seedFeats(
         description: f.description,
         stackable: f.stackable ?? false,
         selectable: f.selectable ?? true,
-        generatedFrom: generatedFeatIdentity(f.name, skillsByName),
       })),
     )
     .returning({ id: featsInRules.id, name: featsInRules.name });

@@ -911,21 +911,21 @@ export const RulesetsMethods = {
         throw new ConflictError("Cannot revert override while characters in this ruleset depend on it");
       }
 
-      // Dependency rules belong to the ruleset module; restore uses the same
-      // generated-feat lifecycle as normal entity edits.
+      // Remove dependents of the discarded local source. Restoring its ancestor
+      // does not restore deleted feats; those are separate explicit actions.
       const repo = ENTITY_REPOS[entityType];
-      const sourceEntity = hasGeneratedFeats ? await repo.findOne(tx, { id: snapshot.sourceEntityId } as never) : undefined;
-      if (sourceEntity) {
-        const localEntity = await repo.findOne(tx, { id: snapshot.forkedEntityId } as never);
+      const localEntity = hasGeneratedFeats ? await repo.findOne(tx, { id: snapshot.forkedEntityId } as never) : undefined;
+      const sourceEntity = localEntity ? await repo.findOne(tx, { id: snapshot.sourceEntityId } as never) : undefined;
+      if (localEntity && sourceEntity) {
         const properties = await Properties.findManyByEntity(tx, {
           entityIds: [snapshot.sourceEntityId, snapshot.forkedEntityId], entityType,
         });
-        const before = localEntity ? generatedHooks.source(entityType, localEntity,
-          properties.filter(property => property.entityId === localEntity.id)) : null;
+        const before = generatedHooks.source(entityType, localEntity,
+          properties.filter(property => property.entityId === localEntity.id));
         const after = generatedHooks.source(entityType, sourceEntity,
           properties.filter(property => property.entityId === sourceEntity.id));
-        if ((before || after) && !(before && after && before.kind === after.kind && before.label === after.label)) await withRulesetScope(tx, rulesetId, async ({ rulesetData }) => {
-          await syncGeneratedFeats(tx, rulesetId, rulesetData, generatedHooks, snapshot.forkedEntityId, before, after);
+        if (before && !(after && before.kind === after.kind && before.label === after.label)) await withRulesetScope(tx, rulesetId, async ({ rulesetData }) => {
+          await syncGeneratedFeats(tx, rulesetId, rulesetData, generatedHooks, snapshot.forkedEntityId, before, null);
         });
       }
 

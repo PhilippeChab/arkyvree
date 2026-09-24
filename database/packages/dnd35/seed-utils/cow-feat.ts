@@ -40,7 +40,6 @@ export async function cowFeatIntoExtension(
       description: baseFeat.description,
       stackable: baseFeat.stackable,
       selectable: baseFeat.selectable,
-      generatedFrom: baseFeat.generatedFrom,
     })
     .returning({ id: featsInRules.id });
 

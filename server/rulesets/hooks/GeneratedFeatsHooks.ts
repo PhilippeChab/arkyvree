@@ -1,5 +1,11 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import type { GeneratedFeatSource } from "@/shared/rulesets/generatedFeats.ts";
+
+/** Transient source description supplied by ruleset hooks, never persisted. */
+export interface GeneratedFeatSource {
+  kind: string;
+  key: string;
+  label: string;
+}
 
 export interface GeneratedFeatDefinition {
   family: string;
@@ -16,5 +22,7 @@ export interface GeneratedFeatsHooks {
   readonly propertyTypes: readonly string[];
   source(entityType: string, entity: { id: string; name: string }, properties: { type: string; value: string | null }[]): GeneratedFeatSource | null;
   definitions(source: GeneratedFeatSource): GeneratedFeatDefinition[];
+  names(source: GeneratedFeatSource): Map<string, string>;
+  matchFamily(data: CachedRulesetData, feat: { id: string; name: string }, source: GeneratedFeatSource, names: ReadonlyMap<string, string>): string | undefined;
   hasOtherSources(data: CachedRulesetData, source: GeneratedFeatSource, excludedEntityId: string): boolean;
 }

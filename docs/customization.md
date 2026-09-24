@@ -237,12 +237,13 @@ Feats auto-generated per unique school through the same `Dnd35GeneratedFeatsHook
 - Created idempotently (skipped if already exist for the school)
 - Deleted when last spell of a school is removed from the ruleset
 
-Generated feats retain a source identity when renamed. Cleanup uses COW tombstones,
-and restoring a source restores only feats automatically removed with it; independent
-feat deletions remain hidden. Seeded weapon families share this lifecycle using
+Renamed inherited feats are identified through existing COW ancestry. Local feats
+are matched using their existing family and modifier target. Cleanup uses ordinary
+COW tombstones; restoring a source leaves deleted feats hidden until explicitly
+restored. Seeded weapon families share this lifecycle using
 `WEAPON_TYPE`, including properties inherited from item templates. Item display-name
 changes do not change weapon families, and editing an item does not generate new
-weapon recipes. See [persistence.md](./persistence.md) for migration and restoration details.
+weapon recipes. See [persistence.md](./persistence.md) for cleanup and restoration details.
 
 ## D&D 3.5 Feat Guidelines
 

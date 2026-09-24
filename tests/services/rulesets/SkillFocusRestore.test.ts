@@ -9,6 +9,7 @@ import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { createSeededTestRuleset } from "@/tests/helpers.ts";
 import { stripSeparators } from "@/shared/utils.ts";
+import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 
 beforeEach(() => invalidateAll());
 
@@ -32,7 +33,7 @@ async function selectFeat(rulesetId: string, featId: string) {
 }
 
 for (const action of ["rename", "delete"] as const) {
-  test(`restoring a skill after ${action} restores its generated feat`, async () => {
+  test(`restoring a skill after ${action} leaves its feat hidden until explicitly restored`, async () => {
     const { session, fork, skill, feat } = await setup();
     if (action === "rename") await SkillsMethods.updateRulesetSkill(session, fork.id, skill.id, {
       name: "Mountaineering", primaryAbilityId: skill.primaryAbilityId, impactedByWeight: true, usableWithoutTraining: true,
@@ -44,14 +45,16 @@ for (const action of ["rename", "delete"] as const) {
       if (cold) invalidateAll();
       await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
         expect(rulesetData.skillsById.get(skill.id)?.name).toBe("Climb");
-        expect(rulesetData.featsById.get(feat.id)?.id).toBe(feat.id);
+        expect(rulesetData.featsById.has(feat.id)).toBe(false);
         expect(rulesetData.feats.some(row => row.name === "Skill Focus: Mountaineering")).toBe(false);
       });
     }
     expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
+    await RulesetsMethods.revertOverride(session, fork.id, "feats", feat.id);
     // The restored skill must remain editable/removable on subsequent requests.
     await SkillsMethods.deleteRulesetSkill(session, fork.id, skill.id);
     await RulesetsMethods.revertOverride(session, fork.id, "skills", skill.id);
+    await RulesetsMethods.revertOverride(session, fork.id, "feats", feat.id);
     const visible = await FeatsMethods.getRulesetFeats(fork.id, { search: "Skill Focus: Climb" }, { limit: 100, page: 1 });
     expect(visible.items.filter(row => row.name === "Skill Focus: Climb")).toHaveLength(1);
   });
@@ -84,6 +87,18 @@ test("renamed inherited Skill Focus still protects ancestor-ID character selecti
     expect(rulesetData.skillsById.get(skill.id)?.name).toBe("Climb");
     expect(rulesetData.featsById.get(feat.id)?.name).toBe("Climbing Specialist");
   });
+});
+
+test("COW ancestry identifies a renamed inherited feat after its modifier target changes", async () => {
+  const { session, fork, skill, feat } = await setup();
+  const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, feat.id, { name: "Climbing Specialist" });
+  const [modifier] = await Modifiers.findManyBySource(db, { sourceIds: [renamed.id], sourceType: "feats" });
+  await ModifiersMethods.updateEntityModifier(session, fork.id, "feats", renamed.id, modifier.id, {
+    target: "skills.swim.misc", value: "4", operator: "add",
+  });
+  await SkillsMethods.deleteRulesetSkill(session, fork.id, skill.id);
+  await withRulesetScope(db, fork.id, async ({ rulesetData }) => expect(rulesetData.featsById.has(feat.id)).toBe(false));
+  expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
 });
 
 test("restore rolls back when a character selected the replacement generated feat", async () => {
@@ -156,18 +171,19 @@ test("repeated feat and skill renames preserve cleanup, including returning to p
   for (const [index, name] of names.entries()) {
     const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, currentFeatId, { name: `Expertise ${index}` });
     await FeatsMethods.updateRulesetFeat(session, fork.id, renamed.id, { name: `Specialist ${index}` });
-    const dependency = (await Feats.findOne(db, { id: renamed.id }))!.generatedFrom;
-    expect(dependency).not.toBeNull();
     await SkillsMethods.updateRulesetSkill(session, fork.id, skill.id, {
       name, primaryAbilityId: skill.primaryAbilityId, impactedByWeight: true, usableWithoutTraining: true,
     });
     if (index % 2 === 1) invalidateAll();
+    if (name === skill.name) {
+      // Returning to an old source name must not undo its feat tombstone.
+      await withRulesetScope(db, fork.id, async ({ rulesetData }) => expect(rulesetData.featsById.has(feat.id)).toBe(false));
+      await RulesetsMethods.revertOverride(session, fork.id, "feats", feat.id);
+    }
     await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-      const dependents = rulesetData.feats.filter(row => row.generatedFrom?.kind === "skills"
-        && rulesetData.canonicalize(row.generatedFrom.key) === rulesetData.canonicalize(skill.id));
+      const dependents = rulesetData.feats.filter(row => names.some(label => row.name === `Skill Focus: ${label}`));
       expect(dependents).toHaveLength(1);
       expect(dependents[0].name).toBe(`Skill Focus: ${name}`);
-      expect(dependents[0].generatedFrom?.label).toBe(name);
       expect(rulesetData.featsById.has(renamed.id)).toBe(false);
       currentFeatId = dependents[0].id;
     });
@@ -176,7 +192,7 @@ test("repeated feat and skill renames preserve cleanup, including returning to p
   }
   await RulesetsMethods.revertOverride(session, fork.id, "skills", skill.id);
   await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-    expect(rulesetData.featsById.get(feat.id)?.id).toBe(feat.id);
+    expect(rulesetData.featsById.has(feat.id)).toBe(false);
     expect(rulesetData.feats.some(row => row.name === "Skill Focus: Mountaineering")).toBe(false);
   });
   expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
