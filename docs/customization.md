@@ -206,9 +206,14 @@ Properties auto-generated from form booleans in `SkillsHooks.syncProperties()`:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
-Feat definitions come from `Dnd35GeneratedFeatsHooks`, applied by the shared generated-feat lifecycle:
+Feat auto-generated per skill in `SkillsHooks.generateSkillFeat()`:
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
 - Deleted on skill delete, regenerated on skill rename
+
+Generated feat names cannot be edited directly. The D&D feat hook protects the
+generated `Family: source` names before any COW copy or write; descriptions and
+customizations remain editable. Renaming a skill deletes its old generated feat
+and its customizations, then creates the replacement in the same transaction.
 
 ### Spells / Powers
 
@@ -228,22 +233,14 @@ Properties auto-generated from spell form fields in `hooks/generators/spellGener
 | `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
 
 On create: generates properties from form fields. If school is provided, also generates Spell Focus feats (idempotent).
-On update: deletes all existing properties, regenerates from updated form. Handles school changes (creates feats for new school, cleans up old school if no spells remain).
-On delete: cleans up properties and checks if Spell Focus feats should be removed (only if no remaining spells use that school).
+On update: deletes all existing properties, regenerates from updated form, and creates feats for a new school when needed. Existing school feats remain.
+On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school through the same `Dnd35GeneratedFeatsHooks` lifecycle:
+Feats auto-generated per unique school in `hooks/generators/spellGenerator.generateSpellFocusFeats()`:
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)
-- Deleted when last spell of a school is removed from the ruleset
-
-Renamed inherited feats are identified through existing COW ancestry. Local feats
-are matched using their existing family and modifier target. Cleanup uses ordinary
-COW tombstones; restoring a source leaves deleted feats hidden until explicitly
-restored. Seeded weapon families share this lifecycle using
-`WEAPON_TYPE`, including properties inherited from item templates. Item display-name
-changes do not change weapon families, and editing an item does not generate new
-weapon recipes. See [persistence.md](./persistence.md) for cleanup and restoration details.
+- Independent of current group membership; removing the last spell does not delete them
 
 ## D&D 3.5 Feat Guidelines
 

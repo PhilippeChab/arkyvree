@@ -64,12 +64,10 @@ import {
   ENTITY_TYPE_TO_SOURCE_TYPE,
   entityHasCharacterPicks,
   NAME_FALLBACK_ENTITY_TYPES,
-  withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { type EntityType } from "@/server/services/rulesets/hashing.ts";
 import type { Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
-import { syncGeneratedFeats } from "@/server/services/rulesets/generatedFeats.ts";
 
 const ENTITY_REPOS = {
   abilities: Abilities,
@@ -890,9 +888,6 @@ export const RulesetsMethods = {
 
       (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-      const generatedHooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.generatedFeats;
-      const hasGeneratedFeats = generatedHooks.entityTypes.includes(entityType);
-      if (hasGeneratedFeats) await EntitySnapshots.lockForCopy(tx, rulesetId, entityId);
       const snapshot = await EntitySnapshots.findBySourceAndRuleset(tx, {
         sourceEntityId: entityId,
         rulesetId,
@@ -902,31 +897,11 @@ export const RulesetsMethods = {
         throw new NotFoundError("Entity is not an override in this ruleset");
       }
 
-      if (hasGeneratedFeats) await ENTITY_REPOS[entityType].lockById(tx, snapshot.forkedEntityId);
-
       // Reverting hard-deletes the COW row, and FK CASCADE then wipes any
       // character picks pointing at it. Mirror the inUse guard each delete
       // service runs (current ruleset + descendants).
       if (await entityHasCharacterPicks(tx, entityType, snapshot.forkedEntityId, rulesetId)) {
         throw new ConflictError("Cannot revert override while characters in this ruleset depend on it");
-      }
-
-      // Remove dependents of the discarded local source. Restoring its ancestor
-      // does not restore deleted feats; those are separate explicit actions.
-      const repo = ENTITY_REPOS[entityType];
-      const localEntity = hasGeneratedFeats ? await repo.findOne(tx, { id: snapshot.forkedEntityId } as never) : undefined;
-      const sourceEntity = localEntity ? await repo.findOne(tx, { id: snapshot.sourceEntityId } as never) : undefined;
-      if (localEntity && sourceEntity) {
-        const properties = await Properties.findManyByEntity(tx, {
-          entityIds: [snapshot.sourceEntityId, snapshot.forkedEntityId], entityType,
-        });
-        const before = generatedHooks.source(entityType, localEntity,
-          properties.filter(property => property.entityId === localEntity.id));
-        const after = generatedHooks.source(entityType, sourceEntity,
-          properties.filter(property => property.entityId === sourceEntity.id));
-        if (before && !(after && before.kind === after.kind && before.label === after.label)) await withRulesetScope(tx, rulesetId, async ({ rulesetData }) => {
-          await syncGeneratedFeats(tx, rulesetId, rulesetData, generatedHooks, snapshot.forkedEntityId, before, null);
-        });
       }
 
       // For items, repoint copies from the COW back to the original parent template

@@ -23,6 +23,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 
 export const FeatsMethods = {
   async getRulesetFeats(
@@ -157,6 +158,10 @@ export const FeatsMethods = {
         const isInherited = feat && sourceChain.includes(feat.rulesetId);
         if (!feat || (!isOwned && !isInherited)) {
           throw new NotFoundError("Feat not found in this ruleset");
+        }
+
+        if (body.name !== feat.name && RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.feats.isGeneratedName(feat.name)) {
+          throw new BadRequestError("Generated feats cannot be renamed");
         }
 
         let targetId = feat.id;

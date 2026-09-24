@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { entitySnapshotsInRules, featsInRules } from "@/drizzle/schema.ts";
+import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -61,18 +61,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
         eq(this.table.entityType, where.entityType),
       ),
     });
-  }
-
-  async findFeatSources(db: Db, where: { rulesetIds: string[]; names: string[] }) {
-    if (where.rulesetIds.length === 0 || where.names.length === 0) return [];
-    return await db.select({ sourceEntityId: this.table.sourceEntityId, name: featsInRules.name })
-      .from(this.table)
-      .innerJoin(featsInRules, eq(featsInRules.id, this.table.sourceEntityId))
-      .where(this.where([
-        inArray(this.table.rulesetId, where.rulesetIds),
-        eq(this.table.entityType, "feats"),
-        inArray(featsInRules.name, where.names),
-      ]));
   }
 
   async findBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {

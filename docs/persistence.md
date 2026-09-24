@@ -119,23 +119,11 @@ If you're adding a new repository that doesn't fit any of these, prefer hard-del
 
 If you add a new repository or change an existing service's removal pattern, update the relevant section. The categorization is intentionally derived-from-code, not aspirational — if something here doesn't match what the code actually does, the doc is wrong, not the code.
 
-Generated feats use the shared lifecycle in `server/services/rulesets/generatedFeats.ts`.
-Ruleset hooks identify families using existing names, `FEAT_FAMILY` properties,
-and modifier targets. Existing COW snapshot source names identify renamed inherited
-feats, even when their local customizations have changed. Locally created feats
-have no ancestry; once their name, family, and target no longer identify a generated
-relationship, cleanup leaves them alone rather than guessing.
+Generated Skill Focus cleanup copies an inherited feat locally before deleting the copy. Its retained COW snapshot is a tombstone: the obsolete feat is hidden from the edited fork’s listings and level-up choices while the ancestor and sibling forks remain unchanged. Locally generated feats are deleted directly. Cleanup refuses to hide a feat already selected by a character in the edited ruleset or a subscribing descendant, including picks stored under an ancestor ID after the feat has been customized locally.
 
-Cleanup copies inherited feats locally before deleting the copies. The resulting
-ordinary tombstones remain hidden until explicitly restored. Restoring a skill,
-spell, or item does **not** restore its deleted feats; each restoration is separate.
-Recreating a skill or returning to its previous name also preserves existing feat
-tombstones. New generated families are still created when no matching feat or
-tombstone exists.
-Reverting a changed source still removes obsolete dependents of its discarded local
-version. Character-pick checks and transaction rollback protect selected feats.
-
-Shared spell-school and weapon-type families are removed only when no other composed
-source uses that group. Weapon sources follow `WEAPON_TYPE`, including item-template
-inheritance, not item display names. Weapon recipes remain package-supplied. No new
-schema, persistent identity, or deletion-reason metadata is used.
+Skill renames delete the old generated feat with its modifiers (and modifier
+requirements), requirements, properties, and junctions before generating its
+replacement. Generated feat names cannot be edited directly. Group membership
+does not own the group's feats: removing a spell or weapon does not delete the
+school's or weapon type's feats. Ordinary override restoration remains an explicit
+per-entity action; this adds no automatic restoration or dependency metadata.

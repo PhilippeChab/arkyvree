@@ -18,5 +18,8 @@ export interface PowersHooks {
 
   extractGroupingValue(body: PowerBody): string | null;
   generateProperties(tx: Db, powerId: string, body: PowerBody): Promise<void>;
+  /** `sourceChain` is the caller's ruleset source chain (passed in so hooks
+   *  don't have to refetch it when they're already running inside a scope). */
+  generateGroupingFeats(tx: Db, rulesetId: string, sourceChain: string[], value: string): Promise<void>;
   afterPowerLinked?(tx: Db, powerId: string, rulesetId: string, sourceChain: string[]): Promise<void>;
 }

@@ -7,6 +7,7 @@ import {
 import type { PowerBody, PowersHooks } from "@/server/rulesets/hooks/PowersHooks.ts";
 import { SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import {
+  generateSpellFocusFeats,
   generateSpellProperties,
   type SpellFields,
 } from "./generators/spellGenerator.ts";
@@ -23,6 +24,11 @@ export class Dnd35PowersHooks implements PowersHooks {
     if (!fields) return;
     await generateSpellProperties(tx, powerId, fields);
   }
+
+  async generateGroupingFeats(tx: Db, rulesetId: string, sourceChain: string[], value: string): Promise<void> {
+    await generateSpellFocusFeats(tx, rulesetId, sourceChain, value);
+  }
+
 
   async afterPowerLinked(tx: Db, powerId: string, rulesetId: string, sourceChain: string[]): Promise<void> {
     // Get the power's school from properties

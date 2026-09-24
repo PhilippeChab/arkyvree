@@ -1,4 +1,3 @@
-import { syncGeneratedFeats } from "@/server/services/rulesets/generatedFeats.ts";
 import { powersInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -130,8 +129,7 @@ export const PowersMethods = {
         const groupingValue = hooks.powers.extractGroupingValue(body);
         if (groupingValue) {
           await hooks.powers.generateProperties(tx, power.id, body);
-          await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, power.id, null,
-            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: groupingValue }]));
+          await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, groupingValue);
         }
 
         if (hooks.powers.afterPowerLinked) {
@@ -226,10 +224,11 @@ export const PowersMethods = {
           const newGroupingValue = hooks.powers.extractGroupingValue(body);
           if (newGroupingValue) {
             await hooks.powers.generateProperties(tx, targetId, body);
+
+            if (newGroupingValue !== oldGroupingValue) {
+              await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, newGroupingValue);
+            }
           }
-          await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, power.id,
-            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: oldGroupingValue }]),
-            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: newGroupingValue }]));
         }
 
         if (hooks.powers.afterPowerLinked) {
@@ -266,16 +265,6 @@ export const PowersMethods = {
           throw new NotFoundError("Power not found in this ruleset");
         }
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-
-        // Read grouping value before COW/deleting (from the resolved entity)
-        const groupingProps = await Properties.findManyByEntity(tx, {
-          entityIds: [power.id],
-          entityType: "powers",
-          type: hooks.powers.primaryGroupingType,
-        });
-        const groupingValue = groupingProps.length > 0 ? groupingProps[0].value : null;
-
         let targetId = power.id;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "powers", power.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
@@ -293,11 +282,6 @@ export const PowersMethods = {
         // wipes those join rows when the power row is deleted.
         const rows = await Powers.delete(tx, { id: targetId });
         const deletedPower = rows[0];
-
-        if (groupingValue) {
-          await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, power.id,
-            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: groupingValue }]), null);
-        }
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,

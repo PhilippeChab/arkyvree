@@ -1,7 +1,17 @@
+import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import { ConflictError } from "@/server/errors/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { SkillsHooks, PropertyRecord } from "@/server/rulesets/hooks/SkillsHooks.ts";
-import { Properties } from "@/server/repositories/index.ts";
+import {
+  Aptitudes,
+  Feats,
+  FeatsAptitudes,
+  Modifiers,
+  Properties,
+} from "@/server/repositories/index.ts";
+import { cowEntityForCustomization, deleteModifiersWithCascade, deletePropertiesWithCascade, deleteRequirementsWithCascade, entityHasCharacterPicks } from "@/server/services/rulesets/cow.ts";
 import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 export class Dnd35SkillsHooks implements SkillsHooks {
   buildProperties(
@@ -75,4 +85,51 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     }
   }
 
+  async generateSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void> {
+    let generalAptitude = await Aptitudes.findOne(tx, { name: "General", rulesetId });
+    if (!generalAptitude) {
+      for (const ancestorId of sourceChain) {
+        generalAptitude = await Aptitudes.findOne(tx, { name: "General", rulesetId: ancestorId });
+        if (generalAptitude) break;
+      }
+    }
+    if (!generalAptitude) return;
+
+    const rows = await Feats.create(tx, {
+      name: `Skill Focus: ${skillName}`,
+      description: `You get a +3 bonus on all ${skillName} checks.`,
+      rulesetId,
+    });
+    const feat = rows[0];
+
+    await FeatsAptitudes.create(tx, { featId: feat.id, aptitudeId: generalAptitude.id });
+
+    await Modifiers.createMany(tx, [{
+      sourceId: feat.id,
+      sourceType: "feats",
+      target: `skills.${stripSeparators(skillName)}.misc`,
+      operator: "add",
+      value: "3",
+      valueType: "number",
+    }]);
+  }
+
+  async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
+    const feat = rulesetData.feats.find(f => f.name === `Skill Focus: ${skillName}`);
+    if (!feat) return;
+    if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
+      throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
+    }
+
+    // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
+    // inherited feat disappears from this fork while its ancestor stays intact.
+    const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
+    await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "feats" });
+    await deleteRequirementsWithCascade(tx, { entityIds: [targetId], entityType: "feats" });
+    await deletePropertiesWithCascade(tx, { entityIds: [targetId], entityType: "feats" });
+    // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link.
+    // Soft-archive would block a future generateSkillFeat with the same name
+    // (the unique index on feats doesn't filter deleted_at).
+    await Feats.delete(tx, { id: targetId });
+  }
 }
