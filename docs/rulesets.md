@@ -146,7 +146,7 @@ The child's own entities are always included. Ancestor entities are included onl
 
 - **Standard entities** (feats, powers, items, races, skills, etc.): COW copies the entity and all customizations
 - **Classes**: COW copies the entire class including all levels and their customizations/relationships
-- **Customizations on inherited entities**: `cowEntityForCustomization` traces the modifier/property/requirement back to its owning entity, COWs that entity, then finds the matching customization in the new copy via hash matching
+- **Customizations on inherited entities**: `cowEntityForCustomization` traces the modifier/property/requirement back to its owning entity, COWs that entity, then resolves the customization through IDs recorded at copy time, including sibling contributions
 
 ### Override Map
 
