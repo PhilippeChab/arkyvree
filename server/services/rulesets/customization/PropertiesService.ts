@@ -2,31 +2,15 @@ import { resolveCustomizationId } from "@/server/services/rulesets/customization
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Activities, Items, Properties } from "@/server/repositories/index.ts";
+import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { Activities, Properties } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { cowEntityForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { cowEntityForCustomization, findPropertyForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
-import type { Db } from "@/server/database/index.ts";
 import { getTableName } from "drizzle-orm";
-
-// Scope the SQL lookup to the stored owner. Proxy-resolved entityId fields
-// cannot prove ownership: an ancestor row's FK may resolve to a local copy.
-async function findPropertyForEntity(db: Db, entityType: string, entityId: string, propertyId: string) {
-  const own = await Properties.findOne(db, { id: propertyId, entityId, entityType });
-  if (own) return { property: own, fromTemplate: false };
-  if (entityType === "items") {
-    const item = await Items.findOne(db, { id: entityId });
-    if (item?.sourceItemId) {
-      const inherited = await Properties.findOne(db, { id: propertyId, entityId: item.sourceItemId, entityType });
-      if (inherited) return { property: inherited, fromTemplate: true };
-    }
-  }
-  throw new NotFoundError("Property not found for this entity");
-}
 
 export const PropertiesMethods = {
   async getEntityProperties(rulesetId: string, entityType: string, entityId: string) {
@@ -104,7 +88,7 @@ export const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = await findPropertyForEntity(tx, entityType, effectiveEntityId, propertyId);
+        const { property, fromTemplate } = await findPropertyForCustomization(tx, entityType, effectiveEntityId, propertyId, rulesetData);
 
         const customizationPolicy = new CustomizationsPolicy(session, property);
         await customizationPolicy.canUpdate();
@@ -136,7 +120,7 @@ export const PropertiesMethods = {
         }
 
         const resolvedPropertyId = resolveCustomizationId(
-          effectiveEntityId, resolvedEntityId, propertyId, customizationIds, "property",
+          property.entityId, resolvedEntityId, propertyId, customizationIds, "property",
         );
 
         const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
@@ -178,7 +162,7 @@ export const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = await findPropertyForEntity(tx, entityType, effectiveEntityId, propertyId);
+        const { property, fromTemplate } = await findPropertyForCustomization(tx, entityType, effectiveEntityId, propertyId, rulesetData);
 
         const customizationPolicy = new CustomizationsPolicy(session, property);
         await customizationPolicy.canDelete();
@@ -190,7 +174,7 @@ export const PropertiesMethods = {
           throw new BadRequestError("Cannot delete a property inherited from a template");
         }
         const resolvedPropertyId = resolveCustomizationId(
-          effectiveEntityId, resolvedEntityId, propertyId, customizationIds, "property",
+          property.entityId, resolvedEntityId, propertyId, customizationIds, "property",
         );
 
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });

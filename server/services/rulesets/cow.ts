@@ -694,6 +694,7 @@ async function mergeSiblingData(
   entityType: EntityType,
   sourceType: string | undefined,
   siblingIds: string[],
+  customizationIds?: Map<string, string>,
 ): Promise<void> {
   // Sibling-loser ids are aliased to their winners in idResolveMap, so the
   // repo proxy would rewrite `findManyBySource(siblingIds)` to fetch the
@@ -807,7 +808,7 @@ async function mergeSiblingData(
       targetModifiers.map((m) => `${m.target}|${m.value}|${m.operator}|${m.valueType}`),
     );
 
-    for (const [, sibCust] of siblingCusts) {
+    for (const [siblingId, sibCust] of siblingCusts) {
       const uniqueModifiers = sibCust.modifiers.filter((m) => {
         const key = `${m.target}|${m.value}|${m.operator}|${m.valueType}`;
         if (existingModKeys.has(key)) return false;
@@ -816,29 +817,13 @@ async function mergeSiblingData(
       });
 
       if (uniqueModifiers.length > 0) {
-        const newModifiers = await Modifiers.createMany(
-          tx,
-          uniqueModifiers.map((m) => ({
-            ...m,
-            id: undefined,
-            sourceId: targetEntityId,
-          })),
-        );
-
-        // Copy modifier requirements from sibling → new modifier
-        for (let i = 0; i < uniqueModifiers.length; i++) {
-          const modReqs = sibCust.modifierRequirements.filter((r) => r.entityId === uniqueModifiers[i].id);
-          if (modReqs.length > 0) {
-            await Requirements.createMany(
-              tx,
-              modReqs.map((r) => ({
-                ...r,
-                id: undefined,
-                entityId: newModifiers[i].id,
-              })),
-            );
-          }
-        }
+        const modifierIds = new Set(uniqueModifiers.map(m => m.id));
+        await copyEntityCustomizations(tx, siblingId, targetEntityId, entityType, {
+          modifiers: uniqueModifiers,
+          modifierRequirements: sibCust.modifierRequirements.filter(r => modifierIds.has(r.entityId)),
+          properties: [],
+          requirements: [],
+        }, customizationIds);
       }
     }
   }
@@ -849,12 +834,14 @@ async function mergeSiblingData(
     targetProperties.map((p) => `${p.type}|${p.value}`),
   );
 
+  const sourcePropertyIds: string[] = [];
   const newProperties: Array<{ entityId: string; entityType: string; type: string; value: string; description: string | null }> = [];
   for (const [, sibCust] of siblingCusts) {
     for (const prop of sibCust.properties) {
       const key = `${prop.type}|${prop.value}`;
       if (existingPropKeys.has(key)) continue;
       existingPropKeys.add(key);
+      sourcePropertyIds.push(prop.id);
       newProperties.push({
         entityId: targetEntityId,
         entityType,
@@ -866,7 +853,10 @@ async function mergeSiblingData(
   }
 
   if (newProperties.length > 0) {
-    await Properties.createMany(tx, newProperties);
+    const copies = await Properties.createMany(tx, newProperties);
+    for (let i = 0; i < sourcePropertyIds.length; i++) {
+      customizationIds?.set(sourcePropertyIds[i], copies[i].id);
+    }
   }
 
   // 4. Merge sibling aptitude links — sibling reads bypass the proxy (loser
@@ -1407,7 +1397,7 @@ async function cowEntity(
   // 4b. Merge sibling data when multiple extensions COW the same base entity
   const siblingIds = siblingMap.get(entityId);
   if (siblingIds && siblingIds.length > 0) {
-    await mergeSiblingData(tx, newEntity.id, entityType, sourceType, siblingIds);
+    await mergeSiblingData(tx, newEntity.id, entityType, sourceType, siblingIds, customizationIds);
   }
 
   // 5. Compute content hash and create snapshot
@@ -1444,6 +1434,27 @@ async function cowEntity(
   });
 
   return newEntity;
+}
+
+/** Read the stored property owner without confusing COW aliases with ownership. */
+async function findPropertyForCustomization(
+  tx: Db,
+  entityType: string,
+  entityId: string,
+  propertyId: string,
+  rulesetData: CachedRulesetData,
+) {
+  const property = await withCowContext(undefined, () => Properties.findOne(tx, { id: propertyId }));
+  if (property?.entityType === entityType) {
+    const visibleSibling = rulesetData.cow.siblingMap.get(entityId)?.includes(property.entityId)
+      && rulesetData.propertiesByEntity.get(entityId)?.some(p => p.id === propertyId);
+    if (property.entityId === entityId || visibleSibling) return { property, fromTemplate: false };
+    if (entityType === "items") {
+      const item = await Items.findOne(tx, { id: entityId });
+      if (item?.sourceItemId === property.entityId) return { property, fromTemplate: true };
+    }
+  }
+  throw new NotFoundError("Property not found for this entity");
 }
 
 /** Resolve and lock a modifier's owner before customization mutations. */
@@ -1541,7 +1552,7 @@ async function cowEntityForCustomization(
   }
   if (!sourceChain.includes(entityRecord.rulesetId as string)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
-  const cowResult = await cowEntity(tx, cowType, entityId, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
+  const cowResult = await cowEntity(tx, cowType, entity.id, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
   return cowResult.id;
 }
 
@@ -1795,6 +1806,7 @@ async function withRulesetScopes<T>(
  *     `withRulesetScope` / `withRulesetScopes` for single / multi-ruleset
  *     reads. `cowEntity` / `cowEntityForCustomization` and the
  *     `lockEntityForMutation` / `delete*WithCascade` helpers for admin CRUD mutations.
+ *     `findPropertyForCustomization` validates stored property ownership.
  *
  *   Forking primitives (only `RulesetsService` fork/publish):
  *     `buildOverrideMap`, `copyEntity*`, `fetch*`,
@@ -1811,6 +1823,7 @@ async function withRulesetScopes<T>(
  */
 export {
   lockEntityForMutation,
+  findPropertyForCustomization,
   withRulesetScope,
   withRulesetScopes,
   cowEntity,

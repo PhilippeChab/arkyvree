@@ -313,11 +313,13 @@ Ruleset customization endpoints require the source entity to belong to the compo
 
 Modifiers belong directly to ruleset entities or class levels. A modifier can have requirements, but cannot have other modifiers. Editing an inherited modifier or its requirements copies its owning entity and preserves the modifier requirements. Missing owners and sources outside the ruleset source chain are rejected.
 
-Customization mutations validate the stored row owner in SQL. After a COW copy,
-clients must use the returned `resolvedEntityId` and reload its customizations;
+Customization mutations validate the stored row owner, without COW alias remapping.
+Property edits also accept visible contributions from sibling extensions. Their
+owner is the stored sibling, so the write must resolve to a copied property before
+it can proceed. After a COW copy, clients must use the returned `resolvedEntityId` and reload its customizations;
 stale ancestor customization IDs are rejected. During the initial copy, mutations
-use the exact copied IDs, so identical modifiers with different requirements
-cannot be confused with one another.
+use the exact copied IDs, including sibling properties, modifiers, and modifier
+requirements, so equal values are never used to guess a copied row's identity.
 
 Modifiers and their requirements are copied in batches, without recursive modifier queries.
 
