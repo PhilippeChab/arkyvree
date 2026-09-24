@@ -1,6 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
+import { entitySnapshotsInRules, featsInRules } from "@/drizzle/schema.ts";
+import type { GeneratedFeatSource } from "@/shared/rulesets/generatedFeats.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -61,6 +62,23 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
         eq(this.table.entityType, where.entityType),
       ),
     });
+  }
+
+  async findGeneratedFeatOverrides(db: Db, where: { rulesetIds: string[] }) {
+    if (where.rulesetIds.length === 0) return [];
+    return await db.select({ snapshot: this.table, generatedFrom: featsInRules.generatedFrom })
+      .from(this.table)
+      .innerJoin(featsInRules, eq(featsInRules.id, this.table.sourceEntityId))
+      .where(and(inArray(this.table.rulesetId, where.rulesetIds), eq(this.table.entityType, "feats")));
+  }
+
+  /** Only deletion provenance is mutable; the captured source identity/hash stay immutable. */
+  async updateGeneratedDeletion(db: Db, where: { rulesetId: string; forkedEntityId: string }, source: GeneratedFeatSource) {
+    return await db.update(this.table).set({ generatedDeletion: source }).where(and(
+      eq(this.table.rulesetId, where.rulesetId),
+      eq(this.table.forkedEntityId, where.forkedEntityId),
+      eq(this.table.entityType, "feats"),
+    ));
   }
 
   async findBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {

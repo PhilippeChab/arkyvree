@@ -24,6 +24,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
+import { generatedSourceProperties, syncGeneratedFeats } from "@/server/services/rulesets/generatedFeats.ts";
 
 interface ItemBody {
   name: string;
@@ -426,6 +427,10 @@ export const ItemsMethods = {
 
         const rows = await Items.delete(tx, { id: targetId });
         const deletedItem = rows[0];
+
+        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.generatedFeats;
+        await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks, item.id,
+          hooks.source("items", item, generatedSourceProperties(rulesetData, item.id)), null);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,

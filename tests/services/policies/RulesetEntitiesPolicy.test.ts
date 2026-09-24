@@ -25,6 +25,7 @@ describe("RulesetEntitiesPolicy", () => {
   });
 
   const createFeat = (): Feat => ({
+    generatedFrom: null,
     id: "feat-123",
     rulesetId: "ruleset-123",
     campaignId: null,

@@ -1,3 +1,4 @@
+import { syncGeneratedFeats } from "@/server/services/rulesets/generatedFeats.ts";
 import { skillsInRules } from "@/drizzle/schema.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -93,7 +94,7 @@ export const SkillsMethods = {
         }
 
         await hooks.skills.syncProperties(tx, skill.id, { impactedByWeight, usableWithoutTraining });
-        await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
+        await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, skill.id, null, hooks.generatedFeats.source("skills", skill, []));
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -153,8 +154,8 @@ export const SkillsMethods = {
         await hooks.skills.syncProperties(tx, targetId, { impactedByWeight, usableWithoutTraining });
 
         if (skill.name !== body.name) {
-          await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
-          await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
+          await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, skill.id,
+            hooks.generatedFeats.source("skills", skill, []), hooks.generatedFeats.source("skills", updatedSkill, []));
         }
 
         await createActivityWithNotifications(tx, {
@@ -196,7 +197,7 @@ export const SkillsMethods = {
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
+        await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, skill.id, hooks.generatedFeats.source("skills", skill, []), null);
 
         // Customizations are polymorphic FKs — Postgres can't cascade these.
         await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "skills" });

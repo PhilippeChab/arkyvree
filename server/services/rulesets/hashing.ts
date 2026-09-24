@@ -38,6 +38,7 @@ const EXCLUDED_FIELDS = new Set([
   "deletedAt",
   "abilityId",
   "primaryAbilityId",
+  "generatedFrom",
 ]);
 
 function sortByKeys(obj: Record<string, unknown>): Record<string, unknown> {

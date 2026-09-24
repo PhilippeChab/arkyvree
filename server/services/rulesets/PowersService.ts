@@ -1,3 +1,4 @@
+import { syncGeneratedFeats } from "@/server/services/rulesets/generatedFeats.ts";
 import { powersInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -129,7 +130,8 @@ export const PowersMethods = {
         const groupingValue = hooks.powers.extractGroupingValue(body);
         if (groupingValue) {
           await hooks.powers.generateProperties(tx, power.id, body);
-          await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, groupingValue);
+          await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, power.id, null,
+            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: groupingValue }]));
         }
 
         if (hooks.powers.afterPowerLinked) {
@@ -224,16 +226,10 @@ export const PowersMethods = {
           const newGroupingValue = hooks.powers.extractGroupingValue(body);
           if (newGroupingValue) {
             await hooks.powers.generateProperties(tx, targetId, body);
-
-            if (newGroupingValue !== oldGroupingValue) {
-              await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, newGroupingValue);
-              if (oldGroupingValue) {
-                await hooks.powers.deleteGroupingFeats(tx, rulesetId, sourceChain, oldGroupingValue);
-              }
-            }
-          } else if (oldGroupingValue) {
-            await hooks.powers.deleteGroupingFeats(tx, rulesetId, sourceChain, oldGroupingValue);
           }
+          await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, power.id,
+            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: oldGroupingValue }]),
+            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: newGroupingValue }]));
         }
 
         if (hooks.powers.afterPowerLinked) {
@@ -299,7 +295,8 @@ export const PowersMethods = {
         const deletedPower = rows[0];
 
         if (groupingValue) {
-          await hooks.powers.deleteGroupingFeats(tx, rulesetId, sourceChain, groupingValue);
+          await syncGeneratedFeats(tx, rulesetId, rulesetData, hooks.generatedFeats, power.id,
+            hooks.generatedFeats.source("powers", power, [{ type: hooks.powers.primaryGroupingType, value: groupingValue }]), null);
         }
 
         await createActivityWithNotifications(tx, {

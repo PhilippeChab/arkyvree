@@ -1,3 +1,5 @@
+import { syncGeneratedPropertyChange } from "@/server/services/rulesets/generatedFeats.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
@@ -67,6 +69,8 @@ export const PropertiesMethods = {
           description: body.description,
         });
         const property = rows[0];
+        await syncGeneratedPropertyChange(tx, rulesetId, rulesetData, RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.generatedFeats,
+          entityType, effectiveEntityId, resolvedEntityId, entityName, [body.type]);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -124,6 +128,8 @@ export const PropertiesMethods = {
           const newProperty = rows[0];
 
           const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+          await syncGeneratedPropertyChange(tx, rulesetId, rulesetData, RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.generatedFeats,
+            entityType, effectiveEntityId, resolvedEntityId, entityName, [property.type, body.type]);
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: newProperty.id,
@@ -148,6 +154,8 @@ export const PropertiesMethods = {
         const updatedProperty = rows[0];
 
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await syncGeneratedPropertyChange(tx, rulesetId, rulesetData, RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.generatedFeats,
+          entityType, effectiveEntityId, resolvedEntityId, entityName, [property.type, body.type]);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: updatedProperty.id,
@@ -199,6 +207,8 @@ export const PropertiesMethods = {
         await Activities.deleteByTarget(tx, { targetId: deletedProperty.id, targetTable: getTableName(propertiesInCustomization) });
 
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await syncGeneratedPropertyChange(tx, rulesetId, rulesetData, RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.generatedFeats,
+          entityType, effectiveEntityId, resolvedEntityId, entityName, [property.type]);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: deletedProperty.id,

@@ -206,7 +206,7 @@ Properties auto-generated from form booleans in `SkillsHooks.syncProperties()`:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
-Feat auto-generated per skill in `SkillsHooks.generateSkillFocusFeat()`:
+Feat definitions come from `Dnd35GeneratedFeatsHooks`, applied by the shared generated-feat lifecycle:
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
 - Deleted on skill delete, regenerated on skill rename
 
@@ -231,11 +231,18 @@ On create: generates properties from form fields. If school is provided, also ge
 On update: deletes all existing properties, regenerates from updated form. Handles school changes (creates feats for new school, cleans up old school if no spells remain).
 On delete: cleans up properties and checks if Spell Focus feats should be removed (only if no remaining spells use that school).
 
-Feats auto-generated per unique school in `hooks/generators/spellGenerator.generateSpellFocusFeats()`:
+Feats auto-generated per unique school through the same `Dnd35GeneratedFeatsHooks` lifecycle:
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)
 - Deleted when last spell of a school is removed from the ruleset
+
+Generated feats retain a source identity when renamed. Cleanup uses COW tombstones,
+and restoring a source restores only feats automatically removed with it; independent
+feat deletions remain hidden. Seeded weapon families share this lifecycle using
+`WEAPON_TYPE`, including properties inherited from item templates. Item display-name
+changes do not change weapon families, and editing an item does not generate new
+weapon recipes. See [persistence.md](./persistence.md) for migration and restoration details.
 
 ## D&D 3.5 Feat Guidelines
 
