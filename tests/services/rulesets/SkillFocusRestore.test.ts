@@ -8,6 +8,7 @@ import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 beforeEach(() => invalidateAll());
 
@@ -146,4 +147,37 @@ test("a newly generated local feat keeps its dependency after being renamed", as
   await FeatsMethods.updateRulesetFeat(session, fork.id, generated.id, { name: "Expertise" });
   await SkillsMethods.deleteRulesetSkill(session, fork.id, localSkill.id);
   expect(await Feats.findOne(db, { id: generated.id })).toBeUndefined();
+});
+
+test("repeated feat and skill renames preserve cleanup, including returning to previous names", async () => {
+  const { session, fork, skill, feat } = await setup();
+  let currentFeatId = feat.id;
+  const names = ["Mountaineering", "Scaling", "Climb", "Mountaineering"];
+  for (const [index, name] of names.entries()) {
+    const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, currentFeatId, { name: `Expertise ${index}` });
+    await FeatsMethods.updateRulesetFeat(session, fork.id, renamed.id, { name: `Specialist ${index}` });
+    const dependency = (await Feats.findOne(db, { id: renamed.id }))!.generatedFrom;
+    expect(dependency).not.toBeNull();
+    await SkillsMethods.updateRulesetSkill(session, fork.id, skill.id, {
+      name, primaryAbilityId: skill.primaryAbilityId, impactedByWeight: true, usableWithoutTraining: true,
+    });
+    if (index % 2 === 1) invalidateAll();
+    await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+      const dependents = rulesetData.feats.filter(row => row.generatedFrom?.kind === "skills"
+        && rulesetData.canonicalize(row.generatedFrom.key) === rulesetData.canonicalize(skill.id));
+      expect(dependents).toHaveLength(1);
+      expect(dependents[0].name).toBe(`Skill Focus: ${name}`);
+      expect(dependents[0].generatedFrom?.label).toBe(name);
+      expect(rulesetData.featsById.has(renamed.id)).toBe(false);
+      currentFeatId = dependents[0].id;
+    });
+    const modifiers = await Modifiers.findManyBySource(db, { sourceIds: [currentFeatId], sourceType: "feats" });
+    expect(modifiers.map(modifier => modifier.target)).toEqual([`skills.${stripSeparators(name)}.misc`]);
+  }
+  await RulesetsMethods.revertOverride(session, fork.id, "skills", skill.id);
+  await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+    expect(rulesetData.featsById.get(feat.id)?.id).toBe(feat.id);
+    expect(rulesetData.feats.some(row => row.name === "Skill Focus: Mountaineering")).toBe(false);
+  });
+  expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
 });
