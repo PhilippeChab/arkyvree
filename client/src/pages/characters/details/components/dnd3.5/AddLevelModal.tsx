@@ -210,6 +210,7 @@ export function AddLevelModal({
             skillsError={wizard.skillsError}
             skillPointAllocations={wizard.skillPointAllocations}
             setValue={wizard.setValue}
+            getValues={wizard.getValues}
             perLevelClassSkillIds={wizard.perLevelClassSkillIds}
             perLevelSkillPoints={wizard.perLevelSkillPoints}
           />

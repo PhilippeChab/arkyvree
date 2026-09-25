@@ -111,6 +111,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   useEffect(() => {
     if (effectiveMode !== "popper") {
       wasPopperMode.current = false;
+      // oxlint-disable-next-line react/set-state-in-effect
       setPopperVisible(false);
       return;
     }

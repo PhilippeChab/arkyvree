@@ -56,6 +56,7 @@ export function ModifierForm({ form, rulesetId, entityType, mode }: ModifierForm
       return;
     }
     if (isTemplateValue(value)) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setTemplateMode(true);
       setTemplateExpression(extractTemplateExpression(value) ?? "");
       setLiteralValue("");

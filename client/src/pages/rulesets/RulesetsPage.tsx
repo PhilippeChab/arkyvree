@@ -163,7 +163,6 @@ function RulesetList({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { offset, updateOffset } = useStaggerAnimation();
 
   const prefetchRuleset = useCallback((id: string) => {
     queryClient.prefetchQuery({
@@ -192,6 +191,9 @@ function RulesetList({
     toggleStar,
   } = useRulesetOperations();
 
+  const listQueryKey = queryKeys.rulesets.list({ scope, search, orderBy, orderDir });
+  const { offset, updateOffset } = useStaggerAnimation(listQueryKey);
+
   const {
     data,
     isLoading,
@@ -200,7 +202,7 @@ function RulesetList({
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.list({ scope, search, orderBy, orderDir }),
+    queryKey: listQueryKey,
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams();
       if (scope) params.append("scope", scope);

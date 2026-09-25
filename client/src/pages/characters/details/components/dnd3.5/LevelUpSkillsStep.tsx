@@ -20,7 +20,6 @@ import {
 } from "@mui/material";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { memo, useCallback, useMemo, useState } from "react";
-import { useLatest } from "@/client/src/hooks/index.ts";
 
 interface SkillDef {
   id: string;
@@ -178,11 +177,11 @@ export function LevelUpSkillsStep({
   skillsError,
   skillPointAllocations,
   setValue,
+  getValues,
   perLevelClassSkillIds,
   perLevelSkillPoints,
 }: LevelUpSkillsStepProps) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const allocationsRef = useLatest(skillPointAllocations);
 
   const randomAssign = useCallback(() => {
     if (!skillData) return;
@@ -221,14 +220,14 @@ export function LevelUpSkillsStep({
 
   const onAllocate = useCallback((skillId: string, rawPoints: number) => {
     if (!skillPointsToSpend) return;
-    const allocs = allocationsRef.current;
+    const allocs = getValues("skillPointAllocations");
     const currentTotal = Object.entries(allocs)
       .filter(([id]) => id !== skillId)
       .reduce((sum, [, points]) => sum + points, 0);
     const maxFromAvailable = skillPointsToSpend - currentTotal;
     const clamped = Math.max(0, Math.min(rawPoints, maxFromAvailable));
     setValue("skillPointAllocations", { ...allocs, [skillId]: clamped });
-  }, [skillPointsToSpend, setValue, allocationsRef]);
+  }, [skillPointsToSpend, setValue, getValues]);
 
   const rows = useMemo(() => {
     if (!skillData) return [];

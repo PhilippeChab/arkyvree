@@ -49,10 +49,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLatest, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
@@ -73,6 +73,14 @@ type FeatAptitudeOption = {
   aptitudeName: string;
   label: string;
 };
+
+// Snapshots of editor state kept outside the forms, compared with the snapshot
+// taken on load or save for dirty tracking.
+const aptitudesSnapshot = (aptitudes: Aptitude[]) => JSON.stringify(aptitudes.map((a) => a.id).sort());
+const aptitudeMetadataSnapshot = (metadata: AptitudeMetadata) => JSON.stringify(Array.from(metadata.entries()).sort());
+const levelFeatsSnapshot = (feats: FeatAptitudeOption[]) => JSON.stringify(feats.map((f) => `${f.featId}-${f.aptitudeId}`).sort());
+const levelSavesSnapshot = (values: Record<string, number>) => JSON.stringify(Object.entries(values).sort());
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -275,12 +283,42 @@ export default function CustomizationPage() {
   const [selectedLevelFeats, setSelectedLevelFeats] = useState<FeatAptitudeOption[]>([]);
   const [levelSaveValues, setLevelSaveValues] = useState<Record<string, number>>({});
 
-  // Initial external state refs for dirty tracking
-  const [initialFeatAptitudes, setInitialFeatAptitudes] = useState<string[]>([]);
-  const [initialSpellAptitudes, setInitialSpellAptitudes] = useState<string[]>([]);
-  const [initialSpellMetadata, setInitialSpellMetadata] = useState<string>("");
-  const [initialLevelFeats, setInitialLevelFeats] = useState<string>("");
-  const [initialLevelSaves, setInitialLevelSaves] = useState<string>("");
+  // Snapshots of the external state as loaded or last saved, for dirty tracking
+  const [initialFeatAptitudes, setInitialFeatAptitudes] = useState("");
+  const [initialSpellAptitudes, setInitialSpellAptitudes] = useState("");
+  const [initialSpellMetadata, setInitialSpellMetadata] = useState("");
+  const [initialLevelFeats, setInitialLevelFeats] = useState("");
+  const [initialLevelSaves, setInitialLevelSaves] = useState("");
+
+  const isFeatDirty = featForm.formState.isDirty ||
+    aptitudesSnapshot(selectedFeatAptitudes) !== initialFeatAptitudes;
+
+  const isSpellDirty = spellForm.formState.isDirty ||
+    aptitudesSnapshot(selectedSpellAptitudes) !== initialSpellAptitudes ||
+    aptitudeMetadataSnapshot(spellAptitudeMetadata) !== initialSpellMetadata;
+
+  const isClassLevelDirty =
+    levelFeatsSnapshot(selectedLevelFeats) !== initialLevelFeats ||
+    levelSavesSnapshot(levelSaveValues) !== initialLevelSaves;
+
+  const isEditorDirty: Record<string, boolean> = {
+    feats: isFeatDirty,
+    races: raceForm.formState.isDirty,
+    items: itemForm.formState.isDirty,
+    powers: isSpellDirty,
+    klass_levels: isClassLevelDirty,
+  };
+  const editorDirtyRef = useLatest(!!entityType && !!isEditorDirty[entityType]);
+  const populatedEntityId = useRef<string | null>(null);
+
+  // The populate effects below re-run on every refetch of the entity, such as
+  // the one after a save. Skip those while the editor has unsaved edits to the
+  // same entity, so a refetch never discards them.
+  const shouldPopulate = useCallback((loadedId: string) => {
+    if (editorDirtyRef.current && populatedEntityId.current === loadedId) return false;
+    populatedEntityId.current = loadedId;
+    return true;
+  }, [editorDirtyRef]);
 
   // Saves query (for spell saveId select and class level saves)
   const { data: savesData } = useQuery({
@@ -327,23 +365,24 @@ export default function CustomizationPage() {
   usePageTitle((entityData as { name?: string } | undefined)?.name);
 
   useEffect(() => {
-    if (entityData && entityType === "feats") {
+    if (entityData && entityType === "feats" && shouldPopulate(entityData.id)) {
       const feat = entityData as { name: string; description: string; featsAptitudesInRules?: { aptitudeId: string; aptitudesInRule?: Aptitude }[] };
       const aptitudes = (feat.featsAptitudesInRules ?? [])
         .filter((fa) => fa.aptitudesInRule)
         .map((fa) => fa.aptitudesInRule!);
+      // oxlint-disable-next-line react/set-state-in-effect
       setSelectedFeatAptitudes(aptitudes);
-      setInitialFeatAptitudes(aptitudes.map((a) => a.id).sort());
+      setInitialFeatAptitudes(aptitudesSnapshot(aptitudes));
       featForm.reset({
         name: feat.name,
         description: feat.description,
         aptitudeIds: aptitudes.map((a) => a.id),
       });
     }
-  }, [entityData, entityType, featForm]);
+  }, [entityData, entityType, featForm, shouldPopulate]);
 
   useEffect(() => {
-    if (entityData && entityType === "races") {
+    if (entityData && entityType === "races" && shouldPopulate(entityData.id)) {
       const race = entityData as { name: string; description: string; size: RaceFormData["size"]; baseSpeed: number };
       raceForm.reset({
         name: race.name,
@@ -352,10 +391,10 @@ export default function CustomizationPage() {
         baseSpeed: race.baseSpeed,
       });
     }
-  }, [entityData, entityType, raceForm]);
+  }, [entityData, entityType, raceForm, shouldPopulate]);
 
   useEffect(() => {
-    if (entityData && entityType === "items") {
+    if (entityData && entityType === "items" && shouldPopulate(entityData.id)) {
       const item = entityData as ItemResponse;
       itemForm.reset({
         name: item.name,
@@ -368,10 +407,10 @@ export default function CustomizationPage() {
         sourceItemId: item.isTemplate ? undefined : item.sourceItemId ?? undefined,
       });
     }
-  }, [entityData, entityType, itemForm]);
+  }, [entityData, entityType, itemForm, shouldPopulate]);
 
   useEffect(() => {
-    if (entityData && entityType === "powers") {
+    if (entityData && entityType === "powers" && shouldPopulate(entityData.id)) {
       const spell = entityData as {
         name: string;
         description: string;
@@ -388,8 +427,9 @@ export default function CustomizationPage() {
       const aptitudes = (spell.powersAptitudesInRules ?? [])
         .filter((pa) => pa.aptitudesInRule)
         .map((pa) => pa.aptitudesInRule!);
+      // oxlint-disable-next-line react/set-state-in-effect
       setSelectedSpellAptitudes(aptitudes);
-      setInitialSpellAptitudes(aptitudes.map((a) => a.id).sort());
+      setInitialSpellAptitudes(aptitudesSnapshot(aptitudes));
       const metadata = new Map<string, { level?: number }>();
       for (const pa of spell.powersAptitudesInRules ?? []) {
         const entry: { level?: number } = {};
@@ -397,12 +437,12 @@ export default function CustomizationPage() {
         if (Object.keys(entry).length > 0) metadata.set(pa.aptitudeId, entry);
       }
       setSpellAptitudeMetadata(metadata);
-      setInitialSpellMetadata(JSON.stringify(Array.from(metadata.entries()).sort()));
+      setInitialSpellMetadata(aptitudeMetadataSnapshot(metadata));
     }
-  }, [entityData, entityType, spellForm]);
+  }, [entityData, entityType, spellForm, shouldPopulate]);
 
   useEffect(() => {
-    if (entityData && entityType === "klass_levels") {
+    if (entityData && entityType === "klass_levels" && shouldPopulate(entityData.id)) {
       const level = entityData as {
         bab: number;
         skills: number;
@@ -423,11 +463,12 @@ export default function CustomizationPage() {
             label: `${feat.name} (${aptitudeName})`,
           };
         });
+        // oxlint-disable-next-line react/set-state-in-effect
         setSelectedLevelFeats(feats);
-        setInitialLevelFeats(JSON.stringify(feats.map((f) => `${f.featId}-${f.aptitudeId}`).sort()));
+        setInitialLevelFeats(levelFeatsSnapshot(feats));
       } else {
         setSelectedLevelFeats([]);
-        setInitialLevelFeats("[]");
+        setInitialLevelFeats(levelFeatsSnapshot([]));
       }
       // Populate saves
       if (level.saves && level.saves.length > 0) {
@@ -436,24 +477,13 @@ export default function CustomizationPage() {
           values[save.saveId] = save.base;
         }
         setLevelSaveValues(values);
-        setInitialLevelSaves(JSON.stringify(Object.entries(values).sort()));
+        setInitialLevelSaves(levelSavesSnapshot(values));
       } else {
         setLevelSaveValues({});
-        setInitialLevelSaves("[]");
+        setInitialLevelSaves(levelSavesSnapshot({}));
       }
     }
-  }, [entityData, entityType, classLevelForm, featOptions]);
-
-  const isFeatDirty = featForm.formState.isDirty ||
-    JSON.stringify(selectedFeatAptitudes.map((a) => a.id).sort()) !== JSON.stringify(initialFeatAptitudes);
-
-  const isSpellDirty = spellForm.formState.isDirty ||
-    JSON.stringify(selectedSpellAptitudes.map((a) => a.id).sort()) !== JSON.stringify(initialSpellAptitudes) ||
-    JSON.stringify(Array.from(spellAptitudeMetadata.entries()).sort()) !== initialSpellMetadata;
-
-  const isClassLevelDirty =
-    JSON.stringify(selectedLevelFeats.map((f) => `${f.featId}-${f.aptitudeId}`).sort()) !== initialLevelFeats ||
-    JSON.stringify(Object.entries(levelSaveValues).sort()) !== initialLevelSaves;
+  }, [entityData, entityType, classLevelForm, featOptions, shouldPopulate]);
 
   const { canEdit, canDelete } = usePermissions(
     ruleset ?? { userId: null, status: undefined },
@@ -461,6 +491,19 @@ export default function CustomizationPage() {
   );
 
   const showDeleteAction = entityType ? isEditable(entityType) && canDelete : false;
+
+  // PUT responses omit relations (aptitude links, class-level feats and saves),
+  // so they never seed the entity cache: callers rebaseline the editor on what
+  // was saved, then the entity is refetched. The mutation stays pending until
+  // that refetch lands, so a quick second save can't send a stale updatedAt.
+  const handleEntitySaved = (newId: string, listKey: QueryKey, message: string) => {
+    if (newId !== entityId) {
+      navigate(`/rulesets/${id}/${entityType}/${newId}/customization${section ? `/${section}` : ""}`, { replace: true, state: location.state });
+    }
+    queryClient.invalidateQueries({ queryKey: listKey });
+    snackbar.success(message);
+    return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
+  };
 
   // Feat update mutation
   const updateFeatMutation = useMutation({
@@ -476,17 +519,11 @@ export default function CustomizationPage() {
       if (!response.ok) throw new Error("Failed to update feat");
       return response.json();
     },
-    onSuccess: (data) => {
-      const newId = (data as { id: string }).id;
-      queryClient.setQueryData(queryKeys.rulesets.entity(id!, entityType!, newId), (old: unknown) =>
-        old ? { ...(old as Record<string, unknown>), ...(data as Record<string, unknown>) } : data,
-      );
-      if (newId !== entityId) {
-        navigate(`/rulesets/${id}/${entityType}/${newId}/customization/${section}`, { replace: true, state: location.state });
-      }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });
-      snackbar.success("Feat updated");
+    onMutate: () => ({ aptitudes: aptitudesSnapshot(selectedFeatAptitudes) }),
+    onSuccess: (data, submitted, snapshot) => {
+      featForm.reset(submitted, { keepValues: true });
+      setInitialFeatAptitudes(snapshot.aptitudes);
+      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Feat updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update feat"),
   });
@@ -501,17 +538,9 @@ export default function CustomizationPage() {
       if (!response.ok) throw new Error("Failed to update race");
       return response.json();
     },
-    onSuccess: (data) => {
-      const newId = (data as { id: string }).id;
-      queryClient.setQueryData(queryKeys.rulesets.entity(id!, entityType!, newId), (old: unknown) =>
-        old ? { ...(old as Record<string, unknown>), ...(data as Record<string, unknown>) } : data,
-      );
-      if (newId !== entityId) {
-        navigate(`/rulesets/${id}/${entityType}/${newId}/customization/${section}`, { replace: true, state: location.state });
-      }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });
-      snackbar.success("Race updated");
+    onSuccess: (data, submitted) => {
+      raceForm.reset(submitted, { keepValues: true });
+      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Race updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update race"),
   });
@@ -527,18 +556,9 @@ export default function CustomizationPage() {
       if (!response.ok) throw new Error("Failed to update item");
       return response.json();
     },
-    onSuccess: (data) => {
-      const newId = (data as { id: string }).id;
-      itemForm.reset(itemForm.getValues());
-      queryClient.setQueryData(queryKeys.rulesets.entity(id!, entityType!, newId), (old: unknown) =>
-        old ? { ...(old as Record<string, unknown>), ...(data as Record<string, unknown>) } : data,
-      );
-      if (newId !== entityId) {
-        navigate(`/rulesets/${id}/${entityType}/${newId}/customization/${section}`, { replace: true, state: location.state });
-      }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });
-      snackbar.success("Item updated");
+    onSuccess: (data, submitted) => {
+      itemForm.reset(submitted, { keepValues: true });
+      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Item updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update item"),
   });
@@ -558,14 +578,15 @@ export default function CustomizationPage() {
       if (!response.ok) throw new Error("Failed to update spell");
       return response.json();
     },
-    onSuccess: (data) => {
-      const newId = (data as { id: string }).id;
-      if (newId !== entityId) {
-        navigate(`/rulesets/${id}/${entityType}/${newId}/customization${section ? `/${section}` : ""}`, { replace: true, state: location.state });
-      }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });
-      snackbar.success("Spell updated");
+    onMutate: () => ({
+      aptitudes: aptitudesSnapshot(selectedSpellAptitudes),
+      metadata: aptitudeMetadataSnapshot(spellAptitudeMetadata),
+    }),
+    onSuccess: (data, { aptitudes: _aptitudes, ...submitted }, snapshot) => {
+      spellForm.reset(submitted, { keepValues: true });
+      setInitialSpellAptitudes(snapshot.aptitudes);
+      setInitialSpellMetadata(snapshot.metadata);
+      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Spell updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update spell"),
   });
@@ -587,18 +608,15 @@ export default function CustomizationPage() {
       if (!response.ok) throw new Error("Failed to update class level");
       return response.json();
     },
-    onSuccess: (data) => {
-      const newId = (data as { id: string }).id;
+    onMutate: () => ({
+      feats: levelFeatsSnapshot(selectedLevelFeats),
+      saves: levelSavesSnapshot(levelSaveValues),
+    }),
+    onSuccess: (data, _submitted, snapshot) => {
+      setInitialLevelFeats(snapshot.feats);
+      setInitialLevelSaves(snapshot.saves);
       const klassId = (entityData as unknown as { klassId: string }).klassId;
-      queryClient.setQueryData(queryKeys.rulesets.entity(id!, entityType!, newId), (old: unknown) =>
-        old ? { ...(old as Record<string, unknown>), ...(data as Record<string, unknown>) } : data,
-      );
-      if (newId !== entityId) {
-        navigate(`/rulesets/${id}/${entityType}/${newId}/customization/${section}`, { replace: true, state: location.state });
-      }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classLevels(id!, klassId) });
-      snackbar.success("Class level updated");
+      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.classLevels(id!, klassId), "Class level updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update class level"),
   });

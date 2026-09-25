@@ -80,6 +80,7 @@ export function TargetPathInput({
 
   useEffect(() => {
     if (isComplete && userChanged) {
+      // oxlint-disable-next-line react/set-state-in-effect
       validatePath(value);
     } else {
       setValidationResult(null);

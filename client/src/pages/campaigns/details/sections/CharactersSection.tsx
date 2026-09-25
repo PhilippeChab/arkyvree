@@ -469,11 +469,13 @@ function LinkCharacterDialog({
 
 export function CharactersSection({ campaign }: CharactersSectionProps) {
   const [isLinkDialogOpen, setLinkDialogOpen] = useState(false);
-  const { offset, updateOffset } = useStaggerAnimation();
 
   // Search state with debounce
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
+
+  const listQueryKey = [...queryKeys.campaigns.section(campaign.id, "characters"), debouncedSearchQuery];
+  const { offset, updateOffset } = useStaggerAnimation(listQueryKey);
 
   const {
     data,
@@ -483,7 +485,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: [...queryKeys.campaigns.section(campaign.id, "characters"), debouncedSearchQuery],
+    queryKey: listQueryKey,
     queryFn: async ({ pageParam }) => {
       const response = await rpc.api.campaigns[":id"].characters.$get({
         param: { id: campaign.id },

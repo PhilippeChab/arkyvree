@@ -44,6 +44,7 @@ export function SubscribeExtensionDialog({
 
   useEffect(() => {
     if (!open) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setSelected([]);
       setSearch("");
     }

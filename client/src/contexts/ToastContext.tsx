@@ -42,6 +42,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
 
   useEffect(() => {
     if (!current && queue.length > 0) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setCurrent(queue[0]);
       setQueue((prev) => prev.slice(1));
       setOpen(true);
