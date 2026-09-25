@@ -484,6 +484,7 @@ export default function CustomizationPage() {
       if (newId !== entityId) {
         navigate(`/rulesets/${id}/${entityType}/${newId}/customization/${section}`, { replace: true, state: location.state });
       }
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });
       snackbar.success("Feat updated");
     },
@@ -508,6 +509,7 @@ export default function CustomizationPage() {
       if (newId !== entityId) {
         navigate(`/rulesets/${id}/${entityType}/${newId}/customization/${section}`, { replace: true, state: location.state });
       }
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });
       snackbar.success("Race updated");
     },
@@ -594,6 +596,7 @@ export default function CustomizationPage() {
       if (newId !== entityId) {
         navigate(`/rulesets/${id}/${entityType}/${newId}/customization/${section}`, { replace: true, state: location.state });
       }
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classLevels(id!, klassId) });
       snackbar.success("Class level updated");
     },
