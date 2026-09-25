@@ -1136,10 +1136,9 @@ async function buildOverrideMap(
 
   // Build siblingMap: when multiple snapshots share a sourceEntityId, the
   // winner's forkedEntityId maps to the sibling-loser forkedEntityIds. The
-  // winner can be either an extension's COW (sibling extensions lose) or the
-  // child fork's own COW — in both cases extension shadows that aren't the
-  // winner are recorded so compose hides/remaps them and their customizations
-  // dedup-merge into the winner's bucket.
+  // winner can be either an extension's COW or the child fork's own COW.
+  // Local winners are converted to true overrides after both pairing passes,
+  // so their customizations are not merged again on reads.
   const extensionSet = new Set(extensionRulesetIds ?? []);
   const siblingMap = new Map<string, string[]>();
 
@@ -1247,6 +1246,19 @@ async function buildOverrideMap(
       }
       const existingSiblings = siblingMap.get(winner.id) ?? [];
       siblingMap.set(winner.id, [...existingSiblings, ...losers.map((l) => l.id)]);
+    }
+  }
+
+  // A local COW already owns its customizations. Keep sibling IDs resolvable,
+  // but suppress their source rows instead of merging them back into the copy.
+  // Include tombstones so deleting the local entity cannot revive a sibling.
+  const localIds = new Set((byRuleset.get(rulesetId) ?? []).map(s => s.forkedEntityId));
+  for (const [winnerId, siblingIds] of siblingMap) {
+    const resolvedId = idResolveMap.get(winnerId) ?? winnerId;
+    if (!localIds.has(resolvedId)) continue;
+    for (const siblingId of siblingIds) {
+      map.set(siblingId, resolvedId);
+      idResolveMap.set(siblingId, resolvedId);
     }
   }
 
