@@ -602,10 +602,7 @@ function serializeReqNode(
   return out;
 }
 
-/**
- * Drop leaves already required as top-level standalone conditions. Preserve
- * equal conditions in separate chains, as well as source identity through pruning.
- */
+/** Deduplicate standalone roots only; preserve every condition inside a chain. */
 function dedupAgainstExisting(
   node: ReqNode,
   existingKeys: Set<string>,
@@ -613,15 +610,10 @@ function dedupAgainstExisting(
   if (node.kind === "leaf") {
     const key = `${node.target}|${node.operator}|${node.value}`;
     if (existingKeys.has(key)) return null;
-    return node;
   }
-  const filteredChildren: ReqNode[] = [];
-  for (const child of node.children) {
-    const result = dedupAgainstExisting(child, existingKeys);
-    if (result) filteredChildren.push(result);
-  }
-  if (filteredChildren.length === 0) return null;
-  return { ...node, children: filteredChildren };
+  // A AND (A OR B) is satisfied whenever A is true. Removing A from the
+  // OR would incorrectly require B; keep nested trees intact.
+  return node;
 }
 
 function collectAllLeafKeys(forest: ReqNode[]): Set<string> {
@@ -709,8 +701,8 @@ async function mergeSiblingData(
   const siblingCusts = await fetchSiblingCustomizationsRaw(tx, siblingIds, entityType, sourceType);
 
   // 1. Merge sibling requirements as a proper recursive forest merge.
-  // Build the target's forest, then for each sibling: build its forest, dedup
-  // its leaves against target standalones, and append its trees at fresh
+  // Build the target's forest, then for each sibling: deduplicate standalone
+  // roots and append intact trees at fresh
   // top-level positions on the target. Top-level AND across all rows combines
   // them: `(target) AND (sibling_1) AND (sibling_2) AND ...`.
   const targetReqs = await Requirements.findManyByEntity(tx, { entityIds: [targetEntityId], entityType });
@@ -1653,8 +1645,10 @@ async function buildCowData(
         (chainIndex.get(a.rulesetId) ?? 999) - (chainIndex.get(b.rulesetId) ?? 999),
       );
       const [winner, ...losers] = sorted;
+      // Aliases must point directly to the visible copy, including a local COW.
+      const resolvedWinnerId = idResolveMap.get(winner.id) ?? winner.id;
       for (const loser of losers) {
-        if (!idResolveMap.has(loser.id)) idResolveMap.set(loser.id, winner.id);
+        if (!idResolveMap.has(loser.id)) idResolveMap.set(loser.id, resolvedWinnerId);
       }
       const existingSiblings = siblingMap.get(winner.id) ?? [];
       siblingMap.set(winner.id, [...existingSiblings, ...losers.map((l) => l.id)]);
