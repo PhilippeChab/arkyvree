@@ -50,12 +50,19 @@ export default function CampaignCharacterPage() {
 
   const handleClose = () => setAnchorEl(null);
 
-  const handleDownloadPdf = async () => {
-    if (!characterId) return;
+  const handleDownloadPdf = async (canEdit: boolean) => {
+    if (!campaignId || !characterId) return;
     try {
-      await rpc.api.characters[":characterId"]["pdf"]["$post"]({
-        param: { characterId },
-      });
+      // Editors export through the character; the Game Master through the campaign.
+      if (canEdit) {
+        await rpc.api.characters[":characterId"]["pdf"]["$post"]({
+          param: { characterId },
+        });
+      } else {
+        await rpc.api.campaigns[":id"].characters[":characterId"]["pdf"]["$post"]({
+          param: { id: campaignId, characterId },
+        });
+      }
       snackbar.info("Your PDF is being generated. You'll be notified when it's ready.");
     } catch (error) {
       if (error instanceof ApiError && error.status === 429) {
@@ -116,26 +123,28 @@ export default function CampaignCharacterPage() {
             </Typography>
           </Stack>
 
-          {data.canEdit && !data.deletedAt && (
+          {(data.canEdit || data.isGameMaster) && !data.deletedAt && (
             <Stack direction="row" spacing={1}>
               <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: "text.secondary" }}>
                 <MoreVertIcon />
               </IconButton>
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                {data.canEdit && (
+                  <MenuItem
+                    onClick={() => {
+                      navigate(`/characters/${characterId}`);
+                      handleClose();
+                    }}
+                  >
+                    <ListItemIcon>
+                      <EditIcon fontSize="small" />
+                    </ListItemIcon>
+                    Edit Character
+                  </MenuItem>
+                )}
                 <MenuItem
                   onClick={() => {
-                    navigate(`/characters/${characterId}`);
-                    handleClose();
-                  }}
-                >
-                  <ListItemIcon>
-                    <EditIcon fontSize="small" />
-                  </ListItemIcon>
-                  Edit Character
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    handleDownloadPdf();
+                    handleDownloadPdf(data.canEdit);
                     handleClose();
                   }}
                 >

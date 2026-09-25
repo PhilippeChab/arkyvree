@@ -27,6 +27,19 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
     return true;
   }
 
+  async canExportCharacters() {
+    const player = await Players.findOne(db, {
+      userId: this.session.userId,
+      campaignId: this.entity.id,
+    });
+
+    if (!player || player.role !== "Game Master") {
+      throw new ForbiddenError("Only the Game Master can export campaign characters");
+    }
+
+    return true;
+  }
+
   async canDelete() {
     // Archived campaigns also archive their player rows — include them.
     const player = await Players.findOne(

@@ -103,6 +103,36 @@ async function findEditableCharacterOrBonded(
   return master ? bonded : null;
 }
 
+/**
+ * Queues a PDF of the character for the session user, who is notified when it
+ * is ready. Callers check that the session may read the character.
+ */
+export async function enqueueCharacterPdf(session: Session, characterRecord: Pick<Character, "id" | "name">) {
+  await withTransaction(async (tx) => {
+    await tx.execute(
+      sql`SELECT graphile_worker.add_job(
+        'generatePdf',
+        ${JSON.stringify({
+          userId: session.userId,
+          characterId: characterRecord.id,
+          characterName: characterRecord.name,
+        })}::json,
+        max_attempts := 2,
+        queue_name := ${"pdf-" + session.userId}
+      )`,
+    );
+
+    await Activities.create(tx, {
+      userId: session.userId,
+      targetId: characterRecord.id,
+      targetTable: getTableName(charactersInCharacter),
+      type: "generatePdf",
+    });
+  });
+
+  pingWorker();
+}
+
 export const CharactersMethods = {
   async getAvailableRaces(
     rulesetId: string,
@@ -700,29 +730,7 @@ export const CharactersMethods = {
       throw new NotFoundError("Character not found");
     }
 
-    await withTransaction(async (tx) => {
-      await tx.execute(
-        sql`SELECT graphile_worker.add_job(
-          'generatePdf',
-          ${JSON.stringify({
-            userId: session.userId,
-            characterId,
-            characterName: characterRecord.name,
-          })}::json,
-          max_attempts := 2,
-          queue_name := ${"pdf-" + session.userId}
-        )`,
-      );
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterRecord.id,
-        targetTable: getTableName(charactersInCharacter),
-        type: "generatePdf",
-      });
-    });
-
-    pingWorker();
+    await enqueueCharacterPdf(session, characterRecord);
   },
 
   async generateSharedPdf(shareToken: string) {

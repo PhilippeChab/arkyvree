@@ -104,12 +104,13 @@ Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDe
 | `canUpdate` | **Game Master only** |
 | `canDelete` | **Game Master only** (archive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
+| `canExportCharacters` | **Game Master only** — PDF export of any character linked to the campaign (`POST /campaigns/:id/characters/:characterId/pdf`), whatever its visibility, since the GM already sees the full sheet |
 
 **Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility`'s policy throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM). This is single-user contention by design.
 
 **Partial visibility filtering**: `getCampaignCharacters` strips `description` and `levels` for characters with `visibility: "Partial"` when the viewer is neither the owner nor a GM.
 
-**`canEdit` on the campaign-character detail response**: `getCampaignCharacter` returns both `isOwner` (link-slot ownership in the campaign) and `canEdit` (character owner OR active character contributor). The campaign character view uses `canEdit` to gate the "Edit Character" / "Download PDF" menu — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
+**`canEdit` on the campaign-character detail response**: `getCampaignCharacter` returns `isOwner` (link-slot ownership in the campaign), `isGameMaster`, and `canEdit` (character owner OR active character contributor). The campaign character view shows "Edit Character" to `canEdit` only, and "Download PDF" to `canEdit` (through the character's own PDF endpoint) or `isGameMaster` (through the campaign endpoint) — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
 
 ## Attachments — `AttachmentsService` registry
 

@@ -123,6 +123,60 @@ describe("campaigns characters", () => {
     });
   }
 
+  describe("POST /:id/characters/:characterId/pdf", () => {
+    // Links the creator's character and adds testuser2 to the campaign with
+    // `role`, returning a session for them.
+    async function joinAs(role: "Game Master" | "Player Character") {
+      const { campaignId, characterId } = await createTestData();
+      const owner = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+      const ownerPlayer = (await Players.findOne(db, { campaignId, userId: owner.userId }))!;
+      await PlayerCharacters.create(db, { playerId: ownerPlayer.id, characterId, visibility: "Private" });
+      const member = (await Users.findOne(db, { emailAddress: "testuser2@example.com" }))!;
+      const [memberSession] = await Sessions.create(db, { userId: member.id });
+      await Players.create(db, { campaignId, userId: member.id, role });
+      return { campaignId, characterId, memberHeaders: { cookie: `session-id=${memberSession.id}` } };
+    }
+
+    test("lets the Game Master export a player's character", async () => {
+      const { campaignId, characterId, memberHeaders } = await joinAs("Game Master");
+
+      const detail = await api.api.campaigns[":id"].characters[":characterId"].$get(
+        { param: { id: campaignId, characterId } },
+        { headers: memberHeaders },
+      );
+      if (!detail.ok) throw new Error("Campaign character request failed");
+      const body = await detail.json();
+      expect(body.isGameMaster).toBe(true);
+      expect(body.canEdit).toBe(false);
+
+      const response = await api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
+        { param: { id: campaignId, characterId } },
+        { headers: memberHeaders },
+      );
+      expect(response.status).toBe(202);
+    });
+
+    test("forbids other players", async () => {
+      const { campaignId, characterId, memberHeaders } = await joinAs("Player Character");
+
+      const response = await api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
+        { param: { id: campaignId, characterId } },
+        { headers: memberHeaders },
+      );
+      expect(response.status).toBe(403);
+    });
+
+    test("returns 404 for a character not linked to the campaign", async () => {
+      const { campaignId, characterId } = await createTestData();
+
+      const response = await api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
+        { param: { id: campaignId, characterId } },
+        { headers },
+      );
+      expect(response.status).toBe(404);
+    });
+  });
+
   test("should link a character to a campaign and list it", async () => {
     const { campaignId, characterId } = await createTestData();
 

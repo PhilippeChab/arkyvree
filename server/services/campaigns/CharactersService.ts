@@ -5,7 +5,8 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, CharacterContributors, CharacterLevels, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { loadBondedByKind } from "@/server/services/CharactersService.ts";
+import { enqueueCharacterPdf, loadBondedByKind } from "@/server/services/CharactersService.ts";
+import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetScopes } from "@/server/services/rulesets/cow.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -280,6 +281,7 @@ export const PlayerCharactersMethods = {
     return {
       visibility: link.visibility as VisibilityType,
       isOwner,
+      isGameMaster: isGM,
       canEdit,
       isPartial,
       canViewPrivateNotes: isGM || canEdit,
@@ -287,6 +289,26 @@ export const PlayerCharactersMethods = {
       detailedCharacter,
       bondedByKind,
     };
+  },
+
+  async enqueueCampaignCharacterPdf(
+    session: Session,
+    campaignId: string,
+    characterId: string,
+  ) {
+    const campaign = await Campaigns.findOne(db, { id: campaignId });
+    if (!campaign) throw new NotFoundError("Campaign not found");
+
+    await new CampaignsPolicy(session, campaign).canExportCharacters();
+
+    const link = await PlayerCharacters.findOne(db, { characterId });
+    const linkedPlayer = link && await Players.findOne(db, { id: link.playerId, campaignId });
+    if (!linkedPlayer) throw new NotFoundError("Character not found in this campaign");
+
+    const character = await Characters.findOne(db, { id: characterId });
+    if (!character) throw new NotFoundError("Character not found");
+
+    await enqueueCharacterPdf(session, character);
   },
 };
 
