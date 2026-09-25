@@ -42,7 +42,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 type CampaignCharactersResponse = InferResponseType<
@@ -82,8 +82,7 @@ function CharacterCard({
   const navigate = useNavigate();
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
-  const chipRef = useRef<HTMLDivElement>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
 
   const queryKey = useMemo(
     () => queryKeys.campaigns.characterDetail(campaignId, character.id),
@@ -169,7 +168,6 @@ function CharacterCard({
             </Typography>
           </Stack>
           <Chip
-            ref={chipRef}
             label={<Stack direction="row" spacing={0.5} sx={{
               alignItems: "center"
             }}><span>{character.visibility}</span><VisibilityIcon sx={{ fontSize: 14 }} /></Stack>}
@@ -177,7 +175,7 @@ function CharacterCard({
             variant="outlined"
             onClick={canEditVisibility ? (e) => {
               e.stopPropagation();
-              setMenuOpen(true);
+              setMenuAnchorEl(e.currentTarget);
             } : undefined}
             sx={{
               fontWeight: 500,
@@ -187,11 +185,11 @@ function CharacterCard({
           />
           {canEditVisibility && (
             <Menu
-              anchorEl={chipRef.current}
-              open={menuOpen}
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
               onClose={(e: React.SyntheticEvent) => {
                 e.stopPropagation?.();
-                setMenuOpen(false);
+                setMenuAnchorEl(null);
               }}
             >
               {VISIBILITY_OPTIONS.map((option) => (
@@ -200,7 +198,7 @@ function CharacterCard({
                   selected={option === character.visibility}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setMenuOpen(false);
+                    setMenuAnchorEl(null);
                     if (option !== character.visibility) {
                       updateVisibility(option);
                     }

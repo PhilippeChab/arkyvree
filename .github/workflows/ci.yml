@@ -17,6 +17,7 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: bunx tsgo --noEmit
+      - run: bun run lint
       - run: bun run build
       - name: Verify production PDF generation
         run: bun run test:pdf-bundle

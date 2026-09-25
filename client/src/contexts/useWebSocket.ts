@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { useLatest } from "@/client/src/hooks/index.ts";
 
 interface WsMessage {
   type: string;
@@ -17,8 +18,7 @@ const PING_INTERVAL_MS = 30000;
 const PONG_TIMEOUT_MS = 10000;
 
 export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptions) {
-  const onMessageRef = useRef(onMessage);
-  onMessageRef.current = onMessage;
+  const onMessageRef = useLatest(onMessage);
 
   useEffect(() => {
     if (!enabled || !identity) return;
@@ -105,5 +105,5 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
         ws.close();
       }
     };
-  }, [enabled, identity]);
+  }, [enabled, identity, onMessageRef]);
 }

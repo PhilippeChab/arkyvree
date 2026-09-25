@@ -43,9 +43,8 @@ export const TemplateExpressionInput = forwardRef<
   ref,
 ) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
-  const anchorRef = useRef<HTMLButtonElement | null>(null);
   const cursorRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [pickerAnchorEl, setPickerAnchorEl] = useState<HTMLElement | null>(null);
   const [pickerPath, setPickerPath] = useState("");
 
   const getSelection = () => {
@@ -94,14 +93,14 @@ export const TemplateExpressionInput = forwardRef<
     },
   }));
 
-  const openPicker = () => {
+  const openPicker = (event: React.MouseEvent<HTMLElement>) => {
     cursorRef.current = getSelection();
     setPickerPath("");
-    setPopoverOpen(true);
+    setPickerAnchorEl(event.currentTarget);
   };
 
   const closePicker = () => {
-    setPopoverOpen(false);
+    setPickerAnchorEl(null);
     setPickerPath("");
   };
 
@@ -134,7 +133,6 @@ export const TemplateExpressionInput = forwardRef<
                 <Tooltip title="Insert path…">
                   <span>
                     <IconButton
-                      ref={anchorRef}
                       size="small"
                       onClick={openPicker}
                       disabled={disabled}
@@ -150,8 +148,8 @@ export const TemplateExpressionInput = forwardRef<
         }}
       />
       <Popover
-        open={popoverOpen}
-        anchorEl={anchorRef.current}
+        open={Boolean(pickerAnchorEl)}
+        anchorEl={pickerAnchorEl}
         onClose={closePicker}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}

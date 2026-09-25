@@ -15,7 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { BaseRules, SelectedKlass } from "./levelUp/useLevelWizard.ts";
 import {
   useAddLevelWizard,
@@ -119,13 +119,12 @@ export function AddLevelModal({
   // buttons). Snapshot the unfiltered response and fall back to the snapshot
   // whenever search is active OR the current response is empty (e.g. mid-
   // refetch during any query-key churn that slipped past keepPreviousData).
-  const quickAddKlassesRef = useRef<typeof availableKlasses>([]);
-  if (!debouncedKlassSearch && availableKlasses.length > 0) {
-    quickAddKlassesRef.current = availableKlasses;
+  const [quickAddSnapshot, setQuickAddSnapshot] = useState<typeof availableKlasses>([]);
+  const hasUnfilteredKlasses = !debouncedKlassSearch && availableKlasses.length > 0;
+  if (hasUnfilteredKlasses && availableKlasses !== quickAddSnapshot) {
+    setQuickAddSnapshot(availableKlasses);
   }
-  const quickAddKlasses = !debouncedKlassSearch && availableKlasses.length > 0
-    ? availableKlasses
-    : quickAddKlassesRef.current;
+  const quickAddKlasses = hasUnfilteredKlasses ? availableKlasses : quickAddSnapshot;
 
   const handleKlassListScroll = useCallback(
     (event: React.UIEvent<HTMLElement>) => {

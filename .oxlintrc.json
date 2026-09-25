@@ -25,6 +25,12 @@
       "warn",
       { "allowConstantExport": true, "allowExportNames": ["useTheme", "useSnackbar"] }
     ],
+    // React Compiler rules. The compiler isn't enabled, so APIs it can't
+    // memoize (react-hook-form's watch()) are fine. Edit forms are populated
+    // from effects with form.reset() (see AGENTS.md), so setting state in an
+    // effect is a hint to consider, not an error.
+    "react/incompatible-library": "off",
+    "react/set-state-in-effect": "warn",
 
     // Unicorn
     "unicorn/no-array-for-each": "error",

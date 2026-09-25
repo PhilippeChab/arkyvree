@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLatest } from "./useLatest.ts";
 
 const GSI_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 const CLIENT_ID = window.__APP_CONFIG__?.googleClientId || null;
@@ -33,9 +34,8 @@ function loadGsiScript(): Promise<void> {
 
 export function useGoogleSignIn(onToken: (idToken: string) => void) {
   const [isAvailable, setIsAvailable] = useState(false);
-  const callbackRef = useRef(onToken);
+  const callbackRef = useLatest(onToken);
   const overlayRef = useRef<HTMLDivElement | null>(null);
-  callbackRef.current = onToken;
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +69,7 @@ export function useGoogleSignIn(onToken: (idToken: string) => void) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [callbackRef]);
 
   useEffect(() => {
     if (isAvailable && overlayRef.current) {

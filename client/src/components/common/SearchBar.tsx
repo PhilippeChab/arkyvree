@@ -16,7 +16,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface FilterOption<T extends string = string> {
   value: T | undefined;
@@ -72,10 +72,11 @@ export function SearchBar<
   const [inputValue, setInputValue] = useState(searchValue);
   const debouncedInputValue = useDebouncedValue(inputValue);
 
-  // Sync from parent on external changes (back button, programmatic clear)
-  const prevSearchValue = useRef(searchValue);
-  if (searchValue !== prevSearchValue.current) {
-    prevSearchValue.current = searchValue;
+  // Sync from parent on external changes (back button, programmatic clear).
+  // The previous value lives in state so a discarded render can't skip the sync.
+  const [prevSearchValue, setPrevSearchValue] = useState(searchValue);
+  if (searchValue !== prevSearchValue) {
+    setPrevSearchValue(searchValue);
     if (inputValue !== searchValue) setInputValue(searchValue);
   }
 

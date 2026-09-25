@@ -52,7 +52,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
@@ -276,11 +276,11 @@ export default function CustomizationPage() {
   const [levelSaveValues, setLevelSaveValues] = useState<Record<string, number>>({});
 
   // Initial external state refs for dirty tracking
-  const initialFeatAptitudes = useRef<string[]>([]);
-  const initialSpellAptitudes = useRef<string[]>([]);
-  const initialSpellMetadata = useRef<string>("");
-  const initialLevelFeats = useRef<string>("");
-  const initialLevelSaves = useRef<string>("");
+  const [initialFeatAptitudes, setInitialFeatAptitudes] = useState<string[]>([]);
+  const [initialSpellAptitudes, setInitialSpellAptitudes] = useState<string[]>([]);
+  const [initialSpellMetadata, setInitialSpellMetadata] = useState<string>("");
+  const [initialLevelFeats, setInitialLevelFeats] = useState<string>("");
+  const [initialLevelSaves, setInitialLevelSaves] = useState<string>("");
 
   // Saves query (for spell saveId select and class level saves)
   const { data: savesData } = useQuery({
@@ -333,7 +333,7 @@ export default function CustomizationPage() {
         .filter((fa) => fa.aptitudesInRule)
         .map((fa) => fa.aptitudesInRule!);
       setSelectedFeatAptitudes(aptitudes);
-      initialFeatAptitudes.current = aptitudes.map((a) => a.id).sort();
+      setInitialFeatAptitudes(aptitudes.map((a) => a.id).sort());
       featForm.reset({
         name: feat.name,
         description: feat.description,
@@ -389,7 +389,7 @@ export default function CustomizationPage() {
         .filter((pa) => pa.aptitudesInRule)
         .map((pa) => pa.aptitudesInRule!);
       setSelectedSpellAptitudes(aptitudes);
-      initialSpellAptitudes.current = aptitudes.map((a) => a.id).sort();
+      setInitialSpellAptitudes(aptitudes.map((a) => a.id).sort());
       const metadata = new Map<string, { level?: number }>();
       for (const pa of spell.powersAptitudesInRules ?? []) {
         const entry: { level?: number } = {};
@@ -397,7 +397,7 @@ export default function CustomizationPage() {
         if (Object.keys(entry).length > 0) metadata.set(pa.aptitudeId, entry);
       }
       setSpellAptitudeMetadata(metadata);
-      initialSpellMetadata.current = JSON.stringify(Array.from(metadata.entries()).sort());
+      setInitialSpellMetadata(JSON.stringify(Array.from(metadata.entries()).sort()));
     }
   }, [entityData, entityType, spellForm]);
 
@@ -424,10 +424,10 @@ export default function CustomizationPage() {
           };
         });
         setSelectedLevelFeats(feats);
-        initialLevelFeats.current = JSON.stringify(feats.map((f) => `${f.featId}-${f.aptitudeId}`).sort());
+        setInitialLevelFeats(JSON.stringify(feats.map((f) => `${f.featId}-${f.aptitudeId}`).sort()));
       } else {
         setSelectedLevelFeats([]);
-        initialLevelFeats.current = "[]";
+        setInitialLevelFeats("[]");
       }
       // Populate saves
       if (level.saves && level.saves.length > 0) {
@@ -436,24 +436,24 @@ export default function CustomizationPage() {
           values[save.saveId] = save.base;
         }
         setLevelSaveValues(values);
-        initialLevelSaves.current = JSON.stringify(Object.entries(values).sort());
+        setInitialLevelSaves(JSON.stringify(Object.entries(values).sort()));
       } else {
         setLevelSaveValues({});
-        initialLevelSaves.current = "[]";
+        setInitialLevelSaves("[]");
       }
     }
   }, [entityData, entityType, classLevelForm, featOptions]);
 
   const isFeatDirty = featForm.formState.isDirty ||
-    JSON.stringify(selectedFeatAptitudes.map((a) => a.id).sort()) !== JSON.stringify(initialFeatAptitudes.current);
+    JSON.stringify(selectedFeatAptitudes.map((a) => a.id).sort()) !== JSON.stringify(initialFeatAptitudes);
 
   const isSpellDirty = spellForm.formState.isDirty ||
-    JSON.stringify(selectedSpellAptitudes.map((a) => a.id).sort()) !== JSON.stringify(initialSpellAptitudes.current) ||
-    JSON.stringify(Array.from(spellAptitudeMetadata.entries()).sort()) !== initialSpellMetadata.current;
+    JSON.stringify(selectedSpellAptitudes.map((a) => a.id).sort()) !== JSON.stringify(initialSpellAptitudes) ||
+    JSON.stringify(Array.from(spellAptitudeMetadata.entries()).sort()) !== initialSpellMetadata;
 
   const isClassLevelDirty =
-    JSON.stringify(selectedLevelFeats.map((f) => `${f.featId}-${f.aptitudeId}`).sort()) !== initialLevelFeats.current ||
-    JSON.stringify(Object.entries(levelSaveValues).sort()) !== initialLevelSaves.current;
+    JSON.stringify(selectedLevelFeats.map((f) => `${f.featId}-${f.aptitudeId}`).sort()) !== initialLevelFeats ||
+    JSON.stringify(Object.entries(levelSaveValues).sort()) !== initialLevelSaves;
 
   const { canEdit, canDelete } = usePermissions(
     ruleset ?? { userId: null, status: undefined },

@@ -129,7 +129,7 @@ export function Layout() {
   // dedicated demo banner and the popover would just stack on top.
   const [onboardingOpen, setOnboardingOpen] = useState(() => !isDemo && !user?.onboardingCompletedAt);
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const sidebarItemRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [onboardingAnchorEl, setOnboardingAnchorEl] = useState<HTMLElement | null>(null);
 
   const isPopoverStep = onboardingOpen && !isMobile && stepToSidebarId[onboardingStep];
   const onboardingHighlightId = isPopoverStep ? stepToSidebarId[onboardingStep] : null;
@@ -407,7 +407,7 @@ export function Layout() {
             {sidebarItems.map((item) => (
               <ListItem key={item.id} disablePadding sx={{ mb: 1 }}>
                 <ListItemButton
-                  ref={(el) => { sidebarItemRefs.current[item.id] = el; }}
+                  ref={onboardingHighlightId === item.id ? setOnboardingAnchorEl : undefined}
                   selected={!("external" in item) && getActiveSection() === item.id}
                   onClick={() => {
                     if ("external" in item && item.external) {
@@ -604,7 +604,7 @@ export function Layout() {
         onClose={handleOnboardingClose}
         activeStep={onboardingStep}
         onStepChange={setOnboardingStep}
-        anchorEl={onboardingHighlightId ? sidebarItemRefs.current[onboardingHighlightId] ?? null : null}
+        anchorEl={onboardingHighlightId ? onboardingAnchorEl : null}
         isMobile={isMobile}
       />
     </Box>
