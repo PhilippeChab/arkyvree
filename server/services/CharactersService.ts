@@ -1,6 +1,6 @@
 import { eq, sql, getTableName } from "drizzle-orm";
 
-import { type alignment, charactersInCharacter, type gender } from "@/drizzle/schema.ts";
+import { type alignment, charactersInCharacter, type gender, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
@@ -12,9 +12,10 @@ import {
   Characters,
   Languages,
   Modifiers,
+  PlayerCharacters,
   Races,
 } from "@/server/repositories/index.ts";
-import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import { CampaignsPolicy, CharactersPolicy } from "@/server/services/policies/index.ts";
 import { purgeAttachmentsForRecords, urlForSlot } from "@/server/services/AttachmentsService.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { pingWorker } from "@/server/queue.ts";
@@ -101,6 +102,68 @@ async function findEditableCharacterOrBonded(
     userId,
   });
   return master ? bonded : null;
+}
+
+/**
+ * The character `userId` may export as a PDF, or null: one they own or
+ * contribute to (or a bonded character of such a master). Through
+ * `campaignId`, the character must be linked to that campaign, and its Game
+ * Master may export it too. Checked when the export is queued and again when
+ * the worker runs it, so access revoked in between is honored.
+ */
+export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
+  if (campaignId) {
+    if (!await PlayerCharacters.findOne(db, { characterId, campaignId })) return null;
+    if (await CampaignsPolicy.isGameMaster(userId, campaignId)) {
+      return (await Characters.findOne(db, { id: characterId })) ?? null;
+    }
+  }
+  return findEditableCharacterOrBonded(db, characterId, userId);
+}
+
+/**
+ * Where a PDF export's activity and failure notification link to: the
+ * character page, or for an export requested from a campaign the campaign
+ * character page (a Game Master can't open the character page itself).
+ */
+export function characterPdfTargetTable(campaignId?: string) {
+  return getTableName(campaignId ? playerCharactersInCampaign : charactersInCharacter);
+}
+
+/**
+ * Queues a PDF of the character for the session user, who is notified when it
+ * is ready. Callers check access with `findExportableCharacter`, passing the
+ * same `campaignId` so the worker repeats that check.
+ */
+export async function enqueueCharacterPdf(
+  session: Session,
+  characterRecord: Pick<Character, "id" | "name">,
+  campaignId?: string,
+) {
+  await withTransaction(async (tx) => {
+    await tx.execute(
+      sql`SELECT graphile_worker.add_job(
+        'generatePdf',
+        ${JSON.stringify({
+          userId: session.userId,
+          characterId: characterRecord.id,
+          characterName: characterRecord.name,
+          campaignId,
+        })}::json,
+        max_attempts := 2,
+        queue_name := ${"pdf-" + session.userId}
+      )`,
+    );
+
+    await Activities.create(tx, {
+      userId: session.userId,
+      targetId: characterRecord.id,
+      targetTable: characterPdfTargetTable(campaignId),
+      type: "generatePdf",
+    });
+  });
+
+  pingWorker();
 }
 
 export const CharactersMethods = {
@@ -695,34 +758,12 @@ export const CharactersMethods = {
   },
 
   async enqueuePdf(session: Session, characterId: string) {
-    const characterRecord = await findEditableCharacterOrBonded(db, characterId, session.userId);
+    const characterRecord = await findExportableCharacter(session.userId, characterId);
     if (!characterRecord) {
       throw new NotFoundError("Character not found");
     }
 
-    await withTransaction(async (tx) => {
-      await tx.execute(
-        sql`SELECT graphile_worker.add_job(
-          'generatePdf',
-          ${JSON.stringify({
-            userId: session.userId,
-            characterId,
-            characterName: characterRecord.name,
-          })}::json,
-          max_attempts := 2,
-          queue_name := ${"pdf-" + session.userId}
-        )`,
-      );
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterRecord.id,
-        targetTable: getTableName(charactersInCharacter),
-        type: "generatePdf",
-      });
-    });
-
-    pingWorker();
+    await enqueueCharacterPdf(session, characterRecord);
   },
 
   async generateSharedPdf(shareToken: string) {

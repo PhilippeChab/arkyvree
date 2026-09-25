@@ -1,5 +1,5 @@
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
+import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
@@ -73,10 +73,35 @@ export default new Hono<SessionContext>()
         visibility: data.visibility,
         isOwner: data.isOwner,
         canEdit: data.canEdit,
+        canDownloadPdf: data.canDownloadPdf,
         isPartial: data.isPartial,
         ...visibleResponse,
         bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
       }, 200);
+    },
+  )
+  // Enqueue async PDF generation of a campaign character (its editors and the Game Master)
+  .post(
+    "/:id/characters/:characterId/pdf",
+    denyDemoUser,
+    exportRateLimit,
+    zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
+    async (c) => {
+      const { id, characterId } = c.req.valid("param");
+      const result = await CampaignCharactersService.initialize().call(
+        "enqueueCampaignCharacterPdf",
+        c.var.requestSession,
+        id,
+        characterId,
+      );
+      const success = result[0];
+
+      if (!success) {
+        const [error, code] = toJson(result[2]);
+        return c.json(error, code);
+      }
+
+      return c.json({ message: "PDF generation started" }, 202);
     },
   )
   .put(

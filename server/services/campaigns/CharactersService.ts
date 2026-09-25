@@ -5,7 +5,7 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, CharacterContributors, CharacterLevels, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { loadBondedByKind } from "@/server/services/CharactersService.ts";
+import { enqueueCharacterPdf, findExportableCharacter, loadBondedByKind } from "@/server/services/CharactersService.ts";
 import { withRulesetScopes } from "@/server/services/rulesets/cow.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -237,13 +237,8 @@ export const PlayerCharactersMethods = {
     const member = await Players.findOne(db, { userId: session.userId, campaignId });
     if (!member) throw new ForbiddenError("You are not a member of this campaign");
 
-    // Find the link between this character and the campaign
-    const link = await PlayerCharacters.findOne(db, { characterId });
+    const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
     if (!link) throw new NotFoundError("Character not found in this campaign");
-
-    // Verify the linked player belongs to this campaign
-    const linkedPlayer = await Players.findOne(db, { id: link.playerId, campaignId });
-    if (!linkedPlayer) throw new NotFoundError("Character not found in this campaign");
 
     const isOwner = link.playerId === member.id;
     const isGM = member.role === "Game Master";
@@ -281,12 +276,25 @@ export const PlayerCharactersMethods = {
       visibility: link.visibility as VisibilityType,
       isOwner,
       canEdit,
+      canDownloadPdf: canEdit || isGM,
       isPartial,
       canViewPrivateNotes: isGM || canEdit,
       character,
       detailedCharacter,
       bondedByKind,
     };
+  },
+
+  async enqueueCampaignCharacterPdf(
+    session: Session,
+    campaignId: string,
+    characterId: string,
+  ) {
+    // Not found for every refusal, as for the character's own export.
+    const character = await findExportableCharacter(session.userId, characterId, campaignId);
+    if (!character) throw new NotFoundError("Character not found in this campaign");
+
+    await enqueueCharacterPdf(session, character, campaignId);
   },
 };
 

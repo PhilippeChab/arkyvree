@@ -14,6 +14,7 @@ import {
   Aptitudes,
   KlassLevels,
   Players,
+  PlayerCharacters,
   Invites,
   Modifiers,
   Requirements,
@@ -139,6 +140,14 @@ export const ActivitiesMethods = {
       const player = await Players.findOne(db, { id: targetId });
       if (!player) return null;
       return `/campaigns/${player.campaignId}`;
+    }
+
+    // targetId is the characterId; a character is linked to one campaign at a time.
+    if (targetTable === "player_characters") {
+      const link = await PlayerCharacters.findOne(db, { characterId: targetId });
+      const player = link && await Players.findOne(db, { id: link.playerId });
+      if (!player) return null;
+      return `/campaigns/${player.campaignId}/characters/${targetId}`;
     }
 
     if (targetTable === "invites") {

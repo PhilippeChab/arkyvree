@@ -109,7 +109,9 @@ Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDe
 
 **Partial visibility filtering**: `getCampaignCharacters` strips `description` and `levels` for characters with `visibility: "Partial"` when the viewer is neither the owner nor a GM.
 
-**`canEdit` on the campaign-character detail response**: `getCampaignCharacter` returns both `isOwner` (link-slot ownership in the campaign) and `canEdit` (character owner OR active character contributor). The campaign character view uses `canEdit` to gate the "Edit Character" / "Download PDF" menu — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
+**`canEdit` on the campaign-character detail response**: `getCampaignCharacter` returns `isOwner` (link-slot ownership in the campaign), `canEdit` (character owner OR active character contributor), and `canDownloadPdf` (`canEdit` OR Game Master). The campaign character view shows "Edit Character" to `canEdit` only, and "Download PDF" to `canDownloadPdf` — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
+
+**PDF export of a campaign character** (`POST /campaigns/:id/characters/:characterId/pdf`): the character must be linked to the campaign; its editors and the Game Master may export it, whatever its visibility, since the GM already sees the full sheet. Archived campaigns still allow it: archiving makes a campaign read-only, and its character pages stay viewable. Every refusal is a 404, as for the character's own `POST /characters/:id/pdf`. Both go through `findExportableCharacter`, which the PDF worker runs again when the job starts, so access lost in between cancels the export.
 
 ## Attachments — `AttachmentsService` registry
 

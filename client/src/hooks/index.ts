@@ -9,6 +9,7 @@ export { useInviteActions } from "./useInviteActions.ts";
 export { useIsMobile } from "./useIsMobile.ts";
 export { useLatest } from "./useLatest.ts";
 export { usePageTitle } from "./usePageTitle.ts";
+export { usePdfExport } from "./usePdfExport.ts";
 export { useStartDemo } from "./useStartDemo.ts";
 export { usePrefetch } from "./usePrefetch.ts";
 export { useSearchParam } from "./useSearchParam.ts";
