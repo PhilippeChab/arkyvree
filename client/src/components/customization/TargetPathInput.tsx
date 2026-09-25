@@ -7,6 +7,7 @@ import {
   InputLabel,
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLatest } from "@/client/src/hooks/index.ts";
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 
 interface TargetPathInputProps {
@@ -43,8 +44,7 @@ export function TargetPathInput({
   const [validationResult, setValidationResult] = useState<PathValidationResult | null>(null);
   const [selectedCompletion, setSelectedCompletion] = useState<PathCompletion | null>(null);
   const [userChanged, setUserChanged] = useState(false);
-  const onPathInfoChangeRef = useRef(onPathInfoChange);
-  onPathInfoChangeRef.current = onPathInfoChange;
+  const onPathInfoChangeRef = useLatest(onPathInfoChange);
 
   const segments = useMemo(
     () => (value ? value.split(".").filter(Boolean) : []),
@@ -123,7 +123,7 @@ export function TargetPathInput({
       lastReportedPathRef.current = null;
       callback(null);
     }
-  }, [isComplete, selectedCompletion, value]);
+  }, [isComplete, selectedCompletion, value, onPathInfoChangeRef]);
 
   const hasError = error || (validationResult !== null && !validationResult.isValid);
   const errorMessage =

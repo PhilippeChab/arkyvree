@@ -7,6 +7,7 @@ export { useExportDownload } from "./useExportDownload.ts";
 export { useGoogleSignIn } from "./useGoogleSignIn.ts";
 export { useInviteActions } from "./useInviteActions.ts";
 export { useIsMobile } from "./useIsMobile.ts";
+export { useLatest } from "./useLatest.ts";
 export { usePageTitle } from "./usePageTitle.ts";
 export { useStartDemo } from "./useStartDemo.ts";
 export { usePrefetch } from "./usePrefetch.ts";

@@ -256,7 +256,7 @@ export function AuthLayoutRoute() {
   // Only kill the demo if we were already one at mount — a freshly-created
   // demo on /sign-in must survive the route change.
   const mountedAsDemo = useRef(isDemo);
-  const [isClearingDemo, setIsClearingDemo] = useState(mountedAsDemo.current);
+  const [isClearingDemo, setIsClearingDemo] = useState(isDemo);
   const demoSignOutStarted = useRef(false);
 
   // Demo sessions live only inside the app — drop the demo on entry to any auth route.
