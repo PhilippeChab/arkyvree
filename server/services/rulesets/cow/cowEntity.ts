@@ -1,11 +1,10 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import type { Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Properties, Rulesets } from "@/server/repositories/index.ts";
+import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { hashEntity, type EntityType, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
-import { ENTITY_REPOS, ENTITY_TYPE_TO_SOURCE_TYPE, type EntityWithId } from "./constants.ts";
+import { CUSTOMIZATION_REPOS, ENTITY_REPOS, ENTITY_TYPE_TO_SOURCE_TYPE, type CustomizationKind, type EntityWithId } from "./constants.ts";
 import { copyEntityCustomizations, copyEntityRelationships } from "./copy.ts";
 import { fetchEntityCustomizations, fetchKlassLevelCustomizations, fetchKlassRelationships } from "./customizations.ts";
 import { buildOverrideMap, buildSourceChain } from "./overrideMap.ts";
@@ -131,30 +130,32 @@ export async function cowEntity(
   return newEntity;
 }
 
-/** Read the stored property owner without confusing COW aliases with ownership. */
-export async function findPropertyForCustomization(
+/**
+ * Resolve the stored row a customization update or delete should change.
+ * `entityId` is the owner the row is shown on, so visible sibling contributions
+ * resolve like the entity's own rows. COWs that owner when inherited and returns
+ * the copy made for the row. A row on a local owner is re-read after the owner
+ * lock, which may have waited for its deletion.
+ */
+export async function cowCustomizationForMutation(
   tx: Db,
+  rulesetId: string,
   entityType: string,
   entityId: string,
-  propertyId: string,
-  rulesetData: CachedRulesetData,
-) {
-  const property = await withCowContext(undefined, () => Properties.findOne(tx, { id: propertyId }));
-  if (property?.entityType === entityType) {
-    const visibleSibling = rulesetData.cow.siblingMap.get(entityId)?.includes(property.entityId)
-      && rulesetData.propertiesByEntity.get(entityId)?.some(p => p.id === propertyId);
-    if (property.entityId === entityId || visibleSibling) return { property, fromTemplate: false };
-    if (entityType === "items") {
-      const item = rulesetData.itemsById.get(entityId);
-      const visibleTemplateProperty = item?.sourceItemId
-        && rulesetData.propertiesByEntity.get(item.sourceItemId)?.some(p => p.id === propertyId && p.entityType === entityType);
-      if (visibleTemplateProperty) return { property, fromTemplate: true };
-    }
+  kind: CustomizationKind,
+  customizationId: string,
+  customizationIds: Map<string, string> = new Map(),
+): Promise<{ resolvedEntityId: string; resolvedCustomizationId: string }> {
+  const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, entityId, customizationIds);
+  const resolvedCustomizationId = resolveCustomizationId(entityId, resolvedEntityId, customizationId, customizationIds, kind);
+  if (resolvedCustomizationId === customizationId
+    && !await withCowContext(undefined, () => CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId }))) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
-  throw new NotFoundError("Property not found for this entity");
+  return { resolvedEntityId, resolvedCustomizationId };
 }
 
-/** Resolve and lock a modifier's owner before customization mutations. */
+/** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
 async function cowModifierForCustomization(
   tx: Db,
   rulesetId: string,
@@ -166,15 +167,10 @@ async function cowModifierForCustomization(
   const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
   if (!modifier || modifier.sourceType === "modifiers") throw new NotFoundError("Customization source not found in this ruleset");
 
-  const resolvedSourceId = await cowEntityForCustomization(tx, rulesetId, modifier.sourceType, modifier.sourceId, customizationIds);
-  if (resolvedSourceId === modifier.sourceId) {
-    // The owner lock may have waited for deletion of this modifier.
-    const current = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifier.id }));
-    if (!current) throw new NotFoundError("Customization source no longer exists; refresh the entity");
-  }
-  return resolveCustomizationId(
-    modifier.sourceId, resolvedSourceId, modifier.id, customizationIds, "modifier",
+  const { resolvedCustomizationId } = await cowCustomizationForMutation(
+    tx, rulesetId, modifier.sourceType, modifier.sourceId, "modifier", modifier.id, customizationIds,
   );
+  return resolvedCustomizationId;
 }
 
 /**

@@ -130,6 +130,7 @@ From `server/services/rulesets/cow.ts`:
 | `withRulesetScope` | The single entry point for a single-ruleset operation. |
 | `withRulesetScopes` | Multi-ruleset list enrichment. |
 | `cowEntity`, `cowEntityForCustomization` | Fork an inherited entity into the current ruleset (for admin-CRUD edits / deletes). |
+| `cowCustomizationForMutation` | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
 | `lockEntityForMutation` | Lock an already-local owner before deleting its customizations. |
 | `deleteModifiersWithCascade`, `deletePropertiesWithCascade`, `deleteRequirementsWithCascade` | Cascade delete an entity's customizations. |
 

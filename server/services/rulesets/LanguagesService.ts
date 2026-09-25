@@ -50,11 +50,9 @@ export const LanguagesMethods = {
   }) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "languages", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "languages", body.name);
 
         const rows = await Languages.create(tx, {
           ...body,

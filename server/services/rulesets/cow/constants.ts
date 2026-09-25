@@ -7,8 +7,11 @@ import {
   Klasses,
   Languages,
   Mechanics,
+  Modifiers,
   Powers,
+  Properties,
   Races,
+  Requirements,
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
@@ -64,3 +67,11 @@ export const ENTITY_REPOS = {
   aptitudes: Aptitudes,
   mechanics: Mechanics,
 } as const;
+
+export const CUSTOMIZATION_REPOS = {
+  property: Properties,
+  requirement: Requirements,
+  modifier: Modifiers,
+} as const;
+
+export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;

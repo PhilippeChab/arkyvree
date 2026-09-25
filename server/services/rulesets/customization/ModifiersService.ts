@@ -7,7 +7,7 @@ import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { copyEntityCustomizations, cowEntityForCustomization, deleteModifiersWithCascade, fetchEntityCustomizations, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { copyEntityCustomizations, cowCustomizationForMutation, cowEntityForCustomization, deleteModifiersWithCascade, fetchEntityCustomizations, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
@@ -204,14 +204,10 @@ export const ModifiersMethods = {
         const customizationPolicy = new CustomizationsPolicy(session, modifier);
         await customizationPolicy.canUpdate();
 
-        const resolvedModifierId = await cowEntityForCustomization(tx, rulesetId, "modifiers", modifierId);
-        const resolvedModifier = resolvedModifierId !== modifierId
-          ? await Modifiers.findOne(tx, { id: resolvedModifierId })
-          : modifier;
-        if (!resolvedModifier) {
-          throw new NotFoundError("Resolved modifier not found after COW");
-        }
-        const resolvedEntityId = resolvedModifier.sourceId;
+        // COW the owning entity if this modifier is inherited
+        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
+          tx, rulesetId, entityType, effectiveEntityId, "modifier", modifierId,
+        );
 
         const pathsService = TargetPathsService.initialize();
         const valueTypeResult = await pathsService.call("resolvePathValueType", rulesetId, body.target, "modifier");
@@ -269,14 +265,9 @@ export const ModifiersMethods = {
         const customizationPolicy = new CustomizationsPolicy(session, modifier);
         await customizationPolicy.canDelete();
 
-        const resolvedModifierId = await cowEntityForCustomization(tx, rulesetId, "modifiers", modifierId);
-        const resolvedModifier = resolvedModifierId !== modifierId
-          ? await Modifiers.findOne(tx, { id: resolvedModifierId })
-          : modifier;
-        if (!resolvedModifier) {
-          throw new NotFoundError("Resolved modifier not found after COW");
-        }
-        const resolvedEntityId = resolvedModifier.sourceId;
+        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
+          tx, rulesetId, entityType, effectiveEntityId, "modifier", modifierId,
+        );
 
         const rows = await deleteModifiersWithCascade(tx, { ids: [resolvedModifierId] });
         const deletedModifier = rows[0];

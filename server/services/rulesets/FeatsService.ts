@@ -93,11 +93,9 @@ export const FeatsMethods = {
   }) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "feats", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "feats", body.name);
 
         if (!body.aptitudeIds || body.aptitudeIds.length === 0) {
           throw new BadRequestError("At least one aptitude must be selected for the feat");

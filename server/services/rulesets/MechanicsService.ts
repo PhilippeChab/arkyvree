@@ -39,11 +39,9 @@ export const MechanicsMethods = {
   }) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "mechanics", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "mechanics", body.name);
 
         const rows = await Mechanics.create(tx, { ...body, rulesetId });
         const mechanic = rows[0];

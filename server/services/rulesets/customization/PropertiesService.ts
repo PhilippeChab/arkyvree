@@ -1,16 +1,30 @@
-import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
+import { invalidateRuleset, type CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Properties } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { cowEntityForCustomization, findPropertyForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import type { Session } from "@/shared/relations.ts";
+import { cowCustomizationForMutation, cowEntityForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import type { Property, Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
+
+/**
+ * A property shown on the entity, looked up like requirements and modifiers:
+ * its own and visible sibling contributions. A derived item also shows its
+ * template's properties; editing one creates an override on the item.
+ */
+function findEntityProperty(rulesetData: CachedRulesetData, entityType: string, entityId: string, propertyId: string) {
+  const matches = (p: Property) => p.id === propertyId && p.entityType === entityType;
+  const own = rulesetData.propertiesByEntity.get(entityId)?.find(matches);
+  if (own) return { property: own, fromTemplate: false };
+  const sourceItemId = entityType === "items" ? rulesetData.itemsById.get(entityId)?.sourceItemId : undefined;
+  const inherited = sourceItemId ? rulesetData.propertiesByEntity.get(sourceItemId)?.find(matches) : undefined;
+  if (inherited) return { property: inherited, fromTemplate: true };
+  throw new NotFoundError("Property not found for this entity");
+}
 
 export const PropertiesMethods = {
   async getEntityProperties(rulesetId: string, entityType: string, entityId: string) {
@@ -88,16 +102,14 @@ export const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = await findPropertyForCustomization(tx, entityType, effectiveEntityId, propertyId, rulesetData);
+        const { property, fromTemplate } = findEntityProperty(rulesetData, entityType, effectiveEntityId, propertyId);
 
         const customizationPolicy = new CustomizationsPolicy(session, property);
         await customizationPolicy.canUpdate();
 
-        const customizationIds = new Map<string, string>();
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
-
         if (fromTemplate) {
           // Template property: create an override on the derived item
+          const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
           const rows = await Properties.create(tx, {
             entityId: resolvedEntityId,
             entityType,
@@ -119,8 +131,9 @@ export const PropertiesMethods = {
           return { ...newProperty, resolvedEntityId };
         }
 
-        const resolvedPropertyId = resolveCustomizationId(
-          property.entityId, resolvedEntityId, propertyId, customizationIds, "property",
+        // COW the owning entity if this property is inherited
+        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
+          tx, rulesetId, entityType, effectiveEntityId, "property", propertyId,
         );
 
         const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
@@ -162,19 +175,17 @@ export const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = await findPropertyForCustomization(tx, entityType, effectiveEntityId, propertyId, rulesetData);
-
-        const customizationPolicy = new CustomizationsPolicy(session, property);
-        await customizationPolicy.canDelete();
-
-        const customizationIds = new Map<string, string>();
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
+        const { property, fromTemplate } = findEntityProperty(rulesetData, entityType, effectiveEntityId, propertyId);
         if (fromTemplate) {
           // Template property: nothing to delete on the derived item since it doesn't own it.
           throw new BadRequestError("Cannot delete a property inherited from a template");
         }
-        const resolvedPropertyId = resolveCustomizationId(
-          property.entityId, resolvedEntityId, propertyId, customizationIds, "property",
+
+        const customizationPolicy = new CustomizationsPolicy(session, property);
+        await customizationPolicy.canDelete();
+
+        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
+          tx, rulesetId, entityType, effectiveEntityId, "property", propertyId,
         );
 
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });

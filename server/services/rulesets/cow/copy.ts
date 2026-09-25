@@ -35,81 +35,56 @@ export async function copyEntityCustomizationsToMany(
   customizationIds?: Map<string, string>,
 ): Promise<void> {
   if (targetEntityIds.length === 0) return;
-  const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
-
-  const modifiersPerTarget = sourceCust.modifiers.length;
-  const newModifiers = sourceType && modifiersPerTarget > 0
-    ? await Modifiers.createMany(
-        tx,
-        targetEntityIds.flatMap((targetId) =>
-          sourceCust.modifiers.map((m) => ({
-            ...m,
-            id: undefined,
-            sourceId: targetId,
-          })),
-        ),
-      )
-    : [];
-
-  // Record identities at copy time; equal modifier values do not imply the
-  // same modifier (their requirements may differ).
-  for (let i = 0; i < modifiersPerTarget; i++) {
-    customizationIds?.set(sourceCust.modifiers[i].id, newModifiers[i].id);
+  // Copies are paired with their sources by position, so reject inputs that
+  // position cannot represent instead of writing rows to the wrong owner.
+  if (customizationIds && targetEntityIds.length > 1) {
+    throw new Error("customizationIds maps each source row to one copy; copy to a single target");
+  }
+  if (!ENTITY_TYPE_TO_SOURCE_TYPE[entityType] && sourceCust.modifiers.length > 0) {
+    throw new Error(`Cannot copy modifiers onto ${entityType}`);
+  }
+  const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
+  const orphan = sourceCust.modifierRequirements.find((r) => !sourceModifierIds.has(r.entityId));
+  if (orphan) {
+    throw new Error(`Modifier requirement ${orphan.id} belongs to a modifier outside the copied set`);
   }
 
-  if (sourceCust.properties.length > 0) {
-    const copies = await Properties.createMany(
-      tx,
-      targetEntityIds.flatMap((targetId) =>
-        sourceCust.properties.map((p) => ({
-          ...p,
-          id: undefined,
-          entityId: targetId,
-        })),
-      ),
-    );
-    for (let i = 0; i < sourceCust.properties.length; i++) {
-      customizationIds?.set(sourceCust.properties[i].id, copies[i].id);
-    }
-  }
-  if (sourceCust.requirements.length > 0) {
-    const copies = await Requirements.createMany(
-      tx,
-      targetEntityIds.flatMap((targetId) =>
-        sourceCust.requirements.map((r) => ({
-          ...r,
-          id: undefined,
-          entityId: targetId,
-        })),
-      ),
-    );
-    for (let i = 0; i < sourceCust.requirements.length; i++) {
-      customizationIds?.set(sourceCust.requirements[i].id, copies[i].id);
-    }
-  }
+  const { modifiers, properties, requirements, modifierRequirements } = sourceCust;
+  const newModifiers = await copyRows(tx, Modifiers, modifiers, targetEntityIds, (_, targetId) => ({ sourceId: targetId }), customizationIds);
+  await copyRows(tx, Properties, properties, targetEntityIds, (_, targetId) => ({ entityId: targetId }), customizationIds);
+  await copyRows(tx, Requirements, requirements, targetEntityIds, (_, targetId) => ({ entityId: targetId }), customizationIds);
+  // A modifier requirement belongs to the copy of its modifier made for the same target.
+  const modifierIndex = new Map(modifiers.map((m, i) => [m.id, i]));
+  await copyRows(tx, Requirements, modifierRequirements, targetEntityIds, (r, _, targetIndex) => ({
+    entityId: newModifiers[targetIndex * modifiers.length + modifierIndex.get(r.entityId)!].id,
+  }), customizationIds);
+}
 
-  if (sourceCust.modifierRequirements.length > 0 && newModifiers.length > 0) {
-    const copies = await Requirements.createMany(
-      tx,
-      targetEntityIds.flatMap((_targetId, targetIndex) => {
-        const modifierIdMap = new Map<string, string>();
-        for (let i = 0; i < modifiersPerTarget; i++) {
-          modifierIdMap.set(
-            sourceCust.modifiers[i].id,
-            newModifiers[targetIndex * modifiersPerTarget + i].id,
-          );
-        }
-        return sourceCust.modifierRequirements.map((r) => ({
-          ...r,
-          id: undefined,
-          entityId: modifierIdMap.get(r.entityId) ?? r.entityId,
-        }));
-      }),
-    );
-    for (let i = 0; i < sourceCust.modifierRequirements.length; i++) {
-      customizationIds?.set(sourceCust.modifierRequirements[i].id, copies[i].id);
-    }
+/**
+ * Inserts one copy of each row per target in a single batch, target-major, with
+ * `owner` repointing each copy. Copies pair with their sources by position, and
+ * the first target's copies are recorded in `customizationIds`: equal values do
+ * not imply the same row (a modifier's requirements may differ).
+ */
+async function copyRows<R extends { id: string }>(
+  tx: Db,
+  repo: { createMany(db: Db, values: (Omit<R, "id"> & { id: undefined })[]): Promise<{ id: string }[]> },
+  rows: R[],
+  targetEntityIds: string[],
+  owner: (row: R, targetId: string, targetIndex: number) => Partial<R>,
+  customizationIds?: Map<string, string>,
+): Promise<{ id: string }[]> {
+  if (rows.length === 0) return [];
+  const copies = await repo.createMany(
+    tx,
+    targetEntityIds.flatMap((targetId, targetIndex) =>
+      rows.map((row) => ({ ...row, ...owner(row, targetId, targetIndex), id: undefined })),
+    ),
+  );
+  for (let i = 0; i < rows.length; i++) {
+    customizationIds?.set(rows[i].id, copies[i].id);
   }
+  return copies;
 }
 
 // Copy relationship data (join tables) for a single entity

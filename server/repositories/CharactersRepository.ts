@@ -96,7 +96,7 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
           sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
         ),
       ))
-      .where(eq(this.table.raceId, where.raceId))
+      .where(this.idMatches(this.table.raceId, where.raceId))
       .limit(1);
     return rows.length > 0;
   }

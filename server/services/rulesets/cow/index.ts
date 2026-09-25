@@ -6,7 +6,7 @@
  *     `withRulesetScope` / `withRulesetScopes` for single / multi-ruleset
  *     reads. `cowEntity` / `cowEntityForCustomization` and the
  *     `lockEntityForMutation` / `delete*WithCascade` helpers for admin CRUD mutations.
- *     `findPropertyForCustomization` validates stored property ownership.
+ *     `cowCustomizationForMutation` resolves the row a customization update or delete changes.
  *
  *   Forking primitives (only `RulesetsService` fork/publish):
  *     `buildOverrideMap`, `copyEntity*`, `fetch*`,
@@ -23,12 +23,12 @@
  */
 export {
   lockEntityForMutation,
-  findPropertyForCustomization,
+  cowCustomizationForMutation,
   cowEntity,
   cowEntityForCustomization,
 } from "./cowEntity.ts";
 export { withRulesetScope, withRulesetScopes } from "./cowData.ts";
-export { assertEntityNameAvailable, repointTombstoneSnapshot } from "./entityNames.ts";
+export { assertAncestorNamesHidden, assertEntityNameAvailable, repointTombstoneSnapshot } from "./entityNames.ts";
 export {
   deleteModifiersWithCascade,
   deletePropertiesWithCascade,

@@ -91,7 +91,7 @@ export const PowersMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "powers", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "powers", body.name);
 
         if (!body.aptitudes || body.aptitudes.length === 0) {
           throw new BadRequestError("At least one aptitude must be selected for the power");

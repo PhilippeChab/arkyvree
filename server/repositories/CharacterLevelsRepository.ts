@@ -65,7 +65,7 @@ class CharacterLevelsRepository
           sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
         ),
       ))
-      .where(and(eq(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
   }
@@ -84,7 +84,7 @@ class CharacterLevelsRepository
           sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
         ),
       ))
-      .where(and(eq(klassLevelsInRules.klassId, where.klassId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassId), isNull(this.table.deletedAt)))
       .limit(1);
     return result.length > 0;
   }

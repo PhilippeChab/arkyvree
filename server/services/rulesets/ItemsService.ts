@@ -3,11 +3,12 @@ import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { inArray } from "drizzle-orm";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { EntitySnapshots, Items } from "@/server/repositories/index.ts";
+import { Items } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import {
+  assertAncestorNamesHidden,
   assertEntityNameAvailable,
   copyEntityCustomizations,
   copyEntityCustomizationsToMany,
@@ -115,13 +116,11 @@ export const ItemsMethods = {
   async createRulesetItem(session: Session, rulesetId: string, body: ItemBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "items", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "items", body.name);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const slot = hooks.items.resolveSlot(body.type, body.slot);
@@ -169,7 +168,7 @@ export const ItemsMethods = {
           throw new NotFoundError("Source item not found in this ruleset");
         }
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "items", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "items", body.name);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const slot = hooks.items.resolveSlot(body.type, body.slot);
@@ -245,43 +244,34 @@ export const ItemsMethods = {
         const slot = hooks.items.resolveSlot(source.type, source.slot);
 
         // Batched pre-validation: one query for local conflicts, one for
-        // ancestor conflicts, one for the tombstone snapshots that excuse
-        // an ancestor match. Avoids N × sourceChain serial round-trips
-        // when N can be up to 50.
+        // ancestor conflicts, then the shared visibility / tombstone check
+        // used by `assertEntityNameAvailable`. Avoids N × sourceChain serial
+        // round-trips when N can be up to 50.
         const ownConflicts = await Items.findByNamesInRulesets(tx, { rulesetIds: [rulesetId], names });
         if (ownConflicts.length > 0) {
           throw new ConflictError(`Name already exists in this ruleset: ${ownConflicts[0].name}`);
         }
 
         const ancestorConflicts = await Items.findByNamesInRulesets(tx, { rulesetIds: sourceChain, names });
-        const snapshots = ancestorConflicts.length > 0
-          ? await EntitySnapshots.findManyBySourcesAndRuleset(tx, {
-              sourceEntityIds: ancestorConflicts.map((c) => c.id),
-              rulesetId,
-            })
-          : [];
-        const snapshotAncestorIds = new Set(snapshots.map((s) => s.sourceEntityId));
+        const tombstoned = await assertAncestorNamesHidden(tx, rulesetId, rulesetData.cow, "items", ancestorConflicts.map((c) => c.id));
 
-        // Preserve sourceChain order: when two ancestors expose an item with
-        // the same name (e.g. an extension and a parent), the closer one
-        // (lower sourceChain index) is the visible conflict, matching the
-        // sequential `assertEntityNameAvailable` semantics.
+        // Preserve sourceChain order: when two tombstoned ancestors share a
+        // name (e.g. an extension and a parent), the closer one (lower
+        // sourceChain index) follows the new item, matching the sequential
+        // `assertEntityNameAvailable` semantics.
         const sourceChainOrder = new Map(sourceChain.map((id, i) => [id, i]));
-        const ancestorByName = new Map<string, (typeof ancestorConflicts)[number]>();
+        const tombstoneByName = new Map<string, (typeof ancestorConflicts)[number]>();
         for (const c of ancestorConflicts) {
-          const existing = ancestorByName.get(c.name);
+          if (!tombstoned.has(c.id)) continue;
+          const existing = tombstoneByName.get(c.name);
           if (!existing || (sourceChainOrder.get(c.rulesetId) ?? Infinity) < (sourceChainOrder.get(existing.rulesetId) ?? Infinity)) {
-            ancestorByName.set(c.name, c);
+            tombstoneByName.set(c.name, c);
           }
         }
         const tombstones = new Map<number, string>();
         for (let i = 0; i < variants.length; i++) {
-          const ancestor = ancestorByName.get(variants[i].name);
-          if (!ancestor) continue;
-          if (!snapshotAncestorIds.has(ancestor.id)) {
-            throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
-          }
-          tombstones.set(i, ancestor.id);
+          const ancestor = tombstoneByName.get(variants[i].name);
+          if (ancestor) tombstones.set(i, ancestor.id);
         }
 
         const sourceCust = source.isTemplate
