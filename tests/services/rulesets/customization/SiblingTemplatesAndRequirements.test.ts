@@ -72,7 +72,7 @@ for (const action of ["update", "delete"] as const) {
 }
 
 for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
-  test(`${action} preserves source identity through requirement pruning and renumbering`, async () => {
+  test(`${action} preserves source identity through requirement renumbering`, async () => {
     const { host, copies } = await setup("feats", async (entityId, index) => {
       const owner = { entityId, entityType: "feats" };
       const strength = { target: "abilities.strength.total", operator: "greater_than_or_equal", value: "13", valueType: "number" };
@@ -90,7 +90,7 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
     });
     const originals = await Requirements.findManyByEntity(db, { entityIds: copies, entityType: "feats" });
     const visible = await RequirementsMethods.getEntityRequirements(host.id, "feats", copies[0]);
-    expect(visible.map(r => r.level).sort()).toEqual(["1", "2", "2.1", "2.2", "2.2.1", "2.2.2"]);
+    expect(visible.map(r => r.level).sort()).toEqual(["1", "2", "2.1", "2.2", "2.2.1", "2.2.2", "2.3"]);
     const target = visible.find(r => r.level === (action === "update chain" ? "2" : "2.2.1"))!;
     const original = originals.find(r => r.id === target.id)!;
     expect(original.level).toBe(action === "update chain" ? "1" : "1.2.1");
@@ -139,7 +139,7 @@ test("hidden and unrelated template properties cannot be overridden", async () =
   }
 });
 
-test("three-extension requirement merge preserves distinct roots and rejects a pruned source ID", async () => {
+test("three-extension requirement merge preserves chains and rejects a duplicate standalone ID", async () => {
   const { session, host, source, copies } = await setup("feats", async (entityId, index) => {
     const owner = { entityId, entityType: "feats" };
     const leaf = { target: "abilities.strength.total", operator: "greater_than_or_equal", value: "13", valueType: "number" };
@@ -152,12 +152,12 @@ test("three-extension requirement merge preserves distinct roots and rejects a p
   }, 3);
   const [hidden] = await Requirements.findManyByEntity(db, { entityIds: [copies[1]], entityType: "feats" });
   const before = await RequirementsMethods.getEntityRequirements(host.id, "feats", source.id);
-  expect(before.map(r => r.level).sort()).toEqual(["1", "2", "2.1"]);
+  expect(before.map(r => r.level).sort()).toEqual(["1", "2", "2.1", "2.2"]);
   await expect(RequirementsMethods.deleteEntityRequirement(session, host.id, "feats", source.id, hidden.id)).rejects.toBeInstanceOf(NotFoundError);
-  const siblingLeaf = before.find(r => r.level === "2.1")!;
+  const siblingLeaf = before.find(r => r.level === "2.2")!;
   await RequirementsMethods.updateEntityRequirement(session, host.id, "feats", source.id, siblingLeaf.id, { level: siblingLeaf.level, target: siblingLeaf.target!, operator: "greater_than_or_equal", value: "15" });
   const after = await RequirementsMethods.getEntityRequirements(host.id, "feats", source.id);
-  expect(after.find(r => r.level === "2.1")?.value).toBe("15");
+  expect(after.find(r => r.level === "2.2")?.value).toBe("15");
   expect(after.find(r => r.level === "1")?.value).toBe("13");
 });
 
