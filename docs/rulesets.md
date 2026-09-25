@@ -177,35 +177,38 @@ rename, so picks of the source keep resolving to that copy.
 
 When multiple extensions COW the same base entity, each extension creates its own independent copy. At runtime, one copy "wins" (the first extension in install order) and the others become **siblings**. Their data is merged transparently so the user sees a single entity with combined customizations.
 
+Merged requirements are **ANDed**: the winner's requirements and each sibling's requirement trees all apply. An OR chain added by one extension therefore does not widen eligibility for another extension's requirements. Illustrative example:
+
 ```
 Base Ruleset
-├── Evasion (base feat, standalone requirement: classes.rogue.level >= 2)
-│
-├── DMG Extension
-│   └── Evasion (COW copy, adds: Shadowdancer >= 2, Assassin >= 8)
-│
-└── Complete Divine Extension
-    └── Evasion (COW copy, adds: Favored Soul >= 5)
+└── Power Attack (requires: Strength >= 13)
 
-User's Fork (subscribed to both DMG + CD)
-└── sees ONE "Evasion" with merged requirements:
-    OR chain: Rogue >= 2 | Shadowdancer >= 2 | Assassin >= 8 | Favored Soul >= 5
+Extension A (installed first)
+└── Power Attack (COW copy: Strength >= 13, adds BAB >= 1)
+
+Extension B
+└── Power Attack (COW copy: Strength >= 13, adds (Fighter >= 1 OR Barbarian >= 1))
+
+User's Fork (subscribed to A, then B)
+└── sees ONE "Power Attack" (A's copy wins) requiring:
+    Strength >= 13 AND BAB >= 1 AND (Fighter >= 1 OR Barbarian >= 1)
+    B's duplicate standalone "Strength >= 13" is dropped; its OR chain is kept intact.
 ```
 
 **How it works:**
 
-1. `buildOverrideMap()` detects when multiple extension snapshots share the same `sourceEntityId`. It builds a `siblingMap: Map<string, string[]>` mapping the winner's `forkedEntityId` → sibling `forkedEntityId`s.
+1. `buildOverrideMap()` detects when multiple extension snapshots share the same `sourceEntityId`. It builds a `siblingMap: Map<string, string[]>` mapping the winner's `forkedEntityId` → sibling `forkedEntityId`s. Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first.
 
 2. **Entity list filtering**: Sibling entities are filtered out of query results (only the winner is returned), so the user never sees duplicate feats.
 
 3. **Read-time merging** (built into the cache compose step in `server/cache/rulesetCache.ts`): `getOrFetchRulesetData` folds sibling contributions into the winner's buckets before services see them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites.
    - **Aptitudes**: sibling `feats_aptitudes` / `powers_aptitudes` are merged into the winner's inline array, deduped by resolved `aptitudeId` after FK remap.
-   - **Requirements**: sibling requirement trees are appended at the top level with `entityId` remapped and levels renumbered to avoid collisions. Duplicate top-level standalone conditions are deduplicated on `target|operator|value`; conditions inside AND/OR chains are preserved to keep their boolean meaning. Display and copying share the same merge function. Display preserves each source row's UUID, and COW records its new copied UUID so edits target the exact requirement.
+   - **Requirements**: sibling requirement trees are appended at the top level (so they are ANDed with the winner's) with `entityId` remapped: a chain gets the next free integer level and a standalone keeps its level, suffixed on collision. Duplicate top-level standalone conditions are deduplicated on `target|operator|value`; conditions inside AND/OR chains are preserved to keep their boolean meaning, so two identical chains both remain. Display and copying share the same merge function (`mergeSiblingRequirements`). Display preserves each source row's UUID, and COW records its new copied UUID so edits target the exact requirement.
    - **Modifiers**: sibling modifiers are appended with `sourceId` remapped to the winner, deduped on `target|value|operator|valueType`. Dropped modifiers have their requirements dropped too.
    - **Properties**: sibling properties are appended with `entityId` remapped to the winner, deduped on `type|value`.
    - Consumers: `FeatsService`, `PowersService`, `ModifiersService`, `RequirementsService`, and `DetailedCharacter` all just read from `rulesetData.*` without any sibling-specific code.
 
-4. **COW merging** (`cowEntity`): When a user COWs the winner entity, `mergeSiblingData()` copies unique requirements, modifiers, and aptitude links from all siblings into the new local copy. The child's copy contains the full merged result. See below.
+4. **COW merging** (`cowEntity`): When a user COWs the winner entity, `mergeSiblingData()` copies unique requirements, modifiers, properties, and aptitude links from all siblings into the new local copy. The child's copy contains the full merged result. See below.
 
 **Key rule**: A local (child fork) COW always wins completely — no sibling merging. The sibling map only applies to extension-vs-extension COW conflicts. If the user's own fork has COW'd a base entity, that fork's copy is authoritative and extension copies are ignored.
 
@@ -223,7 +226,7 @@ until the override is restored.
 Aptitudes are named pools — they have `name` but no per-ruleset content — so the seed only creates a row in the ruleset that *introduces* the name (see `docs/packages.md:COW-ing base entities into extensions → Aptitude ownership rules`). Two cases matter here:
 
 - **Base-inherited names** (`General`, `Cleric Domain`, `Fighter Bonus Feat`, etc.): exactly one row exists, in base. Extensions and forks adding new feats/spells just link to base's id via `aptMap`. No sibling rows, no dedup needed.
-- **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. The sibling mechanism (`cow.ts`'s aptitude-name grouping) picks a winner per name across the source chain, maps losers into `overrideMap`, and the compose step drops losers + FK-remaps references. The user never sees duplicates.
+- **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. The sibling mechanism (the aptitude-name grouping in `buildCowData`, `cow/cowData.ts`) picks a winner per name across the source chain, closest first. Losers go into `siblingMap` / `siblingIds`, so the compose step drops them, and into `idResolveMap`, so references to a loser remap to the visible winner (its local copy, if the fork has one). They are intentionally not added to `overrideMap`, which is for true overrides only. The user never sees duplicates.
 
 ### COW-ing a Merged Entity (Sibling Bake-in)
 
@@ -231,28 +234,29 @@ When a user modifies an entity that is the merged result of multiple extension C
 
 ```
 Before COW (runtime view):
-  User sees "Evasion" with merged OR chain from DMG (winner) + CD (sibling)
+  User sees one "Power Attack" merged from A (winner) + B (sibling)
 
-User edits Evasion → cowEntity triggers:
-  1. Copies the winner (DMG's Evasion) + all its customizations
-  2. Detects siblings via siblingMap → finds CD's Evasion
+User edits Power Attack → cowEntity triggers:
+  1. Copies the winner (A's Power Attack) + all its customizations
+  2. Detects siblings via siblingMap → finds B's Power Attack
   3. Calls mergeSiblingData() to bake sibling data into the new local copy
   4. User's local copy now contains the full merged result
 
 After COW:
-  User's fork has its own "Evasion" with ALL requirements/modifiers from both extensions
+  User's fork has its own "Power Attack" with the merged customizations of both extensions
   The siblingMap no longer applies — local fork wins completely
 ```
 
-`mergeSiblingData()` merges three types of customizations:
+`mergeSiblingData()` merges four types of customizations, using the same rules as the read-time merge above:
 
 | Type | Merge strategy | Deduplication key |
 |---|---|---|
-| **Requirements** | Appends sibling OR-chain leaf nodes to the winner's OR chain | `target + operator + value` |
+| **Requirements** | `mergeSiblingRequirements`: appends each sibling tree at a fresh top-level position (ANDed), chains kept intact | top-level standalone `target + operator + value` |
 | **Modifiers** | Inserts sibling modifiers (with their own requirements) | `target + value + operator + valueType` |
+| **Properties** | Inserts sibling properties | `type + value` |
 | **Aptitude links** | Inserts sibling `feats_aptitudes` / `powers_aptitudes` rows | `aptitudeId` |
 
-This ensures the user's local copy is self-contained. If they later uninstall one of the extensions, their fork retains the full merged data since it's baked into their own copy.
+Each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later uninstall one of the extensions, their fork retains the full merged data since it's baked into their own copy.
 
 ## Extensions
 
@@ -614,7 +618,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 
 | File | Purpose |
 |---|---|
-| `server/services/rulesets/cow.ts` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `cowEntity`, `cowEntityForCustomization`, `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`. The private `mergeSiblingData` helper runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache.ts`). |
+| `server/services/rulesets/cow/` (re-exported by `cow.ts`) | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `cowEntity`, `cowEntityForCustomization`, `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache.ts`). |
 | `server/services/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset`, `installExtension`, `uninstallExtension` |
 | `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations |
 | `server/services/rulesets/*.ts` | Entity services (feats, powers, classes, etc.) using the COW pattern |
@@ -625,7 +629,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/rulesets/universal/*.ts` | Ruleset-agnostic sub-components (abilities, classes, feats, requirements, …) |
 | `server/rulesets/hooks/*.ts` | Universal hook interfaces (`LevelsHooks`, `ClassesHooks`, …) |
 | `server/rulesets/dnd3.5/*.ts` | 3.5 implementation (DetailedCharacter, LevelUpProjector, TargetPaths, hooks, properties, buildCharacterResponse) |
-| `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — merges sibling requirements and modifiers at runtime via `siblingMap` |
+| `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
 | `database/packages/dnd35/seed-utils.ts` | `cowFeatIntoExtension` — reusable helper for COW-ing base feats into extension seeds |
 | `tests/services/ExtensionsService.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/RulesetsService.test.ts` | Includes `extension siblingMap` test block — sibling detection, filtering, requirement/modifier/aptitude merging |
