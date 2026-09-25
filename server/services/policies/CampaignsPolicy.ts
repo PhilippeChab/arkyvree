@@ -6,6 +6,12 @@ import { type Campaign } from "@/shared/relations.ts";
 import BasePolicy from "./BasePolicy.ts";
 
 export default class CampaignsPolicy extends BasePolicy<Campaign> {
+  /** For callers without a session, like the PDF worker re-checking export access. */
+  static async isGameMaster(userId: string, campaignId: string): Promise<boolean> {
+    const player = await Players.findOne(db, { userId, campaignId });
+    return player?.role === "Game Master";
+  }
+
   canCreate() {
     return true;
   }
@@ -15,26 +21,8 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
   }
 
   async canUpdate() {
-    const player = await Players.findOne(db, {
-      userId: this.session.userId,
-      campaignId: this.entity.id,
-    });
-
-    if (!player || player.role !== "Game Master") {
+    if (!await CampaignsPolicy.isGameMaster(this.session.userId, this.entity.id)) {
       throw new ForbiddenError("Only the Game Master can edit this campaign");
-    }
-
-    return true;
-  }
-
-  async canExportCharacters() {
-    const player = await Players.findOne(db, {
-      userId: this.session.userId,
-      campaignId: this.entity.id,
-    });
-
-    if (!player || player.role !== "Game Master") {
-      throw new ForbiddenError("Only the Game Master can export campaign characters");
     }
 
     return true;

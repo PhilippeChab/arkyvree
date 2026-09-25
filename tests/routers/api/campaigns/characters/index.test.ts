@@ -1,6 +1,8 @@
+import { sql } from "drizzle-orm";
 import { Characters, Players, Users, PlayerCharacters, Sessions } from "@/server/repositories/index.ts";
 import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
+import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import type { Application } from "@/server/routers/application.ts";
 import { application } from "@/server/routers/application.ts";
 import { testClient } from "hono/testing";
@@ -124,55 +126,134 @@ describe("campaigns characters", () => {
   }
 
   describe("POST /:id/characters/:characterId/pdf", () => {
-    // Links the creator's character and adds testuser2 to the campaign with
-    // `role`, returning a session for them.
+    // Links the creator's character as a regular player's, and adds testuser2
+    // to the campaign with `role`, returning a session for them.
     async function joinAs(role: "Game Master" | "Player Character") {
       const { campaignId, characterId } = await createTestData();
       const owner = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
       const ownerPlayer = (await Players.findOne(db, { campaignId, userId: owner.userId }))!;
+      await Players.update(db, { role: "Player Character" }, { id: ownerPlayer.id });
       await PlayerCharacters.create(db, { playerId: ownerPlayer.id, characterId, visibility: "Private" });
       const member = (await Users.findOne(db, { emailAddress: "testuser2@example.com" }))!;
       const [memberSession] = await Sessions.create(db, { userId: member.id });
-      await Players.create(db, { campaignId, userId: member.id, role });
-      return { campaignId, characterId, memberHeaders: { cookie: `session-id=${memberSession.id}` } };
+      const [memberPlayer] = await Players.create(db, { campaignId, userId: member.id, role });
+      return { campaignId, characterId, member, memberPlayer, memberHeaders: { cookie: `session-id=${memberSession.id}` } };
     }
 
+    async function requestPdf(campaignId: string, characterId: string, requestHeaders: { cookie: string }) {
+      return api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
+        { param: { id: campaignId, characterId } },
+        { headers: requestHeaders },
+      );
+    }
+
+    async function getDetail(campaignId: string, characterId: string, requestHeaders: { cookie: string }) {
+      const response = await api.api.campaigns[":id"].characters[":characterId"].$get(
+        { param: { id: campaignId, characterId } },
+        { headers: requestHeaders },
+      );
+      if (!response.ok) throw new Error("Campaign character request failed");
+      return response.json();
+    }
+
+    async function queuedPdfPayload(characterId: string) {
+      const jobs = await db.execute(
+        sql`SELECT payload FROM graphile_worker._private_jobs WHERE payload->>'characterId' = ${characterId}`,
+      );
+      expect(jobs.rows.length).toBe(1);
+      return jobs.rows[0].payload as Record<string, unknown>;
+    }
+
+    const workerHelpers = {
+      logger: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
+    } as unknown as Parameters<typeof generatePdfTask>[1];
+
     test("lets the Game Master export a player's character", async () => {
-      const { campaignId, characterId, memberHeaders } = await joinAs("Game Master");
+      const { campaignId, characterId, member, memberHeaders } = await joinAs("Game Master");
 
-      const detail = await api.api.campaigns[":id"].characters[":characterId"].$get(
-        { param: { id: campaignId, characterId } },
-        { headers: memberHeaders },
-      );
-      if (!detail.ok) throw new Error("Campaign character request failed");
-      const body = await detail.json();
-      expect(body.isGameMaster).toBe(true);
-      expect(body.canEdit).toBe(false);
+      const detail = await getDetail(campaignId, characterId, memberHeaders);
+      expect(detail.canEdit).toBe(false);
+      expect(detail.canDownloadPdf).toBe(true);
 
-      const response = await api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
-        { param: { id: campaignId, characterId } },
-        { headers: memberHeaders },
-      );
+      const response = await requestPdf(campaignId, characterId, memberHeaders);
+      expect(response.status).toBe(202);
+      expect(await queuedPdfPayload(characterId)).toMatchObject({ userId: member.id, characterId, campaignId });
+    });
+
+    test("lets the character's owner export it from the campaign", async () => {
+      const { campaignId, characterId } = await joinAs("Game Master");
+
+      const detail = await getDetail(campaignId, characterId, headers);
+      expect(detail.canDownloadPdf).toBe(true);
+
+      const response = await requestPdf(campaignId, characterId, headers);
       expect(response.status).toBe(202);
     });
 
-    test("forbids other players", async () => {
-      const { campaignId, characterId, memberHeaders } = await joinAs("Player Character");
+    test("links the export's activity to the campaign character page", async () => {
+      const { campaignId, characterId, member, memberHeaders } = await joinAs("Game Master");
 
-      const response = await api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
-        { param: { id: campaignId, characterId } },
+      const response = await requestPdf(campaignId, characterId, memberHeaders);
+      expect(response.status).toBe(202);
+
+      const activity = await db.query.activitiesInAccount.findFirst({
+        where: (t, { and, eq }) => and(eq(t.userId, member.id), eq(t.targetId, characterId), eq(t.type, "generatePdf")),
+      });
+      const resolved = await api.api.activities.resolve[":targetTable"][":targetId"].$get(
+        { param: { targetTable: activity!.targetTable, targetId: characterId } },
         { headers: memberHeaders },
       );
-      expect(response.status).toBe(403);
+      if (!resolved.ok) throw new Error("Activity resolve request failed");
+      expect((await resolved.json()).url).toBe(`/campaigns/${campaignId}/characters/${characterId}`);
+    });
+
+    test("the worker skips the export when the Game Master left the campaign before it ran", async () => {
+      const { campaignId, characterId, member, memberPlayer, memberHeaders } = await joinAs("Game Master");
+
+      const response = await requestPdf(campaignId, characterId, memberHeaders);
+      expect(response.status).toBe(202);
+      await Players.delete(db, { id: memberPlayer.id });
+
+      await generatePdfTask(await queuedPdfPayload(characterId), workerHelpers);
+
+      const notification = await db.query.notificationsInAccount.findFirst({
+        where: (t, { and, eq }) => and(eq(t.recipientId, member.id), eq(t.targetId, characterId)),
+      });
+      expect(notification).toMatchObject({ type: "pdfFailed", targetTable: "player_characters" });
+      const exported = await db.query.exportsInAccount.findFirst({ where: (t, { eq }) => eq(t.userId, member.id) });
+      expect(exported).toBeUndefined();
+    });
+
+    test("refuses other players", async () => {
+      const { campaignId, characterId, memberHeaders } = await joinAs("Player Character");
+
+      const response = await requestPdf(campaignId, characterId, memberHeaders);
+      expect(response.status).toBe(404);
+    });
+
+    test("refuses non-members", async () => {
+      const { campaignId, characterId } = await joinAs("Game Master");
+      const outsider = (await Users.findOne(db, { emailAddress: "testuser3@example.com" }))!;
+      const [outsiderSession] = await Sessions.create(db, { userId: outsider.id });
+
+      const response = await requestPdf(campaignId, characterId, { cookie: `session-id=${outsiderSession.id}` });
+      expect(response.status).toBe(404);
+    });
+
+    // Archiving makes a campaign read-only; its character pages stay viewable.
+    test("still lets the Game Master export from an archived campaign", async () => {
+      const { campaignId, characterId, memberHeaders } = await joinAs("Game Master");
+      const archived = await api.api.campaigns[":id"].$delete({ param: { id: campaignId } }, { headers: memberHeaders });
+      expect(archived.status).toBe(200);
+
+      const response = await requestPdf(campaignId, characterId, memberHeaders);
+      expect(response.status).toBe(202);
     });
 
     test("returns 404 for a character not linked to the campaign", async () => {
       const { campaignId, characterId } = await createTestData();
 
-      const response = await api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
-        { param: { id: campaignId, characterId } },
-        { headers },
-      );
+      const response = await requestPdf(campaignId, characterId, headers);
       expect(response.status).toBe(404);
     });
   });

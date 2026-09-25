@@ -72,15 +72,15 @@ export default new Hono<SessionContext>()
       return c.json({
         visibility: data.visibility,
         isOwner: data.isOwner,
-        isGameMaster: data.isGameMaster,
         canEdit: data.canEdit,
+        canDownloadPdf: data.canDownloadPdf,
         isPartial: data.isPartial,
         ...visibleResponse,
         bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
       }, 200);
     },
   )
-  // Enqueue async PDF generation of a campaign character (Game Master only)
+  // Enqueue async PDF generation of a campaign character (its editors and the Game Master)
   .post(
     "/:id/characters/:characterId/pdf",
     denyDemoUser,

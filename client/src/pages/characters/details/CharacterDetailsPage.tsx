@@ -1,7 +1,7 @@
 import { PageTransition, DeleteDialog } from "@/client/src/components/common/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   Archive as ArchiveIcon,
@@ -29,7 +29,7 @@ import {
 } from "@mui/material";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useDemoTimeRemaining, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
@@ -63,6 +63,9 @@ export default function CharacterDetailsPage() {
   const [isModifiersOpen, setModifiersOpen] = useState(false);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
+  const pdfExport = usePdfExport(() =>
+    rpc.api.characters[":characterId"]["pdf"]["$post"]({ param: { characterId: id! } }),
+  );
   const { isDemo } = useDemoTimeRemaining();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
@@ -113,22 +116,6 @@ export default function CharacterDetailsPage() {
       snackbar.error(err, "Failed to remove level");
     } finally {
       setRemovingLevel(false);
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    if (!id) return;
-    try {
-      await rpc.api.characters[":characterId"]["pdf"]["$post"]({
-        param: { characterId: id },
-      });
-      snackbar.info("Your PDF is being generated. You'll be notified when it's ready.");
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 429) {
-        snackbar.warning("Too many PDF requests. Please wait a minute before trying again.");
-      } else {
-        snackbar.error(error, "Failed to start PDF generation");
-      }
     }
   };
 
@@ -240,7 +227,7 @@ export default function CharacterDetailsPage() {
                   <MenuItem
                     key="download-pdf"
                     onClick={() => {
-                      handleDownloadPdf();
+                      pdfExport.mutate();
                       handleClose();
                     }}
                   >
@@ -337,7 +324,7 @@ export default function CharacterDetailsPage() {
                     <MenuItem
                       key="download-pdf"
                       onClick={() => {
-                        handleDownloadPdf();
+                        pdfExport.mutate();
                         handleClose();
                       }}
                     >

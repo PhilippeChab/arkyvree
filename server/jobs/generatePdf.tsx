@@ -2,16 +2,19 @@ import type { Task } from "graphile-worker";
 import { pdf } from "@react-pdf/renderer";
 
 import { db, withTransaction } from "@/server/database/index.ts";
-import { Characters, Exports, Notifications } from "@/server/repositories/index.ts";
+import { Exports, Notifications } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind } from "@/server/rulesets/types.ts";
 import { urlForSlot } from "@/server/services/AttachmentsService.ts";
+import { characterPdfTargetTable, findExportableCharacter } from "@/server/services/CharactersService.ts";
 import { publishWsEvent } from "@/server/ws.ts";
 
 interface GeneratePdfPayload {
   userId: string;
   characterId: string;
   characterName: string;
+  /** Set when a Game Master exports a character of their campaign. */
+  campaignId?: string;
 }
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -22,21 +25,22 @@ function sanitizeFileName(name: string): string {
 }
 
 export const generatePdfTask: Task = async (payload, helpers) => {
-  const { userId, characterId, characterName } = payload as GeneratePdfPayload;
+  const { userId, characterId, characterName, campaignId } = payload as GeneratePdfPayload;
 
   helpers.logger.info(`Generating PDF for character ${characterId}`);
 
   try {
-    const characterRecord = await Characters.findOne(db, { id: characterId });
+    // Access may have been revoked since the export was queued.
+    const characterRecord = await findExportableCharacter(userId, characterId, campaignId);
 
     if (!characterRecord) {
-      helpers.logger.warn(`Character ${characterId} not found for user ${userId}`);
+      helpers.logger.warn(`Character ${characterId} not found or not exportable for user ${userId}`);
       await Notifications.create(db, {
         recipientId: userId,
         actorId: userId,
         type: "pdfFailed",
         targetId: characterId,
-        targetTable: "characters",
+        targetTable: characterPdfTargetTable(campaignId),
         data: { characterName },
       });
       await publishWsEvent(userId, { type: "notifications:updated" }).catch((err) =>
@@ -111,7 +115,7 @@ export const generatePdfTask: Task = async (payload, helpers) => {
           actorId: userId,
           type: "pdfFailed",
           targetId: characterId,
-          targetTable: "characters",
+          targetTable: characterPdfTargetTable(campaignId),
           data: { characterName },
         });
         await publishWsEvent(userId, { type: "notifications:updated" });

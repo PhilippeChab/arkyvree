@@ -1,6 +1,5 @@
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError, rpc } from "@/client/src/services/rpc.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { rpc } from "@/client/src/services/rpc.ts";
 import {
   CharacterDetailSkeleton,
   CharacterSheetBody,
@@ -24,14 +23,13 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 export default function CampaignCharacterPage() {
   const { id: campaignId, characterId } = useParams<{ id: string; characterId: string }>();
   const navigate = useNavigate();
-  const snackbar = useSnackbar();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const { data, isLoading, error } = useQuery({
@@ -46,32 +44,15 @@ export default function CampaignCharacterPage() {
     enabled: !!campaignId && !!characterId,
   });
 
+  const pdfExport = usePdfExport(() =>
+    rpc.api.campaigns[":id"].characters[":characterId"]["pdf"]["$post"]({
+      param: { id: campaignId!, characterId: characterId! },
+    }),
+  );
+
   usePageTitle(data?.identity?.physiology?.name);
 
   const handleClose = () => setAnchorEl(null);
-
-  const handleDownloadPdf = async (canEdit: boolean) => {
-    if (!campaignId || !characterId) return;
-    try {
-      // Editors export through the character; the Game Master through the campaign.
-      if (canEdit) {
-        await rpc.api.characters[":characterId"]["pdf"]["$post"]({
-          param: { characterId },
-        });
-      } else {
-        await rpc.api.campaigns[":id"].characters[":characterId"]["pdf"]["$post"]({
-          param: { id: campaignId, characterId },
-        });
-      }
-      snackbar.info("Your PDF is being generated. You'll be notified when it's ready.");
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 429) {
-        snackbar.warning("Too many PDF requests. Please wait a minute before trying again.");
-      } else {
-        snackbar.error(error, "Failed to start PDF generation");
-      }
-    }
-  };
 
   if (!campaignId || !characterId) {
     return (
@@ -123,7 +104,7 @@ export default function CampaignCharacterPage() {
             </Typography>
           </Stack>
 
-          {(data.canEdit || data.isGameMaster) && !data.deletedAt && (
+          {data.canDownloadPdf && !data.deletedAt && (
             <Stack direction="row" spacing={1}>
               <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: "text.secondary" }}>
                 <MoreVertIcon />
@@ -144,7 +125,7 @@ export default function CampaignCharacterPage() {
                 )}
                 <MenuItem
                   onClick={() => {
-                    handleDownloadPdf(data.canEdit);
+                    pdfExport.mutate();
                     handleClose();
                   }}
                 >

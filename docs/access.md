@@ -104,13 +104,14 @@ Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDe
 | `canUpdate` | **Game Master only** |
 | `canDelete` | **Game Master only** (archive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
-| `canExportCharacters` | **Game Master only** — PDF export of any character linked to the campaign (`POST /campaigns/:id/characters/:characterId/pdf`), whatever its visibility, since the GM already sees the full sheet |
 
 **Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility`'s policy throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM). This is single-user contention by design.
 
 **Partial visibility filtering**: `getCampaignCharacters` strips `description` and `levels` for characters with `visibility: "Partial"` when the viewer is neither the owner nor a GM.
 
-**`canEdit` on the campaign-character detail response**: `getCampaignCharacter` returns `isOwner` (link-slot ownership in the campaign), `isGameMaster`, and `canEdit` (character owner OR active character contributor). The campaign character view shows "Edit Character" to `canEdit` only, and "Download PDF" to `canEdit` (through the character's own PDF endpoint) or `isGameMaster` (through the campaign endpoint) — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
+**`canEdit` on the campaign-character detail response**: `getCampaignCharacter` returns `isOwner` (link-slot ownership in the campaign), `canEdit` (character owner OR active character contributor), and `canDownloadPdf` (`canEdit` OR Game Master). The campaign character view shows "Edit Character" to `canEdit` only, and "Download PDF" to `canDownloadPdf` — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
+
+**PDF export of a campaign character** (`POST /campaigns/:id/characters/:characterId/pdf`): the character must be linked to the campaign; its editors and the Game Master may export it, whatever its visibility, since the GM already sees the full sheet. Archived campaigns still allow it: archiving makes a campaign read-only, and its character pages stay viewable. Every refusal is a 404, as for the character's own `POST /characters/:id/pdf`. Both go through `findExportableCharacter`, which the PDF worker runs again when the job starts, so access lost in between cancels the export.
 
 ## Attachments — `AttachmentsService` registry
 

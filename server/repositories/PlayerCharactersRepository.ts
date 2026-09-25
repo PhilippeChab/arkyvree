@@ -83,12 +83,21 @@ class PlayerCharactersRepository
 
   async findOne(
     db: Db,
-    where: { playerId: string; characterId: string } | { characterId: string },
+    where:
+      | { playerId: string; characterId: string }
+      | { characterId: string }
+      | { characterId: string; campaignId: string },
   ) {
     return await db.query.playerCharactersInCampaign.findFirst({
       where: this.where([
         "playerId" in where && eq(this.table.playerId, where.playerId),
         "characterId" in where && eq(this.table.characterId, where.characterId),
+        "campaignId" in where && inArray(
+          this.table.playerId,
+          db.select({ id: playersInCampaign.id })
+            .from(playersInCampaign)
+            .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
+        ),
         isNull(this.table.deletedAt),
       ]),
     });
