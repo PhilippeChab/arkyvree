@@ -336,6 +336,7 @@ export function PublishRulesetDialog({
   const [kind, setKind] = useState<"ruleset" | "extension">(initialKind);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     if (open) setKind(initialKind);
   }, [open, initialKind]);
 

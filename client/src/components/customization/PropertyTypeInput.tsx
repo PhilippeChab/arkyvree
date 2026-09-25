@@ -44,6 +44,7 @@ export function PropertyTypeInput({
   const debouncedInputValue = useDebouncedValue(inputValue);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     setInputValue(value);
   }, [value]);
 

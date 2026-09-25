@@ -125,6 +125,7 @@ export interface LevelUpSkillsStepProps {
   skillsError: Error | null;
   skillPointAllocations: Record<string, number>;
   setValue: (key: "skillPointAllocations", value: Record<string, number>) => void;
+  getValues: (key: "skillPointAllocations") => Record<string, number>;
   perLevelClassSkillIds?: string[][];
   perLevelSkillPoints?: number[];
 }

@@ -204,6 +204,7 @@ export function EditLevelModal({
             skillsError={wizard.skillsError}
             skillPointAllocations={wizard.skillPointAllocations}
             setValue={wizard.setValue}
+            getValues={wizard.getValues}
           />
         );
       case "feats":

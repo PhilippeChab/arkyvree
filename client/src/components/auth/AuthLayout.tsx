@@ -255,7 +255,6 @@ export function AuthLayoutRoute() {
   const clearSession = useAuthStore((s) => s.clearSession);
   // Only kill the demo if we were already one at mount — a freshly-created
   // demo on /sign-in must survive the route change.
-  const mountedAsDemo = useRef(isDemo);
   const [isClearingDemo, setIsClearingDemo] = useState(isDemo);
   const demoSignOutStarted = useRef(false);
 
@@ -263,13 +262,12 @@ export function AuthLayoutRoute() {
   // clearSession fallback covers signOut failures (server already 401'd, network blip):
   // server-side demo may already be gone, so locally unauth is the right end state.
   useEffect(() => {
-    if (!mountedAsDemo.current) return;
-    if (demoSignOutStarted.current) return;
+    if (!isClearingDemo || demoSignOutStarted.current) return;
     demoSignOutStarted.current = true;
     signOut()
       .catch(() => clearSession())
       .finally(() => setIsClearingDemo(false));
-  }, [signOut, clearSession]);
+  }, [isClearingDemo, signOut, clearSession]);
 
   if (isClearingDemo) {
     return (

@@ -1040,6 +1040,7 @@ export function useAddLevelWizard({
     perLevelClassSkillIds,
     perLevelSkillPoints,
     setValue,
+    getValues,
 
     // Feats (step 5)
     featData,

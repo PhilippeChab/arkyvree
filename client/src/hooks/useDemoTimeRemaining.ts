@@ -39,6 +39,7 @@ export function useDemoTimeRemaining(): DemoTimeRemaining {
 
   useEffect(() => {
     if (!expiresAt) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setState(compute(null));
       return;
     }

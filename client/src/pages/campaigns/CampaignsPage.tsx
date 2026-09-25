@@ -242,7 +242,6 @@ const CAMPAIGN_SORT_OPTIONS: SortOption<SortField>[] = [
 export default function CampaignsPage() {
   usePageTitle("Campaigns");
   const [searchParams, setSearchParams] = useSearchParams();
-  const { offset, updateOffset } = useStaggerAnimation();
   const isDemo = useAuthStore((s) => !!s.user?.expiresAt);
   const limit = 10;
 
@@ -280,6 +279,14 @@ export default function CampaignsPage() {
     confirmCreate,
   } = useCampaignOperations();
 
+  const listQueryKey = queryKeys.campaigns.list({
+    view,
+    search: debouncedSearchQuery,
+    orderBy,
+    orderDir,
+  });
+  const { offset, updateOffset } = useStaggerAnimation(listQueryKey);
+
   const {
     data,
     isLoading: campaignsLoading,
@@ -288,12 +295,7 @@ export default function CampaignsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.campaigns.list({
-      view,
-      search: debouncedSearchQuery,
-      orderBy,
-      orderDir,
-    }),
+    queryKey: listQueryKey,
     queryFn: async ({ pageParam }) => {
       const response = await rpc.api.campaigns.$get({
         query: {

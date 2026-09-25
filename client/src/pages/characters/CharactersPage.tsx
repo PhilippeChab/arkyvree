@@ -1053,7 +1053,6 @@ export default function CharactersPage() {
   usePageTitle("Characters");
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const { offset, updateOffset } = useStaggerAnimation();
   const limit = 10;
 
   // Get state from URL params
@@ -1083,6 +1082,14 @@ export default function CharactersPage() {
     setSearchParams(newParams);
   };
 
+  const listQueryKey = queryKeys.characters.list({
+    view,
+    search: debouncedSearchQuery,
+    orderBy,
+    orderDir,
+  });
+  const { offset, updateOffset } = useStaggerAnimation(listQueryKey);
+
   const {
     data,
     isLoading: charactersLoading,
@@ -1091,12 +1098,7 @@ export default function CharactersPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.characters.list({
-      view,
-      search: debouncedSearchQuery,
-      orderBy,
-      orderDir,
-    }),
+    queryKey: listQueryKey,
     queryFn: async ({ pageParam }) => {
       const response = await rpc.api.characters.$get({
         query: {

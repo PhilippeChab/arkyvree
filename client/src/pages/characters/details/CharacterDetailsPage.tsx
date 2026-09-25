@@ -86,6 +86,7 @@ export default function CharacterDetailsPage() {
   useEffect(() => {
     const characterIsBonded = character && "kind" in character && character.kind !== "pc";
     if (location.state?.openLevelUp && character && !characterIsBonded) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setAddLevelOpen(true);
       navigate(location.pathname, { replace: true, state: {} });
     }
