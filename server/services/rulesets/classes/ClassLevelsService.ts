@@ -264,7 +264,7 @@ export const ClassLevelsMethods = {
         // corrupting the parent.
         let targetKlassId = klass.id;
         if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetKlassId = cowResult.id as string;
         }
 

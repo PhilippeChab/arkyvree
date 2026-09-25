@@ -103,7 +103,7 @@ export const LanguagesMethods = {
         let targetId = language.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "languages", language.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "languages", language.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         }
 
@@ -146,7 +146,7 @@ export const LanguagesMethods = {
 
         let targetId = language.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "languages", language.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "languages", language.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "languages", targetId);

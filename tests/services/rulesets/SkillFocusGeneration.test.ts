@@ -398,7 +398,7 @@ for (const operation of ["rename", "delete"] as const) {
     });
     const levels = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
     await CharacterLevelFeats.create(db, { characterLevelId: levels[0], aptitudeId: ctx.aptMap.General, featId: feat.id });
-    const copy = await cowEntity(db, "feats", feat.id, fork.id, fork.ancestorRulesetIds);
+    const copy = await cowEntity(db, "feats", feat.id, fork.id, fork.ancestorRulesetIds, []);
     const mutation = operation === "delete"
       ? SkillsMethods.deleteRulesetSkill(session, fork.id, ctx.skillMap.Climb)
       : SkillsMethods.updateRulesetSkill(session, fork.id, ctx.skillMap.Climb, {

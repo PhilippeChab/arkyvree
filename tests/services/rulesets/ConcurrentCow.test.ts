@@ -21,7 +21,7 @@ test("COW waits for a competing copy transaction and continues after rollback", 
     await blocker.query("BEGIN");
     const blockerDb = createTestDbFromClient(blocker);
     await EntitySnapshots.lockForCopy(blockerDb, fork.id, sourceId);
-    copying = cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId]);
+    copying = cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
     // Observe an actual PostgreSQL wait, rather than relying on a sleep to
     // guess whether the competing call has reached its critical section.
     let waiting = false;
@@ -36,7 +36,7 @@ test("COW waits for a competing copy transaction and continues after rollback", 
     await blocker.query("ROLLBACK");
     const copied = await copying;
     expect(copied.id).not.toBe(sourceId);
-    expect((await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId])).id).toBe(copied.id);
+    expect((await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], [])).id).toBe(copied.id);
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toHaveLength(1);
     expect((await Feats.findOne(db, { id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
   } finally {
@@ -71,9 +71,9 @@ test("a tombstoned copy can be recreated without duplicating snapshots", async (
   const seed = await getSeedContext(db);
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const sourceId = seed.featMap.Toughness;
-  const first = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId]);
+  const first = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
   await Feats.delete(db, { id: first.id });
-  const second = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId]);
+  const second = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
   expect(second.id).not.toBe(first.id);
   const snapshots = await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id });
   expect(snapshots).toHaveLength(1);

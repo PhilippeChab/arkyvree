@@ -88,7 +88,7 @@ export const MechanicsMethods = {
         let targetId = mechanic.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "mechanics", mechanic.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "mechanics", mechanic.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         }
 
@@ -131,7 +131,7 @@ export const MechanicsMethods = {
 
         let targetId = mechanic.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "mechanics", mechanic.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "mechanics", mechanic.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         }
 

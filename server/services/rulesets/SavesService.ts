@@ -99,7 +99,7 @@ export const SavesMethods = {
         let targetId = save.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "saves", save.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "saves", save.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         }
 
@@ -145,7 +145,7 @@ export const SavesMethods = {
 
         let targetId = save.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "saves", save.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "saves", save.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "saves", targetId);

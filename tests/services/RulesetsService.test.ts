@@ -117,7 +117,7 @@ describe("RulesetsService", () => {
     const feats = await Feats.findManyByRulesetId(db, { rulesetId: base.id }, { limit: 26, page: 1 });
     expect(feats.items).toHaveLength(26);
     for (const feat of feats.items) {
-      const overridden = await cowEntity(db, "feats", feat.id, fork.id, [base.id]);
+      const overridden = await cowEntity(db, "feats", feat.id, fork.id, [base.id], []);
       expect(overridden.id).not.toBe(feat.id);
     }
   });
@@ -2439,7 +2439,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the feat into the child
-      const cowResult = await cowEntity(db, "feats", feats[0].id, child.id);
+      const cowResult = await cowEntity(db, "feats", feats[0].id, child.id, [], []);
 
       // Verify modifier requirements were copied to the new entity's modifiers
       const newModifiers = await Modifiers.findManyBySource(db, {
@@ -2478,7 +2478,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the klass (copies all levels and their customizations)
-      const cowResult = await cowEntity(db, "klasses", klasses[0].id, child.id);
+      const cowResult = await cowEntity(db, "klasses", klasses[0].id, child.id, [], []);
 
       // Find the new level 3 (corresponds to old levels[1])
       const newLevels = await KlassLevels.findManyByKlass(db, { klassId: cowResult.id as string });
@@ -2643,7 +2643,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the feat and modify it
-      const cowResult = await cowEntity(db, "feats", feats[0].id, fork.id);
+      const cowResult = await cowEntity(db, "feats", feats[0].id, fork.id, [], []);
       await Feats.update(db, { description: "Modified description" }, { id: cowResult.id as string });
 
       const changes = await RulesetsMethods.getChanges(forkSession, fork.id);
@@ -2725,7 +2725,7 @@ describe("RulesetsService", () => {
       );
 
       // 1. Modify an inherited feat (creates COW + snapshot)
-      const cowResult = await cowEntity(db, "feats", parentFeats[0].id, fork.id);
+      const cowResult = await cowEntity(db, "feats", parentFeats[0].id, fork.id, [], []);
       await Feats.update(db, { description: "Modified" }, { id: cowResult.id as string });
 
       // 2. Create a new feat locally (no snapshot)
@@ -2778,7 +2778,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the feat
-      await cowEntity(db, "feats", feats[0].id, fork.id);
+      await cowEntity(db, "feats", feats[0].id, fork.id, [], []);
 
       let changes = await RulesetsMethods.getChanges(forkSession, fork.id);
       expect(changes.length).toBe(1);
@@ -2818,7 +2818,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the feat in the fork (creates the override + snapshot)
-      const cowResult = await cowEntity(db, "feats", feats[0].id, fork.id);
+      const cowResult = await cowEntity(db, "feats", feats[0].id, fork.id, [], []);
 
       // Character on the fork picks the COW'd feat
       const characters = await Characters.create(db, {
@@ -2881,7 +2881,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the feat (creates a copy with customizations + join tables)
-      const cowResult = await cowEntity(db, "feats", feats[0].id, fork.id);
+      const cowResult = await cowEntity(db, "feats", feats[0].id, fork.id, [], []);
       const cowFeatId = cowResult.id as string;
 
       // Verify COW copy has customizations
@@ -2940,7 +2940,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the klass
-      const cowResult = await cowEntity(db, "klasses", klasses[0].id, fork.id);
+      const cowResult = await cowEntity(db, "klasses", klasses[0].id, fork.id, [], []);
       const cowKlassId = cowResult.id as string;
 
       // Verify COW copy has levels and associations
@@ -2979,7 +2979,7 @@ describe("RulesetsService", () => {
       );
 
       // COW the template item
-      const cowResult = await cowEntity(db, "items", templates[0].id, fork.id);
+      const cowResult = await cowEntity(db, "items", templates[0].id, fork.id, [], []);
       const cowTemplateId = cowResult.id as string;
 
       // Create copies referencing the COW'd template
@@ -3108,7 +3108,7 @@ describe("RulesetsService", () => {
       ]);
 
       // COW the shared feat into extension A
-      const cowA = await cowEntity(db, "feats", feats[0].id, extA[0].id, [base.id]);
+      const cowA = await cowEntity(db, "feats", feats[0].id, extA[0].id, [base.id], []);
       // Convert standalone to OR chain and add ext A's class requirement
       const cowAReqs = await Requirements.findManyByEntity(db, { entityIds: [cowA.id], entityType: "feats" });
       const standaloneA = cowAReqs.find((r) => /^\d+$/.test(r.level) && r.target && !r.chainingOperator);
@@ -3132,7 +3132,7 @@ describe("RulesetsService", () => {
       }]);
 
       // COW the shared feat into extension B
-      const cowB = await cowEntity(db, "feats", feats[0].id, extB[0].id, [base.id]);
+      const cowB = await cowEntity(db, "feats", feats[0].id, extB[0].id, [base.id], []);
       // Convert standalone to OR chain and add ext B's class requirement
       const cowBReqs = await Requirements.findManyByEntity(db, { entityIds: [cowB.id], entityType: "feats" });
       const standaloneB = cowBReqs.find((r) => /^\d+$/.test(r.level) && r.target && !r.chainingOperator);
@@ -3224,7 +3224,7 @@ describe("RulesetsService", () => {
         ancestorRulesetIds: [base.id],
       });
 
-      await cowEntity(db, "feats", feats[0].id, ext[0].id, [base.id]);
+      await cowEntity(db, "feats", feats[0].id, ext[0].id, [base.id], []);
 
       const child = await Rulesets.create(db, {
         name: `Child ${Math.random().toString(36).substr(2, 5)}`,

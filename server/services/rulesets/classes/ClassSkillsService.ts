@@ -51,7 +51,7 @@ export const ClassSkillsMethods = {
         // would point at the parent ruleset's klass.
         let targetKlassId = klass.id;
         if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetKlassId = cowResult.id as string;
         }
 
@@ -103,7 +103,7 @@ export const ClassSkillsMethods = {
         // klass_skills row from the parent ruleset.
         let targetKlassId = klass.id;
         if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetKlassId = cowResult.id as string;
         }
 

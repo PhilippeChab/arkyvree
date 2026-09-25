@@ -205,7 +205,7 @@ normal merged view of the currently subscribed extensions. Hidden sibling IDs
 still resolve to the local copy; deleting that copy leaves the whole entity hidden
 until the override is restored.
 
-`cowEntity` accepts an optional `extensionRulesetIds` parameter to enable sibling detection. All callers in `cowEntityForCustomization` pass `ruleset.extensionRulesetIds`.
+`cowEntity` requires both the source chain and `extensionRulesetIds`. Every edit path passes the current ruleset’s extensions, including entity edits, class-skill changes, and class-level changes, so the local copy contains all visible sibling customizations before read-time merging stops.
 
 ### Aptitudes and the Sibling Map
 

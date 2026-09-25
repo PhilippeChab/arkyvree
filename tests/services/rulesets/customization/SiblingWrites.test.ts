@@ -26,7 +26,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     const extension = await createSeededTestRuleset(session.userId);
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false, userId: null }, { id: extension.id });
     const copy = pairing === "snapshot"
-      ? await cowEntity(db, entityType, base.id, extension.id, extension.ancestorRulesetIds)
+      ? await cowEntity(db, entityType, base.id, extension.id, extension.ancestorRulesetIds, [])
       : (await repo.create(db, { name: "Sibling write fixture", rulesetId: extension.id }))[0];
     extensions.push({ extension, copy });
   }

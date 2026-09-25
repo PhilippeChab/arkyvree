@@ -108,7 +108,7 @@ export const AptitudesMethods = {
         let targetId = aptitude.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "aptitudes", aptitude.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "aptitudes", aptitude.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         }
 
@@ -151,7 +151,7 @@ export const AptitudesMethods = {
 
         let targetId = aptitude.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "aptitudes", aptitude.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "aptitudes", aptitude.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "aptitudes", targetId);
