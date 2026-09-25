@@ -313,10 +313,14 @@ Ruleset customization endpoints require the source entity to belong to the compo
 
 Modifiers belong directly to ruleset entities or class levels. A modifier can have requirements, but cannot have other modifiers. Editing an inherited modifier or its requirements copies its owning entity and preserves the modifier requirements. Missing owners and sources outside the ruleset source chain are rejected.
 
-Customization mutations validate the stored row owner, without COW alias remapping.
-Property edits also accept visible contributions from sibling extensions. Their
-owner is the stored sibling, so the write must resolve to a copied property before
-it can proceed. After a COW copy, clients must use the returned `resolvedEntityId` and reload its customizations;
+Modifier, property, and requirement updates and deletes follow one pattern. The
+row must be shown on the entity in the composed ruleset: its own rows plus
+visible contributions from sibling extensions, and for a derived item, the
+properties of its template. Editing a template property creates an override on
+the item; deleting one is rejected. `cowCustomizationForMutation` then copies the
+owning entity if it is inherited and resolves the row to its copy, so a sibling
+contribution is written through the local copy, never the stored sibling. After a
+COW copy, clients must use the returned `resolvedEntityId` and reload its customizations;
 stale ancestor customization IDs are rejected. During the initial copy, mutations
 use the exact copied IDs, including sibling properties, modifiers, and modifier
 requirements, so equal values are never used to guess a copied row's identity.
@@ -332,7 +336,9 @@ Customization writes hold a PostgreSQL row lock on their owning ruleset entity
 until the transaction ends. Deletion and override restoration acquire that same
 lock before removing child rows. Requirements on modifiers lock the modifier's
 owner; class levels lock their class. After waiting, sources are checked again so a
-deleted modifier or level cannot receive a new customization. Ordinary reads
+deleted modifier or level cannot receive a new customization, and the modifier,
+property, or requirement being edited is re-read so one deleted meanwhile is
+reported as missing (404) for every kind. Ordinary reads
 do not take these locks, and different owners can be edited independently.
 
 First COW copies retain the fork/source advisory lock and hold a shared row lock

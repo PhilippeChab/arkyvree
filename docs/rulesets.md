@@ -162,6 +162,17 @@ The child's own entities are always included. Ancestor entities are included onl
 | `forkedEntityId` | Child's local COW copy ID |
 | `contentHash` | Baseline hash of entity + customizations at COW time |
 
+### Names of new entities
+
+Every entity create (and bulk item variants) checks the name with
+`assertEntityNameAvailable` / `assertAncestorNamesHidden` against the fork's
+composed view. A local entity, or an inherited one that is still visible, with
+the same name blocks it. Inherited entities hidden by an override
+(`cow.overrideMap` or `cow.siblingIds`) do not. If a hidden ancestor's local
+copy was deleted, its snapshot is a tombstone, and `repointTombstoneSnapshot`
+moves it to the new entity. A live local copy keeps its snapshot even after a
+rename, so picks of the source keep resolving to that copy.
+
 ### Multi-Extension COW (Sibling Map)
 
 When multiple extensions COW the same base entity, each extension creates its own independent copy. At runtime, one copy "wins" (the first extension in install order) and the others become **siblings**. Their data is merged transparently so the user sees a single entity with combined customizations.
@@ -298,6 +309,15 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
   that a downstream fork's character picked is blocked; a fork deleting an
   inherited entity that only the parent's character uses is not (parent's
   characters are unrelated to the fork).
+
+- **Picks stored under a source id count against its local copy.** A
+  character that picked an inherited entity keeps the source id after the fork
+  copies it. Deleting that copy leaves a tombstone hiding the source, which
+  would orphan the pick. Every `existsBy*` matches the entity id with
+  `idMatches`, so inside the delete's `withRulesetScope` it also matches the
+  pre-copy ids that resolve to the copy. `revertOverride` runs outside a scope
+  and matches the copy's own id only: restoring the source keeps pre-copy
+  picks valid.
 
 - **Don't include class-side references** (`klass_level_feats`,
   `klass_level_powers`, `klass_skills`, etc.). Class definitions are

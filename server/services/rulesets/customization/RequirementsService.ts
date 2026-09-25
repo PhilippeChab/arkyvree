@@ -1,4 +1,3 @@
-import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -8,7 +7,7 @@ import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { cowEntityForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { cowCustomizationForMutation, cowEntityForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
@@ -168,11 +167,8 @@ export const RequirementsMethods = {
         await customizationPolicy.canUpdate();
 
         // COW the owning entity if this requirement is inherited
-        const customizationIds = new Map<string, string>();
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
-
-        const resolvedRequirementId = resolveCustomizationId(
-          effectiveEntityId, resolvedEntityId, requirementId, customizationIds, "requirement",
+        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
+          tx, rulesetId, entityType, effectiveEntityId, "requirement", requirementId,
         );
 
         let updatedRequirement;
@@ -276,11 +272,8 @@ export const RequirementsMethods = {
         const customizationPolicy = new CustomizationsPolicy(session, requirement);
         await customizationPolicy.canDelete();
 
-        const customizationIds = new Map<string, string>();
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId, customizationIds);
-
-        const resolvedRequirementId = resolveCustomizationId(
-          effectiveEntityId, resolvedEntityId, requirementId, customizationIds, "requirement",
+        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
+          tx, rulesetId, entityType, effectiveEntityId, "requirement", requirementId,
         );
 
         const rows = await Requirements.delete(tx, { id: resolvedRequirementId });

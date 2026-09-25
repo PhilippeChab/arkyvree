@@ -74,7 +74,7 @@ class CharacterInventoryRepository
           sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
         ),
       ))
-      .where(and(eq(this.table.itemId, where.itemId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(this.table.itemId, where.itemId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
   }

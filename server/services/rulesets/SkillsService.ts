@@ -80,7 +80,7 @@ export const SkillsMethods = {
           throw new BadRequestError("\"Budget\" is a reserved skill name");
         }
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, sourceChain, "skills", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "skills", body.name);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
 

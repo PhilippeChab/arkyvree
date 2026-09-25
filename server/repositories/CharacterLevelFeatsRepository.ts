@@ -110,7 +110,7 @@ class CharacterLevelFeatsRepository
           sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
         ),
       ))
-      .where(and(eq(this.table.aptitudeId, where.aptitudeId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(this.table.aptitudeId, where.aptitudeId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
   }
