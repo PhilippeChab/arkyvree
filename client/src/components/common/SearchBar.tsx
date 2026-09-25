@@ -80,12 +80,14 @@ export function SearchBar<
     if (inputValue !== searchValue) setInputValue(searchValue);
   }
 
-  // Propagate debounced value to parent
+  // Propagate the debounced value to the parent once typing has settled. While
+  // the debounce lags behind an external change (the sync above already reset
+  // inputValue), the stale debounced value must not be written back.
   useEffect(() => {
-    if (debouncedInputValue !== searchValue) {
+    if (debouncedInputValue === inputValue && debouncedInputValue !== searchValue) {
       onSearchChange(debouncedInputValue);
     }
-  }, [debouncedInputValue, searchValue, onSearchChange]);
+  }, [debouncedInputValue, inputValue, searchValue, onSearchChange]);
 
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
