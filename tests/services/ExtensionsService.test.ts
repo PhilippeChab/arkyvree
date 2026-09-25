@@ -621,11 +621,8 @@ describe("subscribeExtension (COW)", () => {
   });
 
   test("Case B sibling-loser ID resolves to host's COW (stale-pick safety)", async () => {
-    // The extension's COW shadow shares the base's name and gets hidden by
-    // siblingMap. Anyone holding the now-hidden ID (e.g. a character pick stored
-    // before subscribe) must still resolve to the host's COW via idResolveMap —
-    // and modifiers attached to that hidden id must appear on the host's COW
-    // through compose-time sibling-merge.
+    // The extension's COW shadow is hidden by the local override. Stale IDs
+    // still resolve to the host's COW, whose customizations stay authoritative.
     const { user, session } = await createTestUser();
     const { base } = await findBaseAndExtension();
     const baseFeats = await Feats.findAll((p) => Feats.findManyByRulesetId(db, { rulesetId: base.id }, p));
@@ -655,9 +652,9 @@ describe("subscribeExtension (COW)", () => {
     const viaStale = await FeatsMethods.getRulesetFeat(draft.id, extCowId!);
     expect(viaStale.id).toBe(hostF1);
 
-    // Compose-time sibling-merge: extension's modifier appears on host's COW.
+    // A later extension must not change the local override's customizations.
     const detail = await FeatsMethods.getRulesetFeat(draft.id, hostF1);
-    expect(detail.modifiers.some((m) => m.target === "abilities.constitution.total")).toBe(true);
+    expect(detail.modifiers.some((m) => m.target === "abilities.constitution.total")).toBe(false);
   });
 
   test("Case A2 stays correct: subscribe both then host COWs → one visible", async () => {

@@ -322,6 +322,9 @@ use the exact copied IDs, including sibling properties, modifiers, and modifier
 requirements, so equal values are never used to guess a copied row's identity.
 Sibling copying follows the same source-chain order as display when selecting
 duplicate contributions across extensions.
+After copying, reads use the local customizations without merging the original
+sibling rows back in. Editing or deleting a copied property, modifier, requirement,
+or aptitude link therefore stays effective until the override is restored.
 
 Modifiers and their requirements are copied in batches, without recursive modifier queries.
 

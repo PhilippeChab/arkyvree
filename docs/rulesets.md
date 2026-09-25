@@ -198,6 +198,13 @@ User's Fork (subscribed to both DMG + CD)
 
 **Key rule**: A local (child fork) COW always wins completely — no sibling merging. The sibling map only applies to extension-vs-extension COW conflicts. If the user's own fork has COW'd a base entity, that fork's copy is authoritative and extension copies are ignored.
 
+This also applies when an extension is installed after the local copy was made:
+its unrelated entities remain available, but its contributions to that overridden
+entity are not merged into the local copy. Restoring the override resumes the
+normal merged view of the currently subscribed extensions. Hidden sibling IDs
+still resolve to the local copy; deleting that copy leaves the whole entity hidden
+until the override is restored.
+
 `cowEntity` accepts an optional `extensionRulesetIds` parameter to enable sibling detection. All callers in `cowEntityForCustomization` pass `ruleset.extensionRulesetIds`.
 
 ### Aptitudes and the Sibling Map

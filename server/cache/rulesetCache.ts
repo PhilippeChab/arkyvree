@@ -720,6 +720,7 @@ async function getOrFetchRulesetData(
   if (cowData.siblingMap.size > 0) {
     for (const raw of chain) {
       for (const f of raw.feats) {
+        if (overriddenIds.has(f.id)) continue;
         const w = siblingToWinner.get(f.id);
         if (!w) continue;
         const remapped = f.featsAptitudesInRules.map((l) => ({ ...l, featId: w }));
@@ -728,6 +729,7 @@ async function getOrFetchRulesetData(
         else siblingFeatLinksByWinner.set(w, remapped);
       }
       for (const p of raw.powers) {
+        if (overriddenIds.has(p.id)) continue;
         const w = siblingToWinner.get(p.id);
         if (!w) continue;
         const remapped = p.powersAptitudesInRules.map((l) => ({ ...l, powerId: w }));
