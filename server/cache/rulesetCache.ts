@@ -24,14 +24,11 @@ import {
 } from "@/server/repositories/index.ts";
 import {
   type CowData,
-  buildReqForest,
-  collectTopLevelStandaloneKeys,
-  dedupAgainstExisting,
+  mergeSiblingRequirements,
   getOrBuildCowData as getOrBuildCowDataFromCow,
   invalidateAllCowData,
   invalidateCowData,
   resolveOverrides,
-  serializeReqNode,
   type IdResolveMap,
 } from "@/server/services/rulesets/cow.ts";
 import type {
@@ -616,72 +613,10 @@ async function getOrFetchRulesetData(
     }
   }
 
-  // Merge each sibling's forest into the winner. Dedup is semantic — drop
-  // sibling-tree leaves that duplicate a top-level standalone on the winner
-  // (the AND already forces them; redundant in the new chain). Identical
-  // conditions across distinct chains are preserved (schema permits this).
   for (const [winnerId, bySibling] of siblingReqsByWinner) {
     const winnerReqs = winnerOwnReqs.get(winnerId) ?? [];
-    const winnerForest = buildReqForest(winnerReqs);
-    const standaloneKeys = collectTopLevelStandaloneKeys(winnerForest);
-    const usedLevels = new Set(winnerReqs.map((r) => r.level));
-    let maxTopInt = 0;
-    for (const r of winnerReqs) {
-      const m = /^(\d+)$/.exec(r.level);
-      if (m) maxTopInt = Math.max(maxTopInt, parseInt(m[1], 10));
-    }
-
-    for (const [, sibReqs] of bySibling) {
-      const sibForest = buildReqForest(sibReqs);
-      for (const tree of sibForest) {
-        const deduped = dedupAgainstExisting(tree, standaloneKeys);
-        if (!deduped) continue;
-
-        let level: string;
-        if (deduped.kind === "chain") {
-          maxTopInt++;
-          level = String(maxTopInt);
-        } else {
-          // Top-level standalone leaf — try to preserve the sibling's original
-          // level, suffix on collision.
-          const originalRow = sibReqs.find((r) =>
-            !r.chainingOperator && r.target === deduped.target
-            && r.operator === deduped.operator && r.value === deduped.value,
-          );
-          const originalLevel = originalRow?.level;
-          if (originalLevel) {
-            level = originalLevel;
-            let suffix = 2;
-            while (usedLevels.has(level)) level = `${originalLevel}-${suffix++}`;
-          } else {
-            maxTopInt++;
-            level = String(maxTopInt);
-          }
-        }
-
-        const serialized = serializeReqNode(deduped, level, winnerId, sibReqs[0].entityType);
-        for (const row of serialized) {
-          usedLevels.add(row.level);
-          requirements.push({
-            id: `synthetic-${winnerId}-${row.level}`,
-            entityId: row.entityId,
-            entityType: row.entityType,
-            level: row.level,
-            target: row.target ?? null,
-            operator: row.operator ?? null,
-            value: row.value ?? null,
-            valueType: row.valueType ?? null,
-            chainingOperator: row.chainingOperator ?? null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            deletedAt: null,
-          } as Requirement);
-        }
-        if (deduped.kind === "leaf") {
-          standaloneKeys.add(`${deduped.target}|${deduped.operator}|${deduped.value}`);
-        }
-      }
-    }
+    const entityType = bySibling.values().next().value![0].entityType;
+    requirements.push(...mergeSiblingRequirements(winnerReqs, bySibling.values(), winnerId, entityType));
   }
 
   // Leveled aptitude IDs: union across visible aptitudes.
