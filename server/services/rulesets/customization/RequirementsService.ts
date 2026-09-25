@@ -157,10 +157,9 @@ export const RequirementsMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = await Requirements.findOne(tx, { id: requirementId, entityId: effectiveEntityId, entityType });
-        if (
-          !requirement || requirement.entityId !== effectiveEntityId || requirement.entityType !== entityType
-        ) {
+        const requirement = rulesetData.requirementsByEntity.get(effectiveEntityId)
+          ?.find(row => row.id === requirementId && row.entityType === entityType);
+        if (!requirement) {
           throw new NotFoundError("Requirement not found for this entity");
         }
 
@@ -267,10 +266,9 @@ export const RequirementsMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = await Requirements.findOne(tx, { id: requirementId, entityId: effectiveEntityId, entityType });
-        if (
-          !requirement || requirement.entityId !== effectiveEntityId || requirement.entityType !== entityType
-        ) {
+        const requirement = rulesetData.requirementsByEntity.get(effectiveEntityId)
+          ?.find(row => row.id === requirementId && row.entityType === entityType);
+        if (!requirement) {
           throw new NotFoundError("Requirement not found for this entity");
         }
 

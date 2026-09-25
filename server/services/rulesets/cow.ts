@@ -49,6 +49,7 @@ import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { hashEntity, type EntityCustomizations, type EntityType, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
 import { getOrFetchRulesetData, type CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { Requirement } from "@/shared/relations.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Constants
@@ -510,16 +511,8 @@ async function copyEntityRelationships(
 
 const MAX_REQ_TREE_DEPTH = 5;
 
-type ReqRow = {
-  level: string;
-  chainingOperator?: string | null;
-  target?: string | null;
-  operator?: string | null;
-  value?: string | null;
-  valueType?: string | null;
-};
-
 type ReqLeafNode = {
+  source: Requirement;
   kind: "leaf";
   target: string;
   operator: string;
@@ -527,6 +520,7 @@ type ReqLeafNode = {
   valueType: string;
 };
 type ReqChainNode = {
+  source: Requirement;
   kind: "chain";
   op: string; // "or" | "and"
   children: ReqNode[];
@@ -543,11 +537,11 @@ function parentLevelOf(level: string): string | null {
  * Top-level entries (rows with no parent in the set) become forest roots.
  * Chain roots recurse into their direct children. Throws on depth overflow.
  */
-function buildReqForest(rows: ReqRow[]): ReqNode[] {
-  const byLevel = new Map<string, ReqRow>();
+function buildReqForest(rows: Requirement[]): ReqNode[] {
+  const byLevel = new Map<string, Requirement>();
   for (const r of rows) byLevel.set(r.level, r);
 
-  const directChildrenOf = (parent: string): ReqRow[] => {
+  const directChildrenOf = (parent: string): Requirement[] => {
     const prefix = `${parent}.`;
     return rows.filter((r) => {
       if (!r.level.startsWith(prefix)) return false;
@@ -556,7 +550,7 @@ function buildReqForest(rows: ReqRow[]): ReqNode[] {
     });
   };
 
-  function buildNode(row: ReqRow, depth: number): ReqNode {
+  function buildNode(row: Requirement, depth: number): ReqNode {
     if (depth >= MAX_REQ_TREE_DEPTH) {
       throw new Error(`Requirement tree exceeds max depth (${MAX_REQ_TREE_DEPTH})`);
     }
@@ -564,10 +558,11 @@ function buildReqForest(rows: ReqRow[]): ReqNode[] {
       const children = directChildrenOf(row.level)
         .sort((a, b) => a.level.localeCompare(b.level))
         .map((c) => buildNode(c, depth + 1));
-      return { kind: "chain", op: row.chainingOperator, children };
+      return { kind: "chain", source: row, op: row.chainingOperator, children };
     }
     return {
       kind: "leaf",
+      source: row,
       target: row.target!,
       operator: row.operator!,
       value: row.value!,
@@ -586,41 +581,21 @@ function buildReqForest(rows: ReqRow[]): ReqNode[] {
 }
 
 /**
- * Serialize a tree node into flat row inserts under a given level prefix.
+ * Flatten a tree under a given level prefix, preserving source row identity.
+ * The copying caller allocates new IDs and records the source-to-copy mapping.
  * Children are renumbered as level.1, level.2, ... regardless of their original
  * indices, so the result is collision-free as long as the caller picks a
  * non-overlapping `level`.
  */
-type ReqInsert = {
-  entityId: string;
-  entityType: string;
-  level: string;
-  target?: string;
-  operator?: string;
-  value?: string;
-  valueType?: string;
-  chainingOperator?: "or" | "and";
-};
-
 function serializeReqNode(
   node: ReqNode,
   level: string,
   entityId: string,
   entityType: string,
-): ReqInsert[] {
-  if (node.kind === "leaf") {
-    return [{
-      entityId, entityType, level,
-      target: node.target,
-      operator: node.operator,
-      value: node.value,
-      valueType: node.valueType,
-    }];
-  }
-  const out: ReqInsert[] = [{
-    entityId, entityType, level,
-    chainingOperator: node.op as "or" | "and",
-  }];
+): Requirement[] {
+  const row = { ...node.source, entityId, entityType, level };
+  if (node.kind === "leaf") return [row];
+  const out: Requirement[] = [row];
   for (let idx = 0; idx < node.children.length; idx++) {
     out.push(...serializeReqNode(node.children[idx], `${level}.${idx + 1}`, entityId, entityType));
   }
@@ -628,18 +603,8 @@ function serializeReqNode(
 }
 
 /**
- * Drop a node's leaves that duplicate any condition already represented
- * elsewhere on the entity (either as a top-level standalone or anywhere
- * inside another chain). Recurses through chain children. If a chain ends
- * up empty, the chain itself is dropped (returns null).
- *
- * Schema constraint: the requirements table has a unique key on
- * (entity_id, entity_type, target, operator, value). The same condition
- * can't appear twice on one entity even across chains, so the merge can't
- * fully preserve `(a OR b) AND (a OR c)` — the duplicated `a` is dropped
- * from the second chain. This is a known semantic gap of the storage
- * layer; the alternative (combining chains into one big OR) would be a
- * worse loss.
+ * Drop leaves already required as top-level standalone conditions. Preserve
+ * equal conditions in separate chains, as well as source identity through pruning.
  */
 function dedupAgainstExisting(
   node: ReqNode,
@@ -656,7 +621,7 @@ function dedupAgainstExisting(
     if (result) filteredChildren.push(result);
   }
   if (filteredChildren.length === 0) return null;
-  return { kind: "chain", op: node.op, children: filteredChildren };
+  return { ...node, children: filteredChildren };
 }
 
 function collectAllLeafKeys(forest: ReqNode[]): Set<string> {
@@ -680,6 +645,45 @@ function collectTopLevelStandaloneKeys(forest: ReqNode[]): Set<string> {
     }
   }
   return keys;
+}
+
+/** Merge sibling forests for both display and copying, retaining source row IDs. */
+function mergeSiblingRequirements(
+  targetRequirements: Requirement[],
+  siblingRequirements: Iterable<Requirement[]>,
+  entityId: string,
+  entityType: string,
+): Requirement[] {
+  const standaloneKeys = collectTopLevelStandaloneKeys(buildReqForest(targetRequirements));
+  const usedLevels = new Set(targetRequirements.map(r => r.level));
+  let maxTopInt = 0;
+  for (const r of targetRequirements) {
+    if (/^\d+$/.test(r.level)) maxTopInt = Math.max(maxTopInt, Number(r.level));
+  }
+  const merged: Requirement[] = [];
+  for (const requirements of siblingRequirements) {
+    for (const tree of buildReqForest(requirements)) {
+      const node = dedupAgainstExisting(tree, standaloneKeys);
+      if (!node) continue;
+      let level: string;
+      if (node.kind === "chain") {
+        do { level = String(++maxTopInt); } while (usedLevels.has(level));
+      } else {
+        const originalLevel = node.source.level;
+        level = originalLevel;
+        let suffix = 2;
+        while (usedLevels.has(level)) level = `${originalLevel}-${suffix++}`;
+      }
+      for (const row of serializeReqNode(node, level, entityId, entityType)) {
+        usedLevels.add(row.level);
+        merged.push(row);
+      }
+      if (node.kind === "leaf") {
+        standaloneKeys.add(`${node.target}|${node.operator}|${node.value}`);
+      }
+    }
+  }
+  return merged;
 }
 
 /**
@@ -710,95 +714,14 @@ async function mergeSiblingData(
   // top-level positions on the target. Top-level AND across all rows combines
   // them: `(target) AND (sibling_1) AND (sibling_2) AND ...`.
   const targetReqs = await Requirements.findManyByEntity(tx, { entityIds: [targetEntityId], entityType });
-  const targetForest = buildReqForest(targetReqs);
-  const usedLevels = new Set<string>(targetReqs.map((r) => r.level));
-  // Dedup is purely semantic now: drop any sibling-tree leaf that matches a
-  // top-level standalone already required on target (the AND already forces
-  // it; redundant within the new chain). Same condition can otherwise appear
-  // in multiple chains — `(barbarian OR x) AND (barbarian OR y)` is a real
-  // distinct constraint vs. the deduped `(barbarian OR x) AND y`.
-  const targetStandaloneKeys = collectTopLevelStandaloneKeys(targetForest);
-  let maxTopInt = 0;
-  for (const r of targetReqs) {
-    const m = /^(\d+)$/.exec(r.level);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n > maxTopInt) maxTopInt = n;
-    }
-  }
-
-  const newReqs: Array<{
-    entityId: string;
-    entityType: string;
-    level: string;
-    target?: string;
-    operator?: string;
-    value?: string;
-    valueType?: string;
-    chainingOperator?: "or" | "and";
-  }> = [];
-
-  for (const [, sibCust] of siblingCusts) {
-    const sibForest = buildReqForest(sibCust.requirements);
-
-    for (const tree of sibForest) {
-      // Drop leaves matching a top-level standalone already required on target
-      // (semantically redundant within the new chain). Empty trees are skipped.
-      const deduped = dedupAgainstExisting(tree, targetStandaloneKeys);
-      if (!deduped) continue;
-
-      // Allocate a fresh top-level position for this sibling tree:
-      //   - Chain roots and leaves with integer-only original level → next int
-      //   - Leaves with arbitrary string levels (e.g. "standard") → keep the
-      //     original level when available, suffix on collision
-      let level: string;
-      if (deduped.kind === "chain") {
-        maxTopInt++;
-        level = String(maxTopInt);
-      } else {
-        // Original level for the sibling's leaf — try to preserve it.
-        // Since this came from sibling.reqs, look up the sibling's row that
-        // produced this leaf to retrieve its level. We don't carry it through
-        // ReqNode by default, so fall back to picking the next available int
-        // when we can't (this only matters for the rarely-used arbitrary
-        // string levels; for integer levels we'd just renumber anyway).
-        const sibStandalones = sibCust.requirements.filter((r) => {
-          if (r.chainingOperator || !r.target) return false;
-          // Top-level rows only (no parent in sibling's set)
-          const p = parentLevelOf(r.level);
-          if (p !== null) {
-            const has = sibCust.requirements.some((rr) => rr.level === p);
-            if (has) return false;
-          }
-          return r.target === deduped.target
-            && r.operator === deduped.operator
-            && r.value === deduped.value
-            && r.valueType === deduped.valueType;
-        });
-        const originalLevel = sibStandalones[0]?.level;
-        if (originalLevel) {
-          level = originalLevel;
-          let suffix = 2;
-          while (usedLevels.has(level)) level = `${originalLevel}-${suffix++}`;
-        } else {
-          maxTopInt++;
-          level = String(maxTopInt);
-        }
-      }
-
-      const serialized = serializeReqNode(deduped, level, targetEntityId, entityType);
-      for (const row of serialized) {
-        usedLevels.add(row.level);
-        newReqs.push(row);
-      }
-      if (deduped.kind === "leaf") {
-        targetStandaloneKeys.add(`${deduped.target}|${deduped.operator}|${deduped.value}`);
-      }
-    }
-  }
-
+  const newReqs = mergeSiblingRequirements(
+    targetReqs, [...siblingCusts.values()].map(cust => cust.requirements), targetEntityId, entityType,
+  );
   if (newReqs.length > 0) {
-    await Requirements.createMany(tx, newReqs);
+    const copies = await Requirements.createMany(tx, newReqs.map(row => ({ ...row, id: undefined })));
+    for (let i = 0; i < newReqs.length; i++) {
+      customizationIds?.set(newReqs[i].id, copies[i].id);
+    }
   }
 
   // 2. Merge sibling modifiers (deduplicate by target+value+operator+valueType)
@@ -1466,8 +1389,10 @@ async function findPropertyForCustomization(
       && rulesetData.propertiesByEntity.get(entityId)?.some(p => p.id === propertyId);
     if (property.entityId === entityId || visibleSibling) return { property, fromTemplate: false };
     if (entityType === "items") {
-      const item = await Items.findOne(tx, { id: entityId });
-      if (item?.sourceItemId === property.entityId) return { property, fromTemplate: true };
+      const item = rulesetData.itemsById.get(entityId);
+      const visibleTemplateProperty = item?.sourceItemId
+        && rulesetData.propertiesByEntity.get(item.sourceItemId)?.some(p => p.id === propertyId && p.entityType === entityType);
+      if (visibleTemplateProperty) return { property, fromTemplate: true };
     }
   }
   throw new NotFoundError("Property not found for this entity");
@@ -1870,6 +1795,7 @@ export {
   // rulesetCache.ts (read-time compose).
   buildReqForest,
   serializeReqNode,
+  mergeSiblingRequirements,
   dedupAgainstExisting,
   collectAllLeafKeys,
   collectTopLevelStandaloneKeys,
