@@ -1488,7 +1488,7 @@ describe("CharactersService", () => {
       //   - rulesetData.abilitiesById on childRuleset exposes the COW'd id
       //     (but auto-resolves pre-COW key, so the client sees the post-COW id).
       const strengthBaseId = ctx.abilityMap["Strength"];
-      const cow = await cowEntity(db, "abilities", strengthBaseId, childRuleset.id);
+      const cow = await cowEntity(db, "abilities", strengthBaseId, childRuleset.id, [], []);
       const strengthPostCowId = (cow as { id: string }).id;
       expect(strengthPostCowId).not.toBe(strengthBaseId);
 

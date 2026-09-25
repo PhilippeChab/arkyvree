@@ -1350,8 +1350,8 @@ async function cowEntity(
   entityType: EntityType,
   entityId: string,
   childRulesetId: string,
-  ancestorRulesetIds?: string[],
-  extensionRulesetIds?: string[],
+  ancestorRulesetIds: string[],
+  extensionRulesetIds: string[],
   customizationIds?: Map<string, string>,
 ): Promise<EntityWithId> {
   const repo = ENTITY_REPOS[entityType];
@@ -1403,7 +1403,7 @@ async function cowEntity(
   // idResolveMap (true overrides + sibling-loser aliases) is what we want for
   // FK remapping — a child copy's references should always point at the
   // canonical winner, never at a stale loser.
-  const { siblingMap, idResolveMap } = await buildOverrideMap(tx, childRulesetId, ancestorRulesetIds ?? [], extensionRulesetIds);
+  const { siblingMap, idResolveMap } = await buildOverrideMap(tx, childRulesetId, ancestorRulesetIds, extensionRulesetIds);
   const idMap: Record<string, string> = {};
   for (const [sourceId, forkedId] of idResolveMap) {
     idMap[sourceId] = forkedId;

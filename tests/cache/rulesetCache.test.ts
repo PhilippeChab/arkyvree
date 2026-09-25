@@ -600,8 +600,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await cowEntity(db, "feats", baseFeat.id, extA.id, [seed.id]);
-      const cowB = await cowEntity(db, "feats", baseFeat.id, extB.id, [seed.id]);
+      const cowA = await cowEntity(db, "feats", baseFeat.id, extA.id, [seed.id], []);
+      const cowB = await cowEntity(db, "feats", baseFeat.id, extB.id, [seed.id], []);
 
       // Child fork subscribed to both extensions.
       const [child] = await Rulesets.create(db, {
@@ -668,8 +668,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await cowEntity(db, "items", baseItem.id, extA.id, [seed.id]);
-      const cowB = await cowEntity(db, "items", baseItem.id, extB.id, [seed.id]);
+      const cowA = await cowEntity(db, "items", baseItem.id, extA.id, [seed.id], []);
+      const cowB = await cowEntity(db, "items", baseItem.id, extB.id, [seed.id], []);
 
       const [child] = await Rulesets.create(db, {
         name: `Sibling Item Child ${Math.random().toString(36).slice(2, 7)}`,

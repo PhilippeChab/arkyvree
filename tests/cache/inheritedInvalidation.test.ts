@@ -19,7 +19,7 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   const source = (await Feats.findOne(db, { rulesetId: extension.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
   const before = await getOrBuildCowData(updatedHost);
   await getOrFetchRulesetData(host.id, before);
-  const copy = await cowEntity(db, "feats", source.id, extension.id, extension.ancestorRulesetIds);
+  const copy = await cowEntity(db, "feats", source.id, extension.id, extension.ancestorRulesetIds, []);
   await Feats.update(db, { description: "Updated extension feat" }, { id: copy.id });
   invalidateRuleset(extension.id);
   const after = await getOrBuildCowData(updatedHost);
@@ -55,7 +55,7 @@ test("a nested base scope clears the fork mapping and restores it afterward", as
   const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
   const fork = await createSeededTestRuleset(session.userId);
   const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-  const copy = await cowEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds);
+  const copy = await cowEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds, []);
   invalidateAll();
   await withRulesetScope(db, fork.id, async () => {
     expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(copy.id);

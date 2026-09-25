@@ -130,7 +130,7 @@ export const RacesMethods = {
         let targetId = race.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         }
 
@@ -173,7 +173,7 @@ export const RacesMethods = {
 
         let targetId = race.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain);
+          const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "races", targetId);
