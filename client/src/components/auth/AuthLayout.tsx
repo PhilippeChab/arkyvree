@@ -5,7 +5,7 @@ import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 // ── Branding panels (rendered once by the layout route) ──
 
@@ -202,20 +202,26 @@ function MobileBranding() {
 
 function AuthFooterLinks() {
   const { start, isPending } = useStartDemo();
+  // The demo is for newcomers, so only sign-up offers it.
+  const showDemo = useLocation().pathname === "/sign-up";
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: { xs: 1, sm: 2 }, rowGap: 0.5, mt: 2, alignItems: "center", justifyContent: "center", width: "100%", maxWidth: 450 }}>
-      <MuiLink
-        component="button"
-        type="button"
-        onClick={() => start()}
-        disabled={isPending}
-        variant="body2"
-        underline="hover"
-        sx={{ color: "text.secondary", background: "none", border: 0, cursor: "pointer", p: 0 }}
-      >
-        {isPending ? "Starting…" : "Try the demo"}
-      </MuiLink>
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>|</Typography>
+      {showDemo && (
+        <>
+          <MuiLink
+            component="button"
+            type="button"
+            onClick={() => start()}
+            disabled={isPending}
+            variant="body2"
+            underline="hover"
+            sx={{ color: "text.secondary", background: "none", border: 0, cursor: "pointer", p: 0 }}
+          >
+            {isPending ? "Starting…" : "Try the demo"}
+          </MuiLink>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>|</Typography>
+        </>
+      )}
       <MuiLink
         href={externalLinks.source}
         target="_blank"
@@ -239,7 +245,7 @@ export function AuthLayoutRoute() {
   const signOut = useAuthStore((s) => s.signOut);
   const clearSession = useAuthStore((s) => s.clearSession);
   // Only kill the demo if we were already one at mount — a freshly-created
-  // demo on /sign-in must survive the route change.
+  // demo on /sign-up must survive the route change.
   const [isClearingDemo, setIsClearingDemo] = useState(isDemo);
   const demoSignOutStarted = useRef(false);
 
