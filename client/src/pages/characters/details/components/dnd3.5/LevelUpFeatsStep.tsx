@@ -6,7 +6,7 @@ import {
 } from "./levelUp/useLevelWizard.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import {
@@ -366,7 +366,7 @@ function FeatFamilyExpansion({
   const query = useInfiniteQuery({
     queryKey: queryKeys.characters.levelUp.availableFeatFamily(characterId, aptitudeId, family, klassId, editingLevelId, allSelectedFeatPickString, pendingLevelKlassLevelIds),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.characters.levels[":characterId"]["available-feats"]["$get"]({
+      return parseResponse(rpc.api.characters.levels[":characterId"]["available-feats"]["$get"]({
         param: { characterId },
         query: {
           aptitudeId,
@@ -380,9 +380,7 @@ function FeatFamilyExpansion({
           ...(pendingLevelKlassLevelIds && { pendingLevelKlassLevelIds }),
           ...(pendingLevelFeatPicks && { pendingLevelFeatPicks }),
         },
-      });
-      if (!response.ok) throw response;
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,

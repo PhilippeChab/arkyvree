@@ -1,6 +1,5 @@
 import { BlankState } from "@/client/src/components/common/index.ts";
 import {
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -9,6 +8,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { SheetSection } from "./SheetSection.tsx";
 
 interface WeaponSlot {
   name: string;
@@ -50,10 +50,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
   );
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography sx={{ fontWeight: 600, color: "primary.main", mb: 3, typography: { xs: "h6", sm: "h5" } }}>
-        Weapons
-      </Typography>
+    <SheetSection title="Weapons">
       {hasWeapons
         ? setEntries.map(([setIndex, set]) => {
             const weapons: { weapon: WeaponSlot; slot: string }[] = [];
@@ -80,7 +77,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                     <col style={{ width: "18%" }} />
                   </colgroup>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "grey.100" }}>
+                    <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>Weapon</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 600 }}>Attack Bonus</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 600 }}>Damage</TableCell>
@@ -140,6 +137,6 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
             );
           })
         : <BlankState title="No weapons equipped" />}
-    </Paper>
+    </SheetSection>
   );
 }

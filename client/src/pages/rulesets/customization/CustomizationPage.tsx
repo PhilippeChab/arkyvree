@@ -5,7 +5,7 @@ import {
 import { FaqHelpIcon, DeleteDialog, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { usePermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
   ItemFormFields,
@@ -22,8 +22,7 @@ import {
   RaceFormFields,
   type RaceFormData,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { Modifier, Property } from "@/shared/relations.ts";
 import {
   ArrowBack,
@@ -58,8 +57,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
 import type { BaseEntityType, EntityType } from "./types.ts";
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type Save = SavesPaginated["items"][number];
 
 type ItemResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$get"], 200>;
@@ -180,9 +178,7 @@ export default function CustomizationPage() {
     queryKey: queryKeys.rulesets.detail(id!),
     queryFn: async () => {
       if (!id) throw new Error("No ruleset ID provided");
-      const response = await rpc.api.rulesets[":id"].$get({ param: { id } });
-      if (!response.ok) throw new Error("Failed to fetch ruleset");
-      return response.json();
+      return parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } }));
     },
   });
 
@@ -203,8 +199,7 @@ export default function CustomizationPage() {
             .modifiers[":modifierId"].$get({
               param: { id, entityType, entityId, modifierId: entityId },
             });
-          if (!response.ok) throw new Error("Failed to fetch modifier");
-          const modifier = await response.json();
+          const modifier = await parseResponse(response);
           return {
             ...modifier,
             name: `${modifier.target} ${modifier.operator} ${modifier.value}`,
@@ -214,44 +209,38 @@ export default function CustomizationPage() {
           response = await rpc.api.rulesets[":id"].feats[":featId"].$get({
             param: { id, featId: entityId },
           });
-          if (!response.ok) throw new Error("Failed to fetch feat");
-          return await response.json();
+          return parseResponse(response);
         }
         case "items": {
           response = await rpc.api.rulesets[":id"].items[":itemId"].$get({
             param: { id, itemId: entityId },
           });
-          if (!response.ok) throw new Error("Failed to fetch item");
-          return await response.json();
+          return parseResponse(response);
         }
         case "powers": {
           response = await rpc.api.rulesets[":id"].powers[":powerId"].$get({
             param: { id, powerId: entityId },
           });
-          if (!response.ok) throw new Error("Failed to fetch power");
-          return await response.json();
+          return parseResponse(response);
         }
         case "klass_levels": {
           response = await rpc.api.rulesets[":id"].class_levels[":classLevelId"]
             .$get({
               param: { id, classLevelId: entityId },
             });
-          if (!response.ok) throw new Error("Failed to fetch class level");
-          return await response.json();
+          return parseResponse(response);
         }
         case "races": {
           response = await rpc.api.rulesets[":id"].races[":raceId"].$get({
             param: { id, raceId: entityId },
           });
-          if (!response.ok) throw new Error("Failed to fetch race");
-          return await response.json();
+          return parseResponse(response);
         }
         case "klasses": {
           response = await rpc.api.rulesets[":id"].classes[":classId"].$get({
             param: { id, classId: entityId },
           });
-          if (!response.ok) throw new Error("Failed to fetch class");
-          return await response.json();
+          return parseResponse(response);
         }
         default:
           throw new Error("Invalid entity type");
@@ -261,7 +250,6 @@ export default function CustomizationPage() {
   });
 
   const snackbar = useSnackbar();
-  const currentUserId = useAuthStore((s) => s.user?.id);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -324,12 +312,10 @@ export default function CustomizationPage() {
   const { data: savesData } = useQuery({
     queryKey: queryKeys.rulesets.section(id!, "saves"),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].saves.$get({
+      return parseResponse(rpc.api.rulesets[":id"].saves.$get({
         param: { id: id! },
         query: { limit: "100" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch saves");
-      return response.json();
+      }));
     },
     enabled: !!id && (entityType === "powers" || entityType === "klass_levels"),
   });
@@ -339,12 +325,10 @@ export default function CustomizationPage() {
   const { data: featsData } = useQuery({
     queryKey: queryKeys.rulesets.section(id!, "feats"),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].feats.$get({
+      return parseResponse(rpc.api.rulesets[":id"].feats.$get({
         param: { id: id! },
         query: { limit: "100", page: "1" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch feats");
-      return response.json();
+      }));
     },
     enabled: !!id && entityType === "klass_levels",
   });
@@ -485,10 +469,8 @@ export default function CustomizationPage() {
     }
   }, [entityData, entityType, classLevelForm, featOptions, shouldPopulate]);
 
-  const { canEdit, canDelete } = usePermissions(
-    ruleset ?? { userId: null, status: undefined },
-    currentUserId,
-  );
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
+  const canDelete = canEdit;
 
   const showDeleteAction = entityType ? isEditable(entityType) && canDelete : false;
 
@@ -508,16 +490,14 @@ export default function CustomizationPage() {
   // Feat update mutation
   const updateFeatMutation = useMutation({
     mutationFn: async (data: FeatFormData) => {
-      const response = await rpc.api.rulesets[":id"].feats[":featId"].$put({
+      return parseResponse(rpc.api.rulesets[":id"].feats[":featId"].$put({
         param: { id: id!, featId: entityId! },
         json: {
           ...data,
           aptitudeIds: selectedFeatAptitudes.map((a) => a.id),
           updatedAt: (entityData as { updatedAt?: string } | undefined)?.updatedAt,
         },
-      });
-      if (!response.ok) throw new Error("Failed to update feat");
-      return response.json();
+      }));
     },
     onMutate: () => ({ aptitudes: aptitudesSnapshot(selectedFeatAptitudes) }),
     onSuccess: (data, submitted, snapshot) => {
@@ -531,12 +511,10 @@ export default function CustomizationPage() {
   // Race update mutation
   const updateRaceMutation = useMutation({
     mutationFn: async (data: RaceFormData) => {
-      const response = await rpc.api.rulesets[":id"].races[":raceId"].$put({
+      return parseResponse(rpc.api.rulesets[":id"].races[":raceId"].$put({
         param: { id: id!, raceId: entityId! },
         json: { ...data, updatedAt: (entityData as { updatedAt?: string } | undefined)?.updatedAt },
-      });
-      if (!response.ok) throw new Error("Failed to update race");
-      return response.json();
+      }));
     },
     onSuccess: (data, submitted) => {
       raceForm.reset(submitted, { keepValues: true });
@@ -549,12 +527,10 @@ export default function CustomizationPage() {
   const updateItemMutation = useMutation({
     mutationFn: async (data: ItemFormInternal) => {
       const loadedUpdatedAt = (entityData as { updatedAt?: string } | undefined)?.updatedAt;
-      const response = await rpc.api.rulesets[":id"].items[":itemId"].$put({
+      return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$put({
         param: { id: id!, itemId: entityId! },
         json: { ...toItemPayload(data), updatedAt: loadedUpdatedAt },
-      });
-      if (!response.ok) throw new Error("Failed to update item");
-      return response.json();
+      }));
     },
     onSuccess: (data, submitted) => {
       itemForm.reset(submitted, { keepValues: true });
@@ -567,16 +543,14 @@ export default function CustomizationPage() {
   const updateSpellMutation = useMutation({
     mutationFn: async (data: SpellFormData & { aptitudes: { id: string; level?: number }[] }) => {
       const { aptitudes, ...rest } = data;
-      const response = await rpc.api.rulesets[":id"].powers[":powerId"].$put({
+      return parseResponse(rpc.api.rulesets[":id"].powers[":powerId"].$put({
         param: { id: id!, powerId: entityId! },
         json: {
           ...rest,
           aptitudes,
           updatedAt: (entityData as { updatedAt?: string } | undefined)?.updatedAt,
         },
-      });
-      if (!response.ok) throw new Error("Failed to update spell");
-      return response.json();
+      }));
     },
     onMutate: () => ({
       aptitudes: aptitudesSnapshot(selectedSpellAptitudes),
@@ -595,7 +569,7 @@ export default function CustomizationPage() {
   const updateClassLevelMutation = useMutation({
     mutationFn: async () => {
       const klassId = (entityData as unknown as { klassId: string }).klassId;
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
         param: { id: id!, classId: klassId, levelId: entityId! },
         json: {
           saves: saves.map((save) => ({
@@ -604,9 +578,7 @@ export default function CustomizationPage() {
           })),
           feats: selectedLevelFeats.map((f) => ({ featId: f.featId, aptitudeId: f.aptitudeId, free: true })),
         },
-      });
-      if (!response.ok) throw new Error("Failed to update class level");
-      return response.json();
+      }));
     },
     onMutate: () => ({
       feats: levelFeatsSnapshot(selectedLevelFeats),
@@ -656,8 +628,7 @@ export default function CustomizationPage() {
         default:
           throw new Error("Invalid entity type for delete");
       }
-      if (!response.ok) throw new Error("Failed to delete");
-      return response.json();
+      return parseResponse(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });

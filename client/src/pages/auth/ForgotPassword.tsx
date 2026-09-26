@@ -1,5 +1,7 @@
-import { AuthPage } from "@/client/src/components/auth";
+import { AuthPage } from "@/client/src/components/auth/index.ts";
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
@@ -21,7 +23,8 @@ type ForgotPasswordFormData = InferRequestType<
 
 export default function ForgotPassword() {
   usePageTitle("Forgot Password");
-  const { forgotPassword, isLoading } = useAuthStore();
+  const forgotPassword = useAuthStore((s) => s.forgotPassword);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -57,13 +60,7 @@ export default function ForgotPassword() {
       )}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <TextField
-          {...register("emailAddress", {
-            required: "Email is required",
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: "Please enter a valid email address",
-            },
-          })}
+          {...register("emailAddress", emailRules)}
           label="Email"
           variant="outlined"
           fullWidth
@@ -84,7 +81,7 @@ export default function ForgotPassword() {
           sx={{ mt: 3, mb: 2 }}
           disabled={isLoading}
         >
-          {isLoading ? "Sending..." : "Send Reset Code"}
+          <DiceSpinner size="small" loading={isLoading}>Send Reset Code</DiceSpinner>
         </Button>
       </form>
       <Box sx={{ mt: 2, textAlign: "center" }}>

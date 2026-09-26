@@ -1,19 +1,16 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { SearchBar, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
 import { Bolt as SpellListIcon } from "@mui/icons-material";
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { classSpellListQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type SpellListResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"]
->;
-type SpellListPaginated = Exclude<SpellListResponse, { error: string }>;
+type SpellListPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"], 200>;
 type Spell = SpellListPaginated["items"][number];
 
 const COLUMNS = [
@@ -40,22 +37,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpel
   const debouncedSearch = useDebouncedValue(search);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, selectedLevel, debouncedSearch),
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
-        param: { id: rulesetId, classId },
-        query: {
-          page: pageParam.toString(),
-          limit: "20",
-          level: selectedLevel.toString(),
-          ...(debouncedSearch && { search: debouncedSearch }),
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch spells");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...classSpellListQuery(rulesetId, classId, selectedLevel, debouncedSearch),
     placeholderData: keepPreviousData,
   });
 
@@ -112,22 +94,16 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpel
         columns={COLUMNS}
         onRowClick={handleRowClick}
         renderCell={renderCell}
-        emptyIcon={<SpellListIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SpellListIcon}
         emptyTitle="No spells"
         emptyDescription="No spells found for this class at the selected level."
       />
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
     </Box>
   );
 }

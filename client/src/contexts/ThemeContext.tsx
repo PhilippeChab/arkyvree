@@ -2,7 +2,7 @@ import { Grow } from "@mui/material";
 import { createTheme, responsiveFontSizes, type Theme, ThemeProvider } from "@mui/material/styles";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)";
+import { prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -155,6 +155,15 @@ const createAppTheme = (darkMode: boolean): Theme => {
     },
     shape: {
       borderRadius: 8,
+    },
+    // MUI's default drops to 48px on landscape phones, but the account button
+    // keeps the app bar at 56px there; one height per breakpoint keeps the
+    // bars, the drawer spacer and the page offset (AppMain) in step.
+    mixins: {
+      toolbar: {
+        minHeight: 56,
+        "@media (min-width:600px)": { minHeight: 64 },
+      },
     },
     spacing: 8,
     components: {
@@ -335,6 +344,19 @@ const createAppTheme = (darkMode: boolean): Theme => {
             padding: "8px 12px",
             maxWidth: 320,
           },
+        },
+      },
+      MuiDialogTitle: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            fontWeight: 600,
+            [theme.breakpoints.up("sm")]: { fontSize: "1.25rem" },
+          }),
+        },
+      },
+      MuiDialogActions: {
+        styleOverrides: {
+          root: { padding: "16px 24px" },
         },
       },
       MuiDialog: {

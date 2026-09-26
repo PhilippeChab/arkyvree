@@ -1,5 +1,5 @@
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { MenuItem, TextField } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
@@ -14,12 +14,10 @@ function TemplateSelector({ form, rulesetId, type }: { form: UseFormReturn<ItemF
   const { data: templates, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, `templates-${type}`),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].templates.$get({
+      return parseResponse(rpc.api.rulesets[":id"].templates.$get({
         param: { id: rulesetId },
         query: { type: type as "Weapon" | "Armor" | "Shield" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch templates");
-      return response.json();
+      }));
     },
   });
 

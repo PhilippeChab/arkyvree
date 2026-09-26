@@ -1,9 +1,9 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, Gavel as MechanicsIcon } from "@mui/icons-material";
 import {
   Box,
@@ -20,14 +20,14 @@ import type { InferRequestType, InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { mechanicsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const MECHANICS_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
   { key: "description", label: "Description", width: "70%" },
 ];
 
-type MechanicsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"]>;
-type MechanicsPaginated = Exclude<MechanicsResponse, { error: string }>;
+type MechanicsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>;
 type Mechanic = MechanicsPaginated["items"][number];
 
 type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$post"]>["json"];
@@ -53,7 +53,6 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    currentUserId,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -64,39 +63,22 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
     sectionName: "mechanics",
     label: "Mechanic",
     createFn: async (data) => {
-      const response = await rpc.api.rulesets[":id"].mechanics.$post({
+      return parseResponse(rpc.api.rulesets[":id"].mechanics.$post({
         param: { id: ruleset.id },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to create mechanic");
-      return response.json();
+      }));
     },
-    onCreateSuccess: (data) => navigate(`/rulesets/${ruleset.id}/mechanics/${(data as { id: string }).id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/mechanics/${created.id}`, { state: { from: location.pathname + location.search } }),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(ruleset.id, "mechanics"), searchQuery, childOnly],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].mechanics.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch mechanics");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...mechanicsQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
 
   const mechanics = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (mechanic: Mechanic) => {
     navigate(`/rulesets/${ruleset.id}/mechanics/${mechanic.id}`, { state: { from: location.pathname + location.search } });
@@ -106,11 +88,9 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.entity(ruleset.id, "mechanics", mechanic.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].mechanics[":mechanicId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].mechanics[":mechanicId"].$get({
           param: { id: ruleset.id, mechanicId: mechanic.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch mechanic");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, ruleset.id]);
@@ -170,22 +150,16 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<MechanicsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={MechanicsIcon}
         emptyTitle="No mechanics"
         emptyDescription="No mechanics documented for this ruleset."
       />
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
 
       <CreateDialog
         open={createDialogOpen}

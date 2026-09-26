@@ -19,7 +19,7 @@ type OwnerCharacterData = InferResponseType<RPC["api"]["characters"][":id"]["$ge
 type CampaignCharacterData = InferResponseType<RPC["api"]["campaigns"][":id"]["characters"][":characterId"]["$get"], 200>;
 type SharedCharacterData = InferResponseType<RPC["api"]["shared"]["characters"][":shareToken"]["$get"], 200>;
 
-export type CharacterData = OwnerCharacterData | Exclude<CampaignCharacterData, { error: string }> | Exclude<SharedCharacterData, { error: string }>;
+export type CharacterData = OwnerCharacterData | CampaignCharacterData | SharedCharacterData;
 
 type CharacterSheetBodyProps = {
   character: CharacterData;

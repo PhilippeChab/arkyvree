@@ -1,4 +1,4 @@
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { PathCompletion, PathValidationResult } from "@/shared/customization/target.ts";
 import {
   Box,
@@ -62,15 +62,10 @@ export function TargetPathInput({
         return;
       }
       try {
-        const response = await rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
+        setValidationResult(await parseResponse(rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
           param: { id: rulesetId },
           json: { path, kind },
-        });
-        if (response.ok) {
-          setValidationResult(await response.json() as PathValidationResult);
-        } else {
-          setValidationResult(null);
-        }
+        })) as PathValidationResult);
       } catch {
         setValidationResult(null);
       }

@@ -29,8 +29,7 @@ export type SpellFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["powers"]["$post"]
 >["json"];
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type Save = SavesPaginated["items"][number];
 export type AptitudeMetadata = Map<string, { level?: number }>;
 

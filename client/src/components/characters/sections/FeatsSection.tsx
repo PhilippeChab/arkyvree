@@ -5,12 +5,12 @@ import {
   Collapse,
   IconButton,
   Link as MuiLink,
-  Paper,
   Stack,
   Typography,
 } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { SheetSection } from "./SheetSection.tsx";
 
 type FeatLike = {
   id?: string;
@@ -90,10 +90,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
   const hasVirtual = (virtualFeats || []).length > 0;
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography sx={{ fontWeight: 600, color: "primary.main", mb: 3, typography: { xs: "h6", sm: "h5" } }}>
-        Feats & Special Abilities
-      </Typography>
+    <SheetSection title="Feats & Special Abilities">
       {featElements.length > 0 || hasVirtual
         ? (
           <Stack spacing={3}>
@@ -104,7 +101,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
         : (
           <BlankState title="No feats or special abilities available" />
         )}
-    </Paper>
+    </SheetSection>
   );
 }
 

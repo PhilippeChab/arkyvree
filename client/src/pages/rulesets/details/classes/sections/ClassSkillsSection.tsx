@@ -2,17 +2,13 @@ import { BlankState } from "@/client/src/components/common/index.ts";
 import {
   RemoveSkillDialog,
 } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import { useClassSkills, usePermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { Autocomplete, Box, Chip, Paper, Skeleton, TextField, Typography } from "@mui/material";
 import type { InferResponseType } from "hono/client";
 
-type ClassSkillsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"]
->;
-type ClassSkillsArray = Exclude<ClassSkillsResponse, { error: string }>;
+type ClassSkillsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"], 200>;
 type ClassSkill = ClassSkillsArray[number];
 
 interface ClassSkillsSectionProps {
@@ -27,8 +23,7 @@ interface ClassSkillsSectionProps {
 }
 
 export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSkillsSectionProps) {
-  const currentUserId = useAuthStore((state) => state.user?.id);
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const {
     classSkills,

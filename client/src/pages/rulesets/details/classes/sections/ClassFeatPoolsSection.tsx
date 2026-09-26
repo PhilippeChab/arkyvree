@@ -1,16 +1,13 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
 import { EmojiEvents as FeatPoolsIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useMemo } from "react";
+import { classFeatPoolsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type FeatPoolsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["feat-pools"]["$get"]
->;
-type FeatPoolsArray = Exclude<FeatPoolsResponse, { error: string }>;
+type FeatPoolsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["feat-pools"]["$get"], 200>;
 type FeatPoolLevel = FeatPoolsArray[number];
 
 interface ClassFeatPoolsSectionProps {
@@ -25,16 +22,7 @@ interface ClassFeatPoolsSectionProps {
 }
 
 export function ClassFeatPoolsSection({ rulesetId, classId }: ClassFeatPoolsSectionProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get({
-        param: { id: rulesetId, classId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch feat pools");
-      return response.json();
-    },
-  });
+  const { data, isLoading } = useQuery(classFeatPoolsQuery(rulesetId, classId));
 
   // Derive aptitude name columns from the union of all feat pool keys in the data
   const poolNames = useMemo(() => {
@@ -103,7 +91,7 @@ export function ClassFeatPoolsSection({ rulesetId, classId }: ClassFeatPoolsSect
         isLoading={isLoading}
         columns={columns}
         renderCell={renderCell}
-        emptyIcon={<FeatPoolsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={FeatPoolsIcon}
         emptyTitle="No feat pools"
         emptyDescription="This class doesn't have any feat pool data."
       />

@@ -1,4 +1,4 @@
-import { BlankState, ConfirmDialog, SearchBar, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import {
   AddPlayerDialog,
   type AddPlayerFormData,
@@ -9,7 +9,7 @@ import {
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Add as AddIcon,
@@ -49,9 +49,9 @@ import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
-type PlayersResponse = InferResponseType<(typeof rpc.api.campaigns)[":id"]["players"]["$get"]>;
-type PlayersPaginated = Exclude<PlayersResponse, { error: string }>;
+type PlayersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["players"]["$get"], 200>;
 type Player = PlayersPaginated["items"][number];
 
 interface PlayersSectionProps {
@@ -139,7 +139,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   // Get permissions for this campaign
   const { canManagePlayers, canManageInvites } = useCampaignPermissions(campaign);
-  const { user } = useAuthStore();
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
   const addForm = useForm<AddPlayerFormData>({
     defaultValues: {
@@ -162,37 +162,19 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: [...queryKeys.campaigns.section(campaign.id, "players"), debouncedSearchQuery],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.campaigns[":id"].players.$get({
-        param: { id: campaign.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: debouncedSearchQuery || undefined,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch players");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    placeholderData: keepPreviousData,
-  });
+  } = useInfiniteQuery({ ...campaignPlayersQuery(campaign.id, debouncedSearchQuery), placeholderData: keepPreviousData });
 
   const players = data?.pages.flatMap((page) => page.items) ?? [];
 
   const addMutation = useMutation({
     mutationFn: async (data: AddPlayerFormData) => {
-      const response = await rpc.api.campaigns[":id"].players.$post({
+      return parseResponse(rpc.api.campaigns[":id"].players.$post({
         param: { id: campaign.id },
         json: {
           role: data.role,
           email: data.email,
         },
-      });
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Player added successfully");
@@ -209,14 +191,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const editMutation = useMutation({
     mutationFn: async ({ playerId, data }: { playerId: string; data: EditPlayerFormData }) => {
-      const response = await rpc.api.campaigns[":id"].players[":playerId"].$put({
+      return parseResponse(rpc.api.campaigns[":id"].players[":playerId"].$put({
         param: { id: campaign.id, playerId },
         json: {
           role: data.role,
           email: data.email,
         },
-      });
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Player updated successfully");
@@ -233,13 +214,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const removeMutation = useMutation({
     mutationFn: async (playerId: string) => {
-      const response = await rpc.api.campaigns[":id"].players[":playerId"].$delete({
+      return parseResponse(rpc.api.campaigns[":id"].players[":playerId"].$delete({
         param: { id: campaign.id, playerId },
-      });
-      return response.json();
+      }));
     },
     onSuccess: () => {
-      const removedSelf = selectedPlayer?.userId === user?.id;
+      const removedSelf = selectedPlayer?.userId === currentUserId;
       snackbar.success(removedSelf ? "You left the campaign" : "Player removed successfully");
       if (removedSelf) {
         navigate("/campaigns", { replace: true });
@@ -260,10 +240,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const revokeInviteMutation = useMutation({
     mutationFn: async (inviteId: string) => {
-      const response = await rpc.api.campaigns.invites[":inviteId"].revoke.$post({
+      return parseResponse(rpc.api.campaigns.invites[":inviteId"].revoke.$post({
         param: { inviteId },
-      });
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Invitation revoked successfully");
@@ -387,7 +366,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                       const playerState = getPlayerState(player);
                       const displayInfo = getPlayerDisplayInfo(player);
                       const isGameMaster = player.role === "Game Master";
-                      const isCurrentUser = player.userId === user?.id;
+                      const isCurrentUser = player.userId === currentUserId;
                       const canRevokeInvite = playerState === "pending" && canManageInvites && !campaign.deletedAt;
                       const canEditPlayer =
                         (!campaign.deletedAt && (canManagePlayers && (!isGameMaster || playerState !== "assigned") || isCurrentUser))
@@ -532,22 +511,16 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                 </Table>
               </TableContainer>
 
-              {hasNextPage && (
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-                  <Button
-                    onClick={() => fetchNextPage()}
-                    disabled={isFetchingNextPage}
-                    variant="outlined"
-                  >
-                    <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-                  </Button>
-                </Box>
-              )}
+              <LoadMoreButton
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onClick={() => fetchNextPage()}
+              />
               </>
             )
             : (
               <BlankState
-                icon={<PlayerIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+                icon={PlayerIcon}
                 title="No players in this campaign"
                 description="Add players to start your adventure together"
                 action={
@@ -595,7 +568,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         }}
         onConfirm={confirmRemovePlayer}
         isLoading={removeMutation.isPending}
-        isSelfRemoval={selectedPlayer?.userId === user?.id}
+        isSelfRemoval={selectedPlayer?.userId === currentUserId}
         selectedPlayer={selectedPlayer}
       />
       {/* Revoke Invite Dialog */}

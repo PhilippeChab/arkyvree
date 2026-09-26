@@ -1,14 +1,14 @@
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Autocomplete, Chip, TextField } from "@mui/material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type AptitudesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"]>;
-type AptitudesPaginated = Exclude<AptitudesResponse, { error: string }>;
+type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
 export type Aptitude = AptitudesPaginated["items"][number];
 
 function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
@@ -18,7 +18,7 @@ function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: [...queryKeys.rulesets.section(rulesetId, "aptitudes"), "autocomplete", debouncedSearch, scope],
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].aptitudes.$get({
+      return parseResponse(rpc.api.rulesets[":id"].aptitudes.$get({
         param: { id: rulesetId },
         query: {
           limit: "10",
@@ -26,9 +26,7 @@ function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
           ...(debouncedSearch && { search: debouncedSearch }),
           ...(scope && { scope }),
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch aptitudes");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -36,14 +34,7 @@ function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
 
   const fetchedOptions = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const handleScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      (target as unknown as Record<string, () => void>).__lockScroll?.();
-      fetchNextPage();
-    }
-  };
+  const handleScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return { fetchedOptions, isLoading, search, setSearch, handleScroll };
 }

@@ -1,5 +1,6 @@
-import { PageTransition, DeleteDialog } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, DeleteDialog, PageTransition } from "@/client/src/components/common/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
+import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -28,7 +29,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -55,9 +56,6 @@ export default function CharacterDetailsPage() {
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
   const [isAddLevelOpen, setAddLevelOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<EditingLevel | null>(null);
-  const [isRemovingLevel, setRemovingLevel] = useState(false);
-  const [isArchiving, setArchiving] = useState(false);
-  const [isHardDeleting, setHardDeleting] = useState(false);
   const [isShareOpen, setShareOpen] = useState(false);
   const [isContributorsOpen, setContributorsOpen] = useState(false);
   const [isModifiersOpen, setModifiersOpen] = useState(false);
@@ -69,18 +67,8 @@ export default function CharacterDetailsPage() {
   const { isDemo } = useDemoTimeRemaining();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
-  const {
-    data: character,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: queryKeys.characters.detail(id!),
-    queryFn: async () => {
-      if (!id) throw new Error("Character ID is required");
-      const response = await rpc.api.characters[":id"]["$get"]({ param: { id } });
-      if (!response.ok) throw new Error("Failed to fetch character");
-      return response.json();
-    },
+  const { data: character, isLoading, error } = useQuery({
+    ...characterDetailQuery(id!),
     enabled: !!id,
   });
 
@@ -103,70 +91,53 @@ export default function CharacterDetailsPage() {
     setAnchorEl(null);
   };
 
-  const handleRemoveLevel = async () => {
-    if (!id) return;
-    setRemovingLevel(true);
-    try {
-      await rpc.api.characters.levels[":characterId"]["$delete"]({
-        param: { characterId: id },
-      });
+  const invalidateCharacter = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id!) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists }),
+  ]);
+
+  const removeLevelMutation = useMutation({
+    mutationFn: () => rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id! } }),
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id!) });
       setConfirmOpen(false);
-    } catch (err) {
-      snackbar.error(err, "Failed to remove level");
-    } finally {
-      setRemovingLevel(false);
-    }
-  };
+    },
+    onError: (err) => snackbar.error(err, "Failed to remove level"),
+  });
 
-  const handleArchiveCharacter = async () => {
-    if (!id) return;
-    setArchiving(true);
-    try {
-      await rpc.api.characters[":id"]["$delete"]({
-        param: { id },
-      });
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id!) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
+  const archiveMutation = useMutation({
+    mutationFn: () => rpc.api.characters[":id"].$delete({ param: { id: id! } }),
+    onSuccess: () => {
+      void invalidateCharacter();
       navigate("/characters");
-    } catch (err) {
+    },
+    onError: (err) => {
       snackbar.error(err, "Failed to archive character");
-    } finally {
-      setArchiving(false);
       setArchiveConfirmOpen(false);
-    }
-  };
+    },
+  });
 
-  const handleUnarchiveCharacter = async () => {
-    if (!id) return;
-    try {
-      await rpc.api.characters[":id"]["unarchive"].$post({
-        param: { id },
-      });
+  const unarchiveMutation = useMutation({
+    mutationFn: () => rpc.api.characters[":id"].unarchive.$post({ param: { id: id! } }),
+    onSuccess: () => {
       snackbar.success("Character unarchived successfully");
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id!) });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
-    } catch (err) {
-      snackbar.error(err, "Failed to unarchive character");
-    }
-  };
+      return invalidateCharacter();
+    },
+    onError: (err) => snackbar.error(err, "Failed to unarchive character"),
+  });
 
-  const handleHardDeleteCharacter = async () => {
-    if (!id) return;
-    setHardDeleting(true);
-    try {
-      // rpc.ts throws ApiError on non-OK responses.
-      await rpc.api.characters[":id"]["permanent"].$delete({ param: { id } });
+  const hardDeleteMutation = useMutation({
+    mutationFn: () => rpc.api.characters[":id"].permanent.$delete({ param: { id: id! } }),
+    onSuccess: () => {
       snackbar.success("Character permanently deleted");
       queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
       navigate("/characters");
-    } catch (err) {
+    },
+    onError: (err) => {
       snackbar.error(err, "Failed to delete character");
-    } finally {
-      setHardDeleting(false);
       setHardDeleteConfirmOpen(false);
-    }
-  };
+    },
+  });
 
   if (isLoading) {
     return (
@@ -176,7 +147,7 @@ export default function CharacterDetailsPage() {
     );
   }
 
-  if (error || !character || "error" in character) {
+  if (error || !character) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Alert severity="error">Failed to load character details.</Alert>
@@ -242,7 +213,7 @@ export default function CharacterDetailsPage() {
                       <MenuItem
                         key="unarchive"
                         onClick={() => {
-                          handleUnarchiveCharacter();
+                          unarchiveMutation.mutate();
                           handleClose();
                         }}
                         sx={{ color: "success.main" }}
@@ -387,28 +358,32 @@ export default function CharacterDetailsPage() {
         <DeleteDialog
           open={isConfirmOpen}
           onClose={() => setConfirmOpen(false)}
-          onConfirm={handleRemoveLevel}
-          title="Confirm Level Removal"
+          onConfirm={() => removeLevelMutation.mutate()}
+          title="Remove Level"
           message="Are you sure you want to remove the last level? This action cannot be undone."
-          isLoading={isRemovingLevel}
+          isLoading={removeLevelMutation.isPending}
+          confirmLabel="Remove Level"
         />
 
-        <DeleteDialog
+        <ConfirmDialog
           open={isArchiveConfirmOpen}
           onClose={() => setArchiveConfirmOpen(false)}
-          onConfirm={handleArchiveCharacter}
-          title="Archive"
+          onConfirm={() => archiveMutation.mutate()}
+          title="Archive Character"
           message="Are you sure you want to archive this character? You can restore it later from the Archived view."
-          isLoading={isArchiving}
+          isLoading={archiveMutation.isPending}
+          confirmLabel="Archive Character"
+          confirmColor="warning"
+          confirmIcon={<ArchiveIcon />}
         />
 
         <DeleteDialog
           open={isHardDeleteConfirmOpen}
           onClose={() => setHardDeleteConfirmOpen(false)}
-          onConfirm={handleHardDeleteCharacter}
+          onConfirm={() => hardDeleteMutation.mutate()}
           title="Delete permanently"
           message="This will permanently delete this character and all of its levels, abilities, inventory, attachments, and customizations. This cannot be undone."
-          isLoading={isHardDeleting}
+          isLoading={hardDeleteMutation.isPending}
           confirmLabel="Delete permanently"
         />
 

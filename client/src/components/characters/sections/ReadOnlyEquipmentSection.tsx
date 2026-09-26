@@ -3,7 +3,6 @@ import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import {
   Box,
   Chip,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -12,6 +11,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { SheetSection } from "./SheetSection.tsx";
 
 interface EquipmentEntry {
   itemId: string;
@@ -54,18 +54,13 @@ export function ReadOnlyEquipmentSection({
   encumbrance?: EncumbranceData;
 }) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography
-        sx={{ fontWeight: 600, color: "primary.main", mb: 3, typography: { xs: "h6", sm: "h5" } }}
-      >
-        Equipment & Inventory
-      </Typography>
+    <SheetSection title="Equipment & Inventory">
       {equipment.length > 0 ? (
         <>
           <TableContainer sx={{ overflowX: "auto" }}>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: "grey.100" }}>
+                <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Item</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 600 }}>Slot</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 600 }}>Quantity</TableCell>
@@ -149,6 +144,6 @@ export function ReadOnlyEquipmentSection({
       ) : (
         <BlankState title="No equipment" />
       )}
-    </Paper>
+    </SheetSection>
   );
 }

@@ -78,17 +78,17 @@ test.describe('Level Edit + Remove', () => {
     }
     await expect(page.getByText(/Level 1 — HP: \+5/)).toBeVisible({ timeout: 10_000 });
 
-    // ── REMOVE path: MoreVert → Remove Level → confirm Delete ─────────
+    // ── REMOVE path: MoreVert → Remove Level → confirm ────────────────
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Remove Level/ }).click();
 
-    const confirmDialog = page.getByRole('dialog', { name: 'Confirm Level Removal' });
+    const confirmDialog = page.getByRole('dialog', { name: 'Remove Level' });
     await expect(confirmDialog).toBeVisible({ timeout: 5_000 });
     const removeResponse = page.waitForResponse(
       (r) => /\/api\/characters\/levels\/[^/?]+/.test(r.url()) && r.request().method() === 'DELETE' && r.ok(),
       { timeout: 15_000 },
     );
-    await confirmDialog.getByRole('button', { name: /^Delete$/ }).click();
+    await confirmDialog.getByRole('button', { name: /^Remove Level$/ }).click();
     await removeResponse;
     await expect(confirmDialog).toBeHidden({ timeout: 10_000 });
 
@@ -157,17 +157,17 @@ test.describe('Level Edit + Remove', () => {
     }
     await expect(page.getByText(/Level 1 — HP: \+3/)).toBeVisible({ timeout: 10_000 });
 
-    // ── REMOVE path: MoreVert → Remove Level → confirm Delete ─────────
+    // ── REMOVE path: MoreVert → Remove Level → confirm ────────────────
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Remove Level/ }).click();
 
-    const confirmDialog = page.getByRole('dialog', { name: 'Confirm Level Removal' });
+    const confirmDialog = page.getByRole('dialog', { name: 'Remove Level' });
     await expect(confirmDialog).toBeVisible({ timeout: 5_000 });
     const removeResponse = page.waitForResponse(
       (r) => /\/api\/characters\/levels\/[^/?]+/.test(r.url()) && r.request().method() === 'DELETE' && r.ok(),
       { timeout: 15_000 },
     );
-    await confirmDialog.getByRole('button', { name: /^Delete$/ }).click();
+    await confirmDialog.getByRole('button', { name: /^Remove Level$/ }).click();
     await removeResponse;
     await expect(confirmDialog).toBeHidden({ timeout: 10_000 });
 

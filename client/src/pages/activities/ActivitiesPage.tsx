@@ -1,24 +1,31 @@
 import {
   BlankState,
+  LoadMoreButton,
+  PageHeader,
   PageTransition,
   SearchBar,
   DiceSpinner,
   type SortOption,
 } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, usePageTitle } from "@/client/src/hooks/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import {
+  isNavigableTarget,
+  useDebouncedValue,
+  useOpenActivityTarget,
+  usePageTitle,
+  useUpdateSearchParams,
+} from "@/client/src/hooks/index.ts";
 import {
   formatActivityDate,
   formatActivityDetails,
   formatActivityType,
 } from "@/client/src/lib/activityFormatters.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { History as HistoryIcon } from "@mui/icons-material";
 import {
   Alert,
   Box,
-  Button,
   Chip,
   Container,
   Paper,
@@ -32,16 +39,9 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { useNavigate, useSearchParams } from "react-router-dom";
-
-type ActivityResponse = InferResponseType<typeof rpc.api.activities.$get>;
-type ActivityPaginated = Extract<Exclude<ActivityResponse, { error: string }>, { items: unknown[] }>;
+import { useSearchParams } from "react-router-dom";
 
 type SortField = "createdAt" | "type";
-type SortDirection = "asc" | "desc";
-
-const NON_NAVIGABLE_TABLES = new Set(["users", "sessions"]);
 
 const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
   { field: "createdAt", direction: "desc", label: "Newest First" },
@@ -50,137 +50,66 @@ const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
   { field: "type", direction: "desc", label: "Type (Z-A)" },
 ];
 
-async function resolveActivityUrl(targetTable: string, targetId: string): Promise<string | null> {
-  try {
-    const response = await rpc.api.activities.resolve[":targetTable"][":targetId"].$get({
-      param: { targetTable, targetId },
-    });
-    const data = await response.json();
-    return "url" in data ? data.url : null;
-  } catch {
-    return null;
-  }
-}
+const PAGE_SIZE = 10;
 
 export default function ActivitiesPage() {
   usePageTitle("Activities");
-  const navigate = useNavigate();
-  const snackbar = useSnackbar();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const limit = 10;
+  const openTarget = useOpenActivityTarget();
+  const [searchParams] = useSearchParams();
+  const updateSearchParams = useUpdateSearchParams();
 
-  // Get state from URL params
   const searchQuery = searchParams.get("search") || "";
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const rawOrderBy = searchParams.get("orderBy");
-  const orderBy: SortField = rawOrderBy === "createdAt" || rawOrderBy === "type" ? rawOrderBy : "createdAt";
-  const rawOrderDir = searchParams.get("orderDir");
-  const orderDir: SortDirection = rawOrderDir === "asc" || rawOrderDir === "desc" ? rawOrderDir : "desc";
-
-  // Update URL when filters change
-  const updateURLParams = (updates: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams);
-
-    for (const [key, value] of Object.entries(updates)) {
-      if (value && value !== "all") {
-        newParams.set(key, value);
-      } else {
-        newParams.delete(key);
-      }
-    }
-
-    setSearchParams(newParams);
-  };
+  const orderBy = oneOf(searchParams.get("orderBy"), ["createdAt", "type"], "createdAt");
+  const orderDir = oneOf(searchParams.get("orderDir"), ["asc", "desc"], "desc");
 
   const {
     data,
-    isLoading: activitiesLoading,
-    error: activitiesError,
+    isLoading,
+    error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: queryKeys.activities.list({ search: debouncedSearchQuery, orderBy, orderDir }),
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.activities.$get({
-        query: {
-          page: pageParam.toString(),
-          limit: limit.toString(),
-          search: debouncedSearchQuery || undefined,
-          orderBy,
-          orderDir,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch activities");
-      }
-
-      return response.json();
-    },
+    queryFn: ({ pageParam }) => parseResponse(rpc.api.activities.$get({
+      query: {
+        page: pageParam.toString(),
+        limit: PAGE_SIZE.toString(),
+        search: debouncedSearchQuery || undefined,
+        orderBy,
+        orderDir,
+      },
+    })),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => (lastPage as ActivityPaginated).nextPage,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     placeholderData: keepPreviousData,
   });
 
-  const handleSortChange = (field: SortField, direction: SortDirection) => {
-    updateURLParams({ orderBy: field, orderDir: direction });
-  };
-
-  // Flatten the pages into a single array of activities
-  const activities = data?.pages.flatMap((page) => (page as ActivityPaginated).items) ?? [];
-
-  if (activitiesLoading) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <DiceSpinner />
-        </Box>
-      </Container>
-    );
-  }
-
-  if (activitiesError) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error">Failed to load activity logs.</Alert>
-      </Container>
-    );
-  }
+  const activities = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <PageTransition>
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <Paper
-          sx={{
-            background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            color: "white",
-            p: { xs: 2, sm: 4 },
-            borderRadius: 4,
-            mb: 4,
-          }}
-        >
-          <Typography sx={{ typography: { xs: "h4", md: "h3" }, fontWeight: 800, mb: 1 }}>
-            Activity
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9 }}>
-            View your activity history and track actions
-          </Typography>
-        </Paper>
+        <PageHeader title="Activity" subtitle="View your activity history and track actions" />
 
         <SearchBar
           searchValue={searchQuery}
-          onSearchChange={(value) => updateURLParams({ search: value || null })}
+          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
           searchPlaceholder="Search activity logs..."
           sortOptions={ACTIVITY_SORT_OPTIONS}
           sortField={orderBy}
           sortDirection={orderDir}
-          onSortChange={handleSortChange}
+          onSortChange={(field, direction) => updateSearchParams({ orderBy: field, orderDir: direction })}
         />
 
-        {/* Activities Table */}
-        {activities.length > 0 ? (
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: { xs: 4, sm: 8 } }}>
+            <DiceSpinner />
+          </Box>
+        ) : error ? (
+          <Alert severity="error">Failed to load activity logs.</Alert>
+        ) : activities.length > 0 ? (
           <>
             <TableContainer component={Paper} sx={{ mb: 3, overflowX: "auto" }}>
               <Table>
@@ -192,15 +121,11 @@ export default function ActivitiesPage() {
                 </TableHead>
                 <TableBody>
                   {activities.map((activity) => {
-                    const isNavigable = !NON_NAVIGABLE_TABLES.has(activity.targetTable);
+                    const isNavigable = isNavigableTarget(activity.targetTable);
                     return (
                       <TableRow
                         key={activity.id}
-                        onClick={isNavigable ? async () => {
-                          const url = await resolveActivityUrl(activity.targetTable, activity.targetId);
-                          if (url) navigate(url);
-                          else snackbar.warning("This item has been deleted and is no longer available.");
-                        } : undefined}
+                        onClick={isNavigable ? () => openTarget(activity.targetTable, activity.targetId) : undefined}
                         sx={{
                           "&:hover": { bgcolor: "action.hover" },
                           cursor: isNavigable ? "pointer" : "default",
@@ -216,9 +141,7 @@ export default function ActivitiesPage() {
                           </Tooltip>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" sx={{
-                            color: "text.secondary"
-                          }}>
+                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
                             {formatActivityDate(activity.createdAt)}
                           </Typography>
                         </TableCell>
@@ -229,32 +152,17 @@ export default function ActivitiesPage() {
               </Table>
             </TableContainer>
 
-            {hasNextPage && (
-              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-                <Button
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  variant="outlined"
-                  size="large"
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 2,
-                    fontWeight: 600,
-                    borderWidth: 2,
-                    "&:hover": {
-                      borderWidth: 2,
-                    },
-                  }}
-                >
-                  <DiceSpinner size="small" loading={isFetchingNextPage}>Load More Activities</DiceSpinner>
-                </Button>
-              </Box>
-            )}
+            <LoadMoreButton
+              size="large"
+              label="Load More Activities"
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onClick={() => fetchNextPage()}
+            />
           </>
         ) : (
           <BlankState
-            icon={<HistoryIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />}
+            icon={HistoryIcon}
             title="No activity logs found"
             description="Your activity history will appear here as you interact with the application."
             sx={{ mt: 4 }}

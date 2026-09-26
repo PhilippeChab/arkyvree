@@ -1,24 +1,18 @@
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Autocomplete,
   Box,
-  Button,
   Chip,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   TextField,
 } from "@mui/material";
-import { CreateDialog, Modal } from "@/client/src/components/common/index.ts";
+import { CreateDialog, DeleteDialog } from "@/client/src/components/common/index.ts";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type RulesetSave = SavesPaginated["items"][number];
 
 type CreateLevelFormData = InferRequestType<
@@ -54,12 +48,10 @@ export function CreateLevelDialog({
   const { data: featsData } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, "feats"),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"]["feats"]["$get"]({
+      return parseResponse(rpc.api.rulesets[":id"]["feats"]["$get"]({
         param: { id: rulesetId },
         query: { limit: "10", page: "1" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch feats");
-      return response.json();
+      }));
     },
     enabled: open && !!rulesetId,
   });
@@ -67,12 +59,10 @@ export function CreateLevelDialog({
   const { data: savesData } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, "saves"),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"]["saves"]["$get"]({
+      return parseResponse(rpc.api.rulesets[":id"]["saves"]["$get"]({
         param: { id: rulesetId },
         query: { limit: "100", page: "1" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch saves");
-      return response.json();
+      }));
     },
     enabled: open && !!rulesetId,
   });
@@ -250,78 +240,30 @@ export function CreateLevelDialog({
   );
 }
 
-interface DeleteLevelDialogProps {
+interface ConfirmActionProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
   isLoading: boolean;
 }
 
-export function DeleteLevelDialog({
-  open,
-  onClose,
-  onConfirm,
-  isLoading,
-}: DeleteLevelDialogProps) {
+export function DeleteLevelDialog(props: ConfirmActionProps) {
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>Delete Level</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Are you sure you want to delete this level? This action cannot be undone.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          color="error"
-          variant="contained"
-          disabled={isLoading}
-        >
-          {isLoading ? "Deleting..." : "Delete"}
-        </Button>
-      </DialogActions>
-    </Modal>
+    <DeleteDialog
+      {...props}
+      title="Delete Level"
+      message="Are you sure you want to delete this level? This action cannot be undone."
+    />
   );
 }
 
-interface RemoveSkillDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-}
-
-export function RemoveSkillDialog({
-  open,
-  onClose,
-  onConfirm,
-  isLoading,
-}: RemoveSkillDialogProps) {
+export function RemoveSkillDialog(props: ConfirmActionProps) {
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>Remove Skill</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Are you sure you want to remove this skill from the class?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          color="error"
-          variant="contained"
-          disabled={isLoading}
-        >
-          {isLoading ? "Removing..." : "Remove"}
-        </Button>
-      </DialogActions>
-    </Modal>
+    <DeleteDialog
+      {...props}
+      title="Remove Skill"
+      message="Are you sure you want to remove this skill from the class?"
+      confirmLabel="Remove"
+    />
   );
 }

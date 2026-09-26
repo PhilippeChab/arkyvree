@@ -1,5 +1,7 @@
 import type { ClientResponse } from "hono/client";
 
+import { saveBlob } from "@/client/src/lib/download.ts";
+
 export async function downloadPdf(
   fetchResponse: () => Promise<ClientResponse<unknown>>,
   characterName: string | undefined,
@@ -7,19 +9,8 @@ export async function downloadPdf(
 ): Promise<void> {
   try {
     const response = await fetchResponse();
-    if (!response.ok) {
-      onError("Failed to download PDF");
-      return;
-    }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(characterName || "character").replace(/[/\\?%*:|"<>]/g, "_").slice(0, 200)}-sheet.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    const safeName = (characterName || "character").replace(/[/\\?%*:|"<>]/g, "_").slice(0, 200);
+    saveBlob(await response.blob(), `${safeName}-sheet.pdf`);
   } catch {
     onError("Failed to download PDF");
   }

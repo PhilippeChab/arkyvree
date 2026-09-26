@@ -1,7 +1,7 @@
 import { AnimatedAlert, Modal } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Box,
   Button,
@@ -73,13 +73,11 @@ export function EditLevelModal({
       editingLevelId,
     ),
     queryFn: async () => {
-      const response = await rpc.api.characters.levels[":characterId"][
+      return parseResponse(rpc.api.characters.levels[":characterId"][
         ":characterLevelId"
       ]["$get"]({
         param: { characterId, characterLevelId: editingLevelId },
-      });
-      if (!response.ok) throw response;
-      return response.json();
+      }));
     },
     enabled: open && !!editingLevelId,
   });

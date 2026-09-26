@@ -1,7 +1,7 @@
 import { AnimatedAlert, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Box,
   Button,
@@ -15,13 +15,14 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { BaseRules, SelectedKlass } from "./levelUp/useLevelWizard.ts";
 import {
   useAddLevelWizard,
   addStepContent,
   addStepLabels,
 } from "./levelUp/useAddLevelWizard.ts";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
 
 // ── Entry point ──────────────────────────────────────────────────────
@@ -82,7 +83,7 @@ export function AddLevelModal({
   } = useInfiniteQuery({
     queryKey: queryKeys.characters.levelUp.availableClasses(characterId, debouncedKlassSearch, wizard.allKlassLevelIds, allAbilityIds, allPendingFeatPicks, pendingSkillAllocations),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.characters.levels[":characterId"][
+      return parseResponse(rpc.api.characters.levels[":characterId"][
         "available-classes"
       ]["$get"]({
         param: { characterId },
@@ -95,9 +96,7 @@ export function AddLevelModal({
           ...(allPendingFeatPicks && { pendingFeatPicks: allPendingFeatPicks }),
           ...(pendingSkillAllocations && { pendingSkillAllocations }),
         },
-      });
-      if (!response.ok) throw response;
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -126,17 +125,11 @@ export function AddLevelModal({
   }
   const quickAddKlasses = hasUnfilteredKlasses ? availableKlasses : quickAddSnapshot;
 
-  const handleKlassListScroll = useCallback(
-    (event: React.UIEvent<HTMLElement>) => {
-      const target = event.target as HTMLElement;
-      const bottom =
-        target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-      if (bottom && hasNextKlassPage && !isFetchingNextKlassPage) {
-        fetchNextKlassPage();
-      }
-    },
-    [hasNextKlassPage, isFetchingNextKlassPage, fetchNextKlassPage],
-  );
+  const handleKlassListScroll = createListboxScrollHandler({
+    hasNextPage: hasNextKlassPage,
+    isFetchingNextPage: isFetchingNextKlassPage,
+    fetchNextPage: fetchNextKlassPage,
+  });
 
   // ── Deferred step (minimum 300ms spinner before heavy render) ───────
 

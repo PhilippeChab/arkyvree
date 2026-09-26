@@ -1,12 +1,13 @@
 import { z } from "zod";
 
+import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 import { sanitizeEmail, sanitizeText } from "@/shared/utils.ts";
 
 export const SignUpJson = z
   .object({
     emailAddress: z.string().email(),
-    password: z.string().min(12),
-    passwordConfirmation: z.string().min(12),
+    password: z.string().min(PASSWORD_MIN_LENGTH),
+    passwordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
   })
   .transform((input) => {
     return {
@@ -43,8 +44,8 @@ export const UpdateProfileJson = z
 export const UpdatePasswordJson = z
   .object({
     currentPassword: z.string().min(1),
-    newPassword: z.string().min(12),
-    newPasswordConfirmation: z.string().min(12),
+    newPassword: z.string().min(PASSWORD_MIN_LENGTH),
+    newPasswordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
   })
   .transform((input) => {
     return {
@@ -94,8 +95,8 @@ export const ResetPasswordJson = z
   .object({
     emailAddress: z.string().email(),
     code: z.string(),
-    newPassword: z.string().min(12),
-    newPasswordConfirmation: z.string().min(12),
+    newPassword: z.string().min(PASSWORD_MIN_LENGTH),
+    newPasswordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
   })
   .transform((input) => {
     return {
@@ -149,8 +150,8 @@ export const GoogleSignInJson = z
 
 export const SetPasswordJson = z
   .object({
-    newPassword: z.string().min(12),
-    newPasswordConfirmation: z.string().min(12),
+    newPassword: z.string().min(PASSWORD_MIN_LENGTH),
+    newPasswordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
   })
   .transform((input) => {
     return {

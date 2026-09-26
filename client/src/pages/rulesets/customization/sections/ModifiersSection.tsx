@@ -10,13 +10,13 @@ import {
   EditDialog,
 } from "@/client/src/components/common/index.ts";
 import {
-  usePermissions,
+  useRulesetPermissions,
   useRulesetSection,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, Tune as ModifiersIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
@@ -32,10 +32,7 @@ const MODIFIERS_COLUMNS = [
   { key: "createdAt", label: "Created", width: "20%" },
 ];
 
-type ModifiersResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"]
->;
-type ModifiersArray = Exclude<ModifiersResponse, { error: string }>;
+type ModifiersArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"], 200>;
 type Modifier = ModifiersArray[number];
 
 type ModifierFormData = InferRequestType<
@@ -76,7 +73,6 @@ export function ModifiersSection({
   const {
     data: modifiers,
     isLoading,
-    currentUserId,
     createDialogOpen,
     editDialogOpen,
     deleteDialogOpen,
@@ -99,27 +95,23 @@ export function ModifiersSection({
     label: "Modifier",
     data: externalData,
     queryFn: !externalData ? async () => {
-      const response = await rpc.api.rulesets[":id"].customization[
+      return parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers.$get({
         param: { id: ruleset.id, entityType, entityId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch modifiers");
-      return response.json();
+      }));
     } : undefined,
     queryKeysToInvalidate,
     createFn: async (data: ModifierFormData) => {
-      const response = await rpc.api.rulesets[":id"].customization[
+      return parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers.$post({
         param: { id: ruleset.id, entityType: entityType, entityId: entityId },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to create modifier");
-      return response.json();
+      }));
     },
     updateFn: async (modifierId: string, data: ModifierFormData) => {
-      const response = await rpc.api.rulesets[":id"].customization[
+      return parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].$put({
         param: {
@@ -129,12 +121,10 @@ export function ModifiersSection({
           modifierId: modifierId,
         },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to update modifier");
-      return response.json();
+      }));
     },
     deleteFn: async (modifierId: string) => {
-      const response = await rpc.api.rulesets[":id"].customization[
+      return parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].$delete({
         param: {
@@ -143,16 +133,14 @@ export function ModifiersSection({
           entityId: entityId,
           modifierId: modifierId,
         },
-      });
-      if (!response.ok) throw new Error("Failed to delete modifier");
-      return response.json();
+      }));
     },
     onCreateSuccess: handleResolvedEntityId,
     onUpdateSuccess: handleResolvedEntityId,
     onDeleteSuccess: handleResolvedEntityId,
   });
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const canDelete = canEdit;
 
   const handleEditModifier = (modifier: Modifier) => {
@@ -180,7 +168,7 @@ export function ModifiersSection({
 
   const duplicateMutation = useMutation({
     mutationFn: async ({ sourceId, data }: { sourceId: string; data: ModifierFormData }) => {
-      const response = await rpc.api.rulesets[":id"].customization[
+      return parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].duplicate.$post({
         param: {
@@ -190,9 +178,7 @@ export function ModifiersSection({
           modifierId: sourceId,
         },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to duplicate modifier");
-      return response.json();
+      }));
     },
     onSuccess: (data) => {
       snackbar.success("Modifier created successfully");
@@ -237,8 +223,7 @@ export function ModifiersSection({
               modifierId: modifier.id,
             },
           });
-          if (!response.ok) throw new Error("Failed to fetch modifier");
-          const data = await response.json();
+          const data = await parseResponse(response);
           return {
             ...data,
             name: `${data.target} ${data.operator} ${data.value}`,
@@ -321,11 +306,7 @@ export function ModifiersSection({
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={
-          <ModifiersIcon
-            sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }}
-          />
-        }
+        emptyIcon={ModifiersIcon}
         emptyTitle="No modifiers"
         emptyDescription="No modifiers defined for this entity."
       />

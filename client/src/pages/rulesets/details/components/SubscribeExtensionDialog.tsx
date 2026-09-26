@@ -1,7 +1,7 @@
 import { ScrollSafeListbox, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Extension as ExtensionIcon } from "@mui/icons-material";
 import {
   Autocomplete,
@@ -13,14 +13,13 @@ import {
   DialogTitle,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type RulesetsResponse = InferResponseType<typeof rpc.api.rulesets.$get>;
-type RulesetsPaginated = Exclude<RulesetsResponse, { error: string }>;
+type RulesetsPaginated = InferResponseType<typeof rpc.api.rulesets.$get, 200>;
 type ExtensionRuleset = RulesetsPaginated["items"][number];
 
 interface SubscribeExtensionDialogProps {
@@ -53,16 +52,14 @@ export function SubscribeExtensionDialog({
   const { data, isLoading: isLoadingExtensions, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: [...queryKeys.rulesets.lists, "extensions", debouncedSearch],
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets.$get({
+      return parseResponse(rpc.api.rulesets.$get({
         query: {
           scope: "extensions",
           limit: "10",
           page: pageParam.toString(),
           ...(debouncedSearch && { search: debouncedSearch }),
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch extensions");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -74,14 +71,7 @@ export function SubscribeExtensionDialog({
     return all.filter((ext) => !subscribedExtensionIds.includes(ext.id));
   }, [data, subscribedExtensionIds]);
 
-  const handleScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      (target as unknown as Record<string, () => void>).__lockScroll?.();
-      fetchNextPage();
-    }
-  };
+  const handleScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   const handleClose = () => {
     if (isLoading) return;
@@ -97,11 +87,7 @@ export function SubscribeExtensionDialog({
       maxWidth="md"
       slotProps={{ paper: { sx: { minHeight: { xs: undefined, sm: 600 } } } }}
     >
-      <DialogTitle>
-        <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Subscribe to Extensions
-        </Typography>
-      </DialogTitle>
+      <DialogTitle>Subscribe to Extensions</DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
           <DialogContentText>
@@ -146,7 +132,7 @@ export function SubscribeExtensionDialog({
             }} />
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions>
         <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
           Cancel
         </Button>

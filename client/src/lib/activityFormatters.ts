@@ -193,7 +193,3 @@ export function formatActivityDetails(data: unknown): string | null {
   }
   return parts.length > 0 ? parts.join("\n") : null;
 }
-
-export const ACTIONABLE_NOTIFICATION_TYPES = new Set(["createCampaignInvite", "inviteContributor", "inviteCharacterContributor"]);
-
-export const DOWNLOADABLE_NOTIFICATION_TYPES = new Set(["pdfReady"]);

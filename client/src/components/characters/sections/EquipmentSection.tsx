@@ -11,12 +11,7 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import {
-  ApiError,
-  type ApiValidationIssue,
-  type RPC,
-  rpc,
-} from "@/client/src/services/rpc.ts";
+import { ApiError, type ApiValidationIssue, parseResponse, type RPC, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
@@ -32,7 +27,6 @@ import {
   IconButton,
   Link as MuiLink,
   MenuItem,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -48,6 +42,8 @@ import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import { SheetSection } from "./SheetSection.tsx";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
 const LOCATION_VALUES = [
   "Head",
@@ -67,21 +63,12 @@ const LOCATION_VALUES = [
 
 type LocationValue = (typeof LOCATION_VALUES)[number];
 
-type ItemsResponse = InferResponseType<
-  RPC["api"]["rulesets"][":id"]["items"]["$get"]
->;
-type ItemsPaginated = Exclude<ItemsResponse, { error: string }>;
+type ItemsPaginated = InferResponseType<RPC["api"]["rulesets"][":id"]["items"]["$get"], 200>;
 type SearchItem = ItemsPaginated["items"][number];
 
-type ItemDetailResponse = InferResponseType<
-  RPC["api"]["rulesets"][":id"]["items"][":itemId"]["$get"]
->;
-type ItemDetail = Exclude<ItemDetailResponse, { error: string }>;
+type ItemDetail = InferResponseType<RPC["api"]["rulesets"][":id"]["items"][":itemId"]["$get"], 200>;
 
-type InventoryResponse = InferResponseType<
-  RPC["api"]["characters"]["inventory"][":characterId"]["$get"]
->;
-type InventoryItems = Exclude<InventoryResponse, { error: string }>;
+type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
 type InventoryEntry = InventoryItems[number];
 
 interface EncumbranceData {
@@ -236,11 +223,9 @@ export function EquipmentSection({
   const { data: inventoryItems = [] } = useQuery({
     queryKey: queryKeys.characters.inventory(characterId),
     queryFn: async () => {
-      const response = await rpc.api.characters.inventory[":characterId"].$get({
+      return parseResponse(rpc.api.characters.inventory[":characterId"].$get({
         param: { characterId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch inventory");
-      return response.json();
+      }));
     },
   });
 
@@ -289,8 +274,7 @@ export function EquipmentSection({
       const response = await rpc.api.rulesets[":id"].items[":itemId"].$get({
         param: { id: rulesetId, itemId: selectedItem!.id },
       });
-      if (!response.ok) throw new Error("Failed to fetch item details");
-      return response.json() as Promise<ItemDetail>;
+      return parseResponse(response) as Promise<ItemDetail>;
     },
     enabled: !!selectedItem,
   });
@@ -374,16 +358,14 @@ export function EquipmentSection({
   } = useInfiniteQuery({
     queryKey: queryKeys.characters.itemSearch(rulesetId, debouncedItemSearch),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].items.$get({
+      return parseResponse(rpc.api.rulesets[":id"].items.$get({
         param: { id: rulesetId },
         query: {
           page: pageParam.toString(),
           limit: "10",
           search: debouncedItemSearch || undefined,
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch items");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -392,15 +374,7 @@ export function EquipmentSection({
 
   const searchItems = searchData?.pages.flatMap((page) => page.items) ?? [];
 
-  const handleItemsScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom =
-      target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      (target as unknown as Record<string, () => void>).__lockScroll?.();
-      fetchNextPage();
-    }
-  };
+  const handleItemsScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   // Mutations
   const addMutation = useMutation({
@@ -611,21 +585,9 @@ export function EquipmentSection({
   const hasItems = inventoryItems.length > 0;
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1}
-        sx={{
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          mb: 3
-        }}>
-        <Typography
-          sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "h6", sm: "h5" } }}
-        >
-          Equipment & Inventory
-        </Typography>
-        {!isArchived && hasItems && (
+    <SheetSection
+      title="Equipment & Inventory"
+      action={!isArchived && hasItems && (
           <Stack direction="row" spacing={1}>
             {isCustomRuleset && (
               <Button
@@ -646,14 +608,14 @@ export function EquipmentSection({
               Add Item
             </Button>
           </Stack>
-        )}
-      </Stack>
+      )}
+    >
       {hasItems ? (
         <>
           <TableContainer sx={{ overflowX: "auto" }}>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: "grey.100" }}>
+                <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Item</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 600 }}>
                     Slot
@@ -1098,6 +1060,6 @@ export function EquipmentSection({
         onConfirm={() => deletingItemId && removeMutation.mutate(deletingItemId)}
         isLoading={removeMutation.isPending}
       />
-    </Paper>
+    </SheetSection>
   );
 }

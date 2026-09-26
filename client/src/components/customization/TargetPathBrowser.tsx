@@ -1,6 +1,6 @@
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { PathCompletion } from "@/shared/customization/target.ts";
 import { formatSegment } from "@/shared/utils.ts";
 import ChevronRight from "@mui/icons-material/ChevronRight";
@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
 interface TargetPathBrowserProps {
   rulesetId: string;
@@ -67,7 +68,7 @@ export function TargetPathBrowser({
   const { data: completionsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: queryKeys.rulesets.targetCompletions(rulesetId, flatMode ? `flat:${debouncedSearch}` : browsePrefix, kind, debouncedSearch, entityType),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].customization["target"].paths.completions.$post({
+      return parseResponse(rpc.api.rulesets[":id"].customization["target"].paths.completions.$post({
         param: { id: rulesetId },
         json: {
           partialPath: queryPrefix,
@@ -79,9 +80,7 @@ export function TargetPathBrowser({
           limit: 50,
           page: pageParam,
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch completions");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -146,13 +145,7 @@ export function TargetPathBrowser({
     onChange("");
   };
 
-  const handleScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
+  const handleScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   const breadcrumbSegments = segments;
 

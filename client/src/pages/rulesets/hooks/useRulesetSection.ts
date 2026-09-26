@@ -1,6 +1,5 @@
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { type DefaultValues, type FieldValues, useForm } from "react-hook-form";
@@ -12,10 +11,11 @@ interface RulesetSectionConfig<TData, TFormData extends FieldValues> {
   queryFn?: () => Promise<TData[]>;
   data?: TData[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
-  createFn: (data: TFormData) => Promise<unknown>;
+  /** Resolves to the created entity; its id is handed to `onCreateSuccess`. */
+  createFn: (data: TFormData) => Promise<{ id: string }>;
   updateFn?: (id: string, data: TFormData) => Promise<unknown>;
   deleteFn?: (id: string) => Promise<unknown>;
-  onCreateSuccess?: (data: unknown) => void;
+  onCreateSuccess?: (created: { id: string }) => void;
   onUpdateSuccess?: (data: unknown) => void;
   onDeleteSuccess?: (data: unknown) => void;
   onEditDialogClose?: () => void;
@@ -40,7 +40,6 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
   onEditDialogClose,
   createDefaults,
 }: RulesetSectionConfig<TData, TFormData>) {
-  const currentUserId = useAuthStore((state) => state.user?.id);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -156,9 +155,6 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
     isLoading,
     error,
 
-    // Permissions - computed once
-    currentUserId,
-
     // Dialog states
     createDialogOpen,
     editDialogOpen,
@@ -188,16 +184,4 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
     handleDelete,
     confirmDelete,
   };
-}
-
-// Utility for computing permissions
-export function usePermissions(ruleset: { userId?: string | null; status?: string; contributorRole?: string | null }, currentUserId?: string) {
-  const isOwner = !!(ruleset.userId && ruleset.userId === currentUserId);
-  const contributorRole = ruleset.contributorRole ?? null;
-  const isAdminOrEditor = contributorRole === "Admin" || contributorRole === "Editor";
-
-  const canEdit = !!((isOwner || isAdminOrEditor) && ruleset.status !== "Archived");
-  const canDelete = canEdit;
-
-  return { canEdit, canDelete };
 }

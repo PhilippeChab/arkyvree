@@ -1,5 +1,5 @@
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   CharacterDetailSkeleton,
   CharacterSheetBody,
@@ -35,11 +35,9 @@ export default function CampaignCharacterPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.campaigns.characterDetail(campaignId!, characterId!),
     queryFn: async () => {
-      const response = await rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
+      return parseResponse(rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
         param: { id: campaignId!, characterId: characterId! },
-      });
-      if (!response.ok) throw new Error("Failed to fetch character");
-      return response.json();
+      }));
     },
     enabled: !!campaignId && !!characterId,
   });
@@ -70,7 +68,7 @@ export default function CampaignCharacterPage() {
     );
   }
 
-  if (error || !data || "error" in data || !("identity" in data)) {
+  if (error || !data) {
     return (
       <Container maxWidth="xl" sx={{ py: 2 }}>
         <Alert severity="error">Failed to load character details.</Alert>

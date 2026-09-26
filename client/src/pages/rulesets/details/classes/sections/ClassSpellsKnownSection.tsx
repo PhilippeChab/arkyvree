@@ -1,16 +1,13 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
 import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useMemo } from "react";
+import { classSpellsKnownQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type SpellsKnownResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells-known"]["$get"]
->;
-type SpellsKnownArray = Exclude<SpellsKnownResponse, { error: string }>;
+type SpellsKnownArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells-known"]["$get"], 200>;
 type SpellKnownLevel = SpellsKnownArray[number];
 
 interface ClassSpellsKnownSectionProps {
@@ -36,16 +33,7 @@ function ordinal(n: number): string {
 }
 
 export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSpellsKnownSectionProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classSpellsKnown(rulesetId, classId),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get({
-        param: { id: rulesetId, classId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch spells known");
-      return response.json();
-    },
-  });
+  const { data, isLoading } = useQuery(classSpellsKnownQuery(rulesetId, classId));
 
   // Derive spell level columns from the union of all spell levels in the data
   const spellLevelKeys = useMemo(() => {
@@ -114,7 +102,7 @@ export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSpellsKnown
         isLoading={isLoading}
         columns={columns}
         renderCell={renderCell}
-        emptyIcon={<SpellsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SpellsIcon}
         emptyTitle="No spells known"
         emptyDescription="This class doesn't have any spells known data."
       />
