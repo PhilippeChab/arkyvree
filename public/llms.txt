@@ -48,7 +48,7 @@ Merging lets you pull changes from sibling forks that share a common ancestor. E
 
 ## Public Pages
 
-- `https://github.com/PhilippeChab/arkyvree/blob/main/docs/help/README.md` - Help Center
+- `https://github.com/PhilippeChab/arkyvree/blob/main/help/README.md` - Help Center
 - `https://github.com/PhilippeChab/arkyvree/blob/main/CHANGELOG.md` - Latest updates and improvements
 - `https://github.com/PhilippeChab/arkyvree/issues` - Feedback and feature requests
 - `https://ko-fi.com/philippechab` - Support Arkyvree

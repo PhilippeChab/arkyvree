@@ -177,4 +177,4 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 - See [docs/auth-routing.md](./docs/auth-routing.md) for the auth/routing architecture: three-bucket layout-route tree, cookie security, demo lifecycle (entry-to-auth vs in-app TTL expiry), stale-cookie defense, cross-tab behavior
 - See [docs/access.md](./docs/access.md) for the policy matrix (rulesets / characters / campaigns / customizations), actor definitions (owner / contributor / campaign member), and the ruleset listing-scope reference
 - See [docs/ui-buttons.md](./docs/ui-buttons.md) for action button color / variant conventions across Buttons and MenuItems (destructive / caution / positive / cancel)
-- [docs/help/](./docs/help/README.md) is the user-facing help center and [CHANGELOG.md](./CHANGELOG.md) the user-facing changelog, both linked from the app. Update them when a change alters user-visible behavior
+- [help/](./help/README.md) is the user-facing help center and [CHANGELOG.md](./CHANGELOG.md) the user-facing changelog, both linked from the app. Update them when a change alters user-visible behavior
