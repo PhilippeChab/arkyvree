@@ -67,6 +67,20 @@ interface CharacterIdentitySectionProps {
   };
 }
 
+const toIdentityForm = ({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData => ({
+  race: identity?.physiology?.race?.name || "",
+  alignment: (identity?.beliefs?.alignment as Alignment | undefined) || "",
+  experience: identity?.meta?.xp || 0,
+  age: String(identity?.physiology?.age || ""),
+  gender: (identity?.physiology?.gender as Gender | undefined) || "",
+  height: String(identity?.physiology?.height || ""),
+  weight: String(identity?.physiology?.weight || ""),
+  deity: identity?.beliefs?.deity || "",
+  description: identity?.physiology?.description || "",
+  notes: identity?.background?.notes || "",
+  languageIds: (identity?.physiology?.languages ?? []).map((l) => l.id),
+});
+
 export function CharacterIdentitySection({
   characterName,
   characterId,
@@ -95,24 +109,11 @@ export function CharacterIdentitySection({
     },
   });
 
-  const identity = character.identity;
-  const syncedUpdatedAt = useFormSync(form, {
-    race: identity?.physiology?.race?.name || "",
-    alignment: (identity?.beliefs?.alignment as Alignment | undefined) || "",
-    experience: identity?.meta?.xp || 0,
-    age: String(identity?.physiology?.age || ""),
-    gender: (identity?.physiology?.gender as Gender | undefined) || "",
-    height: String(identity?.physiology?.height || ""),
-    weight: String(identity?.physiology?.weight || ""),
-    deity: identity?.beliefs?.deity || "",
-    description: identity?.physiology?.description || "",
-    notes: identity?.background?.notes || "",
-    languageIds: (identity?.physiology?.languages ?? []).map((l) => l.id),
-  }, character.updatedAt);
+  const sync = useFormSync(form, toIdentityForm(character), { key: characterId, updatedAt: character.updatedAt });
 
   const handleSubmit = async (formData: CharacterIdentityFormData) => {
     try {
-      await rpc.api.characters[":id"]["$put"]({
+      const saved = await parseResponse(rpc.api.characters[":id"]["$put"]({
         param: { id: characterId },
         json: {
           age: Number(formData.age) || undefined,
@@ -125,12 +126,11 @@ export function CharacterIdentitySection({
           description: formData.description,
           notes: formData.notes,
           languageIds: formData.languageIds,
-          updatedAt: syncedUpdatedAt(),
+          updatedAt: sync.updatedAt(),
         },
-      });
+      }));
 
-      // Saved: the edits are now the baseline the refetch below is synced against.
-      form.reset(formData);
+      sync.saved(formData, saved.updatedAt);
       await queryClient.invalidateQueries({
         queryKey: queryKeys.characters.detail(characterId),
       });

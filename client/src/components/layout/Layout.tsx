@@ -182,8 +182,12 @@ export function Layout() {
   const queryClient = useQueryClient();
   const signOut = useAuthStore((s) => s.signOut);
   const clearSession = useAuthStore((s) => s.clearSession);
-  // First path segment, e.g. "rulesets" for /rulesets/123; highlights the matching sidebar item.
-  const activeSection = location.pathname.split("/")[1];
+  // Sidebar item of the first path segment ("rulesets" for /rulesets/123);
+  // pages outside the sidebar (profile, invites) keep Dashboard highlighted.
+  const pathSection = location.pathname.split("/")[1];
+  const activeSection = sidebarItems.some((item) => !("external" in item) && item.id === pathSection)
+    ? pathSection
+    : "dashboard";
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);

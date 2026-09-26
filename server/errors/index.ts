@@ -88,7 +88,8 @@ export class InternalError extends BaseError {
   }
 }
 
-type ErrorJson = {
+/** Body of every API error response. */
+export type ErrorJson = {
   error: string;
   cause: string;
   message: string;

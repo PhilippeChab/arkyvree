@@ -156,6 +156,15 @@ const createAppTheme = (darkMode: boolean): Theme => {
     shape: {
       borderRadius: 8,
     },
+    // MUI's default drops to 48px on landscape phones, but the account button
+    // keeps the app bar at 56px there; one height per breakpoint keeps the
+    // bars, the drawer spacer and the page offset (AppMain) in step.
+    mixins: {
+      toolbar: {
+        minHeight: 56,
+        "@media (min-width:600px)": { minHeight: 64 },
+      },
+    },
     spacing: 8,
     components: {
       MuiButton: {

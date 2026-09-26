@@ -70,8 +70,7 @@ export function useNotificationActions() {
     queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
   // Best-effort: failing to mark read must not block what the user clicked.
-  // Answering an invite already marks its notification read server-side, so
-  // this request can 404 — refetch either way to show the current state.
+  // Refetch either way to show the current state.
   const markRead = async (notificationId: string) => {
     try {
       await rpc.api.notifications[":id"].read.$post({ param: { id: notificationId } });
@@ -104,10 +103,11 @@ export function useNotificationActions() {
     mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].accept(notification.targetId);
     },
-    onSuccess: (_, { notification, type }) => {
+    // Answering marks the invite's notification read server-side.
+    onSuccess: (_, { type }) => {
       snackbar.success(`${INVITES[type].label} accepted!`);
       queryClient.invalidateQueries({ queryKey: INVITES[type].listKey });
-      void markRead(notification.id);
+      void invalidateNotifications();
     },
     onError: (error, { notification }) => handleInviteError(error, notification),
   });
@@ -117,9 +117,9 @@ export function useNotificationActions() {
     mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].reject(notification.targetId);
     },
-    onSuccess: (_, { notification, type }) => {
+    onSuccess: (_, { type }) => {
       snackbar.success(`${INVITES[type].label} rejected`);
-      void markRead(notification.id);
+      void invalidateNotifications();
     },
     onError: (error, { notification }) => handleInviteError(error, notification),
   });
@@ -136,9 +136,12 @@ export function useNotificationActions() {
 
   const isDownloadable = (n: NotificationLike) => n.type === "pdfReady";
 
-  /** Whether clicking the notification does anything (invites use their buttons instead). */
+  /**
+   * Whether clicking the notification does anything: download, open its
+   * target, or at least mark it read. Invites use their buttons instead.
+   */
   const isOpenable = (n: NotificationLike) =>
-    !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable));
+    !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable) || !n.readAt);
 
   const downloadExport = async (n: NotificationLike) => {
     void markRead(n.id);

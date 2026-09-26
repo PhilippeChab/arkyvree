@@ -96,7 +96,7 @@ export default function ProfilePage() {
   });
 
   const profileForm = useForm<ProfileFormData>({ defaultValues: { username: "", emailAddress: "" } });
-  useFormSync(profileForm, userData && toProfileForm(userData));
+  const profileSync = useFormSync(profileForm, userData && toProfileForm(userData));
 
   // Set-password (no password yet, e.g. Google-only accounts) uses the same
   // form minus the current password.
@@ -114,7 +114,7 @@ export default function ProfilePage() {
     onSuccess: (data) => {
       // The server's values, not the submitted ones: a new email stays pending
       // until verified, so the field keeps the current address.
-      profileForm.reset(toProfileForm(data));
+      profileSync.saved(toProfileForm(data));
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
       updateUser({
         emailAddress: data.emailAddress,

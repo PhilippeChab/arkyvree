@@ -1,6 +1,6 @@
-import { DeleteDialog, DiceSpinner, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
+import { DeleteDialog, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { EntityDetailLayout } from "@/client/src/pages/rulesets/components/index.ts";
+import { EntityDetailLayout, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -19,9 +19,6 @@ import {
 } from "@mui/icons-material";
 import {
   Box,
-  Button,
-  Card,
-  CardContent,
   Chip,
   MenuItem,
   TextField,
@@ -88,7 +85,7 @@ export default function ClassDetailsPage() {
 
   const { data: ruleset, isLoading: isRulesetLoading } = useQuery(rulesetDetailQuery(rulesetId));
 
-  const { data: classData, isLoading: isClassLoading } = useQuery({
+  const { data: classData, isLoading: isClassLoading, isFetching: isClassFetching } = useQuery({
     queryKey: queryKeys.rulesets.classDetail(rulesetId, classId),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
       param: { id: rulesetId, classId },
@@ -102,22 +99,23 @@ export default function ClassDetailsPage() {
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
-  const syncedUpdatedAt = useFormSync(editForm, classData && toClassForm(classData), classData?.updatedAt);
+  const sync = useFormSync(editForm, classData && toClassForm(classData), { key: classId, updatedAt: classData?.updatedAt });
 
   const { data: abilities } = useRulesetAbilities(rulesetId);
 
   const updateMutation = useMutation({
     mutationFn: (data: ClassFormData) => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
       param: { id: rulesetId, classId },
-      json: { ...data, updatedAt: syncedUpdatedAt() },
+      json: { ...data, updatedAt: sync.updatedAt() },
     })),
     onSuccess: (data) => {
-      editForm.reset(toClassForm(data));
-      // The PUT returns the bare class row: keep the property fields (bonus
-      // spell ability, caster type) until the refetch brings the saved class's.
-      const detailKey = queryKeys.rulesets.classDetail(rulesetId, data.id);
-      if (classData) queryClient.setQueryData(detailKey, { ...classData, ...data });
-      queryClient.invalidateQueries({ queryKey: detailKey });
+      sync.saved(toClassForm(data), data.updatedAt);
+      // The PUT returns the bare class row: keep showing the property fields
+      // (bonus spell ability, caster type) until the refetch brings the saved
+      // class's own; their selects stay disabled until then.
+      const savedKey = queryKeys.rulesets.classDetail(rulesetId, data.id);
+      if (classData) queryClient.setQueryData(savedKey, { ...classData, ...data });
+      queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
       // Editing an inherited class copies it into this ruleset under a new id.
       if (data.id !== classId) {
         navigate(`/rulesets/${rulesetId}/classes/${data.id}/${currentTab}`, { replace: true, state: location.state });
@@ -204,73 +202,58 @@ export default function ClassDetailsPage() {
       >
         {classData && ruleset && (
           <>
-            <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-              <CardContent sx={{ p: 0 }}>
-                <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-                    <Typography component="h2" variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                      Class Overview
-                    </Typography>
-                    {!canEdit && (
-                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                        <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
-                        {bonusSpellAbilityName && (
-                          <Chip label={`Bonus Spells: ${bonusSpellAbilityName}`} color="info" variant="outlined" />
-                        )}
-                        {classData.casterTypeValue && (
-                          <Chip label={`Caster Type: ${classData.casterTypeValue}`} color="info" variant="outlined" />
-                        )}
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
-
-                <Box sx={{ p: { xs: 2, sm: 3 } }}>
-                  {canEdit ? (
-                    <form onSubmit={editForm.handleSubmit((data) => updateMutation.mutate(data))}>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <ClassFormFields form={editForm} />
-                        <TextField
-                          label="Spellcasting Ability"
-                          fullWidth
-                          select
-                          value={classData.bonusSpellAbilityId ?? ""}
-                          onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
-                          disabled={bonusSpellMutation.isPending}
-                        >
-                          <MenuItem value="">None</MenuItem>
-                          {abilities?.map((a) => (
-                            <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
-                          ))}
-                        </TextField>
-                        <TextField
-                          label="Caster Type"
-                          fullWidth
-                          select
-                          value={classData.casterTypeValue ?? ""}
-                          onChange={(e) => casterTypeMutation.mutate(e.target.value)}
-                          disabled={casterTypeMutation.isPending}
-                          helperText="Whether this class casts arcane or divine spells"
-                        >
-                          <MenuItem value="">None</MenuItem>
-                          <MenuItem value="Arcane">Arcane</MenuItem>
-                          <MenuItem value="Divine">Divine</MenuItem>
-                        </TextField>
-                        <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                          <Button type="submit" variant="contained" disabled={!editForm.formState.isDirty || updateMutation.isPending}>
-                            <DiceSpinner size="small" loading={updateMutation.isPending}>Save</DiceSpinner>
-                          </Button>
-                        </Box>
-                      </Box>
-                    </form>
-                  ) : (
-                    <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                      {classData.description || "No description provided."}
-                    </Typography>
+            <EntityDetailsCard
+              title="Class Overview"
+              sx={{ mb: 4 }}
+              description={classData.description}
+              chips={(
+                <>
+                  <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
+                  {bonusSpellAbilityName && (
+                    <Chip label={`Bonus Spells: ${bonusSpellAbilityName}`} color="info" variant="outlined" />
                   )}
-                </Box>
-              </CardContent>
-            </Card>
+                  {classData.casterTypeValue && (
+                    <Chip label={`Caster Type: ${classData.casterTypeValue}`} color="info" variant="outlined" />
+                  )}
+                </>
+              )}
+              edit={canEdit ? {
+                fields: (
+                  <>
+                    <ClassFormFields form={editForm} />
+                    <TextField
+                      label="Spellcasting Ability"
+                      fullWidth
+                      select
+                      value={classData.bonusSpellAbilityId ?? ""}
+                      onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
+                      disabled={bonusSpellMutation.isPending || isClassFetching}
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {abilities?.map((a) => (
+                        <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
+                      ))}
+                    </TextField>
+                    <TextField
+                      label="Caster Type"
+                      fullWidth
+                      select
+                      value={classData.casterTypeValue ?? ""}
+                      onChange={(e) => casterTypeMutation.mutate(e.target.value)}
+                      disabled={casterTypeMutation.isPending || isClassFetching}
+                      helperText="Whether this class casts arcane or divine spells"
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      <MenuItem value="Arcane">Arcane</MenuItem>
+                      <MenuItem value="Divine">Divine</MenuItem>
+                    </TextField>
+                  </>
+                ),
+                onSubmit: editForm.handleSubmit((data) => updateMutation.mutate(data)),
+                canSave: editForm.formState.isDirty,
+                isSaving: updateMutation.isPending,
+              } : undefined}
+            />
 
             <SectionTabs
               tabs={TABS}

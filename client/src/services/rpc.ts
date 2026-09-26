@@ -1,3 +1,4 @@
+import type { ErrorJson } from "@/server/errors/index.ts";
 import type { Application } from "@/server/routers/application.ts";
 import { hc } from "hono/client";
 
@@ -8,13 +9,7 @@ import { hc } from "hono/client";
 // failed sign-in because requests bypassed the configured proxy.
 const host = document.location.origin;
 
-export type ApiValidationIssue = {
-  category: string;
-  message: string;
-  entityName?: string;
-  entityType?: string;
-  requirementTree?: string;
-};
+export type ApiValidationIssue = NonNullable<ErrorJson["issues"]>[number];
 
 export class ApiError extends Error {
   status: number;
@@ -36,12 +31,6 @@ export type RPC = typeof _rpc;
 
 const _rpcWithTypes = (...args: Parameters<typeof hc>): RPC => hc<Application>(...args);
 
-interface ErrorBody {
-  message?: string;
-  error?: string;
-  issues?: ApiValidationIssue[];
-}
-
 const defaultFetch = async (input: URL | RequestInfo, init?: RequestInit) => {
   const response = await fetch(input, {
     ...init,
@@ -52,7 +41,7 @@ const defaultFetch = async (input: URL | RequestInfo, init?: RequestInit) => {
     // Errors from the API are JSON, but a proxy in front of it (502, 413, …)
     // can answer with HTML. Fall back to a generic message instead of
     // surfacing a JSON parse error.
-    const errorData: ErrorBody = await response.json().catch(() => ({}));
+    const errorData: Partial<ErrorJson> = await response.json().catch(() => ({}));
 
     throw new ApiError(
       errorData.message || "An unexpected error occurred",

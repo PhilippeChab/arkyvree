@@ -15,9 +15,8 @@ export function AppBrand() {
   );
 }
 
-// Place the main area right under the fixed app bar: the toolbar mixin with
-// `top` for `minHeight`, media queries included (56px on phones, 48px on
-// phones in landscape, 64px from `sm` up).
+// Place the main area right under the fixed app bar: the theme's toolbar
+// mixin with `top` for `minHeight`, media queries included.
 function belowToolbar(toolbar: CSSObject): CSSObject {
   return Object.fromEntries(Object.entries(toolbar).map(([key, value]) =>
     key === "minHeight" ? ["top", value] : [key, typeof value === "object" && value ? belowToolbar(value as CSSObject) : value]));
