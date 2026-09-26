@@ -15,6 +15,7 @@ import {
   useRulesetOperations,
   useRulesetPermissions,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -702,7 +703,7 @@ export default function RulesetDetailsPage() {
             <MenuItem
               key="faq-link"
               component="a"
-              href="https://arkyvree.featurebase.app/help"
+              href={externalLinks.help}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setAnchorEl(null)}

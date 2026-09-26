@@ -34,7 +34,6 @@ interface Window {
     sentryDsn?: string | null;
     sentryEnvironment?: string | null;
     sentryRelease?: string | null;
-    featurebaseEnabled?: boolean;
   };
   google?: {
     accounts: {

@@ -1,6 +1,7 @@
 import { PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
@@ -214,25 +215,9 @@ function AuthFooterLinks() {
       >
         {isPending ? "Starting…" : "Try the demo"}
       </MuiLink>
-      <Typography variant="body2" sx={{
-        color: "text.secondary"
-      }}>|</Typography>
-      <MuiLink href="https://arkyvree.featurebase.app/help" target="_blank" rel="noopener noreferrer" variant="body2" underline="hover" sx={{
-        color: "text.secondary"
-      }}>
-        Help
-      </MuiLink>
-      <Typography variant="body2" sx={{
-        color: "text.secondary"
-      }}>|</Typography>
-      <MuiLink href="https://arkyvree.featurebase.app/changelog" target="_blank" rel="noopener noreferrer" variant="body2" underline="hover" sx={{
-        color: "text.secondary"
-      }}>
-        Changelog
-      </MuiLink>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>|</Typography>
       <MuiLink
-        href="https://github.com/PhilippeChab/arkyvree"
+        href={externalLinks.source}
         target="_blank"
         rel="noopener noreferrer"
         variant="body2"

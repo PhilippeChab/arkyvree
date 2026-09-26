@@ -157,14 +157,14 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 **Selector gotchas captured by existing tests:**
 
 - `<Typography component="h3">` renders as `<h3>` and is matched by `getByRole('heading')`; Typography styled only via `sx={{ typography: { xs: "h4" } }}` renders as `<p>` — use text-based selectors there.
-- `[role="dialog"]` matches the Featurebase chat iframes too. Scope to the actual MUI dialog with `[role="dialog"][aria-modal="true"]` or by accessible name: `page.getByRole('dialog', { name: 'Fork Ruleset' })`.
+- Scope dialog selectors to the open MUI dialog with `[role="dialog"][aria-modal="true"]` or by accessible name: `page.getByRole('dialog', { name: 'Fork Ruleset' })`.
 - `<ListItemText primary="Fork" secondary="Create your own editable copy" />` produces an accessible name combining both lines. Use `name: /^Fork\b/`, not `name: /^Fork$/`.
 - Filter and sort options live inside popup `<Menu>` components; click the "Filter"/"Sort" tooltip IconButton first, then the `MenuItem`.
 - Default submit-button labels diverge per dialog wrapper: `CreateDialog` → "Create", `EditDialog` → "Update", `DeleteDialog` → "Delete", custom dialogs (Fork Ruleset / Archive Campaign / Save Changes) override these. Check the actual component before writing the assertion.
 
 **Shared helpers:**
 
-`tests/e2e/helpers.ts` exports `signIn`, `selectOption`, `createCharacter`, and `TEST_USERS` — reuse them across batches instead of inlining. The helpers scope dialog interactions to `[role="dialog"][aria-modal="true"]` to dodge the Featurebase iframe issue.
+`tests/e2e/helpers.ts` exports `signIn`, `selectOption`, `createCharacter`, and `TEST_USERS` — reuse them across batches instead of inlining. The helpers scope dialog interactions to `[role="dialog"][aria-modal="true"]`.
 
 ## Application Logic
 
@@ -177,3 +177,4 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 - See [docs/auth-routing.md](./docs/auth-routing.md) for the auth/routing architecture: three-bucket layout-route tree, cookie security, demo lifecycle (entry-to-auth vs in-app TTL expiry), stale-cookie defense, cross-tab behavior
 - See [docs/access.md](./docs/access.md) for the policy matrix (rulesets / characters / campaigns / customizations), actor definitions (owner / contributor / campaign member), and the ruleset listing-scope reference
 - See [docs/ui-buttons.md](./docs/ui-buttons.md) for action button color / variant conventions across Buttons and MenuItems (destructive / caution / positive / cancel)
+- [docs/help/](./docs/help/README.md) is the user-facing help center and [CHANGELOG.md](./CHANGELOG.md) the user-facing changelog, both linked from the app. Update them when a change alters user-visible behavior

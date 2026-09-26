@@ -138,7 +138,6 @@ const APP_CONFIG = JSON.stringify({
   sentryDsn: process.env.SENTRY_CLIENT_DSN || null,
   sentryEnvironment: process.env.NODE_ENV || null,
   sentryRelease: process.env.FLY_MACHINE_VERSION || null,
-  featurebaseEnabled: process.env.FEATUREBASE_ENABLED !== "false",
 });
 
 async function getTemplate(): Promise<string> {

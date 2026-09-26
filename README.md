@@ -4,7 +4,7 @@ A programmable ruleset engine for tabletop RPGs.
 
 Original idea and core architecture implemented by myself, the rest was done by AI agents.
 
-[Hosted app](https://rpg.arkyvree.com) · [Contributing](./CONTRIBUTING.md) · [Issues](https://github.com/PhilippeChab/arkyvree/issues) · [Security](./SECURITY.md)
+[Hosted app](https://rpg.arkyvree.com) · [Help](./docs/help/README.md) · [Changelog](./CHANGELOG.md) · [Contributing](./CONTRIBUTING.md) · [Issues](https://github.com/PhilippeChab/arkyvree/issues) · [Security](./SECURITY.md) · [Support on Ko-fi](https://ko-fi.com/philippechab)
 
 ## Prerequisites
 

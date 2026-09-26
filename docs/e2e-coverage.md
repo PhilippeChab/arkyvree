@@ -229,11 +229,6 @@ test polls for it; tests that follow a save with a sticky UI element
 (verify dialog, list row, banner) assert on that element instead of the
 snackbar text.
 
-**Featurebase disabled in tests.** `FEATUREBASE_ENABLED=false` is set on
-the vite command in `playwright.config.ts` so the third-party iframe
-doesn't inject `role="dialog"` elements that would compete with MUI
-dialogs in selectors.
-
 ## Deliberately out of scope
 
 Per project decisions, these are not e2e-tested:

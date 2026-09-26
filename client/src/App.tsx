@@ -4,7 +4,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@ta
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AuthLayoutRoute } from "@/client/src/components/auth/index.ts";
 import { ErrorBoundary } from "@/client/src/components/common/index.ts";
-import { FeaturebaseMessenger, Layout, PublicLayout } from "@/client/src/components/layout/index.ts";
+import { Layout, PublicLayout } from "@/client/src/components/layout/index.ts";
 import { CustomThemeProvider } from "@/client/src/contexts/ThemeContext.tsx";
 import { SnackbarProvider } from "@/client/src/contexts/ToastContext.tsx";
 import { WebSocketProvider } from "@/client/src/contexts/WebSocketContext.tsx";
@@ -192,7 +192,6 @@ function App() {
               <WebSocketProvider>
                 <CssBaseline />
                 <AppRoutes />
-                <FeaturebaseMessenger />
               </WebSocketProvider>
             </SnackbarProvider>
           </CustomThemeProvider>

@@ -1,3 +1,4 @@
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -7,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Dashboard as DashboardIcon,
+  Favorite as SupportIcon,
   HelpOutlined as FaqIcon,
   History as HistoryIcon,
   RocketLaunch as ChangelogIcon,
@@ -52,9 +54,6 @@ const expandedDrawerWidth = 240;
 
 export type Section = "dashboard" | "rulesets" | "campaigns" | "characters" | "activities" | "notifications";
 
-const FEATUREBASE_HELP_URL = "https://arkyvree.featurebase.app/help";
-const FEATUREBASE_CHANGELOG_URL = "https://arkyvree.featurebase.app/changelog";
-
 const sidebarItems = [
   {
     id: "dashboard" as const,
@@ -96,7 +95,7 @@ const sidebarItems = [
     label: "Help",
     icon: <FaqIcon />,
     description: "Help center",
-    path: FEATUREBASE_HELP_URL,
+    path: externalLinks.help,
     external: true,
   },
   {
@@ -104,7 +103,15 @@ const sidebarItems = [
     label: "Changelog",
     icon: <ChangelogIcon />,
     description: "What's new",
-    path: FEATUREBASE_CHANGELOG_URL,
+    path: externalLinks.changelog,
+    external: true,
+  },
+  {
+    id: "support" as const,
+    label: "Support Arkyvree",
+    icon: <SupportIcon />,
+    description: "Buy me a coffee",
+    path: externalLinks.support,
     external: true,
   },
 ];
