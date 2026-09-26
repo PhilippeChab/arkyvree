@@ -2,13 +2,14 @@ import { BlankState, ConfirmDialog } from "@/client/src/components/common/index.
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { AbilityScoresSectionProps } from "../../sectionFactory.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
+import { SheetSection } from "../SheetSection.tsx";
 
 export function AbilityScoresSection({
   abilities,
@@ -24,12 +25,10 @@ export function AbilityScoresSection({
 
   const updateMutation = useMutation({
     mutationFn: async ({ abilityId, score }: { abilityId: string; score: number }) => {
-      const response = await rpc.api.characters[":id"].abilities.$put({
+      return parseResponse(rpc.api.characters[":id"].abilities.$put({
         param: { id: characterId },
         json: { [abilityId]: score },
-      });
-      if (!response.ok) throw new Error("Failed to update ability score");
-      return response.json();
+      }));
     },
     onMutate: async ({ abilityId, score }) => {
       await queryClient.cancelQueries({ queryKey });
@@ -84,10 +83,7 @@ export function AbilityScoresSection({
   };
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography sx={{ fontWeight: 600, color: "primary.main", mb: 3, typography: { xs: "h6", sm: "h5" } }}>
-        Ability Scores
-      </Typography>
+    <SheetSection title="Ability Scores">
       {sortedEntries.length > 0
         ? (
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
@@ -134,6 +130,6 @@ export function AbilityScoresSection({
         }}
         isLoading={false}
       />
-    </Paper>
+    </SheetSection>
   );
 }

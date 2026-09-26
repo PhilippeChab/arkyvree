@@ -2,7 +2,7 @@ import { Grow } from "@mui/material";
 import { createTheme, responsiveFontSizes, type Theme, ThemeProvider } from "@mui/material/styles";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)";
+import { prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -335,6 +335,19 @@ const createAppTheme = (darkMode: boolean): Theme => {
             padding: "8px 12px",
             maxWidth: 320,
           },
+        },
+      },
+      MuiDialogTitle: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            fontWeight: 600,
+            [theme.breakpoints.up("sm")]: { fontSize: "1.25rem" },
+          }),
+        },
+      },
+      MuiDialogActions: {
+        styleOverrides: {
+          root: { padding: "16px 24px" },
         },
       },
       MuiDialog: {

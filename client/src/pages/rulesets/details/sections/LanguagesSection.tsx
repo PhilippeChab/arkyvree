@@ -1,15 +1,17 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, DiceSpinner } from "@/client/src/components/common/index.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { LanguageFormFields, type LanguageFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, Translate as LanguagesIcon } from "@mui/icons-material";
-import { Box, Button, TextField, ToggleButton, Typography } from "@mui/material";
+import { Box, Button, ToggleButton, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { languagesQuery } from "../sectionQueries.ts";
 
 const LANGUAGES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -21,9 +23,6 @@ type LanguagesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["lan
 type LanguagesPaginated = Exclude<LanguagesResponse, { error: string }>;
 type Language = LanguagesPaginated["items"][number];
 
-type LanguageFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["languages"]["$post"]
->["json"];
 
 interface LanguagesSectionProps {
   ruleset: { id: string; name: string; rulesetId?: string | null; userId?: string | null; status?: string };
@@ -40,7 +39,6 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    currentUserId,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -51,39 +49,22 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
     sectionName: "languages",
     label: "Language",
     createFn: async (data) => {
-      const response = await rpc.api.rulesets[":id"].languages.$post({
+      return parseResponse(rpc.api.rulesets[":id"].languages.$post({
         param: { id: ruleset.id },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to create language");
-      return response.json();
+      }));
     },
-    onCreateSuccess: (data) => navigate(`/rulesets/${ruleset.id}/languages/${(data as { id: string }).id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/languages/${created.id}`, { state: { from: location.pathname + location.search } }),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(ruleset.id, "languages"), searchQuery, childOnly],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].languages.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch languages");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...languagesQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
 
   const languages = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (language: Language) => {
     navigate(`/rulesets/${ruleset.id}/languages/${language.id}`, { state: { from: location.pathname + location.search } });
@@ -93,11 +74,9 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.entity(ruleset.id, "languages", language.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].languages[":languageId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].languages[":languageId"].$get({
           param: { id: ruleset.id, languageId: language.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch language");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, ruleset.id]);
@@ -171,17 +150,11 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
         emptyDescription="No languages available for this ruleset."
       />
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
 
       <CreateDialog
         open={createDialogOpen}
@@ -191,27 +164,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
         onSubmit={(data) => createMutation.mutate(data)}
         isLoading={createMutation.isPending}
       >
-        <TextField
-          {...createForm.register("name", { required: "Name is required" })}
-          label="Name"
-          fullWidth
-          error={!!createForm.formState.errors.name}
-          helperText={createForm.formState.errors.name?.message}
-        />
-        <TextField
-          {...createForm.register("description")}
-          label="Description"
-          fullWidth
-          multiline
-          minRows={3}
-          sx={{ "& textarea": { resize: "vertical" } }}
-        />
-        <TextField
-          {...createForm.register("type")}
-          label="Type"
-          fullWidth
-          placeholder="e.g., Spoken, Written, Sign"
-        />
+        <LanguageFormFields form={createForm} />
       </CreateDialog>
     </Box>
   );

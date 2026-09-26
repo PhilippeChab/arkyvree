@@ -4,6 +4,13 @@ import { BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
 export type EntityKind = "pc" | (typeof BONDED_KINDS)[number]["slug"];
 export type EntitySortField = "name" | "createdAt" | "updatedAt";
 
+/** Kind and sort the Races and Classes tabs open with. */
+export const DEFAULT_ENTITY_FILTERS = {
+  kind: "pc",
+  orderBy: "name",
+  orderDir: "asc",
+} as const satisfies { kind: EntityKind; orderBy: EntitySortField; orderDir: "asc" | "desc" };
+
 export const KIND_FILTER_OPTIONS: FilterOption<EntityKind>[] = [
   { value: "pc", label: "Player Character" },
   ...BONDED_KINDS.map((b) => ({ value: b.slug as EntityKind, label: b.label })),

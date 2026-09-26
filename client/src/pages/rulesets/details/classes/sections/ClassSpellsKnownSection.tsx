@@ -1,6 +1,6 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
@@ -39,11 +39,9 @@ export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSpellsKnown
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.classSpellsKnown(rulesetId, classId),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get({
         param: { id: rulesetId, classId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch spells known");
-      return response.json();
+      }));
     },
   });
 

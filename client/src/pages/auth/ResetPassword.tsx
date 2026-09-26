@@ -1,6 +1,8 @@
-import { AuthPage } from "@/client/src/components/auth";
+import { AuthPage, VerificationCodeInput } from "@/client/src/components/auth/index.ts";
+import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { confirmPasswordRules, newPasswordRules } from "@/client/src/lib/validation.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Alert,
@@ -10,7 +12,7 @@ import {
   Typography,
   Link as MuiLink,
 } from "@mui/material";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
@@ -22,71 +24,28 @@ interface ResetPasswordFormData {
 
 export default function ResetPassword() {
   usePageTitle("Reset Password");
-  const { resetPassword, forgotPassword, pendingPasswordResetEmail, isLoading } = useAuthStore();
+  const resetPassword = useAuthStore((s) => s.resetPassword);
+  const forgotPassword = useAuthStore((s) => s.forgotPassword);
+  const pendingPasswordResetEmail = useAuthStore((s) => s.pendingPasswordResetEmail);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const [error, setError] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
 
   const form = useForm<ResetPasswordFormData>({
-    defaultValues: { digits: ["", "", "", "", "", "", "", ""], newPassword: "", newPasswordConfirmation: "" },
+    defaultValues: { digits: EMPTY_VERIFICATION_CODE, newPassword: "", newPasswordConfirmation: "" },
   });
+  const { errors } = form.formState;
   const digits = form.watch("digits");
-  const newPassword = form.watch("newPassword");
-  const newPasswordConfirmation = form.watch("newPasswordConfirmation");
 
   if (!pendingPasswordResetEmail) {
     return <Navigate to="/forgot-password" replace />;
   }
 
-  const setDigits = (next: string[]) => form.setValue("digits", next, { shouldDirty: true });
-
-  const handleDigitChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      const pasted = value.replace(/\D/g, "").slice(0, 8);
-      if (pasted.length > 0) {
-        const next = digits.slice();
-        for (let i = 0; i < pasted.length && i + index < 8; i++) {
-          next[i + index] = pasted[i];
-        }
-        setDigits(next);
-        const nextIndex = Math.min(index + pasted.length, 7);
-        inputRefs.current[nextIndex]?.focus();
-        return;
-      }
-    }
-
-    const digit = value.replace(/\D/g, "").slice(-1);
-    const next = digits.slice();
-    next[index] = digit;
-    setDigits(next);
-
-    if (digit && index < 7) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
   const onSubmit = async (data: ResetPasswordFormData) => {
-    const code = data.digits.join("");
-    if (code.length !== 8) return;
-    if (data.newPassword.length < 12) {
-      setError("Password must be at least 12 characters");
-      return;
-    }
-    if (data.newPassword !== data.newPasswordConfirmation) {
-      setError("Passwords do not match");
-      return;
-    }
-
     try {
       setError(null);
-      await resetPassword(pendingPasswordResetEmail, code, data.newPassword, data.newPasswordConfirmation);
+      await resetPassword(pendingPasswordResetEmail, data.digits.join(""), data.newPassword, data.newPasswordConfirmation);
       navigate("/sign-in");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Failed to reset password");
@@ -104,7 +63,7 @@ export default function ResetPassword() {
     }
   };
 
-  const isComplete = digits.every((d) => d !== "") && newPassword.length > 0 && newPasswordConfirmation.length > 0;
+  const isComplete = digits.every((d) => d !== "");
 
   return (
     <AuthPage
@@ -122,59 +81,36 @@ export default function ResetPassword() {
         </Alert>
       )}
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            justifyContent: "center",
-            mb: 3,
-          }}
-        >
-          {digits.map((digit, index) => (
-            <TextField
-              key={index}
-              inputRef={(el) => { inputRefs.current[index] = el; }}
-              value={digit}
-              onChange={(e) => handleDigitChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              sx={{ width: { xs: 36, sm: 44 } }}
-              slotProps={{
-                htmlInput: {
-                  maxLength: 8,
-                  style: {
-                    textAlign: "center",
-                    fontSize: "1.5rem",
-                    fontWeight: "bold",
-                    padding: "12px 0",
-                  },
-                  inputMode: "numeric",
-                }
-              }}
-            />
-          ))}
-        </Box>
+        <VerificationCodeInput
+          digits={digits}
+          onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
+        />
 
         <TextField
-          {...form.register("newPassword")}
+          {...form.register("newPassword", newPasswordRules)}
           label="New Password"
           type="password"
           variant="outlined"
           fullWidth
           margin="normal"
+          error={!!errors.newPassword}
+          helperText={errors.newPassword?.message}
           slotProps={{
-            htmlInput: { minLength: 12 }
+            htmlInput: { autoComplete: "new-password" }
           }}
         />
 
         <TextField
-          {...form.register("newPasswordConfirmation")}
+          {...form.register("newPasswordConfirmation", confirmPasswordRules<ResetPasswordFormData>("newPassword"))}
           label="Confirm New Password"
           type="password"
           variant="outlined"
           fullWidth
           margin="normal"
+          error={!!errors.newPasswordConfirmation}
+          helperText={errors.newPasswordConfirmation?.message}
           slotProps={{
-            htmlInput: { minLength: 12 }
+            htmlInput: { autoComplete: "new-password" }
           }}
         />
 
@@ -194,6 +130,7 @@ export default function ResetPassword() {
           Didn't receive the code?{" "}
           <MuiLink
             component="button"
+            type="button"
             underline="hover"
             onClick={handleResend}
             disabled={isLoading}

@@ -9,7 +9,6 @@ import {
   Collapse,
   IconButton,
   Link as MuiLink,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -21,6 +20,7 @@ import {
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { PowersSectionProps } from "../../sectionFactory.ts";
+import { SheetSection } from "../SheetSection.tsx";
 
 const SCHOOL_KEY = "SPELL_SCHOOL";
 
@@ -146,7 +146,7 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
               <col style={{ width: "10%" }} />
             </colgroup>
             <TableHead>
-              <TableRow sx={{ bgcolor: "grey.100" }}>
+              <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Save</TableCell>
@@ -305,13 +305,10 @@ export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spell
   if (groups.length === 0) return null;
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography sx={{ fontWeight: 600, color: "primary.main", mb: 3, typography: { xs: "h6", sm: "h5" } }}>
-        Spells
-      </Typography>
+    <SheetSection title="Spells">
       {groups.map((apt) => (
         <CollapsibleClass key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
       ))}
-    </Paper>
+    </SheetSection>
   );
 }

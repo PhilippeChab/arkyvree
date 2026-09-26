@@ -1,10 +1,10 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { SearchBar, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Bolt as SpellListIcon } from "@mui/icons-material";
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -42,7 +42,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpel
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, selectedLevel, debouncedSearch),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
         param: { id: rulesetId, classId },
         query: {
           page: pageParam.toString(),
@@ -50,9 +50,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpel
           level: selectedLevel.toString(),
           ...(debouncedSearch && { search: debouncedSearch }),
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch spells");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -117,17 +115,11 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpel
         emptyDescription="No spells found for this class at the selected level."
       />
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
     </Box>
   );
 }

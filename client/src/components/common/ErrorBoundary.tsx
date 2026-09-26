@@ -1,6 +1,7 @@
 import { Box, Button, Typography } from "@mui/material";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
+import { isChunkLoadError, reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
 import { Sentry } from "@/client/src/lib/sentry.ts";
 
 interface Props {
@@ -18,27 +19,13 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false, isChunkError: false };
   }
 
-  static isChunkLoadError(error: unknown): boolean {
-    // Vite fires this custom error type for failed dynamic imports
-    if (error instanceof TypeError && error.message.includes("import")) return true;
-    // Webpack uses a named error
-    if (error instanceof Error && error.name === "ChunkLoadError") return true;
-    // Some browsers wrap it as a generic error with a failed network request cause
-    if (error instanceof Error && error.cause instanceof TypeError) return true;
-    return false;
-  }
-
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, isChunkError: ErrorBoundary.isChunkLoadError(error) };
+    return { hasError: true, isChunkError: isChunkLoadError(error) };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (this.state.isChunkError) {
-      const lastReload = sessionStorage.getItem("chunk_reload");
-      if (!lastReload || Date.now() - Number(lastReload) > 10_000) {
-        sessionStorage.setItem("chunk_reload", String(Date.now()));
-        window.location.reload();
-      }
+      reloadForStaleChunks();
       return;
     }
     // eslint-disable-next-line no-console -- ErrorBoundary must log unrecoverable errors

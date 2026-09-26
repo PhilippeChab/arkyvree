@@ -2,10 +2,9 @@ import {
   CreateLevelDialog,
 } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { useClassLevels, usePermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useClassLevels, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, FormatListNumbered as LevelsIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Tooltip, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,19 +33,16 @@ interface ClassLevelsSectionProps {
 export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassLevelsSectionProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const currentUserId = useAuthStore((state) => state.user?.id);
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   // Fetch saves for dynamic columns
   const { data: savesData } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, "saves"),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"]["saves"]["$get"]({
+      return parseResponse(rpc.api.rulesets[":id"]["saves"]["$get"]({
         param: { id: rulesetId },
         query: { limit: "100", page: "1" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch saves");
-      return response.json();
+      }));
     },
   });
   // Build dynamic columns based on ruleset saves
@@ -85,11 +81,9 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.entity(rulesetId, "klass_levels", level.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].class_levels[":classLevelId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].class_levels[":classLevelId"].$get({
           param: { id: rulesetId, classLevelId: level.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch class level");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, rulesetId]);

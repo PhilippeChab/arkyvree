@@ -1,7 +1,8 @@
 import { BlankState } from "@/client/src/components/common/index.ts";
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import type { CombatAndSavesSectionProps } from "../../sectionFactory.ts";
 import { StatField, fmt } from "./statHelpers.tsx";
+import { SheetSection } from "../SheetSection.tsx";
 
 function iterativeAttacks(bab: number): string {
   const attacks: string[] = [];
@@ -18,10 +19,7 @@ export function CombatAndSavesSection({
   const bab = combat?.bab ?? 0;
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography sx={{ fontWeight: 600, mb: 3, color: "primary.main", typography: { xs: "h6", sm: "h5" } }}>
-        Combat & Saves
-      </Typography>
+    <SheetSection title="Combat & Saves">
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3 }}>
         {/* Left column: Combat Stats */}
         <Box sx={{ flex: 1, minWidth: { md: 350 } }}>
@@ -123,6 +121,6 @@ export function CombatAndSavesSection({
             )}
         </Box>
       </Box>
-    </Paper>
+    </SheetSection>
   );
 }

@@ -29,3 +29,26 @@ export function useSearchParam(key: string, defaultValue = ""): [string, (value:
 
   return [value, setValue];
 }
+
+/**
+ * Apply several search param changes at once, e.g. a sort field and direction.
+ * Empty values remove the param. Pushes a history entry so Back restores the
+ * previous filters.
+ */
+export function useUpdateSearchParams() {
+  const [, setSearchParams] = useSearchParams();
+
+  return useCallback(
+    (updates: Record<string, string | null | undefined>) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [key, value] of Object.entries(updates)) {
+          if (value) next.set(key, value);
+          else next.delete(key);
+        }
+        return next;
+      });
+    },
+    [setSearchParams],
+  );
+}

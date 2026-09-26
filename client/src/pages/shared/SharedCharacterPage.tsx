@@ -1,6 +1,6 @@
 import { PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { Download as DownloadIcon } from "@mui/icons-material";
@@ -21,11 +21,9 @@ export default function SharedCharacterPage() {
     queryKey: queryKeys.shared.character(shareToken!),
     queryFn: async () => {
       if (!shareToken) throw new Error("Share token is required");
-      const response = await rpc.api.shared.characters[":shareToken"]["$get"]({
+      return parseResponse(rpc.api.shared.characters[":shareToken"]["$get"]({
         param: { shareToken },
-      });
-      if (!response.ok) throw new Error("Failed to fetch shared character");
-      return response.json();
+      }));
     },
     enabled: !!shareToken,
   });

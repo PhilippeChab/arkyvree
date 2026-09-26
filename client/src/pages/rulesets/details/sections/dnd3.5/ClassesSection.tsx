@@ -1,18 +1,19 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { SearchBar, CreateDialog, DiceSpinner } from "@/client/src/components/common/index.ts";
-import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, type EntityKind, type EntitySortField } from "../kindFilterOptions.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { DEFAULT_ENTITY_FILTERS, ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, type EntityKind, type EntitySortField } from "../kindFilterOptions.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { AccessibilityNew as ClassesIcon, Add as AddIcon } from "@mui/icons-material";
-import { Box, Button, Chip, MenuItem, TextField, ToggleButton, Typography } from "@mui/material";
-import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
+import { Box, Button, Chip, ToggleButton, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ClassesSectionProps } from "../../sectionFactory.ts";
+import { classesQuery } from "../../sectionQueries.ts";
 
 const CLASSES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -25,7 +26,6 @@ type ClassesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["class
 type ClassesPaginated = Exclude<ClassesResponse, { error: string }>;
 type Class = ClassesPaginated["items"][number];
 
-type ClassFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["classes"]["$post"]>["json"];
 
 export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: ClassesSectionProps) {
   const navigate = useNavigate();
@@ -38,12 +38,11 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
   const [orderByParam, setOrderByParam] = useSearchParam("orderBy");
   const [orderDirParam, setOrderDirParam] = useSearchParam("orderDir");
 
-  const kindFilter: EntityKind = (KIND_FILTER_OPTIONS.find((o) => o.value === kindParam)?.value ?? "pc") as EntityKind;
-  const sortField = (orderByParam as EntitySortField) || "name";
-  const sortDirection = (orderDirParam as "asc" | "desc") || "asc";
+  const kindFilter: EntityKind = (KIND_FILTER_OPTIONS.find((o) => o.value === kindParam)?.value ?? DEFAULT_ENTITY_FILTERS.kind) as EntityKind;
+  const sortField = (orderByParam as EntitySortField) || DEFAULT_ENTITY_FILTERS.orderBy;
+  const sortDirection = (orderDirParam as "asc" | "desc") || DEFAULT_ENTITY_FILTERS.orderDir;
 
   const {
-    currentUserId,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -55,42 +54,22 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
     label: "Class",
     createDefaults: { hd: 8 },
     createFn: async (data) => {
-      const response = await rpc.api.rulesets[":id"].classes.$post({
+      return parseResponse(rpc.api.rulesets[":id"].classes.$post({
         param: { id: ruleset.id },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to create class");
-      return response.json();
+      }));
     },
-    onCreateSuccess: (data) => navigate(`/rulesets/${ruleset.id}/classes/${(data as { id: string }).id}/levels`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/classes/${created.id}/levels`, { state: { from: location.pathname + location.search } }),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(ruleset.id, "classes"), searchQuery, childOnly, kindFilter, sortField, sortDirection],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].classes.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-          kind: kindFilter,
-          orderBy: sortField,
-          orderDir: sortDirection,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch classes");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...classesQuery(ruleset.id, { search: searchQuery, childOnly, kind: kindFilter, orderBy: sortField, orderDir: sortDirection }),
     placeholderData: keepPreviousData,
   });
 
   const classes = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleClassClick = (class_: Class) => {
     navigate(`/rulesets/${ruleset.id}/classes/${class_.id}/levels`, { state: { from: location.pathname + location.search } });
@@ -100,21 +79,17 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.classDetail(ruleset.id, class_.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].classes[":classId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
           param: { id: ruleset.id, classId: class_.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch class");
-        return response.json();
+        }));
       },
     });
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.classLevels(ruleset.id, class_.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
+        return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
           param: { id: ruleset.id, classId: class_.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch levels");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, ruleset.id]);
@@ -211,17 +186,11 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
         emptyDescription="No classes available for this ruleset."
       />
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
 
       <CreateDialog
         open={createDialogOpen}
@@ -232,34 +201,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
         isLoading={createMutation.isPending}
         maxWidth="xs"
       >
-        <TextField
-          {...createForm.register("name", { required: "Name is required" })}
-          label="Name"
-          fullWidth
-          error={!!createForm.formState.errors.name}
-          helperText={createForm.formState.errors.name?.message}
-        />
-        <TextField
-          {...createForm.register("description")}
-          label="Description"
-          fullWidth
-          multiline
-          minRows={3}
-          sx={{ "& textarea": { resize: "vertical" } }}
-        />
-        <TextField
-          {...createForm.register("hd", { valueAsNumber: true })}
-          label="Hit Die"
-          select
-          fullWidth
-          value={createForm.watch("hd") ?? 8}
-          error={!!createForm.formState.errors.hd}
-          helperText={createForm.formState.errors.hd?.message}
-        >
-          {HIT_DIE_VALUES.map((v) => (
-            <MenuItem key={v} value={v}>{`d${v}`}</MenuItem>
-          ))}
-        </TextField>
+        <ClassFormFields form={createForm} />
       </CreateDialog>
     </Box>
   );

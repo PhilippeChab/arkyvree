@@ -1,7 +1,9 @@
-import { AnimatedAlert, FormDialog } from "@/client/src/components/common/index.ts";
+import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
+import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
+import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Box,
@@ -9,12 +11,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
   Typography,
   Link as MuiLink,
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface EmailChangeVerificationDialogProps {
@@ -34,125 +35,46 @@ export function EmailChangeVerificationDialog({
 }: EmailChangeVerificationDialogProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
+  const updateUser = useAuthStore((s) => s.updateUser);
   const [error, setError] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const form = useForm<EmailVerificationFormData>({
-    defaultValues: { digits: ["", "", "", "", "", "", "", ""] },
+    defaultValues: { digits: EMPTY_VERIFICATION_CODE },
   });
-  const { handleSubmit, watch, setValue, reset } = form;
-  const digits = watch("digits");
-
-  const resetState = () => {
-    reset();
-    setError(null);
-    setResendSuccess(false);
-  };
-
-  useEffect(() => {
-    if (!open) resetState();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  const digits = form.watch("digits");
 
   const handleClose = () => {
-    resetState();
+    form.reset();
+    setError(null);
+    setResendSuccess(false);
     onClose();
   };
 
-  const setDigits = (newDigits: string[]) => {
-    setValue("digits", newDigits, { shouldDirty: true });
-  };
-
-  const handleDigitChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      const pasted = value.replace(/\D/g, "").slice(0, 8);
-      if (pasted.length > 0) {
-        const newDigits = [...digits];
-        for (let i = 0; i < pasted.length && i + index < 8; i++) {
-          newDigits[i + index] = pasted[i];
-        }
-        setDigits(newDigits);
-        const nextIndex = Math.min(index + pasted.length, 7);
-        inputRefs.current[nextIndex]?.focus();
-        return;
-      }
-    }
-
-    const digit = value.replace(/\D/g, "").slice(-1);
-    const newDigits = [...digits];
-    newDigits[index] = digit;
-    setDigits(newDigits);
-
-    if (digit && index < 7) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
   const verifyMutation = useMutation({
-    mutationFn: async (code: string) => {
-      const response = await rpc.auth["verify-email-change"].$post({
-        json: { code },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Verification failed");
-      }
-
-      return response.json();
-    },
+    mutationFn: (code: string) => parseResponse(rpc.auth["verify-email-change"].$post({ json: { code } })),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
-      useAuthStore.setState((state) => ({
-        user: state.user
-          ? {
-              ...state.user,
-              emailAddress: data.emailAddress,
-              pendingEmailAddress: data.pendingEmailAddress,
-            }
-          : null,
-      }));
+      updateUser({ emailAddress: data.emailAddress, pendingEmailAddress: data.pendingEmailAddress });
       snackbar.success("Email address updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      setError(error.message);
-    },
+    onError: (error) => setError(error.message),
   });
 
   const resendMutation = useMutation({
-    mutationFn: async () => {
-      const response = await rpc.auth["resend-email-change"].$post();
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to resend code");
-      }
-
-      return response.json();
-    },
+    mutationFn: () => rpc.auth["resend-email-change"].$post(),
     onSuccess: () => {
       setResendSuccess(true);
       setError(null);
     },
-    onError: (error: Error) => {
-      setError(error.message);
-    },
+    onError: (error) => setError(error.message),
   });
 
   const onSubmit = (data: EmailVerificationFormData) => {
-    const code = data.digits.join("");
-    if (code.length !== 8) return;
     setError(null);
     setResendSuccess(false);
-    verifyMutation.mutate(code);
+    verifyMutation.mutate(data.digits.join(""));
   };
 
   const isComplete = digits.every((d) => d !== "");
@@ -179,40 +101,11 @@ export function EmailChangeVerificationDialog({
           A new code has been sent to your email.
         </AnimatedAlert>
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1,
-              justifyContent: "center",
-              mb: 2,
-            }}
-          >
-            {digits.map((digit, index) => (
-              <TextField
-                key={index}
-                inputRef={(el) => {
-                  inputRefs.current[index] = el;
-                }}
-                value={digit}
-                onChange={(e) => handleDigitChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                sx={{ width: { xs: 36, sm: 44 } }}
-                slotProps={{
-                  htmlInput: {
-                    maxLength: 8,
-                    style: {
-                      textAlign: "center",
-                      fontSize: "1.5rem",
-                      fontWeight: "bold",
-                      padding: "12px 0",
-                    },
-                    inputMode: "numeric",
-                  }
-                }}
-              />
-            ))}
-          </Box>
+        <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          <VerificationCodeInput
+            digits={digits}
+            onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
+          />
 
           <Box sx={{ textAlign: "center", mb: 1 }}>
             <Typography variant="body2">
@@ -230,13 +123,13 @@ export function EmailChangeVerificationDialog({
           </Box>
 
           <DialogActions sx={{ px: 0 }}>
-            <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
+            <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">Cancel</Button>
             <Button
               type="submit"
               variant="contained"
               disabled={verifyMutation.isPending || !isComplete}
             >
-              {verifyMutation.isPending ? "Verifying..." : "Verify"}
+              <DiceSpinner size="small" loading={verifyMutation.isPending}>Verify</DiceSpinner>
             </Button>
           </DialogActions>
         </form>

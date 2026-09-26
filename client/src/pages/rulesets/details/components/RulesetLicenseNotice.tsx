@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -12,6 +11,7 @@ import {
 } from "@mui/material";
 
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { useOglLicense } from "@/client/src/hooks/index.ts";
 
 interface RulesetLicenseNoticeProps {
   name: string;
@@ -19,16 +19,7 @@ interface RulesetLicenseNoticeProps {
 
 export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
   const [open, setOpen] = useState(false);
-  const { data: text, isPending, isError, refetch } = useQuery({
-    queryKey: ["legal", "ogl-1.0a"],
-    queryFn: async ({ signal }) => {
-      const response = await fetch("/legal/ogl-1.0a.md", { signal });
-      if (!response.ok) throw new Error("Failed to load the license text");
-      return response.text();
-    },
-    enabled: open,
-    staleTime: Infinity,
-  });
+  const { data: text, isPending, isError, refetch } = useOglLicense(open);
 
   return (
     <>
@@ -79,7 +70,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Close</Button>
+          <Button onClick={() => setOpen(false)} variant="outlined" color="inherit">Close</Button>
         </DialogActions>
       </Modal>
     </>

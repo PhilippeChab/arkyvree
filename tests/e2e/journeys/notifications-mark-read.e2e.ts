@@ -9,9 +9,9 @@ import { signIn, selectOption } from '@/tests/e2e/helpers.ts';
  *    across the worker pool — assert deltas, not absolute zero)
  *  - For the FIRST invite row: actionable invite rows render Accept/Reject
  *    buttons (no dedicated Mark-As-Read button on actionable rows). The
- *    only per-row affordance that calls `markReadMutation` for an invite
- *    is Reject (which fires `inviteActions.rejectInvite` → markNotificationRead
- *    in `useInviteActions.ts`). Click Reject on the first invite.
+ *    only per-row affordance that marks an invite read is Reject (the
+ *    server marks the notification read, and `useNotificationActions.reject`
+ *    refetches). Click Reject on the first invite.
  *  - Assert the row is no longer styled "unread" (NotificationsPage.tsx:
  *    unread rows have `bgcolor: action.selected` AND a leading 8px primary
  *    Circle dot; read rows have neither). The simplest assertion is that
@@ -90,7 +90,7 @@ test.describe('Notifications Mark-Read Flow', () => {
 
     // Sanity: both invite rows render the actionable Accept/Reject pair
     // (they're unread + actionable type — see NotificationsPage.tsx
-    // `isActionable` and ACTIONABLE_NOTIFICATION_TYPES in activityFormatters.ts).
+    // uses `useNotificationActions().isActionable`).
     await expect(rowA.getByRole('button', { name: 'Accept' })).toBeVisible();
     await expect(rowA.getByRole('button', { name: 'Reject' })).toBeVisible();
     await expect(rowB.getByRole('button', { name: 'Accept' })).toBeVisible();
@@ -100,11 +100,8 @@ test.describe('Notifications Mark-Read Flow', () => {
     // Actionable invite rows do NOT render a dedicated "Mark as read"
     // button — only Accept/Reject. The user spec says "don't accept the
     // invites; we're testing the read affordance", and Reject is the
-    // only per-row affordance that fires markNotificationRead for an
-    // actionable row (see useInviteActions.rejectInvite in
-    // client/src/hooks/useInviteActions.ts — its onSuccess calls
-    // markNotificationRead which POSTs notifications/:id/read, the same
-    // endpoint NotificationsPage.markReadMutation hits).
+    // only per-row affordance that marks an actionable row read (see
+    // `reject` in client/src/hooks/useNotificationActions.ts).
     await rowA.getByRole('button', { name: 'Reject' }).click();
 
     // After the read flips, row A is no longer actionable: Accept/Reject
@@ -181,7 +178,7 @@ test.describe('Notifications Mark-Read Flow', () => {
 
     // ── Invitee REJECTS both invites — each reject fires a
     // `rejectCampaignInvite` notification BACK to the GM.
-    // rejectCampaignInvite is NOT in ACTIONABLE_NOTIFICATION_TYPES, so
+    // rejectCampaignInvite is not an invite type (not actionable), so
     // these are the kind of notifications Mark-All-Read actually
     // affects (the server's markAllRead excludes actionable types).
     const inviteeContext = await browser.newContext();

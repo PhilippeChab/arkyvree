@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError, rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 
 interface SlotParams {
@@ -22,7 +22,7 @@ export function useDirectUpload(slot: SlotParams) {
         throw new Error(`File exceeds ${MAX_UPLOAD_BYTES / 1024 / 1024}MB limit`);
       }
 
-      const presignRes = await rpc.api.attachments["direct-uploads"].$post({
+      const { signedId, presignedUrl, headers } = await parseResponse(rpc.api.attachments["direct-uploads"].$post({
         json: {
           recordType: slot.recordType,
           recordId: slot.recordId,
@@ -31,15 +31,9 @@ export function useDirectUpload(slot: SlotParams) {
           contentType: file.type,
           byteSize: file.size,
         },
-      });
-      if (!presignRes.ok) {
-        throw new ApiError(
-          "Failed to start upload",
-          presignRes.status,
-          "DirectUploadError",
-        );
-      }
-      const { signedId, presignedUrl, headers } = await presignRes.json();
+      }));
+
+      // Straight to storage, outside the API client: check the status here.
 
       const putRes = await fetch(presignedUrl, {
         method: "PUT",
@@ -50,13 +44,7 @@ export function useDirectUpload(slot: SlotParams) {
         throw new Error(`Upload failed: ${putRes.status} ${putRes.statusText}`);
       }
 
-      const attachRes = await rpc.api.attachments[":signedId"].attach.$post({
-        param: { signedId },
-      });
-      if (!attachRes.ok) {
-        throw new ApiError("Failed to attach", attachRes.status, "AttachError");
-      }
-      return await attachRes.json();
+      return parseResponse(rpc.api.attachments[":signedId"].attach.$post({ param: { signedId } }));
     },
     onSuccess: () => {
       if (slot.recordId) {
@@ -76,15 +64,8 @@ export function useDetachAttachment(slot: SlotParams) {
   const snackbar = useSnackbar();
 
   return useMutation({
-    mutationFn: async (attachmentId: string) => {
-      const res = await rpc.api.attachments[":id"].$delete({
-        param: { id: attachmentId },
-      });
-      if (!res.ok) {
-        throw new ApiError("Failed to detach", res.status, "DetachError");
-      }
-      return await res.json();
-    },
+    mutationFn: (attachmentId: string) =>
+      parseResponse(rpc.api.attachments[":id"].$delete({ param: { id: attachmentId } })),
     onSuccess: () => {
       if (slot.recordId) {
         queryClient.invalidateQueries({

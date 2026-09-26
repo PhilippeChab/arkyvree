@@ -1,8 +1,12 @@
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import {
+  campaignListQuery,
+  characterListQuery,
+  dashboardStatsQuery,
+  rulesetListQuery,
+} from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { useAttachment } from "@/client/src/hooks/index.ts";
 import {
   AccountCircle,
   ChevronLeft,
@@ -20,7 +24,6 @@ import {
   Person as PersonIcon,
   Settings as SettingsIcon,
 } from "@mui/icons-material";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import {
   AppBar,
   Avatar,
@@ -39,20 +42,18 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
+import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAttachment, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
+import { AppBrand, AppMain } from "./AppShell.tsx";
 import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
-import { Footer } from "./Footer.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";
 
 const drawerWidth = 72;
 const expandedDrawerWidth = 240;
-
-export type Section = "dashboard" | "rulesets" | "campaigns" | "characters" | "activities" | "notifications";
 
 const sidebarItems = [
   {
@@ -118,6 +119,16 @@ const sidebarItems = [
 
 const stepToSidebarId: Record<number, string> = { 1: "rulesets", 2: "characters", 3: "campaigns" };
 
+// Warm the first page of a section when its sidebar item is hovered. The
+// options are the ones the pages use, filtered the way a page opens by default.
+const DEFAULT_LIST = { search: "", orderBy: "createdAt", orderDir: "desc" } as const;
+const prefetchers: Partial<Record<string, (queryClient: QueryClient) => void>> = {
+  dashboard: (queryClient) => void queryClient.prefetchQuery(dashboardStatsQuery()),
+  rulesets: (queryClient) => void queryClient.prefetchInfiniteQuery(rulesetListQuery({ scope: undefined, ...DEFAULT_LIST })),
+  characters: (queryClient) => void queryClient.prefetchInfiniteQuery(characterListQuery({ view: "active", ...DEFAULT_LIST })),
+  campaigns: (queryClient) => void queryClient.prefetchInfiniteQuery(campaignListQuery({ view: "active", ...DEFAULT_LIST })),
+};
+
 export function Layout() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -126,6 +137,7 @@ export function Layout() {
   const theme = useTheme();
 
   const user = useAuthStore((s) => s.user);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const { data: avatarAttachment } = useAttachment({
     recordType: "User",
     recordId: user?.id,
@@ -161,117 +173,17 @@ export function Layout() {
 
   const handleOnboardingClose = useCallback(() => {
     setOnboardingOpen(false);
-    useAuthStore.setState((s) => ({
-      user: s.user ? { ...s.user, onboardingCompletedAt: new Date().toISOString() } : null,
-    }));
+    updateUser({ onboardingCompletedAt: new Date().toISOString() });
     completeOnboarding();
-  }, [completeOnboarding]);
+  }, [completeOnboarding, updateUser]);
 
   const location = useLocation();
   const navigate = useNavigate();
-  const mainRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = mainRef.current;
-    if (!el || el.scrollTop === 0) return;
-
-    const start = el.scrollTop;
-    const startTime = performance.now();
-    const duration = 250;
-    let frame: number;
-
-    function step(now: number) {
-      const progress = Math.min((now - startTime) / duration, 1);
-      el!.scrollTop = start * (1 - (1 - Math.pow(1 - progress, 3)));
-      if (progress < 1) frame = requestAnimationFrame(step);
-    }
-
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, [location.pathname]);
-
   const queryClient = useQueryClient();
-  const { signOut, clearSession } = useAuthStore();
-
-  const prefetchSection = useCallback((sectionId: Section) => {
-    switch (sectionId) {
-      case "dashboard":
-        queryClient.prefetchQuery({
-          queryKey: queryKeys.dashboard.stats,
-          queryFn: async () => {
-            const response = await rpc.api.dashboard.stats.$get();
-            if (!response.ok) throw new Error("Failed to fetch dashboard stats");
-            return response.json();
-          },
-        });
-        break;
-      case "campaigns":
-        queryClient.prefetchInfiniteQuery({
-          queryKey: queryKeys.campaigns.list({ view: "active", search: "", orderBy: "createdAt", orderDir: "desc" }),
-          queryFn: async () => {
-            const response = await rpc.api.campaigns.$get({
-              query: { page: "1", limit: "10", visibility: "active", orderBy: "createdAt", orderDir: "desc" },
-            });
-            if (!response.ok) throw new Error("Failed to fetch campaigns");
-            return response.json();
-          },
-          initialPageParam: 1,
-        });
-        break;
-      case "characters":
-        queryClient.prefetchInfiniteQuery({
-          queryKey: queryKeys.characters.list({ view: "active", search: "", orderBy: "createdAt", orderDir: "desc" }),
-          queryFn: async () => {
-            const response = await rpc.api.characters.$get({
-              query: { page: "1", limit: "10", visibility: "active", orderBy: "createdAt", orderDir: "desc" },
-            });
-            if (!response.ok) throw new Error("Failed to fetch characters");
-            return response.json();
-          },
-          initialPageParam: 1,
-        });
-        break;
-      case "rulesets":
-        queryClient.prefetchInfiniteQuery({
-          queryKey: queryKeys.rulesets.list({ scope: undefined, search: "", orderBy: "createdAt", orderDir: "desc" }),
-          queryFn: async () => {
-            const response = await rpc.api.rulesets.$get({
-              query: { page: "1", limit: "10", orderBy: "createdAt", orderDir: "desc" },
-            });
-            if (!response.ok) throw new Error("Failed to fetch rulesets");
-            return response.json();
-          },
-          initialPageParam: 1,
-        });
-        break;
-      case "activities":
-        queryClient.prefetchInfiniteQuery({
-          queryKey: queryKeys.activities.list({ search: "", orderBy: "createdAt", orderDir: "desc" }),
-          queryFn: async () => {
-            const response = await rpc.api.activities.$get({
-              query: { page: "1", limit: "20", orderBy: "createdAt", orderDir: "desc" },
-            });
-            if (!response.ok) throw new Error("Failed to fetch activities");
-            return response.json();
-          },
-          initialPageParam: 1,
-        });
-        break;
-    }
-  }, [queryClient]);
-
-  // Get active section from current path
-  const getActiveSection = (): Section => {
-    const path = location.pathname.slice(1); // Remove leading slash
-    const basePath = path.split("/")[0]; // Get first segment (e.g., "rulesets" from "rulesets/123")
-
-    if (
-      ["dashboard", "characters", "campaigns", "rulesets", "activities", "notifications"].includes(basePath)
-    ) {
-      return basePath as Section;
-    }
-    return "dashboard";
-  };
+  const signOut = useAuthStore((s) => s.signOut);
+  const clearSession = useAuthStore((s) => s.clearSession);
+  // First path segment, e.g. "rulesets" for /rulesets/123; highlights the matching sidebar item.
+  const activeSection = location.pathname.split("/")[1];
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -316,7 +228,7 @@ export function Layout() {
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           {isMobile ? (
-            <IconButton color="inherit" onClick={() => setMobileDrawerOpen(true)} edge="start">
+            <IconButton color="inherit" onClick={() => setMobileDrawerOpen(true)} edge="start" aria-label="Open navigation">
               <MenuIcon />
             </IconButton>
           ) : (
@@ -338,15 +250,14 @@ export function Layout() {
               fontWeight: 700,
             }}
           >
-            <img src="/pwa-192x192.png" alt="" style={{ width: 28, height: 28, marginRight: 8, verticalAlign: "middle" }} />
-            Arkyvree
+            <AppBrand />
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 2 }, flexShrink: 0 }}>
             {!isDemo && <FeedbackButton />}
             {!isDemo && <NotificationBell />}
             {!isDemo && (
-              <IconButton size="large" onClick={handleMenuOpen} color="inherit">
+              <IconButton size="large" onClick={handleMenuOpen} color="inherit" aria-label="Account menu">
                 <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
                   <AccountCircle />
                 </Avatar>
@@ -415,7 +326,8 @@ export function Layout() {
           sx={{
             display: "flex",
             flexDirection: "column",
-            height: "calc(100% - 64px)",
+            flex: 1,
+            minHeight: 0,
             position: "relative",
           }}
         >
@@ -424,7 +336,7 @@ export function Layout() {
               <ListItem key={item.id} disablePadding sx={{ mb: 1 }}>
                 <ListItemButton
                   ref={sidebarItemRefs[item.id]}
-                  selected={!("external" in item) && getActiveSection() === item.id}
+                  selected={!("external" in item) && activeSection === item.id}
                   onClick={() => {
                     if ("external" in item && item.external) {
                       window.open(item.path, "_blank", "noopener,noreferrer");
@@ -433,7 +345,7 @@ export function Layout() {
                     }
                     if (isMobile) setMobileDrawerOpen(false);
                   }}
-                  onMouseEnter={() => { if (!("external" in item)) prefetchSection(item.id as Section); }}
+                  onMouseEnter={() => prefetchers[item.id]?.(queryClient)}
                   sx={{
                     height: 48,
                     minHeight: "unset",
@@ -563,6 +475,7 @@ export function Layout() {
           >
             <IconButton
               onClick={() => setSidebarExpanded(!sidebarExpanded)}
+              aria-label={effectiveExpanded ? "Collapse sidebar" : "Expand sidebar"}
               sx={{
                 color: (theme) => theme.palette.mode === "dark" ? "grey.400" : "grey.700",
                 backgroundColor: (theme) =>
@@ -589,32 +502,7 @@ export function Layout() {
           )}
         </Box>
       </Drawer>
-      {/* Main Content */}
-      <Box
-        ref={mainRef}
-        component="main"
-        sx={{
-          position: "fixed",
-          top: 64,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          bgcolor: "background.default",
-          overflow: "auto",
-          scrollbarGutter: "stable",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        {isDemo && <DemoBanner />}
-        <Box sx={{ width: "100%", maxWidth: "1200px", px: { xs: 2, md: 3 }, flex: 1 }}>
-          <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><DiceSpinner /></Box>}>
-            <Outlet />
-          </Suspense>
-        </Box>
-        <Footer />
-      </Box>
+      <AppMain banner={isDemo && <DemoBanner />} railWidth={isMobile ? 0 : drawerWidth} />
       <Onboarding
         open={onboardingOpen}
         onClose={handleOnboardingClose}

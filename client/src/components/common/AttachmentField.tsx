@@ -11,7 +11,7 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner } from "./DiceSpinner.tsx";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
@@ -269,7 +269,7 @@ export function AttachmentField({
           <Tooltip title={`Remove ${label ?? name}`}>
             <IconButton
               onClick={() => attachment && detach.mutate(attachment.id)}
-              aria-label={`Delete ${label ?? name}`}
+              aria-label={`Remove ${label ?? name}`}
               sx={{
                 position: "absolute",
                 bottom: 0,

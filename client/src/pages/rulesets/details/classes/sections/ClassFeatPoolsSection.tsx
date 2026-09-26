@@ -1,6 +1,6 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { EmojiEvents as FeatPoolsIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
@@ -28,11 +28,9 @@ export function ClassFeatPoolsSection({ rulesetId, classId }: ClassFeatPoolsSect
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get({
         param: { id: rulesetId, classId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch feat pools");
-      return response.json();
+      }));
     },
   });
 

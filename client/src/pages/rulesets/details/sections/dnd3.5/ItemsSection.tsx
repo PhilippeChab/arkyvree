@@ -1,9 +1,9 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { SearchBar, CreateDialog, DiceSpinner } from "@/client/src/components/common/index.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { DECIMAL_PATTERN, type ItemFormInternal, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { Add as AddIcon, Construction as ItemsIcon } from "@mui/icons-material";
 import {
@@ -35,6 +35,7 @@ interface ItemsSectionProps {
 }
 
 import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
+import { itemsQuery } from "../../sectionQueries.ts";
 
 const ITEMS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -49,12 +50,10 @@ function TemplateSelector({ form, rulesetId, type, disabled }: { form: UseFormRe
   const { data: templates, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, `templates-${type}`),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].templates.$get({
+      return parseResponse(rpc.api.rulesets[":id"].templates.$get({
         param: { id: rulesetId },
         query: { type: type as "Weapon" | "Armor" | "Shield" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch templates");
-      return response.json();
+      }));
     },
   });
 
@@ -86,7 +85,6 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    currentUserId,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -97,14 +95,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
     sectionName: "items",
     label: "Item",
     createFn: async (data) => {
-      const response = await rpc.api.rulesets[":id"].items.$post({
+      return parseResponse(rpc.api.rulesets[":id"].items.$post({
         param: { id: ruleset.id },
         json: toItemPayload(data),
-      });
-      if (!response.ok) throw new Error("Failed to create item");
-      return response.json();
+      }));
     },
-    onCreateSuccess: (data) => navigate(`/rulesets/${ruleset.id}/items/${(data as { id: string }).id}/customization`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/items/${created.id}/customization`, { state: { from: location.pathname + location.search } }),
   });
 
   const handleAddItem = () => {
@@ -114,28 +110,13 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
   };
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(ruleset.id, "items"), searchQuery, childOnly],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].items.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch items");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...itemsQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
 
   const items = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (item: Item) => {
     navigate(`/rulesets/${ruleset.id}/items/${item.id}/customization`, { state: { from: location.pathname + location.search } });
@@ -163,21 +144,19 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
 
   const duplicateMutation = useMutation({
     mutationFn: async ({ sourceId, data }: { sourceId: string; data: ItemFormInternal }) => {
-      const response = await rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
+      return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
         param: { id: ruleset.id, itemId: sourceId },
         json: toItemPayload(data),
-      });
-      if (!response.ok) throw new Error("Failed to duplicate item");
-      return response.json();
+      }));
     },
-    onSuccess: (data) => {
+    onSuccess: (created) => {
       snackbar.success("Item created successfully");
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(ruleset.id, "items") });
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.changes(ruleset.id) });
       setCreateDialogOpen(false);
       setDuplicateSourceId(null);
       createForm.reset({} as ItemFormInternal);
-      navigate(`/rulesets/${ruleset.id}/items/${(data as { id: string }).id}/customization`, { state: { from: location.pathname + location.search } });
+      navigate(`/rulesets/${ruleset.id}/items/${created.id}/customization`, { state: { from: location.pathname + location.search } });
     },
     onError: (err: Error) => {
       snackbar.error(err, "Failed to duplicate item");
@@ -186,15 +165,10 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
 
   const bulkMutation = useMutation({
     mutationFn: async ({ itemId, variants }: { itemId: string; variants: Array<{ name: string; description?: string }> }) => {
-      const response = await rpc.api.rulesets[":id"].items[":itemId"].variants.$post({
+      return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].variants.$post({
         param: { id: ruleset.id, itemId },
         json: { variants },
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(("message" in err && err.message) || "Failed to create variants");
-      }
-      return response.json();
+      }));
     },
     onSuccess: (data) => {
       const count = data.length;
@@ -211,11 +185,9 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.entity(ruleset.id, "items", item.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].items[":itemId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({
           param: { id: ruleset.id, itemId: item.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch item");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, ruleset.id]);
@@ -340,17 +312,11 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
         emptyTitle="No items"
         emptyDescription="No items available for this ruleset."
       />
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
       <CreateDialog
         open={createDialogOpen}
         onClose={() => {

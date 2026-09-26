@@ -1,32 +1,25 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, DiceSpinner } from "@/client/src/components/common/index.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { SkillFormFields, type SkillFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, Psychology as SkillsIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
   Chip,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Switch,
-  TextField,
   ToggleButton,
   Typography,
 } from "@mui/material";
-import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
+import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { SkillsSectionProps } from "../../sectionFactory.ts";
+import { skillsQuery } from "../../sectionQueries.ts";
 
-type AbilitiesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"]>;
-type AbilitiesPaginated = Exclude<AbilitiesResponse, { error: string }>;
-type RulesetAbility = AbilitiesPaginated["items"][number];
 
 const SKILLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -39,7 +32,6 @@ type SkillsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills
 type SkillsPaginated = Exclude<SkillsResponse, { error: string }>;
 type Skill = SkillsPaginated["items"][number];
 
-type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
 
 export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsSectionProps) {
   const navigate = useNavigate();
@@ -50,7 +42,6 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    currentUserId,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -59,56 +50,27 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
   } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
+    createDefaults: { impactedByWeight: false, usableWithoutTraining: false },
     label: "Skill",
     createFn: async (data) => {
-      const response = await rpc.api.rulesets[":id"].skills.$post({
+      return parseResponse(rpc.api.rulesets[":id"].skills.$post({
         param: { id: ruleset.id },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to create skill");
-      return response.json();
+      }));
     },
-    onCreateSuccess: (data) => navigate(`/rulesets/${ruleset.id}/skills/${(data as { id: string }).id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/skills/${created.id}`, { state: { from: location.pathname + location.search } }),
   });
 
-  // Fetch abilities for the primary ability select
-  const { data: abilitiesData } = useQuery({
-    queryKey: queryKeys.rulesets.section(ruleset.id, "abilities"),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].abilities.$get({
-        param: { id: ruleset.id },
-        query: { limit: "100", page: "1" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch abilities");
-      return response.json();
-    },
-  });
-
-  const rulesetAbilities: RulesetAbility[] = abilitiesData?.items ?? [];
+  const { data: rulesetAbilities = [] } = useRulesetAbilities(ruleset.id);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(ruleset.id, "skills"), searchQuery, childOnly],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].skills.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch skills");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...skillsQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
 
   const skills = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = useCallback((skill: Skill) => {
     navigate(`/rulesets/${ruleset.id}/skills/${skill.id}`, { state: { from: location.pathname + location.search } });
@@ -118,11 +80,9 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.entity(ruleset.id, "skills", skill.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].skills[":skillId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].skills[":skillId"].$get({
           param: { id: ruleset.id, skillId: skill.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch skill");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, ruleset.id]);
@@ -208,17 +168,11 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
         emptyDescription="No skills available for this ruleset."
       />
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
 
       <CreateDialog
         open={createDialogOpen}
@@ -228,43 +182,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
         onSubmit={(data) => createMutation.mutate(data)}
         isLoading={createMutation.isPending}
       >
-        <TextField
-          {...createForm.register("name", { required: "Name is required" })}
-          label="Name"
-          fullWidth
-          error={!!createForm.formState.errors.name}
-          helperText={createForm.formState.errors.name?.message}
-        />
-        <TextField
-          {...createForm.register("description")}
-          label="Description"
-          fullWidth
-          multiline
-          minRows={3}
-          sx={{ "& textarea": { resize: "vertical" } }}
-        />
-        <FormControl fullWidth>
-          <InputLabel>Primary Ability</InputLabel>
-          <Select
-            {...createForm.register("primaryAbilityId", {
-              required: "Primary ability is required",
-            })}
-            label="Primary Ability"
-            defaultValue=""
-          >
-            {rulesetAbilities.map((ability) => (
-              <MenuItem key={ability.id} value={ability.id}>{ability.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Box>
-          <Typography variant="body2" gutterBottom>Impacted by Weight</Typography>
-          <Switch {...createForm.register("impactedByWeight")} />
-        </Box>
-        <Box>
-          <Typography variant="body2" gutterBottom>Usable Without Training</Typography>
-          <Switch {...createForm.register("usableWithoutTraining")} />
-        </Box>
+        <SkillFormFields form={createForm} abilities={rulesetAbilities} />
       </CreateDialog>
 
     </Box>

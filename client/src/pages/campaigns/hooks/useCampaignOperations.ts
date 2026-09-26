@@ -3,7 +3,7 @@ import type {
 } from "@/client/src/pages/campaigns/components/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,12 +25,7 @@ export function useCampaignOperations() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: CreateCampaignFormData) => {
-      const response = await rpc.api.campaigns.$post({
-        json: data,
-      });
-      return response.json();
-    },
+    mutationFn: (data: CreateCampaignFormData) => parseResponse(rpc.api.campaigns.$post({ json: data })),
     onSuccess: (data) => {
       snackbar.success("Campaign created successfully");
       queryClient.invalidateQueries({
@@ -38,7 +33,7 @@ export function useCampaignOperations() {
       });
       setCreateDialogOpen(false);
       createForm.reset();
-      navigate(`/campaigns/${(data as { campaign: { id: string } }).campaign.id}`);
+      navigate(`/campaigns/${data.campaign.id}`);
     },
     onError: (error) => {
       snackbar.error(error);

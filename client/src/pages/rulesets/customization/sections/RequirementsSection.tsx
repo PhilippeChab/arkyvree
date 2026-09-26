@@ -13,12 +13,12 @@ import {
   defaultValueForPath,
 } from "@/client/src/components/customization/index.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 import { TemplateExpressionInput, type TemplateExpressionInputRef } from "@/client/src/components/customization/TemplateExpressionInput.tsx";
 import { TemplateExpressionToolbar } from "@/client/src/components/customization/TemplateExpressionToolbar.tsx";
 import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   ChevronRight as ChevronRightIcon,
@@ -175,7 +175,6 @@ export function RequirementsSection(
   const {
     data: requirements,
     isLoading,
-    currentUserId,
     createDialogOpen,
     editDialogOpen,
     deleteDialogOpen,
@@ -198,25 +197,21 @@ export function RequirementsSection(
     label: "Requirement",
     data: externalData,
     queryFn: !externalData ? async () => {
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements.$get({
           param: { id: ruleset.id, entityType, entityId },
-        });
-      if (!response.ok) throw new Error("Failed to fetch requirements");
-      return response.json();
+        }));
     } : undefined,
     queryKeysToInvalidate,
     createFn: async (data: RequirementFormData) => {
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements.$post({
           param: { id: ruleset.id, entityType: entityType, entityId: entityId },
           json: data,
-        });
-      if (!response.ok) throw new Error("Failed to create requirement");
-      return response.json();
+        }));
     },
     updateFn: async (requirementId: string, data: RequirementFormData) => {
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements[":requirement_id"].$put({
           param: {
             id: ruleset.id,
@@ -225,12 +220,10 @@ export function RequirementsSection(
             requirement_id: requirementId,
           },
           json: data,
-        });
-      if (!response.ok) throw new Error("Failed to update requirement");
-      return response.json();
+        }));
     },
     deleteFn: async (requirementId: string) => {
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements[":requirement_id"].$delete({
           param: {
             id: ruleset.id,
@@ -238,16 +231,14 @@ export function RequirementsSection(
             entityId: entityId,
             requirement_id: requirementId,
           },
-        });
-      if (!response.ok) throw new Error("Failed to delete requirement");
-      return response.json();
+        }));
     },
     onCreateSuccess: handleResolvedEntityId,
     onUpdateSuccess: handleResolvedEntityId,
     onDeleteSuccess: handleResolvedEntityId,
   });
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const canDelete = canEdit;
   const isPublished = ruleset.status === "Published";
 

@@ -1,13 +1,12 @@
 import { DeleteDialog, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { usePermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
   ClassFormFields,
   type ClassFormData,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { type HitDieValue } from "@/shared/dnd3.5/classes.ts";
 import {
   ArrowBack,
@@ -34,7 +33,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -80,11 +79,9 @@ export default function ClassDetailsPage() {
   const { data: ruleset, isLoading: isRulesetLoading } = useQuery({
     queryKey: queryKeys.rulesets.detail(rulesetId!),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].$get({
+      return parseResponse(rpc.api.rulesets[":id"].$get({
         param: { id: rulesetId! },
-      });
-      if (!response.ok) throw new Error("Failed to fetch ruleset");
-      return response.json();
+      }));
     },
     enabled: !!rulesetId,
   });
@@ -92,11 +89,9 @@ export default function ClassDetailsPage() {
   const { data: classData, isLoading: isClassLoading } = useQuery({
     queryKey: queryKeys.rulesets.classDetail(rulesetId!, classId!),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].$get({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
         param: { id: rulesetId!, classId: classId! },
-      });
-      if (!response.ok) throw new Error("Failed to fetch class");
-      return response.json();
+      }));
     },
     enabled: !!rulesetId && !!classId,
   });
@@ -105,39 +100,31 @@ export default function ClassDetailsPage() {
 
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const currentUserId = useAuthStore((s) => s.user?.id);
   const currentTabValue = getTabValue();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const editForm = useForm<ClassFormData>();
 
-  const { canEdit, canDelete } = usePermissions(
-    ruleset ?? { userId: null, status: undefined },
-    currentUserId,
-  );
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
+  const canDelete = canEdit;
 
-  useEffect(() => {
-    if (classData) {
-      editForm.reset({
-        name: classData.name,
-        description: classData.description ?? undefined,
-        hd: (classData.hd ?? 8) as HitDieValue,
-      });
-    }
-  }, [classData, editForm]);
+  useFormSync(editForm, classData && {
+    name: classData.name,
+    description: classData.description ?? undefined,
+    hd: (classData.hd ?? 8) as HitDieValue,
+  });
 
   const updateMutation = useMutation({
     mutationFn: async (data: ClassFormData) => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].$put({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
         param: { id: rulesetId!, classId: classId! },
         json: { ...data, updatedAt: classData?.updatedAt },
-      });
-      if (!response.ok) throw new Error("Failed to update class");
-      return response.json();
+      }));
     },
-    onSuccess: (data) => {
-      const newId = (data as { id: string }).id;
+    onSuccess: (data, submitted) => {
+      editForm.reset(submitted);
+      const newId = data.id;
       queryClient.setQueryData(queryKeys.rulesets.classDetail(rulesetId!, newId), data);
       if (newId !== classId) {
         const tab = TAB_SECTIONS[currentTabValue];
@@ -151,11 +138,9 @@ export default function ClassDetailsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].$delete({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$delete({
         param: { id: rulesetId!, classId: classId! },
-      });
-      if (!response.ok) throw new Error("Failed to delete class");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId!, "classes") });
@@ -168,18 +153,7 @@ export default function ClassDetailsPage() {
   // Bonus spell ability
   const BONUS_SPELL_ABILITY_TYPE = "KLASS_BONUS_SPELL_ABILITY_ID";
 
-  const { data: abilities } = useQuery({
-    queryKey: queryKeys.rulesets.section(rulesetId!, "abilities-for-class"),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].abilities.$get({
-        param: { id: rulesetId! },
-        query: { page: "1", limit: "100" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch abilities");
-      return response.json();
-    },
-    enabled: !!rulesetId,
-  });
+  const { data: abilities } = useRulesetAbilities(rulesetId);
 
   const bonusSpellMutation = useMutation({
     mutationFn: async (abilityId: string) => {
@@ -188,26 +162,20 @@ export default function ClassDetailsPage() {
 
       if (propertyId) {
         if (!abilityId) {
-          const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
+          return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
             param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
-          });
-          if (!response.ok) throw new Error("Failed to delete property");
-          return response.json();
+          }));
         }
-        const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
+        return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
           param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
           json: { type: BONUS_SPELL_ABILITY_TYPE, value: abilityId },
-        });
-        if (!response.ok) throw new Error("Failed to update property");
-        return response.json();
+        }));
       }
 
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
         param: { id: rulesetId!, entityType: "klasses", entityId },
         json: { type: BONUS_SPELL_ABILITY_TYPE, value: abilityId },
-      });
-      if (!response.ok) throw new Error("Failed to create property");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classDetail(rulesetId!, classId!) });
@@ -226,26 +194,20 @@ export default function ClassDetailsPage() {
 
       if (propertyId) {
         if (!casterType) {
-          const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
+          return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
             param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
-          });
-          if (!response.ok) throw new Error("Failed to delete property");
-          return response.json();
+          }));
         }
-        const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
+        return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
           param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
           json: { type: CASTER_TYPE_PROPERTY_TYPE, value: casterType },
-        });
-        if (!response.ok) throw new Error("Failed to update property");
-        return response.json();
+        }));
       }
 
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
         param: { id: rulesetId!, entityType: "klasses", entityId },
         json: { type: CASTER_TYPE_PROPERTY_TYPE, value: casterType },
-      });
-      if (!response.ok) throw new Error("Failed to create property");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classDetail(rulesetId!, classId!) });
@@ -260,67 +222,55 @@ export default function ClassDetailsPage() {
       queryClient.prefetchQuery({
         queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
         queryFn: async () => {
-          const response = await rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
+          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
             param: { id: rulesetId, classId },
-          });
-          if (!response.ok) throw new Error("Failed to fetch levels");
-          return response.json();
+          }));
         },
       });
     } else if (sectionKey === "spells") {
       queryClient.prefetchQuery({
         queryKey: queryKeys.rulesets.classSpells(rulesetId, classId),
         queryFn: async () => {
-          const response = await rpc.api.rulesets[":id"].classes[":classId"].spells.$get({
+          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get({
             param: { id: rulesetId, classId },
-          });
-          if (!response.ok) throw new Error("Failed to fetch spells");
-          return response.json();
+          }));
         },
       });
     } else if (sectionKey === "feat-pools") {
       queryClient.prefetchQuery({
         queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
         queryFn: async () => {
-          const response = await rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get({
+          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get({
             param: { id: rulesetId, classId },
-          });
-          if (!response.ok) throw new Error("Failed to fetch feat pools");
-          return response.json();
+          }));
         },
       });
     } else if (sectionKey === "spells-known") {
       queryClient.prefetchQuery({
         queryKey: queryKeys.rulesets.classSpellsKnown(rulesetId, classId),
         queryFn: async () => {
-          const response = await rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get({
+          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get({
             param: { id: rulesetId, classId },
-          });
-          if (!response.ok) throw new Error("Failed to fetch spells known");
-          return response.json();
+          }));
         },
       });
     } else if (sectionKey === "spell-list") {
       queryClient.prefetchQuery({
         queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, 0),
         queryFn: async () => {
-          const response = await rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
+          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
             param: { id: rulesetId, classId },
             query: { level: "0", page: "1", limit: "20" },
-          });
-          if (!response.ok) throw new Error("Failed to fetch spell list");
-          return response.json();
+          }));
         },
       });
     } else {
       queryClient.prefetchQuery({
         queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
         queryFn: async () => {
-          const response = await rpc.api.rulesets[":id"].classes[":classId"].skills.$get({
+          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills.$get({
             param: { id: rulesetId, classId },
-          });
-          if (!response.ok) throw new Error("Failed to fetch skills");
-          return response.json();
+          }));
         },
       });
     }
@@ -490,7 +440,7 @@ export default function ClassDetailsPage() {
                     sx={{ fontWeight: 600 }}
                   />
                   {classData?.bonusSpellAbilityId && (() => {
-                    const abilityName = abilities?.items.find((a) => a.id === classData.bonusSpellAbilityId)?.name;
+                    const abilityName = abilities?.find((a) => a.id === classData.bonusSpellAbilityId)?.name;
                     return abilityName ? (
                       <Chip
                         label={`Bonus Spells: ${abilityName}`}
@@ -527,7 +477,7 @@ export default function ClassDetailsPage() {
                     disabled={bonusSpellMutation.isPending}
                   >
                     <MenuItem value="">None</MenuItem>
-                    {abilities?.items.map((a) => (
+                    {abilities?.map((a) => (
                       <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
                     ))}
                   </TextField>

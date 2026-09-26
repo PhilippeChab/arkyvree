@@ -82,7 +82,9 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 - RPC client (`client/src/services/rpc.ts`) wraps Hono's `hc` client with `ApiError` class for typed error handling
 - `ApiError` includes `status` (HTTP code) and `errorName` (server error class name)
+- The RPC fetch throws `ApiError` on every non-2xx response, so never check `response.ok`. Read bodies with `parseResponse(rpc.api.x.$get(...))` (re-exported from `rpc.ts`), which also narrows to the success type. To react to a specific status (e.g. show "not found"), catch `ApiError` and test `error.status`
 - Use `InferRequestType` / `InferResponseType` from `hono/client` for all API types — never recreate manually
+- Queries shared between a page and a prefetch (sidebar hover, card hover) live in `client/src/lib/queries.ts` as `queryOptions` factories, so the key, page size and params can't drift apart. Ruleset and campaign tab lists do the same in `pages/rulesets/details/sectionQueries.ts` and `pages/campaigns/details/sectionQueries.ts`: a section renders with its factory and the tab hover prefetches through it. Every query key comes from `lib/queryKeys.ts`
 
 **State Management:**
 
@@ -94,8 +96,16 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 - `useDebouncedValue(value, delay?)` — shared hook for debouncing search inputs (default 300ms)
 - `useRulesetSection` — generic CRUD hook for ruleset detail sections (queries, mutations, dialogs, forms)
+- `useRulesetPermissions(ruleset)` — the single source of ruleset edit / manage / publish rights on the client
+- `useFormSync(form, values)` — keeps an inline edit form in step with server data without wiping unsaved edits on refetch. Use it instead of an effect that calls `form.reset()` whenever the query data changes
+- `useSearchParam` / `useUpdateSearchParams` — list filters and sort live in the URL; `oneOf()` (`lib/oneOf.ts`) validates enum params
+- `useNotificationActions` — accept / reject invites, download exports and open targets for any notification surface
+- `useRulesetAbilities(rulesetId)` — the full ability list for pickers; don't query abilities ad hoc
 - `usePrefetch` — returns `{ onMouseEnter, onFocus }` props for prefetching on hover/focus
+- Infinite listboxes: `createListboxScrollHandler` (`lib/listboxScroll.ts`) with `ScrollSafeListbox`
 - Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()`
+
+**Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `LoadMoreButton` (paginated lists), `BlankState` (empty lists). Reuse them rather than restyling a copy.
 
 **Toast/Snackbar:**
 
@@ -114,7 +124,9 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Pick the wrapper by purpose — there is no lint rule to choose between them, only a convention:
   - **`CreateDialog` / `EditDialog`** (from `StandardDialogs.tsx`): standard create / edit shapes. Default for create or update flows.
   - **`FormDialog`**: any other dialog that contains a React Hook Form. Binds the form, registers with the global dirty-tracker, blocks backdrop / Escape close while dirty.
-  - **`Modal`**: confirm dialogs, info dialogs, manager dialogs that don't bind a form. **Never wrap a `<form>` in `Modal`** — Modal skips the dirty-close guard, so backdrop click / Escape discards typed input.
+  - **`ConfirmDialog` / `DeleteDialog`** (from `StandardDialogs.tsx`): yes/no confirmations. Set `confirmColor` by intent (`warning` for Archive / Leave, `success` for Publish, `error` for destructive) and `confirmLabel` to the action ("Archive Character", not "Confirm"). `DeleteDialog` is the `error` preset.
+  - **`Modal`**: info dialogs and manager dialogs that don't bind a form. **Never wrap a `<form>` in `Modal`** — Modal skips the dirty-close guard, so backdrop click / Escape discards typed input.
+- Dialog title and action-bar styling come from the theme — use a plain `<DialogTitle>` and `<DialogActions>` without extra typography or padding.
 - Manager dialogs with both a list and an invite form: keep the outer `Modal` for the manager and put the form in a nested `FormDialog` opened from an Invite button.
 - Edit dialogs receive a `form` prop (from React Hook Form) — parent calls `form.reset({ ...data })` before opening
 - Dialog components should not receive the selected entity as a prop — form state is the source of truth

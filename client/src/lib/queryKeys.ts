@@ -4,7 +4,6 @@ export const queryKeys = {
     linkedAccounts: ["auth", "linkedAccounts"] as const,
   },
   rulesets: {
-    all: ["rulesets"] as const,
     lists: ["rulesets", "list"] as const,
     list: (filters?: Record<string, unknown>) =>
       ["rulesets", "list", filters] as const,
@@ -12,6 +11,9 @@ export const queryKeys = {
       ["rulesets", "detail", id] as const,
     section: (id: string, section: string) =>
       ["rulesets", "detail", id, section] as const,
+    /** Every ability of the ruleset, for pickers — not the paginated Abilities tab. */
+    abilities: (id: string) =>
+      ["rulesets", "detail", id, "abilityOptions"] as const,
     classDetail: (id: string, classId: string) =>
       ["rulesets", "detail", id, "class", classId] as const,
     classLevels: (id: string, classId: string) =>
@@ -37,10 +39,13 @@ export const queryKeys = {
     changes: (id: string) =>
       ["rulesets", "detail", id, "changes"] as const,
     languages: (id: string) =>
-      ["rulesets", "detail", id, "languages"] as const,
+      ["rulesets", "detail", id, "languageOptions"] as const,
+    propertyTypeCompletions: (id: string, search: string, entityType?: string) =>
+      ["rulesets", "detail", id, "propertyTypeCompletions", search, entityType] as const,
+    propertyValueCompletions: (id: string, propertyType: string, search: string) =>
+      ["rulesets", "detail", id, "propertyValueCompletions", propertyType, search] as const,
   },
   campaigns: {
-    all: ["campaigns"] as const,
     lists: ["campaigns", "list"] as const,
     list: (filters?: Record<string, unknown>) =>
       ["campaigns", "list", filters] as const,
@@ -52,7 +57,6 @@ export const queryKeys = {
       ["campaigns", "detail", campaignId, "character", characterId] as const,
   },
   characters: {
-    all: ["characters"] as const,
     lists: ["characters", "list"] as const,
     list: (filters?: Record<string, unknown>) =>
       ["characters", "list", filters] as const,
@@ -83,8 +87,6 @@ export const queryKeys = {
         ["characters", "levelUp", characterId, "skills", classId, editingLevelId, abilityId] as const,
       feats: (characterId: string, classId?: string, editingLevelId?: string) =>
         ["characters", "levelUp", characterId, "feats", classId, editingLevelId] as const,
-      availableFeats: (characterId: string, aptitudeId: string | null, classId?: string, search?: string, editingLevelId?: string, selectedFeatPicks?: string) =>
-        ["characters", "levelUp", characterId, "availableFeats", aptitudeId, classId, search, editingLevelId, selectedFeatPicks] as const,
       availableFeatsGrouped: (characterId: string, aptitudeId: string | null, classId?: string, search?: string, editingLevelId?: string, selectedFeatPicks?: string, pendingKlassLevelIds?: string, pendingFeatPicks?: string) =>
         ["characters", "levelUp", characterId, "availableFeatsGrouped", aptitudeId, classId, search, editingLevelId, selectedFeatPicks, pendingKlassLevelIds, pendingFeatPicks] as const,
       availableFeatFamily: (characterId: string, aptitudeId: string, family: string, classId?: string, editingLevelId?: string, selectedFeatPicks?: string, pendingKlassLevelIds?: string) =>
@@ -99,20 +101,22 @@ export const queryKeys = {
         ["characters", "levelUp", characterId, "preview", levelsKey, abilityKey] as const,
     },
   },
+  legal: {
+    ogl: ["legal", "ogl-1.0a"] as const,
+  },
   shared: {
     character: (shareToken: string) =>
       ["shared", "character", shareToken] as const,
   },
   invites: {
-    me: ["invites", "me"] as const,
-    detail: (id: string | undefined) => ["invites", "detail", id] as const,
+    detail: (kind: "campaign" | "rulesetContributor" | "characterContributor", id: string) =>
+      ["invites", kind, id] as const,
   },
   dashboard: {
     stats: ["dashboard", "stats"] as const,
   },
   activities: {
     all: ["activities"] as const,
-    lists: ["activities", "list"] as const,
     list: (filters?: Record<string, unknown>) =>
       ["activities", "list", filters] as const,
   },
@@ -123,7 +127,6 @@ export const queryKeys = {
       ["notifications", "list", filters] as const,
   },
   attachments: {
-    all: ["attachments"] as const,
     slot: (recordType: string, recordId: string, name: string) =>
       ["attachments", recordType, recordId, name] as const,
   },

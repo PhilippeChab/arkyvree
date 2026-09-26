@@ -1,11 +1,13 @@
 import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EntityType } from "@/shared/customization/properties.ts";
 import { Autocomplete, Chip, ListItem, ListItemText, TextField } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
 type CompletionsResponse = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"]["properties"]["types"]["completions"]["$get"]
@@ -55,9 +57,9 @@ export function PropertyTypeInput({
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["propertyTypeCompletions", rulesetId, debouncedInputValue, entityType],
+    queryKey: queryKeys.rulesets.propertyTypeCompletions(rulesetId, debouncedInputValue, entityType),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].customization.properties.types.completions
+      return parseResponse(rpc.api.rulesets[":id"].customization.properties.types.completions
         .$get({
           param: { id: rulesetId },
           query: {
@@ -66,9 +68,7 @@ export function PropertyTypeInput({
             page: pageParam.toString(),
             ...(entityType && { entityType }),
           },
-        });
-      if (!response.ok) throw new Error("Failed to fetch property type completions");
-      return response.json();
+        }));
     },
     enabled: !!rulesetId && !disabled,
     initialPageParam: 1,
@@ -100,14 +100,7 @@ export function PropertyTypeInput({
     [onChange],
   );
 
-  const handleScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      (target as unknown as Record<string, () => void>).__lockScroll?.();
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const handleScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   const processedCompletions = useMemo(() => {
     const seen = new Set<string>();

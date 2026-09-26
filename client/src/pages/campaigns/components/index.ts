@@ -3,7 +3,6 @@ export {
   type CreateCampaignFormData,
   EditCampaignDialog,
   type EditCampaignFormData,
-  DeleteCampaignDialog,
   AddPlayerDialog,
   type AddPlayerFormData,
   EditPlayerDialog,

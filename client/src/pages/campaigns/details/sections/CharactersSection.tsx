@@ -5,11 +5,12 @@ import {
   SearchBar,
   StyledCard,
   DiceSpinner,
+  LoadMoreButton,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useAttachments, useDebouncedValue, usePrefetch, useStaggerAnimation } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   Person as CharacterIcon,
@@ -44,6 +45,8 @@ import {
 import type { InferResponseType } from "hono/client";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
+import { campaignCharactersQuery } from "../sectionQueries.ts";
 
 type CampaignCharactersResponse = InferResponseType<
   (typeof rpc.api.campaigns)[":id"]["characters"]["$get"]
@@ -89,22 +92,18 @@ function CharacterCard({
     [campaignId, character.id],
   );
   const queryFn = useCallback(async () => {
-    const response = await rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
+    return parseResponse(rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
       param: { id: campaignId, characterId: character.id },
-    });
-    if (!response.ok) throw new Error("Failed to fetch character");
-    return response.json();
+    }));
   }, [campaignId, character.id]);
   const prefetchHandlers = usePrefetch(queryKey, queryFn);
 
   const { mutate: updateVisibility } = useMutation({
     mutationFn: async (visibility: "Private" | "Public" | "Partial") => {
-      const response = await rpc.api.campaigns[":id"].characters[":characterId"]["$put"]({
+      return parseResponse(rpc.api.campaigns[":id"].characters[":characterId"]["$put"]({
         param: { id: campaignId, characterId: character.id },
         json: { visibility },
-      });
-      if (!response.ok) throw new Error("Failed to update visibility");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Visibility updated");
@@ -291,16 +290,14 @@ function LinkCharacterDialog({
   } = useInfiniteQuery({
     queryKey: queryKeys.characters.unlinked(campaignId, { search: debouncedCharacterSearch }),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.characters.unlinked[":campaignId"].$get({
+      return parseResponse(rpc.api.characters.unlinked[":campaignId"].$get({
         param: { campaignId },
         query: {
           limit: "10",
           page: pageParam.toString(),
           ...(debouncedCharacterSearch && { search: debouncedCharacterSearch }),
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch unlinked characters");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -310,13 +307,7 @@ function LinkCharacterDialog({
   const unlinkedCharacters =
     unlinkedCharactersData?.pages.flatMap((page) => page.items) ?? [];
 
-  const handleCharactersScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
+  const handleCharactersScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   const snackbar = useSnackbar();
   const { mutate: linkCharacter, isPending: isLinking } = useMutation({
@@ -327,12 +318,10 @@ function LinkCharacterDialog({
       characterId: string;
       visibility: "Private" | "Public" | "Partial";
     }) => {
-      const response = await rpc.api.campaigns[":id"].characters.$post({
+      return parseResponse(rpc.api.campaigns[":id"].characters.$post({
         param: { id: campaignId },
         json: { characterId, visibility },
-      });
-      if (!response.ok) throw new Error("Failed to link character");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Character linked successfully");
@@ -474,8 +463,8 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
-  const listQueryKey = [...queryKeys.campaigns.section(campaign.id, "characters"), debouncedSearchQuery];
-  const { offset, updateOffset } = useStaggerAnimation(listQueryKey);
+  const listQuery = campaignCharactersQuery(campaign.id, debouncedSearchQuery);
+  const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
   const {
     data,
@@ -484,24 +473,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: listQueryKey,
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.campaigns[":id"].characters.$get({
-        param: { id: campaign.id },
-        query: {
-          limit: "10",
-          page: pageParam.toString(),
-          search: debouncedSearchQuery || undefined,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch characters");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    placeholderData: keepPreviousData,
-  });
+  } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
 
   const characters = useMemo(
     () => data?.pages.flatMap((page) => page.items) ?? [],
@@ -587,31 +559,16 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
                   />
                 ))}
               </Box>
-              {hasNextPage && (
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-                  <Button
-                    onClick={() => {
-                      updateOffset(characters.length);
-                      fetchNextPage();
-                    }}
-                    disabled={isFetchingNextPage}
-                    variant="outlined"
-                    size="large"
-                    sx={{
-                      px: 4,
-                      py: 1.5,
-                      borderRadius: 2,
-                      fontWeight: 600,
-                      borderWidth: 2,
-                      "&:hover": {
-                        borderWidth: 2,
-                      },
-                    }}
-                  >
-                    <DiceSpinner size="small" loading={isFetchingNextPage}>Load More Characters</DiceSpinner>
-                  </Button>
-                </Box>
-              )}
+              <LoadMoreButton
+                size="large"
+                label="Load More Characters"
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onClick={() => {
+                  updateOffset(characters.length);
+                  fetchNextPage();
+                }}
+              />
             </>
           ) : (
             <BlankState

@@ -8,14 +8,9 @@ import {
   Publish as PublishIcon,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { DiceSpinner, FormDialog, Modal } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, CreateDialog, EditDialog } from "@/client/src/components/common/index.ts";
 import {
   Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Stack,
   TextField,
   ToggleButton,
@@ -23,7 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { Controller, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 
 export type EditRulesetFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["$put"]
@@ -32,6 +27,81 @@ export type EditRulesetFormData = InferRequestType<
 export type ForkRulesetFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["fork"]["$post"]
 >["json"];
+
+type RulesetKind = "ruleset" | "extension";
+
+/** Public / Private choice; the selected option can't be toggled off. */
+function PrivacyToggle({ value, onChange, disabled }: {
+  value: boolean;
+  onChange: (isPrivate: boolean) => void;
+  disabled: boolean;
+}) {
+  return (
+    <Box>
+      <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+        Privacy
+      </Typography>
+      <ToggleButtonGroup
+        value={value}
+        exclusive
+        onChange={(_, next: boolean | null) => next !== null && onChange(next)}
+        disabled={disabled}
+        size="small"
+      >
+        <ToggleButton value={false}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <PublicIcon fontSize="small" />
+            <Typography variant="body2">Public</Typography>
+          </Stack>
+        </ToggleButton>
+        <ToggleButton value>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <LockIcon fontSize="small" />
+            <Typography variant="body2">Private</Typography>
+          </Stack>
+        </ToggleButton>
+      </ToggleButtonGroup>
+    </Box>
+  );
+}
+
+/** Ruleset / Extension choice made when publishing; the selected option can't be toggled off. */
+function RulesetKindToggle({ value, onChange, disabled }: {
+  value: RulesetKind;
+  onChange: (kind: RulesetKind) => void;
+  disabled: boolean;
+}) {
+  return (
+    <Box>
+      <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+        Publish as
+      </Typography>
+      <ToggleButtonGroup
+        value={value}
+        exclusive
+        onChange={(_, next: RulesetKind | null) => next && onChange(next)}
+        disabled={disabled}
+        size="small"
+      >
+        <ToggleButton value="ruleset">
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <RulesetIcon fontSize="small" />
+            <Typography variant="body2">Ruleset</Typography>
+          </Stack>
+        </ToggleButton>
+        <ToggleButton value="extension">
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <ExtensionIcon fontSize="small" />
+            <Typography variant="body2">Extension</Typography>
+          </Stack>
+        </ToggleButton>
+      </ToggleButtonGroup>
+      <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
+        Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.
+      </Typography>
+    </Box>
+  );
+}
 
 interface EditRulesetDialogProps {
   open: boolean;
@@ -53,124 +123,48 @@ export function EditRulesetDialog({
   canBeExtension,
 }: EditRulesetDialogProps) {
   return (
-    <FormDialog
+    <EditDialog
       open={open}
       onClose={onClose}
+      title="Edit Ruleset"
       form={form}
+      onSubmit={onSubmit}
       isLoading={isLoading}
+      submitLabel="Save Changes"
     >
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <DialogTitle>
-          <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-            Edit Ruleset
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <TextField
-              {...form.register("name", { required: "Name is required" })}
-              label="Name"
-              fullWidth
-              error={!!form.formState.errors.name}
-              helperText={form.formState.errors.name?.message}
-              autoFocus
-              disabled={isLoading}
-            />
-            <TextField
-              {...form.register("description")}
-              label="Description"
-              fullWidth
-              multiline
-              minRows={4}
-              disabled={isLoading}
-              sx={{ "& textarea": { resize: "vertical" } }}
-            />
-            {!isPublic && (
-              <Box>
-                <Typography variant="subtitle2" gutterBottom sx={{
-                  color: "text.secondary"
-                }}>
-                  Privacy
-                </Typography>
-                <ToggleButtonGroup
-                  value={form.watch("private") ?? false}
-                  exclusive
-                  onChange={(_, value) => form.setValue("private", value)}
-                  disabled={isLoading}
-                  size="small"
-                >
-                  <ToggleButton value={false}>
-                    <Stack direction="row" spacing={1} sx={{
-                      alignItems: "center"
-                    }}>
-                      <PublicIcon fontSize="small" />
-                      <Typography variant="body2">Public</Typography>
-                    </Stack>
-                  </ToggleButton>
-                  <ToggleButton value>
-                    <Stack direction="row" spacing={1} sx={{
-                      alignItems: "center"
-                    }}>
-                      <LockIcon fontSize="small" />
-                      <Typography variant="body2">Private</Typography>
-                    </Stack>
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-            )}
-            {canBeExtension && (
-              <Box>
-                <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
-                  Publish as
-                </Typography>
-                <Controller
-                  name="kind"
-                  control={form.control}
-                  defaultValue="ruleset"
-                  render={({ field }) => (
-                    <ToggleButtonGroup
-                      value={field.value ?? "ruleset"}
-                      exclusive
-                      onChange={(_, value) => value && field.onChange(value)}
-                      disabled={isLoading}
-                      size="small"
-                    >
-                      <ToggleButton value="ruleset">
-                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                          <RulesetIcon fontSize="small" />
-                          <Typography variant="body2">Ruleset</Typography>
-                        </Stack>
-                      </ToggleButton>
-                      <ToggleButton value="extension">
-                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                          <ExtensionIcon fontSize="small" />
-                          <Typography variant="body2">Extension</Typography>
-                        </Stack>
-                      </ToggleButton>
-                    </ToggleButtonGroup>
-                  )}
-                />
-                <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
-                  Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.
-                </Typography>
-              </Box>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isLoading}
-          >
-            <DiceSpinner size="small" loading={isLoading}>Save Changes</DiceSpinner>
-          </Button>
-        </DialogActions>
-      </form>
-    </FormDialog>
+      <TextField
+        {...form.register("name", { required: "Name is required" })}
+        label="Name"
+        fullWidth
+        error={!!form.formState.errors.name}
+        helperText={form.formState.errors.name?.message}
+        autoFocus
+        disabled={isLoading}
+      />
+      <TextField
+        {...form.register("description")}
+        label="Description"
+        fullWidth
+        multiline
+        minRows={4}
+        disabled={isLoading}
+        sx={{ "& textarea": { resize: "vertical" } }}
+      />
+      {!isPublic && (
+        <PrivacyToggle
+          value={form.watch("private") ?? false}
+          onChange={(isPrivate) => form.setValue("private", isPrivate, { shouldDirty: true })}
+          disabled={isLoading}
+        />
+      )}
+      {canBeExtension && (
+        <RulesetKindToggle
+          value={form.watch("kind") ?? "ruleset"}
+          onChange={(kind) => form.setValue("kind", kind, { shouldDirty: true })}
+          disabled={isLoading}
+        />
+      )}
+    </EditDialog>
   );
 }
 
@@ -190,85 +184,39 @@ export function ForkRulesetDialog({
   isLoading,
 }: ForkRulesetDialogProps) {
   return (
-    <FormDialog
+    <CreateDialog
       open={open}
       onClose={onClose}
+      title="Fork Ruleset"
       form={form}
+      onSubmit={onSubmit}
       isLoading={isLoading}
+      submitLabel="Fork Ruleset"
     >
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <DialogTitle>
-          <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-            Fork Ruleset
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <TextField
-              {...form.register("name", { required: "Name is required" })}
-              label="New Name"
-              fullWidth
-              error={!!form.formState.errors.name}
-              helperText={form.formState.errors.name?.message}
-              autoFocus
-              disabled={isLoading}
-            />
-            <TextField
-              {...form.register("description")}
-              label="Description"
-              fullWidth
-              multiline
-              minRows={4}
-              disabled={isLoading}
-              sx={{ "& textarea": { resize: "vertical" } }}
-            />
-            <Box>
-              <Typography variant="subtitle2" gutterBottom sx={{
-                color: "text.secondary"
-              }}>
-                Privacy
-              </Typography>
-              <ToggleButtonGroup
-                value={form.watch("private") ?? false}
-                exclusive
-                onChange={(_, value) => form.setValue("private", value)}
-                disabled={isLoading}
-                size="small"
-              >
-                <ToggleButton value={false}>
-                  <Stack direction="row" spacing={1} sx={{
-                    alignItems: "center"
-                  }}>
-                    <PublicIcon fontSize="small" />
-                    <Typography variant="body2">Public</Typography>
-                  </Stack>
-                </ToggleButton>
-                <ToggleButton value>
-                  <Stack direction="row" spacing={1} sx={{
-                    alignItems: "center"
-                  }}>
-                    <LockIcon fontSize="small" />
-                    <Typography variant="body2">Private</Typography>
-                  </Stack>
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isLoading}
-          >
-            <DiceSpinner size="small" loading={isLoading}>Fork Ruleset</DiceSpinner>
-          </Button>
-        </DialogActions>
-      </form>
-    </FormDialog>
+      <TextField
+        {...form.register("name", { required: "Name is required" })}
+        label="New Name"
+        fullWidth
+        error={!!form.formState.errors.name}
+        helperText={form.formState.errors.name?.message}
+        autoFocus
+        disabled={isLoading}
+      />
+      <TextField
+        {...form.register("description")}
+        label="Description"
+        fullWidth
+        multiline
+        minRows={4}
+        disabled={isLoading}
+        sx={{ "& textarea": { resize: "vertical" } }}
+      />
+      <PrivacyToggle
+        value={form.watch("private") ?? false}
+        onChange={(isPrivate) => form.setValue("private", isPrivate, { shouldDirty: true })}
+        disabled={isLoading}
+      />
+    </CreateDialog>
   );
 }
 
@@ -279,40 +227,19 @@ interface ArchiveRulesetDialogProps {
   isLoading: boolean;
 }
 
-export function ArchiveRulesetDialog({
-  open,
-  onClose,
-  onConfirm,
-  isLoading,
-}: ArchiveRulesetDialogProps) {
+export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: ArchiveRulesetDialogProps) {
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>
-        <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Archive Ruleset
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Are you sure you want to archive this ruleset? You can restore it later from the archived
-          rulesets section.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="contained"
-          color="warning"
-          disabled={isLoading}
-          startIcon={<ArchiveIcon />}
-        >
-          <DiceSpinner size="small" loading={isLoading}>Archive Ruleset</DiceSpinner>
-        </Button>
-      </DialogActions>
-    </Modal>
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      isLoading={isLoading}
+      title="Archive Ruleset"
+      message="Are you sure you want to archive this ruleset? You can restore it later from the archived rulesets section."
+      confirmLabel="Archive Ruleset"
+      confirmColor="warning"
+      confirmIcon={<ArchiveIcon />}
+    />
   );
 }
 
@@ -333,7 +260,7 @@ export function PublishRulesetDialog({
   canBeExtension,
   initialKind = "ruleset",
 }: PublishRulesetDialogProps) {
-  const [kind, setKind] = useState<"ruleset" | "extension">(initialKind);
+  const [kind, setKind] = useState<RulesetKind>(initialKind);
 
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect
@@ -341,64 +268,23 @@ export function PublishRulesetDialog({
   }, [open, initialKind]);
 
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>
-        <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Publish Ruleset
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <Stack spacing={2}>
-          <DialogContentText>
-            Are you sure you want to publish this ruleset? Once published it becomes forkable by other users and shows up in public listings.
-          </DialogContentText>
-          {canBeExtension && (
-            <Box>
-              <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
-                Publish as
-              </Typography>
-              <ToggleButtonGroup
-                value={kind}
-                exclusive
-                onChange={(_, value) => value && setKind(value)}
-                disabled={isLoading}
-                size="small"
-              >
-                <ToggleButton value="ruleset">
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <RulesetIcon fontSize="small" />
-                    <Typography variant="body2">Ruleset</Typography>
-                  </Stack>
-                </ToggleButton>
-                <ToggleButton value="extension">
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <ExtensionIcon fontSize="small" />
-                    <Typography variant="body2">Extension</Typography>
-                  </Stack>
-                </ToggleButton>
-              </ToggleButtonGroup>
-              <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
-                Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.
-              </Typography>
-            </Box>
-          )}
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={() => onConfirm(kind)}
-          variant="contained"
-          color="success"
-          disabled={isLoading}
-          startIcon={<PublishIcon />}
-        >
-          <DiceSpinner size="small" loading={isLoading}>Publish Ruleset</DiceSpinner>
-        </Button>
-      </DialogActions>
-    </Modal>
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={() => onConfirm(kind)}
+      isLoading={isLoading}
+      title="Publish Ruleset"
+      message="Are you sure you want to publish this ruleset? Once published it becomes forkable by other users and shows up in public listings."
+      confirmLabel="Publish Ruleset"
+      confirmColor="success"
+      confirmIcon={<PublishIcon />}
+    >
+      {canBeExtension && (
+        <Box sx={{ mt: 2 }}>
+          <RulesetKindToggle value={kind} onChange={setKind} disabled={isLoading} />
+        </Box>
+      )}
+    </ConfirmDialog>
   );
 }
 
@@ -418,32 +304,16 @@ export function UnsubscribeExtensionDialog({
   extensionName,
 }: UnsubscribeExtensionDialogProps) {
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>
-        <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Unsubscribe from Extension
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Are you sure you want to unsubscribe from <strong>{extensionName}</strong>? You will
-          lose all associated data from this extension.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="contained"
-          color="error"
-          disabled={isLoading}
-          startIcon={<ExtensionIcon />}
-        >
-          <DiceSpinner size="small" loading={isLoading}>Unsubscribe</DiceSpinner>
-        </Button>
-      </DialogActions>
-    </Modal>
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      isLoading={isLoading}
+      title="Unsubscribe from Extension"
+      message={<>Are you sure you want to unsubscribe from <strong>{extensionName}</strong>? You will lose all associated data from this extension.</>}
+      confirmLabel="Unsubscribe"
+      confirmColor="error"
+      confirmIcon={<ExtensionIcon />}
+    />
   );
 }

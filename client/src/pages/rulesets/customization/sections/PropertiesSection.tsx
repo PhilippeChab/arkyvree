@@ -4,9 +4,9 @@ import {
 } from "@/client/src/components/customization/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { CreateDialog, DeleteDialog, EditDialog } from "@/client/src/components/common/index.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EntityType } from "@/shared/customization/properties.ts";
 import { Add as AddIcon, ListAlt as PropertiesIcon } from "@mui/icons-material";
 import { Box, Button, Chip, TextField, Typography } from "@mui/material";
@@ -60,7 +60,6 @@ export function PropertiesSection(
   const {
     data: properties,
     isLoading,
-    currentUserId,
     createDialogOpen,
     editDialogOpen,
     deleteDialogOpen,
@@ -84,16 +83,14 @@ export function PropertiesSection(
     data: externalData,
     queryKeysToInvalidate,
     createFn: async (data: PropertyFormData) => {
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties.$post({
           param: { id: ruleset.id, entityType: entityType, entityId: entityId },
           json: data,
-        });
-      if (!response.ok) throw new Error("Failed to create property");
-      return response.json();
+        }));
     },
     updateFn: async (propertyId: string, data: PropertyFormData) => {
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties[":property_id"].$put({
           param: {
             id: ruleset.id,
@@ -102,12 +99,10 @@ export function PropertiesSection(
             property_id: propertyId,
           },
           json: data,
-        });
-      if (!response.ok) throw new Error("Failed to update property");
-      return response.json();
+        }));
     },
     deleteFn: async (propertyId: string) => {
-      const response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties[":property_id"].$delete({
           param: {
             id: ruleset.id,
@@ -115,16 +110,14 @@ export function PropertiesSection(
             entityId: entityId,
             property_id: propertyId,
           },
-        });
-      if (!response.ok) throw new Error("Failed to delete property");
-      return response.json();
+        }));
     },
     onCreateSuccess: handleResolvedEntityId,
     onUpdateSuccess: handleResolvedEntityId,
     onDeleteSuccess: handleResolvedEntityId,
   });
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const canDelete = canEdit;
 
   const handleEditProperty = (property: Property) => {

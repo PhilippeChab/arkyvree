@@ -1,19 +1,20 @@
 import { AttachmentField, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useDirtyForm } from "@/client/src/hooks/index.ts";
+import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Autocomplete, Box, Button, Chip, FormControl, InputLabel, MenuItem, Paper, Select, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { ALIGNMENT_OPTIONS, GENDER_OPTIONS, type Alignment, type Gender } from "@/shared/enums.ts";
 
 interface CharacterIdentityFormData {
   race: string;
-  alignment: string;
+  alignment: Alignment | "";
   experience: number;
   age: string;
-  gender: string;
+  gender: Gender | "";
   height: string;
   weight: string;
   deity: string;
@@ -94,64 +95,48 @@ export function CharacterIdentitySection({
     },
   });
 
-  // Initialize form when character data changes
-  useEffect(() => {
-    if (character) {
-      const formData = {
-        race: character.identity?.physiology?.race?.name || "",
-        alignment: character.identity?.beliefs?.alignment || "",
-        experience: character.identity?.meta?.xp || 0,
-        age: String(character.identity?.physiology?.age || ""),
-        gender: character.identity?.physiology?.gender || "",
-        height: String(character.identity?.physiology?.height || ""),
-        weight: String(character.identity?.physiology?.weight || ""),
-        deity: character.identity?.beliefs?.deity || "",
-        description: character.identity?.physiology?.description || "",
-        notes: character.identity?.background?.notes || "",
-        languageIds: (character.identity?.physiology?.languages ?? []).map((l) => l.id),
-      };
-      form.reset(formData);
-    }
-  }, [character, form]);
+  const identity = character.identity;
+  useFormSync(form, {
+    race: identity?.physiology?.race?.name || "",
+    alignment: (identity?.beliefs?.alignment as Alignment | undefined) || "",
+    experience: identity?.meta?.xp || 0,
+    age: String(identity?.physiology?.age || ""),
+    gender: (identity?.physiology?.gender as Gender | undefined) || "",
+    height: String(identity?.physiology?.height || ""),
+    weight: String(identity?.physiology?.weight || ""),
+    deity: identity?.beliefs?.deity || "",
+    description: identity?.physiology?.description || "",
+    notes: identity?.background?.notes || "",
+    languageIds: (identity?.physiology?.languages ?? []).map((l) => l.id),
+  });
 
   const handleSubmit = async (formData: CharacterIdentityFormData) => {
     try {
-      const updateData = {
-        age: Number(formData.age) || undefined,
-        gender: formData.gender as "Male" | "Female" | "Other" | undefined,
-        height: formData.height || undefined,
-        weight: formData.weight || undefined,
-        deity: formData.deity,
-        xp: formData.experience,
-        alignment: formData.alignment as
-          | "Lawful Good"
-          | "Neutral Good"
-          | "Chaotic Good"
-          | "Lawful Neutral"
-          | "True Neutral"
-          | "Chaotic Neutral"
-          | "Lawful Evil"
-          | "Neutral Evil"
-          | "Chaotic Evil"
-          | undefined,
-        description: formData.description,
-        notes: formData.notes,
-      };
-
       await rpc.api.characters[":id"]["$put"]({
         param: { id: characterId },
-        json: { ...updateData, languageIds: formData.languageIds, updatedAt: character.updatedAt },
+        json: {
+          age: Number(formData.age) || undefined,
+          gender: formData.gender || undefined,
+          height: formData.height || undefined,
+          weight: formData.weight || undefined,
+          deity: formData.deity,
+          xp: formData.experience,
+          alignment: formData.alignment || undefined,
+          description: formData.description,
+          notes: formData.notes,
+          languageIds: formData.languageIds,
+          updatedAt: character.updatedAt,
+        },
       });
 
+      // Saved: the edits are now the baseline the refetch below is synced against.
+      form.reset(formData);
       await queryClient.invalidateQueries({
         queryKey: queryKeys.characters.detail(characterId),
       });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.characters.levelUp.all(characterId),
       });
-
-      // Reset form dirty state after successful save
-      form.reset(formData);
     } catch (err) {
       snackbar.error(err, "Failed to save character details");
     }
@@ -207,14 +192,12 @@ export function CharacterIdentitySection({
   // when the user clicks Save, matching the rest of the identity section.
   const { data: availableLanguages } = useQuery({
     queryKey: queryKeys.rulesets.languages(rulesetId!),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].languages.$get({
+    queryFn: async (): Promise<LanguageOption[]> => {
+      const page = await parseResponse(rpc.api.rulesets[":id"].languages.$get({
         param: { id: rulesetId! },
         query: { limit: "100", page: "1" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch languages");
-      const data = await response.json();
-      return (data as { items: LanguageOption[] }).items;
+      }));
+      return page.items;
     },
     enabled: !!rulesetId && !readOnly,
   });
@@ -352,15 +335,9 @@ export function CharacterIdentitySection({
                   label="Alignment"
                   value={form.watch("alignment")}
                 >
-                  <MenuItem value="Lawful Good">Lawful Good</MenuItem>
-                  <MenuItem value="Neutral Good">Neutral Good</MenuItem>
-                  <MenuItem value="Chaotic Good">Chaotic Good</MenuItem>
-                  <MenuItem value="Lawful Neutral">Lawful Neutral</MenuItem>
-                  <MenuItem value="True Neutral">True Neutral</MenuItem>
-                  <MenuItem value="Chaotic Neutral">Chaotic Neutral</MenuItem>
-                  <MenuItem value="Lawful Evil">Lawful Evil</MenuItem>
-                  <MenuItem value="Neutral Evil">Neutral Evil</MenuItem>
-                  <MenuItem value="Chaotic Evil">Chaotic Evil</MenuItem>
+                  {ALIGNMENT_OPTIONS.map((alignment) => (
+                    <MenuItem key={alignment} value={alignment}>{alignment}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <TextField
@@ -402,9 +379,9 @@ export function CharacterIdentitySection({
               label="Gender"
               value={form.watch("gender")}
             >
-              <MenuItem value="Male">Male</MenuItem>
-              <MenuItem value="Female">Female</MenuItem>
-              <MenuItem value="Other">Other</MenuItem>
+              {GENDER_OPTIONS.map((gender) => (
+                <MenuItem key={gender} value={gender}>{gender}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <TextField
