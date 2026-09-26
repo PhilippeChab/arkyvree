@@ -7,7 +7,7 @@ import { infiniteQueryOptions, queryOptions, type QueryClient } from "@tanstack/
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./sections/kindFilterOptions.ts";
+import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "@/client/src/pages/rulesets/details/sections/kindFilterOptions.ts";
 
 export type RulesetSection =
   | "races"

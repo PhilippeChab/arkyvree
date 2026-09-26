@@ -3,6 +3,7 @@ import {
   ListCard,
   ListCardGrid,
   LoadMoreButton,
+  PageActionButton,
   PageHeader,
   PageTransition,
   SearchBar,
@@ -15,7 +16,6 @@ import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { characterDetailQuery, characterListQuery, type CharacterListFilters } from "@/client/src/lib/queries.ts";
 import { CreateCharacterDialog } from "@/client/src/pages/characters/components/index.ts";
 import {
-  Add as AddIcon,
   Archive as ArchiveIcon,
   Group as GroupIcon,
   Shield as ShieldIcon,
@@ -48,8 +48,6 @@ const CHARACTER_SORT_OPTIONS: SortOption<SortField>[] = [
   { field: "updatedAt", direction: "desc", label: "Recently Updated" },
   { field: "updatedAt", direction: "asc", label: "Least Recently Updated" },
 ];
-
-const blankStateIconSx = { fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 };
 
 export default function CharactersPage() {
   usePageTitle("Characters");
@@ -88,22 +86,7 @@ export default function CharactersPage() {
 
   const prefetchCharacter = (id: string) => void queryClient.prefetchQuery(characterDetailQuery(id));
 
-  const createButton = (label: string) => (
-    <Button
-      variant="contained"
-      size="large"
-      startIcon={<AddIcon />}
-      onClick={() => setCreateModalOpen(true)}
-      sx={{
-        px: 3,
-        py: 1.5,
-        borderRadius: 2,
-        boxShadow: (theme) => `0 4px 14px 0 ${theme.palette.primary.main}40`,
-      }}
-    >
-      {label}
-    </Button>
-  );
+  const createButton = (label: string) => <PageActionButton onClick={() => setCreateModalOpen(true)}>{label}</PageActionButton>;
 
   const viewActiveButton = (
     <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
@@ -123,7 +106,7 @@ export default function CharactersPage() {
 
         <SearchBar
           searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value })}
+          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
           searchPlaceholder="Search characters..."
           filterOptions={CHARACTER_FILTER_OPTIONS}
           filterValue={view}
@@ -193,21 +176,21 @@ export default function CharactersPage() {
           </>
         ) : view === "archived" ? (
           <BlankState
-            icon={<ArchiveIcon sx={blankStateIconSx} />}
+            icon={ArchiveIcon}
             title="No archived characters"
             description="Characters you archive will appear here. You can restore them at any time."
             action={viewActiveButton}
           />
         ) : view === "shared" ? (
           <BlankState
-            icon={<GroupIcon sx={blankStateIconSx} />}
+            icon={GroupIcon}
             title="No shared characters"
             description="Characters other users invite you to contribute to will appear here."
             action={viewActiveButton}
           />
         ) : (
           <BlankState
-            icon={<ShieldIcon sx={blankStateIconSx} />}
+            icon={ShieldIcon}
             title="No characters yet"
             description="Create your first character to start your adventure"
             action={createButton("Create Your First Character")}

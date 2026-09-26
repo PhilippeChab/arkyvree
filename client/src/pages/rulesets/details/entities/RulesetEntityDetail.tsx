@@ -1,15 +1,14 @@
-import { Box, Button, Card, CardContent, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { useForm, type DefaultValues, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { DeleteDialog, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DeleteDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useFormSync, usePageTitle } from "@/client/src/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { EntityDetailLayout } from "@/client/src/pages/rulesets/components/index.ts";
+import { EntityDetailLayout, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 interface EntityBase {
@@ -22,7 +21,7 @@ interface EntityBase {
 interface EntityEditing<TEntity, TForm extends FieldValues> {
   toFormValues: (entity: TEntity) => TForm;
   /** Saves the form; resolves to the saved entity, whose id changes when a fork copies an inherited one. */
-  update: (data: TForm, updatedAt: string) => Promise<TEntity>;
+  update: (data: TForm, updatedAt: string | undefined) => Promise<TEntity>;
   remove: () => Promise<unknown>;
   renderFields: (form: UseFormReturn<TForm>) => ReactNode;
 }
@@ -72,16 +71,23 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const canEdit = !!editing && canEditEntities;
 
   const form = useForm<TForm>({ defaultValues: {} as DefaultValues<TForm> });
-  useFormSync(form, entity && editing ? editing.toFormValues(entity) : undefined);
+  const sync = useFormSync(form, entity && editing ? editing.toFormValues(entity) : undefined, {
+    // An inherited entity keeps its id in every fork.
+    key: `${rulesetId}/${entityId}`,
+    updatedAt: entity?.updatedAt,
+  });
 
   const invalidateSection = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
 
   const saveMutation = useMutation({
-    mutationFn: (data: TForm) => editing!.update(data, entity!.updatedAt),
-    onSuccess: (saved, submitted) => {
-      form.reset(submitted);
-      queryClient.setQueryData(queryKeys.rulesets.entity(rulesetId, section, saved.id), saved);
+    mutationFn: (data: TForm) => editing!.update(data, sync.updatedAt()),
+    onSuccess: (saved) => {
+      sync.saved(editing!.toFormValues(saved), saved.updatedAt);
+      const savedKey = queryKeys.rulesets.entity(rulesetId, section, saved.id);
+      queryClient.setQueryData(savedKey, saved);
+      // Supersede any refetch that left before the save committed.
+      void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
       // Editing an inherited entity copies it into this ruleset under a new id.
       if (saved.id !== entityId) {
         navigate(`/rulesets/${rulesetId}/${section}/${saved.id}`, { replace: true, state: location.state });
@@ -113,38 +119,17 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
         isLoading={isRulesetLoading || isEntityLoading}
       >
         {entity && (
-          <Card sx={{ boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-            <CardContent sx={{ p: 0 }}>
-              <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-                  <Typography component="h2" variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                    {label} Details
-                  </Typography>
-                  {!canEdit && renderChips && (
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>{renderChips(entity)}</Box>
-                  )}
-                </Box>
-              </Box>
-              <Box sx={{ p: { xs: 2, sm: 3 } }}>
-                {canEdit ? (
-                  <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))}>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                      {editing.renderFields(form)}
-                      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                        <Button type="submit" variant="contained" disabled={!form.formState.isDirty || saveMutation.isPending}>
-                          <DiceSpinner size="small" loading={saveMutation.isPending}>Save</DiceSpinner>
-                        </Button>
-                      </Box>
-                    </Box>
-                  </form>
-                ) : (
-                  <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                    {entity.description || "No description provided."}
-                  </Typography>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
+          <EntityDetailsCard
+            title={`${label} Details`}
+            chips={renderChips?.(entity)}
+            description={entity.description}
+            edit={canEdit ? {
+              fields: editing.renderFields(form),
+              onSubmit: form.handleSubmit((data) => saveMutation.mutate(data)),
+              canSave: form.formState.isDirty,
+              isSaving: saveMutation.isPending,
+            } : undefined}
+          />
         )}
       </EntityDetailLayout>
       {editing && (

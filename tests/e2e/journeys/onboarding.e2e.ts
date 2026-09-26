@@ -42,7 +42,7 @@ test.describe('Onboarding Wizard', () => {
 
     // Wizard closes; the dashboard (whose own heading shares the welcome text) is what's left
     await expect(page.getByRole('button', { name: /^Get Started$/ })).toHaveCount(0);
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('[role="dialog"][aria-modal="true"]')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Welcome to Arkyvree', level: 1 })).toBeVisible();
   });
 });

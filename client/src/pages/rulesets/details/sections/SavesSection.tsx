@@ -20,7 +20,7 @@ import type { InferResponseType } from "hono/client";
 import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { savesQuery } from "../sectionQueries.ts";
+import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const SAVES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -28,8 +28,7 @@ const SAVES_COLUMNS = [
   { key: "ability", label: "Linked Ability", width: "30%" },
 ];
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type Save = SavesPaginated["items"][number];
 
 
@@ -160,7 +159,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<SavesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SavesIcon}
         emptyTitle="No saves"
         emptyDescription="No saving throws available for this ruleset."
       />

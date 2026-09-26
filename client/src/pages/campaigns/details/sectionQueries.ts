@@ -1,6 +1,6 @@
 /**
- * List queries of the campaign tabs, shared by the sections and the prefetches
- * (tab hover, campaign card hover) so they use the same key and request.
+ * List queries of the campaign tabs, shared by the sections and the campaign
+ * card's hover prefetch so they use the same key and request.
  */
 import { infiniteQueryOptions, type QueryClient } from "@tanstack/react-query";
 
@@ -31,9 +31,10 @@ export const campaignPlayersQuery = (campaignId: string, search: string) => infi
   getNextPageParam: nextPage,
 });
 
-/** Warm the first page of a tab as it opens: tab changes clear the search. */
-export function prefetchCampaignSection(queryClient: QueryClient, campaignId: string, section: CampaignSection) {
-  return section === "characters"
-    ? queryClient.prefetchInfiniteQuery(campaignCharactersQuery(campaignId, ""))
-    : queryClient.prefetchInfiniteQuery(campaignPlayersQuery(campaignId, ""));
+/** Warm the first page of both tabs: the campaign page mounts them together. */
+export function prefetchCampaignSections(queryClient: QueryClient, campaignId: string) {
+  return Promise.all([
+    queryClient.prefetchInfiniteQuery(campaignCharactersQuery(campaignId, "")),
+    queryClient.prefetchInfiniteQuery(campaignPlayersQuery(campaignId, "")),
+  ]);
 }

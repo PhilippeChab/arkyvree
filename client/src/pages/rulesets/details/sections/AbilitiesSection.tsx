@@ -7,15 +7,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { abilitiesQuery } from "../sectionQueries.ts";
+import { abilitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const ABILITIES_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
   { key: "description", label: "Description", width: "70%" },
 ];
 
-type AbilitiesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"]>;
-type AbilitiesPaginated = Exclude<AbilitiesResponse, { error: string }>;
+type AbilitiesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>;
 type Ability = AbilitiesPaginated["items"][number];
 
 interface AbilitiesSectionProps {
@@ -93,7 +92,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Abil
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<AbilitiesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={AbilitiesIcon}
         emptyTitle="No abilities"
         emptyDescription="No abilities available for this ruleset."
       />

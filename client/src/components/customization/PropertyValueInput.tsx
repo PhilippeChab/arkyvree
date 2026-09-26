@@ -8,10 +8,7 @@ import type { InferResponseType } from "hono/client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type CompletionsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"]["properties"]["values"]["completions"]["$get"]
->;
-type CompletionsPage = Exclude<CompletionsResponse, { error: string }>;
+type CompletionsPage = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"]["properties"]["values"]["completions"]["$get"], 200>;
 type PropertyValueCompletion = CompletionsPage["items"][number];
 
 interface PropertyValueInputProps {

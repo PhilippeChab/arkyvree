@@ -8,8 +8,7 @@ import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type AptitudesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"]>;
-type AptitudesPaginated = Exclude<AptitudesResponse, { error: string }>;
+type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
 export type Aptitude = AptitudesPaginated["items"][number];
 
 function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {

@@ -28,7 +28,7 @@ export type ForkRulesetFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["fork"]["$post"]
 >["json"];
 
-type RulesetKind = "ruleset" | "extension";
+type RulesetKind = NonNullable<InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"]>;
 
 /** Public / Private choice; the selected option can't be toggled off. */
 function PrivacyToggle({ value, onChange, disabled }: {
@@ -246,10 +246,10 @@ export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: Ar
 interface PublishRulesetDialogProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (kind: "ruleset" | "extension") => void;
+  onConfirm: (kind: RulesetKind) => void;
   isLoading: boolean;
   canBeExtension: boolean;
-  initialKind?: "ruleset" | "extension";
+  initialKind?: RulesetKind;
 }
 
 export function PublishRulesetDialog({

@@ -15,7 +15,7 @@ import { Edit as EditIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon,
 import { BlankState } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
-import { type ReactNode, useMemo, useRef } from "react";
+import { type ElementType, type ReactNode, useMemo, useRef } from "react";
 import { TABLE_CONTAINER_LOADING_STYLE, TABLE_CONTAINER_STYLE, TABLE_STYLE } from "./tableStyles.ts";
 
 interface Column {
@@ -38,7 +38,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   onRowClick?: (item: T) => void;
   onRowMouseEnter?: (item: T) => void;
   renderCell: (item: T, columnKey: string) => ReactNode;
-  emptyIcon?: ReactNode;
+  emptyIcon?: ElementType;
   emptyTitle?: string;
   emptyDescription?: string;
 }

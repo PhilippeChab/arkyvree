@@ -19,8 +19,7 @@ import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type RulesetsResponse = InferResponseType<typeof rpc.api.rulesets.$get>;
-type RulesetsPaginated = Exclude<RulesetsResponse, { error: string }>;
+type RulesetsPaginated = InferResponseType<typeof rpc.api.rulesets.$get, 200>;
 type ExtensionRuleset = RulesetsPaginated["items"][number];
 
 interface SubscribeExtensionDialogProps {

@@ -12,8 +12,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type RulesetSave = SavesPaginated["items"][number];
 
 type CreateLevelFormData = InferRequestType<

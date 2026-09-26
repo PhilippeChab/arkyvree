@@ -32,10 +32,7 @@ const MODIFIERS_COLUMNS = [
   { key: "createdAt", label: "Created", width: "20%" },
 ];
 
-type ModifiersResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"]
->;
-type ModifiersArray = Exclude<ModifiersResponse, { error: string }>;
+type ModifiersArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"], 200>;
 type Modifier = ModifiersArray[number];
 
 type ModifierFormData = InferRequestType<
@@ -309,11 +306,7 @@ export function ModifiersSection({
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={
-          <ModifiersIcon
-            sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }}
-          />
-        }
+        emptyIcon={ModifiersIcon}
         emptyTitle="No modifiers"
         emptyDescription="No modifiers defined for this entity."
       />

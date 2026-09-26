@@ -7,8 +7,7 @@ import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 export type Save = SavesPaginated["items"][number];
 
 interface SavesAutocompleteProps {

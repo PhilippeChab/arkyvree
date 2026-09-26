@@ -1,7 +1,7 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { RaceFormFields, type RaceFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { DEFAULT_ENTITY_FILTERS, ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, type EntityKind, type EntitySortField } from "./kindFilterOptions.ts";
+import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, parseEntityFilters } from "./kindFilterOptions.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -21,7 +21,7 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { racesQuery } from "../sectionQueries.ts";
+import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const RACES_COLUMNS = [
   { key: "name", label: "Name", width: "15%" },
@@ -31,8 +31,7 @@ const RACES_COLUMNS = [
 ];
 
 
-type RacesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"]>;
-type RacesPaginated = Exclude<RacesResponse, { error: string }>;
+type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
 type Race = RacesPaginated["items"][number];
 
 
@@ -59,9 +58,8 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RacesSec
   const [orderByParam, setOrderByParam] = useSearchParam("orderBy");
   const [orderDirParam, setOrderDirParam] = useSearchParam("orderDir");
 
-  const kindFilter: EntityKind = (KIND_FILTER_OPTIONS.find((o) => o.value === kindParam)?.value ?? DEFAULT_ENTITY_FILTERS.kind) as EntityKind;
-  const sortField = (orderByParam as EntitySortField) || DEFAULT_ENTITY_FILTERS.orderBy;
-  const sortDirection = (orderDirParam as "asc" | "desc") || DEFAULT_ENTITY_FILTERS.orderDir;
+  const { kind: kindFilter, orderBy: sortField, orderDir: sortDirection } =
+    parseEntityFilters(kindParam, orderByParam, orderDirParam);
 
   const {
     createDialogOpen,
@@ -187,7 +185,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RacesSec
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<RacesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={RacesIcon}
         emptyTitle="No races"
         emptyDescription="No races available for this ruleset."
       />

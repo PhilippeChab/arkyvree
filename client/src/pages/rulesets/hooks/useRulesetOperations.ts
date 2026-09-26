@@ -6,14 +6,15 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
+import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
 
-type RulesetResponse = InferResponseType<typeof rpc.api.rulesets.$get>;
-type RulesetArray = Exclude<RulesetResponse, { error: string }>;
+type RulesetArray = InferResponseType<typeof rpc.api.rulesets.$get, 200>;
 type Ruleset = RulesetArray["items"][number];
+type PublishKind = InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"];
 
 export function useRulesetOperations() {
   const queryClient = useQueryClient();
@@ -125,57 +126,11 @@ export function useRulesetOperations() {
     },
   });
 
-  // Star mutation
-  const starMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].star.$post({
-        param: { id },
-      }));
-    },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to star ruleset");
-    },
-  });
-
-  // Unstar mutation
-  const unstarMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].star.$delete({
-        param: { id },
-      }));
-    },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to unstar ruleset");
-    },
-  });
-
-  const toggleStar = (id: string, isCurrentlyStarred: boolean) => {
-    if (isCurrentlyStarred) {
-      unstarMutation.mutate(id);
-    } else {
-      starMutation.mutate(id);
-    }
-  };
+  const toggleStar = useToggleRulesetStar();
 
   // Publish mutation
   const publishMutation = useMutation({
-    mutationFn: async ({ id, kind }: { id: string; kind?: "ruleset" | "extension" }) => {
+    mutationFn: async ({ id, kind }: { id: string; kind?: PublishKind }) => {
       return parseResponse(rpc.api.rulesets[":id"].publish.$post({
         param: { id },
         json: { kind },
@@ -325,7 +280,7 @@ export function useRulesetOperations() {
     }
   };
 
-  const confirmPublish = (kind?: "ruleset" | "extension") => {
+  const confirmPublish = (kind?: PublishKind) => {
     if (selectedRuleset) {
       publishMutation.mutate({ id: selectedRuleset.id, kind });
     }
@@ -361,8 +316,6 @@ export function useRulesetOperations() {
     archiveMutation,
     unarchiveMutation,
     publishMutation,
-    starMutation,
-    unstarMutation,
     subscribeMutation,
     unsubscribeMutation,
 

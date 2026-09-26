@@ -57,8 +57,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
 import type { BaseEntityType, EntityType } from "./types.ts";
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type Save = SavesPaginated["items"][number];
 
 type ItemResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$get"], 200>;

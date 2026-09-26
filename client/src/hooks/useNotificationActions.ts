@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
@@ -7,14 +8,9 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError, rpc } from "@/client/src/services/rpc.ts";
 import { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 
-interface NotificationLike {
-  id: string;
-  type: string;
-  targetTable: string;
-  targetId: string;
-  data: unknown;
-  readAt: string | null;
-}
+type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200>["items"][number];
+/** Fields the actions use; the bell's unread-summary items carry them too. */
+type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "targetId" | "data" | "readAt">;
 
 type NotificationData = Record<string, string | undefined>;
 
@@ -46,6 +42,15 @@ const INVITES = {
 
 type InviteType = keyof typeof INVITES;
 
+interface InviteAnswer {
+  notification: NotificationLike;
+  type: InviteType;
+}
+
+// Shared by accept and reject, so every notification surface can tell which
+// invites are being answered, whichever surface the click came from.
+const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
+
 const isInviteType = (type: string): type is InviteType => type in INVITES;
 
 const notificationData = (n: NotificationLike) => (n.data ?? {}) as NotificationData;
@@ -65,8 +70,7 @@ export function useNotificationActions() {
     queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
   // Best-effort: failing to mark read must not block what the user clicked.
-  // Answering an invite already marks its notification read server-side, so
-  // this request can 404 — refetch either way to show the current state.
+  // Refetch either way to show the current state.
   const markRead = async (notificationId: string) => {
     try {
       await rpc.api.notifications[":id"].read.$post({ param: { id: notificationId } });
@@ -86,43 +90,58 @@ export function useNotificationActions() {
   const handleInviteError = (error: unknown, notification: NotificationLike) => {
     if (error instanceof ApiError && error.status === 409) {
       snackbar.warning("This invitation is no longer pending");
+      // Answered or revoked elsewhere: stop offering it.
+      void markRead(notification.id);
     } else {
+      // Still pending: keep Accept / Reject so the user can retry.
       snackbar.error(error, "Failed to process invitation");
     }
-    // The invite is resolved one way or another; stop offering it.
-    void markRead(notification.id);
   };
 
   const acceptMutation = useMutation({
-    mutationFn: async ({ notification, type }: { notification: NotificationLike; type: InviteType }) => {
+    mutationKey: ANSWER_INVITE_KEY,
+    mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].accept(notification.targetId);
     },
-    onSuccess: (_, { notification, type }) => {
+    // Answering marks the invite's notification read server-side.
+    onSuccess: (_, { type }) => {
       snackbar.success(`${INVITES[type].label} accepted!`);
       queryClient.invalidateQueries({ queryKey: INVITES[type].listKey });
-      void markRead(notification.id);
+      void invalidateNotifications();
     },
     onError: (error, { notification }) => handleInviteError(error, notification),
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async ({ notification, type }: { notification: NotificationLike; type: InviteType }) => {
+    mutationKey: ANSWER_INVITE_KEY,
+    mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].reject(notification.targetId);
     },
-    onSuccess: (_, { notification, type }) => {
+    onSuccess: (_, { type }) => {
       snackbar.success(`${INVITES[type].label} rejected`);
-      void markRead(notification.id);
+      void invalidateNotifications();
     },
     onError: (error, { notification }) => handleInviteError(error, notification),
   });
 
+  const answeringIds = useMutationState({
+    filters: { mutationKey: ANSWER_INVITE_KEY, status: "pending" },
+    select: (mutation) => (mutation.state.variables as InviteAnswer).notification.id,
+  });
+
   const isActionable = (n: NotificationLike) => isInviteType(n.type) && !n.readAt;
+
+  /** Whether this invite is being accepted or rejected right now. */
+  const isAnswering = (n: NotificationLike) => answeringIds.includes(n.id);
 
   const isDownloadable = (n: NotificationLike) => n.type === "pdfReady";
 
-  /** Whether clicking the notification does anything (invites use their buttons instead). */
+  /**
+   * Whether clicking the notification does anything: download, open its
+   * target, or at least mark it read. Invites use their buttons instead.
+   */
   const isOpenable = (n: NotificationLike) =>
-    !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable));
+    !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable) || !n.readAt);
 
   const downloadExport = async (n: NotificationLike) => {
     void markRead(n.id);
@@ -172,7 +191,7 @@ export function useNotificationActions() {
     open,
     accept,
     reject,
-    isInvitePending: acceptMutation.isPending || rejectMutation.isPending,
+    isAnswering,
     markAllRead,
   };
 }

@@ -20,7 +20,7 @@ import {
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { PowersSectionProps } from "../../sectionFactory.ts";
-import { SheetSection } from "../SheetSection.tsx";
+import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
 const SCHOOL_KEY = "SPELL_SCHOOL";
 

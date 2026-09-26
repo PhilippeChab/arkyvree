@@ -46,7 +46,7 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { featsGroupedQuery, featsQuery } from "../sectionQueries.ts";
+import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -60,12 +60,10 @@ const GROUPED_COLUMNS = [
   { key: "variants", label: "Variants", width: "50%" },
 ];
 
-type FeatsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"]>;
-type FeatsPaginated = Exclude<FeatsResponse, { error: string }>;
+type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
 type Feat = FeatsPaginated["items"][number];
 
-type GroupedResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"]>;
-type GroupedPaginated = Exclude<GroupedResponse, { error: string }>;
+type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 type GroupedFeatRow = GroupedPaginated["items"][number];
 
 
@@ -254,7 +252,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
     if (groupedFeats.length === 0) {
       return (
         <BlankState
-          icon={<FeatsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+          icon={FeatsIcon}
           title="No feats"
           description="No feats available for this ruleset."
         />
@@ -362,7 +360,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
           onRowClick={handleRowClick}
           onRowMouseEnter={handleRowMouseEnter}
           renderCell={renderCell}
-          emptyIcon={<FeatsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+          emptyIcon={FeatsIcon}
           emptyTitle="No feats"
           emptyDescription="No feats available for this ruleset."
         />

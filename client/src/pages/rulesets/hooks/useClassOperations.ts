@@ -6,21 +6,16 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type LevelsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"]
->;
-type LevelsArray = Exclude<LevelsResponse, { error: string }>;
+type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
 export type Level = LevelsArray[number];
 
 type CreateLevelFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
 >["json"];
 
-type ClassSkillsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"]
->;
-type ClassSkillsArray = Exclude<ClassSkillsResponse, { error: string }>;
+type ClassSkillsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"], 200>;
 
 export function useClassLevels(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
@@ -41,15 +36,7 @@ export function useClassLevels(rulesetId: string, classId: string) {
   });
 
   // Query
-  const { data: levels, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
-        param: { id: rulesetId, classId },
-      }));
-    },
-    enabled: !!rulesetId && !!classId,
-  });
+  const { data: levels, isLoading } = useQuery({ ...classLevelsQuery(rulesetId, classId), enabled: !!rulesetId && !!classId });
 
   // Create mutation
   const createMutation = useMutation({
@@ -128,15 +115,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
   const [skillToRemove, setSkillToRemove] = useState<string | null>(null);
 
   // Fetch class skills data
-  const { data: classSkills, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills.$get({
-        param: { id: rulesetId, classId },
-      }));
-    },
-    enabled: !!rulesetId && !!classId,
-  });
+  const { data: classSkills, isLoading } = useQuery({ ...classSkillsQuery(rulesetId, classId), enabled: !!rulesetId && !!classId });
 
   // Available skills with server-side search and pagination
   const [skillSearch, setSkillSearch] = useState("");

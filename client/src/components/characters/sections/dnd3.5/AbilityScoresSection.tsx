@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { AbilityScoresSectionProps } from "../../sectionFactory.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
-import { SheetSection } from "../SheetSection.tsx";
+import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
 export function AbilityScoresSection({
   abilities,

@@ -8,10 +8,7 @@ import { Close as CloseIcon } from "@mui/icons-material";
 import { Autocomplete, Box, Chip, Paper, Skeleton, TextField, Typography } from "@mui/material";
 import type { InferResponseType } from "hono/client";
 
-type ClassSkillsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"]
->;
-type ClassSkillsArray = Exclude<ClassSkillsResponse, { error: string }>;
+type ClassSkillsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"], 200>;
 type ClassSkill = ClassSkillsArray[number];
 
 interface ClassSkillsSectionProps {

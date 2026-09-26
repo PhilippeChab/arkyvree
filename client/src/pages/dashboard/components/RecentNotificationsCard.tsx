@@ -52,7 +52,7 @@ export function RecentNotificationsCard() {
         </Box>
       ) : items.length === 0 ? (
         <BlankState
-          icon={<NotificationsIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />}
+          icon={NotificationsIcon}
           title="No notifications yet"
           description="Notifications from your campaigns and collaborators will appear here."
         />
@@ -93,7 +93,7 @@ export function RecentNotificationsCard() {
                       sx={{ mt: 1 }}
                       onAccept={() => actions.accept(notification)}
                       onReject={() => actions.reject(notification)}
-                      disabled={actions.isInvitePending}
+                      disabled={actions.isAnswering(notification)}
                     />
                   )}
                 </Box>

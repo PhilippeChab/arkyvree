@@ -37,6 +37,8 @@ interface InviteLandingPageProps {
   /** "Campaign", "Ruleset", "Character". */
   entityLabel: string;
   entityPath: (entityId: string) => string;
+  /** Where accepting lands when the invite doesn't name its entity. */
+  listPath: string;
   icon: ElementType;
   queryKey: readonly unknown[];
   loadInvite: () => Promise<InviteDetails>;
@@ -79,6 +81,7 @@ export function InviteLandingPage({
   pageTitle,
   entityLabel,
   entityPath,
+  listPath,
   icon: Icon,
   queryKey,
   loadInvite,
@@ -131,6 +134,9 @@ export function InviteLandingPage({
       }
     },
     enabled: !isAnswering,
+    // Drop the invite once the page closes: it may be answered elsewhere (the
+    // bell, the dashboard), and a cached "Pending" would offer dead buttons.
+    gcTime: 0,
   });
 
   const goToDashboard = (
@@ -246,7 +252,7 @@ export function InviteLandingPage({
             <InviteActionButtons
               prominent
               onAccept={() => acceptMutation.mutate(undefined, {
-                onSuccess: () => navigate(entityId ? entityPath(entityId) : "/dashboard"),
+                onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
               })}
               onReject={() => rejectMutation.mutate()}
               disabled={isAnswering}

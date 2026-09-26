@@ -39,7 +39,7 @@ import {
   SPELL_RANGE_TYPES,
   SPELL_RESISTANCE_OPTIONS,
 } from "@/shared/dnd3.5/spells.ts";
-import { powersQuery } from "../../sectionQueries.ts";
+import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -47,8 +47,7 @@ const SPELLS_COLUMNS = [
   { key: "description", label: "Description", width: "60%" },
 ];
 
-type SpellsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"]>;
-type SpellsPaginated = Exclude<SpellsResponse, { error: string }>;
+type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
 type Spell = SpellsPaginated["items"][number];
 
 type SpellFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["powers"]["$post"]>["json"];
@@ -462,7 +461,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<PowersIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={PowersIcon}
         emptyTitle="No spells"
         emptyDescription="No spells available for this ruleset."
       />

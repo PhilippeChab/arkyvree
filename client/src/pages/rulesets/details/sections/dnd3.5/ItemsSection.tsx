@@ -24,8 +24,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { BulkVariantsDialog } from "@/client/src/pages/rulesets/details/sections/dnd3.5/BulkVariantsDialog.tsx";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 
-type ItemsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"]>;
-type ItemsPaginated = Exclude<ItemsResponse, { error: string }>;
+type ItemsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>;
 type Item = ItemsPaginated["items"][number];
 
 interface ItemsSectionProps {
@@ -35,7 +34,7 @@ interface ItemsSectionProps {
 }
 
 import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
-import { itemsQuery } from "../../sectionQueries.ts";
+import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const ITEMS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -308,7 +307,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<ItemsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={ItemsIcon}
         emptyTitle="No items"
         emptyDescription="No items available for this ruleset."
       />

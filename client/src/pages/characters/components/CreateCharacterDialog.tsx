@@ -464,6 +464,9 @@ export function CreateCharacterDialog({
   // Fetch races for selected ruleset, annotated with eligibility
   const {
     data: racesData,
+    isPending: isRacesPending,
+    isPlaceholderData: isRacesPlaceholder,
+    isError: isRacesError,
     fetchNextPage: fetchNextRacesPage,
     hasNextPage: hasNextRacesPage,
     isFetchingNextPage: isFetchingNextRacesPage,
@@ -494,16 +497,18 @@ export function CreateCharacterDialog({
     [racesData?.pages],
   );
 
-  // Clear race selection if the selected race is no longer available or becomes ineligible
+  // Clear the race once the list for the current ruleset, alignment and gender
+  // has loaded without it, or with it ineligible. While a new list loads, the
+  // previous one is still shown, and a failed load says nothing either way.
   const selectedRaceId = watch("raceId");
+  const racesSettled = !!selectedRulesetId && !isRacesPending && !isRacesPlaceholder && !isRacesError;
   useEffect(() => {
-    if (selectedRaceId && races.length > 0) {
-      const selectedRace = races.find((r) => r.id === selectedRaceId);
-      if (!selectedRace || !selectedRace.eligible) {
-        setValue("raceId", "");
-      }
+    if (!selectedRaceId || !racesSettled) return;
+    const selectedRace = races.find((r) => r.id === selectedRaceId);
+    if (!selectedRace || !selectedRace.eligible) {
+      setValue("raceId", "");
     }
-  }, [races, selectedRaceId, setValue]);
+  }, [races, racesSettled, selectedRaceId, setValue]);
 
   const { data: abilityItems } = useRulesetAbilities(selectedRulesetId || undefined);
   const rulesetAbilities = useMemo(() => {
@@ -620,6 +625,7 @@ export function CreateCharacterDialog({
           onChange={(_, newValue) => {
             setSelectedRuleset(newValue);
             setValue("rulesetId", newValue?.id ?? "");
+            if (!newValue) setValue("raceId", "");
           }}
           onInputChange={(_, value, reason) => {
             if (reason === "input") setRulesetSearch(value);

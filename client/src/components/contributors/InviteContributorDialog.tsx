@@ -1,10 +1,14 @@
 import { Button, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import type { InferRequestType } from "hono/client";
 import { Controller, useForm } from "react-hook-form";
 
 import { DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
 import { emailRules } from "@/client/src/lib/validation.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type ContributorRole = "Admin" | "Editor" | "Viewer";
+export type ContributorRole = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["contributors"][":contributorId"]["$put"]
+>["json"]["role"];
 
 export interface InviteContributorFormData {
   email: string;
@@ -33,6 +37,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={isLoading}>
       <form
         onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))}
+        noValidate
       >
         <DialogTitle>Invite Contributor</DialogTitle>
         <DialogContent>

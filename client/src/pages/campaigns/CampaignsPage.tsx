@@ -4,6 +4,7 @@ import {
   ListCard,
   ListCardGrid,
   LoadMoreButton,
+  PageActionButton,
   PageHeader,
   PageTransition,
   SearchBar,
@@ -18,7 +19,6 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { campaignDetailQuery, campaignListQuery, type CampaignListFilters } from "@/client/src/lib/queries.ts";
 import {
-  Add as AddIcon,
   Archive as ArchiveIcon,
   AutoStories as RulesetIcon,
   Group as GroupIcon,
@@ -36,7 +36,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { prefetchCampaignSection } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
+import { prefetchCampaignSections } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
 type SortField = CampaignListFilters["orderBy"];
 
@@ -53,8 +53,6 @@ const CAMPAIGN_SORT_OPTIONS: SortOption<SortField>[] = [
   { field: "updatedAt", direction: "desc", label: "Recently Updated" },
   { field: "updatedAt", direction: "asc", label: "Least Recently Updated" },
 ];
-
-const blankStateIconSx = { fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 };
 
 export default function CampaignsPage() {
   usePageTitle("Campaigns");
@@ -93,28 +91,13 @@ export default function CampaignsPage() {
 
   const campaigns = data?.pages.flatMap((page) => page.items) ?? [];
 
-  // Warm the detail page and its default tab while the pointer is on a card.
+  // Warm the detail page and its tabs while the pointer is on a card.
   const prefetchCampaign = (id: string) => {
     void queryClient.prefetchQuery(campaignDetailQuery(id));
-    void prefetchCampaignSection(queryClient, id, "characters");
+    void prefetchCampaignSections(queryClient, id);
   };
 
-  const createButton = (label: string) => (
-    <Button
-      variant="contained"
-      size="large"
-      startIcon={<AddIcon />}
-      onClick={handleCreate}
-      sx={{
-        px: 3,
-        py: 1.5,
-        borderRadius: 2,
-        boxShadow: (theme) => `0 4px 14px 0 ${theme.palette.primary.main}40`,
-      }}
-    >
-      {label}
-    </Button>
-  );
+  const createButton = (label: string) => <PageActionButton onClick={handleCreate}>{label}</PageActionButton>;
 
   return (
     <PageTransition>
@@ -128,7 +111,7 @@ export default function CampaignsPage() {
 
         <SearchBar
           searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value })}
+          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
           searchPlaceholder="Search campaigns..."
           filterOptions={CAMPAIGN_FILTER_OPTIONS}
           filterValue={view}
@@ -186,7 +169,7 @@ export default function CampaignsPage() {
           </>
         ) : view === "archived" ? (
           <BlankState
-            icon={<ArchiveIcon sx={blankStateIconSx} />}
+            icon={ArchiveIcon}
             title="No archived campaigns"
             description="Campaigns you archive will appear here. You can restore them at any time."
             action={
@@ -197,7 +180,7 @@ export default function CampaignsPage() {
           />
         ) : (
           <BlankState
-            icon={<CampaignIcon sx={blankStateIconSx} />}
+            icon={CampaignIcon}
             title="No campaigns yet"
             description={isDemo
               ? "Sign up to create campaigns and run multiplayer sessions."
