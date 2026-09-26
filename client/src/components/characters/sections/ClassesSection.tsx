@@ -80,7 +80,7 @@ export function ClassesSection({
       </Stack>
       {classes && Object.keys(classes).length > 0
         ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 1 }}>
             {Object.values(classes).map((cls) => {
               const className = cls.klass?.name || "Unknown";
               const currentLevel = cls.levels?.length || cls.level || 1;
@@ -102,7 +102,6 @@ export function ClassesSection({
                     sx={{
                       fontSize: "0.875rem",
                       height: "auto",
-                      alignSelf: "center",
                       "& .MuiChip-label": { px: 2, py: 1 },
                     }}
                   />
@@ -114,6 +113,7 @@ export function ClassesSection({
                   key={className}
                   disableGutters
                   sx={{
+                    width: "100%",
                     boxShadow: "none",
                     "&::before": { display: "none" },
                     border: "1px solid",
