@@ -113,7 +113,11 @@ export default function ClassDetailsPage() {
     })),
     onSuccess: (data) => {
       editForm.reset(toClassForm(data));
-      queryClient.setQueryData(queryKeys.rulesets.classDetail(rulesetId, data.id), data);
+      // The PUT returns the bare class row: keep the property fields (bonus
+      // spell ability, caster type) until the refetch brings the saved class's.
+      const detailKey = queryKeys.rulesets.classDetail(rulesetId, data.id);
+      if (classData) queryClient.setQueryData(detailKey, { ...classData, ...data });
+      queryClient.invalidateQueries({ queryKey: detailKey });
       // Editing an inherited class copies it into this ruleset under a new id.
       if (data.id !== classId) {
         navigate(`/rulesets/${rulesetId}/classes/${data.id}/${currentTab}`, { replace: true, state: location.state });

@@ -10,6 +10,7 @@ import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
 
 type RulesetArray = InferResponseType<typeof rpc.api.rulesets.$get, 200>;
 type Ruleset = RulesetArray["items"][number];
@@ -125,53 +126,7 @@ export function useRulesetOperations() {
     },
   });
 
-  // Star mutation
-  const starMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].star.$post({
-        param: { id },
-      }));
-    },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to star ruleset");
-    },
-  });
-
-  // Unstar mutation
-  const unstarMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].star.$delete({
-        param: { id },
-      }));
-    },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to unstar ruleset");
-    },
-  });
-
-  const toggleStar = (id: string, isCurrentlyStarred: boolean) => {
-    if (isCurrentlyStarred) {
-      unstarMutation.mutate(id);
-    } else {
-      starMutation.mutate(id);
-    }
-  };
+  const toggleStar = useToggleRulesetStar();
 
   // Publish mutation
   const publishMutation = useMutation({
@@ -361,8 +316,6 @@ export function useRulesetOperations() {
     archiveMutation,
     unarchiveMutation,
     publishMutation,
-    starMutation,
-    unstarMutation,
     subscribeMutation,
     unsubscribeMutation,
 

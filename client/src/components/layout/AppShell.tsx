@@ -1,4 +1,4 @@
-import { Box, type Theme } from "@mui/material";
+import { Box, type CSSObject } from "@mui/material";
 import { Suspense, useEffect, useRef, type ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
@@ -15,14 +15,12 @@ export function AppBrand() {
   );
 }
 
-// Place the main area right under the fixed app bar, whose toolbar is 56px on
-// phones, 48px in landscape and 64px from `sm` up.
-function belowToolbar(theme: Theme) {
-  const { minHeight, ...breakpoints } = theme.mixins.toolbar as { minHeight: number } & Record<string, { minHeight: number }>;
-  return {
-    top: minHeight,
-    ...Object.fromEntries(Object.entries(breakpoints).map(([query, { minHeight: height }]) => [query, { top: height }])),
-  };
+// Place the main area right under the fixed app bar: the toolbar mixin with
+// `top` for `minHeight`, media queries included (56px on phones, 48px on
+// phones in landscape, 64px from `sm` up).
+function belowToolbar(toolbar: CSSObject): CSSObject {
+  return Object.fromEntries(Object.entries(toolbar).map(([key, value]) =>
+    key === "minHeight" ? ["top", value] : [key, typeof value === "object" && value ? belowToolbar(value as CSSObject) : value]));
 }
 
 /**
@@ -62,7 +60,7 @@ export function AppMain({ banner, railWidth = 0 }: {
       component="main"
       sx={(theme) => ({
         position: "fixed",
-        ...belowToolbar(theme),
+        ...belowToolbar(theme.mixins.toolbar),
         left: railWidth,
         right: 0,
         bottom: 0,

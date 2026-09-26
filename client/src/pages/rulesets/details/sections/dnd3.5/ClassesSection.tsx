@@ -1,7 +1,7 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { DEFAULT_ENTITY_FILTERS, ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, type EntityKind, type EntitySortField } from "@/client/src/pages/rulesets/details/sections/kindFilterOptions.ts";
+import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, parseEntityFilters } from "@/client/src/pages/rulesets/details/sections/kindFilterOptions.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -37,9 +37,8 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
   const [orderByParam, setOrderByParam] = useSearchParam("orderBy");
   const [orderDirParam, setOrderDirParam] = useSearchParam("orderDir");
 
-  const kindFilter: EntityKind = (KIND_FILTER_OPTIONS.find((o) => o.value === kindParam)?.value ?? DEFAULT_ENTITY_FILTERS.kind) as EntityKind;
-  const sortField = (orderByParam as EntitySortField) || DEFAULT_ENTITY_FILTERS.orderBy;
-  const sortDirection = (orderDirParam as "asc" | "desc") || DEFAULT_ENTITY_FILTERS.orderDir;
+  const { kind: kindFilter, orderBy: sortField, orderDir: sortDirection } =
+    parseEntityFilters(kindParam, orderByParam, orderDirParam);
 
   const {
     createDialogOpen,

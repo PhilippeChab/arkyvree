@@ -88,20 +88,20 @@ export function EmailChangeVerificationDialog({
       maxWidth="xs"
     >
       <DialogTitle>Verify New Email</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          We sent an 8-digit code to <strong>{pendingEmail}</strong>
-        </Typography>
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            We sent an 8-digit code to <strong>{pendingEmail}</strong>
+          </Typography>
 
-        <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
-          {error}
-        </AnimatedAlert>
+          <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
+            {error}
+          </AnimatedAlert>
 
-        <AnimatedAlert in={resendSuccess} severity="success" sx={{ mb: 2 }}>
-          A new code has been sent to your email.
-        </AnimatedAlert>
+          <AnimatedAlert in={resendSuccess} severity="success" sx={{ mb: 2 }}>
+            A new code has been sent to your email.
+          </AnimatedAlert>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <VerificationCodeInput
             digits={digits}
             onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
@@ -121,19 +121,18 @@ export function EmailChangeVerificationDialog({
               </MuiLink>
             </Typography>
           </Box>
-
-          <DialogActions sx={{ px: 0 }}>
-            <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={verifyMutation.isPending || !isComplete}
-            >
-              <DiceSpinner size="small" loading={verifyMutation.isPending}>Verify</DiceSpinner>
-            </Button>
-          </DialogActions>
-        </form>
-      </DialogContent>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">Cancel</Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={verifyMutation.isPending || !isComplete}
+          >
+            <DiceSpinner size="small" loading={verifyMutation.isPending}>Verify</DiceSpinner>
+          </Button>
+        </DialogActions>
+      </form>
     </FormDialog>
   );
 }

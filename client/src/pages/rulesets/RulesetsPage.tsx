@@ -13,7 +13,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, usePageTitle, useStaggerAnimation, useUpdateSearchParams } from "@/client/src/hooks/index.ts";
 import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery, rulesetListQuery, type RulesetListFilters } from "@/client/src/lib/queries.ts";
 import {
@@ -83,7 +83,7 @@ const STATUS_PILLS = {
 function RulesetList({ filters }: { filters: RulesetListFilters }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toggleStar } = useRulesetOperations();
+  const toggleStar = useToggleRulesetStar();
 
   const listQuery = rulesetListQuery(filters);
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);

@@ -91,11 +91,12 @@ export function useNotificationActions() {
   const handleInviteError = (error: unknown, notification: NotificationLike) => {
     if (error instanceof ApiError && error.status === 409) {
       snackbar.warning("This invitation is no longer pending");
+      // Answered or revoked elsewhere: stop offering it.
+      void markRead(notification.id);
     } else {
+      // Still pending: keep Accept / Reject so the user can retry.
       snackbar.error(error, "Failed to process invitation");
     }
-    // The invite is resolved one way or another; stop offering it.
-    void markRead(notification.id);
   };
 
   const acceptMutation = useMutation({

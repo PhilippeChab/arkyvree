@@ -83,18 +83,18 @@ export function DeleteAccountDialog({
       maxWidth="xs"
     >
       <DialogTitle>Delete Account</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          This action is <strong>permanent</strong> and cannot be undone. All
-          your characters, campaign memberships, and account data will be
-          removed.
-        </Typography>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            This action is <strong>permanent</strong> and cannot be undone. All
+            your characters, campaign memberships, and account data will be
+            removed.
+          </Typography>
 
-        <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
-          {error}
-        </AnimatedAlert>
+          <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
+            {error}
+          </AnimatedAlert>
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           {hasPassword ? (
             <TextField
               {...register("password")}
@@ -115,20 +115,19 @@ export function DeleteAccountDialog({
               autoComplete="off"
             />
           )}
-
-          <DialogActions sx={{ px: 0 }}>
-            <Button onClick={handleClose} disabled={deleteMutation.isPending} variant="outlined" color="inherit">Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="error"
-              disabled={isSubmitDisabled}
-            >
-              <DiceSpinner size="small" loading={deleteMutation.isPending}>Delete Account</DiceSpinner>
-            </Button>
-          </DialogActions>
-        </form>
-      </DialogContent>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} disabled={deleteMutation.isPending} variant="outlined" color="inherit">Cancel</Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="error"
+            disabled={isSubmitDisabled}
+          >
+            <DiceSpinner size="small" loading={deleteMutation.isPending}>Delete Account</DiceSpinner>
+          </Button>
+        </DialogActions>
+      </form>
     </FormDialog>
   );
 }
