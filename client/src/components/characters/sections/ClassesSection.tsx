@@ -15,12 +15,12 @@ import {
   Chip,
   IconButton,
   Link as MuiLink,
-  Paper,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { Link } from "react-router-dom";
+import { SheetSection } from "./SheetSection.tsx";
 
 interface ClassLevel {
   klassLevel: { id: string; level: number; klassId: string };
@@ -52,18 +52,9 @@ export function ClassesSection({
 }: ClassesSectionProps) {
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Stack
-        direction="row"
-        sx={{
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 3
-        }}>
-        <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "h6", sm: "h5" } }}>
-          Classes & Levels
-        </Typography>
-        {!readOnly && (
+    <SheetSection
+      title="Classes & Levels"
+      action={!readOnly && (
           <Stack direction="row" spacing={0.5}>
             <Tooltip title="Add Level">
               <IconButton size="small" onClick={onAddLevel}>
@@ -76,8 +67,8 @@ export function ClassesSection({
               </IconButton>
             </Tooltip>
           </Stack>
-        )}
-      </Stack>
+      )}
+    >
       {classes && Object.keys(classes).length > 0
         ? (
           <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 1 }}>
@@ -171,6 +162,6 @@ export function ClassesSection({
         : (
           <BlankState title="No classes available" />
         )}
-    </Paper>
+    </SheetSection>
   );
 }

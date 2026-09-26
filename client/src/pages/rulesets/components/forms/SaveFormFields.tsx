@@ -13,8 +13,7 @@ export type SaveFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["saves"]["$post"]
 >["json"];
 
-type AbilitiesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"]>;
-type AbilitiesPaginated = Exclude<AbilitiesResponse, { error: string }>;
+type AbilitiesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>;
 type Ability = AbilitiesPaginated["items"][number];
 
 interface SaveFormFieldsProps {

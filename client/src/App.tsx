@@ -12,6 +12,9 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import DashboardPage from "@/client/src/pages/dashboard/DashboardPage.tsx";
 import SignIn from "@/client/src/pages/auth/SignIn.tsx";
 import { ApiError } from "@/client/src/services/rpc.ts";
+import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
+import "./App.css";
+
 const ActivitiesPage = lazy(() => import("@/client/src/pages/activities/ActivitiesPage.tsx"));
 const RulesetContributorInvitePage = lazy(() => import("@/client/src/pages/ruleset-contributor-invite/RulesetContributorInvitePage.tsx"));
 const CharacterContributorInvitePage = lazy(() => import("@/client/src/pages/character-contributor-invite/CharacterContributorInvitePage.tsx"));
@@ -41,9 +44,6 @@ const SignUp = lazy(() => import("@/client/src/pages/auth/SignUp.tsx"));
 const VerifyEmail = lazy(() => import("@/client/src/pages/auth/VerifyEmail.tsx"));
 const ForgotPassword = lazy(() => import("@/client/src/pages/auth/ForgotPassword.tsx"));
 const ResetPassword = lazy(() => import("@/client/src/pages/auth/ResetPassword.tsx"));
-
-import "./App.css";
-import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
 
 function handleGlobalError(error: unknown) {
   if (error instanceof ApiError && error.status === 401) {
@@ -116,9 +116,8 @@ function PrivateRoute() {
   try { demoExpired = !!localStorage.getItem(DEMO_EXPIRED_FLAG); } catch { /* storage disabled */ }
   if (demoExpired) return <Navigate to="/demo-expired" replace />;
 
-  const redirectParam = location.pathname !== "/"
-    ? `?redirect=${encodeURIComponent(location.pathname)}`
-    : "";
+  const target = location.pathname + location.search;
+  const redirectParam = target !== "/" ? `?redirect=${encodeURIComponent(target)}` : "";
   return <Navigate to={`/sign-in${redirectParam}`} replace />;
 }
 

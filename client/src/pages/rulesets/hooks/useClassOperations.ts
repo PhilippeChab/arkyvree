@@ -1,26 +1,21 @@
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type LevelsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"]
->;
-type LevelsArray = Exclude<LevelsResponse, { error: string }>;
+type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
 export type Level = LevelsArray[number];
 
 type CreateLevelFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
 >["json"];
 
-type ClassSkillsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"]
->;
-type ClassSkillsArray = Exclude<ClassSkillsResponse, { error: string }>;
+type ClassSkillsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"], 200>;
 
 export function useClassLevels(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
@@ -41,27 +36,15 @@ export function useClassLevels(rulesetId: string, classId: string) {
   });
 
   // Query
-  const { data: levels, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
-        param: { id: rulesetId, classId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch levels");
-      return response.json();
-    },
-    enabled: !!rulesetId && !!classId,
-  });
+  const { data: levels, isLoading } = useQuery({ ...classLevelsQuery(rulesetId, classId), enabled: !!rulesetId && !!classId });
 
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: CreateLevelFormData) => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].levels.$post({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$post({
         param: { id: rulesetId, classId },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to create level");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Level created successfully");
@@ -132,17 +115,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
   const [skillToRemove, setSkillToRemove] = useState<string | null>(null);
 
   // Fetch class skills data
-  const { data: classSkills, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].skills.$get({
-        param: { id: rulesetId, classId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch class skills");
-      return response.json();
-    },
-    enabled: !!rulesetId && !!classId,
-  });
+  const { data: classSkills, isLoading } = useQuery({ ...classSkillsQuery(rulesetId, classId), enabled: !!rulesetId && !!classId });
 
   // Available skills with server-side search and pagination
   const [skillSearch, setSkillSearch] = useState("");
@@ -157,16 +130,14 @@ export function useClassSkills(rulesetId: string, classId: string) {
   } = useInfiniteQuery({
     queryKey: [...queryKeys.rulesets.section(rulesetId, "skills"), "autocomplete", debouncedSkillSearch],
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].skills.$get({
+      return parseResponse(rpc.api.rulesets[":id"].skills.$get({
         param: { id: rulesetId },
         query: {
           limit: "20",
           page: pageParam.toString(),
           ...(debouncedSkillSearch && { search: debouncedSkillSearch }),
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch skills");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -185,12 +156,10 @@ export function useClassSkills(rulesetId: string, classId: string) {
   // Add skill mutation
   const addSkillMutation = useMutation({
     mutationFn: async (skillId: string) => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
         param: { id: rulesetId, classId },
         json: { skillId },
-      });
-      if (!response.ok) throw new Error("Failed to add skill to class");
-      return response.json();
+      }));
     },
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -248,13 +217,11 @@ export function useClassSkills(rulesetId: string, classId: string) {
   // Remove skill mutation
   const removeSkillMutation = useMutation({
     mutationFn: async (skillId: string) => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete(
+      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete(
         {
           param: { id: rulesetId, classId, skillId },
         },
-      );
-      if (!response.ok) throw new Error("Failed to remove skill from class");
-      return response.json();
+      ));
     },
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)

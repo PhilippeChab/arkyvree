@@ -1,18 +1,20 @@
-import { AuthPage, GoogleSignInButton } from "@/client/src/components/auth";
-import { useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
+import { AuthPage, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
+import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Alert,
   Box,
   Button,
-  Divider,
   TextField,
   Typography,
   Link as MuiLink,
 } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -22,32 +24,16 @@ type SignUpFormData = InferRequestType<
 
 export default function SignUp() {
   usePageTitle("Sign Up");
-  const { signUp, signInWithGoogle, error: authError, isLoading } = useAuthStore();
+  const signUp = useAuthStore((s) => s.signUp);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const rawRedirect = searchParams.get("redirect");
-  const redirect = rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.includes("://") ? rawRedirect : null;
-
-  const handleGoogleToken = useCallback(
-    async (idToken: string) => {
-      try {
-        setError(null);
-        await signInWithGoogle(idToken);
-        navigate(redirect ?? "/dashboard");
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "Failed to sign up with Google");
-      }
-    },
-    [signInWithGoogle, navigate, redirect],
-  );
-
-  const { overlayRef, isAvailable: isGoogleAvailable } = useGoogleSignIn(handleGoogleToken);
+  const redirect = safeRedirectPath(searchParams.get("redirect"));
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<SignUpFormData>({
     defaultValues: {
@@ -56,8 +42,6 @@ export default function SignUp() {
       passwordConfirmation: "",
     },
   });
-
-  const password = watch("password");
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
@@ -71,20 +55,14 @@ export default function SignUp() {
 
   return (
     <AuthPage title="Sign Up">
-      {(error || authError) && (
+      {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error || authError}
+          {error}
         </Alert>
       )}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <TextField
-          {...register("emailAddress", {
-            required: "Email is required",
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: "Please enter a valid email address",
-            },
-          })}
+          {...register("emailAddress", emailRules)}
           label="Email"
           variant="outlined"
           fullWidth
@@ -98,13 +76,7 @@ export default function SignUp() {
         />
 
         <TextField
-          {...register("password", {
-            required: "Password is required",
-            minLength: {
-              value: 12,
-              message: "Password must be at least 12 characters",
-            },
-          })}
+          {...register("password", newPasswordRules)}
           type="password"
           label="Password"
           variant="outlined"
@@ -118,11 +90,7 @@ export default function SignUp() {
         />
 
         <TextField
-          {...register("passwordConfirmation", {
-            required: "Please confirm your password",
-            validate: (value) =>
-              value === password || "Passwords do not match",
-          })}
+          {...register("passwordConfirmation", confirmPasswordRules<SignUpFormData>("password"))}
           type="password"
           label="Confirm Password"
           variant="outlined"
@@ -143,15 +111,15 @@ export default function SignUp() {
           sx={{ mt: 3, mb: 2 }}
           disabled={isLoading}
         >
-          {isLoading ? "Signing up..." : "Sign Up"}
+          <DiceSpinner size="small" loading={isLoading}>Sign Up</DiceSpinner>
         </Button>
       </form>
-      {isGoogleAvailable && (
-        <>
-          <Divider sx={{ my: 2 }}>or</Divider>
-          <GoogleSignInButton overlayRef={overlayRef} disabled={isLoading} label="Sign up with Google" />
-        </>
-      )}
+      <GoogleSignInSection
+        label="Sign up with Google"
+        disabled={isLoading}
+        onSuccess={() => navigate(redirect ?? "/dashboard")}
+        onError={(error) => setError(error instanceof Error ? error.message : "Failed to sign up with Google")}
+      />
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2">
           Already have an account?{" "}

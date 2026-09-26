@@ -1,16 +1,13 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
 import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useMemo } from "react";
+import { classSpellsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type SpellsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells"]["$get"]
->;
-type SpellsArray = Exclude<SpellsResponse, { error: string }>;
+type SpellsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells"]["$get"], 200>;
 type SpellLevel = SpellsArray[number];
 
 interface ClassSpellsSectionProps {
@@ -36,16 +33,7 @@ function ordinal(n: number): string {
 }
 
 export function ClassSpellsSection({ rulesetId, classId }: ClassSpellsSectionProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classSpells(rulesetId, classId),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].classes[":classId"].spells.$get({
-        param: { id: rulesetId, classId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch spells");
-      return response.json();
-    },
-  });
+  const { data, isLoading } = useQuery(classSpellsQuery(rulesetId, classId));
 
   // Derive spell level columns from the union of all spell levels in the data
   const spellLevelKeys = useMemo(() => {
@@ -114,7 +102,7 @@ export function ClassSpellsSection({ rulesetId, classId }: ClassSpellsSectionPro
         isLoading={isLoading}
         columns={columns}
         renderCell={renderCell}
-        emptyIcon={<SpellsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SpellsIcon}
         emptyTitle="No spells"
         emptyDescription="This class doesn't have any spells per day data."
       />

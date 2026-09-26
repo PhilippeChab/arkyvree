@@ -1,4 +1,4 @@
-import { PageTransition } from "@/client/src/components/common/index.ts";
+import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { type ThemeMode, useTheme } from "@/client/src/contexts/ThemeContext.tsx";
 import { DarkMode, LightMode, SettingsBrightness } from "@mui/icons-material";
@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Container,
-  Paper,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -25,27 +24,11 @@ export default function SettingsPage() {
   return (
     <PageTransition>
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <Paper
-          sx={{
-            background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            color: "white",
-            p: { xs: 2, sm: 4 },
-            borderRadius: 4,
-            mb: 4,
-          }}
-        >
-          <Typography sx={{ typography: { xs: "h4", md: "h3" }, fontWeight: 800, mb: 1 }}>
-            Settings
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9 }}>
-            Customize your experience
-          </Typography>
-        </Paper>
+        <PageHeader title="Settings" subtitle="Customize your experience" />
 
         <Card>
           <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+            <Typography component="h2" sx={{ fontWeight: 700, mb: 1, typography: { xs: "h6", sm: "h5" } }}>
               Theme
             </Typography>
             <Typography

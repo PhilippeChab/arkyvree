@@ -1,21 +1,18 @@
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { InferResponseType } from "hono/client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface User {
-  id: string;
-  emailAddress: string;
-  name?: string;
-  pendingEmailAddress?: string | null;
-  onboardingCompletedAt?: string | null;
-  expiresAt?: string | null;
-}
+type MeResponse = InferResponseType<typeof rpc.auth.me.$get, 200>;
+export type AuthUser = Pick<
+  MeResponse,
+  "id" | "emailAddress" | "username" | "pendingEmailAddress" | "onboardingCompletedAt" | "expiresAt"
+>;
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  error: string | null;
   pendingVerificationEmail: string | null;
   pendingPasswordResetEmail: string | null;
   signIn: (emailAddress: string, password: string) => Promise<void>;
@@ -28,230 +25,106 @@ interface AuthState {
   signOut: () => Promise<void>;
   clearSession: () => void;
   checkAuth: () => Promise<void>;
+  /** Merge fields into the signed-in user, e.g. after a profile update. */
+  updateUser: (patch: Partial<AuthUser>) => void;
 }
+
+const signedOut = {
+  user: null,
+  isAuthenticated: false,
+  pendingVerificationEmail: null,
+  pendingPasswordResetEmail: null,
+} as const;
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-      pendingVerificationEmail: null,
-      pendingPasswordResetEmail: null,
-
-      checkAuth: async () => {
-        if (useAuthStore.getState().isAuthenticated) {
-          return;
-        }
-
-        // checkAuth runs automatically on app mount to reconcile the auth
-        // store with the server cookie. A 401 (or any other failure) here
-        // just means the visitor isn't signed in — leave the store silent
-        // so the next page (e.g. SignIn) doesn't show a stale error from
-        // an unrelated background call.
+    (set) => {
+      // Flags the request as in flight; errors propagate to the page, which
+      // owns how they are shown.
+      const track = async <T>(request: () => Promise<T>): Promise<T> => {
+        set({ isLoading: true });
         try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth.me.$get();
-          if (response.ok) {
-            const user = await response.json();
-            set({ user, isAuthenticated: true, isLoading: false });
+          return await request();
+        } finally {
+          set({ isLoading: false });
+        }
+      };
+
+      const signedIn = (user: AuthUser) =>
+        set({ user, isAuthenticated: true, pendingVerificationEmail: null });
+
+      return {
+        ...signedOut,
+        isLoading: false,
+
+        checkAuth: async () => {
+          if (useAuthStore.getState().isAuthenticated) {
             return;
           }
-        } catch {
-          // fall through
-        }
-        set({ user: null, isAuthenticated: false, isLoading: false });
-      },
 
-      signIn: async (emailAddress: string, password: string) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth["sign-in"].$post({
-            json: { emailAddress, password },
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to sign in");
+          // checkAuth runs automatically on app mount to reconcile the auth
+          // store with the server cookie. A 401 (or any other failure) here
+          // just means the visitor isn't signed in.
+          try {
+            signedIn(await track(() => parseResponse(rpc.auth.me.$get())));
+          } catch {
+            set({ user: null, isAuthenticated: false });
           }
+        },
 
-          const user = await response.json();
-          set({ user, isAuthenticated: true, isLoading: false, pendingVerificationEmail: null });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Failed to sign in";
-          const isUnverified = message === "Email not verified";
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: isUnverified ? null : message,
-            pendingVerificationEmail: isUnverified ? emailAddress : null,
-          });
-          throw error;
-        }
-      },
-
-      signInWithGoogle: async (idToken: string) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth.google.$post({
-            json: { idToken },
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to sign in with Google");
+        signIn: async (emailAddress, password) => {
+          try {
+            signedIn(await track(() => parseResponse(rpc.auth["sign-in"].$post({ json: { emailAddress, password } }))));
+          } catch (error) {
+            const isUnverified = error instanceof Error && error.message === "Email not verified";
+            set({ user: null, isAuthenticated: false, pendingVerificationEmail: isUnverified ? emailAddress : null });
+            throw error;
           }
+        },
 
-          const user = await response.json();
-          set({ user, isAuthenticated: true, isLoading: false, pendingVerificationEmail: null });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Failed to sign in with Google";
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: message,
-          });
-          throw error;
-        }
-      },
+        signInWithGoogle: async (idToken) => {
+          signedIn(await track(() => parseResponse(rpc.auth.google.$post({ json: { idToken } }))));
+        },
 
-      signUp: async (emailAddress: string, password: string, passwordConfirmation: string) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth["sign-up"].$post({
-            json: { emailAddress, password, passwordConfirmation },
-          });
+        signUp: async (emailAddress, password, passwordConfirmation) => {
+          await track(() => rpc.auth["sign-up"].$post({ json: { emailAddress, password, passwordConfirmation } }));
+          set({ pendingVerificationEmail: emailAddress });
+        },
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to sign up");
-          }
+        verifyEmail: async (emailAddress, code) => {
+          signedIn(await track(() => parseResponse(rpc.auth["verify-email"].$post({ json: { emailAddress, code } }))));
+        },
 
-          set({ isLoading: false, pendingVerificationEmail: emailAddress });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : "Failed to sign up",
-          });
-          throw error;
-        }
-      },
+        resendVerification: async (emailAddress) => {
+          await track(() => rpc.auth["resend-verification"].$post({ json: { emailAddress } }));
+        },
 
-      verifyEmail: async (emailAddress: string, code: string) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth["verify-email"].$post({
-            json: { emailAddress, code },
-          });
+        forgotPassword: async (emailAddress) => {
+          await track(() => rpc.auth["forgot-password"].$post({ json: { emailAddress } }));
+          set({ pendingPasswordResetEmail: emailAddress });
+        },
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Invalid verification code");
-          }
-
-          const user = await response.json();
-          set({ user, isAuthenticated: true, isLoading: false, pendingVerificationEmail: null });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : "Verification failed",
-          });
-          throw error;
-        }
-      },
-
-      resendVerification: async (emailAddress: string) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth["resend-verification"].$post({
-            json: { emailAddress },
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to resend verification");
-          }
-
-          set({ isLoading: false });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : "Failed to resend verification",
-          });
-          throw error;
-        }
-      },
-
-      forgotPassword: async (emailAddress: string) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth["forgot-password"].$post({
-            json: { emailAddress },
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to send reset code");
-          }
-
-          set({ isLoading: false, pendingPasswordResetEmail: emailAddress });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : "Failed to send reset code",
-          });
-          throw error;
-        }
-      },
-
-      resetPassword: async (emailAddress: string, code: string, newPassword: string, newPasswordConfirmation: string) => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth["reset-password"].$post({
+        resetPassword: async (emailAddress, code, newPassword, newPasswordConfirmation) => {
+          await track(() => rpc.auth["reset-password"].$post({
             json: { emailAddress, code, newPassword, newPasswordConfirmation },
-          });
+          }));
+          set({ pendingPasswordResetEmail: null });
+        },
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to reset password");
-          }
+        signOut: async () => {
+          await track(() => rpc.auth["sign-out"].$post());
+          set(signedOut);
+        },
 
-          set({ isLoading: false, pendingPasswordResetEmail: null });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : "Failed to reset password",
-          });
-          throw error;
-        }
-      },
+        clearSession: () => {
+          set({ ...signedOut, isLoading: false });
+        },
 
-      signOut: async () => {
-        try {
-          set({ isLoading: true, error: null });
-          const response = await rpc.auth["sign-out"].$post();
-
-          if (!response.ok) {
-            throw new Error("Failed to sign out");
-          }
-
-          set({ user: null, isAuthenticated: false, isLoading: false, pendingVerificationEmail: null });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : "Failed to sign out",
-          });
-          throw error;
-        }
-      },
-
-      clearSession: () => {
-        set({ user: null, isAuthenticated: false, isLoading: false, error: null, pendingVerificationEmail: null, pendingPasswordResetEmail: null });
-      },
-    }),
+        updateUser: (patch) => {
+          set((state) => ({ user: state.user ? { ...state.user, ...patch } : null }));
+        },
+      };
+    },
     {
       name: "auth-storage",
       partialize: (state) => ({

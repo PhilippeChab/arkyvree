@@ -2,7 +2,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError, rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 export type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
 export type Attachment = NonNullable<AttachmentResponse>;
@@ -19,13 +19,9 @@ async function fetchSlot(
   recordId: string,
   name: string,
 ): Promise<AttachmentResponse> {
-  const response = await rpc.api.attachments.$get({
+  return parseResponse(rpc.api.attachments.$get({
     query: { recordType, recordId, name },
-  });
-  if (!response.ok) {
-    throw new ApiError("Failed to load attachment", response.status, "AttachmentError");
-  }
-  return await response.json();
+  }));
 }
 
 export function useAttachment(params: UseAttachmentParams) {

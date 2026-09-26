@@ -2,11 +2,7 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import {
-  ApiError,
-  type ApiValidationIssue,
-  rpc,
-} from "@/client/src/services/rpc.ts";
+import { ApiError, type ApiValidationIssue, parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   useInfiniteQuery,
   useMutation,
@@ -289,14 +285,12 @@ export function useAddLevelWizard({
       // server would apply the bump, and the client memo would double-count.
       const abilityIds = levels.map(() => null);
 
-      const response = await rpc.api.characters.levels[":characterId"][
+      return parseResponse(rpc.api.characters.levels[":characterId"][
         "preview"
       ]["$post"]({
         param: { characterId },
         json: { levels, abilityIds },
-      });
-      if (!response.ok) throw response;
-      return response.json();
+      }));
     },
     enabled: open && validClassCount >= 1 && activeStep > 0,
     staleTime: Infinity,
@@ -502,7 +496,7 @@ export function useAddLevelWizard({
     queryFn: async ({ pageParam }) => {
       if (!selectedAptitude || !slotLevelDetail)
         throw new Error("No aptitude or level detail available");
-      const response = await rpc.api.characters.levels[":characterId"][
+      return parseResponse(rpc.api.characters.levels[":characterId"][
         "available-feats"
       ]["grouped"]["$get"]({
         param: { characterId },
@@ -526,9 +520,7 @@ export function useAddLevelWizard({
             pendingLevelFeatPicks: allSelectedFeatPickString,
           }),
         },
-      });
-      if (!response.ok) throw response;
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -593,7 +585,7 @@ export function useAddLevelWizard({
     queryFn: async ({ pageParam }) => {
       if (!selectedPowerAptitude || !firstClass)
         throw new Error("No aptitude or class selected");
-      const response = await rpc.api.characters.levels[":characterId"][
+      return parseResponse(rpc.api.characters.levels[":characterId"][
         "available-powers"
       ]["$get"]({
         param: { characterId },
@@ -617,9 +609,7 @@ export function useAddLevelWizard({
             pendingLevelFeatPicks: allSelectedFeatPickString,
           }),
         },
-      });
-      if (!response.ok) throw response;
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -823,22 +813,12 @@ export function useAddLevelWizard({
       powers: Record<string, string[]>;
       force?: boolean;
     }) => {
-      const response = await rpc.api.characters.levels[":characterId"][
+      return parseResponse(rpc.api.characters.levels[":characterId"][
         "finalize"
       ]["$post"]({
         param: { characterId },
         json: { levels, skills, feats, powers, force },
-      });
-      if (!response.ok) {
-        const body = await response.json();
-        throw new ApiError(
-          "message" in body ? body.message : "Failed to finalize levels",
-          response.status,
-          "error" in body ? body.error : "BadRequestError",
-          "issues" in body ? body.issues : undefined,
-        );
-      }
-      return response.json();
+      }));
     },
     onSuccess: async () => {
       queryClient.removeQueries({

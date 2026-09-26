@@ -1,3 +1,4 @@
+import type { ErrorJson } from "@/server/errors/index.ts";
 import type { Application } from "@/server/routers/application.ts";
 import { hc } from "hono/client";
 
@@ -8,13 +9,7 @@ import { hc } from "hono/client";
 // failed sign-in because requests bypassed the configured proxy.
 const host = document.location.origin;
 
-export type ApiValidationIssue = {
-  category: string;
-  message: string;
-  entityName?: string;
-  entityType?: string;
-  requirementTree?: string;
-};
+export type ApiValidationIssue = NonNullable<ErrorJson["issues"]>[number];
 
 export class ApiError extends Error {
   status: number;
@@ -43,11 +38,13 @@ const defaultFetch = async (input: URL | RequestInfo, init?: RequestInit) => {
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    const serverMessage = errorData.message || "An unexpected error occurred";
+    // Errors from the API are JSON, but a proxy in front of it (502, 413, …)
+    // can answer with HTML. Fall back to a generic message instead of
+    // surfacing a JSON parse error.
+    const errorData: Partial<ErrorJson> = await response.json().catch(() => ({}));
 
     throw new ApiError(
-      serverMessage,
+      errorData.message || "An unexpected error occurred",
       response.status,
       errorData.error || "UnknownError",
       errorData.issues,
@@ -58,3 +55,10 @@ const defaultFetch = async (input: URL | RequestInfo, init?: RequestInit) => {
 };
 
 export const rpc = _rpcWithTypes(`${host}/`, { fetch: defaultFetch });
+
+/**
+ * Parse an RPC response as its success body type. Non-2xx responses never
+ * reach callers — `defaultFetch` has already thrown `ApiError` — so there is
+ * no `response.ok` check to write: `queryFn: () => parseResponse(rpc.api.x.$get())`.
+ */
+export { parseResponse } from "hono/client";

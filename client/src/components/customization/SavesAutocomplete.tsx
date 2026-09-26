@@ -1,13 +1,13 @@
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Autocomplete, TextField } from "@mui/material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 export type Save = SavesPaginated["items"][number];
 
 interface SavesAutocompleteProps {
@@ -25,16 +25,14 @@ export function SavesAutocomplete({ rulesetId, value, onChange, disabled, enable
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: [...queryKeys.rulesets.section(rulesetId, "saves"), "autocomplete", debouncedSearch],
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].saves.$get({
+      return parseResponse(rpc.api.rulesets[":id"].saves.$get({
         param: { id: rulesetId },
         query: {
           limit: "10",
           page: pageParam.toString(),
           ...(debouncedSearch && { search: debouncedSearch }),
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch saves");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -48,13 +46,7 @@ export function SavesAutocomplete({ rulesetId, value, onChange, disabled, enable
     ? [value, ...fetchedOptions]
     : fetchedOptions;
 
-  const handleScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
+  const handleScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return (
     <Autocomplete

@@ -7,7 +7,7 @@ The frontend uses MUI Buttons + MenuItems for actions. Color and variant carry *
 | Intent | Examples | Button | MenuItem |
 |---|---|---|---|
 | **Default action** | Create, Update, Save, Submit, Invite, Generate Link, Subscribe, Link Character | `variant="contained"` (default color) | n/a |
-| **Destructive** | Delete, Remove, Reject, Unsubscribe, Delete Account | `variant="contained" color="error"` | `sx={{ color: "error.main" }}` |
+| **Destructive** | Delete, Remove, Reject, Unsubscribe, Unlink, Delete Account | `variant="contained" color="error"` | `sx={{ color: "error.main" }}` |
 | **Caution** (reversible self-action) | Archive, Leave (ruleset/character/campaign) | `variant="contained" color="warning"` | `sx={{ color: "warning.main" }}` |
 | **Positive** | Publish, Accept, Unarchive, Restore | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
 | **Cancel / Close / Dismiss** | Cancel, Close, Dismiss (in dialogs) | `variant="outlined" color="inherit"` | n/a |
@@ -24,6 +24,8 @@ Apply the matrix even when the destructive action fires directly with no confirm
 
 Cancel/Close sits **left** of the primary action in `<DialogActions>`. The four wrappers in `client/src/components/common/StandardDialogs.tsx` already do this — prefer them over hand-rolling a dialog so the convention stays automatic.
 
+For confirmations, `ConfirmDialog` takes the intent directly: `confirmColor="warning"` for Archive / Leave, `"success"` for Publish, `"error"` for destructive actions (`DeleteDialog` is that preset), plus a `confirmLabel` naming the action and an optional `confirmIcon`.
+
 ## Pair patterns to know
 
 - **Accept + Reject (invites, notifications):** both `variant="contained"`, Accept = `success`, Reject = `error`. Visually equal-weight because both choices are equally consequential and there's no confirm.
@@ -36,6 +38,7 @@ Cancel/Close sits **left** of the primary action in `<DialogActions>`. The four 
 - ❌ `<Button variant="contained" sx={{ background: "red" }}>Delete</Button>` — bypasses the theme and the dark-mode palette. Use `color="error"` instead.
 - ❌ `<Button>Delete</Button>` with no color on a destructive confirm — reads as a default action. Use `color="error" variant="contained"`.
 - ❌ `<Button>Cancel</Button>` in a dialog with no variant/color — reads heavier than intended next to a contained submit. Use `variant="outlined" color="inherit"`, or rely on `StandardDialogs`.
+- ❌ Confirming an Archive with `DeleteDialog` — its red "Delete" button reads as destruction. Use `ConfirmDialog` with `confirmColor="warning"` and a label like "Archive Character".
 - ❌ Splitting Cancel into a Modal that wraps a `<form>` — `Modal` doesn't run the dirty-form close guard. Use `FormDialog` (see [CLAUDE.md](../CLAUDE.md) → Dialog Conventions).
 
 ## Loading state

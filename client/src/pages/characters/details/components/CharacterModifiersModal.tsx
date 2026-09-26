@@ -17,7 +17,7 @@ import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   Close as CloseIcon,
@@ -72,11 +72,9 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const { data: modifiers = [], isLoading } = useQuery({
     queryKey: [...queryKeys.characters.detail(characterId), "modifiers"],
     queryFn: async () => {
-      const response = await rpc.api.characters.modifiers[":characterId"].modifiers.$get({
+      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers.$get({
         param: { characterId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch modifiers");
-      return response.json();
+      }));
     },
     enabled: open,
   });
@@ -87,12 +85,10 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
 
   const createMutation = useMutation({
     mutationFn: async (data: ModifierFormData) => {
-      const response = await rpc.api.characters.modifiers[":characterId"].modifiers.$post({
+      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers.$post({
         param: { characterId },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to create modifier");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Modifier created");
@@ -105,12 +101,10 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, updatedAt }: { id: string; data: ModifierFormData; updatedAt?: string }) => {
-      const response = await rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$put({
+      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$put({
         param: { characterId, modifierId: id },
         json: { ...data, updatedAt },
-      });
-      if (!response.ok) throw new Error("Failed to update modifier");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Modifier updated");
@@ -123,11 +117,9 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$delete({
+      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$delete({
         param: { characterId, modifierId: id },
-      });
-      if (!response.ok) throw new Error("Failed to delete modifier");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       snackbar.success("Modifier deleted");
@@ -197,7 +189,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
             </Box>
           ) : modifiers.length === 0 ? (
             <BlankState
-              icon={<TuneIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+              icon={TuneIcon}
               title="No modifiers"
               description="Add custom bonuses or overrides to this character."
             />
@@ -205,7 +197,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
             <TableContainer>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: "grey.100" }}>
+                  <TableRow>
                     <TableCell sx={{ fontWeight: 600, width: "40%" }}>Target</TableCell>
                     <TableCell sx={{ fontWeight: 600, width: "15%" }}>Operator</TableCell>
                     <TableCell sx={{ fontWeight: 600, width: "25%" }}>Value</TableCell>

@@ -1,5 +1,12 @@
-import type { ClientResponse } from "hono/client";
-import { faqTooltip, Modal, PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
+import {
+  DetailPageHeader,
+  DiceSpinner,
+  FaqHelpIcon,
+  Modal,
+  PageTransition,
+  SectionTabs,
+  type SectionTab,
+} from "@/client/src/components/common/index.ts";
 import {
   ArchiveRulesetDialog,
   EditRulesetDialog,
@@ -10,21 +17,21 @@ import {
   SubscribeExtensionDialog,
   UnsubscribeExtensionDialog,
 } from "@/client/src/pages/rulesets/details/components/index.ts";
-import { usePageTitle, usePrefetch } from "@/client/src/hooks/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
 import {
   useRulesetOperations,
   useRulesetPermissions,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   AccessibilityNew as ClassesIcon,
   FitnessCenter as AbilitiesIcon,
   Archive as ArchiveIcon,
   CompareArrows as CompareArrowsIcon,
-  ArrowBack,
   Bolt as PowersIcon,
   CheckCircle as PublishedIcon,
   Construction as ItemsIcon,
@@ -35,7 +42,6 @@ import {
   Gavel as MechanicsIcon,
   Lock as PrivateIcon,
   Public as PublicIcon,
-  MoreVert as MoreVertIcon,
   Star as StarIcon,
   StarBorder as StarBorderIcon,
   People as RacesIcon,
@@ -47,7 +53,6 @@ import {
   Stars as AptitudesIcon,
   Translate as LanguagesIcon,
   Group as ContributorsIcon,
-  HelpOutlined as HelpIcon,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -65,8 +70,6 @@ import {
   MenuItem,
   Paper,
   Popover,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -84,42 +87,17 @@ import {
   SavesSection,
 } from "./sections/index.ts";
 import { getSections } from "./sectionFactory.ts";
+import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  if (value !== index) return null;
-
+function HelpLabel({ label, help }: { label: string; help: string }) {
   return (
-    <div
-      role="tabpanel"
-      id={`ruleset-tabpanel-${index}`}
-      aria-labelledby={`ruleset-tab-${index}`}
-      {...other}
-    >
-      <Box sx={{ py: 3 }}>{children}</Box>
-    </div>
+    <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+      {label}
+      <FaqHelpIcon text={help} />
+    </Box>
   );
 }
-
-type TabSection =
-  | "races"
-  | "languages"
-  | "skills"
-  | "feats"
-  | "powers"
-  | "items"
-  | "classes"
-  | "aptitudes"
-  | "saves"
-  | "abilities"
-  | "mechanics";
 
 function getStatusChip(status: "Draft" | "Published" | "Archived") {
   switch (status) {
@@ -169,7 +147,7 @@ function getStatusChip(status: "Draft" | "Published" | "Archived") {
 }
 
 export default function RulesetDetailsPage() {
-  const { id, section } = useParams<{ id: string; section?: string }>();
+  const { id = "", section } = useParams<{ id: string; section?: string }>();
   const navigate = useNavigate();
   const currentUserId = useAuthStore((state) => state.user?.id);
 
@@ -178,39 +156,23 @@ export default function RulesetDetailsPage() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: queryKeys.rulesets.detail(id!),
-    queryFn: async () => {
-      if (!id) throw new Error("No ruleset ID provided");
-      const response = await rpc.api.rulesets[":id"].$get({ param: { id } });
-      if (!response.ok) throw new Error("Failed to fetch ruleset");
-      return response.json();
-    },
+    ...rulesetDetailQuery(id),
     placeholderData: keepPreviousData,
   });
 
   usePageTitle(ruleset?.name);
 
   const { data: subscribedExtensions } = useQuery({
-    queryKey: [...queryKeys.rulesets.detail(id!), "extensions"],
-    queryFn: async () => {
-      if (!id) throw new Error("No ruleset ID provided");
-      const response = await rpc.api.rulesets[":id"].extensions.$get({ param: { id } });
-      if (!response.ok) throw new Error("Failed to fetch extensions");
-      return response.json();
-    },
+    queryKey: [...queryKeys.rulesets.detail(id), "extensions"],
+    queryFn: () => parseResponse(rpc.api.rulesets[":id"].extensions.$get({ param: { id } })),
     enabled: !!ruleset?.rulesetId,
   });
 
-  // Prefetch parent ruleset on hover/focus of the fork chip
-  const parentId = ruleset?.rulesetId;
-  const parentQueryFn = useCallback(async () => {
-    const response = await rpc.api.rulesets[":id"].$get({ param: { id: parentId! } });
-    if (!response.ok) throw new Error("Failed to fetch ruleset");
-    return response.json();
-  }, [parentId]);
-  const parentPrefetch = usePrefetch(queryKeys.rulesets.detail(parentId!), parentQueryFn);
-
   const queryClient = useQueryClient();
+  // Warm the parent ruleset while the pointer is on the "Forked from" chip.
+  const prefetchParent = () => {
+    if (ruleset?.rulesetId) void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.rulesetId));
+  };
 
   const {
     selectedRuleset,
@@ -275,7 +237,7 @@ export default function RulesetDetailsPage() {
 
   const baseRules = ruleset?.baseRules;
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
-  type TabConfig = { key: TabSection; label: string; icon: React.ElementType; component: (props: { ruleset: NonNullable<typeof ruleset>; childOnly: boolean; onChildOnlyChange: (value: boolean) => void }) => React.ReactNode };
+  type TabConfig = SectionTab<RulesetSection> & { component: (props: { ruleset: NonNullable<typeof ruleset>; childOnly: boolean; onChildOnlyChange: (value: boolean) => void }) => React.ReactNode };
   const tabConfig = useMemo((): TabConfig[] => {
     const sections = getSections(baseRules ?? "Dungeons & Dragons: 3.5");
     return [
@@ -285,73 +247,22 @@ export default function RulesetDetailsPage() {
       { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
       { key: "powers", label: sections.labels.powers, icon: PowersIcon, component: sections.PowersSection },
       { key: "items", label: "Items", icon: ItemsIcon, component: sections.ItemsSection },
-      { key: "aptitudes", label: "Aptitudes", icon: AptitudesIcon, component: AptitudesSection },
+      { key: "aptitudes", label: <HelpLabel label="Aptitudes" help="Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities)." />, icon: AptitudesIcon, component: AptitudesSection },
       { key: "classes", label: "Classes", icon: ClassesIcon, component: sections.ClassesSection },
       { key: "saves", label: "Saves", icon: SavesIcon, component: SavesSection },
       { key: "abilities", label: "Abilities", icon: AbilitiesIcon, component: AbilitiesSection },
-      { key: "mechanics", label: "Mechanics", icon: MechanicsIcon, component: MechanicsSection },
+      { key: "mechanics", label: <HelpLabel label="Mechanics" help="Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table." />, icon: MechanicsIcon, component: MechanicsSection },
     ];
   }, [baseRules]);
 
-  const tabSections = useMemo(() => tabConfig.map((t) => t.key), [tabConfig]);
-  const currentTabValue = useMemo(() => {
-    if (!section) return 0;
-    const index = tabSections.indexOf(section as TabSection);
-    return index >= 0 ? index : 0;
-  }, [section, tabSections]);
+  const currentTab = tabConfig.find((tab) => tab.key === section) ?? tabConfig[0];
 
-  const prefetchSection = useCallback((sectionKey: TabSection) => {
-    if (!id) return;
-    const childOnlyQuery = childOnly ? "true" as const : undefined;
-    const makeFn = (fetcher: () => Promise<ClientResponse<unknown>>) => async () => {
-      const response = await fetcher();
-      if (!response.ok) throw new Error(`Failed to fetch ${sectionKey}`);
-      return response.json();
-    };
-    if (sectionKey === "abilities") {
-      queryClient.prefetchQuery({
-        queryKey: [...queryKeys.rulesets.section(id, "abilities"), childOnly],
-        queryFn: makeFn(() => rpc.api.rulesets[":id"].abilities.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } })),
-      });
-      return;
-    }
-    const queryKey = [...queryKeys.rulesets.section(id, sectionKey), "", childOnly];
-    const sectionFetchers: Record<Exclude<TabSection, "abilities">, () => Promise<ClientResponse<unknown>>> = {
-      saves: () => rpc.api.rulesets[":id"].saves.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      mechanics: () => rpc.api.rulesets[":id"].mechanics.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      races: () => rpc.api.rulesets[":id"].races.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      languages: () => rpc.api.rulesets[":id"].languages.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      skills: () => rpc.api.rulesets[":id"].skills.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      feats: () => rpc.api.rulesets[":id"].feats.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      powers: () => rpc.api.rulesets[":id"].powers.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      items: () => rpc.api.rulesets[":id"].items.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      aptitudes: () => rpc.api.rulesets[":id"].aptitudes.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-      classes: () => rpc.api.rulesets[":id"].classes.$get({ param: { id }, query: { page: "1", limit: "10", childOnly: childOnlyQuery } }),
-    };
-    const fetcher = sectionFetchers[sectionKey as keyof typeof sectionFetchers];
-    if (!fetcher) return;
-    queryClient.prefetchInfiniteQuery({
-      queryKey,
-      queryFn: makeFn(fetcher),
-      initialPageParam: 1,
-    });
-  }, [id, childOnly, queryClient]);
-
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    const newSection = tabSections[newValue];
-    navigate(`/rulesets/${id}/${newSection}`);
-  };
-
-  const handleBack = () => {
-    navigate("/rulesets");
-  };
-
-  // Redirect to races tab if no section specified
+  // Normalize the URL to a known tab.
   useEffect(() => {
-    if (id && (!section || !tabSections.includes(section as TabSection))) {
+    if (id && !tabConfig.some((tab) => tab.key === section)) {
       navigate(`/rulesets/${id}/races`, { replace: true });
     }
-  }, [id, section, navigate, tabSections]);
+  }, [id, section, navigate, tabConfig]);
 
   if (isLoading) {
     return (
@@ -392,164 +303,112 @@ export default function RulesetDetailsPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        {/* Header */}
-        <Box
-          sx={{
-            mb: 4,
-            display: "flex",
-            alignItems: "center",
-            py: 2,
-            borderBottom: 1,
-            borderColor: "divider",
-            position: "relative",
-          }}
-        >
-          <IconButton
-            onClick={handleBack}
-            size="large"
-            sx={{
-              position: "absolute",
-              left: 0,
-              "&:hover": {
-                bgcolor: "action.hover",
-              },
-            }}
-          >
-            <ArrowBack />
-          </IconButton>
-          {hasMenuItems && (
+        <DetailPageHeader
+          title={ruleset.name}
+          titleAdornment={ruleset.isStarrable && (
             <IconButton
-              size="large"
-              onClick={(e) => setAnchorEl(e.currentTarget)}
+              onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
+              size="small"
+              aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
               sx={{
-                position: "absolute",
-                right: 0,
-                "&:hover": {
-                  bgcolor: "action.hover",
-                },
+                flexShrink: 0,
+                p: 0,
+                color: ruleset.isStarred ? "warning.main" : "action.disabled",
+                "&:hover": { color: "warning.main", backgroundColor: "transparent" },
               }}
             >
-              <MoreVertIcon />
+              {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
             </IconButton>
           )}
-          <Box
-            sx={{
-              flexGrow: 1,
-              textAlign: "center",
-              px: { xs: 5, md: 8 },
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
-              <Typography component="h3" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
-                {ruleset.name}
-              </Typography>
-              {ruleset.isStarrable && (
-                <IconButton
-                  onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
-                  size="small"
-                  sx={{
-                    flexShrink: 0,
-                    p: 0,
-                    color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                    "&:hover": { color: "warning.main", backgroundColor: "transparent" },
-                  }}
-                >
-                  {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
-                </IconButton>
-              )}
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
-              {getStatusChip(ruleset.status)}
+          onBack={() => navigate("/rulesets")}
+          onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
+          chips={(
+            <>
+          {getStatusChip(ruleset.status)}
+          <Chip
+            icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
+            label={ruleset.private ? "Private" : "Public"}
+            size="medium"
+            color={ruleset.private ? "warning" : "success"}
+            variant="filled"
+            sx={{ fontWeight: 600 }}
+          />
+          {isExtension && (
+            <Chip
+              icon={<ExtensionIcon />}
+              label="Extension"
+              size="medium"
+              color="secondary"
+              variant="filled"
+              sx={{ fontWeight: 600 }}
+            />
+          )}
+          {ruleset.rulesetId && ruleset.rulesetName && (
+            <Chip
+              icon={<ForkIcon />}
+              label={`Forked from ${ruleset.rulesetName}`}
+              size="medium"
+              color="info"
+              variant="outlined"
+              component={RouterLink}
+              to={`/rulesets/${ruleset.rulesetId}`}
+              clickable
+              sx={{ fontWeight: 500 }}
+              onMouseEnter={prefetchParent}
+              onFocus={prefetchParent}
+            />
+          )}
+          {subscribedExtensions && subscribedExtensions.length > 0 && (
+            <>
               <Chip
-                icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
-                label={ruleset.private ? "Private" : "Public"}
+                icon={<ExtensionIcon />}
+                label={`${subscribedExtensions.length} ${subscribedExtensions.length === 1 ? "extension" : "extensions"}`}
                 size="medium"
-                color={ruleset.private ? "warning" : "success"}
-                variant="filled"
-                sx={{ fontWeight: 600 }}
+                color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
+                variant="outlined"
+                clickable
+                onClick={(e) => setExtensionsAnchor(e.currentTarget)}
+                sx={{ fontWeight: 500 }}
               />
-              {isExtension && (
-                <Chip
-                  icon={<ExtensionIcon />}
-                  label="Extension"
-                  size="medium"
-                  color="secondary"
-                  variant="filled"
-                  sx={{ fontWeight: 600 }}
-                />
-              )}
-              {ruleset.rulesetId && ruleset.rulesetName && (
-                <Chip
-                  icon={<ForkIcon />}
-                  label={`Forked from ${ruleset.rulesetName}`}
-                  size="medium"
-                  color="info"
-                  variant="outlined"
-                  component={RouterLink}
-                  to={`/rulesets/${ruleset.rulesetId}`}
-                  clickable
-                  sx={{ fontWeight: 500 }}
-                  {...parentPrefetch}
-                />
-              )}
-              {subscribedExtensions && subscribedExtensions.length > 0 && (
-                <>
-                  <Chip
-                    icon={<ExtensionIcon />}
-                    label={`${subscribedExtensions.length} ${subscribedExtensions.length === 1 ? "extension" : "extensions"}`}
-                    size="medium"
-                    color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
-                    variant="outlined"
-                    clickable
-                    onClick={(e) => setExtensionsAnchor(e.currentTarget)}
-                    sx={{ fontWeight: 500 }}
-                  />
-                  <Popover
-                    open={Boolean(extensionsAnchor)}
-                    anchorEl={extensionsAnchor}
-                    onClose={() => setExtensionsAnchor(null)}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-                    transformOrigin={{ vertical: "top", horizontal: "center" }}
-                  >
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5, maxWidth: 360 }}>
-                      {subscribedExtensions.map((ext) => (
-                        <Chip
-                          key={ext.extensionId}
-                          icon={<ExtensionIcon />}
-                          label={ext.extensionName}
-                          size="medium"
-                          color={ext.updateAvailable ? "warning" : "default"}
-                          variant="outlined"
-                          component={RouterLink}
-                          to={`/rulesets/${ext.extensionId}`}
-                          clickable
-                          sx={{ fontWeight: 500, justifyContent: "flex-start" }}
-                          onDelete={isOwner ? (e: React.MouseEvent) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
-                          } : undefined}
-                        />
-                      ))}
-                    </Box>
-                  </Popover>
-                </>
-              )}
-            </Box>
-            <Typography
-              variant="body1"
-              sx={{
-                color: "text.secondary",
-                maxWidth: 600,
-                mx: "auto"
-              }}>
-              {ruleset.description || "Explore the complete rules and content for this game system"}
-            </Typography>
-            {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
-              <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
-            )}
-          </Box>
-        </Box>
+              <Popover
+                open={Boolean(extensionsAnchor)}
+                anchorEl={extensionsAnchor}
+                onClose={() => setExtensionsAnchor(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                transformOrigin={{ vertical: "top", horizontal: "center" }}
+              >
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5, maxWidth: 360 }}>
+                  {subscribedExtensions.map((ext) => (
+                    <Chip
+                      key={ext.extensionId}
+                      icon={<ExtensionIcon />}
+                      label={ext.extensionName}
+                      size="medium"
+                      color={ext.updateAvailable ? "warning" : "default"}
+                      variant="outlined"
+                      component={RouterLink}
+                      to={`/rulesets/${ext.extensionId}`}
+                      clickable
+                      sx={{ fontWeight: 500, justifyContent: "flex-start" }}
+                      onDelete={isOwner ? (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
+                      } : undefined}
+                    />
+                  ))}
+                </Box>
+              </Popover>
+            </>
+          )}
+            </>
+          )}
+          description={ruleset.description || "Explore the complete rules and content for this game system"}
+        >
+          {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
+            <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
+          )}
+        </DetailPageHeader>
 
         {/* Read-Only Banner for Archived Rulesets */}
         {ruleset.status === "Archived" && (
@@ -562,88 +421,17 @@ export default function RulesetDetailsPage() {
           </Alert>
         )}
 
-        <Box sx={{ borderRadius: 2, bgcolor: "action.hover", p: 1, mb: 4 }}>
-          <Tabs
-            value={currentTabValue}
-            onChange={handleTabChange}
-            aria-label="ruleset details tabs"
-            variant="scrollable"
-            scrollButtons
-            allowScrollButtonsMobile
-            sx={{
-              "& .MuiTabs-indicator": {
-                height: 3,
-                borderRadius: 1.5,
-              },
-              "& .MuiTab-root": {
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: "0.875rem",
-                minHeight: 48,
-                borderRadius: 1,
-                mx: 0.5,
-                "&:hover": {
-                  bgcolor: "action.hover",
-                },
-                "&.Mui-selected": {
-                  bgcolor: "background.default",
-                  boxShadow: 1,
-                },
-              },
-              "& .MuiTabs-scrollButtons": {
-                "&.Mui-disabled": {
-                  opacity: 0.3,
-                },
-              },
-            }}
-          >
-            {tabConfig.map((tab) => (
-              <Tab
-                key={tab.key}
-                icon={<tab.icon />}
-                label={
-                  tab.key === "aptitudes" ? (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      {tab.label}
-                      <Tooltip
-                        title={faqTooltip(
-                          "Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities).",
-                        )}
-                        arrow
-                      >
-                        <HelpIcon sx={{ fontSize: 16, opacity: 0.6 }} />
-                      </Tooltip>
-                    </Box>
-                  ) : tab.key === "mechanics" ? (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      {tab.label}
-                      <Tooltip
-                        title={faqTooltip(
-                          "Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table.",
-                        )}
-                        arrow
-                      >
-                        <HelpIcon sx={{ fontSize: 16, opacity: 0.6 }} />
-                      </Tooltip>
-                    </Box>
-                  ) : (
-                    tab.label
-                  )
-                }
-                iconPosition="start"
-                onMouseEnter={() => prefetchSection(tab.key)}
-              />
-            ))}
-          </Tabs>
-        </Box>
+        <SectionTabs
+          tabs={tabConfig}
+          value={currentTab.key}
+          onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
+          // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local changes".
+          onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
+          aria-label="ruleset details tabs"
+        />
 
-        <Box sx={{ width: "100%" }}>
-          {id &&
-            tabConfig.map((tab, index) => (
-              <TabPanel key={tab.key} value={currentTabValue} index={index}>
-                <tab.component ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={setChildOnly} />
-              </TabPanel>
-            ))}
+        <Box role="tabpanel" sx={{ py: 3 }}>
+          <currentTab.component ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={setChildOnly} />
         </Box>
 
         <Menu

@@ -1,18 +1,20 @@
-import { AuthPage, GoogleSignInButton } from "@/client/src/components/auth";
-import { useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
+import { AuthPage, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
+import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Alert,
   Box,
   Button,
-  Divider,
   TextField,
   Typography,
   Link as MuiLink,
 } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -22,27 +24,12 @@ type SignInFormData = InferRequestType<
 
 export default function SignIn() {
   usePageTitle("Sign In");
-  const { signIn, signInWithGoogle, error: authError, isLoading } = useAuthStore();
+  const signIn = useAuthStore((s) => s.signIn);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const rawRedirect = searchParams.get("redirect");
-  const redirect = rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.includes("://") ? rawRedirect : null;
-
-  const handleGoogleToken = useCallback(
-    async (idToken: string) => {
-      try {
-        setError(null);
-        await signInWithGoogle(idToken);
-        navigate(redirect ?? "/dashboard");
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "Failed to sign in with Google");
-      }
-    },
-    [signInWithGoogle, navigate, redirect],
-  );
-
-  const { overlayRef, isAvailable: isGoogleAvailable } = useGoogleSignIn(handleGoogleToken);
+  const redirect = safeRedirectPath(searchParams.get("redirect"));
 
   const {
     register,
@@ -72,20 +59,14 @@ export default function SignIn() {
 
   return (
     <AuthPage title="Sign In">
-      {(error || authError) && (
+      {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error || authError}
+          {error}
         </Alert>
       )}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <TextField
-          {...register("emailAddress", {
-            required: "Email is required",
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: "Please enter a valid email address",
-            },
-          })}
+          {...register("emailAddress", emailRules)}
           label="Email"
           variant="outlined"
           fullWidth
@@ -99,13 +80,7 @@ export default function SignIn() {
         />
 
         <TextField
-          {...register("password", {
-            required: "Password is required",
-            minLength: {
-              value: 1,
-              message: "Password is required",
-            },
-          })}
+          {...register("password", { required: "Password is required" })}
           type="password"
           label="Password"
           variant="outlined"
@@ -113,6 +88,9 @@ export default function SignIn() {
           margin="normal"
           error={!!errors.password}
           helperText={errors.password?.message}
+          slotProps={{
+            htmlInput: { autoComplete: "current-password" }
+          }}
         />
 
         <Box sx={{ mt: 1, textAlign: "right" }}>
@@ -129,15 +107,14 @@ export default function SignIn() {
           sx={{ mt: 2, mb: 2 }}
           disabled={isLoading}
         >
-          {isLoading ? "Signing in..." : "Sign In"}
+          <DiceSpinner size="small" loading={isLoading}>Sign In</DiceSpinner>
         </Button>
       </form>
-      {isGoogleAvailable && (
-        <>
-          <Divider sx={{ my: 2 }}>or</Divider>
-          <GoogleSignInButton overlayRef={overlayRef} disabled={isLoading} />
-        </>
-      )}
+      <GoogleSignInSection
+        disabled={isLoading}
+        onSuccess={() => navigate(redirect ?? "/dashboard")}
+        onError={(error) => setError(error instanceof Error ? error.message : "Failed to sign in with Google")}
+      />
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2">
           Don't have an account?{" "}

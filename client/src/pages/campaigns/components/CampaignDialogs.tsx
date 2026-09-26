@@ -1,14 +1,21 @@
-import { AnimatedAlert, CreateDialog, FormDialog, Modal, DiceSpinner } from "@/client/src/components/common/index.ts";
+import {
+  AnimatedAlert,
+  ConfirmDialog,
+  CreateDialog,
+  DiceSpinner,
+  EditDialog,
+  FormDialog,
+} from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   AdminPanelSettings as GMIcon,
-  Archive as ArchiveIcon,
   Edit as EditIcon,
   ExitToApp as LeaveIcon,
   Person as PersonIcon,
   PersonAdd as PersonAddIcon,
+  PersonRemove as PersonRemoveIcon,
   Send as SendIcon,
 } from "@mui/icons-material";
 import {
@@ -18,7 +25,6 @@ import {
   Button,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   FormControl,
   FormHelperText,
@@ -33,6 +39,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
 export type CreateCampaignFormData = InferRequestType<
   (typeof rpc.api.campaigns)["$post"]
@@ -81,16 +88,14 @@ export function CreateCampaignDialog({
   } = useInfiniteQuery({
     queryKey: queryKeys.rulesets.list({ scope: "published", search: debouncedRulesetSearch }),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets.$get({
+      return parseResponse(rpc.api.rulesets.$get({
         query: {
           limit: "10",
           page: pageParam.toString(),
           scope: "published",
           ...(debouncedRulesetSearch && { search: debouncedRulesetSearch }),
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch rulesets");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -102,23 +107,13 @@ export function CreateCampaignDialog({
     .sort((a, b) => (a.group === b.group ? 0 : a.group === "My Drafts" ? -1 : 1));
   const [selectedRuleset, setSelectedRuleset] = useState<(typeof rulesets)[number] | null>(null);
 
-  const handleRulesetsScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
+  const handleRulesetsScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return (
     <CreateDialog
       open={open}
       onClose={onClose}
-      title={
-        <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Create New Campaign
-        </Typography>
-      }
+      title="Create New Campaign"
       form={form}
       onSubmit={onSubmit}
       isLoading={isLoading}
@@ -196,98 +191,34 @@ export function EditCampaignDialog({
   isLoading,
 }: EditCampaignDialogProps) {
   return (
-    <FormDialog
+    <EditDialog
       open={open}
       onClose={onClose}
+      title="Edit Campaign"
       form={form}
+      onSubmit={onSubmit}
       isLoading={isLoading}
+      submitLabel="Save Changes"
     >
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <DialogTitle>
-          <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-            Edit Campaign
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <TextField
-              {...form.register("name", { required: "Name is required" })}
-              label="Name"
-              fullWidth
-              error={!!form.formState.errors.name}
-              helperText={form.formState.errors.name?.message}
-              autoFocus
-              disabled={isLoading}
-            />
-            <TextField
-              {...form.register("description")}
-              label="Description"
-              fullWidth
-              multiline
-              minRows={4}
-              disabled={isLoading}
-              sx={{ "& textarea": { resize: "vertical" } }}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isLoading}
-          >
-            <DiceSpinner size="small" loading={isLoading}>Save Changes</DiceSpinner>
-          </Button>
-        </DialogActions>
-      </form>
-    </FormDialog>
-  );
-}
-
-interface DeleteCampaignDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-}
-
-export function DeleteCampaignDialog({
-  open,
-  onClose,
-  onConfirm,
-  isLoading,
-}: DeleteCampaignDialogProps) {
-  return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>
-        <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Archive Campaign
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Are you sure you want to archive this campaign? You can restore it later from the archived
-          campaigns section.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="contained"
-          color="warning"
-          disabled={isLoading}
-          startIcon={<ArchiveIcon />}
-        >
-          <DiceSpinner size="small" loading={isLoading}>Archive Campaign</DiceSpinner>
-        </Button>
-      </DialogActions>
-    </Modal>
+      <TextField
+        {...form.register("name", { required: "Name is required" })}
+        label="Name"
+        fullWidth
+        error={!!form.formState.errors.name}
+        helperText={form.formState.errors.name?.message}
+        autoFocus
+        disabled={isLoading}
+      />
+      <TextField
+        {...form.register("description")}
+        label="Description"
+        fullWidth
+        multiline
+        minRows={4}
+        disabled={isLoading}
+        sx={{ "& textarea": { resize: "vertical" } }}
+      />
+    </EditDialog>
   );
 }
 
@@ -328,11 +259,7 @@ export function AddPlayerDialog({
       isLoading={isLoading}
     >
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <DialogTitle>
-          <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-            Add Player
-          </Typography>
-        </DialogTitle>
+        <DialogTitle>Add Player</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <Alert severity="info">
@@ -382,7 +309,7 @@ export function AddPlayerDialog({
             </FormControl>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
+        <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
             Cancel
           </Button>
@@ -469,11 +396,7 @@ export function EditPlayerDialog({
       isLoading={isLoading}
     >
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <DialogTitle>
-          <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-            Edit Player
-          </Typography>
-        </DialogTitle>
+        <DialogTitle>Edit Player</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             {isAssigned
@@ -558,7 +481,7 @@ export function EditPlayerDialog({
             </FormControl>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
+        <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
             Cancel
           </Button>
@@ -634,41 +557,24 @@ export function RemovePlayerDialog({
   };
 
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>
-        <Typography component="div" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          {isSelfRemoval ? "Leave Campaign" : "Remove Player"}
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          {isSelfRemoval ? (
-            <>Are you sure you want to leave this campaign? You will lose access unless re-invited.</>
-          ) : (
-            <>
-              Are you sure you want to remove <strong>{getPlayerName()}</strong> from this campaign?
-              {hasPendingInvite && " This will also cancel any pending invitations."}{" "}
-              This action cannot be undone.
-            </>
-          )}
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          color={isSelfRemoval ? "warning" : "error"}
-          variant="contained"
-          disabled={isLoading}
-          startIcon={isSelfRemoval ? <LeaveIcon /> : <ArchiveIcon />}
-        >
-          <DiceSpinner size="small" loading={isLoading}>
-            {isSelfRemoval ? "Leave" : "Remove Player"}
-          </DiceSpinner>
-        </Button>
-      </DialogActions>
-    </Modal>
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      isLoading={isLoading}
+      title={isSelfRemoval ? "Leave Campaign" : "Remove Player"}
+      message={isSelfRemoval ? (
+        "Are you sure you want to leave this campaign? You will lose access unless re-invited."
+      ) : (
+        <>
+          Are you sure you want to remove <strong>{getPlayerName()}</strong> from this campaign?
+          {hasPendingInvite && " This will also cancel any pending invitations."}{" "}
+          This action cannot be undone.
+        </>
+      )}
+      confirmLabel={isSelfRemoval ? "Leave" : "Remove Player"}
+      confirmColor={isSelfRemoval ? "warning" : "error"}
+      confirmIcon={isSelfRemoval ? <LeaveIcon /> : <PersonRemoveIcon />}
+    />
   );
 }

@@ -1,12 +1,10 @@
 import type {
-  alignment,
   baseRules,
-  gender,
   location,
   role,
   rulesetStatus,
 } from "@/drizzle/schema.ts";
-import { sizeType } from "@/drizzle/schema.ts";
+import { alignment, gender, sizeType } from "@/drizzle/schema.ts";
 
 export type Alignment = (typeof alignment.enumValues)[number];
 export type Gender = (typeof gender.enumValues)[number];
@@ -17,3 +15,5 @@ export type SizeType = (typeof sizeType.enumValues)[number];
 export type BaseRules = (typeof baseRules.enumValues)[number];
 
 export const SIZE_OPTIONS = sizeType.enumValues;
+export const ALIGNMENT_OPTIONS = alignment.enumValues;
+export const GENDER_OPTIONS = gender.enumValues;

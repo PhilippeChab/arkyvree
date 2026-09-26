@@ -6,10 +6,10 @@ import {
   type Save,
 } from "@/client/src/components/customization/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, DiceSpinner } from "@/client/src/components/common/index.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, Bolt as PowersIcon } from "@mui/icons-material";
 import {
   Autocomplete,
@@ -39,6 +39,7 @@ import {
   SPELL_RANGE_TYPES,
   SPELL_RESISTANCE_OPTIONS,
 } from "@/shared/dnd3.5/spells.ts";
+import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -46,8 +47,7 @@ const SPELLS_COLUMNS = [
   { key: "description", label: "Description", width: "60%" },
 ];
 
-type SpellsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"]>;
-type SpellsPaginated = Exclude<SpellsResponse, { error: string }>;
+type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
 type Spell = SpellsPaginated["items"][number];
 
 type SpellFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["powers"]["$post"]>["json"];
@@ -225,7 +225,6 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
   const [selectedCreateSave, setSelectedCreateSave] = useState<Save | null>(null);
 
   const {
-    currentUserId,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -238,7 +237,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
       if (selectedCreateAptitudes.length === 0) {
         throw new Error("At least one aptitude must be selected");
       }
-      const response = await rpc.api.rulesets[":id"].powers.$post({
+      return parseResponse(rpc.api.rulesets[":id"].powers.$post({
         param: { id: ruleset.id },
         json: {
           ...data,
@@ -248,38 +247,24 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
             return { id: a.id, level: meta?.level };
           }) as SpellFormData["aptitudes"],
         },
-      });
-      if (!response.ok) throw new Error("Failed to create spell");
-      return response.json();
+      }));
     },
-    onCreateSuccess: (data) => navigate(`/rulesets/${ruleset.id}/powers/${(data as { id: string }).id}/customization`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/powers/${created.id}/customization`, { state: { from: location.pathname + location.search } }),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(ruleset.id, "powers"), searchQuery, childOnly, selectedAptitude?.id, selectedLevel],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].powers.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-          aptitudeId: selectedAptitude?.id,
-          level: selectedLevel !== "" ? selectedLevel.toString() : undefined,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch spells");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...powersQuery(ruleset.id, {
+      search: searchQuery,
+      childOnly,
+      aptitudeId: selectedAptitude?.id,
+      level: selectedLevel === "" ? undefined : selectedLevel,
+    }),
     placeholderData: keepPreviousData,
   });
 
   const spells = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleCreate = () => {
     setSelectedCreateAptitudes([]);
@@ -296,11 +281,9 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.entity(ruleset.id, "powers", spell.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].powers[":powerId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].powers[":powerId"].$get({
           param: { id: ruleset.id, powerId: spell.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch spell");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, ruleset.id]);
@@ -478,22 +461,16 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<PowersIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={PowersIcon}
         emptyTitle="No spells"
         emptyDescription="No spells available for this ruleset."
       />
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
 
       <CreateDialog
         open={createDialogOpen}

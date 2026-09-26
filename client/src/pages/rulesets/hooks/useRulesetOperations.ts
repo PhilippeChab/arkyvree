@@ -4,16 +4,17 @@ import type {
 } from "@/client/src/pages/rulesets/details/components/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
+import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
 
-type RulesetResponse = InferResponseType<typeof rpc.api.rulesets.$get>;
-type RulesetArray = Exclude<RulesetResponse, { error: string }>;
+type RulesetArray = InferResponseType<typeof rpc.api.rulesets.$get, 200>;
 type Ruleset = RulesetArray["items"][number];
+type PublishKind = InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"];
 
 export function useRulesetOperations() {
   const queryClient = useQueryClient();
@@ -39,12 +40,10 @@ export function useRulesetOperations() {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, updatedAt }: { id: string; data: EditRulesetFormData; updatedAt?: string }) => {
-      const response = await rpc.api.rulesets[":id"].$put({
+      return parseResponse(rpc.api.rulesets[":id"].$put({
         param: { id },
         json: { ...data, updatedAt },
-      });
-      if (!response.ok) throw new Error("Failed to update ruleset");
-      return response.json();
+      }));
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset updated successfully");
@@ -65,12 +64,10 @@ export function useRulesetOperations() {
   // Fork mutation
   const forkMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ForkRulesetFormData }) => {
-      const response = await rpc.api.rulesets[":id"].fork.$post({
+      return parseResponse(rpc.api.rulesets[":id"].fork.$post({
         param: { id },
         json: data,
-      });
-      if (!response.ok) throw new Error("Failed to fork ruleset");
-      return response.json();
+      }));
     },
     onSuccess: (data) => {
       snackbar.success("Ruleset forked successfully");
@@ -89,11 +86,9 @@ export function useRulesetOperations() {
   // Archive mutation
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await rpc.api.rulesets[":id"].archive.$post({
+      return parseResponse(rpc.api.rulesets[":id"].archive.$post({
         param: { id },
-      });
-      if (!response.ok) throw new Error("Failed to archive ruleset");
-      return response.json();
+      }));
     },
     onSuccess: (_, id) => {
       snackbar.success("Ruleset archived successfully");
@@ -113,11 +108,9 @@ export function useRulesetOperations() {
   // Unarchive mutation
   const unarchiveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await rpc.api.rulesets[":id"].unarchive.$post({
+      return parseResponse(rpc.api.rulesets[":id"].unarchive.$post({
         param: { id },
-      });
-      if (!response.ok) throw new Error("Failed to unarchive ruleset");
-      return response.json();
+      }));
     },
     onSuccess: (_, id) => {
       snackbar.success("Ruleset unarchived successfully");
@@ -133,67 +126,15 @@ export function useRulesetOperations() {
     },
   });
 
-  // Star mutation
-  const starMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await rpc.api.rulesets[":id"].star.$post({
-        param: { id },
-      });
-      if (!response.ok) throw new Error("Failed to star ruleset");
-      return response.json();
-    },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to star ruleset");
-    },
-  });
-
-  // Unstar mutation
-  const unstarMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await rpc.api.rulesets[":id"].star.$delete({
-        param: { id },
-      });
-      if (!response.ok) throw new Error("Failed to unstar ruleset");
-      return response.json();
-    },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to unstar ruleset");
-    },
-  });
-
-  const toggleStar = (id: string, isCurrentlyStarred: boolean) => {
-    if (isCurrentlyStarred) {
-      unstarMutation.mutate(id);
-    } else {
-      starMutation.mutate(id);
-    }
-  };
+  const toggleStar = useToggleRulesetStar();
 
   // Publish mutation
   const publishMutation = useMutation({
-    mutationFn: async ({ id, kind }: { id: string; kind?: "ruleset" | "extension" }) => {
-      const response = await rpc.api.rulesets[":id"].publish.$post({
+    mutationFn: async ({ id, kind }: { id: string; kind?: PublishKind }) => {
+      return parseResponse(rpc.api.rulesets[":id"].publish.$post({
         param: { id },
         json: { kind },
-      });
-      if (!response.ok) throw new Error("Failed to publish ruleset");
-      return response.json();
+      }));
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset published successfully");
@@ -213,12 +154,10 @@ export function useRulesetOperations() {
   // Subscribe extension mutation
   const subscribeMutation = useMutation({
     mutationFn: async ({ id, extensionIds }: { id: string; extensionIds: string[] }) => {
-      const response = await rpc.api.rulesets[":id"].subscribe.$post({
+      return parseResponse(rpc.api.rulesets[":id"].subscribe.$post({
         param: { id },
         json: { extensionIds },
-      });
-      if (!response.ok) throw new Error("Failed to subscribe to extension");
-      return response.json();
+      }));
     },
     onSuccess: (_, { id, extensionIds }) => {
       snackbar.success(
@@ -242,12 +181,10 @@ export function useRulesetOperations() {
   // Unsubscribe extension mutation
   const unsubscribeMutation = useMutation({
     mutationFn: async ({ id, extensionId }: { id: string; extensionId: string }) => {
-      const response = await rpc.api.rulesets[":id"].unsubscribe.$post({
+      return parseResponse(rpc.api.rulesets[":id"].unsubscribe.$post({
         param: { id },
         json: { extensionId },
-      });
-      if (!response.ok) throw new Error("Failed to unsubscribe from extension");
-      return response.json();
+      }));
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Unsubscribed from extension successfully");
@@ -343,7 +280,7 @@ export function useRulesetOperations() {
     }
   };
 
-  const confirmPublish = (kind?: "ruleset" | "extension") => {
+  const confirmPublish = (kind?: PublishKind) => {
     if (selectedRuleset) {
       publishMutation.mutate({ id: selectedRuleset.id, kind });
     }
@@ -379,8 +316,6 @@ export function useRulesetOperations() {
     archiveMutation,
     unarchiveMutation,
     publishMutation,
-    starMutation,
-    unstarMutation,
     subscribeMutation,
     unsubscribeMutation,
 

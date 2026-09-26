@@ -47,7 +47,10 @@ export const settledPulse = keyframes`
 export function fadeInUpSx(index: number, offset = 0) {
   const delay = (index - offset) * DURATION.stagger;
   return {
-    animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} ${delay}ms both`,
+    // `backwards`, not `both`: hold the first frame through the stagger delay,
+    // but don't pin the last one, which would override hover transforms and
+    // opacity on the animated card once it has finished.
+    animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} ${delay}ms backwards`,
     [prefersReducedMotion]: { animation: "none" },
   } as const;
 }

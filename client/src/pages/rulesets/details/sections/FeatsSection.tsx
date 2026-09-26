@@ -1,13 +1,14 @@
 import {
   AptitudeAutocomplete,
-  AptitudesAutocomplete,
   type Aptitude,
 } from "@/client/src/components/customization/index.ts";
+import { FeatFormFields, type FeatFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   BlankState,
   CreateDialog,
   SearchBar,
   DiceSpinner,
+  LoadMoreButton,
 } from "@/client/src/components/common/index.ts";
 import {
   RulesetSectionTable,
@@ -15,10 +16,10 @@ import {
   TABLE_CONTAINER_STYLE,
   TABLE_STYLE,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import { usePermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   ExpandLess as ExpandLessIcon,
@@ -37,15 +38,15 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   ToggleButton,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -59,15 +60,12 @@ const GROUPED_COLUMNS = [
   { key: "variants", label: "Variants", width: "50%" },
 ];
 
-type FeatsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"]>;
-type FeatsPaginated = Exclude<FeatsResponse, { error: string }>;
+type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
 type Feat = FeatsPaginated["items"][number];
 
-type GroupedResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"]>;
-type GroupedPaginated = Exclude<GroupedResponse, { error: string }>;
+type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 type GroupedFeatRow = GroupedPaginated["items"][number];
 
-type FeatFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["feats"]["$post"]>["json"];
 
 type FeatAptitude = {
   aptitudeId: string;
@@ -100,7 +98,6 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
   const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
 
   const {
-    currentUserId,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -113,61 +110,27 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
       if (selectedCreateAptitudes.length === 0) {
         throw new Error("At least one aptitude must be selected");
       }
-      const response = await rpc.api.rulesets[":id"].feats.$post({
+      return parseResponse(rpc.api.rulesets[":id"].feats.$post({
         param: { id: ruleset.id },
         json: {
           ...data,
           aptitudeIds: selectedCreateAptitudes.map((a) => a.id),
         },
-      });
-      if (!response.ok) throw new Error("Failed to create feat");
-      return response.json();
+      }));
     },
-    onCreateSuccess: (data) => navigate(`/rulesets/${ruleset.id}/feats/${(data as { id: string }).id}/customization`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/feats/${created.id}/customization`, { state: { from: location.pathname + location.search } }),
   });
 
   // Flat query (used when grouped is off)
   const flatQuery = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(ruleset.id, "feats"), searchQuery, childOnly, selectedAptitude?.id],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].feats.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-          aptitudeId: selectedAptitude?.id,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch feats");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...featsQuery(ruleset.id, { search: searchQuery, childOnly, aptitudeId: selectedAptitude?.id }),
     placeholderData: keepPreviousData,
     enabled: !grouped,
   });
 
   // Grouped query (used when grouped is on)
   const groupedQuery = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.sectionGrouped(ruleset.id, "feats"), searchQuery, childOnly, selectedAptitude?.id],
-    queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].feats.grouped.$get({
-        param: { id: ruleset.id },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: searchQuery || undefined,
-          childOnly: childOnly ? "true" : undefined,
-          aptitudeId: selectedAptitude?.id,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch grouped feats");
-      return response.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...featsGroupedQuery(ruleset.id, { search: searchQuery, childOnly, aptitudeId: selectedAptitude?.id }),
     placeholderData: keepPreviousData,
     enabled: grouped,
   });
@@ -175,7 +138,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
   const feats = flatQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const groupedFeats = groupedQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
-  const { canEdit } = usePermissions(ruleset, currentUserId);
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleCreate = () => {
     setSelectedCreateAptitudes([]);
@@ -190,11 +153,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
     queryClient.prefetchQuery({
       queryKey: queryKeys.rulesets.entity(ruleset.id, "feats", feat.id),
       queryFn: async () => {
-        const response = await rpc.api.rulesets[":id"].feats[":featId"].$get({
+        return parseResponse(rpc.api.rulesets[":id"].feats[":featId"].$get({
           param: { id: ruleset.id, featId: feat.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch feat");
-        return response.json();
+        }));
       },
     });
   }, [queryClient, ruleset.id]);
@@ -291,7 +252,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
     if (groupedFeats.length === 0) {
       return (
         <BlankState
-          icon={<FeatsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+          icon={FeatsIcon}
           title="No feats"
           description="No feats available for this ruleset."
         />
@@ -399,23 +360,17 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
           onRowClick={handleRowClick}
           onRowMouseEnter={handleRowMouseEnter}
           renderCell={renderCell}
-          emptyIcon={<FeatsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+          emptyIcon={FeatsIcon}
           emptyTitle="No feats"
           emptyDescription="No feats available for this ruleset."
         />
       )}
 
-      {hasNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            variant="outlined"
-          >
-            <DiceSpinner size="small" loading={isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
 
       <CreateDialog
         open={createDialogOpen}
@@ -425,25 +380,11 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
         onSubmit={(data) => createMutation.mutate(data)}
         isLoading={createMutation.isPending}
       >
-        <TextField
-          {...createForm.register("name", { required: "Name is required" })}
-          label="Name"
-          fullWidth
-          error={!!createForm.formState.errors.name}
-          helperText={createForm.formState.errors.name?.message}
-        />
-        <TextField
-          {...createForm.register("description")}
-          label="Description"
-          fullWidth
-          multiline
-          minRows={3}
-          sx={{ "& textarea": { resize: "vertical" } }}
-        />
-        <AptitudesAutocomplete
+        <FeatFormFields
+          form={createForm}
           rulesetId={ruleset.id}
-          value={selectedCreateAptitudes}
-          onChange={setSelectedCreateAptitudes}
+          selectedAptitudes={selectedCreateAptitudes}
+          onAptitudesChange={setSelectedCreateAptitudes}
         />
       </CreateDialog>
     </Box>
@@ -478,7 +419,7 @@ function GroupedRow({
   const variantQuery = useInfiniteQuery({
     queryKey: queryKeys.rulesets.familyVariants(rulesetId, row.family ?? ""),
     queryFn: async ({ pageParam }) => {
-      const response = await rpc.api.rulesets[":id"].feats.$get({
+      return parseResponse(rpc.api.rulesets[":id"].feats.$get({
         param: { id: rulesetId },
         query: {
           limit: "50",
@@ -486,9 +427,7 @@ function GroupedRow({
           family: row.family!,
           childOnly: childOnly ? "true" : undefined,
         },
-      });
-      if (!response.ok) throw new Error("Failed to fetch family variants");
-      return response.json();
+      }));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,

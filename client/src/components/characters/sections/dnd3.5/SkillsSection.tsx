@@ -3,7 +3,6 @@ import { BlankState } from "@/client/src/components/common/index.ts";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import {
   IconButton,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -13,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo, useState } from "react";
+import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
 function getSkillGroup(name: string): string | null {
   const match = name.match(/^(.+?)\s*\(/);
@@ -71,10 +71,7 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
   const hasSkills = skills && typeof skills === "object" && Object.keys(skills).length > 0;
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography sx={{ fontWeight: 600, color: "primary.main", mb: 3, typography: { xs: "h6", sm: "h5" } }}>
-        Skills
-      </Typography>
+    <SheetSection title="Skills">
       {hasSkills
         ? (
           <>
@@ -92,7 +89,7 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
                   <col style={{ width: 50 }} />
                 </colgroup>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: "grey.100" }}>
+                  <TableRow>
                     <TableCell sx={{ fontWeight: 600 }}>Skill</TableCell>
                     <TableCell align="center" sx={{ fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Rank</TableCell>
                     <TableCell align="center" sx={{ fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Abil</TableCell>
@@ -164,6 +161,6 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
           </>
         )
         : <BlankState title="No skills available" />}
-    </Paper>
+    </SheetSection>
   );
 }

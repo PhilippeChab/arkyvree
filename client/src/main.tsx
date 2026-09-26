@@ -4,17 +4,14 @@ import "@fontsource-variable/lora";
 import "@fontsource-variable/lora/wght-italic.css";
 import App from '@/client/src/App.tsx'
 import '@/client/src/index.css'
+import { reloadForStaleChunks } from '@/client/src/lib/chunkReload.ts'
 import { initSentry } from '@/client/src/lib/sentry.ts'
 import { useDirtyFormsStore } from '@/client/src/stores/dirtyFormsStore.ts'
 
 initSentry();
 
 window.addEventListener("vite:preloadError", () => {
-  const lastReload = sessionStorage.getItem("chunk_reload");
-  if (!lastReload || Date.now() - Number(lastReload) > 10_000) {
-    sessionStorage.setItem("chunk_reload", String(Date.now()));
-    window.location.reload();
-  }
+  reloadForStaleChunks();
 });
 
 // Warn before tab close / browser refresh / navigation when any form

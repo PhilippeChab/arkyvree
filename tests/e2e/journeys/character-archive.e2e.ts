@@ -11,7 +11,7 @@ test.describe('Character Archive / Unarchive', () => {
     await page.locator('[data-testid="MoreVertIcon"]').first().click();
     await page.getByRole('menuitem', { name: /^Archive$/ }).click();
 
-    const dialog = page.getByRole('dialog', { name: /^Archive$/ });
+    const dialog = page.getByRole('dialog', { name: 'Archive Character' });
     await expect(dialog).toBeVisible();
     // Wait for the archive DELETE before asserting the list refetches —
     // under parallel load the request can take a few seconds.
@@ -19,8 +19,7 @@ test.describe('Character Archive / Unarchive', () => {
       (r) => /\/api\/characters\/[a-f0-9-]+$/.test(r.url()) && r.request().method() === 'DELETE' && r.ok(),
       { timeout: 15_000 },
     );
-    // The archive dialog reuses DeleteDialog whose confirm button reads "Delete" by default.
-    await dialog.getByRole('button', { name: /^Delete$/ }).click();
+    await dialog.getByRole('button', { name: /^Archive Character$/ }).click();
     await archiveResponse;
 
     await expect(page).toHaveURL(/\/characters(\?|$)/, { timeout: 10000 });

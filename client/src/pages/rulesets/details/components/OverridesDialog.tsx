@@ -1,5 +1,5 @@
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { CompareArrows as CompareArrowsIcon, Restore as RestoreIcon } from "@mui/icons-material";
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
@@ -72,11 +72,9 @@ export function OverridesDialog({
   const { data: changes, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.changes(rulesetId),
     queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].changes.$get({
+      return parseResponse(rpc.api.rulesets[":id"].changes.$get({
         param: { id: rulesetId },
-      });
-      if (!response.ok) throw new Error("Failed to fetch changes");
-      return response.json();
+      }));
     },
     enabled: open,
     placeholderData: (prev) => prev,
@@ -84,11 +82,9 @@ export function OverridesDialog({
 
   const revertMutation = useMutation({
     mutationFn: async ({ entityType, sourceEntityId }: { entityType: string; sourceEntityId: string }) => {
-      const response = await rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore.$post({
+      return parseResponse(rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore.$post({
         param: { id: rulesetId, entityType: entityType as never, entityId: sourceEntityId },
-      });
-      if (!response.ok) throw new Error("Failed to revert");
-      return response.json();
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(rulesetId) });
