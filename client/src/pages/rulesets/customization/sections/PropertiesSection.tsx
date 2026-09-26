@@ -19,12 +19,9 @@ const PROPERTIES_COLUMNS = [
   { key: "description", label: "Description", width: "40%" },
 ];
 
-type PropertiesResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"][
+type PropertiesArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"][
   "$get"
-  ]
->;
-type PropertiesArray = Exclude<PropertiesResponse, { error: string }>;
+  ], 200>;
 type Property = PropertiesArray[number];
 
 type PropertyFormData = InferRequestType<

@@ -8,20 +8,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type LevelsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"]
->;
-type LevelsArray = Exclude<LevelsResponse, { error: string }>;
+type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
 export type Level = LevelsArray[number];
 
 type CreateLevelFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
 >["json"];
 
-type ClassSkillsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"]
->;
-type ClassSkillsArray = Exclude<ClassSkillsResponse, { error: string }>;
+type ClassSkillsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"], 200>;
 
 export function useClassLevels(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();

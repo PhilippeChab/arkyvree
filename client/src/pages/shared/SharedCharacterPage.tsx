@@ -49,7 +49,7 @@ export default function SharedCharacterPage() {
     );
   }
 
-  if (error || !character || "error" in character) {
+  if (error || !character) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Alert severity="error">

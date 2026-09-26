@@ -14,6 +14,7 @@ export default function CampaignInvitePage() {
       pageTitle="Campaign Invite"
       entityLabel="Campaign"
       entityPath={(id) => `/campaigns/${id}`}
+      listPath="/campaigns"
       icon={InviteIcon}
       queryKey={queryKeys.invites.detail("campaign", inviteId)}
       loadInvite={async () => {

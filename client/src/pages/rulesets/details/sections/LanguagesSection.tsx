@@ -19,8 +19,7 @@ const LANGUAGES_COLUMNS = [
   { key: "description", label: "Description", width: "55%" },
 ];
 
-type LanguagesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"]>;
-type LanguagesPaginated = Exclude<LanguagesResponse, { error: string }>;
+type LanguagesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>;
 type Language = LanguagesPaginated["items"][number];
 
 

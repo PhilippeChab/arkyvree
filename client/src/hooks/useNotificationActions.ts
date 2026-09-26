@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
@@ -41,6 +41,15 @@ const INVITES = {
 } as const;
 
 type InviteType = keyof typeof INVITES;
+
+interface InviteAnswer {
+  notification: NotificationLike;
+  type: InviteType;
+}
+
+// Shared by accept and reject, so every notification surface can tell which
+// invites are being answered, whichever surface the click came from.
+const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
 
 const isInviteType = (type: string): type is InviteType => type in INVITES;
 
@@ -90,7 +99,8 @@ export function useNotificationActions() {
   };
 
   const acceptMutation = useMutation({
-    mutationFn: async ({ notification, type }: { notification: NotificationLike; type: InviteType }) => {
+    mutationKey: ANSWER_INVITE_KEY,
+    mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].accept(notification.targetId);
     },
     onSuccess: (_, { notification, type }) => {
@@ -102,7 +112,8 @@ export function useNotificationActions() {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async ({ notification, type }: { notification: NotificationLike; type: InviteType }) => {
+    mutationKey: ANSWER_INVITE_KEY,
+    mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].reject(notification.targetId);
     },
     onSuccess: (_, { notification, type }) => {
@@ -112,7 +123,15 @@ export function useNotificationActions() {
     onError: (error, { notification }) => handleInviteError(error, notification),
   });
 
+  const answeringIds = useMutationState({
+    filters: { mutationKey: ANSWER_INVITE_KEY, status: "pending" },
+    select: (mutation) => (mutation.state.variables as InviteAnswer).notification.id,
+  });
+
   const isActionable = (n: NotificationLike) => isInviteType(n.type) && !n.readAt;
+
+  /** Whether this invite is being accepted or rejected right now. */
+  const isAnswering = (n: NotificationLike) => answeringIds.includes(n.id);
 
   const isDownloadable = (n: NotificationLike) => n.type === "pdfReady";
 
@@ -168,7 +187,7 @@ export function useNotificationActions() {
     open,
     accept,
     reject,
-    isInvitePending: acceptMutation.isPending || rejectMutation.isPending,
+    isAnswering,
     markAllRead,
   };
 }

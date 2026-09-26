@@ -205,7 +205,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
                       <IconButton
                         size="small"
                         onClick={() => {
-                          roleForm.reset({ role: contributor.role as ContributorRole });
+                          roleForm.reset({ role: contributor.role });
                           setRoleTargetId(contributor.id);
                         }}
                       >

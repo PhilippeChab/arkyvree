@@ -14,6 +14,7 @@ export default function RulesetContributorInvitePage() {
       pageTitle="Ruleset Contributor Invite"
       entityLabel="Ruleset"
       entityPath={(id) => `/rulesets/${id}`}
+      listPath="/rulesets"
       icon={ContributorIcon}
       queryKey={queryKeys.invites.detail("rulesetContributor", contributorId)}
       loadInvite={async () => {

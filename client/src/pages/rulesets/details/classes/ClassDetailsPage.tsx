@@ -64,6 +64,12 @@ const SECTION_COMPONENTS = {
 const BONUS_SPELL_ABILITY_TYPE = "KLASS_BONUS_SPELL_ABILITY_ID";
 const CASTER_TYPE_PROPERTY_TYPE = "KLASS_CASTER_TYPE";
 
+const toClassForm = (klass: { name: string; description: string | null; hd: number | null }): ClassFormData => ({
+  name: klass.name,
+  description: klass.description ?? undefined,
+  hd: (klass.hd ?? 8) as HitDieValue,
+});
+
 const isClassSection = (section: string | undefined): section is ClassSection =>
   TABS.some((tab) => tab.key === section);
 
@@ -96,21 +102,17 @@ export default function ClassDetailsPage() {
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
-  useFormSync(editForm, classData && {
-    name: classData.name,
-    description: classData.description ?? undefined,
-    hd: (classData.hd ?? 8) as HitDieValue,
-  });
+  const syncedUpdatedAt = useFormSync(editForm, classData && toClassForm(classData), classData?.updatedAt);
 
   const { data: abilities } = useRulesetAbilities(rulesetId);
 
   const updateMutation = useMutation({
     mutationFn: (data: ClassFormData) => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
       param: { id: rulesetId, classId },
-      json: { ...data, updatedAt: classData?.updatedAt },
+      json: { ...data, updatedAt: syncedUpdatedAt() },
     })),
-    onSuccess: (data, submitted) => {
-      editForm.reset(submitted);
+    onSuccess: (data) => {
+      editForm.reset(toClassForm(data));
       queryClient.setQueryData(queryKeys.rulesets.classDetail(rulesetId, data.id), data);
       // Editing an inherited class copies it into this ruleset under a new id.
       if (data.id !== classId) {

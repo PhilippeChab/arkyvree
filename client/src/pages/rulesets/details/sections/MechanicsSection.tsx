@@ -27,8 +27,7 @@ const MECHANICS_COLUMNS = [
   { key: "description", label: "Description", width: "70%" },
 ];
 
-type MechanicsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"]>;
-type MechanicsPaginated = Exclude<MechanicsResponse, { error: string }>;
+type MechanicsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>;
 type Mechanic = MechanicsPaginated["items"][number];
 
 type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$post"]>["json"];

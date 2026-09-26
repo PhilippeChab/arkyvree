@@ -12,10 +12,7 @@ import type { InferResponseType } from "hono/client";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-type LevelsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"]
->;
-type LevelsArray = Exclude<LevelsResponse, { error: string }>;
+type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
 type Level = LevelsArray[number];
 
 interface ClassLevelsSectionProps {

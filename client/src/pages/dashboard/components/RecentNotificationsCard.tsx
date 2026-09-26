@@ -93,7 +93,7 @@ export function RecentNotificationsCard() {
                       sx={{ mt: 1 }}
                       onAccept={() => actions.accept(notification)}
                       onReject={() => actions.reject(notification)}
-                      disabled={actions.isInvitePending}
+                      disabled={actions.isAnswering(notification)}
                     />
                   )}
                 </Box>

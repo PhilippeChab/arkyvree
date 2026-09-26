@@ -10,10 +10,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { classSpellListQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type SpellListResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"]
->;
-type SpellListPaginated = Exclude<SpellListResponse, { error: string }>;
+type SpellListPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"], 200>;
 type Spell = SpellListPaginated["items"][number];
 
 const COLUMNS = [

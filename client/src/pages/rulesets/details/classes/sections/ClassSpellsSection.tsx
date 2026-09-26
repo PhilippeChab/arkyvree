@@ -7,10 +7,7 @@ import type { InferResponseType } from "hono/client";
 import { useMemo } from "react";
 import { classSpellsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type SpellsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells"]["$get"]
->;
-type SpellsArray = Exclude<SpellsResponse, { error: string }>;
+type SpellsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells"]["$get"], 200>;
 type SpellLevel = SpellsArray[number];
 
 interface ClassSpellsSectionProps {

@@ -22,8 +22,7 @@ const CLASSES_COLUMNS = [
 ];
 
 
-type ClassesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"]>;
-type ClassesPaginated = Exclude<ClassesResponse, { error: string }>;
+type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
 type Class = ClassesPaginated["items"][number];
 
 

@@ -180,7 +180,7 @@ export default function NotificationsPage() {
                             <InviteActionButtons
                               onAccept={() => actions.accept(notification)}
                               onReject={() => actions.reject(notification)}
-                              disabled={actions.isInvitePending}
+                              disabled={actions.isAnswering(notification)}
                             />
                           )}
                         </TableCell>

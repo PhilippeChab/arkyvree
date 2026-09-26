@@ -27,6 +27,11 @@ interface ProfileFormData {
   emailAddress: string;
 }
 
+const toProfileForm = (user: { username: string | null; emailAddress: string }): ProfileFormData => ({
+  username: user.username ?? "",
+  emailAddress: user.emailAddress,
+});
+
 interface PasswordFormData {
   currentPassword: string;
   newPassword: string;
@@ -91,10 +96,7 @@ export default function ProfilePage() {
   });
 
   const profileForm = useForm<ProfileFormData>({ defaultValues: { username: "", emailAddress: "" } });
-  useFormSync(profileForm, userData && {
-    username: userData.username ?? "",
-    emailAddress: userData.emailAddress,
-  });
+  useFormSync(profileForm, userData && toProfileForm(userData));
 
   // Set-password (no password yet, e.g. Google-only accounts) uses the same
   // form minus the current password.
@@ -109,8 +111,10 @@ export default function ProfilePage() {
         emailAddress: data.emailAddress || undefined,
       },
     })),
-    onSuccess: (data, submitted) => {
-      profileForm.reset(submitted);
+    onSuccess: (data) => {
+      // The server's values, not the submitted ones: a new email stays pending
+      // until verified, so the field keeps the current address.
+      profileForm.reset(toProfileForm(data));
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
       updateUser({
         emailAddress: data.emailAddress,

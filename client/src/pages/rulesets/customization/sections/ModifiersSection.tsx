@@ -32,10 +32,7 @@ const MODIFIERS_COLUMNS = [
   { key: "createdAt", label: "Created", width: "20%" },
 ];
 
-type ModifiersResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"]
->;
-type ModifiersArray = Exclude<ModifiersResponse, { error: string }>;
+type ModifiersArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"], 200>;
 type Modifier = ModifiersArray[number];
 
 type ModifierFormData = InferRequestType<

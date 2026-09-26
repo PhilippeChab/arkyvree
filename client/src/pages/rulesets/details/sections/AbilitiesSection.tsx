@@ -14,8 +14,7 @@ const ABILITIES_COLUMNS = [
   { key: "description", label: "Description", width: "70%" },
 ];
 
-type AbilitiesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"]>;
-type AbilitiesPaginated = Exclude<AbilitiesResponse, { error: string }>;
+type AbilitiesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>;
 type Ability = AbilitiesPaginated["items"][number];
 
 interface AbilitiesSectionProps {

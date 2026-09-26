@@ -23,25 +23,13 @@ import {
   AddReviewStep,
 } from "./index.ts";
 
-type LeveledUpSkillsResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["skill-slots"]["$get"]
->;
-type SkillsData = Exclude<LeveledUpSkillsResponse, { error: string }>;
+type SkillsData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["skill-slots"]["$get"], 200>;
 
-type LeveledUpPowersResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["power-slots"]["$get"]
->;
-type PowersData = Exclude<LeveledUpPowersResponse, { error: string }>;
+type PowersData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["power-slots"]["$get"], 200>;
 
-type LeveledUpAttributesResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["attribute-slots"]["$get"]
->;
-type AttributesData = Exclude<LeveledUpAttributesResponse, { error: string }>;
+type AttributesData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["attribute-slots"]["$get"], 200>;
 
-type LeveledUpFeatsResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["feat-slots"]["$get"]
->;
-type FeatsData = Exclude<LeveledUpFeatsResponse, { error: string }>;
+type FeatsData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["feat-slots"]["$get"], 200>;
 
 // ── Step prop interfaces ──────────────────────────────────────────────
 

@@ -63,21 +63,12 @@ const LOCATION_VALUES = [
 
 type LocationValue = (typeof LOCATION_VALUES)[number];
 
-type ItemsResponse = InferResponseType<
-  RPC["api"]["rulesets"][":id"]["items"]["$get"]
->;
-type ItemsPaginated = Exclude<ItemsResponse, { error: string }>;
+type ItemsPaginated = InferResponseType<RPC["api"]["rulesets"][":id"]["items"]["$get"], 200>;
 type SearchItem = ItemsPaginated["items"][number];
 
-type ItemDetailResponse = InferResponseType<
-  RPC["api"]["rulesets"][":id"]["items"][":itemId"]["$get"]
->;
-type ItemDetail = Exclude<ItemDetailResponse, { error: string }>;
+type ItemDetail = InferResponseType<RPC["api"]["rulesets"][":id"]["items"][":itemId"]["$get"], 200>;
 
-type InventoryResponse = InferResponseType<
-  RPC["api"]["characters"]["inventory"][":characterId"]["$get"]
->;
-type InventoryItems = Exclude<InventoryResponse, { error: string }>;
+type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
 type InventoryEntry = InventoryItems[number];
 
 interface EncumbranceData {

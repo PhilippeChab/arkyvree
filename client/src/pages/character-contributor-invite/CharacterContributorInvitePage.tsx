@@ -14,6 +14,7 @@ export default function CharacterContributorInvitePage() {
       pageTitle="Character Contributor Invite"
       entityLabel="Character"
       entityPath={(id) => `/characters/${id}`}
+      listPath="/characters"
       icon={ContributorIcon}
       queryKey={queryKeys.invites.detail("characterContributor", contributorId)}
       loadInvite={async () => {

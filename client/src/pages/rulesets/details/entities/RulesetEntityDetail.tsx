@@ -22,7 +22,7 @@ interface EntityBase {
 interface EntityEditing<TEntity, TForm extends FieldValues> {
   toFormValues: (entity: TEntity) => TForm;
   /** Saves the form; resolves to the saved entity, whose id changes when a fork copies an inherited one. */
-  update: (data: TForm, updatedAt: string) => Promise<TEntity>;
+  update: (data: TForm, updatedAt: string | undefined) => Promise<TEntity>;
   remove: () => Promise<unknown>;
   renderFields: (form: UseFormReturn<TForm>) => ReactNode;
 }
@@ -72,15 +72,15 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const canEdit = !!editing && canEditEntities;
 
   const form = useForm<TForm>({ defaultValues: {} as DefaultValues<TForm> });
-  useFormSync(form, entity && editing ? editing.toFormValues(entity) : undefined);
+  const syncedUpdatedAt = useFormSync(form, entity && editing ? editing.toFormValues(entity) : undefined, entity?.updatedAt);
 
   const invalidateSection = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
 
   const saveMutation = useMutation({
-    mutationFn: (data: TForm) => editing!.update(data, entity!.updatedAt),
-    onSuccess: (saved, submitted) => {
-      form.reset(submitted);
+    mutationFn: (data: TForm) => editing!.update(data, syncedUpdatedAt()),
+    onSuccess: (saved) => {
+      form.reset(editing!.toFormValues(saved));
       queryClient.setQueryData(queryKeys.rulesets.entity(rulesetId, section, saved.id), saved);
       // Editing an inherited entity copies it into this ruleset under a new id.
       if (saved.id !== entityId) {

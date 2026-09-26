@@ -130,7 +130,7 @@ export function NotificationBell() {
                     sx={{ mt: 1 }}
                     onAccept={() => actions.accept(notification, (path) => closeAnd(() => navigate(path)))}
                     onReject={() => actions.reject(notification)}
-                    disabled={actions.isInvitePending}
+                    disabled={actions.isAnswering(notification)}
                   />
                 </Box>
               ) : (

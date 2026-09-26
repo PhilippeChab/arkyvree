@@ -84,7 +84,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - `ApiError` includes `status` (HTTP code) and `errorName` (server error class name)
 - The RPC fetch throws `ApiError` on every non-2xx response, so never check `response.ok`. Read bodies with `parseResponse(rpc.api.x.$get(...))` (re-exported from `rpc.ts`), which also narrows to the success type. To react to a specific status (e.g. show "not found"), catch `ApiError` and test `error.status`
 - Use `InferRequestType` / `InferResponseType` from `hono/client` for all API types — never recreate manually
-- Queries shared between a page and a prefetch (sidebar hover, card hover) live in `client/src/lib/queries.ts` as `queryOptions` factories, so the key, page size and params can't drift apart. Ruleset and campaign tab lists do the same in `pages/rulesets/details/sectionQueries.ts` and `pages/campaigns/details/sectionQueries.ts`: a section renders with its factory and the tab hover prefetches through it. Every query key comes from `lib/queryKeys.ts`
+- Queries shared between a page and a prefetch (sidebar hover, card hover) live in `client/src/lib/queries.ts` as `queryOptions` factories, so the key, page size and params can't drift apart. Ruleset and campaign tab lists do the same in `pages/rulesets/details/sectionQueries.ts` and `pages/campaigns/details/sectionQueries.ts`: a section renders with its factory and the hover prefetch (ruleset tab, campaign card) goes through it. Every query key comes from `lib/queryKeys.ts`
 
 **State Management:**
 

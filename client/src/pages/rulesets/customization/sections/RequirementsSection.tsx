@@ -51,12 +51,9 @@ import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-type RequirementsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"][
+type RequirementsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"][
     "$get"
-  ]
->;
-type RequirementsArray = Exclude<RequirementsResponse, { error: string }>;
+  ], 200>;
 type Requirement = RequirementsArray[number];
 
 type RequirementFormData = InferRequestType<

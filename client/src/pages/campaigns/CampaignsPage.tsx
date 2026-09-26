@@ -36,7 +36,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { prefetchCampaignSection } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
+import { prefetchCampaignSections } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
 type SortField = CampaignListFilters["orderBy"];
 
@@ -91,10 +91,10 @@ export default function CampaignsPage() {
 
   const campaigns = data?.pages.flatMap((page) => page.items) ?? [];
 
-  // Warm the detail page and its default tab while the pointer is on a card.
+  // Warm the detail page and its tabs while the pointer is on a card.
   const prefetchCampaign = (id: string) => {
     void queryClient.prefetchQuery(campaignDetailQuery(id));
-    void prefetchCampaignSection(queryClient, id, "characters");
+    void prefetchCampaignSections(queryClient, id);
   };
 
   const createButton = (label: string) => <PageActionButton onClick={handleCreate}>{label}</PageActionButton>;

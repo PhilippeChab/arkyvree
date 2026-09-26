@@ -7,10 +7,7 @@ import type { InferResponseType } from "hono/client";
 import { useMemo } from "react";
 import { classFeatPoolsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type FeatPoolsResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["feat-pools"]["$get"]
->;
-type FeatPoolsArray = Exclude<FeatPoolsResponse, { error: string }>;
+type FeatPoolsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["feat-pools"]["$get"], 200>;
 type FeatPoolLevel = FeatPoolsArray[number];
 
 interface ClassFeatPoolsSectionProps {

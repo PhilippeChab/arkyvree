@@ -31,8 +31,7 @@ const RACES_COLUMNS = [
 ];
 
 
-type RacesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"]>;
-type RacesPaginated = Exclude<RacesResponse, { error: string }>;
+type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
 type Race = RacesPaginated["items"][number];
 
 

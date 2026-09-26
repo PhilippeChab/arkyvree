@@ -41,7 +41,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { CharactersSection, PlayersSection } from "./sections/index.ts";
-import { prefetchCampaignSection, type CampaignSection } from "./sectionQueries.ts";
+import type { CampaignSection } from "./sectionQueries.ts";
 
 type TabSection = CampaignSection;
 
@@ -152,7 +152,6 @@ export default function CampaignDetailsPage() {
     );
   }
 
-  const Section = SECTION_COMPONENTS[currentTab];
   const closeMenuAnd = (then: () => void) => () => {
     setAnchorEl(null);
     then();
@@ -191,13 +190,18 @@ export default function CampaignDetailsPage() {
           tabs={TABS}
           value={currentTab}
           onChange={(key) => navigate(`/campaigns/${id}/${key}`)}
-          onTabHover={(key) => void prefetchCampaignSection(queryClient, id, key)}
           aria-label="campaign details tabs"
         />
 
-        <Box role="tabpanel" sx={{ py: 3 }}>
-          <Section campaign={campaign} />
-        </Box>
+        {/* Both tabs stay mounted so switching keeps each one's search and loaded pages. */}
+        {TABS.map(({ key }) => {
+          const Section = SECTION_COMPONENTS[key];
+          return (
+            <Box key={key} role="tabpanel" hidden={key !== currentTab} sx={{ py: 3 }}>
+              <Section campaign={campaign} />
+            </Box>
+          );
+        })}
 
         <Menu
           anchorEl={anchorEl}

@@ -60,12 +60,10 @@ const GROUPED_COLUMNS = [
   { key: "variants", label: "Variants", width: "50%" },
 ];
 
-type FeatsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"]>;
-type FeatsPaginated = Exclude<FeatsResponse, { error: string }>;
+type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
 type Feat = FeatsPaginated["items"][number];
 
-type GroupedResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"]>;
-type GroupedPaginated = Exclude<GroupedResponse, { error: string }>;
+type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 type GroupedFeatRow = GroupedPaginated["items"][number];
 
 

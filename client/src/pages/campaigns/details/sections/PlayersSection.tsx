@@ -51,8 +51,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
-type PlayersResponse = InferResponseType<(typeof rpc.api.campaigns)[":id"]["players"]["$get"]>;
-type PlayersPaginated = Exclude<PlayersResponse, { error: string }>;
+type PlayersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["players"]["$get"], 200>;
 type Player = PlayersPaginated["items"][number];
 
 interface PlayersSectionProps {

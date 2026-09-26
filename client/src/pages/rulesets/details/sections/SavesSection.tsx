@@ -28,8 +28,7 @@ const SAVES_COLUMNS = [
   { key: "ability", label: "Linked Ability", width: "30%" },
 ];
 
-type SavesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"]>;
-type SavesPaginated = Exclude<SavesResponse, { error: string }>;
+type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type Save = SavesPaginated["items"][number];
 
 

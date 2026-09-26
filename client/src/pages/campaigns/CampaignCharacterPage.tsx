@@ -68,7 +68,7 @@ export default function CampaignCharacterPage() {
     );
   }
 
-  if (error || !data || "error" in data || !("identity" in data)) {
+  if (error || !data) {
     return (
       <Container maxWidth="xl" sx={{ py: 2 }}>
         <Alert severity="error">Failed to load character details.</Alert>

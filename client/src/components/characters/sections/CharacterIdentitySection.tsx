@@ -96,7 +96,7 @@ export function CharacterIdentitySection({
   });
 
   const identity = character.identity;
-  useFormSync(form, {
+  const syncedUpdatedAt = useFormSync(form, {
     race: identity?.physiology?.race?.name || "",
     alignment: (identity?.beliefs?.alignment as Alignment | undefined) || "",
     experience: identity?.meta?.xp || 0,
@@ -108,7 +108,7 @@ export function CharacterIdentitySection({
     description: identity?.physiology?.description || "",
     notes: identity?.background?.notes || "",
     languageIds: (identity?.physiology?.languages ?? []).map((l) => l.id),
-  });
+  }, character.updatedAt);
 
   const handleSubmit = async (formData: CharacterIdentityFormData) => {
     try {
@@ -125,7 +125,7 @@ export function CharacterIdentitySection({
           description: formData.description,
           notes: formData.notes,
           languageIds: formData.languageIds,
-          updatedAt: character.updatedAt,
+          updatedAt: syncedUpdatedAt(),
         },
       });
 

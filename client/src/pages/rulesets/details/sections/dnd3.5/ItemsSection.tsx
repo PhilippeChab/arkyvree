@@ -24,8 +24,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { BulkVariantsDialog } from "@/client/src/pages/rulesets/details/sections/dnd3.5/BulkVariantsDialog.tsx";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 
-type ItemsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"]>;
-type ItemsPaginated = Exclude<ItemsResponse, { error: string }>;
+type ItemsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>;
 type Item = ItemsPaginated["items"][number];
 
 interface ItemsSectionProps {

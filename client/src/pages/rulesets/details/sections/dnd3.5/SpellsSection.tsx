@@ -47,8 +47,7 @@ const SPELLS_COLUMNS = [
   { key: "description", label: "Description", width: "60%" },
 ];
 
-type SpellsResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"]>;
-type SpellsPaginated = Exclude<SpellsResponse, { error: string }>;
+type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
 type Spell = SpellsPaginated["items"][number];
 
 type SpellFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["powers"]["$post"]>["json"];

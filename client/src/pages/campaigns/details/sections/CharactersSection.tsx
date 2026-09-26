@@ -48,13 +48,7 @@ import { useNavigate } from "react-router-dom";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
-type CampaignCharactersResponse = InferResponseType<
-  (typeof rpc.api.campaigns)[":id"]["characters"]["$get"]
->;
-type CampaignCharactersPaginated = Exclude<
-  CampaignCharactersResponse,
-  { error: string }
->;
+type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
 
 interface CharactersSectionProps {
