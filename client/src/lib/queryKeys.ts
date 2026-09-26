@@ -11,9 +11,12 @@ export const queryKeys = {
       ["rulesets", "detail", id] as const,
     section: (id: string, section: string) =>
       ["rulesets", "detail", id, section] as const,
-    /** Every ability of the ruleset, for pickers — not the paginated Abilities tab. */
+    /**
+     * Every ability of the ruleset, for pickers. Nested under the Abilities
+     * section key so invalidating the section refreshes the pickers too.
+     */
     abilities: (id: string) =>
-      ["rulesets", "detail", id, "abilityOptions"] as const,
+      ["rulesets", "detail", id, "abilities", "options"] as const,
     classDetail: (id: string, classId: string) =>
       ["rulesets", "detail", id, "class", classId] as const,
     classLevels: (id: string, classId: string) =>
@@ -38,8 +41,9 @@ export const queryKeys = {
       ["rulesets", "detail", id, "targetCompletions", prefix, kind, search, entityType] as const,
     changes: (id: string) =>
       ["rulesets", "detail", id, "changes"] as const,
+    /** Every language of the ruleset, for pickers; nested like `abilities`. */
     languages: (id: string) =>
-      ["rulesets", "detail", id, "languageOptions"] as const,
+      ["rulesets", "detail", id, "languages", "options"] as const,
     propertyTypeCompletions: (id: string, search: string, entityType?: string) =>
       ["rulesets", "detail", id, "propertyTypeCompletions", search, entityType] as const,
     propertyValueCompletions: (id: string, propertyType: string, search: string) =>

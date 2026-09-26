@@ -189,7 +189,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
             </Box>
           ) : modifiers.length === 0 ? (
             <BlankState
-              icon={<TuneIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+              icon={TuneIcon}
               title="No modifiers"
               description="Add custom bonuses or overrides to this character."
             />

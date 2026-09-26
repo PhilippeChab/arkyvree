@@ -1,4 +1,4 @@
-import { BlankState, ConfirmDialog, DiceSpinner, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
+import { BlankState, ConfirmDialog, DiceSpinner, EditDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import {
   ContributorsTable,
   InviteContributorDialog,
@@ -19,9 +19,6 @@ import {
   Alert,
   Box,
   Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControl,
   IconButton,
   InputLabel,
@@ -37,6 +34,7 @@ import {
 } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 type Contributor = InferResponseType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$get"], 200>["items"][number];
 
@@ -51,42 +49,8 @@ interface ContributorsSectionProps {
   onLeave?: () => void;
 }
 
-function EditRoleDialog({
-  open,
-  onClose,
-  onSubmit,
-  isLoading,
-  currentRole,
-  roles,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (role: ContributorRole) => void;
-  isLoading: boolean;
-  currentRole: ContributorRole;
-  roles: ContributorRole[];
-}) {
-  const [role, setRole] = useState<ContributorRole>(currentRole);
-
-  return (
-    <Modal open={open} onClose={() => !isLoading && onClose()} maxWidth="xs">
-      <DialogTitle>Update Role</DialogTitle>
-      <DialogContent>
-        <FormControl fullWidth margin="normal">
-          <InputLabel>Role</InputLabel>
-          <Select value={role} onChange={(e) => setRole(e.target.value as ContributorRole)} label="Role">
-            {roles.map((r) => <MenuItem key={r} value={r}>{r}</MenuItem>)}
-          </Select>
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">Cancel</Button>
-        <Button variant="contained" onClick={() => onSubmit(role)} disabled={isLoading}>
-          <DiceSpinner size="small" loading={isLoading}>Save</DiceSpinner>
-        </Button>
-      </DialogActions>
-    </Modal>
-  );
+interface RoleFormData {
+  role: ContributorRole;
 }
 
 export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionProps) {
@@ -103,7 +67,9 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const assignableRoles: ContributorRole[] = isOwner ? ["Admin", "Editor", "Viewer"] : ["Editor", "Viewer"];
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [roleTarget, setRoleTarget] = useState<Contributor | null>(null);
+  // Contributor whose role is being edited; the role itself lives in roleForm.
+  const [roleTargetId, setRoleTargetId] = useState<string | null>(null);
+  const roleForm = useForm<RoleFormData>({ defaultValues: { role: "Editor" } });
   const [removeTarget, setRemoveTarget] = useState<Contributor | null>(null);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
 
@@ -143,7 +109,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
     onSuccess: () => {
       snackbar.success("Role updated");
       queryClient.invalidateQueries({ queryKey: contributorsKey });
-      setRoleTarget(null);
+      setRoleTargetId(null);
     },
     onError: (error) => snackbar.error(error, "Failed to update role"),
   });
@@ -214,7 +180,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
       )}
       {contributors.length === 0 && !owner ? (
         <BlankState
-          icon={<ContributorsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+          icon={ContributorsIcon}
           title="No contributors yet"
           description={canInvite ? "Invite collaborators to help build this ruleset" : "This ruleset has no contributors"}
           action={canInvite ? (
@@ -236,7 +202,13 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
                 <>
                   {canEditRoles && outranks && contributor.status === "Active" && (
                     <Tooltip title="Edit role">
-                      <IconButton size="small" onClick={() => setRoleTarget(contributor)}>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          roleForm.reset({ role: contributor.role as ContributorRole });
+                          setRoleTargetId(contributor.id);
+                        }}
+                      >
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -267,18 +239,29 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
         isLoading={inviteMutation.isPending}
         roles={assignableRoles}
       />
-      {roleTarget && (
-        <EditRoleDialog
-          // Keyed so each contributor opens with their own role.
-          key={roleTarget.id}
-          open
-          onClose={() => setRoleTarget(null)}
-          onSubmit={(role) => updateRoleMutation.mutate({ contributorId: roleTarget.id, role })}
-          isLoading={updateRoleMutation.isPending}
-          currentRole={roleTarget.role as ContributorRole}
-          roles={assignableRoles}
+      <EditDialog
+        open={!!roleTargetId}
+        onClose={() => setRoleTargetId(null)}
+        title="Update Role"
+        form={roleForm}
+        onSubmit={({ role }) => roleTargetId && updateRoleMutation.mutate({ contributorId: roleTargetId, role })}
+        isLoading={updateRoleMutation.isPending}
+        submitLabel="Save"
+        maxWidth="xs"
+      >
+        <Controller
+          name="role"
+          control={roleForm.control}
+          render={({ field }) => (
+            <FormControl fullWidth>
+              <InputLabel>Role</InputLabel>
+              <Select {...field} label="Role">
+                {assignableRoles.map((role) => <MenuItem key={role} value={role}>{role}</MenuItem>)}
+              </Select>
+            </FormControl>
+          )}
         />
-      )}
+      </EditDialog>
       {removeTarget && (
         <ConfirmDialog
           open

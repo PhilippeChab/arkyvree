@@ -1,11 +1,11 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
 import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useMemo } from "react";
+import { classSpellsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 type SpellsResponse = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells"]["$get"]
@@ -36,14 +36,7 @@ function ordinal(n: number): string {
 }
 
 export function ClassSpellsSection({ rulesetId, classId }: ClassSpellsSectionProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classSpells(rulesetId, classId),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get({
-        param: { id: rulesetId, classId },
-      }));
-    },
-  });
+  const { data, isLoading } = useQuery(classSpellsQuery(rulesetId, classId));
 
   // Derive spell level columns from the union of all spell levels in the data
   const spellLevelKeys = useMemo(() => {
@@ -112,7 +105,7 @@ export function ClassSpellsSection({ rulesetId, classId }: ClassSpellsSectionPro
         isLoading={isLoading}
         columns={columns}
         renderCell={renderCell}
-        emptyIcon={<SpellsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SpellsIcon}
         emptyTitle="No spells"
         emptyDescription="This class doesn't have any spells per day data."
       />

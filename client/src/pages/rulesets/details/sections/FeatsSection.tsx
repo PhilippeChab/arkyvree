@@ -46,7 +46,7 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { featsGroupedQuery, featsQuery } from "../sectionQueries.ts";
+import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -254,7 +254,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
     if (groupedFeats.length === 0) {
       return (
         <BlankState
-          icon={<FeatsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+          icon={FeatsIcon}
           title="No feats"
           description="No feats available for this ruleset."
         />
@@ -362,7 +362,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
           onRowClick={handleRowClick}
           onRowMouseEnter={handleRowMouseEnter}
           renderCell={renderCell}
-          emptyIcon={<FeatsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+          emptyIcon={FeatsIcon}
           emptyTitle="No feats"
           emptyDescription="No feats available for this ruleset."
         />

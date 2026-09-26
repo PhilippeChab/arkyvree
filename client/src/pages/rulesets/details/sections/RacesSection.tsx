@@ -21,7 +21,7 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { racesQuery } from "../sectionQueries.ts";
+import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const RACES_COLUMNS = [
   { key: "name", label: "Name", width: "15%" },
@@ -187,7 +187,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RacesSec
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<RacesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={RacesIcon}
         emptyTitle="No races"
         emptyDescription="No races available for this ruleset."
       />

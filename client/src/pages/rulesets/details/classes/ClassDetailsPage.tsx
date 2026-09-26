@@ -1,6 +1,8 @@
-import { DeleteDialog, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DeleteDialog, DiceSpinner, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { EntityDetailLayout } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
   ClassFormFields,
@@ -9,10 +11,8 @@ import {
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { type HitDieValue } from "@/shared/dnd3.5/classes.ts";
 import {
-  ArrowBack,
   Bolt as SpellListIcon,
   EmojiEvents as FeatPoolsIcon,
-  MoreVert as MoreVertIcon,
   TrendingUp as LevelsIcon,
   Psychology as SkillsIcon,
   AutoStories as SpellsIcon,
@@ -23,20 +23,16 @@ import {
   Card,
   CardContent,
   Chip,
-  IconButton,
-  Menu,
   MenuItem,
-  Skeleton,
-  Tab,
-  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { prefetchClassSection, type ClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,
@@ -46,68 +42,59 @@ import {
   ClassSpellsSection,
 } from "./sections/index.ts";
 
-type TabSection = "levels" | "skills" | "feat-pools" | "spells-known" | "spell-list" | "spells";
+const TABS: SectionTab<ClassSection>[] = [
+  { key: "levels", label: "Levels", icon: LevelsIcon },
+  { key: "skills", label: "Skills", icon: SkillsIcon },
+  { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
+  { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
+  { key: "spells", label: "Spell Uses", icon: SpellsIcon },
+  { key: "spell-list", label: "Spells", icon: SpellListIcon },
+];
 
-const TAB_CONFIG = [
-  { key: "levels", label: "Levels", icon: LevelsIcon, component: ClassLevelsSection },
-  { key: "skills", label: "Skills", icon: SkillsIcon, component: ClassSkillsSection },
-  { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon, component: ClassFeatPoolsSection },
-  { key: "spells-known", label: "Spells Known", icon: SpellsIcon, component: ClassSpellsKnownSection },
-  { key: "spells", label: "Spell Uses", icon: SpellsIcon, component: ClassSpellsSection },
-  { key: "spell-list", label: "Spells", icon: SpellListIcon, component: ClassSpellListSection },
-] as const;
+const SECTION_COMPONENTS = {
+  levels: ClassLevelsSection,
+  skills: ClassSkillsSection,
+  "feat-pools": ClassFeatPoolsSection,
+  "spells-known": ClassSpellsKnownSection,
+  spells: ClassSpellsSection,
+  "spell-list": ClassSpellListSection,
+} as const;
 
-const TAB_SECTIONS: TabSection[] = TAB_CONFIG.map(tab => tab.key);
+// Class settings stored as customization properties of the class.
+const BONUS_SPELL_ABILITY_TYPE = "KLASS_BONUS_SPELL_ABILITY_ID";
+const CASTER_TYPE_PROPERTY_TYPE = "KLASS_CASTER_TYPE";
+
+const isClassSection = (section: string | undefined): section is ClassSection =>
+  TABS.some((tab) => tab.key === section);
 
 export default function ClassDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id: rulesetId, classId, section } = useParams<{
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
+  const { id: rulesetId = "", classId = "", section } = useParams<{
     id: string;
     classId: string;
     section?: string;
   }>();
-  const backUrl = (location.state as { from?: string })?.from ?? `/rulesets/${rulesetId}/classes`;
+  const backUrl = (location.state as { from?: string } | null)?.from ?? `/rulesets/${rulesetId}/classes`;
+  const currentTab: ClassSection = isClassSection(section) ? section : "levels";
 
-  // Get current tab value based on URL section
-  const getTabValue = (): number => {
-    if (!section) return 0;
-    const index = TAB_SECTIONS.indexOf(section as TabSection);
-    return index >= 0 ? index : 0;
-  };
-
-  const { data: ruleset, isLoading: isRulesetLoading } = useQuery({
-    queryKey: queryKeys.rulesets.detail(rulesetId!),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].$get({
-        param: { id: rulesetId! },
-      }));
-    },
-    enabled: !!rulesetId,
-  });
+  const { data: ruleset, isLoading: isRulesetLoading } = useQuery(rulesetDetailQuery(rulesetId));
 
   const { data: classData, isLoading: isClassLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classDetail(rulesetId!, classId!),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
-        param: { id: rulesetId!, classId: classId! },
-      }));
-    },
-    enabled: !!rulesetId && !!classId,
+    queryKey: queryKeys.rulesets.classDetail(rulesetId, classId),
+    queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
+      param: { id: rulesetId, classId },
+    })),
   });
 
   usePageTitle(classData?.name);
 
-  const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
-  const currentTabValue = getTabValue();
-
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const editForm = useForm<ClassFormData>();
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const canDelete = canEdit;
 
   useFormSync(editForm, classData && {
     name: classData.name,
@@ -115,212 +102,78 @@ export default function ClassDetailsPage() {
     hd: (classData.hd ?? 8) as HitDieValue,
   });
 
+  const { data: abilities } = useRulesetAbilities(rulesetId);
+
   const updateMutation = useMutation({
-    mutationFn: async (data: ClassFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
-        param: { id: rulesetId!, classId: classId! },
-        json: { ...data, updatedAt: classData?.updatedAt },
-      }));
-    },
+    mutationFn: (data: ClassFormData) => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
+      param: { id: rulesetId, classId },
+      json: { ...data, updatedAt: classData?.updatedAt },
+    })),
     onSuccess: (data, submitted) => {
       editForm.reset(submitted);
-      const newId = data.id;
-      queryClient.setQueryData(queryKeys.rulesets.classDetail(rulesetId!, newId), data);
-      if (newId !== classId) {
-        const tab = TAB_SECTIONS[currentTabValue];
-        navigate(`/rulesets/${rulesetId}/classes/${newId}${tab ? `/${tab}` : ""}`, { replace: true, state: location.state });
+      queryClient.setQueryData(queryKeys.rulesets.classDetail(rulesetId, data.id), data);
+      // Editing an inherited class copies it into this ruleset under a new id.
+      if (data.id !== classId) {
+        navigate(`/rulesets/${rulesetId}/classes/${data.id}/${currentTab}`, { replace: true, state: location.state });
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId!, "classes") });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, "classes") });
       snackbar.success("Class updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update class"),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$delete({
-        param: { id: rulesetId!, classId: classId! },
-      }));
-    },
+    mutationFn: () => rpc.api.rulesets[":id"].classes[":classId"].$delete({ param: { id: rulesetId, classId } }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId!, "classes") });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, "classes") });
       snackbar.success("Class deleted");
       navigate(backUrl);
     },
     onError: (err) => snackbar.error(err, "Failed to delete class"),
   });
 
-  // Bonus spell ability
-  const BONUS_SPELL_ABILITY_TYPE = "KLASS_BONUS_SPELL_ABILITY_ID";
+  // Create, update or clear (empty value) the class's single property of a type.
+  const setClassProperty = async (type: string, propertyId: string | null | undefined, value: string) => {
+    const param = { id: rulesetId, entityType: "klasses" as const, entityId: classData?.id ?? classId };
+    const endpoint = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties;
+    if (!propertyId) {
+      await endpoint.$post({ param, json: { type, value } });
+    } else if (!value) {
+      await endpoint[":property_id"].$delete({ param: { ...param, property_id: propertyId } });
+    } else {
+      await endpoint[":property_id"].$put({ param: { ...param, property_id: propertyId }, json: { type, value } });
+    }
+  };
 
-  const { data: abilities } = useRulesetAbilities(rulesetId);
+  const onClassPropertySaved = (message: string) => () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classDetail(rulesetId, classId) });
+    snackbar.success(message);
+  };
 
   const bonusSpellMutation = useMutation({
-    mutationFn: async (abilityId: string) => {
-      const entityId = classData?.id ?? classId!;
-      const propertyId = classData?.bonusSpellPropertyId;
-
-      if (propertyId) {
-        if (!abilityId) {
-          return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
-            param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
-          }));
-        }
-        return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
-          param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
-          json: { type: BONUS_SPELL_ABILITY_TYPE, value: abilityId },
-        }));
-      }
-
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
-        param: { id: rulesetId!, entityType: "klasses", entityId },
-        json: { type: BONUS_SPELL_ABILITY_TYPE, value: abilityId },
-      }));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classDetail(rulesetId!, classId!) });
-      snackbar.success("Bonus spell ability updated");
-    },
+    mutationFn: (abilityId: string) =>
+      setClassProperty(BONUS_SPELL_ABILITY_TYPE, classData?.bonusSpellPropertyId, abilityId),
+    onSuccess: onClassPropertySaved("Bonus spell ability updated"),
     onError: (err) => snackbar.error(err, "Failed to update bonus spell ability"),
   });
 
-  // Caster type
-  const CASTER_TYPE_PROPERTY_TYPE = "KLASS_CASTER_TYPE";
-
   const casterTypeMutation = useMutation({
-    mutationFn: async (casterType: string) => {
-      const entityId = classData?.id ?? classId!;
-      const propertyId = classData?.casterTypePropertyId;
-
-      if (propertyId) {
-        if (!casterType) {
-          return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
-            param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
-          }));
-        }
-        return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
-          param: { id: rulesetId!, entityType: "klasses", entityId, property_id: propertyId },
-          json: { type: CASTER_TYPE_PROPERTY_TYPE, value: casterType },
-        }));
-      }
-
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
-        param: { id: rulesetId!, entityType: "klasses", entityId },
-        json: { type: CASTER_TYPE_PROPERTY_TYPE, value: casterType },
-      }));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classDetail(rulesetId!, classId!) });
-      snackbar.success("Caster type updated");
-    },
+    mutationFn: (casterType: string) =>
+      setClassProperty(CASTER_TYPE_PROPERTY_TYPE, classData?.casterTypePropertyId, casterType),
+    onSuccess: onClassPropertySaved("Caster type updated"),
     onError: (err) => snackbar.error(err, "Failed to update caster type"),
   });
 
-  const prefetchClassSection = useCallback((sectionKey: TabSection) => {
-    if (!rulesetId || !classId) return;
-    if (sectionKey === "levels") {
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
-        queryFn: async () => {
-          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
-            param: { id: rulesetId, classId },
-          }));
-        },
-      });
-    } else if (sectionKey === "spells") {
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.rulesets.classSpells(rulesetId, classId),
-        queryFn: async () => {
-          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get({
-            param: { id: rulesetId, classId },
-          }));
-        },
-      });
-    } else if (sectionKey === "feat-pools") {
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
-        queryFn: async () => {
-          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get({
-            param: { id: rulesetId, classId },
-          }));
-        },
-      });
-    } else if (sectionKey === "spells-known") {
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.rulesets.classSpellsKnown(rulesetId, classId),
-        queryFn: async () => {
-          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get({
-            param: { id: rulesetId, classId },
-          }));
-        },
-      });
-    } else if (sectionKey === "spell-list") {
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, 0),
-        queryFn: async () => {
-          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
-            param: { id: rulesetId, classId },
-            query: { level: "0", page: "1", limit: "20" },
-          }));
-        },
-      });
-    } else {
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
-        queryFn: async () => {
-          return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills.$get({
-            param: { id: rulesetId, classId },
-          }));
-        },
-      });
-    }
-  }, [rulesetId, classId, queryClient]);
-
+  // Normalize the URL to a known tab.
   useEffect(() => {
-    if (rulesetId && classId && !section) {
+    if (rulesetId && classId && !isClassSection(section)) {
       navigate(`/rulesets/${rulesetId}/classes/${classId}/levels`, { replace: true });
     }
   }, [rulesetId, classId, section, navigate]);
 
-  const handleBack = () => {
-    navigate(backUrl);
-  };
+  const isLoading = isRulesetLoading || isClassLoading;
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    const newSection = TAB_SECTIONS[newValue];
-    navigate(`/rulesets/${rulesetId}/classes/${classId}/${newSection}`);
-  };
-
-  const formatHitDie = (hitDie: number | null | undefined) => `d${hitDie || 8}`;
-
-  if (isRulesetLoading || isClassLoading) {
-    return (
-      <Box sx={{ maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } }}>
-        <Box sx={{ mb: 4, display: "flex", alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}>
-          <Skeleton variant="circular" width={40} height={40} sx={{ position: "absolute", left: 0 }} />
-          <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
-            <Skeleton variant="text" width={200} height={40} sx={{ mx: "auto" }} />
-            <Skeleton variant="text" width={150} height={24} sx={{ mx: "auto" }} />
-          </Box>
-        </Box>
-        <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-              <Skeleton variant="text" width={150} height={32} />
-            </Box>
-            <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              <Skeleton variant="text" width="100%" />
-              <Skeleton variant="text" width="80%" />
-            </Box>
-          </CardContent>
-        </Card>
-        <Skeleton variant="rounded" height={56} sx={{ mb: 4, borderRadius: 2 }} />
-        <Skeleton variant="rounded" height={300} sx={{ borderRadius: 2 }} />
-      </Box>
-    );
-  }
-
-  if (!ruleset || !classData) {
+  if (!isLoading && (!ruleset || !classData)) {
     return (
       <Box sx={{ maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" color="error">
@@ -330,250 +183,103 @@ export default function ClassDetailsPage() {
     );
   }
 
-  return (
-    <Box sx={{ maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } }}>
-      {/* Header */}
-      <Box
-        sx={{
-          mb: 4,
-          display: "flex",
-          alignItems: "center",
-          py: 2,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "relative",
-        }}
-      >
-        <IconButton
-          onClick={handleBack}
-          size="large"
-          sx={{
-            position: "absolute",
-            left: 0,
-            "&:hover": {
-              bgcolor: "action.hover",
-            },
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-        <Box
-          sx={{
-            flexGrow: 1,
-            textAlign: "center",
-            px: { xs: 5, sm: 8 },
-          }}
-        >
-          <Typography sx={{ fontWeight: 600, mb: 0.5, typography: { xs: "h5", md: "h4" } }}>
-            {classData.name}
-          </Typography>
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {ruleset.name} Ruleset
-          </Typography>
-        </Box>
-        {canDelete && (
-          <>
-            <IconButton
-              size="large"
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{
-                position: "absolute",
-                right: 0,
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              <MoreVertIcon />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={() => setAnchorEl(null)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-              <MenuItem onClick={() => { setAnchorEl(null); setDeleteDialogOpen(true); }} sx={{ color: "error.main" }}>
-                Delete
-              </MenuItem>
-            </Menu>
-          </>
-        )}
-      </Box>
-      {/* Class Information Card */}
-      <Card
-        sx={{
-          mb: 4,
-          boxShadow: 2,
-          borderRadius: 2,
-          border: 1,
-          borderColor: "divider",
-        }}
-      >
-        <CardContent sx={{ p: 0 }}>
-          <Box
-            sx={{
-              p: { xs: 2, sm: 3 },
-              pb: 2,
-              borderBottom: 1,
-              borderColor: "divider",
-              bgcolor: "action.hover",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                Class Overview
-              </Typography>
-              {!canEdit && (
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Chip
-                    label={`Hit Die: ${formatHitDie(classData.hd)}`}
-                    size="medium"
-                    color="secondary"
-                    variant="filled"
-                    sx={{ fontWeight: 600 }}
-                  />
-                  {classData?.bonusSpellAbilityId && (() => {
-                    const abilityName = abilities?.find((a) => a.id === classData.bonusSpellAbilityId)?.name;
-                    return abilityName ? (
-                      <Chip
-                        label={`Bonus Spells: ${abilityName}`}
-                        size="medium"
-                        color="info"
-                        variant="outlined"
-                      />
-                    ) : null;
-                  })()}
-                  {classData?.casterTypeValue && (
-                    <Chip
-                      label={`Caster Type: ${classData.casterTypeValue}`}
-                      size="medium"
-                      color="info"
-                      variant="outlined"
-                    />
-                  )}
-                </Box>
-              )}
-            </Box>
-          </Box>
+  const Section = SECTION_COMPONENTS[currentTab];
+  const bonusSpellAbilityName = abilities?.find((a) => a.id === classData?.bonusSpellAbilityId)?.name;
 
-          <Box sx={{ p: { xs: 2, sm: 3 } }}>
-            {canEdit ? (
-              <form onSubmit={editForm.handleSubmit((data) => updateMutation.mutate(data))}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <ClassFormFields form={editForm} />
-                  <TextField
-                    label="Spellcasting Ability"
-                    fullWidth
-                    select
-                    value={classData?.bonusSpellAbilityId ?? ""}
-                    onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
-                    disabled={bonusSpellMutation.isPending}
-                  >
-                    <MenuItem value="">None</MenuItem>
-                    {abilities?.map((a) => (
-                      <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
-                    ))}
-                  </TextField>
-                  <TextField
-                    label="Caster Type"
-                    fullWidth
-                    select
-                    value={classData?.casterTypeValue ?? ""}
-                    onChange={(e) => casterTypeMutation.mutate(e.target.value)}
-                    disabled={casterTypeMutation.isPending}
-                    helperText="Whether this class casts arcane or divine spells"
-                  >
-                    <MenuItem value="">None</MenuItem>
-                    <MenuItem value="Arcane">Arcane</MenuItem>
-                    <MenuItem value="Divine">Divine</MenuItem>
-                  </TextField>
-                  <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                    <Button type="submit" variant="contained" disabled={!editForm.formState.isDirty || updateMutation.isPending}>
-                      <DiceSpinner size="small" loading={updateMutation.isPending}>Save</DiceSpinner>
-                    </Button>
+  return (
+    <>
+      <EntityDetailLayout
+        entityName={classData?.name}
+        rulesetName={ruleset?.name}
+        onBack={() => navigate(backUrl)}
+        canDelete={canEdit}
+        onDelete={() => setDeleteDialogOpen(true)}
+        isLoading={isLoading}
+      >
+        {classData && ruleset && (
+          <>
+            <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                    <Typography component="h2" variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
+                      Class Overview
+                    </Typography>
+                    {!canEdit && (
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
+                        {bonusSpellAbilityName && (
+                          <Chip label={`Bonus Spells: ${bonusSpellAbilityName}`} color="info" variant="outlined" />
+                        )}
+                        {classData.casterTypeValue && (
+                          <Chip label={`Caster Type: ${classData.casterTypeValue}`} color="info" variant="outlined" />
+                        )}
+                      </Box>
+                    )}
                   </Box>
                 </Box>
-              </form>
-            ) : (
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.secondary",
-                  lineHeight: 1.6,
-                  fontSize: "1rem"
-                }}>
-                {classData.description}
-              </Typography>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-      {/* Navigation Tabs */}
-      <Box sx={{ borderRadius: 2, bgcolor: "action.hover", p: 1, mb: 4 }}>
-        <Tabs
-          value={currentTabValue}
-          onChange={handleTabChange}
-          aria-label="class details tabs"
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          sx={{
-            "& .MuiTabs-indicator": {
-              height: 3,
-              borderRadius: 1.5,
-            },
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              minHeight: 48,
-              borderRadius: 1,
-              mx: 0.5,
-              "&:hover": {
-                bgcolor: "action.hover",
-              },
-              "&.Mui-selected": {
-                bgcolor: "background.default",
-                boxShadow: 1,
-              },
-            },
-            "& .MuiTabs-scrollButtons": {
-              "&.Mui-disabled": {
-                opacity: 0.3,
-              },
-            },
-          }}
-        >
-          {TAB_CONFIG.map((tab) => (
-            <Tab
-              key={tab.key}
-              icon={<tab.icon />}
-              label={tab.label}
-              iconPosition="start"
-              onMouseEnter={() => prefetchClassSection(tab.key)}
+
+                <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                  {canEdit ? (
+                    <form onSubmit={editForm.handleSubmit((data) => updateMutation.mutate(data))}>
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <ClassFormFields form={editForm} />
+                        <TextField
+                          label="Spellcasting Ability"
+                          fullWidth
+                          select
+                          value={classData.bonusSpellAbilityId ?? ""}
+                          onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
+                          disabled={bonusSpellMutation.isPending}
+                        >
+                          <MenuItem value="">None</MenuItem>
+                          {abilities?.map((a) => (
+                            <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
+                          ))}
+                        </TextField>
+                        <TextField
+                          label="Caster Type"
+                          fullWidth
+                          select
+                          value={classData.casterTypeValue ?? ""}
+                          onChange={(e) => casterTypeMutation.mutate(e.target.value)}
+                          disabled={casterTypeMutation.isPending}
+                          helperText="Whether this class casts arcane or divine spells"
+                        >
+                          <MenuItem value="">None</MenuItem>
+                          <MenuItem value="Arcane">Arcane</MenuItem>
+                          <MenuItem value="Divine">Divine</MenuItem>
+                        </TextField>
+                        <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+                          <Button type="submit" variant="contained" disabled={!editForm.formState.isDirty || updateMutation.isPending}>
+                            <DiceSpinner size="small" loading={updateMutation.isPending}>Save</DiceSpinner>
+                          </Button>
+                        </Box>
+                      </Box>
+                    </form>
+                  ) : (
+                    <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                      {classData.description || "No description provided."}
+                    </Typography>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+
+            <SectionTabs
+              tabs={TABS}
+              value={currentTab}
+              onChange={(key) => navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`)}
+              onTabHover={(key) => void prefetchClassSection(queryClient, rulesetId, classId, key)}
+              aria-label="class details tabs"
             />
-          ))}
-        </Tabs>
-      </Box>
-      {/* Tab Content */}
-      {TAB_CONFIG.map((tab, index) => (
-        currentTabValue === index && (
-          <tab.component
-            key={tab.key}
-            rulesetId={rulesetId!}
-            classId={classId!}
-            className={classData?.name}
-            ruleset={ruleset}
-          />
-        )
-      ))}
+
+            <Box role="tabpanel">
+              <Section rulesetId={rulesetId} classId={classId} className={classData.name} ruleset={ruleset} />
+            </Box>
+          </>
+        )}
+      </EntityDetailLayout>
       <DeleteDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
@@ -582,6 +288,6 @@ export default function ClassDetailsPage() {
         onConfirm={() => deleteMutation.mutate()}
         isLoading={deleteMutation.isPending}
       />
-    </Box>
+    </>
   );
 }

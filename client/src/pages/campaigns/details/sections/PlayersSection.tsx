@@ -49,7 +49,7 @@ import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { campaignPlayersQuery } from "../sectionQueries.ts";
+import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
 type PlayersResponse = InferResponseType<(typeof rpc.api.campaigns)[":id"]["players"]["$get"]>;
 type PlayersPaginated = Exclude<PlayersResponse, { error: string }>;
@@ -521,7 +521,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
             )
             : (
               <BlankState
-                icon={<PlayerIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+                icon={PlayerIcon}
                 title="No players in this campaign"
                 description="Add players to start your adventure together"
                 action={

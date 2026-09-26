@@ -130,7 +130,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                 <Alert severity="error">Failed to load contributors</Alert>
               ) : contributors.length === 0 && !owner ? (
                 <BlankState
-                  icon={<ContributorsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+                  icon={ContributorsIcon}
                   title="No contributors yet"
                   description={canInvite
                     ? "Invite collaborators to help maintain this character."

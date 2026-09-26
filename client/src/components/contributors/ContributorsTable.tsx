@@ -104,9 +104,11 @@ export function ContributorsTable<T extends ContributorRow>({
             <TableRow key={contributor.id} sx={{ "&:hover .row-actions": { opacity: 1 } }}>
               {userCell(contributor.user?.username, contributor.email)}
               {!isMobile && <TableCell>{contributor.email}</TableCell>}
-              {showRoles && contributor.role && (
+              {showRoles && (
                 <TableCell>
-                  <Chip label={contributor.role} size="small" color={roleColor(contributor.role)} variant="outlined" />
+                  {contributor.role && (
+                    <Chip label={contributor.role} size="small" color={roleColor(contributor.role)} variant="outlined" />
+                  )}
                 </TableCell>
               )}
               <TableCell>

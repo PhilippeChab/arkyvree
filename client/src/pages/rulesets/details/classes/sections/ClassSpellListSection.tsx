@@ -1,14 +1,14 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
 import { Bolt as SpellListIcon } from "@mui/icons-material";
 import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { classSpellListQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 type SpellListResponse = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"]
@@ -40,20 +40,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpel
   const debouncedSearch = useDebouncedValue(search);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, selectedLevel, debouncedSearch),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
-        param: { id: rulesetId, classId },
-        query: {
-          page: pageParam.toString(),
-          limit: "20",
-          level: selectedLevel.toString(),
-          ...(debouncedSearch && { search: debouncedSearch }),
-        },
-      }));
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...classSpellListQuery(rulesetId, classId, selectedLevel, debouncedSearch),
     placeholderData: keepPreviousData,
   });
 
@@ -110,7 +97,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpel
         columns={COLUMNS}
         onRowClick={handleRowClick}
         renderCell={renderCell}
-        emptyIcon={<SpellListIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SpellListIcon}
         emptyTitle="No spells"
         emptyDescription="No spells found for this class at the selected level."
       />

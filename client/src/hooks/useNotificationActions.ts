@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
@@ -7,14 +8,9 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError, rpc } from "@/client/src/services/rpc.ts";
 import { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 
-interface NotificationLike {
-  id: string;
-  type: string;
-  targetTable: string;
-  targetId: string;
-  data: unknown;
-  readAt: string | null;
-}
+type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200>["items"][number];
+/** Fields the actions use; the bell's unread-summary items carry them too. */
+type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "targetId" | "data" | "readAt">;
 
 type NotificationData = Record<string, string | undefined>;
 

@@ -52,7 +52,7 @@ export function RecentNotificationsCard() {
         </Box>
       ) : items.length === 0 ? (
         <BlankState
-          icon={<NotificationsIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />}
+          icon={NotificationsIcon}
           title="No notifications yet"
           description="Notifications from your campaigns and collaborators will appear here."
         />

@@ -20,7 +20,7 @@ import type { InferRequestType, InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { mechanicsQuery } from "../sectionQueries.ts";
+import { mechanicsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const MECHANICS_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
@@ -151,7 +151,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<MechanicsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={MechanicsIcon}
         emptyTitle="No mechanics"
         emptyDescription="No mechanics documented for this ruleset."
       />

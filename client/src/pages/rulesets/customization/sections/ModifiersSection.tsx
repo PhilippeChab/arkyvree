@@ -309,11 +309,7 @@ export function ModifiersSection({
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={
-          <ModifiersIcon
-            sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }}
-          />
-        }
+        emptyIcon={ModifiersIcon}
         emptyTitle="No modifiers"
         emptyDescription="No modifiers defined for this entity."
       />

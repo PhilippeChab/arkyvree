@@ -105,7 +105,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Infinite listboxes: `createListboxScrollHandler` (`lib/listboxScroll.ts`) with `ScrollSafeListbox`
 - Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()`
 
-**Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `LoadMoreButton` (paginated lists), `BlankState` (empty lists). Reuse them rather than restyling a copy.
+**Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `PageActionButton` (the create action in a list page header and empty state), `LoadMoreButton` (paginated lists), `BlankState` (empty lists; pass the icon component, it applies the standard size and tint). Reuse them rather than restyling a copy.
 
 **Toast/Snackbar:**
 

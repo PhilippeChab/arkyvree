@@ -46,7 +46,7 @@ import type { InferResponseType } from "hono/client";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
-import { campaignCharactersQuery } from "../sectionQueries.ts";
+import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
 type CampaignCharactersResponse = InferResponseType<
   (typeof rpc.api.campaigns)[":id"]["characters"]["$get"]
@@ -572,7 +572,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
             </>
           ) : (
             <BlankState
-              icon={<CharacterIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+              icon={CharacterIcon}
               title="No characters in this campaign"
               description="Link your existing characters to this campaign to get started"
             />

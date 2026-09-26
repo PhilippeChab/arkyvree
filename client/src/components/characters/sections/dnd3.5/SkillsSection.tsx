@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo, useState } from "react";
-import { SheetSection } from "../SheetSection.tsx";
+import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
 function getSkillGroup(name: string): string | null {
   const match = name.match(/^(.+?)\s*\(/);

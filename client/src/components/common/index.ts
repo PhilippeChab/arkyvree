@@ -13,6 +13,7 @@ export { Modal, type ModalProps } from "./Modal.tsx";
 export { faqTooltip } from "./faqTooltip.tsx";
 export { FaqHelpIcon } from "./FaqHelpIcon.tsx";
 export { GoldDivider } from "./GoldDivider.tsx";
+export { PageActionButton } from "./PageActionButton.tsx";
 export { PageHeader } from "./PageHeader.tsx";
 export { PageTransition } from "./PageTransition.tsx";
 export { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";

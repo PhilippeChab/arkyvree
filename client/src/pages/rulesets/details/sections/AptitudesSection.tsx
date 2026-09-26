@@ -11,7 +11,7 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { aptitudesQuery } from "../sectionQueries.ts";
+import { aptitudesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const APTITUDES_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
@@ -141,7 +141,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Apti
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<AptitudesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={AptitudesIcon}
         emptyTitle="No aptitudes"
         emptyDescription="No aptitudes available for this ruleset."
       />

@@ -39,7 +39,7 @@ import {
   SPELL_RANGE_TYPES,
   SPELL_RESISTANCE_OPTIONS,
 } from "@/shared/dnd3.5/spells.ts";
-import { powersQuery } from "../../sectionQueries.ts";
+import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -462,7 +462,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<PowersIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={PowersIcon}
         emptyTitle="No spells"
         emptyDescription="No spells available for this ruleset."
       />

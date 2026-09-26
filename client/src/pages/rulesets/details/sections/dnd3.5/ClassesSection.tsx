@@ -1,7 +1,7 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { DEFAULT_ENTITY_FILTERS, ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, type EntityKind, type EntitySortField } from "../kindFilterOptions.ts";
+import { DEFAULT_ENTITY_FILTERS, ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, type EntityKind, type EntitySortField } from "@/client/src/pages/rulesets/details/sections/kindFilterOptions.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -13,7 +13,7 @@ import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ClassesSectionProps } from "../../sectionFactory.ts";
-import { classesQuery } from "../../sectionQueries.ts";
+import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const CLASSES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -181,7 +181,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
         onRowClick={handleClassClick}
         onRowMouseEnter={handleClassMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<ClassesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={ClassesIcon}
         emptyTitle="No classes"
         emptyDescription="No classes available for this ruleset."
       />

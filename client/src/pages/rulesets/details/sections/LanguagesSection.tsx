@@ -11,7 +11,7 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { languagesQuery } from "../sectionQueries.ts";
+import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const LANGUAGES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -145,7 +145,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<LanguagesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={LanguagesIcon}
         emptyTitle="No languages"
         emptyDescription="No languages available for this ruleset."
       />

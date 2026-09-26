@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { abilitiesQuery } from "../sectionQueries.ts";
+import { abilitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const ABILITIES_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
@@ -93,7 +93,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Abil
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<AbilitiesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={AbilitiesIcon}
         emptyTitle="No abilities"
         emptyDescription="No abilities available for this ruleset."
       />

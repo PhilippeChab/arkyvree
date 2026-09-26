@@ -118,7 +118,7 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
   if (rulesets.length === 0) {
     return (
       <BlankState
-        icon={<BookIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />}
+        icon={BookIcon}
         title="No rulesets found"
         description="Try adjusting your search or filters, or fork a base ruleset"
       />
@@ -229,7 +229,7 @@ export default function RulesetsPage() {
 
         <SearchBar
           searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value })}
+          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
           searchPlaceholder="Search rulesets..."
           filterOptions={RULESET_FILTER_OPTIONS}
           filterValue={scope}

@@ -1,11 +1,11 @@
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
 import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useMemo } from "react";
+import { classSpellsKnownQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 type SpellsKnownResponse = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spells-known"]["$get"]
@@ -36,14 +36,7 @@ function ordinal(n: number): string {
 }
 
 export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSpellsKnownSectionProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.classSpellsKnown(rulesetId, classId),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get({
-        param: { id: rulesetId, classId },
-      }));
-    },
-  });
+  const { data, isLoading } = useQuery(classSpellsKnownQuery(rulesetId, classId));
 
   // Derive spell level columns from the union of all spell levels in the data
   const spellLevelKeys = useMemo(() => {
@@ -112,7 +105,7 @@ export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSpellsKnown
         isLoading={isLoading}
         columns={columns}
         renderCell={renderCell}
-        emptyIcon={<SpellsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SpellsIcon}
         emptyTitle="No spells known"
         emptyDescription="This class doesn't have any spells known data."
       />

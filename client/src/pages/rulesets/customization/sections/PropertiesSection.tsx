@@ -185,7 +185,7 @@ export function PropertiesSection(
         onEdit={handleEditProperty}
         onDelete={handleDelete}
         renderCell={renderCell}
-        emptyIcon={<PropertiesIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={PropertiesIcon}
         emptyTitle="No properties"
         emptyDescription="No properties defined for this entity."
       />

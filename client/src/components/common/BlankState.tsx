@@ -1,17 +1,18 @@
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
-import type { ReactNode } from "react";
+import type { ElementType, ReactNode } from "react";
 import { fadeIn, prefersReducedMotion, DURATION, EASING } from "@/client/src/lib/animations.ts";
 
 interface BlankStateProps {
-  icon?: ReactNode;
+  /** Icon component, sized and tinted here so every empty state looks alike. */
+  icon?: ElementType;
   title: string;
   description?: string;
   action?: ReactNode;
   sx?: SxProps<Theme>;
 }
 
-export function BlankState({ icon, title, description, action, sx }: BlankStateProps) {
+export function BlankState({ icon: Icon, title, description, action, sx }: BlankStateProps) {
   return (
     <Box
       sx={{
@@ -28,9 +29,9 @@ export function BlankState({ icon, title, description, action, sx }: BlankStateP
         ...sx as Record<string, unknown>,
       }}
     >
-      {icon && (
+      {Icon && (
         <Box sx={{ filter: (theme) => `drop-shadow(0 2px 4px ${theme.palette.secondary.main}40)` }}>
-          {icon}
+          <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />
         </Box>
       )}
       <Typography variant="h6" gutterBottom sx={{

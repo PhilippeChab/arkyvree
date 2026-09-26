@@ -18,7 +18,7 @@ import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { SkillsSectionProps } from "../../sectionFactory.ts";
-import { skillsQuery } from "../../sectionQueries.ts";
+import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 
 const SKILLS_COLUMNS = [
@@ -163,7 +163,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<SkillsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={SkillsIcon}
         emptyTitle="No skills"
         emptyDescription="No skills available for this ruleset."
       />

@@ -95,7 +95,7 @@ export default function ActivitiesPage() {
 
         <SearchBar
           searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value })}
+          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
           searchPlaceholder="Search activity logs..."
           sortOptions={ACTIVITY_SORT_OPTIONS}
           sortField={orderBy}
@@ -162,7 +162,7 @@ export default function ActivitiesPage() {
           </>
         ) : (
           <BlankState
-            icon={<HistoryIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />}
+            icon={HistoryIcon}
             title="No activity logs found"
             description="Your activity history will appear here as you interact with the application."
             sx={{ mt: 4 }}

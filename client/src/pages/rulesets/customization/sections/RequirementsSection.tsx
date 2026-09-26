@@ -540,7 +540,7 @@ export function RequirementsSection(
           {requirementsTree.length === 0
             ? (
               <BlankState
-                icon={<RequirementsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+                icon={RequirementsIcon}
                 title="No requirements"
                 description="No requirements defined for this entity."
               />

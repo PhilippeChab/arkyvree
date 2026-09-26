@@ -183,7 +183,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<LevelsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={LevelsIcon}
         emptyTitle="No levels"
         emptyDescription={canEdit
           ? "Start by adding the first level for this class."

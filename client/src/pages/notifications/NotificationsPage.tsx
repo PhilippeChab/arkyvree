@@ -115,7 +115,7 @@ export default function NotificationsPage() {
 
         <SearchBar
           searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value })}
+          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
           searchPlaceholder="Search notifications..."
           filterOptions={FILTER_OPTIONS}
           filterValue={unreadOnly ? "unread" : undefined}
@@ -200,7 +200,7 @@ export default function NotificationsPage() {
           </>
         ) : (
           <BlankState
-            icon={<NotificationsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />}
+            icon={NotificationsIcon}
             title={unreadOnly ? "No unread notifications" : "No notifications yet"}
             description="Notifications from your campaigns and collaborators will appear here."
             sx={{ mt: 4 }}

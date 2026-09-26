@@ -33,6 +33,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={isLoading}>
       <form
         onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))}
+        noValidate
       >
         <DialogTitle>Invite Contributor</DialogTitle>
         <DialogContent>

@@ -35,7 +35,7 @@ interface ItemsSectionProps {
 }
 
 import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
-import { itemsQuery } from "../../sectionQueries.ts";
+import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const ITEMS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -308,7 +308,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={<ItemsIcon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2 }} />}
+        emptyIcon={ItemsIcon}
         emptyTitle="No items"
         emptyDescription="No items available for this ruleset."
       />
