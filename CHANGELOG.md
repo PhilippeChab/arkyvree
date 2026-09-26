@@ -1,7 +1,5 @@
 # Changelog
 
-Notable changes to the hosted app at [rpg.arkyvree.com](https://rpg.arkyvree.com).
-
 ## 0.5.0 — 2026-05-21
 
 - Character contributors: invite collaborators by email to edit a character and download its PDF
