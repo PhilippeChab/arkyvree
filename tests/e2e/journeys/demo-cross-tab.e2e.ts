@@ -17,7 +17,7 @@ test.describe('Demo cross-tab', () => {
     try {
       // ── Tab A: start a demo session ──
       const tabA = await context.newPage();
-      await tabA.goto('/sign-in');
+      await tabA.goto('/sign-up');
       await tabA.getByRole('button', { name: /Try the demo/ }).click();
       await tabA.waitForURL('/dashboard', { timeout: 15_000 });
       await expect(tabA.getByText(/Demo mode/)).toBeVisible({ timeout: 10_000 });

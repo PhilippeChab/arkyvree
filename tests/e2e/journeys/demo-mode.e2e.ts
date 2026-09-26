@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Demo mode lifecycle:
- *  - Guest clicks "Try the demo" on /sign-in
+ *  - Guest clicks "Try the demo" on /sign-up
  *  - POST /api/demo/start → /dashboard with the Demo banner
  *  - Demo persists across in-app navigation (/rulesets still authed)
  *  - Visiting /sign-in kills the demo (AuthLayoutRoute hard-deletes
@@ -14,10 +14,10 @@ import { test, expect } from '@playwright/test';
  *  surface the "Your demo has ended" CTA → /sign-up.
  */
 test.describe('Demo mode', () => {
-  test('start demo from sign-in, persist in app, die on auth-route entry', async ({ page }) => {
+  test('start demo from sign-up, persist in app, die on auth-route entry', async ({ page }) => {
     test.setTimeout(60_000);
 
-    await page.goto('/sign-in');
+    await page.goto('/sign-up');
     await page.getByRole('button', { name: /Try the demo/ }).click();
 
     await page.waitForURL('/dashboard', { timeout: 15_000 });
@@ -33,6 +33,8 @@ test.describe('Demo mode', () => {
     // Visiting /sign-in (an AuthLayoutRoute page) signs the demo out
     await page.goto('/sign-in');
     await expect(page.getByRole('button', { name: /^Sign In$/ })).toBeVisible({ timeout: 10_000 });
+    // Sign-in is for returning users, so it doesn't offer the demo
+    await expect(page.getByRole('button', { name: /Try the demo/ })).toHaveCount(0);
     // Banner gone — the layout is the public auth shell, not the in-app shell
     await expect(page.getByText(/Demo mode/)).toHaveCount(0);
 
@@ -51,7 +53,7 @@ test.describe('Demo mode', () => {
   test('in-app 401 with an expired demo session redirects to /demo-expired', async ({ page }) => {
     test.setTimeout(60_000);
 
-    await page.goto('/sign-in');
+    await page.goto('/sign-up');
     await page.getByRole('button', { name: /Try the demo/ }).click();
 
     await page.waitForURL('/dashboard', { timeout: 15_000 });
