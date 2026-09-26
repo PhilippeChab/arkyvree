@@ -96,7 +96,7 @@ export default defineConfig({
       // which strips `data-testid` from MUI icons (test selectors break).
       // The separate `build` CI job already validates the production bundle.
       // --host :: matches the IPv6 loopback used by the Playwright probe.
-      command: 'API_PORT=8001 FEATUREBASE_ENABLED=false bun vite --port 5175 --host ::',
+      command: 'API_PORT=8001 bun vite --port 5175 --host ::',
       url: 'http://[::1]:5175',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,

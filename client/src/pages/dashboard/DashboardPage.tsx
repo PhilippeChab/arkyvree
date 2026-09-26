@@ -1,6 +1,7 @@
 import { GoldDivider, PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -175,7 +176,7 @@ export default function DashboardPage() {
           Your programmable ruleset engine. Build characters, manage campaigns.
         </Typography>
         <Link
-          href="https://arkyvree.featurebase.app/help"
+          href={externalLinks.help}
           target="_blank"
           rel="noopener noreferrer"
           sx={{

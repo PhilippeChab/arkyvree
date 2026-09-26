@@ -1,7 +1,7 @@
 import { type Page, type Locator, expect } from '@playwright/test';
 
 export async function selectOption(page: Page, label: string, optionText?: string) {
-  // MUI dialog has aria-modal="true"; featurebase chat iframes also use role=dialog
+  // Scope to the open MUI dialog (aria-modal="true") when one is showing
   const modalDialog = page.locator('[role="dialog"][aria-modal="true"]');
   const scope = (await modalDialog.first().isVisible().catch(() => false)) ? modalDialog : page;
   await scope.locator(`text="${label}"`).first().locator('..').locator('[role="combobox"]').click();

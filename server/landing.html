@@ -703,9 +703,6 @@
       </p>
       <div class="hero-ctas anim-6">
         <a href="/sign-up" class="btn btn-primary">Get Started</a>
-        <button type="button" class="btn btn-primary" data-demo-cta>Try the demo</button>
-        <a href="https://arkyvree.featurebase.app/help" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Learn More</a>
-        <a href="https://arkyvree.featurebase.app/changelog" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Changelog</a>
         <a href="https://github.com/PhilippeChab/arkyvree" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Source</a>
       </div>
     </section>
@@ -784,43 +781,8 @@
       <p class="cta-subtitle anim-2">Create your free account and start building.</p>
       <div class="cta-buttons anim-3">
         <a href="/sign-up" class="btn btn-primary btn-cta">Get Started</a>
-        <button type="button" class="btn btn-outline btn-cta" data-demo-cta>Try the demo</button>
       </div>
     </section>
   </main>
-
-  <script>
-    (function () {
-      var buttons = document.querySelectorAll('[data-demo-cta]');
-      buttons.forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-          if (btn.disabled) return;
-          var original = btn.textContent;
-          btn.disabled = true;
-          btn.textContent = 'Starting…';
-          try {
-            var res = await fetch('/api/demo/start', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-            });
-            if (!res.ok) throw new Error('Failed');
-            var user = await res.json();
-            try {
-              localStorage.setItem('auth-storage', JSON.stringify({
-                state: { user: user, isAuthenticated: true },
-                version: 0,
-              }));
-            } catch (e) {}
-            location.replace('/dashboard');
-          } catch (e) {
-            btn.disabled = false;
-            btn.textContent = original;
-            alert('Could not start the demo. Please try again.');
-          }
-        });
-      });
-    })();
-  </script>
 </body>
 </html>

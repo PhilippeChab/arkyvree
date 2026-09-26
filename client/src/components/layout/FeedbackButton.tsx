@@ -1,5 +1,6 @@
 import { Feedback } from "@mui/icons-material";
 import { IconButton, Tooltip } from "@mui/material";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 export function FeedbackButton() {
   return (
@@ -8,7 +9,7 @@ export function FeedbackButton() {
         size="large"
         color="inherit"
         component="a"
-        href="https://arkyvree.featurebase.app/"
+        href={externalLinks.feedback}
         target="_blank"
         rel="noopener noreferrer"
       >

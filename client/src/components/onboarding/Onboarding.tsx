@@ -4,6 +4,7 @@ import {
   fadeInUp,
   prefersReducedMotion,
 } from "@/client/src/lib/animations.ts";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import {
   HelpOutlined as FaqIcon,
   Map as MapIcon,
@@ -145,7 +146,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
 
   const handleViewFaq = () => {
     onClose();
-    window.open("https://arkyvree.featurebase.app/help", "_blank", "noopener,noreferrer");
+    window.open(externalLinks.help, "_blank", "noopener,noreferrer");
   };
 
   if (!open) return null;

@@ -62,16 +62,11 @@ const baseConfig: UserConfig = {
       apply: "serve",
       transformIndexHtml(html) {
         const env = loadEnv("development", path.resolve(__dirname), "");
-        // Process env wins over .env files so tooling (e.g. playwright)
-        // can flip FEATUREBASE_ENABLED=false at the command line without
-        // needing to mutate the .env files vite reads from disk.
-        const featurebaseRaw = process.env.FEATUREBASE_ENABLED ?? env.FEATUREBASE_ENABLED;
         const config = JSON.stringify({
           googleClientId: env.GOOGLE_CLIENT_ID || null,
           sentryDsn: env.SENTRY_CLIENT_DSN || null,
           sentryEnvironment: env.NODE_ENV || null,
           sentryRelease: null,
-          featurebaseEnabled: featurebaseRaw !== "false",
         });
         return html.replace("__APP_CONFIG_JSON__", config);
       },

@@ -23,7 +23,6 @@ import type {
   VerifyEmailJson,
 } from "@/server/routers/authentication/validation.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/AttachmentsService.ts";
-import { signFeaturebaseJwt } from "@/server/services/featurebaseJwt.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 import { hashPassword, verifyPassword } from "@/shared/utils.ts";
@@ -300,12 +299,6 @@ export const AuthenticationMethods = {
     // Return user without sensitive information
     const { passwordDigest, ...safeUser } = user;
     return { ...safeUser, hasPassword: !!passwordDigest };
-  },
-
-  async featurebaseToken(session: Session) {
-    const user = await Users.findOne(db, { id: session.userId });
-    if (!user) throw new InternalError("User not found");
-    return { jwt: await signFeaturebaseJwt(user) };
   },
 
   // Returns an existing valid demo session if `existingSessionId` is one;

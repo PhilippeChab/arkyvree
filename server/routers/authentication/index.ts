@@ -133,17 +133,6 @@ export default new Hono()
 
     return c.json(result[1], 200);
   })
-  .get("/featurebase-token", async (c) => {
-    const result = await AuthenticationService.initialize().call("featurebaseToken", c.var.requestSession);
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
-  })
   .put("/profile", denyDemoUser, zValidator("json", UpdateProfileJson), async (c) => {
     const body = c.req.valid("json");
     const result = await AuthenticationService.initialize().call(

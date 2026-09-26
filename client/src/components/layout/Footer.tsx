@@ -1,4 +1,5 @@
 import { Box, Link, Typography } from "@mui/material";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 export function Footer() {
   return (
@@ -21,7 +22,7 @@ export function Footer() {
         © {new Date().getFullYear()} Arkyvree
       </Typography>
       <Link
-        href="https://github.com/PhilippeChab/arkyvree"
+        href={externalLinks.source}
         target="_blank"
         rel="noopener noreferrer"
         variant="caption"

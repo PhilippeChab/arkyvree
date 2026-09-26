@@ -32,7 +32,7 @@ test.describe('Character — Manage Modifiers (runtime)', () => {
 
     // The wrapper Modal has no accessible name (Typography title), so scope
     // to the visible aria-modal dialog containing the "Manage Modifiers"
-    // heading. Excludes Featurebase iframe role=dialogs (no aria-modal).
+    // heading.
     const manageDialog = page
       .locator('[role="dialog"][aria-modal="true"]')
       .filter({ hasText: 'Manage Modifiers' });
