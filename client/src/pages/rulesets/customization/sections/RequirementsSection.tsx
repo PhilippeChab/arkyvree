@@ -1,3 +1,4 @@
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   BlankState,
@@ -5,19 +6,16 @@ import {
   DeleteDialog,
   EditDialog,
   DiceSpinner,
+  SectionContent,
 } from "@/client/src/components/common/index.ts";
 import {
-  PathValueInput,
-  RequirementOperationSelect,
+  RequirementForm,
+  type RequirementFormData,
+  type RequirementType,
   TargetPathBreadcrumbs,
-  TargetPathInput,
-  defaultValueForPath,
 } from "@/client/src/components/customization/index.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
-import { TemplateExpressionInput, type TemplateExpressionInputRef } from "@/client/src/components/customization/TemplateExpressionInput.tsx";
-import { TemplateExpressionToolbar } from "@/client/src/components/customization/TemplateExpressionToolbar.tsx";
 import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -31,38 +29,24 @@ import {
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  FormControlLabel,
   Stack,
-  Switch,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
-import type { InferRequestType, InferResponseType } from "hono/client";
-import { useCallback, useMemo, useRef, useState } from "react";
+import type { InferResponseType } from "hono/client";
+import { useCallback, useMemo, useState } from "react";
+import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
 type RequirementsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"][
     "$get"
   ], 200>;
 type Requirement = RequirementsArray[number];
-
-type RequirementFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"][
-    "$post"
-  ]
->["json"];
 
 // Tree node interface for hierarchical requirements
 interface RequirementTreeNode {
@@ -72,13 +56,18 @@ interface RequirementTreeNode {
   children: RequirementTreeNode[];
 }
 
-interface RequirementPath {
-  path: string;
-  category: string;
-  description: string;
-  valueType: "number" | "string" | "boolean";
-  operators: string[];
-  possibleValues?: { value: string; label: string }[];
+/** What a requirement saves: its level, then its chaining operator or its condition. */
+const requirementPayload = (type: RequirementType, level: string, data: RequirementFormData): RequirementFormData =>
+  type === "chaining"
+    ? { level, chainingOperator: data.chainingOperator }
+    : { level, target: data.target, operator: data.operator, value: data.value };
+
+function PublishedWarning() {
+  return (
+    <Alert severity="warning">
+      This ruleset is published. Changing requirements may break character validation for existing users.
+    </Alert>
+  );
 }
 
 interface RequirementsSectionProps {
@@ -93,67 +82,15 @@ interface RequirementsSectionProps {
 export function RequirementsSection(
   { ruleset, entityType, entityId, data: externalData, queryKeysToInvalidate, onEntityIdChange }: RequirementsSectionProps,
 ) {
-  const { tag, follow: handleResolvedEntityId } = useCopyFollow(entityId, onEntityIdChange);
-
-  // Path state management for operator selection
-  const [selectedCreatePath, setSelectedCreatePath] = useState<RequirementPath | null>(null);
-  const [selectedEditPath, setSelectedEditPath] = useState<RequirementPath | null>(null);
-  const [createTemplateMode, setCreateTemplateMode] = useState(false);
-  const [createTemplateExpression, setCreateTemplateExpression] = useState("");
-  const [editTemplateMode, setEditTemplateMode] = useState(false);
-  const [editTemplateExpression, setEditTemplateExpression] = useState("");
-  const [editLiteralValue, setEditLiteralValue] = useState("");
-  const createExpressionRef = useRef<TemplateExpressionInputRef | null>(null);
-  const editExpressionRef = useRef<TemplateExpressionInputRef | null>(null);
-
-  // Toggling template off while the literal is empty silently saves "" and
-  // wipes the prior value. Carry the rendered template across as the new
-  // literal so the user can either edit it, delete it deliberately, or save
-  // as a template-shaped string — but never lose content accidentally.
-  const handleToggleCreateTemplate = (checked: boolean) => {
-    setCreateTemplateMode(checked);
-    if (!checked) {
-      const currentLiteral = (createForm.getValues("value") ?? "").toString();
-      if (!currentLiteral.trim() && createTemplateExpression.trim()) {
-        createForm.setValue("value", `{{ ${createTemplateExpression} }}`);
-      }
-    }
-  };
-  const handleToggleEditTemplate = (checked: boolean) => {
-    setEditTemplateMode(checked);
-    if (!checked && !editLiteralValue.trim() && editTemplateExpression.trim()) {
-      setEditLiteralValue(`{{ ${editTemplateExpression} }}`);
-    }
-  };
-
-  // Reset all per-dialog state so reopening the dialog doesn't inherit
-  // the toggle/expression/literal from the previous session.
-  const resetCreateState = () => {
-    setSelectedCreatePath(null);
-    setCreateRequirementType("condition");
-    setCreateParentLevel(null);
-    setCreateTemplateMode(false);
-    setCreateTemplateExpression("");
-    createForm.reset();
-  };
-  const resetEditState = () => {
-    setSelectedEditPath(null);
-    setEditRequirementType("condition");
-    setEditTemplateMode(false);
-    setEditTemplateExpression("");
-    setEditLiteralValue("");
-  };
+  const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
+  const entityParam = { id: ruleset.id, entityType, entityId };
 
   // Parent level for contextual "Add Child" (null = root)
   const [createParentLevel, setCreateParentLevel] = useState<string | null>(null);
 
   // Requirement type state management
-  const [createRequirementType, setCreateRequirementType] = useState<"condition" | "chaining">(
-    "condition",
-  );
-  const [editRequirementType, setEditRequirementType] = useState<"condition" | "chaining">(
-    "condition",
-  );
+  const [createRequirementType, setCreateRequirementType] = useState<RequirementType>("condition");
+  const [editRequirementType, setEditRequirementType] = useState<RequirementType>("condition");
 
   // Helper function to determine if a requirement is a chaining node
   const isChaining = (requirement: Requirement) => {
@@ -180,7 +117,7 @@ export function RequirementsSection(
     handleEdit,
     handleDelete,
     confirmDelete,
-  } = useRulesetSection<Requirement, RequirementFormData>({
+  } = useRulesetSection({
     rulesetId: ruleset.id,
     sectionName: `customization-${entityType}-${entityId}-requirements`,
     label: "Requirement",
@@ -188,48 +125,53 @@ export function RequirementsSection(
     queryFn: !externalData ? async () => {
       return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements.$get({
-          param: { id: ruleset.id, entityType, entityId },
+          param: entityParam,
         }));
     } : undefined,
     queryKeysToInvalidate,
     createFn: async (data: RequirementFormData) => {
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements.$post({
-          param: { id: ruleset.id, entityType: entityType, entityId: entityId },
+          param: entityParam,
           json: data,
         })));
     },
     updateFn: async (requirementId: string, data: RequirementFormData) => {
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements[":requirement_id"].$put({
-          param: {
-            id: ruleset.id,
-            entityType: entityType,
-            entityId: entityId,
-            requirement_id: requirementId,
-          },
+          param: { ...entityParam, requirement_id: requirementId },
           json: data,
         })));
     },
     deleteFn: async (requirementId: string) => {
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements[":requirement_id"].$delete({
-          param: {
-            id: ruleset.id,
-            entityType: entityType,
-            entityId: entityId,
-            requirement_id: requirementId,
-          },
+          param: { ...entityParam, requirement_id: requirementId },
         })));
     },
-    onCreateSuccess: handleResolvedEntityId,
-    onUpdateSuccess: handleResolvedEntityId,
-    onDeleteSuccess: handleResolvedEntityId,
+    ...followCopies,
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const canDelete = canEdit;
   const isPublished = ruleset.status === "Published";
+
+  /** Opens the create dialog for a root requirement (null) or a child of the given level. */
+  const openCreate = (parentLevel: string | null) => {
+    setCreateParentLevel(parentLevel);
+    setCreateRequirementType("condition");
+    handleCreate();
+  };
+
+  // Reset per-dialog state so reopening a dialog doesn't inherit the previous session's.
+  const resetCreateState = () => {
+    setCreateRequirementType("condition");
+    setCreateParentLevel(null);
+    createForm.reset();
+  };
+  const resetEditState = () => {
+    setEditRequirementType("condition");
+  };
 
   const computeNextLevel = useCallback((parentLevel: string | null): string => {
     if (!requirements) return "1";
@@ -280,7 +222,8 @@ export function RequirementsSection(
 
     // Build hierarchy based on level numbering
     for (const requirement of sortedRequirements) {
-      const node = nodeMap.get(requirement.level)!;
+      const node = nodeMap.get(requirement.level);
+      if (!node) continue;
       const levelParts = requirement.level.split(".");
 
       // Determine if this is a root node
@@ -349,10 +292,6 @@ export function RequirementsSection(
 
   const handleEditCondition = (requirement: Requirement) => {
     setEditRequirementType("condition");
-    const isTemplate = isTemplateValue(requirement.value || "");
-    setEditTemplateMode(isTemplate);
-    setEditTemplateExpression(isTemplate ? extractTemplateExpression(requirement.value || "") || "" : "");
-    setEditLiteralValue(isTemplate ? "" : requirement.value || "");
     // Unregister fields that won't be used
     editForm.unregister("chainingOperator");
     handleEdit(requirement, {
@@ -405,12 +344,8 @@ export function RequirementsSection(
 
                 {requirementIsChaining
                   ? (
-                    <Stack direction="row" spacing={1} sx={{
-                      alignItems: "center"
-                    }}>
-                      <Typography variant="body2" sx={{
-                        color: "text.secondary"
-                      }}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
                         Chaining:
                       </Typography>
                       <Chip
@@ -448,7 +383,7 @@ export function RequirementsSection(
                       whiteSpace: "nowrap",
                       display: { xs: "none", sm: "block" }
                     }}>
-                    {new Date(requirement.createdAt).toLocaleDateString()}
+                    {formatDate(requirement.createdAt)}
                   </Typography>
 
                   {canEdit && requirementIsChaining && (
@@ -458,9 +393,7 @@ export function RequirementsSection(
                       title="Add child requirement"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setCreateParentLevel(node.level);
-                        setCreateRequirementType("condition");
-                        handleCreate();
+                        openCreate(node.level);
                       }}
                     >
                       <AddIcon fontSize="small" />
@@ -469,6 +402,7 @@ export function RequirementsSection(
                   {canEdit && (
                     <IconButton
                       size="small"
+                      aria-label="Edit requirement"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEditRequirement(requirement);
@@ -481,6 +415,7 @@ export function RequirementsSection(
                     <IconButton
                       size="small"
                       color="error"
+                      aria-label="Delete requirement"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(requirement.id);
@@ -501,27 +436,11 @@ export function RequirementsSection(
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-      {canEdit && (
-        <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setCreateParentLevel(null);
-              setCreateRequirementType("condition");
-              handleCreate();
-            }}
-          >
-            Add Requirement
-          </Button>
-        </Box>
-      )}
+    <SectionContent>
+      {canEdit && <SectionAddButton label="Add Requirement" onClick={() => openCreate(null)} />}
       {/* Loading State */}
       {isLoading && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <DiceSpinner />
-        </Box>
+        <DiceSpinner sx={{ py: 4 }} />
       )}
       {/* Content */}
       {!isLoading && (
@@ -556,171 +475,18 @@ export function RequirementsSection(
         }}
         title="Create Requirement"
         form={createForm}
-        onSubmit={(data) => {
-          const level = computeNextLevel(createParentLevel);
-          const cleanedData = createRequirementType === "chaining"
-            ? {
-              level,
-              chainingOperator: data.chainingOperator,
-            }
-            : {
-              level,
-              target: data.target,
-              operator: data.operator,
-              value: createTemplateMode && createTemplateExpression.trim()
-                ? `{{ ${createTemplateExpression} }}`
-                : data.value,
-            };
-
-          createMutation.mutate(cleanedData);
-        }}
+        onSubmit={(data) => createMutation.mutate(requirementPayload(createRequirementType, computeNextLevel(createParentLevel), data))}
         isLoading={createMutation.isPending}
         maxWidth="md"
       >
-        {isPublished && (
-          <Alert severity="warning">
-            This ruleset is published. Changing requirements may break character validation for existing users.
-          </Alert>
-        )}
-        <Box>
-          <Typography variant="subtitle2" gutterBottom sx={{
-            color: "text.secondary"
-          }}>
-            Type
-          </Typography>
-          <ToggleButtonGroup
-            value={createRequirementType}
-            exclusive
-            onChange={(_, value) => {
-              if (!value) return;
-              setCreateRequirementType(value);
-              if (value === "chaining") {
-                createForm.unregister("target");
-                createForm.unregister("operator");
-                createForm.unregister("value");
-              } else {
-                createForm.unregister("chainingOperator");
-              }
-            }}
-            size="small"
-          >
-            <ToggleButton value="condition">
-              <Typography variant="body2">Condition</Typography>
-            </ToggleButton>
-            <ToggleButton value="chaining">
-              <Typography variant="body2">Chaining</Typography>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-
-        {createRequirementType === "chaining"
-          ? (
-            <FormControl fullWidth>
-              <InputLabel>Chaining Operator</InputLabel>
-              <Select
-                {...createForm.register("chainingOperator", {
-                  required: "Chaining operator is required",
-                })}
-                value={createForm.watch("chainingOperator") || ""}
-                onChange={(e) => {
-                  createForm.setValue("chainingOperator", e.target.value);
-                  createForm.clearErrors("chainingOperator");
-                }}
-                label="Chaining Operator"
-                error={!!createForm.formState.errors.chainingOperator}
-              >
-                <MenuItem value="and">AND</MenuItem>
-                <MenuItem value="or">OR</MenuItem>
-              </Select>
-              {createForm.formState.errors.chainingOperator && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                  {createForm.formState.errors.chainingOperator.message}
-                </Typography>
-              )}
-            </FormControl>
-          )
-          : (
-            <>
-              <TargetPathInput
-                rulesetId={ruleset.id}
-                kind="requirement"
-                value={createForm.watch("target") || ""}
-                onChange={(value) => {
-                  createForm.setValue("target", value);
-                  createForm.clearErrors("target");
-                }}
-                onPathInfoChange={(pathInfo) => {
-                  if (pathInfo) {
-                    const valueType = pathInfo.valueType as "number" | "string" | "boolean";
-                    setSelectedCreatePath({
-                      path: createForm.watch("target") || "",
-                      category: "",
-                      description: "",
-                      valueType,
-                      operators: pathInfo.operators,
-                      possibleValues: pathInfo.possibleValues,
-                    });
-                    createForm.setValue("value", defaultValueForPath(valueType, pathInfo.possibleValues));
-                    createForm.setValue("operator", pathInfo.operators[0] ?? "");
-                    createForm.clearErrors("operator");
-                  } else {
-                    setSelectedCreatePath(null);
-                  }
-                }}
-                label="Target"
-                error={!!createForm.formState.errors.target}
-                helperText={createForm.formState.errors.target?.message}
-              />
-              <RequirementOperationSelect
-                value={createForm.watch("operator") || ""}
-                onChange={(value) => {
-                  createForm.setValue("operator", value);
-                  createForm.clearErrors("operator");
-                }}
-                error={!!createForm.formState.errors.operator}
-                operators={selectedCreatePath?.operators || []}
-                label="Operator"
-              />
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: -1, flexWrap: "wrap" }}>
-                <FormControlLabel
-                  control={<Switch size="small" checked={createTemplateMode} onChange={(_, checked) => handleToggleCreateTemplate(checked)} />}
-                  label="Template"
-                />
-                {createTemplateMode && (
-                  <TemplateExpressionToolbar inputRef={createExpressionRef} disabled={!createTemplateMode} />
-                )}
-              </Box>
-              {createTemplateMode ? (
-                <TemplateExpressionInput
-                  ref={createExpressionRef}
-                  value={createTemplateExpression}
-                  onChange={setCreateTemplateExpression}
-                  rulesetId={ruleset.id}
-                  kind="requirement"
-                />
-              ) : (
-                <PathValueInput
-                  value={createForm.watch("value") || ""}
-                  onChange={(value) => {
-                    createForm.setValue("value", value);
-                    createForm.clearErrors("value");
-                  }}
-                  valueType={selectedCreatePath?.valueType}
-                  possibleValues={selectedCreatePath?.possibleValues}
-                  required
-                  error={!!createForm.formState.errors.value}
-                  helperText={createForm.formState.errors.value?.message}
-                  placeholder={selectedCreatePath
-                    ? (selectedCreatePath.valueType === "boolean"
-                      ? "true or false"
-                      : selectedCreatePath.valueType === "string"
-                      ? "text value"
-                      : "numeric value")
-                    : "e.g., 13, 5, true"}
-                />
-              )}
-            </>
-          )}
+        {isPublished && <PublishedWarning />}
+        <RequirementForm
+          form={createForm}
+          type={createRequirementType}
+          onTypeChange={setCreateRequirementType}
+          rulesetId={ruleset.id}
+          mode="create"
+        />
       </CreateDialog>
       <EditDialog
         open={editDialogOpen}
@@ -732,167 +498,22 @@ export function RequirementsSection(
         form={editForm}
         onSubmit={(data) => {
           if (!selectedRequirement) return;
-
-          const cleanedData = editRequirementType === "chaining"
-            ? {
-              level: selectedRequirement.level,
-              chainingOperator: data.chainingOperator,
-            }
-            : {
-              level: selectedRequirement.level,
-              target: data.target,
-              operator: data.operator,
-              value: editTemplateMode && editTemplateExpression.trim()
-                ? `{{ ${editTemplateExpression} }}`
-                : editLiteralValue,
-            };
-
-          updateMutation.mutate({ id: selectedRequirement.id, data: cleanedData });
+          updateMutation.mutate({
+            id: selectedRequirement.id,
+            data: requirementPayload(editRequirementType, selectedRequirement.level, data),
+          });
         }}
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >
-        {isPublished && (
-          <Alert severity="warning">
-            This ruleset is published. Changing requirements may break character validation for existing users.
-          </Alert>
-        )}
-        <Box>
-          <Typography variant="subtitle2" gutterBottom sx={{
-            color: "text.secondary"
-          }}>
-            Type
-          </Typography>
-          <ToggleButtonGroup
-            value={editRequirementType}
-            exclusive
-            onChange={(_, value) => {
-              if (!value) return;
-              setEditRequirementType(value);
-              if (value === "chaining") {
-                editForm.unregister("target");
-                editForm.unregister("operator");
-                editForm.unregister("value");
-              } else {
-                editForm.unregister("chainingOperator");
-              }
-            }}
-            size="small"
-          >
-            <ToggleButton value="condition">
-              <Typography variant="body2">Condition</Typography>
-            </ToggleButton>
-            <ToggleButton value="chaining">
-              <Typography variant="body2">Chaining</Typography>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-
-        {editRequirementType === "chaining"
-          ? (
-            <FormControl fullWidth>
-              <InputLabel>Chaining Operator</InputLabel>
-              <Select
-                {...editForm.register("chainingOperator", {
-                  required: "Chaining operator is required",
-                })}
-                value={editForm.watch("chainingOperator") || ""}
-                onChange={(e) => {
-                  editForm.setValue("chainingOperator", e.target.value);
-                  editForm.clearErrors("chainingOperator");
-                }}
-                label="Chaining Operator"
-                error={!!editForm.formState.errors.chainingOperator}
-              >
-                <MenuItem value="and">and</MenuItem>
-                <MenuItem value="or">or</MenuItem>
-              </Select>
-              {editForm.formState.errors.chainingOperator && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                  {editForm.formState.errors.chainingOperator.message}
-                </Typography>
-              )}
-            </FormControl>
-          )
-          : (
-            <>
-              <TargetPathInput
-                rulesetId={ruleset.id}
-                kind="requirement"
-                value={editForm.watch("target") || ""}
-                onChange={(value) => {
-                  editForm.setValue("target", value);
-                  editForm.clearErrors("target");
-                }}
-                onPathInfoChange={(pathInfo) => {
-                  if (pathInfo) {
-                    setSelectedEditPath({
-                      path: editForm.watch("target") || "",
-                      category: "",
-                      description: "",
-                      valueType: pathInfo.valueType as "number" | "string" | "boolean",
-                      operators: pathInfo.operators,
-                      possibleValues: pathInfo.possibleValues,
-                    });
-                    // If the existing operator isn't valid for the new path's
-                    // operator list (only happens when the user changed the
-                    // target), fall back to the first allowed operator.
-                    if (!pathInfo.operators.includes(editForm.watch("operator") || "")) {
-                      editForm.setValue("operator", pathInfo.operators[0] ?? "");
-                      editForm.clearErrors("operator");
-                    }
-                  } else {
-                    setSelectedEditPath(null);
-                  }
-                }}
-                label="Target"
-                error={!!editForm.formState.errors.target}
-                helperText={editForm.formState.errors.target?.message}
-              />
-              <RequirementOperationSelect
-                value={editForm.watch("operator") || ""}
-                onChange={(value) => {
-                  editForm.setValue("operator", value);
-                  editForm.clearErrors("operator");
-                }}
-                error={!!editForm.formState.errors.operator}
-                operators={selectedEditPath?.operators || []}
-                label="Operator"
-              />
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: -1, flexWrap: "wrap" }}>
-                <FormControlLabel
-                  control={<Switch size="small" checked={editTemplateMode} onChange={(_, checked) => handleToggleEditTemplate(checked)} />}
-                  label="Template"
-                />
-                {editTemplateMode && (
-                  <TemplateExpressionToolbar inputRef={editExpressionRef} disabled={!editTemplateMode} />
-                )}
-              </Box>
-              {editTemplateMode ? (
-                <TemplateExpressionInput
-                  ref={editExpressionRef}
-                  value={editTemplateExpression}
-                  onChange={setEditTemplateExpression}
-                  rulesetId={ruleset.id}
-                  kind="requirement"
-                />
-              ) : (
-                <PathValueInput
-                  value={editLiteralValue}
-                  onChange={setEditLiteralValue}
-                  valueType={selectedEditPath?.valueType}
-                  possibleValues={selectedEditPath?.possibleValues}
-                  placeholder={selectedEditPath
-                    ? (selectedEditPath.valueType === "boolean"
-                      ? "true or false"
-                      : selectedEditPath.valueType === "string"
-                      ? "text value"
-                      : "numeric value")
-                    : "e.g., 13, 5, true"}
-                />
-              )}
-            </>
-          )}
+        {isPublished && <PublishedWarning />}
+        <RequirementForm
+          form={editForm}
+          type={editRequirementType}
+          onTypeChange={setEditRequirementType}
+          rulesetId={ruleset.id}
+          mode="edit"
+        />
       </EditDialog>
       <DeleteDialog
         open={deleteDialogOpen}
@@ -902,6 +523,6 @@ export function RequirementsSection(
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
       />
-    </Box>
+    </SectionContent>
   );
 }

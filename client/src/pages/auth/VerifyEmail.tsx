@@ -1,13 +1,11 @@
-import { AuthPage, VerificationCodeInput } from "@/client/src/components/auth/index.ts";
+import { AuthPage, AuthSubmitButton, ResendCodeLink, useResendCode, VerificationCodeInput } from "@/client/src/components/auth/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
-  Alert,
   Box,
-  Button,
   Typography,
   Link as MuiLink,
 } from "@mui/material";
@@ -29,11 +27,12 @@ export default function VerifyEmail() {
   const fromSignIn = location.state?.from === "sign-in";
   const redirect = safeRedirectPath(location.state?.redirect);
   const [error, setError] = useState<string | null>(null);
-  const [resendSuccess, setResendSuccess] = useState(false);
   const navigate = useNavigate();
 
   const form = useForm<VerifyEmailFormData>({ defaultValues: { digits: EMPTY_VERIFICATION_CODE } });
   const digits = form.watch("digits");
+
+  const { handleResend, notice } = useResendCode(() => resendVerification(pendingVerificationEmail ?? ""), setError);
 
   if (!pendingVerificationEmail) {
     return <Navigate to={fromSignIn ? "/sign-in" : "/sign-up"} replace />;
@@ -45,18 +44,7 @@ export default function VerifyEmail() {
       await verifyEmail(pendingVerificationEmail, data.digits.join(""));
       navigate(redirect ?? "/dashboard");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Verification failed");
-    }
-  };
-
-  const handleResend = async () => {
-    try {
-      setError(null);
-      setResendSuccess(false);
-      await resendVerification(pendingVerificationEmail);
-      setResendSuccess(true);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to resend code");
+      setError(errorMessage(error, "Verification failed"));
     }
   };
 
@@ -64,53 +52,24 @@ export default function VerifyEmail() {
 
   return (
     <AuthPage
+      error={error}
+      notice={notice}
       title="Verify Email"
       subtitle={<>We sent an 8-digit code to <strong>{pendingVerificationEmail}</strong></>}
     >
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {resendSuccess && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          A new code has been sent to your email.
-        </Alert>
-      )}
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <VerificationCodeInput
           digits={digits}
           onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
         />
 
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mb: 2 }}
-          disabled={isLoading || !isComplete}
-        >
-          <DiceSpinner size="small" loading={isLoading}>Verify</DiceSpinner>
-        </Button>
+        <AuthSubmitButton loading={isLoading} disabled={!isComplete}>Verify</AuthSubmitButton>
       </form>
       <Box sx={{ textAlign: "center" }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
           Don't see it? Check your spam or junk folder.
         </Typography>
-        <Typography variant="body2">
-          Didn't receive the code?{" "}
-          <MuiLink
-            component="button"
-            type="button"
-            underline="hover"
-            onClick={handleResend}
-            disabled={isLoading}
-            sx={{ verticalAlign: "baseline", font: "inherit" }}
-          >
-            Resend
-          </MuiLink>
-        </Typography>
+        <ResendCodeLink onResend={handleResend} disabled={isLoading} />
         <Typography variant="body2" sx={{ mt: 1 }}>
           <MuiLink component={Link} to={fromSignIn ? "/sign-in" : "/sign-up"} underline="hover">
             {fromSignIn ? "Back to Sign In" : "Back to Sign Up"}

@@ -1,10 +1,13 @@
 import { Avatar, Box, Stack, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 
+import { initialOf } from "@/shared/utils.ts";
+
 import { StyledCard } from "./StyledCard.tsx";
 
 interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "children" | "title"> {
-  avatar: ReactNode;
+  /** Defaults to the title's initial. */
+  avatar?: ReactNode;
   /** Brand colour of the avatar's gradient. */
   avatarTone?: "primary" | "secondary";
   avatarSrc?: string;
@@ -45,7 +48,7 @@ export function ListCard({
               flexShrink: 0,
             }}
           >
-            {avatar}
+            {avatar ?? initialOf(title)}
           </Avatar>
           <Typography variant="h6" noWrap sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.3, flex: 1 }}>
             {title}

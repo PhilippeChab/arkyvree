@@ -1,18 +1,19 @@
 import type { LevelUpAttributeStepProps } from "./levelUpFactory.ts";
-import type { LeveledUpAttribute } from "./levelUp/useLevelWizard.ts";
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import { capitalize } from "@/shared/utils.ts";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
-import { Alert, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
+import { Alert } from "@mui/material";
+import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
 
 export function LevelUpAttributeStep({
-  attributeData,
-  isLoadingAttributes,
-  attributesError,
-  selectedAttribute,
+  wizard,
   baseRules,
-  setValue,
 }: LevelUpAttributeStepProps) {
+  const {
+    attributeData,
+    isLoadingAttributes,
+    attributesError,
+    selectedAttribute,
+    setValue,
+  } = wizard;
   if (isLoadingAttributes) return <DiceSpinner />;
   if (attributesError)
     return <Alert severity="error">Error loading attributes.</Alert>;
@@ -23,35 +24,12 @@ export function LevelUpAttributeStep({
   }
 
   return (
-    <FormControl component="fieldset">
-      <FormLabel component="legend">
-        Select an attribute to increase
-      </FormLabel>
-      <RadioGroup
-        aria-label="attribute"
-        name="attribute"
-        value={selectedAttribute || ""}
-        onChange={(e) => setValue("selectedAttribute", e.target.value)}
-      >
-        {sortAbilities(
-          Object.entries(attributeData.attributes),
-          baseRules,
-          ([key]) => key,
-        ).map(([key, value]: [string, LeveledUpAttribute[string]]) => {
-          const modifier = Math.floor((value.total - 10) / 2);
-          const capitalizedKey = capitalize(key);
-          return (
-            <FormControlLabel
-              key={value.abilityId}
-              value={value.abilityId}
-              control={<Radio />}
-              label={`${capitalizedKey}: ${value.total} (${
-                modifier >= 0 ? "+" : ""
-              }${modifier})`}
-            />
-          );
-        })}
-      </RadioGroup>
-    </FormControl>
+    <AttributeIncreaseField
+      attributes={attributeData.attributes}
+      baseRules={baseRules}
+      name="attribute"
+      value={selectedAttribute}
+      onChange={(abilityId) => setValue("selectedAttribute", abilityId)}
+    />
   );
 }

@@ -1,6 +1,9 @@
 import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 
-export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** React Hook Form rules for an entity's required name. */
+export const nameRules = { required: "Name is required" } as const;
 
 /** React Hook Form rules for a required email address field. */
 export const emailRules = {

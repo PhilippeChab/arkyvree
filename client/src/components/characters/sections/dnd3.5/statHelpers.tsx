@@ -1,10 +1,5 @@
 import { Box, Typography } from "@mui/material";
 
-export function fmt(v?: number): string {
-  if (v === undefined) return "+0";
-  return v >= 0 ? `+${v}` : `${v}`;
-}
-
 export function StatField({ label, value }: { label: string; value: string | number }) {
   return (
     <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>

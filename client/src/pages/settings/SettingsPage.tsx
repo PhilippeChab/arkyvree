@@ -33,10 +33,7 @@ export default function SettingsPage() {
             </Typography>
             <Typography
               variant="body2"
-              sx={{
-                color: "text.secondary",
-                mb: 3
-              }}>
+              sx={{ color: "text.secondary", mb: 3 }}>
               Choose how Arkyvree looks to you. Select a single theme, or sync
               with your system settings.
             </Typography>

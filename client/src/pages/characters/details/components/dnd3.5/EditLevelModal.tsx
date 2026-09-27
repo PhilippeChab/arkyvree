@@ -3,14 +3,7 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import type { EditingLevel } from "@/client/src/types/character.ts";
-import {
-  type AptitudeModifier,
-  type SelectedFeat,
-  type BaseRules,
-  editStepContent,
-  editStepLabels,
-  useLevelWizard,
-} from "./levelUp/useLevelWizard.ts";
+import { type BaseRules, editStepContent, editStepLabels, useLevelWizard } from "./levelUp/index.ts";
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
 interface EditLevelModalProps {
@@ -47,7 +40,6 @@ export function EditLevelModal({
     characterId,
     baseRules,
     editingLevelId,
-    stepContent: editStepContent,
     onReset: resetEditRefs,
   });
 
@@ -96,25 +88,8 @@ export function EditLevelModal({
     if (!editLevelData || !wizard.featData || editFeatsAppliedRef.current)
       return;
     editFeatsAppliedRef.current = true;
-    const editFeats = editLevelData.feats;
-    if (!editFeats || Object.keys(editFeats).length === 0) return;
-    const prePopulated: Record<string, SelectedFeat[]> = {};
-    for (const [aptitudeId, feats] of Object.entries(editFeats)) {
-      prePopulated[aptitudeId] = (
-        feats as Array<{
-          id: string;
-          name: string;
-          description?: string;
-          aptitudeModifiers?: AptitudeModifier[];
-        }>
-      ).map((f) => ({
-        id: f.id,
-        name: f.name,
-        description: f.description,
-        aptitudeModifiers: f.aptitudeModifiers,
-      }));
-    }
-    wizardSetValue("selectedFeats", prePopulated);
+    // A saved level's feats have the selected-feat shape.
+    if (Object.keys(editLevelData.feats).length > 0) wizardSetValue("selectedFeats", editLevelData.feats);
   }, [editLevelData, wizard.featData, wizardSetValue]);
 
   // Pre-populate powers from edit data
@@ -122,23 +97,7 @@ export function EditLevelModal({
     if (!editLevelData || !wizard.powerData || editPowersAppliedRef.current)
       return;
     editPowersAppliedRef.current = true;
-    const editPowers = editLevelData.powers;
-    if (!editPowers || Object.keys(editPowers).length === 0) return;
-    const prePopulated: Record<
-      string,
-      Array<{ id: string; name: string; description?: string; powerLevel?: number }>
-    > = {};
-    for (const [aptitudeId, powers] of Object.entries(editPowers)) {
-      prePopulated[aptitudeId] = (
-        powers as Array<{ id: string; name: string; description?: string; powerLevel?: number }>
-      ).map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        powerLevel: p.powerLevel,
-      }));
-    }
-    wizardSetValue("selectedPowers", prePopulated);
+    if (Object.keys(editLevelData.powers).length > 0) wizardSetValue("selectedPowers", editLevelData.powers);
   }, [editLevelData, wizard.powerData, wizardSetValue]);
 
   // Reset refs when dialog opens
@@ -157,104 +116,25 @@ export function EditLevelModal({
 
     switch (contentType) {
       case "hp":
-        return (
-          <Sections.LevelUpHpStep
-            selectedClass={wizard.selectedClass}
-            selectedHP={wizard.selectedHP}
-            isEditing={true}
-            hpRolling={wizard.hpRolling}
-            hpSettled={wizard.hpSettled}
-            hpDisplayValue={wizard.hpDisplayValue}
-            triggerHpRoll={wizard.triggerHpRoll}
-            setValue={wizard.setValue}
-          />
-        );
+        return <Sections.LevelUpHpStep wizard={wizard} />;
       case "attributes":
-        return (
-          <Sections.LevelUpAttributeStep
-            attributeData={wizard.attributeData}
-            isLoadingAttributes={wizard.isLoadingAttributes}
-            attributesError={wizard.attributesError}
-            selectedAttribute={wizard.selectedAttribute}
-            baseRules={baseRules}
-            setValue={wizard.setValue}
-          />
-        );
+        return <Sections.LevelUpAttributeStep wizard={wizard} baseRules={baseRules} />;
       case "skills":
-        return (
-          <Sections.LevelUpSkillsStep
-            skillData={wizard.skillData}
-            isLoadingSkills={wizard.isLoadingSkills}
-            skillsError={wizard.skillsError}
-            skillPointAllocations={wizard.skillPointAllocations}
-            setValue={wizard.setValue}
-            getValues={wizard.getValues}
-          />
-        );
+        return <Sections.LevelUpSkillsStep wizard={wizard} />;
       case "feats":
         return (
           <Sections.LevelUpFeatsStep
-            featData={wizard.featData}
-            isLoadingFeats={wizard.isLoadingFeats}
-            featsError={wizard.featsError}
-            adjustedFeatPools={wizard.adjustedFeatPools}
-            selectedFeats={wizard.selectedFeats}
-            selectedAptitude={wizard.selectedAptitude}
-            setSelectedAptitude={wizard.setSelectedAptitude}
-            groupedFeats={wizard.groupedFeats}
-            isLoadingAvailableFeats={wizard.isLoadingAvailableFeats}
-            isFetchingNextFeatsPage={wizard.isFetchingNextFeatsPage}
-            expandedFeatFamilies={wizard.expandedFeatFamilies}
-            toggleFeatFamily={wizard.toggleFeatFamily}
+            wizard={wizard}
             characterId={characterId}
             klassId={wizard.selectedClass?.id ?? ""}
             klassLevel={wizard.selectedClass?.nextLevel ?? 1}
             editingLevelId={editingLevelId}
-            allSelectedFeatPickString={wizard.allSelectedFeatPickString}
-            featSearch={wizard.featSearch}
-            setFeatSearch={wizard.setFeatSearch}
-            handleFeatsScroll={wizard.handleFeatsScroll}
-            setValue={wizard.setValue}
-            handleDeleteFeat={wizard.handleDeleteFeat}
           />
         );
       case "powers":
-        return (
-          <Sections.LevelUpPowersStep
-            powerData={wizard.powerData}
-            isLoadingPowers={wizard.isLoadingPowers}
-            powersError={wizard.powersError}
-            selectedPowers={wizard.selectedPowers}
-            selectedFeats={wizard.selectedFeats}
-            selectedPowerAptitude={wizard.selectedPowerAptitude}
-            selectedPowerLevel={wizard.selectedPowerLevel}
-            setSelectedPowerAptitude={wizard.setSelectedPowerAptitude}
-            setSelectedPowerLevel={wizard.setSelectedPowerLevel}
-            availablePowers={wizard.availablePowers}
-            isLoadingAvailablePowers={wizard.isLoadingAvailablePowers}
-            isFetchingNextPowersPage={wizard.isFetchingNextPowersPage}
-            powerSearch={wizard.powerSearch}
-            setValue={wizard.setValue}
-            handleDeletePower={wizard.handleDeletePower}
-            onPowerSearchChange={wizard.setPowerSearch}
-            onPowersScroll={wizard.handlePowersScroll}
-          />
-        );
+        return <Sections.LevelUpPowersStep wizard={wizard} />;
       case "review":
-        return (
-          <Sections.LevelUpReviewStep
-            selectedClass={wizard.selectedClass}
-            selectedHP={wizard.selectedHP}
-            selectedAttribute={wizard.selectedAttribute}
-            attributeData={wizard.attributeData}
-            skillPointAllocations={wizard.skillPointAllocations}
-            skillData={wizard.skillData}
-            selectedFeats={wizard.selectedFeats}
-            featData={wizard.featData}
-            selectedPowers={wizard.selectedPowers}
-            powerData={wizard.powerData}
-          />
-        );
+        return <Sections.LevelUpReviewStep wizard={wizard} />;
       default:
         return <p>Unknown step</p>;
     }

@@ -11,14 +11,17 @@ import type { InferRequestType, InferResponseType } from "hono/client";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-export const LIST_PAGE_SIZE = 10;
+const LIST_PAGE_SIZE = 10;
 
 type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query"];
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
 
+export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
+export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
 export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
 export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
+export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
 
 type Direction = "asc" | "desc";
 
@@ -92,6 +95,21 @@ export const rulesetListQuery = (filters: RulesetListFilters) => infiniteQueryOp
       search: filters.search || undefined,
       orderBy: filters.orderBy,
       orderDir: filters.orderDir,
+    },
+  })),
+  initialPageParam: 1,
+  getNextPageParam: (lastPage) => lastPage.nextPage,
+});
+
+/** A ruleset picker's options: the rulesets in one scope, filtered by what's typed. */
+export const rulesetPickerQuery = (scope: RulesetListParams["scope"], search: string) => infiniteQueryOptions({
+  queryKey: queryKeys.rulesets.list({ scope, search }),
+  queryFn: ({ pageParam }) => parseResponse(rpc.api.rulesets.$get({
+    query: {
+      page: pageParam.toString(),
+      limit: LIST_PAGE_SIZE.toString(),
+      scope,
+      search: search || undefined,
     },
   })),
   initialPageParam: 1,

@@ -8,6 +8,7 @@ import type { InferResponseType } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { ClassDetail } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { EntityType } from "./types.ts";
 
 const rulesetApi = rpc.api.rulesets[":id"];
@@ -17,8 +18,7 @@ export type Race = InferResponseType<(typeof rulesetApi)["races"][":raceId"]["$g
 export type Item = InferResponseType<(typeof rulesetApi)["items"][":itemId"]["$get"], 200>;
 export type Power = InferResponseType<(typeof rulesetApi)["powers"][":powerId"]["$get"], 200>;
 export type ClassLevel = InferResponseType<(typeof rulesetApi)["class_levels"][":classLevelId"]["$get"], 200>;
-export type Klass = InferResponseType<(typeof rulesetApi)["classes"][":classId"]["$get"], 200>;
-export type CustomizedModifier = InferResponseType<
+type CustomizedModifier = InferResponseType<
   (typeof rulesetApi)["customization"][":entityType"][":entityId"]["modifiers"][":modifierId"]["$get"],
   200
 >;
@@ -29,7 +29,7 @@ export type CustomizationEntity =
   | { type: "items"; entity: Item }
   | { type: "powers"; entity: Power }
   | { type: "klass_levels"; entity: ClassLevel }
-  | { type: "klasses"; entity: Klass }
+  | { type: "klasses"; entity: ClassDetail }
   | { type: "modifiers"; entity: CustomizedModifier };
 
 async function fetchEntity(id: string, type: EntityType, entityId: string): Promise<CustomizationEntity> {

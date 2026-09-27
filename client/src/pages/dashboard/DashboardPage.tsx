@@ -1,3 +1,4 @@
+import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { GoldDivider, PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
@@ -76,9 +77,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
-          <DiceSpinner size="large" />
-        </Box>
+        <DiceSpinner size="large" sx={{ minHeight: "80vh" }} />
       </Container>
     );
   }
@@ -168,7 +167,7 @@ export default function DashboardPage() {
                   width: 120,
                   height: 120,
                   borderRadius: "50%",
-                  background: "radial-gradient(circle, rgba(245, 197, 66, 0.15) 0%, transparent 70%)",
+                  background: `radial-gradient(circle, ${brandGoldTint(true, 0.15)} 0%, transparent 70%)`,
                   pointerEvents: "none",
                 }}
               />
@@ -180,7 +179,7 @@ export default function DashboardPage() {
                   width: { sm: 48, md: 64 },
                   height: { sm: 48, md: 64 },
                   position: "relative",
-                  filter: "drop-shadow(0 4px 12px rgba(191, 144, 0, 0.35))",
+                  filter: `drop-shadow(0 4px 12px ${brandGoldTint(false, 0.35)})`,
                 }}
               />
             </Box>

@@ -1,13 +1,13 @@
-import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { SectionContent } from "@/client/src/components/common/index.ts";
+import type { RulesetAbility } from "@/client/src/hooks/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { abilityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
 import { FitnessCenter as AbilitiesIcon } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { abilitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const ABILITIES_COLUMNS = [
@@ -15,11 +15,10 @@ const ABILITIES_COLUMNS = [
   { key: "description", label: "Description", width: "70%" },
 ];
 
-type AbilitiesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>;
-type Ability = AbilitiesPaginated["items"][number];
+type Ability = RulesetAbility;
 
 export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
-  const navigate = useNavigate();
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery(abilitiesQuery(ruleset.id, childOnly));
@@ -32,11 +31,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         return ability.name;
       case "description":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {ability.description || "-"}
-          </Typography>
+          <DescriptionCell text={ability.description} />
         );
       default:
         return null;
@@ -44,7 +39,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   };
 
   const handleRowClick = (ability: Ability) => {
-    navigate(`/rulesets/${ruleset.id}/abilities/${ability.id}`);
+    openEntity(`abilities/${ability.id}`);
   };
 
   const handleRowMouseEnter = useCallback((ability: Ability) => {
@@ -52,7 +47,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   }, [queryClient, ruleset.id]);
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       {/* No search bar here: the actions sit alone, and take no space when there are none. */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1, "&:empty": { display: "none" } }}>
         <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
@@ -68,6 +63,6 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         emptyTitle="No abilities"
         emptyDescription="No abilities available for this ruleset."
       />
-    </Box>
+    </SectionContent>
   );
 }

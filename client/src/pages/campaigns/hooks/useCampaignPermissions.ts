@@ -1,6 +1,7 @@
+import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-export function useCampaignPermissions(campaign: { currentUserRole: string | null }) {
+export function useCampaignPermissions(campaign: Pick<CampaignDetail, "currentUserRole">) {
   const isDM = campaign.currentUserRole === "Game Master";
   // Demo users can run their own campaigns but can't pull other users in.
   const isDemo = useAuthStore((state) => !!state.user?.expiresAt);

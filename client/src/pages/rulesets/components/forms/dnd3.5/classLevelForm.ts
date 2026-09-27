@@ -1,3 +1,4 @@
+import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import type { InferRequestType } from "hono/client";
 
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -15,7 +16,7 @@ export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" |
  * go out unchanged: the endpoints replace the list, so an empty one would
  * clear them.
  */
-export function allLevelSaves(rulesetSaves: { id: string }[] | undefined, saves: LevelSave[]): LevelSave[] {
+export function allLevelSaves(rulesetSaves: Pick<RulesetSave, "id">[] | undefined, saves: LevelSave[]): LevelSave[] {
   if (!rulesetSaves) return saves;
   return rulesetSaves.map((save) => ({ saveId: save.id, base: saves.find((s) => s.saveId === save.id)?.base ?? 0 }));
 }
@@ -26,3 +27,7 @@ export const levelFeatLabel = (featName: string, aptitudeName: string | null | u
 
 /** Identifies a granted feat: the same feat can be granted for several aptitudes. */
 export const featKey = (feat: LevelFeat) => `${feat.featId}-${feat.aptitudeId}`;
+
+export type CreateLevelFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
+>["json"];

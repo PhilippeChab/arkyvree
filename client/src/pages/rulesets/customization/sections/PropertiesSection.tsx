@@ -4,14 +4,14 @@ import {
   PropertyValueInput,
 } from "@/client/src/components/customization/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, DeleteDialog, EditDialog } from "@/client/src/components/common/index.ts";
+import { CreateDialog, DeleteDialog, EditDialog, DescriptionField, SectionContent } from "@/client/src/components/common/index.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { EntityType } from "@/shared/customization/properties.ts";
-import { Add as AddIcon, ListAlt as PropertiesIcon } from "@mui/icons-material";
-import { Box, Button, Chip, TextField, Typography } from "@mui/material";
+import { ListAlt as PropertiesIcon } from "@mui/icons-material";
+import { Chip, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
+import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
 const PROPERTIES_COLUMNS = [
@@ -43,28 +43,27 @@ interface PropertiesSectionProps {
 export function PropertiesSection(
   { ruleset, entityType, entityId, data: externalData, queryKeysToInvalidate, onEntityIdChange }: PropertiesSectionProps,
 ) {
-  const { tag, follow: handleResolvedEntityId } = useCopyFollow(entityId, onEntityIdChange);
+  const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
+  const entityParam = { id: ruleset.id, entityType, entityId };
 
   const {
     data: properties,
     isLoading,
-    createDialogOpen,
     editDialogOpen,
     deleteDialogOpen,
-    setCreateDialogOpen,
     setEditDialogOpen,
     setDeleteDialogOpen,
     selectedItem: selectedProperty,
     createForm,
     editForm,
-    createMutation,
     updateMutation,
     deleteMutation,
     handleCreate,
     handleEdit,
     handleDelete,
     confirmDelete,
-  } = useRulesetSection<Property, PropertyFormData>({
+    createDialogProps,
+  } = useRulesetSection({
     rulesetId: ruleset.id,
     sectionName: `customization-${entityType}-${entityId}-properties`,
     label: "Property",
@@ -73,36 +72,24 @@ export function PropertiesSection(
     createFn: async (data: PropertyFormData) => {
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties.$post({
-          param: { id: ruleset.id, entityType: entityType, entityId: entityId },
+          param: entityParam,
           json: data,
         })));
     },
     updateFn: async (propertyId: string, data: PropertyFormData) => {
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties[":property_id"].$put({
-          param: {
-            id: ruleset.id,
-            entityType: entityType,
-            entityId: entityId,
-            property_id: propertyId,
-          },
+          param: { ...entityParam, property_id: propertyId },
           json: data,
         })));
     },
     deleteFn: async (propertyId: string) => {
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties[":property_id"].$delete({
-          param: {
-            id: ruleset.id,
-            entityType: entityType,
-            entityId: entityId,
-            property_id: propertyId,
-          },
+          param: { ...entityParam, property_id: propertyId },
         })));
     },
-    onCreateSuccess: handleResolvedEntityId,
-    onUpdateSuccess: handleResolvedEntityId,
-    onDeleteSuccess: handleResolvedEntityId,
+    ...followCopies,
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
@@ -134,14 +121,10 @@ export function PropertiesSection(
               variant="outlined"
             />
           )
-          : <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>—</Typography>;
+          : <Typography variant="body2" sx={{ color: "text.secondary" }}>—</Typography>;
       case "description":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {property.description}
           </Typography>
         );
@@ -151,18 +134,8 @@ export function PropertiesSection(
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-      {canEdit && (
-        <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreate}
-          >
-            Add Property
-          </Button>
-        </Box>
-      )}
+    <SectionContent>
+      {canEdit && <SectionAddButton label="Add Property" onClick={handleCreate} />}
 
       <RulesetSectionTable
         data={properties}
@@ -179,19 +152,15 @@ export function PropertiesSection(
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Property"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
         fixedHeight="40vh"
       >
         <PropertyTypeInput
           value={createForm.watch("type") || ""}
           onChange={(value: string) => createForm.setValue("type", value)}
           rulesetId={ruleset.id}
-          entityType={entityType as EntityType}
+          entityType={entityType}
           label="Type"
           placeholder="e.g., tag, category, note"
           fullWidth
@@ -209,14 +178,9 @@ export function PropertiesSection(
           error={!!createForm.formState.errors.value}
           helperText={createForm.formState.errors.value?.message}
         />
-        <TextField
+        <DescriptionField
           {...createForm.register("description")}
-          label="Description"
-          fullWidth
-          multiline
-          minRows={3}
           placeholder="Enter the property description..."
-          sx={{ "& textarea": { resize: "vertical" } }}
         />
       </CreateDialog>
 
@@ -234,7 +198,7 @@ export function PropertiesSection(
           value={editForm.watch("type") || ""}
           onChange={(value: string) => editForm.setValue("type", value)}
           rulesetId={ruleset.id}
-          entityType={entityType as EntityType}
+          entityType={entityType}
           label="Type"
           placeholder="e.g., tag, category, note"
           fullWidth
@@ -252,14 +216,9 @@ export function PropertiesSection(
           error={!!editForm.formState.errors.value}
           helperText={editForm.formState.errors.value?.message}
         />
-        <TextField
+        <DescriptionField
           {...editForm.register("description")}
-          label="Description"
-          fullWidth
-          multiline
-          minRows={3}
           placeholder="Enter the property description..."
-          sx={{ "& textarea": { resize: "vertical" } }}
         />
       </EditDialog>
 
@@ -271,6 +230,6 @@ export function PropertiesSection(
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
       />
-    </Box>
+    </SectionContent>
   );
 }

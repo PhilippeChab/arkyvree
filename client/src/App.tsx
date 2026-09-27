@@ -39,7 +39,7 @@ const MechanicDetailPage = lazy(() => import("@/client/src/pages/rulesets/detail
 const AptitudeDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/AptitudeDetailPage.tsx"));
 const AbilityDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/AbilityDetailPage.tsx"));
 const SharedCharacterPage = lazy(() => import("@/client/src/pages/shared/SharedCharacterPage.tsx"));
-const LegalPage = lazy(() => import("@/client/src/pages/legal/index.ts"));
+const LegalPage = lazy(() => import("@/client/src/pages/legal/LegalPage.tsx"));
 const SignUp = lazy(() => import("@/client/src/pages/auth/SignUp.tsx"));
 const VerifyEmail = lazy(() => import("@/client/src/pages/auth/VerifyEmail.tsx"));
 const ForgotPassword = lazy(() => import("@/client/src/pages/auth/ForgotPassword.tsx"));

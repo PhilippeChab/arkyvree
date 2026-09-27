@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-export type DemoUrgency = "normal" | "warning" | "critical" | "expired";
+type DemoUrgency = "normal" | "warning" | "critical" | "expired";
 
 export interface DemoTimeRemaining {
   isDemo: boolean;

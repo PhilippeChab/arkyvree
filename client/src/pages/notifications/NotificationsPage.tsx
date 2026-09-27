@@ -1,3 +1,4 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   BlankState,
   LoadMoreButton,
@@ -6,10 +7,11 @@ import {
   SearchBar,
   DiceSpinner,
   type FilterOption,
-  type SortOption,
+  CREATED_SORTS,
+  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
-import { useDebouncedValue, useNotificationActions, usePageTitle, useUpdateSearchParams } from "@/client/src/hooks/index.ts";
+import { useNotificationActions, usePageTitle, useListParams } from "@/client/src/hooks/index.ts";
 import {
   formatActivityDetails,
   formatNotificationMessage,
@@ -37,12 +39,6 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
-
-const SORT_OPTIONS: SortOption<"createdAt">[] = [
-  { field: "createdAt", direction: "desc", label: "Newest First" },
-  { field: "createdAt", direction: "asc", label: "Oldest First" },
-];
 
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: undefined, label: "All" },
@@ -54,12 +50,11 @@ const PAGE_SIZE = 10;
 export default function NotificationsPage() {
   usePageTitle("Notifications");
   const actions = useNotificationActions();
-  const [searchParams] = useSearchParams();
-  const updateSearchParams = useUpdateSearchParams();
+  const { searchParams, updateSearchParams, search, orderDir, searchBarProps } = useListParams(
+    ["createdAt"],
+    { orderBy: "createdAt", orderDir: "desc" },
+  );
 
-  const searchQuery = searchParams.get("search") || "";
-  const debouncedSearch = useDebouncedValue(searchQuery);
-  const orderDir = searchParams.get("orderDir") === "asc" ? "asc" : "desc";
   const unreadOnly = searchParams.get("filter") === "unread";
 
   const {
@@ -70,14 +65,14 @@ export default function NotificationsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.notifications.list({ search: debouncedSearch, orderDir, unreadOnly }),
+    queryKey: queryKeys.notifications.list({ search, orderDir, unreadOnly }),
     queryFn: ({ pageParam }) => parseResponse(rpc.api.notifications.$get({
       query: {
         page: pageParam.toString(),
         limit: PAGE_SIZE.toString(),
-        search: debouncedSearch || undefined,
+        search: search || undefined,
         orderDir,
-        ...(unreadOnly && { unreadOnly: "true" }),
+        unreadOnly: unreadOnly ? "true" : undefined,
       },
     })),
     initialPageParam: 1,
@@ -85,7 +80,7 @@ export default function NotificationsPage() {
     placeholderData: keepPreviousData,
   });
 
-  const notifications = data?.pages.flatMap((page) => page.items) ?? [];
+  const notifications = pageItems(data);
 
   return (
     <PageTransition>
@@ -114,22 +109,17 @@ export default function NotificationsPage() {
         />
 
         <SearchBar
-          searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
+          {...searchBarProps}
           searchPlaceholder="Search notifications..."
           filterOptions={FILTER_OPTIONS}
           filterValue={unreadOnly ? "unread" : undefined}
           onFilterChange={(value) => updateSearchParams({ filter: value })}
-          sortOptions={SORT_OPTIONS}
+          sortOptions={CREATED_SORTS}
           sortField="createdAt"
-          sortDirection={orderDir}
-          onSortChange={(_, direction) => updateSearchParams({ orderDir: direction })}
         />
 
         {isLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: { xs: 4, sm: 8 } }}>
-            <DiceSpinner />
-          </Box>
+          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
         ) : error ? (
           <Alert severity="error">Failed to load notifications.</Alert>
         ) : notifications.length > 0 ? (
@@ -159,7 +149,7 @@ export default function NotificationsPage() {
                         }}
                       >
                         <TableCell>
-                          <Tooltip title={formatActivityDetails(notification.data) ?? ""} arrow enterDelay={300} slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}>
+                          <Tooltip describeChild title={formatActivityDetails(notification.data) ?? ""} arrow enterDelay={300} slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                               {isUnread && (
                                 <CircleIcon sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
@@ -198,6 +188,8 @@ export default function NotificationsPage() {
               onClick={() => fetchNextPage()}
             />
           </>
+        ) : search ? (
+          <NoMatchesState search={search} sx={{ mt: 4 }} />
         ) : (
           <BlankState
             icon={NotificationsIcon}

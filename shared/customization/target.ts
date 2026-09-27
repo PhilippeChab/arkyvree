@@ -1,9 +1,12 @@
+/** The type of value a target path holds. */
+export type PathValueType = "number" | "string" | "boolean";
+
 export interface TargetPath {
   path: string;
   category: string;
   description: string;
   groupDescription?: string;
-  valueType: "number" | "string" | "boolean";
+  valueType: PathValueType;
   operators: string[];
   possibleValues?: { value: string; label: string }[];
   sortOrder?: number;
@@ -35,7 +38,7 @@ export interface PathCompletion {
   /** Present on leaf completions (kind="property") — full path for this item */
   path?: string;
   /** Present on leaf completions — value type of the target */
-  valueType?: "number" | "string" | "boolean";
+  valueType?: PathValueType;
   /** Present on leaf completions — allowed operators */
   operators?: string[];
   /** Present on leaf completions — possible values for enum-like targets */

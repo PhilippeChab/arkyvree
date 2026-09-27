@@ -1,17 +1,16 @@
-import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { Aptitude } from "@/client/src/components/customization/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { aptitudeQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { AptitudeFormFields, type AptitudeFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { SearchBar, CreateDialog, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Stars as AptitudesIcon } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { aptitudesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const APTITUDES_COLUMNS = [
@@ -19,22 +18,16 @@ const APTITUDES_COLUMNS = [
   { key: "description", label: "Description", width: "70%" },
 ];
 
-type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
-type Aptitude = AptitudesPaginated["items"][number];
-
 export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    createDialogOpen,
-    setCreateDialogOpen,
     createForm,
-    createMutation,
     handleCreate,
+    createDialogProps,
   } = useRulesetSection<Aptitude, AptitudeFormData>({
     rulesetId: ruleset.id,
     sectionName: "aptitudes",
@@ -45,7 +38,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         json: data,
       }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/aptitudes/${created.id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`aptitudes/${created.id}`),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -53,10 +46,10 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     placeholderData: keepPreviousData,
   });
 
-  const aptitudes = data?.pages.flatMap((page) => page.items) ?? [];
+  const aptitudes = pageItems(data);
 
   const handleRowClick = (aptitude: Aptitude) => {
-    navigate(`/rulesets/${ruleset.id}/aptitudes/${aptitude.id}`, { state: { from: location.pathname + location.search } });
+    openEntity(`aptitudes/${aptitude.id}`);
   };
 
   const handleRowMouseEnter = useCallback((aptitude: Aptitude) => {
@@ -69,11 +62,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         return aptitude.name;
       case "description":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {aptitude.description || "-"}
-          </Typography>
+          <DescriptionCell text={aptitude.description} />
         );
       default:
         return null;
@@ -81,7 +70,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -99,6 +88,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
       <RulesetSectionTable
         data={aptitudes}
+        search={searchQuery}
         isLoading={isLoading}
         columns={APTITUDES_COLUMNS}
         onRowClick={handleRowClick}
@@ -116,15 +106,11 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Aptitude"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
       >
         <AptitudeFormFields form={createForm} />
       </CreateDialog>
-    </Box>
+    </SectionContent>
   );
 }

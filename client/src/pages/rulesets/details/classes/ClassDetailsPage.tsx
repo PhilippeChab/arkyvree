@@ -1,16 +1,14 @@
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { DeleteDialog, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { EntityDetailLayout, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { EntityDetailLayout, EntityDetailsCard, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
+import { useRulesetPermissions, entityPageState } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import {
-  ClassFormFields,
-  type ClassFormData,
-} from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { type HitDieValue } from "@/shared/dnd3.5/classes.ts";
+import { isHitDie } from "@/shared/dnd3.5/classes.ts";
 import {
   Bolt as SpellListIcon,
   EmojiEvents as FeatPoolsIcon,
@@ -23,14 +21,13 @@ import {
   Chip,
   MenuItem,
   TextField,
-  Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { classDetailQuery, prefetchClassSection, type ClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { classDetailQuery, prefetchClassSection, type ClassDetail, type ClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,
@@ -62,10 +59,10 @@ const SECTION_COMPONENTS = {
 const BONUS_SPELL_ABILITY_TYPE = "KLASS_BONUS_SPELL_ABILITY_ID";
 const CASTER_TYPE_PROPERTY_TYPE = "KLASS_CASTER_TYPE";
 
-const toClassForm = (klass: { name: string; description: string | null; hd: number | null }): ClassFormData => ({
+const toClassForm = (klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData => ({
   name: klass.name,
   description: klass.description ?? undefined,
-  hd: (klass.hd ?? 8) as HitDieValue,
+  hd: isHitDie(klass.hd) ? klass.hd : 8,
 });
 
 const isClassSection = (section: string | undefined): section is ClassSection =>
@@ -81,12 +78,12 @@ export default function ClassDetailsPage() {
     classId: string;
     section?: string;
   }>();
-  const backUrl = (location.state as { from?: string } | null)?.from ?? `/rulesets/${rulesetId}/classes`;
+  const backUrl = entityPageState(location.state).from ?? `/rulesets/${rulesetId}/classes`;
   const currentTab: ClassSection = isClassSection(section) ? section : "levels";
 
-  const { data: ruleset, isLoading: isRulesetLoading } = useQuery(rulesetDetailQuery(rulesetId));
+  const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
 
-  const { data: classData, isLoading: isClassLoading, isFetching: isClassFetching } = useQuery(
+  const { data: classData, isLoading: isClassLoading, isFetching: isClassFetching, error: classError } = useQuery(
     classDetailQuery(rulesetId, classId),
   );
 
@@ -186,11 +183,11 @@ export default function ClassDetailsPage() {
 
   if (!isLoading && (!ruleset || !classData)) {
     return (
-      <Box sx={{ maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } }}>
-        <Typography variant="h6" color="error">
-          {!ruleset ? "Ruleset not found" : "Class not found"}
-        </Typography>
-      </Box>
+      <EntityPageError
+        message={!ruleset ? loadFailureMessage("Ruleset", rulesetError) : loadFailureMessage("Class", classError)}
+        backLabel="Back"
+        onBack={() => navigate(backUrl)}
+      />
     );
   }
 
@@ -265,7 +262,8 @@ export default function ClassDetailsPage() {
             <SectionTabs
               tabs={TABS}
               value={currentTab}
-              onChange={(key) => navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`)}
+              // Keep the Back target the page was opened with.
+              onChange={(key) => navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`, { state: location.state })}
               onTabHover={(key) => void prefetchClassSection(queryClient, rulesetId, classId, key)}
               aria-label="class details tabs"
             />

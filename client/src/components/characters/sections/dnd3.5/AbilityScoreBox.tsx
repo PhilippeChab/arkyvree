@@ -1,3 +1,5 @@
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
 import { Box, IconButton, Paper, Stack, Typography } from "@mui/material";
 
@@ -5,7 +7,7 @@ interface AbilityScoreBoxProps {
   ability: string;
   score: number;
   modifier: number;
-  abilityData?: { abilityId?: string; base?: number; level?: number; misc?: number; total?: number };
+  abilityData?: CharacterDetail["abilities"][string];
   onBaseChange?: (abilityId: string, value: number) => void;
   readOnly?: boolean;
   compact?: boolean;
@@ -21,9 +23,11 @@ export function AbilityScoreBox({
   compact,
 }: AbilityScoreBoxProps) {
   const baseValue = abilityData?.base || 10;
-  const canEdit = !readOnly && !compact && abilityData?.abilityId && onBaseChange;
+  const edit = !readOnly && !compact && abilityData?.abilityId && onBaseChange
+    ? { abilityId: abilityData.abilityId, onBaseChange }
+    : null;
   const label = compact ? ability.slice(0, 3).toUpperCase() : ability;
-  const showBreakdown = !compact && abilityData;
+  const breakdown = compact ? undefined : abilityData;
 
   return (
     <Paper
@@ -71,13 +75,12 @@ export function AbilityScoreBox({
             minWidth: compact ? 32 : 40,
           }}
         >
-          {modifier >= 0 ? "+" : ""}
-          {modifier}
+          {formatSigned(modifier)}
         </Typography>
 
-        {showBreakdown && (
+        {breakdown && (
           <Box sx={{ fontSize: "0.75rem", textAlign: "center" }}>
-            {canEdit ? (
+            {edit ? (
               <Stack
                 direction="row"
                 spacing={0.5}
@@ -85,7 +88,8 @@ export function AbilityScoreBox({
               >
                 <IconButton
                   size="small"
-                  onClick={() => onBaseChange!(abilityData!.abilityId!, baseValue - 1)}
+                  aria-label={`Lower base ${ability}`}
+                  onClick={() => edit.onBaseChange(edit.abilityId, baseValue - 1)}
                   disabled={baseValue <= 1}
                   sx={{ p: 0 }}
                 >
@@ -96,7 +100,8 @@ export function AbilityScoreBox({
                 </Typography>
                 <IconButton
                   size="small"
-                  onClick={() => onBaseChange!(abilityData!.abilityId!, baseValue + 1)}
+                  aria-label={`Raise base ${ability}`}
+                  onClick={() => edit.onBaseChange(edit.abilityId, baseValue + 1)}
                   disabled={baseValue >= 100}
                   sx={{ p: 0 }}
                 >
@@ -109,14 +114,10 @@ export function AbilityScoreBox({
               </Typography>
             )}
             <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-              Level: {abilityData!.level
-                ? (abilityData!.level >= 0 ? `+${abilityData!.level}` : abilityData!.level)
-                : "+0"}
+              Level: {formatSigned(breakdown.level)}
             </Typography>
             <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-              Misc: {abilityData!.misc
-                ? (abilityData!.misc >= 0 ? `+${abilityData!.misc}` : abilityData!.misc)
-                : "+0"}
+              Misc: {formatSigned(breakdown.misc)}
             </Typography>
           </Box>
         )}

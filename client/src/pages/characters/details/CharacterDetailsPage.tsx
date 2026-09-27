@@ -1,4 +1,5 @@
-import { ConfirmDialog, DeleteDialog, PageTransition } from "@/client/src/components/common/index.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+import { ConfirmDialog, DeleteDialog, PageTransition, PageError, ActionMenuItem } from "@/client/src/components/common/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -21,9 +22,7 @@ import {
   Container,
   Fade,
   IconButton,
-  ListItemIcon,
   Menu,
-  MenuItem,
   Paper,
   Stack,
   Typography,
@@ -49,7 +48,7 @@ import {
 export default function CharacterDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams<{ id: string }>();
+  const { id = "" } = useParams<{ id: string }>();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isConfirmOpen, setConfirmOpen] = useState(false);
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
@@ -62,13 +61,13 @@ export default function CharacterDetailsPage() {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const pdfExport = usePdfExport(() =>
-    rpc.api.characters[":characterId"]["pdf"]["$post"]({ param: { characterId: id! } }),
+    rpc.api.characters[":characterId"]["pdf"]["$post"]({ param: { characterId: id } }),
   );
   const { isDemo } = useDemoTimeRemaining();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   const { data: character, isLoading, error } = useQuery({
-    ...characterDetailQuery(id!),
+    ...characterDetailQuery(id),
     enabled: !!id,
   });
 
@@ -90,23 +89,27 @@ export default function CharacterDetailsPage() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const closeMenuAnd = (then: () => void) => () => {
+    handleClose();
+    then();
+  };
 
   const invalidateCharacter = () => Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id!) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists }),
   ]);
 
   const removeLevelMutation = useMutation({
-    mutationFn: () => rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id! } }),
+    mutationFn: () => rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id!) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id) });
       setConfirmOpen(false);
     },
     onError: (err) => snackbar.error(err, "Failed to remove level"),
   });
 
   const archiveMutation = useMutation({
-    mutationFn: () => rpc.api.characters[":id"].$delete({ param: { id: id! } }),
+    mutationFn: () => rpc.api.characters[":id"].$delete({ param: { id } }),
     onSuccess: () => {
       void invalidateCharacter();
       navigate("/characters");
@@ -118,7 +121,7 @@ export default function CharacterDetailsPage() {
   });
 
   const unarchiveMutation = useMutation({
-    mutationFn: () => rpc.api.characters[":id"].unarchive.$post({ param: { id: id! } }),
+    mutationFn: () => rpc.api.characters[":id"].unarchive.$post({ param: { id } }),
     onSuccess: () => {
       snackbar.success("Character unarchived successfully");
       return invalidateCharacter();
@@ -127,7 +130,7 @@ export default function CharacterDetailsPage() {
   });
 
   const hardDeleteMutation = useMutation({
-    mutationFn: () => rpc.api.characters[":id"].permanent.$delete({ param: { id: id! } }),
+    mutationFn: () => rpc.api.characters[":id"].permanent.$delete({ param: { id } }),
     onSuccess: () => {
       snackbar.success("Character permanently deleted");
       queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
@@ -150,7 +153,7 @@ export default function CharacterDetailsPage() {
   if (error || !character) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error">Failed to load character details.</Alert>
+        <PageError message="Failed to load character" backLabel="Back to Characters" onBack={() => navigate("/characters")} />
       </Container>
     );
   }
@@ -167,20 +170,12 @@ export default function CharacterDetailsPage() {
         <Paper sx={{ p: 2, mb: 2 }}>
           <Stack
             direction="row"
-            sx={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 1
-            }}>
+            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
             <Stack
               direction="row"
               spacing={2}
-              sx={{
-                alignItems: "center",
-                minWidth: 0
-              }}>
-              <IconButton onClick={() => navigate(isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters")}>
+              sx={{ alignItems: "center", minWidth: 0 }}>
+              <IconButton aria-label="Back" onClick={() => navigate(isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters")}>
                 <ArrowBackIcon />
               </IconButton>
               <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
@@ -190,163 +185,27 @@ export default function CharacterDetailsPage() {
 
             {!(isBonded && isArchived) && (
               <Stack direction="row" spacing={1}>
-              <IconButton onClick={handleClick} sx={{ color: "text.secondary" }}>
+              <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
                 <MoreVertIcon />
               </IconButton>
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
                 {isBonded ? (
-                  <MenuItem
-                    key="download-pdf"
-                    onClick={() => {
-                      pdfExport.mutate();
-                      handleClose();
-                    }}
-                  >
-                    <ListItemIcon>
-                      <DownloadIcon fontSize="small" />
-                    </ListItemIcon>
-                    Download PDF
-                  </MenuItem>
+                  <ActionMenuItem key="download-pdf" icon={DownloadIcon} label="Download PDF" onClick={closeMenuAnd(() => pdfExport.mutate())} />
                 ) : isArchived ? (
                   [
-                    isOwner && (
-                      <MenuItem
-                        key="unarchive"
-                        onClick={() => {
-                          unarchiveMutation.mutate();
-                          handleClose();
-                        }}
-                        sx={{ color: "success.main" }}
-                      >
-                        <ListItemIcon>
-                          <UnarchiveIcon fontSize="small" sx={{ color: "success.main" }} />
-                        </ListItemIcon>
-                        Unarchive
-                      </MenuItem>
-                    ),
-                    !isDemo && (
-                      <MenuItem
-                        key="contributors"
-                        onClick={() => {
-                          setContributorsOpen(true);
-                          handleClose();
-                        }}
-                      >
-                        <ListItemIcon>
-                          <GroupIcon fontSize="small" />
-                        </ListItemIcon>
-                        Contributors
-                      </MenuItem>
-                    ),
-                    isOwner && (
-                      <MenuItem
-                        key="hard-delete"
-                        onClick={() => {
-                          setHardDeleteConfirmOpen(true);
-                          handleClose();
-                        }}
-                        sx={{ color: "error.main" }}
-                      >
-                        <ListItemIcon>
-                          <DeleteForeverIcon fontSize="small" sx={{ color: "error.main" }} />
-                        </ListItemIcon>
-                        Delete permanently
-                      </MenuItem>
-                    ),
+                    isOwner && <ActionMenuItem key="unarchive" icon={UnarchiveIcon} label="Unarchive" intent="positive" onClick={closeMenuAnd(() => unarchiveMutation.mutate())} />,
+                    !isDemo && <ActionMenuItem key="contributors" icon={GroupIcon} label="Contributors" onClick={closeMenuAnd(() => setContributorsOpen(true))} />,
+                    isOwner && <ActionMenuItem key="hard-delete" icon={DeleteForeverIcon} label="Delete permanently" intent="destructive" onClick={closeMenuAnd(() => setHardDeleteConfirmOpen(true))} />,
                   ]
                 ) : (
                   [
-                    <MenuItem
-                      key="add-level"
-                      onClick={() => {
-                        setAddLevelOpen(true);
-                        handleClose();
-                      }}
-                    >
-                      <ListItemIcon>
-                        <AddIcon fontSize="small" />
-                      </ListItemIcon>
-                      Add Level
-                    </MenuItem>,
-                    <MenuItem
-                      key="remove-level"
-                      onClick={() => {
-                        setConfirmOpen(true);
-                        handleClose();
-                      }}
-                    >
-                      <ListItemIcon>
-                        <RemoveIcon fontSize="small" />
-                      </ListItemIcon>
-                      Remove Level
-                    </MenuItem>,
-                    <MenuItem
-                      key="manage-modifiers"
-                      onClick={() => {
-                        setModifiersOpen(true);
-                        handleClose();
-                      }}
-                    >
-                      <ListItemIcon>
-                        <TuneIcon fontSize="small" />
-                      </ListItemIcon>
-                      Manage Modifiers
-                    </MenuItem>,
-                    <MenuItem
-                      key="download-pdf"
-                      onClick={() => {
-                        pdfExport.mutate();
-                        handleClose();
-                      }}
-                    >
-                      <ListItemIcon>
-                        <DownloadIcon fontSize="small" />
-                      </ListItemIcon>
-                      Download PDF
-                    </MenuItem>,
-                    !isDemo && (
-                      <MenuItem
-                        key="contributors"
-                        onClick={() => {
-                          setContributorsOpen(true);
-                          handleClose();
-                        }}
-                      >
-                        <ListItemIcon>
-                          <GroupIcon fontSize="small" />
-                        </ListItemIcon>
-                        Contributors
-                      </MenuItem>
-                    ),
-                    isOwner && !isDemo && (
-                      <MenuItem
-                        key="share"
-                        onClick={() => {
-                          setShareOpen(true);
-                          handleClose();
-                        }}
-                      >
-                        <ListItemIcon>
-                          <ShareIcon fontSize="small" />
-                        </ListItemIcon>
-                        Share
-                      </MenuItem>
-                    ),
-                    isOwner && (
-                      <MenuItem
-                        key="archive"
-                        onClick={() => {
-                          setArchiveConfirmOpen(true);
-                          handleClose();
-                        }}
-                        sx={{ color: "warning.main" }}
-                      >
-                        <ListItemIcon>
-                          <ArchiveIcon fontSize="small" sx={{ color: "warning.main" }} />
-                        </ListItemIcon>
-                        Archive
-                      </MenuItem>
-                    ),
+                    <ActionMenuItem key="add-level" icon={AddIcon} label="Add Level" onClick={closeMenuAnd(() => setAddLevelOpen(true))} />,
+                    <ActionMenuItem key="remove-level" icon={RemoveIcon} label="Remove Level" onClick={closeMenuAnd(() => setConfirmOpen(true))} />,
+                    <ActionMenuItem key="manage-modifiers" icon={TuneIcon} label="Manage Modifiers" onClick={closeMenuAnd(() => setModifiersOpen(true))} />,
+                    <ActionMenuItem key="download-pdf" icon={DownloadIcon} label="Download PDF" onClick={closeMenuAnd(() => pdfExport.mutate())} />,
+                    !isDemo && <ActionMenuItem key="contributors" icon={GroupIcon} label="Contributors" onClick={closeMenuAnd(() => setContributorsOpen(true))} />,
+                    isOwner && !isDemo && <ActionMenuItem key="share" icon={ShareIcon} label="Share" onClick={closeMenuAnd(() => setShareOpen(true))} />,
+                    isOwner && <ActionMenuItem key="archive" icon={ArchiveIcon} label="Archive" intent="caution" onClick={closeMenuAnd(() => setArchiveConfirmOpen(true))} />,
                   ]
                 )}
               </Menu>
@@ -387,18 +246,17 @@ export default function CharacterDetailsPage() {
           confirmLabel="Delete permanently"
         />
 
-
         <ShareDialog
           open={isShareOpen}
           onClose={() => setShareOpen(false)}
-          characterId={id!}
+          characterId={id}
           shareToken={character.shareToken}
         />
 
         <ContributorsDialog
           open={isContributorsOpen}
           onClose={() => setContributorsOpen(false)}
-          characterId={id!}
+          characterId={id}
           isOwner={isOwner}
           isArchived={isArchived}
         />
@@ -406,7 +264,7 @@ export default function CharacterDetailsPage() {
         <CharacterModifiersModal
           open={isModifiersOpen}
           onClose={() => setModifiersOpen(false)}
-          characterId={id!}
+          characterId={id}
           rulesetId={character.rulesetId}
         />
 
@@ -424,16 +282,16 @@ export default function CharacterDetailsPage() {
           <AddLevelModal
             open
             onClose={() => setAddLevelOpen(false)}
-            characterId={id!}
-            baseRules={character.baseRules!}
+            characterId={id}
+            baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
           />
         )}
         {editingLevel && (
           <EditLevelModal
             open
             onClose={() => setEditingLevel(null)}
-            characterId={id!}
-            baseRules={character.baseRules!}
+            characterId={id}
+            baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
             editingLevel={editingLevel}
           />
         )}
@@ -441,7 +299,7 @@ export default function CharacterDetailsPage() {
         {isBonded ? (
           <CharacterSheetBody
             character={character}
-            characterId={id!}
+            characterId={id}
             readOnly
             identityReadOnly={isArchived}
             equipmentMode="readonly"
@@ -450,7 +308,7 @@ export default function CharacterDetailsPage() {
         ) : (
           <CharacterSheetBody
             character={character}
-            characterId={id!}
+            characterId={id}
             readOnly={isArchived}
             onEditLevel={!isArchived ? setEditingLevel : undefined}
             onAddLevel={() => setAddLevelOpen(true)}
@@ -458,7 +316,7 @@ export default function CharacterDetailsPage() {
             onViewBondedSheet={(bondedId) => navigate(`/characters/${bondedId}`)}
             equipmentMode="editable"
             rulesetId={character.rulesetId}
-            showDiagnostics
+            diagnostics={character}
           />
         )}
       </Container>

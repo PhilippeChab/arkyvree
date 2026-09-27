@@ -13,7 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { ReactNode } from "react";
-import type { LevelWizard } from "./levelUp/useLevelWizard.ts";
+import type { LevelWizard } from "./levelUp/index.ts";
 
 /** The part of a level wizard the dialog drives: steps, cancel, validation and navigation. */
 type WizardControls = Pick<
@@ -75,12 +75,7 @@ export function LevelWizardDialog({
     >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent
-        sx={{
-          height: "100%",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
+        sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}
       >
         {/* Cancel confirm */}
         <AnimatedAlert
@@ -170,13 +165,7 @@ export function LevelWizardDialog({
 
         {/* Step content */}
         <Box
-          sx={{
-            flex: 1,
-            overflow: "auto",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-          }}
+          sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", minHeight: 0 }}
         >
           {children}
         </Box>

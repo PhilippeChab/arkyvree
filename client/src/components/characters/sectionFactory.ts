@@ -1,29 +1,19 @@
-import type { RPC } from "@/client/src/services/rpc.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import type { ComponentType } from "react";
-import type { InferResponseType } from "hono/client";
 import {
   AbilityScoresSection,
   CombatAndSavesSection,
   BondedSection,
   SkillsSection,
   SpellsSection,
+  type Dnd35AbilityScoresSectionProps,
+  type Dnd35BondedSectionProps,
+  type Dnd35CombatAndSavesSectionProps,
+  type Dnd35PowersSectionProps,
+  type Dnd35SkillsSectionProps,
 } from "./sections/dnd3.5/index.ts";
-import type {
-  Dnd35AbilityScoresSectionProps,
-  Dnd35CombatAndSavesSectionProps,
-  Dnd35PowersSectionProps,
-  Dnd35SkillsSectionProps,
-} from "./sections/dnd3.5/types.ts";
 
-type CharacterResponse = InferResponseType<RPC["api"]["characters"][":id"]["$get"], 200>;
-type BaseRules = NonNullable<CharacterResponse["baseRules"]>;
-
-type BondedFromResponse = NonNullable<NonNullable<CharacterResponse["bonded"]>[string]>;
-export interface BondedSectionProps {
-  bonded: BondedFromResponse;
-  /** When true, the bonded name renders as a router link to `/characters/<bondedId>`. */
-  linkable?: boolean;
-}
+type BaseRules = NonNullable<CharacterDetail["baseRules"]>;
 
 // The 3.5 prop shapes under the generic names the SectionMap uses. When a
 // second ruleset ships, this file will grow per-ruleset prop types and the
@@ -36,7 +26,7 @@ type SkillsSectionProps = Dnd35SkillsSectionProps;
 interface SectionMap {
   AbilityScoresSection: ComponentType<AbilityScoresSectionProps>;
   CombatAndSavesSection: ComponentType<CombatAndSavesSectionProps>;
-  BondedSection: ComponentType<BondedSectionProps>;
+  BondedSection: ComponentType<Dnd35BondedSectionProps>;
   PowersSection: ComponentType<PowersSectionProps>;
   SkillsSection: ComponentType<SkillsSectionProps>;
 }

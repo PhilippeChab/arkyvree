@@ -1,3 +1,4 @@
+import type { InferRequestType } from "hono/client";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
@@ -53,6 +54,9 @@ function getEntityUrl(rulesetId: string, change: Change): string | undefined {
     : `/rulesets/${rulesetId}/${segment}/${entityId}`;
 }
 
+const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore;
+type RestorableType = InferRequestType<typeof restoreApi.$post>["param"]["entityType"];
+
 interface OverridesDialogProps {
   open: boolean;
   onClose: () => void;
@@ -82,8 +86,9 @@ export function OverridesDialog({
 
   const revertMutation = useMutation({
     mutationFn: async ({ entityType, sourceEntityId }: { entityType: string; sourceEntityId: string }) => {
-      return parseResponse(rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore.$post({
-        param: { id: rulesetId, entityType: entityType as never, entityId: sourceEntityId },
+      return parseResponse(restoreApi.$post({
+        // The changes list types entityType as a string; every entity it lists can be restored.
+        param: { id: rulesetId, entityType: entityType as RestorableType, entityId: sourceEntityId },
       }));
     },
     onSuccess: () => {
@@ -99,8 +104,9 @@ export function OverridesDialog({
   const grouped = new Map<string, Change[]>();
   if (changes) {
     for (const change of changes) {
-      if (!grouped.has(change.entityType)) grouped.set(change.entityType, []);
-      grouped.get(change.entityType)!.push(change);
+      const group = grouped.get(change.entityType) ?? [];
+      group.push(change);
+      grouped.set(change.entityType, group);
     }
   }
 
@@ -112,9 +118,7 @@ export function OverridesDialog({
       </DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <DiceSpinner />
-          </Box>
+          <DiceSpinner sx={{ py: 4 }} />
         )}
         <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={250} unmountOnExit>
           <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>

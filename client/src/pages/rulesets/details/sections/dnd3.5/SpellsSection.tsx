@@ -1,23 +1,17 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { AptitudeAutocomplete, type Aptitude } from "@/client/src/components/customization/index.ts";
-import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { AptitudeChipsCell, DescriptionCell, RulesetSectionTable, SectionActions, SpellLevelFilter } from "@/client/src/pages/rulesets/components/index.ts";
+import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Bolt as PowersIcon } from "@mui/icons-material";
 import {
   Box,
-  Chip,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useRulesetSaves, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { SpellFormFields, type SpellFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
@@ -33,8 +27,7 @@ type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["power
 type Spell = SpellsPaginated["items"][number];
 
 export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
@@ -47,7 +40,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
-    createMutation,
+    createDialogProps,
   } = useRulesetSection<Spell, SpellFormData>({
     rulesetId: ruleset.id,
     sectionName: "powers",
@@ -58,7 +51,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       }
       return parseResponse(rpc.api.rulesets[":id"].powers.$post({ param: { id: ruleset.id }, json: data }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/powers/${created.id}/customization`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`powers/${created.id}/customization`),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -71,7 +64,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     placeholderData: keepPreviousData,
   });
 
-  const spells = data?.pages.flatMap((page) => page.items) ?? [];
+  const spells = pageItems(data);
 
   const { data: createSaves = [] } = useRulesetSaves(ruleset.id, createDialogOpen);
 
@@ -81,7 +74,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   };
 
   const handleRowClick = (spell: Spell) => {
-    navigate(`/rulesets/${ruleset.id}/powers/${spell.id}/customization`, { state: { from: location.pathname + location.search } });
+    openEntity(`powers/${spell.id}/customization`);
   };
 
   const handleRowMouseEnter = useCallback((spell: Spell) => {
@@ -93,44 +86,16 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       case "name":
         return spell.name;
       case "aptitudes":
-        return (
-          <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-            {spell.powersAptitudesInRules && spell.powersAptitudesInRules.length > 0
-              ? (
-                spell.powersAptitudesInRules.map((link) => (
-                  <Chip
-                    key={link.aptitudeId}
-                    label={link.aptitudesInRule?.name || "Unknown"}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                ))
-              )
-              : (
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
-                  -
-                </Typography>
-              )}
-          </Box>
-        );
+        return <AptitudeChipsCell links={spell.powersAptitudesInRules} />;
       case "description":
-        return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {spell.description || "-"}
-          </Typography>
-        );
+        return <DescriptionCell text={spell.description} />;
       default:
         return null;
     }
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -146,19 +111,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
                 scope="spells"
               />
             </Box>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>Level</InputLabel>
-              <Select
-                value={selectedLevel}
-                label="Level"
-                onChange={(e) => setLevelParam(String(e.target.value))}
-              >
-                <MenuItem value="">All</MenuItem>
-                {Array.from({ length: 10 }, (_, i) => (
-                  <MenuItem key={i} value={i}>{i}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SpellLevelFilter value={selectedLevel} onChange={(level) => setLevelParam(String(level))} allowAll />
           </>
         }
         actions={
@@ -174,6 +127,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
       <RulesetSectionTable
         data={spells}
+        search={searchQuery}
         isLoading={isLoading}
         columns={SPELLS_COLUMNS}
         onRowClick={handleRowClick}
@@ -191,17 +145,13 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Spell"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
         maxWidth="md"
         fixedHeight
       >
         <SpellFormFields form={createForm} rulesetId={ruleset.id} saves={createSaves} />
       </CreateDialog>
-    </Box>
+    </SectionContent>
   );
 }

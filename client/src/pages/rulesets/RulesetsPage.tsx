@@ -1,3 +1,4 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   BlankState,
   InfoPill,
@@ -10,8 +11,11 @@ import {
   DiceSpinner,
   type FilterOption,
   type SortOption,
+  CREATED_SORTS,
+  UPDATED_SORTS,
+  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, usePageTitle, useStaggerAnimation, useUpdateSearchParams } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
 import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -30,14 +34,13 @@ import {
 } from "@mui/icons-material";
 import {
   Alert,
-  Box,
   Container,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const SCOPES = ["base", "extensions", "systems", "community", "forked", "campaignAccessible", "starred", "archived"] as const;
 type FilterScope = (typeof SCOPES)[number];
@@ -55,12 +58,7 @@ const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
   { value: "archived", label: "Archived" },
 ];
 
-const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [
-  { field: "createdAt", direction: "desc", label: "Newest First" },
-  { field: "createdAt", direction: "asc", label: "Oldest First" },
-  { field: "updatedAt", direction: "desc", label: "Recently Updated" },
-  { field: "updatedAt", direction: "asc", label: "Least Recently Updated" },
-];
+const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [...CREATED_SORTS, ...UPDATED_SORTS];
 
 const STATUS_PILLS = {
   Draft: {
@@ -101,13 +99,11 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
     placeholderData: keepPreviousData,
   });
 
-  const rulesets = data?.pages.flatMap(({ items }) => items) ?? [];
+  const rulesets = pageItems(data);
 
   if (isLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: { xs: 4, sm: 8 } }}>
-        <DiceSpinner />
-      </Box>
+      <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
     );
   }
 
@@ -116,11 +112,13 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
   }
 
   if (rulesets.length === 0) {
-    return (
+    return filters.search ? (
+      <NoMatchesState search={filters.search} />
+    ) : (
       <BlankState
         icon={BookIcon}
         title="No rulesets found"
-        description="Try adjusting your search or filters, or fork a base ruleset"
+        description="Try another filter, or fork a base ruleset"
       />
     );
   }
@@ -208,15 +206,12 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
 
 export default function RulesetsPage() {
   usePageTitle("Rulesets");
-  const [searchParams] = useSearchParams();
-  const updateSearchParams = useUpdateSearchParams();
+  const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
+    ["createdAt", "updatedAt"],
+    { orderBy: "createdAt", orderDir: "desc" },
+  );
 
-  const searchQuery = searchParams.get("search") || "";
-  const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const rawScope = searchParams.get("scope");
-  const scope = SCOPES.includes(rawScope as FilterScope) ? rawScope as FilterScope : undefined;
-  const orderBy = oneOf(searchParams.get("orderBy"), ["createdAt", "updatedAt"], "createdAt");
-  const orderDir = oneOf(searchParams.get("orderDir"), ["asc", "desc"], "desc");
+  const scope = oneOf(searchParams.get("scope"), SCOPES);
 
   return (
     <PageTransition>
@@ -228,19 +223,15 @@ export default function RulesetsPage() {
         />
 
         <SearchBar
-          searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
+          {...searchBarProps}
           searchPlaceholder="Search rulesets..."
           filterOptions={RULESET_FILTER_OPTIONS}
           filterValue={scope}
           onFilterChange={(value) => updateSearchParams({ scope: value })}
           sortOptions={RULESET_SORT_OPTIONS}
-          sortField={orderBy}
-          sortDirection={orderDir}
-          onSortChange={(field, direction) => updateSearchParams({ orderBy: field, orderDir: direction })}
         />
 
-        <RulesetList filters={{ scope, search: debouncedSearchQuery, orderBy, orderDir }} />
+        <RulesetList filters={{ scope, search, orderBy, orderDir }} />
       </Container>
     </PageTransition>
   );

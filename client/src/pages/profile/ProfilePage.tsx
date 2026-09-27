@@ -1,4 +1,5 @@
-import { AttachmentField, DiceSpinner, PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
+import type { AuthUser } from "@/client/src/stores/authStore.ts";
+import { AttachmentField, DiceSpinner, PageHeader, PageTransition, EmailField, PasswordField, PageError } from "@/client/src/components/common/index.ts";
 import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
 import { useFormSync, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
@@ -27,7 +28,7 @@ interface ProfileFormData {
   emailAddress: string;
 }
 
-const toProfileForm = (user: { username: string | null; emailAddress: string }): ProfileFormData => ({
+const toProfileForm = (user: Pick<AuthUser, "username" | "emailAddress">): ProfileFormData => ({
   username: user.username ?? "",
   emailAddress: user.emailAddress,
 });
@@ -159,9 +160,7 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-          <DiceSpinner size="large" />
-        </Box>
+        <DiceSpinner size="large" sx={{ minHeight: 400 }} />
       </Container>
     );
   }
@@ -169,7 +168,7 @@ export default function ProfilePage() {
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <Alert severity="error">Failed to load profile data. Please try again later.</Alert>
+        <PageError message="Failed to load your profile. Please try again later." />
       </Container>
     );
   }
@@ -242,18 +241,10 @@ export default function ProfilePage() {
                   helperText={profileErrors.username?.message || "Optional: Choose a display name"}
                 />
 
-                <TextField
+                <EmailField
                   {...profileForm.register("emailAddress", emailRules)}
+                  error={profileErrors.emailAddress}
                   label="Email Address"
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  error={!!profileErrors.emailAddress}
-                  helperText={profileErrors.emailAddress?.message}
-                  type="email"
-                  slotProps={{
-                    htmlInput: { autoComplete: "email" }
-                  }}
                 />
 
                 <Button
@@ -302,47 +293,26 @@ export default function ProfilePage() {
         <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
           <form onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))} noValidate>
             {hasPassword && (
-              <TextField
+              <PasswordField
                 {...passwordForm.register("currentPassword", { required: "Current password is required" })}
-                type="password"
+                error={passwordErrors.currentPassword}
                 label="Current Password"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                error={!!passwordErrors.currentPassword}
-                helperText={passwordErrors.currentPassword?.message}
-                slotProps={{
-                  htmlInput: { autoComplete: "current-password" }
-                }}
+                autoComplete="current-password"
               />
             )}
 
-            <TextField
+            <PasswordField
               {...passwordForm.register("newPassword", newPasswordRules)}
-              type="password"
+              error={passwordErrors.newPassword}
               label="New Password"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              error={!!passwordErrors.newPassword}
-              helperText={passwordErrors.newPassword?.message}
-              slotProps={{
-                htmlInput: { autoComplete: "new-password" }
-              }}
+              autoComplete="new-password"
             />
 
-            <TextField
+            <PasswordField
               {...passwordForm.register("newPasswordConfirmation", confirmPasswordRules<PasswordFormData>("newPassword"))}
-              type="password"
+              error={passwordErrors.newPasswordConfirmation}
               label="Confirm New Password"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              error={!!passwordErrors.newPasswordConfirmation}
-              helperText={passwordErrors.newPasswordConfirmation?.message}
-              slotProps={{
-                htmlInput: { autoComplete: "new-password" }
-              }}
+              autoComplete="new-password"
             />
 
             <Button

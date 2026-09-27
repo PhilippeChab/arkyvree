@@ -1,5 +1,8 @@
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { PathCompletion, PathValidationResult } from "@/shared/customization/target.ts";
+import type { PathCompletion, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
+
+/** What the input reports about a completed path. */
+export type PathInfo = Pick<TargetPath, "path" | "valueType" | "operators" | "possibleValues">;
 import {
   Box,
   FormControl,
@@ -22,9 +25,7 @@ interface TargetPathInputProps {
   helperText?: string;
   disabled?: boolean;
   fullWidth?: boolean;
-  onPathInfoChange?: (
-    pathInfo: { path: string; valueType: string; operators: string[]; possibleValues?: { value: string; label: string }[] } | null
-  ) => void;
+  onPathInfoChange?: (pathInfo: PathInfo | null) => void;
 }
 
 export function TargetPathInput({
@@ -65,7 +66,7 @@ export function TargetPathInput({
         setValidationResult(await parseResponse(rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
           param: { id: rulesetId },
           json: { path, kind },
-        })) as PathValidationResult);
+        })));
       } catch {
         setValidationResult(null);
       }

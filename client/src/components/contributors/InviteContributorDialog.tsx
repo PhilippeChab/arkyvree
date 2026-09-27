@@ -1,8 +1,8 @@
-import { Button, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
-import { DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
 import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
@@ -41,36 +41,14 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
       >
         <DialogTitle>Invite Contributor</DialogTitle>
         <DialogContent>
-          <Controller
-            name="email"
-            control={form.control}
-            rules={emailRules}
-            render={({ field, fieldState }) => (
-              <TextField
-                {...field}
-                label="Email address"
-                type="email"
-                fullWidth
-                margin="normal"
-                error={!!fieldState.error}
-                helperText={fieldState.error?.message}
-                autoFocus
-              />
-            )}
+          <EmailField
+            {...form.register("email", emailRules)}
+            error={form.formState.errors.email}
+            label="Email address"
+            autoFocus
           />
           {roles && (
-            <Controller
-              name="role"
-              control={form.control}
-              render={({ field }) => (
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Role</InputLabel>
-                  <Select {...field} label="Role">
-                    {roles.map((role) => <MenuItem key={role} value={role}>{role}</MenuItem>)}
-                  </Select>
-                </FormControl>
-              )}
-            />
+            <SelectField control={form.control} name="role" label="Role" options={roles} margin="normal" />
           )}
         </DialogContent>
         <DialogActions>

@@ -1,3 +1,4 @@
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { BlankState } from "@/client/src/components/common/index.ts";
 import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
@@ -12,27 +13,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SheetSection } from "./SheetSection.tsx";
 
-type FeatLike = {
-  id?: string;
-  name: string;
-  description?: string | null;
-  stackable?: boolean;
-};
+type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
 
 interface FeatsSectionProps {
-  classes: Record<string, {
-    levels?: Array<{
-      feats?: FeatLike[];
-    }>;
-  }>;
-  virtualFeats?: Array<{
-    id: string;
-    name: string;
-    description?: string | null;
-    stackable: boolean;
-  }>;
+  classes: CharacterDetail["classes"];
+  virtualFeats?: CharacterDetail["virtualFeats"];
   rulesetId?: string;
-  renderFeatExtra?: (feat: FeatLike) => React.ReactNode;
+  renderFeatExtra?: (feat: Feat) => React.ReactNode;
 }
 
 export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra }: FeatsSectionProps) {
@@ -44,13 +31,13 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
     : [];
 
   // Group feats by name
-  const groupedFeats = allFeats.reduce((acc, feat) => {
+  const groupedFeats = allFeats.reduce<Record<string, typeof allFeats>>((acc, feat) => {
     if (!acc[feat.name]) {
       acc[feat.name] = [];
     }
     acc[feat.name].push(feat);
     return acc;
-  }, {} as Record<string, typeof allFeats>);
+  }, {});
 
   const renderFeatName = (feat: { id?: string; name: string }, suffix?: string) => {
     const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
@@ -87,7 +74,8 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
     ));
   });
 
-  const hasVirtual = (virtualFeats || []).length > 0;
+  const grantedFeats = virtualFeats ?? [];
+  const hasVirtual = grantedFeats.length > 0;
 
   return (
     <SheetSection title="Feats & Special Abilities">
@@ -95,7 +83,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
         ? (
           <Stack spacing={3}>
             {featElements}
-            {hasVirtual && <GrantedFeatsSection feats={virtualFeats!} rulesetId={rulesetId} />}
+            {hasVirtual && <GrantedFeatsSection feats={grantedFeats} rulesetId={rulesetId} />}
           </Stack>
         )
         : (

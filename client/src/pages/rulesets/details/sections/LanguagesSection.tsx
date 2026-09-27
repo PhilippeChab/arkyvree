@@ -1,17 +1,16 @@
-import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import type { RulesetLanguage } from "@/client/src/hooks/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { languageQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { LanguageFormFields, type LanguageFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Translate as LanguagesIcon } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const LANGUAGES_COLUMNS = [
@@ -20,22 +19,18 @@ const LANGUAGES_COLUMNS = [
   { key: "description", label: "Description", width: "55%" },
 ];
 
-type LanguagesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>;
-type Language = LanguagesPaginated["items"][number];
+type Language = RulesetLanguage;
 
 export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    createDialogOpen,
-    setCreateDialogOpen,
     createForm,
-    createMutation,
     handleCreate,
+    createDialogProps,
   } = useRulesetSection<Language, LanguageFormData>({
     rulesetId: ruleset.id,
     sectionName: "languages",
@@ -46,7 +41,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         json: data,
       }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/languages/${created.id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`languages/${created.id}`),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -54,10 +49,10 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     placeholderData: keepPreviousData,
   });
 
-  const languages = data?.pages.flatMap((page) => page.items) ?? [];
+  const languages = pageItems(data);
 
   const handleRowClick = (language: Language) => {
-    navigate(`/rulesets/${ruleset.id}/languages/${language.id}`, { state: { from: location.pathname + location.search } });
+    openEntity(`languages/${language.id}`);
   };
 
   const handleRowMouseEnter = useCallback((language: Language) => {
@@ -69,21 +64,10 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       case "name":
         return language.name;
       case "type":
-        return language.type || "\u2014";
+        return language.type || "—";
       case "description":
         return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical"
-            }}>
-            {language.description || "\u2014"}
-          </Typography>
+          <DescriptionCell text={language.description} />
         );
       default:
         return null;
@@ -91,7 +75,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -109,6 +93,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
       <RulesetSectionTable
         data={languages}
+        search={searchQuery}
         isLoading={isLoading}
         columns={LANGUAGES_COLUMNS}
         onRowClick={handleRowClick}
@@ -126,15 +111,11 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Language"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
       >
         <LanguageFormFields form={createForm} />
       </CreateDialog>
-    </Box>
+    </SectionContent>
   );
 }

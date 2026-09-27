@@ -1,3 +1,4 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { BlankState, ConfirmDialog, DiceSpinner, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
@@ -55,7 +56,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
     enabled: open,
   });
 
-  const contributors = data?.pages.flatMap((page) => page.items) ?? [];
+  const contributors = pageItems(data);
   const owner = data?.pages[0]?.owner ?? null;
 
   const inviteMutation = useMutation({
@@ -123,9 +124,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
 
             <Box sx={{ minHeight: { xs: 280, sm: 360 }, display: "flex", flexDirection: "column" }}>
               {isLoading ? (
-                <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <DiceSpinner />
-                </Box>
+                <DiceSpinner sx={{ flex: 1 }} />
               ) : error ? (
                 <Alert severity="error">Failed to load contributors</Alert>
               ) : contributors.length === 0 && !owner ? (

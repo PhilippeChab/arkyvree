@@ -1,6 +1,7 @@
-import { useCallback, useRef, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { useWebSocket } from "@/client/src/contexts/useWebSocket.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -18,23 +19,21 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const buildVersionRef = useRef<string | null>(null);
+  // A refresh would discard unsaved form work: confirm it first.
+  const [confirmRefresh, setConfirmRefresh] = useState(false);
 
   const onMessage = useCallback(
     (data: { type: string; [key: string]: unknown }) => {
       if (data.type === "app:version") {
-        const version = data.version as string;
+        if (typeof data.version !== "string") return;
+        const { version } = data;
         if (buildVersionRef.current && buildVersionRef.current !== version) {
           snackbar.info("A new version is available", {
             action: {
               label: "Refresh",
               onClick: () => {
-                // Warn before reload if any form has unsaved work — the
-                // refresh would otherwise discard it without recourse.
-                const dirty = useDirtyFormsStore.getState().count > 0;
-                if (dirty && !window.confirm("You have unsaved changes that will be lost. Refresh anyway?")) {
-                  return;
-                }
-                window.location.reload();
+                if (useDirtyFormsStore.getState().count > 0) setConfirmRefresh(true);
+                else window.location.reload();
               },
             },
             persistent: true,
@@ -55,5 +54,19 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   useWebSocket({ enabled: isAuthenticated, identity: userId, onMessage });
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ConfirmDialog
+        open={confirmRefresh}
+        onClose={() => setConfirmRefresh(false)}
+        onConfirm={() => window.location.reload()}
+        isLoading={false}
+        title="Refresh Arkyvree"
+        message="You have unsaved changes that will be lost. Refresh anyway?"
+        confirmLabel="Refresh"
+        confirmColor="warning"
+      />
+    </>
+  );
 }

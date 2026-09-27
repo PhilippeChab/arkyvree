@@ -1,65 +1,32 @@
 import type { AddReviewStepProps } from "./levelUpFactory.ts";
-import { ReviewSelections } from "./ReviewSelections.tsx";
+import { LevelReview, ReviewGroup } from "./LevelReview.tsx";
 import { attributeName } from "./attributeName.ts";
-import { Box, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 
-export function AddReviewStep({
-  classPlan,
-  hpValues,
-  abilityIncreases,
-  attributeData,
-  skillPointAllocations,
-  skillData,
-  selectedFeats,
-  featData,
-  selectedPowers,
-  powerData,
-}: AddReviewStepProps) {
+export function AddReviewStep({ wizard }: AddReviewStepProps) {
+  const { classPlan, hpValues, abilityIncreases, attributeData } = wizard;
+  const increases = Object.entries(abilityIncreases).filter((entry): entry is [string, string] => entry[1] != null);
+
   return (
-    <Box>
-      <Typography gutterBottom sx={{ typography: { xs: "h6", sm: "h5" } }}>
-        Review Changes
-      </Typography>
-      {/* Class Advancement */}
-      <Box sx={{
-        mb: 3
-      }}>
-        <Typography variant="h6" gutterBottom>
-          Class Advancement
-        </Typography>
-        {classPlan.map((klass, i) =>
-          klass ? (
-            <Typography key={i} variant="body1">
-              <strong>{klass.name}</strong> Level {klass.nextLevel}
-              {hpValues[i] != null && <> — HP: +{hpValues[i]}</>}
+    <LevelReview wizard={wizard}>
+      <ReviewGroup title="Class Advancement">
+        {/* HP is kept per planned level; empty slots don't count. */}
+        {classPlan.filter((klass) => klass !== null).map((klass, i) => (
+          <Typography key={i} variant="body1">
+            <strong>{klass.name}</strong> Level {klass.nextLevel}
+            {hpValues[i] != null && <> — HP: +{hpValues[i]}</>}
+          </Typography>
+        ))}
+      </ReviewGroup>
+      {increases.length > 0 && (
+        <ReviewGroup title="Attribute Increases">
+          {increases.map(([index, abilityId]) => (
+            <Typography key={index} variant="body1">
+              <strong>{attributeName(attributeData, abilityId)}</strong> +1
             </Typography>
-          ) : null,
-        )}
-      </Box>
-      {/* Attribute Increases */}
-      {Object.keys(abilityIncreases).length > 0 &&
-        Object.values(abilityIncreases).some((v) => v != null) && (
-          <Box sx={{
-            mb: 3
-          }}>
-            <Typography variant="h6" gutterBottom>
-              Attribute Increases
-            </Typography>
-            {Object.entries(abilityIncreases).map(([index, abilityId]) => abilityId && (
-              <Typography key={index} variant="body1">
-                <strong>{attributeName(attributeData, abilityId)}</strong> +1
-              </Typography>
-            ))}
-          </Box>
-        )}
-      <ReviewSelections
-        skillPointAllocations={skillPointAllocations}
-        skillData={skillData}
-        selectedFeats={selectedFeats}
-        featData={featData}
-        selectedPowers={selectedPowers}
-        powerData={powerData}
-      />
-    </Box>
+          ))}
+        </ReviewGroup>
+      )}
+    </LevelReview>
   );
 }

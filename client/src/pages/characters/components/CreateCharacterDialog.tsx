@@ -1,5 +1,10 @@
-import { AnimatedAlert, CreateDialog } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useRulesetAbilities } from "@/client/src/hooks/index.ts";
+import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { BaseRulesetAlert, CreateDialog, DescriptionField, NameField, RulesetPicker, SelectField } from "@/client/src/components/common/index.ts";
+import { type RulesetAbility, useDebouncedValue, useListboxQuery, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { settledPulse } from "@/client/src/lib/animations.ts";
@@ -13,15 +18,10 @@ import {
   Remove as RemoveIcon,
 } from "@mui/icons-material";
 import {
-  Autocomplete,
   Chip,
-  FormControl,
-  FormHelperText,
   IconButton,
-  InputLabel,
   MenuItem,
   Paper,
-  Select,
   Skeleton,
   Stack,
   TextField,
@@ -32,6 +32,7 @@ import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
+  skipToken,
 } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -43,10 +44,7 @@ type CreateCharacterFormData = InferRequestType<
   typeof rpc.api.characters.$post
 >["json"];
 
-function formatModifier(score: number): string {
-  const m = Math.floor((score - 10) / 2);
-  return m >= 0 ? `+${m}` : `${m}`;
-}
+type AbilityOption = Pick<RulesetAbility, "id" | "name">;
 
 function AbilityCard({
   name,
@@ -79,27 +77,20 @@ function AbilityCard({
         }),
       }}
     >
-      <Typography variant="caption" sx={{
-        color: "text.secondary"
-      }}>{name}</Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>{name}</Typography>
       <Stack
         direction="row"
         spacing={0.5}
-        sx={{
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-        <IconButton size="small" onClick={onDecrease} disabled={!canDecrease}>
+        sx={{ alignItems: "center", justifyContent: "center" }}>
+        <IconButton size="small" aria-label={`Lower ${name}`} onClick={onDecrease} disabled={!canDecrease}>
           <RemoveIcon fontSize="small" />
         </IconButton>
         <Typography variant="h6" sx={{ minWidth: 28 }}>{score}</Typography>
-        <IconButton size="small" onClick={onIncrease} disabled={!canIncrease}>
+        <IconButton size="small" aria-label={`Raise ${name}`} onClick={onIncrease} disabled={!canIncrease}>
           <AddIcon fontSize="small" />
         </IconButton>
       </Stack>
-      <Typography variant="caption" sx={{
-        color: "text.secondary"
-      }}>{bottomInfo}</Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>{bottomInfo}</Typography>
     </Paper>
   );
 }
@@ -109,7 +100,7 @@ function StandardArrayScores({
   abilityValues,
   setValue,
 }: {
-  abilities: { id: string; name: string }[];
+  abilities: AbilityOption[];
   abilityValues: Record<string, number> | undefined;
   setValue: (key: `abilities.${string}`, value: number) => void;
 }) {
@@ -127,9 +118,7 @@ function StandardArrayScores({
   const sortedAsc = useMemo(() => [...STANDARD_ARRAY].sort((a, b) => a - b), []);
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{
-      flexWrap: "wrap"
-    }}>
+    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const score = abilityValues?.[ability.id] ?? STANDARD_ARRAY[0];
         const idx = sortedAsc.indexOf(score);
@@ -145,7 +134,7 @@ function StandardArrayScores({
             onDecrease={() => canDecrease && handleChange(ability.id, sortedAsc[idx - 1])}
             canIncrease={canIncrease}
             canDecrease={canDecrease}
-            bottomInfo={`Mod: ${formatModifier(score)}`}
+            bottomInfo={`Mod: ${formatSigned(abilityModifier(score))}`}
           />
         );
       })}
@@ -158,7 +147,7 @@ function PointBuyScores({
   abilityValues,
   setValue,
 }: {
-  abilities: { id: string; name: string }[];
+  abilities: AbilityOption[];
   abilityValues: Record<string, number> | undefined;
   setValue: (key: `abilities.${string}`, value: number) => void;
 }) {
@@ -172,9 +161,7 @@ function PointBuyScores({
   const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{
-      flexWrap: "wrap"
-    }}>
+    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const score = abilityValues?.[ability.id] ?? 8;
         const costNow = POINT_BUY_COSTS[score] ?? 0;
@@ -212,7 +199,7 @@ function AbilityScoresSection({
   method,
 }: {
   ref: Ref<AbilityScoresHandle>;
-  abilities: { id: string; name: string }[];
+  abilities: AbilityOption[];
   control: Control<CreateCharacterFormData>;
   setValue: (key: `abilities.${string}`, value: number) => void;
   onRollingChange: (rolling: boolean) => void;
@@ -289,9 +276,7 @@ function AbilityScoresSection({
   }
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{
-      flexWrap: "wrap"
-    }}>
+    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const isSettled = settledIds.has(ability.id);
         const displayValue = rolling
@@ -307,7 +292,7 @@ function AbilityScoresSection({
             onDecrease={() => setValue(`abilities.${ability.id}`, Math.max(1, displayValue - 1))}
             canIncrease={!rolling && displayValue < 100}
             canDecrease={!rolling && displayValue > 1}
-            bottomInfo={`Mod: ${formatModifier(displayValue)}`}
+            bottomInfo={`Mod: ${formatSigned(abilityModifier(displayValue))}`}
             isSettled={isSettled}
           />
         );
@@ -335,7 +320,7 @@ export function CreateCharacterDialog({
       raceId: "",
       name: "",
       xp: 0,
-      abilities: {} as Record<string, number>,
+      abilities: {},
       age: 1,
       height: "",
       weight: "",
@@ -369,22 +354,7 @@ export function CreateCharacterDialog({
     hasNextPage: hasNextRulesetsPage,
     isFetchingNextPage: isFetchingNextRulesetsPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.list({
-      scope: "published",
-      search: debouncedRulesetSearch,
-    }),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets.$get({
-        query: {
-          limit: "10",
-          page: pageParam.toString(),
-          scope: "published",
-          ...(debouncedRulesetSearch && { search: debouncedRulesetSearch }),
-        },
-      }));
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...rulesetPickerQuery("published", debouncedRulesetSearch),
   });
 
   const {
@@ -393,22 +363,7 @@ export function CreateCharacterDialog({
     hasNextPage: hasNextCampaignRulesetsPage,
     isFetchingNextPage: isFetchingNextCampaignRulesetsPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.list({
-      scope: "campaignAccessible",
-      search: debouncedRulesetSearch,
-    }),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets.$get({
-        query: {
-          limit: "10",
-          page: pageParam.toString(),
-          scope: "campaignAccessible",
-          ...(debouncedRulesetSearch && { search: debouncedRulesetSearch }),
-        },
-      }));
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...rulesetPickerQuery("campaignAccessible", debouncedRulesetSearch),
   });
 
   const {
@@ -417,31 +372,16 @@ export function CreateCharacterDialog({
     hasNextPage: hasNextMyDraftsPage,
     isFetchingNextPage: isFetchingNextMyDraftsPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.list({
-      scope: "myDrafts",
-      search: debouncedRulesetSearch,
-    }),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets.$get({
-        query: {
-          limit: "10",
-          page: pageParam.toString(),
-          scope: "myDrafts",
-          ...(debouncedRulesetSearch && { search: debouncedRulesetSearch }),
-        },
-      }));
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...rulesetPickerQuery("myDrafts", debouncedRulesetSearch),
   });
 
   const rulesets = useMemo(() => {
     const draftRulesets =
-      myDraftsData?.pages.flatMap((page) => page.items) ?? [];
+      pageItems(myDraftsData);
     const publishedRulesets =
-      rulesetsData?.pages.flatMap((page) => page.items) ?? [];
+      pageItems(rulesetsData);
     const campaignRulesets =
-      campaignRulesetsData?.pages.flatMap((page) => page.items) ?? [];
+      pageItems(campaignRulesetsData);
     const seenIds = new Set(draftRulesets.map((r) => r.id));
     const dedupedPublished = publishedRulesets.filter(
       (r) => !seenIds.has(r.id),
@@ -455,7 +395,7 @@ export function CreateCharacterDialog({
       ...dedupedPublished.map((r) => ({ ...r, group: "Published" as const })),
       ...dedupedCampaign.map((r) => ({ ...r, group: "Campaign" as const })),
     ];
-  }, [myDraftsData?.pages, rulesetsData?.pages, campaignRulesetsData?.pages]);
+  }, [myDraftsData, rulesetsData, campaignRulesetsData]);
 
   const [selectedRuleset, setSelectedRuleset] = useState<
     (typeof rulesets)[number] | null
@@ -463,39 +403,31 @@ export function CreateCharacterDialog({
 
   // Fetch races for selected ruleset, annotated with eligibility
   const {
-    data: racesData,
+    items: races,
     isPending: isRacesPending,
     isPlaceholderData: isRacesPlaceholder,
     isError: isRacesError,
-    fetchNextPage: fetchNextRacesPage,
-    hasNextPage: hasNextRacesPage,
-    isFetchingNextPage: isFetchingNextRacesPage,
-  } = useInfiniteQuery({
-    queryKey: queryKeys.characters.availableRaces(selectedRulesetId!, {
+    onScroll: handleRacesScroll,
+  } = useListboxQuery({
+    queryKey: queryKeys.characters.availableRaces(selectedRulesetId ?? "", {
       alignment: selectedAlignment,
       gender: selectedGender,
     }),
-    queryFn: async ({ pageParam }) => {
+    queryFn: selectedRulesetId ? async ({ pageParam }) => {
       return parseResponse(rpc.api.characters["available-races"].$get({
         query: {
-          rulesetId: selectedRulesetId!,
-          ...(selectedAlignment && { alignment: selectedAlignment }),
-          ...(selectedGender && { gender: selectedGender }),
+          rulesetId: selectedRulesetId,
+          alignment: selectedAlignment || undefined,
+          gender: selectedGender || undefined,
           limit: "100",
           page: pageParam.toString(),
         },
       }));
-    },
+    } : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: !!selectedRulesetId,
     placeholderData: keepPreviousData,
   });
-
-  const races = useMemo(
-    () => racesData?.pages.flatMap((page) => page.items) ?? [],
-    [racesData?.pages],
-  );
 
   // Clear the race once the list for the current ruleset, alignment and gender
   // has loaded without it, or with it ineligible. While a new list loads, the
@@ -543,11 +475,6 @@ export function CreateCharacterDialog({
     { hasNextPage: hasNextRulesetsPage, isFetchingNextPage: isFetchingNextRulesetsPage, fetchNextPage: fetchNextRulesetsPage },
     { hasNextPage: hasNextCampaignRulesetsPage, isFetchingNextPage: isFetchingNextCampaignRulesetsPage, fetchNextPage: fetchNextCampaignRulesetsPage },
   ]);
-  const handleRacesScroll = createListboxScrollHandler({
-    hasNextPage: hasNextRacesPage,
-    isFetchingNextPage: isFetchingNextRacesPage,
-    fetchNextPage: fetchNextRacesPage,
-  });
 
   const createCharacterMutation = useMutation({
     mutationFn: async (data: CreateCharacterFormData) => {
@@ -594,18 +521,14 @@ export function CreateCharacterDialog({
       isLoading={createCharacterMutation.isPending}
       maxWidth="md"
     >
-      <AnimatedAlert in={selectedRuleset !== null && !selectedRuleset.userId} severity="warning" sx={{ mb: 2 }}>
-        Base rulesets are read-only templates. Fork it first to customize rules for your group.
-      </AnimatedAlert>
+      <BaseRulesetAlert ruleset={selectedRuleset} />
       {/* Basic Info */}
       <Typography variant="h6">Basic Information</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <TextField
-          {...register("name", { required: "Name is required" })}
+        <NameField
+          {...register("name", nameRules)}
+          error={errors.name}
           label="Character Name"
-          error={!!errors.name}
-          helperText={errors.name?.message}
-          fullWidth
         />
         <TextField
           {...register("xp", { valueAsNumber: true, min: 0 })}
@@ -616,108 +539,59 @@ export function CreateCharacterDialog({
       </Stack>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <Autocomplete
-          options={rulesets}
-          getOptionLabel={(option) => option.name}
-          groupBy={(option) => option.group}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
+        <RulesetPicker
+          rulesets={rulesets}
           value={selectedRuleset}
-          onChange={(_, newValue) => {
-            setSelectedRuleset(newValue);
-            setValue("rulesetId", newValue?.id ?? "");
-            if (!newValue) setValue("raceId", "");
+          onChange={(ruleset) => {
+            setSelectedRuleset(ruleset);
+            // Re-check it only once a submit has shown the error, like the other fields.
+            setValue("rulesetId", ruleset?.id ?? "", { shouldValidate: form.formState.isSubmitted });
+            if (!ruleset) setValue("raceId", "");
           }}
-          onInputChange={(_, value, reason) => {
-            if (reason === "input") setRulesetSearch(value);
-          }}
-          filterOptions={(x) => x}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Ruleset"
-              error={!!errors.rulesetId}
-              helperText={errors.rulesetId?.message}
-            />
-          )}
-          fullWidth
-          slotProps={{
-            listbox: {
-              onScroll: handleRulesetsScroll,
-              style: { maxHeight: 300 },
-            }
-          }}
+          onSearch={setRulesetSearch}
+          onScroll={handleRulesetsScroll}
+          error={errors.rulesetId}
         />
 
-        <FormControl
-          fullWidth
-          error={!!errors.raceId}
+        <SelectField
+          control={control}
+          name="raceId"
+          label="Race"
+          rules={{ required: "Race is required" }}
+          options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
           disabled={!selectedRulesetId}
-        >
-          <InputLabel>Race</InputLabel>
-          <Select
-            {...register("raceId", { required: "Race is required" })}
-            label="Race"
-            // Controlled: the race is cleared when it stops being available.
-            value={races.some((race) => race.id === selectedRaceId) ? selectedRaceId : ""}
-            MenuProps={{
-              slotProps: {
-                paper: {
-                  style: { maxHeight: 300 },
-                  onScroll: handleRacesScroll,
-                },
-              },
-            }}
-          >
-            {races.map((race) => (
-              <MenuItem key={race.id} value={race.id} disabled={!race.eligible}>
-                {race.name}
-              </MenuItem>
-            ))}
-          </Select>
-          {errors.raceId && <FormHelperText>{errors.raceId.message}</FormHelperText>}
-        </FormControl>
+          onMenuScroll={handleRacesScroll}
+        />
       </Stack>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <FormControl fullWidth error={!!errors.alignment}>
-          <InputLabel>Alignment</InputLabel>
-          <Select
-            {...register("alignment", { required: "Alignment is required" })}
-            label="Alignment"
-            value={selectedAlignment ?? ""}
-          >
-            {ALIGNMENT_OPTIONS.map((alignment) => (
-              <MenuItem key={alignment} value={alignment}>{alignment}</MenuItem>
-            ))}
-          </Select>
-          {errors.alignment && <FormHelperText>{errors.alignment.message}</FormHelperText>}
-        </FormControl>
-
-        <FormControl fullWidth error={!!errors.gender}>
-          <InputLabel>Gender</InputLabel>
-          <Select
-            {...register("gender", { required: "Gender is required" })}
-            label="Gender"
-            value={selectedGender ?? ""}
-          >
-            {GENDER_OPTIONS.map((gender) => (
-              <MenuItem key={gender} value={gender}>{gender}</MenuItem>
-            ))}
-          </Select>
-          {errors.gender && <FormHelperText>{errors.gender.message}</FormHelperText>}
-        </FormControl>
+        <SelectField
+          control={control}
+          name="alignment"
+          label="Alignment"
+          rules={{ required: "Alignment is required" }}
+          options={ALIGNMENT_OPTIONS}
+        />
+        <SelectField
+          control={control}
+          name="gender"
+          label="Gender"
+          rules={{ required: "Gender is required" }}
+          options={GENDER_OPTIONS}
+        />
       </Stack>
 
       {/* Ability Scores */}
       <Typography variant="h6">Ability Scores</Typography>
-      <Stack direction="row" spacing={1} sx={{
-        alignItems: "center"
-      }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <TextField
           select
           label="Method"
           value={rollMethod}
-          onChange={(e) => setRollMethod(e.target.value as RollMethodId)}
+          onChange={(e) => {
+            const method = ROLL_METHODS.find((m) => m.id === e.target.value);
+            if (method) setRollMethod(method.id);
+          }}
           size="small"
           sx={{ minWidth: 200 }}
         >
@@ -761,9 +635,7 @@ export function CreateCharacterDialog({
           method={rollMethod}
         />
       ) : (
-        <Stack direction="row" spacing={2} useFlexGap sx={{
-          flexWrap: "wrap"
-        }}>
+        <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton
               key={i}
@@ -802,14 +674,9 @@ export function CreateCharacterDialog({
       {/* Optional Details */}
       <Typography variant="h6">Optional Details</Typography>
       <TextField {...register("deity")} label="Deity" fullWidth />
-      <TextField
+      <DescriptionField
         {...register("description")}
-        label="Description"
-        multiline
-        minRows={3}
         placeholder="Character appearance, personality, or background..."
-        fullWidth
-        sx={{ "& textarea": { resize: "vertical" } }}
       />
       <TextField
         {...register("notes")}

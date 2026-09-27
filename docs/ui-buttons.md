@@ -12,6 +12,8 @@ The frontend uses MUI Buttons + MenuItems for actions. Color and variant carry *
 | **Positive** | Publish, Accept, Unarchive, Restore | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
 | **Cancel / Close / Dismiss** | Cancel, Close, Dismiss (in dialogs) | `variant="outlined" color="inherit"` | n/a |
 
+Page action menus use `ActionMenuItem` (`components/common`), whose `intent` (`destructive` / `caution` / `positive`) applies the MenuItem column.
+
 Apply the matrix even when the destructive action fires directly with no confirm dialog (e.g. inline Reject buttons in notification surfaces and invite cards) — the visual treatment is what tells the user the click is consequential.
 
 ## How this works in the theme

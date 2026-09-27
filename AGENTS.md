@@ -76,8 +76,8 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 **Components:**
 
 - Functional components with explicit prop interfaces
-- Group related components in folders with `index.ts` exports
-- Keep every folder's `index.ts`, even one nothing imports yet (routes lazy-load page files directly, so page barrels look unused). Don't delete them as dead code
+- Group related components in folders with `index.ts` exports. Code outside a folder imports it through its `index.ts`, never a file inside it; files within the folder (its subfolders included) import each other directly, and a subfolder with its own `index.ts` is imported through that
+- An `index.ts` exports what code outside its folder uses. An entry, or a whole `index.ts`, that nothing imports is dead code: delete it. Page folders have none: routes import each page file directly (most lazily, so each gets its own chunk)
 
 **API Layer:**
 
@@ -96,17 +96,22 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 **Hooks & Patterns:**
 
 - `useDebouncedValue(value, delay?)` — shared hook for debouncing search inputs (default 300ms)
-- `useRulesetSection` — generic CRUD hook for ruleset detail sections (queries, mutations, dialogs, forms)
+- `useRulesetSection` — generic CRUD hook for ruleset detail sections (queries, mutations, dialogs, forms); spread its `createDialogProps` into the section's `CreateDialog`
 - `useRulesetPermissions(ruleset)` — the single source of ruleset edit / manage / publish rights on the client
 - `useFormSync(form, values, { key, updatedAt })` — keeps an inline edit form in step with server data without wiping unsaved edits on refetch; use it instead of an effect that calls `form.reset()` whenever the query data changes. `key` is the record from the URL (include the ruleset id for ruleset entities: inherited ones keep their id in every fork), so opening another record resets the form. A page that follows a copy-on-write to the copy passes the source's key as `adoptKey`: a form still holding the source takes the new key over and keeps its unsaved edits. Submit through `sync.handleSubmit`, send `sync.updatedAt()` as the save's stale-edit token, and on success call `sync.saved(values, response.updatedAt)` instead of `form.reset()`
-- `useSearchParam` / `useUpdateSearchParams` — list filters and sort live in the URL; `oneOf()` (`lib/oneOf.ts`) validates enum params
+- `useListParams(sortFields, defaultSort)` — a list page's search and sort from the URL, plus the `searchBarProps` that change them (`SearchBar` already debounces typing: don't debounce `search` again). `useSearchParam` for any other filter; `oneOf()` (`lib/oneOf.ts`) validates enum params. Sort options come from `NAME_SORTS` / `CREATED_SORTS` / `UPDATED_SORTS`
 - `useNotificationActions` — accept / reject invites, download exports and open targets for any notification surface
-- `useRulesetAbilities(rulesetId)` / `useRulesetSaves(rulesetId)` / `useRulesetFeats(rulesetId)` — the ability / save / feat lists for pickers and columns (the first 100 of each, the most one request returns); don't query them ad hoc
+- `useRulesetAbilities(rulesetId)` / `useRulesetSaves(rulesetId)` / `useRulesetFeats(rulesetId)` / `useRulesetLanguages(rulesetId)` — the ability / save / feat / language lists for pickers and columns (the first 100 of each, the most one request returns); don't query them ad hoc
+- `useOpenEntity(rulesetId)` — opens a ruleset entity's page with the current list as its Back target; `entityPageState(location.state)` reads that target back
+- `useValidationIssues()` — a save the server can refuse with rules warnings: shows them in the form (with a force save), toasts anything else
+- `useToggleSet()` — expanded rows / open groups, toggled one key at a time
 - `usePrefetch` — returns `{ onMouseEnter, onFocus }` props for prefetching on hover/focus
-- Infinite listboxes: `createListboxScrollHandler` (`lib/listboxScroll.ts`) with `ScrollSafeListbox`
+- Infinite listboxes: `useListboxQuery(options)` returns the loaded `items` and the listbox's `onScroll`; give the listbox `ScrollSafeListbox`. Several queries behind one listbox share a `createListboxScrollHandler([...])` (`lib/listboxScroll.ts`); flatten any other infinite query with `pageItems(data)` (`lib/pageItems.ts`)
+- A query that can't run yet passes `skipToken` as its `queryFn` (not `enabled` plus a guard or `!` in the `queryFn`); `enabled` is for plain on/off gates
+- Untyped JSON (activity and notification payloads, stored state) is read through `isRecord` (`lib/isRecord.ts`) guards, not casts
 - Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()`
 
-**Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `PageActionButton` (the create action in a list page header and empty state), `LoadMoreButton` (paginated lists), `BlankState` (empty lists; pass the icon component, it applies the standard size and tint). Reuse them rather than restyling a copy.
+**Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `PageActionButton` (the create action in a list page header and empty state), `LoadMoreButton` (paginated lists), `BlankState` (empty lists; pass the icon component, it applies the standard size and tint), `SectionContent` (a tab's centered column), `PageError` (a page that failed to load, with its way back), `ActionMenuItem` (a page's action menu item, colored by intent), `NameField` / `DescriptionField` / `EmailField` / `PasswordField` (with `nameRules` from `lib/validation.ts`), `SelectField` (a form's select), `RulesetPicker` + `BaseRulesetAlert` (a create dialog's ruleset), `ValidationIssueList`. A select outside a form is a `TextField select`: `FormControl` + `InputLabel` + `Select` leaves the combobox without an accessible name. Ruleset tables use `DescriptionCell` and `AptitudeChipsCell`, and spell lists `SpellLevelFilter` (`pages/rulesets/components`). Formatting helpers live in `lib/formatNumeric.ts` (`formatSigned`, `formatCount`, `formatCost`, `formatWeight`) and `lib/errorMessage.ts`; an empty value reads "—". Reuse them rather than restyling a copy.
 
 **Toast/Snackbar:**
 
@@ -118,7 +123,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 - Always use `<DiceSpinner>` (`components/common/DiceSpinner.tsx`) — never MUI `CircularProgress`
 - For Buttons, use the wrapper API so the button doesn't shrink when loading flips: `<DiceSpinner size="small" loading={isPending}>Save</DiceSpinner>` as the Button child. Pair with `disabled={isPending}`. Keep any static `startIcon` outside the wrapper.
-- For Suspense fallbacks and full-section loaders, use standalone `<DiceSpinner />` (default medium)
+- For Suspense fallbacks and full-section loaders, use standalone `<DiceSpinner />` (default medium); it centers itself, so give it the block's spacing through `sx` (`<DiceSpinner sx={{ py: 4 }} />`) instead of wrapping it in a Box
 
 **Dialog Conventions:**
 

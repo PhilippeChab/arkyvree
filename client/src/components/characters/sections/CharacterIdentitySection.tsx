@@ -1,11 +1,13 @@
-import type { CharacterData } from "@/client/src/components/characters/index.ts";
-import { AttachmentField, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { type RulesetLanguage, useRulesetLanguages } from "@/client/src/hooks/index.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import type { CharacterData } from "./characterData.ts";
+import { AttachmentField, DiceSpinner, SelectField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Autocomplete, Box, Button, Chip, FormControl, InputLabel, MenuItem, Paper, Select, Skeleton, Stack, TextField, Typography } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS, type Alignment, type Gender } from "@/shared/enums.ts";
@@ -24,10 +26,8 @@ interface CharacterIdentityFormData {
   languageIds: string[];
 }
 
-interface LanguageOption {
-  id: string;
-  name: string;
-}
+/** A language as the picker shows it: the character's, or one the ruleset offers. */
+type LanguageOption = Pick<RulesetLanguage, "id" | "name">;
 
 interface CharacterIdentitySectionProps {
   characterName: string;
@@ -42,10 +42,10 @@ interface CharacterIdentitySectionProps {
 
 const toIdentityForm = ({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData => ({
   race: identity?.physiology?.race?.name || "",
-  alignment: (identity?.beliefs?.alignment as Alignment | undefined) || "",
+  alignment: oneOf(identity?.beliefs?.alignment, ALIGNMENT_OPTIONS) ?? "",
   experience: identity?.meta?.xp || 0,
   age: String(identity?.physiology?.age || ""),
-  gender: (identity?.physiology?.gender as Gender | undefined) || "",
+  gender: oneOf(identity?.physiology?.gender, GENDER_OPTIONS) ?? "",
   height: String(identity?.physiology?.height || ""),
   weight: String(identity?.physiology?.weight || ""),
   deity: identity?.beliefs?.deity || "",
@@ -163,17 +163,7 @@ export function CharacterIdentitySection({
   // ── Languages ────────────────────────────────────────────────────
   // Staged via the form like every other field — selections only persist
   // when the user clicks Save, matching the rest of the identity section.
-  const { data: availableLanguages } = useQuery({
-    queryKey: queryKeys.rulesets.languages(rulesetId!),
-    queryFn: async (): Promise<LanguageOption[]> => {
-      const page = await parseResponse(rpc.api.rulesets[":id"].languages.$get({
-        param: { id: rulesetId! },
-        query: { limit: "100", page: "1" },
-      }));
-      return page.items;
-    },
-    enabled: !!rulesetId && !readOnly,
-  });
+  const { data: availableLanguages } = useRulesetLanguages(rulesetId, !readOnly);
 
   const watchedLanguageIds = form.watch("languageIds");
   const currentLanguages = useMemo(
@@ -219,7 +209,7 @@ export function CharacterIdentitySection({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  (e.target as HTMLInputElement).blur();
+                  if (e.target instanceof HTMLElement) e.target.blur();
                 } else if (e.key === "Escape") {
                   setNameDraft(characterName);
                   setNameEditing(false);
@@ -228,7 +218,7 @@ export function CharacterIdentitySection({
               autoFocus
               disabled={nameSaving}
               variant="standard"
-              slotProps={{ htmlInput: { maxLength: 255 } }}
+              slotProps={{ htmlInput: { "aria-label": "Character name", maxLength: 255 } }}
               sx={{
                 "& .MuiInputBase-input": {
                   fontWeight: 600,
@@ -301,18 +291,15 @@ export function CharacterIdentitySection({
             </>
           ) : (
             <>
-              <FormControl size="small" disabled={readOnly} sx={disabledFieldStyle}>
-                <InputLabel>Alignment</InputLabel>
-                <Select
-                  {...form.register("alignment")}
-                  label="Alignment"
-                  value={form.watch("alignment")}
-                >
-                  {ALIGNMENT_OPTIONS.map((alignment) => (
-                    <MenuItem key={alignment} value={alignment}>{alignment}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <SelectField
+                control={form.control}
+                name="alignment"
+                label="Alignment"
+                options={ALIGNMENT_OPTIONS}
+                size="small"
+                disabled={readOnly}
+                sx={disabledFieldStyle}
+              />
               <TextField
                 {...form.register("experience", { valueAsNumber: true })}
                 label="Experience"
@@ -345,18 +332,15 @@ export function CharacterIdentitySection({
             disabled={readOnly}
             sx={disabledFieldStyle}
           />
-          <FormControl size="small" disabled={readOnly} sx={disabledFieldStyle}>
-            <InputLabel>Gender</InputLabel>
-            <Select
-              {...form.register("gender")}
-              label="Gender"
-              value={form.watch("gender")}
-            >
-              {GENDER_OPTIONS.map((gender) => (
-                <MenuItem key={gender} value={gender}>{gender}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SelectField
+            control={form.control}
+            name="gender"
+            label="Gender"
+            options={GENDER_OPTIONS}
+            size="small"
+            disabled={readOnly}
+            sx={disabledFieldStyle}
+          />
           <TextField
             {...form.register("height")}
             label="Height"
@@ -382,16 +366,11 @@ export function CharacterIdentitySection({
               <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
                 <Typography
                   variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    mr: 1,
-                  }}>
+                  sx={{ color: "text.secondary", mr: 1 }}>
                   Languages:
                 </Typography>
                 {selectedLanguages.length === 0
-                  ? <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>None</Typography>
+                  ? <Typography variant="body2" sx={{ color: "text.secondary" }}>None</Typography>
                   : selectedLanguages.map((lang) => (
                     <Chip key={lang.id} label={lang.name} size="small" />
                   ))}

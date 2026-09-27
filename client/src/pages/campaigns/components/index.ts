@@ -12,7 +12,6 @@ export {
   getPlayerSlot,
   playerDisplay,
   type PlayerFormData,
-  type PlayerSlot,
   type PlayerState,
   toPlayerPayload,
 } from "./players.ts";

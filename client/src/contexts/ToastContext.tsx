@@ -1,3 +1,4 @@
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { Alert, type AlertColor, Button, Snackbar } from '@mui/material';
 import React, { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
@@ -55,11 +56,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
 
   const success = useCallback((message: string, options?: ToastOptions) => enqueue(message, 'success', options), [enqueue]);
   const error = useCallback((err: unknown, fallback?: string) => {
-    const message = typeof err === 'string'
-      ? err
-      : err instanceof Error
-        ? (err.message || fallback || '')
-        : (fallback || '');
+    const message = errorMessage(err, fallback ?? '');
     if (!message) return;
     enqueue(message, 'error');
   }, [enqueue]);
@@ -75,12 +72,14 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     setCurrent(null);
   };
 
+  const action = current?.action;
+
   return (
     <SnackbarContext.Provider value={{ success, error, info, warning }}>
       {children}
       <Snackbar
         open={open}
-        autoHideDuration={current?.persistent ? null : current?.action ? 6000 : 4000}
+        autoHideDuration={current?.persistent ? null : action ? 6000 : 4000}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         sx={{ bottom: '12px !important' }}
@@ -100,9 +99,9 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
               alignItems: 'center',
             },
           }}
-          action={current?.action ? (
-            <Button color="inherit" size="small" onClick={() => { current.action!.onClick(); setOpen(false); }}>
-              {current.action.label}
+          action={action ? (
+            <Button color="inherit" size="small" onClick={() => { action.onClick(); setOpen(false); }}>
+              {action.label}
             </Button>
           ) : undefined}
         >

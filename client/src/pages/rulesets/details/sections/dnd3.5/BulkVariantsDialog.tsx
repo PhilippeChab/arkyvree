@@ -1,3 +1,4 @@
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import {
   Box,
   Button,
@@ -11,25 +12,18 @@ import {
   Typography,
 } from "@mui/material";
 import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
-import { useEffect } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
 import { DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
-
-interface VariantRow {
-  name: string;
-  description?: string;
-}
-
-interface FormValues {
-  variants: VariantRow[];
-}
+import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 
 interface BulkVariantsDialogProps {
   open: boolean;
   onClose: () => void;
   baseItemName: string;
   baseItemDescription?: string | null;
+  /** Reset by the caller before opening, with `variantRow(item, 1)`. */
+  form: UseFormReturn<BulkVariantsFormValues>;
   onSubmit: (variants: VariantRow[]) => void;
   isLoading: boolean;
 }
@@ -41,32 +35,16 @@ export function BulkVariantsDialog({
   onClose,
   baseItemName,
   baseItemDescription,
+  form,
   onSubmit,
   isLoading,
 }: BulkVariantsDialogProps) {
-  const buildRow = (copyNumber: number): VariantRow => ({
-    name: `${baseItemName} (Copy ${copyNumber})`,
-    description: baseItemDescription ?? "",
-  });
-
-  const form = useForm<FormValues>({
-    defaultValues: { variants: [buildRow(1)] },
-  });
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "variants",
   });
 
-  useEffect(() => {
-    if (open) {
-      form.reset({ variants: [buildRow(1)] });
-    }
-    // buildRow closes over baseItemName / baseItemDescription so they're
-    // captured in the dependency list via those props.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, baseItemName, baseItemDescription, form]);
-
-  const submit = (values: FormValues) => {
+  const submit = (values: BulkVariantsFormValues) => {
     onSubmit(
       values.variants.map((v) => ({
         name: v.name.trim(),
@@ -88,7 +66,7 @@ export function BulkVariantsDialog({
         <DialogTitle>Create variants of {baseItemName}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Each variant copies the base item's cost, weight, type, and slot.
               You'll be able to customize them individually after.
             </Typography>
@@ -122,6 +100,7 @@ export function BulkVariantsDialog({
                     <span>
                       <IconButton
                         size="small"
+                        aria-label="Remove variant"
                         onClick={() => remove(index)}
                         disabled={fields.length === 1 || isLoading}
                         sx={{ mt: 0.5 }}
@@ -136,7 +115,7 @@ export function BulkVariantsDialog({
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
-              onClick={() => append(buildRow(fields.length + 1))}
+              onClick={() => append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))}
               disabled={fields.length >= MAX_VARIANTS || isLoading}
               sx={{ alignSelf: "flex-start" }}
             >
@@ -150,7 +129,7 @@ export function BulkVariantsDialog({
           </Button>
           <Button type="submit" variant="contained" disabled={isLoading}>
             <DiceSpinner size="small" loading={isLoading}>
-              {`Create ${fields.length} variant${fields.length === 1 ? "" : "s"}`}
+              {`Create ${formatCount(fields.length, "variant")}`}
             </DiceSpinner>
           </Button>
         </DialogActions>

@@ -4,68 +4,37 @@
  * Reflex/Will saves, skill ranks) are D&D 3.5 specific — other rulesets would
  * define their own section prop types alongside their own section components.
  */
-import type { RPC } from "@/client/src/services/rpc.ts";
-import type { InferResponseType } from "hono/client";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
-type CharacterResponse = InferResponseType<RPC["api"]["characters"][":id"]["$get"], 200>;
+/** The sheet's combat stats; empty on a sheet that carries none. */
+export type SheetCombat = Partial<CharacterDetail["combat"]>;
 
 export interface Dnd35CombatAndSavesSectionProps {
-  combat: {
-    hp?: { base?: number; constitution?: number; misc?: number; total?: number };
-    initiative?: { dexterity?: number; misc?: number; total?: number };
-    speed?: { base?: number; misc?: number; total?: number };
-    bab?: number;
-    grapple?: { bab?: number; strength?: number; size?: number; misc?: number; total?: number };
-    ac?: {
-      total?: number;
-      touch?: number;
-      flatfooted?: number;
-      base?: number;
-      armor?: number;
-      shield?: number;
-      dexterity?: number;
-      natural?: number;
-      deflection?: number;
-      misc?: number;
-    };
-    encumbrance?: {
-      carriedweight?: number;
-      lightload?: number;
-      mediumload?: number;
-      heavyload?: number;
-      load?: string;
-    };
-  };
-  saves: Record<string, {
-    name?: string;
-    base?: number;
-    ability?: number;
-    misc?: number;
-    total?: number;
-  }>;
+  combat: SheetCombat;
+  saves: CharacterDetail["savingThrows"];
 }
 
 export interface Dnd35PowersSectionProps {
-  classes: CharacterResponse["classes"];
-  powers?: CharacterResponse["powers"];
-  virtualPowers?: CharacterResponse["virtualPowers"];
-  aptitudes?: CharacterResponse["aptitudes"];
-  spellTags?: CharacterResponse["spellTags"];
+  classes: CharacterDetail["classes"];
+  powers?: CharacterDetail["powers"];
+  virtualPowers?: CharacterDetail["virtualPowers"];
+  aptitudes?: CharacterDetail["aptitudes"];
+  spellTags?: CharacterDetail["spellTags"];
   rulesetId?: string;
 }
 
 export interface Dnd35AbilityScoresSectionProps {
-  abilities: Record<string, {
-    abilityId?: string;
-    base?: number;
-    level?: number;
-    misc?: number;
-    total?: number;
-  }>;
+  abilities: CharacterDetail["abilities"];
   characterId: string;
   readOnly?: boolean;
 }
 
+export interface Dnd35BondedSectionProps {
+  bonded: NonNullable<CharacterDetail["bonded"][string]>;
+  /** When true, the bonded name renders as a router link to `/characters/<bondedId>`. */
+  linkable?: boolean;
+}
+
 export interface Dnd35SkillsSectionProps {
-  skills: NonNullable<CharacterResponse["skills"]>;
+  skills: NonNullable<CharacterDetail["skills"]>;
 }

@@ -19,13 +19,7 @@ export function CharacterDetailSkeleton() {
     <Container maxWidth="xl" sx={{ py: 2 }}>
       {/* Themed header with pulsing icon */}
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          py: 4,
-          mb: 2,
-        }}
+        sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 4, mb: 2 }}
       >
         <DiceSpinner size="large" />
         <Typography
@@ -42,9 +36,7 @@ export function CharacterDetailSkeleton() {
       <Stack spacing={3}>
         {/* Header bar */}
         <Section index={0}>
-          <Stack direction="row" spacing={2} sx={{
-            alignItems: "center"
-          }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <Skeleton variant="circular" width={40} height={40} />
             <Skeleton variant="text" width="40%" height={36} />
           </Stack>

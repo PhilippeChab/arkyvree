@@ -13,26 +13,30 @@ export function GoldDivider({ label, sx }: GoldDividerProps) {
   if (!label) {
     return (
       <Box
-        sx={{
-          my: 3,
-          height: "1px",
-          background: gradientLine,
-          opacity: 0.4,
-          ...sx as Record<string, unknown>,
-        }}
+        sx={[
+          {
+            my: 3,
+            height: "1px",
+            background: gradientLine,
+            opacity: 0.4,
+          },
+          ...(Array.isArray(sx) ? sx : [sx]),
+        ]}
       />
     );
   }
 
   return (
     <Box
-      sx={{
-        my: 3,
-        display: "flex",
-        alignItems: "center",
-        gap: 2,
-        ...sx as Record<string, unknown>,
-      }}
+      sx={[
+        {
+          my: 3,
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
     >
       <Box sx={{ flex: 1, height: "1px", background: gradientLine, opacity: 0.4 }} />
       <Typography

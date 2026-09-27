@@ -1,11 +1,10 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { skipToken, useQueries, useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 export type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
-export type Attachment = NonNullable<AttachmentResponse>;
 
 interface UseAttachmentParams {
   recordType: string;
@@ -25,14 +24,15 @@ async function fetchSlot(
 }
 
 export function useAttachment(params: UseAttachmentParams) {
+  const { recordId } = params;
   return useQuery({
     queryKey: queryKeys.attachments.slot(
       params.recordType,
       params.recordId ?? "",
       params.name,
     ),
-    queryFn: () => fetchSlot(params.recordType, params.recordId!, params.name),
-    enabled: !!params.recordId && (params.enabled ?? true),
+    queryFn: recordId ? () => fetchSlot(params.recordType, recordId, params.name) : skipToken,
+    enabled: params.enabled ?? true,
   });
 }
 

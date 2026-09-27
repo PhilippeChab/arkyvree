@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon, LibraryAdd as LibraryAddIcon } from "@mui/icons-material";
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankState, NoMatchesState } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { type ElementType, type ReactNode, useMemo, useRef } from "react";
@@ -41,6 +41,8 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   emptyIcon?: ElementType;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** The section's search, so an empty result reads as no matches rather than an empty section. */
+  search?: string;
 }
 
 export function RulesetSectionTable<T extends { id: string }>({
@@ -59,6 +61,7 @@ export function RulesetSectionTable<T extends { id: string }>({
   emptyIcon,
   emptyTitle = "No data available",
   emptyDescription = "No data available for this ruleset.",
+  search,
 }: RulesetSectionTableProps<T>) {
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isMobile = useIsMobile();
@@ -103,9 +106,9 @@ export function RulesetSectionTable<T extends { id: string }>({
   }
 
   if (!data || data.length === 0) {
-    return (
-      <BlankState icon={emptyIcon} title={emptyTitle} description={emptyDescription} />
-    );
+    return search
+      ? <NoMatchesState search={search} />
+      : <BlankState icon={emptyIcon} title={emptyTitle} description={emptyDescription} />;
   }
 
   return (
@@ -147,9 +150,7 @@ export function RulesetSectionTable<T extends { id: string }>({
               {visibleColumns.map((column, index) => (
                 <TableCell
                   key={column.key}
-                  sx={{
-                    position: index === visibleColumns.length - 1 && showInlineActions ? "relative" : undefined,
-                  }}
+                  sx={{ position: index === visibleColumns.length - 1 && showInlineActions ? "relative" : undefined }}
                 >
                   {index === visibleColumns.length - 1 && showInlineActions ? (
                     <>

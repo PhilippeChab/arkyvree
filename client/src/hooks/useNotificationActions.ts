@@ -1,3 +1,4 @@
+import { isRecord } from "@/client/src/lib/isRecord.ts";
 import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useNavigate } from "react-router-dom";
@@ -53,7 +54,11 @@ const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
 
 const isInviteType = (type: string): type is InviteType => type in INVITES;
 
-const notificationData = (n: NotificationLike) => (n.data ?? {}) as NotificationData;
+/** A notification's payload: its string fields (ids, names); anything else is left out. */
+const notificationData = (n: NotificationLike): NotificationData =>
+  isRecord(n.data)
+    ? Object.fromEntries(Object.entries(n.data).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
+    : {};
 
 /**
  * What a user can do with a notification, shared by the bell, the dashboard

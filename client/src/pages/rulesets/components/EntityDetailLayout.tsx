@@ -1,3 +1,4 @@
+import { PageError } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import {
   DURATION,
@@ -17,8 +18,20 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
+
+/** An entity page's column: centered, up to 1200px. */
+const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
+
+/** An entity page that couldn't load its entity, in the page's column. */
+export function EntityPageError(props: ComponentProps<typeof PageError>) {
+  return (
+    <Box sx={PAGE_SX}>
+      <PageError {...props} />
+    </Box>
+  );
+}
 
 interface EntityDetailLayoutProps {
   entityName?: string;
@@ -50,7 +63,7 @@ export function EntityDetailLayout({
 
   if (isLoading) {
     return (
-      <Box sx={{ maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } }}>
+      <Box sx={PAGE_SX}>
         <Box sx={{ mb: 4, display: "flex", alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}>
           <Skeleton variant="circular" width={40} height={40} sx={{ position: "absolute", left: 0 }} />
           <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
@@ -65,9 +78,7 @@ export function EntityDetailLayout({
 
   return (
     <Box sx={{
-      maxWidth: 1200,
-      margin: "0 auto",
-      p: { xs: 2, sm: 3 },
+      ...PAGE_SX,
       animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
       [prefersReducedMotion]: { animation: "none" },
     }}>
@@ -83,6 +94,7 @@ export function EntityDetailLayout({
         }}
       >
         <IconButton
+          aria-label="Back"
           onClick={onBack}
           disabled={backDisabled}
           size={isMobile ? "medium" : "large"}
@@ -111,6 +123,7 @@ export function EntityDetailLayout({
         {canDelete && onDelete && (
           <>
             <IconButton
+              aria-label="More actions"
               size={isMobile ? "medium" : "large"}
               onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{

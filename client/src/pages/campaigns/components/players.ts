@@ -9,7 +9,7 @@ export type PlayerFormData = InferRequestType<PlayersApi["$post"]>["json"];
 
 export type CampaignPlayer = InferResponseType<PlayersApi["$get"], 200>["items"][number];
 
-export type PendingInvite = NonNullable<CampaignPlayer["invitesInCampaigns"]>[number];
+type PendingInvite = NonNullable<CampaignPlayer["invitesInCampaigns"]>[number];
 
 /**
  * Where a player slot stands, with the name the dialogs give it. A pending

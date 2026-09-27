@@ -1,5 +1,7 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
-import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton, SectionContent, NoMatchesState } from "@/client/src/components/common/index.ts";
 import {
   AddPlayerDialog,
   type CampaignPlayer,
@@ -49,7 +51,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
+import { useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -78,8 +80,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const selectedSlot = selectedPlayer && getPlayerSlot(selectedPlayer);
 
   // Search state with debounce
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearchQuery = useDebouncedValue(searchQuery);
+  const [searchQuery, setSearchQuery] = useSearchParam("playerSearch");
 
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedInviteId, setSelectedInviteId] = useState<string | null>(null);
@@ -109,9 +110,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({ ...campaignPlayersQuery(campaign.id, debouncedSearchQuery), placeholderData: keepPreviousData });
+  } = useInfiniteQuery({ ...campaignPlayersQuery(campaign.id, searchQuery), placeholderData: keepPreviousData });
 
-  const players = data?.pages.flatMap((page) => page.items) ?? [];
+  const players = pageItems(data);
 
   const addMutation = useMutation({
     mutationFn: async (data: PlayerFormData) => {
@@ -239,7 +240,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       {/* Header */}
       <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
         Players
@@ -261,9 +262,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       />
       {/* Loading State */}
       {playersLoading && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <DiceSpinner />
-        </Box>
+        <DiceSpinner sx={{ py: 4 }} />
       )}
       {/* Error State */}
       {playersError && (
@@ -328,9 +327,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                 {displayInfo.name}
                               </Typography>
-                              <Typography variant="caption" sx={{
-                                color: "text.secondary"
-                              }}>
+                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
                                 {displayInfo.email}
                               </Typography>
                             </Box>
@@ -373,16 +370,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                           <TableCell>
                             {slot.state === "assigned"
                               ? (
-                                <Typography variant="body2" sx={{
-                                  color: "text.secondary"
-                                }}>
-                                  {new Date(player.createdAt).toLocaleDateString()}
+                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                  {formatDate(player.createdAt)}
                                 </Typography>
                               )
                               : (
-                                <Typography variant="body2" sx={{
-                                  color: "text.disabled"
-                                }}>
+                                <Typography variant="body2" sx={{ color: "text.disabled" }}>
                                   —
                                 </Typography>
                               )}
@@ -458,7 +451,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               />
               </>
             )
-            : (
+            : searchQuery ? (
+              <NoMatchesState search={searchQuery} />
+            ) : (
               <BlankState
                 icon={PlayerIcon}
                 title="No players in this campaign"
@@ -515,6 +510,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         confirmLabel="Revoke Invitation"
         isLoading={revokeInviteMutation.isPending}
       />
-    </Box>
+    </SectionContent>
   );
 }

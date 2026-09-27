@@ -1,12 +1,12 @@
+import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
 import type { LevelUpSkillsStepProps } from "./levelUpFactory.ts";
+import type { SkillsData } from "./levelUp/index.ts";
 import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
-import ExpandLess from "@mui/icons-material/ExpandLess";
 import { Casino as CasinoIcon } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
-  IconButton,
   Stack,
   Table,
   TableBody,
@@ -19,34 +19,20 @@ import {
   Typography,
 } from "@mui/material";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback } from "react";
 
-interface SkillDef {
-  id: string;
-  name: string;
-  description?: string | null;
-  isClassSkill: boolean;
-  isCurrentClassSkill: boolean;
-  currentRank: number;
-}
-
-interface SkillRowProps {
-  skill: SkillDef;
+interface SkillAllocationRowProps {
+  skill: SkillsData["skills"][number];
   totalCharacterLevel: number;
   pointsAllocated: number;
   onAllocate: (skillId: string, rawPoints: number) => void;
-  indented?: boolean;
-  hidden?: boolean;
+  indented: boolean;
+  hidden: boolean;
   perLevelClassSkillIds?: string[][];
   perLevelSkillPoints?: number[];
 }
 
-function getSkillGroup(name: string): string | null {
-  const match = name.match(/^(.+?)\s*\(/);
-  return match ? match[1] : null;
-}
-
-const SkillRow = memo(function SkillRow({
+const SkillAllocationRow = memo(function SkillAllocationRow({
   skill,
   totalCharacterLevel,
   pointsAllocated,
@@ -55,7 +41,7 @@ const SkillRow = memo(function SkillRow({
   hidden,
   perLevelClassSkillIds,
   perLevelSkillPoints,
-}: SkillRowProps) {
+}: SkillAllocationRowProps) {
   const isMultiLevel = perLevelClassSkillIds && perLevelSkillPoints;
   // Multi-level batches of the same class should still display per-class
   // class-skill status (not the character-wide history captured by
@@ -85,37 +71,17 @@ const SkillRow = memo(function SkillRow({
       ? maxRanksCanAdd
       : maxRanksCanAdd * 2;
 
-  const displayName = indented ? skill.name.replace(/^.+?\s*\(/, "(") : skill.name;
-
   return (
-    <TableRow
-      sx={{
-        ...(hidden && { display: "none" }),
-        ...(!hidden && indented ? {
-          animation: "fadeInRow 200ms ease-out",
-          "@keyframes fadeInRow": {
-            from: { opacity: 0 },
-            to: { opacity: 1 },
-          },
-        } : {}),
-      }}
+    <SkillRow
+      name={skill.name}
+      indented={indented}
+      hidden={hidden}
+      renderName={(label) => skill.description ? (
+        <Tooltip describeChild title={skill.description} enterTouchDelay={0} arrow>
+          <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{label}</span>
+        </Tooltip>
+      ) : label}
     >
-      <TableCell sx={indented ? { pl: 5 } : undefined}>
-        {skill.description ? (
-          <Tooltip title={skill.description} enterTouchDelay={0} arrow>
-            <span
-              style={{
-                borderBottom: "1px dashed currentColor",
-                cursor: "help",
-              }}
-            >
-              {displayName}
-            </span>
-          </Tooltip>
-        ) : (
-          displayName
-        )}
-      </TableCell>
       <TableCell>
         <TextField
           type="number"
@@ -151,7 +117,7 @@ const SkillRow = memo(function SkillRow({
         />
       </TableCell>
       <TableCell>
-        <Typography variant="body2" color="textSecondary">
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {pointsAllocated}
         </Typography>
       </TableCell>
@@ -162,27 +128,24 @@ const SkillRow = memo(function SkillRow({
         </Typography>
       </TableCell>
       <TableCell>{isMultiClass ? (skill.isClassSkill ? "Yes" : "No") : skill.isCurrentClassSkill ? "Yes" : "No"}</TableCell>
-    </TableRow>
+    </SkillRow>
   );
 });
 
-type Row =
-  | { type: "skill"; skill: SkillDef; group: null }
-  | { type: "skill"; skill: SkillDef; group: string }
-  | { type: "group"; prefix: string; count: number };
+/** The narrow number columns' headers. */
+const columnHeaderSx = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
-export function LevelUpSkillsStep({
-  skillData,
-  isLoadingSkills,
-  skillsError,
-  skillPointAllocations,
-  setValue,
-  getValues,
-  perLevelClassSkillIds,
-  perLevelSkillPoints,
-}: LevelUpSkillsStepProps) {
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-
+export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
+  const {
+    skillData,
+    isLoadingSkills,
+    skillsError,
+    skillPointAllocations,
+    setValue,
+    getValues,
+    perLevelClassSkillIds,
+    perLevelSkillPoints,
+  } = wizard;
   const randomAssign = useCallback(() => {
     if (!skillData) return;
     const isMultiLevel = perLevelClassSkillIds && perLevelSkillPoints;
@@ -229,42 +192,6 @@ export function LevelUpSkillsStep({
     setValue("skillPointAllocations", { ...allocs, [skillId]: clamped });
   }, [skillPointsToSpend, setValue, getValues]);
 
-  const rows = useMemo(() => {
-    if (!skillData) return [];
-    const skills = skillData.skills;
-
-    const prefixCounts = new Map<string, number>();
-    for (const skill of skills) {
-      const prefix = getSkillGroup(skill.name);
-      if (prefix) prefixCounts.set(prefix, (prefixCounts.get(prefix) ?? 0) + 1);
-    }
-
-    const result: Row[] = [];
-    let lastPrefix: string | null = null;
-
-    for (const skill of skills) {
-      const prefix = getSkillGroup(skill.name);
-      const isGrouped = prefix !== null && (prefixCounts.get(prefix) ?? 0) >= 2;
-
-      if (isGrouped && prefix !== lastPrefix) {
-        result.push({ type: "group", prefix: prefix!, count: prefixCounts.get(prefix!)! });
-        lastPrefix = prefix;
-      }
-
-      result.push({ type: "skill", skill, group: isGrouped ? prefix : null });
-    }
-
-    return result;
-  }, [skillData]);
-
-  const toggle = (prefix: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(prefix)) { next.delete(prefix); } else { next.add(prefix); }
-      return next;
-    });
-  };
-
   if (isLoadingSkills) return <DiceSpinner />;
   if (skillsError) return <Alert severity="error">Error loading skills.</Alert>;
   if (!skillData) return null;
@@ -278,10 +205,7 @@ export function LevelUpSkillsStep({
         <Stack
           direction="row"
           spacing={1}
-          sx={{
-            alignItems: "center",
-            mb: 1
-          }}>
+          sx={{ alignItems: "center", mb: 1 }}>
           <Typography variant="h6">
             Skill Points to Spend: {skillData.skillPointsToSpend}
           </Typography>
@@ -292,17 +216,19 @@ export function LevelUpSkillsStep({
         <Typography
           variant="subtitle2"
           gutterBottom
-          color={pointsSpent > skillData.skillPointsToSpend
-            ? "error"
-            : pointsSpent === skillData.skillPointsToSpend
-            ? "success"
-            : "textSecondary"}
+          sx={{
+            color: pointsSpent > skillData.skillPointsToSpend
+              ? "error.main"
+              : pointsSpent === skillData.skillPointsToSpend
+                ? "success.main"
+                : "text.secondary",
+          }}
         >
           Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
           {pointsRemaining > 0 && (
-            <span style={{ color: "#ff9800", marginLeft: "8px" }}>
+            <Box component="span" sx={{ color: "warning.main", ml: 1 }}>
               ({pointsRemaining} remaining)
-            </span>
+            </Box>
           )}
         </Typography>
       </Box>
@@ -319,52 +245,31 @@ export function LevelUpSkillsStep({
           <TableHead>
             <TableRow>
               <TableCell>Skill</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Add</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Used</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Rank</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Total</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Class</TableCell>
+              <TableCell sx={columnHeaderSx}>Add</TableCell>
+              <TableCell sx={columnHeaderSx}>Used</TableCell>
+              <TableCell sx={columnHeaderSx}>Rank</TableCell>
+              <TableCell sx={columnHeaderSx}>Total</TableCell>
+              <TableCell sx={columnHeaderSx}>Class</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => {
-              if (row.type === "group") {
-                const isExpanded = expanded.has(row.prefix);
-                return (
-                  <TableRow
-                    key={`group-${row.prefix}`}
-                    sx={{ bgcolor: "action.hover", cursor: "pointer" }}
-                    onClick={() => toggle(row.prefix)}
-                  >
-                    <TableCell sx={{ fontWeight: 600 }}>
-                      {row.prefix} ({row.count})
-                    </TableCell>
-                    <TableCell colSpan={4} />
-                    <TableCell align="center">
-                      <IconButton size="small" sx={{ transition: "transform 200ms", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>
-                        <ExpandLess fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              }
-
-              const { skill, group } = row;
-              const hidden = !!group && !expanded.has(group);
-              return (
-                <SkillRow
+            <GroupedSkillRows
+              skills={skillData.skills}
+              columns={6}
+              renderSkill={(skill, { indented, hidden }) => (
+                <SkillAllocationRow
                   key={skill.id}
                   skill={skill}
                   totalCharacterLevel={skillData.totalCharacterLevel}
                   pointsAllocated={skillPointAllocations[skill.id] || 0}
                   onAllocate={onAllocate}
-                  indented={!!group}
+                  indented={indented}
                   hidden={hidden}
                   perLevelClassSkillIds={perLevelClassSkillIds}
                   perLevelSkillPoints={perLevelSkillPoints}
                 />
-              );
-            })}
+              )}
+            />
           </TableBody>
         </Table>
       </TableContainer>

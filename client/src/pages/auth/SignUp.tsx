@@ -1,15 +1,13 @@
-import { AuthPage, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
-  Alert,
   Box,
-  Button,
-  TextField,
   Typography,
   Link as MuiLink,
 } from "@mui/material";
@@ -49,76 +47,39 @@ export default function SignUp() {
       await signUp(data.emailAddress, data.password, data.passwordConfirmation);
       navigate("/verify-email", { state: { redirect } });
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to sign up");
+      setError(errorMessage(error, "Failed to sign up"));
     }
   };
 
   return (
-    <AuthPage title="Sign Up">
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+    <AuthPage error={error} title="Sign Up">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <TextField
+        <EmailField
           {...register("emailAddress", emailRules)}
-          label="Email"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          error={!!errors.emailAddress}
-          helperText={errors.emailAddress?.message}
-          type="email"
-          slotProps={{
-            htmlInput: { autoComplete: "email" }
-          }}
+          error={errors.emailAddress}
         />
 
-        <TextField
+        <PasswordField
           {...register("password", newPasswordRules)}
-          type="password"
+          error={errors.password}
           label="Password"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          error={!!errors.password}
-          helperText={errors.password?.message}
-          slotProps={{
-            htmlInput: { autoComplete: "new-password" }
-          }}
+          autoComplete="new-password"
         />
 
-        <TextField
+        <PasswordField
           {...register("passwordConfirmation", confirmPasswordRules<SignUpFormData>("password"))}
-          type="password"
+          error={errors.passwordConfirmation}
           label="Confirm Password"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          error={!!errors.passwordConfirmation}
-          helperText={errors.passwordConfirmation?.message}
-          slotProps={{
-            htmlInput: { autoComplete: "new-password" }
-          }}
+          autoComplete="new-password"
         />
 
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mt: 3, mb: 2 }}
-          disabled={isLoading}
-        >
-          <DiceSpinner size="small" loading={isLoading}>Sign Up</DiceSpinner>
-        </Button>
+        <AuthSubmitButton loading={isLoading}>Sign Up</AuthSubmitButton>
       </form>
       <GoogleSignInSection
         label="Sign up with Google"
         disabled={isLoading}
         onSuccess={() => navigate(redirect ?? "/dashboard")}
-        onError={(error) => setError(error instanceof Error ? error.message : "Failed to sign up with Google")}
+        onError={(error) => setError(errorMessage(error, "Failed to sign up with Google"))}
       />
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2">

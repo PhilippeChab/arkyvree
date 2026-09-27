@@ -2,28 +2,24 @@ import type { LevelUpHpStepProps } from "./levelUpFactory.ts";
 import { settledPulse } from "@/client/src/lib/animations.ts";
 import { Casino as CasinoIcon } from "@mui/icons-material";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
-import { Alert, Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
 
-export function LevelUpHpStep({
-  selectedClass,
-  selectedHP,
-  isEditing,
-  hpRolling,
-  hpSettled,
-  hpDisplayValue,
-  triggerHpRoll,
-  setValue,
-}: LevelUpHpStepProps) {
-  if (!selectedClass) {
-    if (isEditing) return <DiceSpinner />;
-    return <Alert severity="error">Please select a class first.</Alert>;
-  }
+export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
+  const {
+    selectedClass,
+    selectedHP,
+    hpRolling,
+    hpSettled,
+    hpDisplayValue,
+    triggerHpRoll,
+    setValue,
+  } = wizard;
+  // The level's class loads with the level being edited.
+  if (!selectedClass) return <DiceSpinner />;
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} sx={{
-        alignItems: "center"
-      }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Typography variant="h6">
           Set HP for Level {selectedClass.nextLevel}
         </Typography>
@@ -44,7 +40,7 @@ export function LevelUpHpStep({
           disabled={hpRolling}
         />
       </Stack>
-      <Typography variant="body2" color="textSecondary" gutterBottom>
+      <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
         Enter HP gain (1 to {selectedClass.hd}). Average:{" "}
         {Math.ceil(selectedClass.hd / 2)}, Maximum: {selectedClass.hd}
       </Typography>

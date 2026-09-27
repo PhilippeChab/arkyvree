@@ -48,6 +48,8 @@ export const verifyPassword = async (
 };
 
 export const capitalize = (s: string) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
+/** A name's first letter, capitalized, for an avatar. */
+export const initialOf = (name: string) => name.charAt(0).toUpperCase();
 export const stripSeparators = (s: string) =>
   String(s).replaceAll(/[^a-z0-9]/gi, "").toLowerCase();
 

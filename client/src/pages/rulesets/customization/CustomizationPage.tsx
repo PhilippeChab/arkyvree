@@ -1,3 +1,4 @@
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import { DeleteDialog, DiceSpinner, FaqHelpIcon, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
@@ -6,7 +7,7 @@ import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { rulesetDetailQuery, type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import { EntityDetailLayout } from "@/client/src/pages/rulesets/components/index.ts";
+import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   ClassLevelEditor,
   FeatEditor,
@@ -19,14 +20,14 @@ import {
   customizationEntityQuery,
   type CustomizationEntity,
 } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions, entityPageState } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
   Label as PropertiesIcon,
   Rule as RequirementsIcon,
   Settings as ModifiersIcon,
 } from "@mui/icons-material";
-import { Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -40,13 +41,6 @@ import type { EntityType } from "@/client/src/pages/rulesets/customization/types
 type TabSection = "properties" | "modifiers" | "requirements";
 
 /** Router state of a customization page. */
-interface CustomizationState {
-  /** The list to go back to. */
-  from?: string;
-  /** Set when a copy-on-write moved the page from this entity to its copy. */
-  copiedFrom?: string;
-}
-
 const tabLabel = (label: string, help: string) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
     {label}
@@ -91,7 +85,7 @@ const isEntityType = (type: string | undefined): type is EntityType => !!type &&
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
 type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
 const isEditable = (data: CustomizationEntity): data is EditableEntity =>
-  (EDITABLE_TYPES as readonly string[]).includes(data.type);
+  EDITABLE_TYPES.some((type) => type === data.type);
 
 export default function CustomizationPage() {
   const { id: rulesetId = "", entityType, entityId = "", section } = useParams<{
@@ -104,7 +98,7 @@ export default function CustomizationPage() {
   const location = useLocation();
   const validType = isEntityType(entityType) ? entityType : undefined;
 
-  const copiedFrom = (location.state as CustomizationState | null)?.copiedFrom;
+  const { copiedFrom } = entityPageState(location.state);
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const { data, isLoading: isEntityLoading, isPlaceholderData, error: entityError } = useQuery({
@@ -139,18 +133,18 @@ export default function CustomizationPage() {
     }
   }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
 
-  if (!validType || rulesetError || entityError || (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))) {
+  // A failed refetch keeps showing the data it has (and any unsaved edits).
+  if (!validType || (rulesetError && !ruleset) || (entityError && !data) || (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))) {
     return (
-      <Box sx={{ maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } }}>
-        <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
-          <Typography variant="h5" color="error" gutterBottom>
-            {validType ? "Failed to load customization data" : `Invalid entity type: ${entityType}`}
-          </Typography>
-          <Button variant="contained" onClick={() => navigate(`/rulesets/${rulesetId}`)} sx={{ mt: 2 }}>
-            Back to Ruleset
-          </Button>
-        </Paper>
-      </Box>
+      <EntityPageError
+        message={!validType
+          ? `Invalid entity type: ${entityType}`
+          : !ruleset && (rulesetError || !entityError)
+            ? loadFailureMessage("Ruleset", rulesetError)
+            : loadFailureMessage(ENTITY_LABELS[validType], entityError)}
+        backLabel="Back to Ruleset"
+        onBack={() => navigate(`/rulesets/${rulesetId}`)}
+      />
     );
   }
 
@@ -271,7 +265,7 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
   const type = data.type;
   const label = ENTITY_LABELS[type];
   const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, entityId);
-  const state = (location.state as CustomizationState | null) ?? {};
+  const state = entityPageState(location.state);
   const listPath = state.from ?? `/rulesets/${rulesetId}/${type}`;
   usePageTitle(pageTitle);
 
@@ -295,8 +289,8 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
   // Once the copy's own data is in, forget where it came from, so going
   // back and forth in history never carries edits between the two.
   useEffect(() => {
-    const current = location.state as CustomizationState | null;
-    if (!current?.copiedFrom || locked) return;
+    const current = entityPageState(location.state);
+    if (!current.copiedFrom || locked) return;
     // A navigation still loading has moved the address bar on: leave it be.
     if (window.location.pathname !== location.pathname) return;
     const { copiedFrom: _done, ...rest } = current;
@@ -368,7 +362,7 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
       <Box role="tabpanel" sx={{ py: 3 }}>
         {/* The source's customizations don't belong to the copy: wait for it. */}
         {locked ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><DiceSpinner /></Box>
+          <DiceSpinner sx={{ py: 4 }} />
         ) : section === "requirements" ? (
           <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
         ) : data.type === "modifiers" ? null : section === "modifiers" ? (

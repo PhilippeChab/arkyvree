@@ -1,3 +1,4 @@
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import {
   AnimatedAlert,
   BlankState,
@@ -9,10 +10,10 @@ import {
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
+import { useDebouncedValue, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError, type ApiValidationIssue, parseResponse, type RPC, rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, type RPC, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
@@ -22,64 +23,33 @@ import {
   Autocomplete,
   Box,
   Button,
-  Checkbox,
-  Chip,
-  FormControlLabel,
   IconButton,
-  Link as MuiLink,
-  MenuItem,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, skipToken } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import {
+  detectSlotFromItem,
+  EMPTY_INVENTORY_FORM,
+  type EncumbranceData,
+  getSlotConflictWarning,
+  type InventoryFormData,
+  type ItemColumns,
+  LOCATION_CHOICES,
+  placementPayload,
+  placementProfile,
+} from "./equipment.ts";
+import { EquipmentTable } from "./EquipmentTable.tsx";
+import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
 import { SheetSection } from "./SheetSection.tsx";
-import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
-
-const LOCATION_VALUES = [
-  "Head",
-  "Neck",
-  "Shoulders",
-  "Torso",
-  "Wrists",
-  "Hands",
-  "Waist",
-  "Finger",
-  "Trinket",
-  "Main Hand",
-  "Off Hand",
-  "Two Handed",
-  "Other",
-] as const;
-
-type LocationValue = (typeof LOCATION_VALUES)[number];
-
-type ItemsPaginated = InferResponseType<RPC["api"]["rulesets"][":id"]["items"]["$get"], 200>;
-type SearchItem = ItemsPaginated["items"][number];
-
-type ItemDetail = InferResponseType<RPC["api"]["rulesets"][":id"]["items"][":itemId"]["$get"], 200>;
 
 type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
 type InventoryEntry = InventoryItems[number];
-
-/** The sheet's carried weight and load thresholds (the combat section's `encumbrance`). */
-export interface EncumbranceData {
-  carriedweight?: number;
-  lightload?: number;
-  mediumload?: number;
-  heavyload?: number;
-  load?: string;
-}
 
 interface EquipmentSectionProps {
   characterId: string;
@@ -87,129 +57,6 @@ interface EquipmentSectionProps {
   isArchived: boolean;
   isCustomRuleset?: boolean;
   encumbrance?: EncumbranceData;
-}
-
-const HAND_SLOTS = new Set<LocationValue>(["Main Hand", "Off Hand", "Two Handed"]);
-
-const SINGLE_OCCUPANCY_SLOTS = new Set<LocationValue>([
-  "Head", "Neck", "Shoulders", "Torso", "Wrists",
-  "Hands", "Waist", "Trinket",
-]);
-
-interface AddItemFormData {
-  selectedItem: SearchItem | null;
-  quantity: number;
-  equipped: boolean;
-  location: LocationValue | "none";
-  weaponSet: number;
-  totalCharges: number;
-  remainingCharges: number;
-}
-
-interface EditItemFormData {
-  quantity: number;
-  equipped: boolean;
-  location: LocationValue | "none";
-  weaponSet: number;
-  totalCharges: number;
-  remainingCharges: number;
-}
-
-type ItemColumns = { type: string | null; slot: string };
-type ItemProperties = { type: string; value: string }[];
-
-function detectSlotFromItem(item: ItemColumns): LocationValue | null {
-  if (item.type === "Weapon") return null; // hand slot picker
-  if (item.type === "Armor") return "Torso";
-  if (item.type === "Shield") return "Off Hand";
-  const match = LOCATION_VALUES.find((v) => v.toLowerCase() === item.slot.toLowerCase());
-  if (match) return match;
-  return null;
-}
-
-function isWeaponItem(item: ItemColumns): boolean {
-  return item.type === "Weapon";
-}
-
-function isShieldItem(item: ItemColumns): boolean {
-  return item.type === "Shield";
-}
-
-function isEquipableItem(_item: ItemColumns): boolean {
-  return true;
-}
-
-function isSlotlessEquipable(_item: ItemColumns): boolean {
-  return false;
-}
-
-function hasChargesProperty(properties: ItemProperties): { has: boolean; defaultCount: number } {
-  const prop = properties.find((p) => p.type === "ITEM_HAS_CHARGES");
-  if (!prop) return { has: false, defaultCount: 0 };
-  return { has: true, defaultCount: Number.parseInt(prop.value, 10) || 0 };
-}
-
-function getSlotConflictWarning(
-  location: LocationValue | "none",
-  weaponSet: number,
-  inventoryItems: InventoryEntry[],
-  excludeItemId?: string,
-): string | null {
-  if (!location || location === "none") return null;
-
-  const equipped = inventoryItems.filter(
-    (e) => e.equipped && e.location && e.itemId !== excludeItemId,
-  );
-
-  if (SINGLE_OCCUPANCY_SLOTS.has(location)) {
-    const conflict = equipped.find((e) => e.location === location);
-    if (conflict) {
-      return `${location} slot is occupied by ${conflict.item.name}`;
-    }
-  }
-
-  if (location === "Finger") {
-    const fingerCount = equipped.filter((e) => e.location === "Finger").length;
-    if (fingerCount >= 2) {
-      return "Both finger slots are occupied";
-    }
-  }
-
-  if (HAND_SLOTS.has(location)) {
-    const sameSet = equipped.filter(
-      (e) => HAND_SLOTS.has(e.location as LocationValue) && e.weaponSet === weaponSet,
-    );
-
-    if (location === "Two Handed") {
-      const conflict = sameSet.find(
-        (e) => e.location === "Main Hand" || e.location === "Off Hand",
-      );
-      if (conflict) {
-        return `Cannot equip two-handed: ${conflict.item.name} is in ${conflict.location} (Set ${weaponSet})`;
-      }
-    }
-
-    if (location === "Main Hand" || location === "Off Hand") {
-      const twoHanded = sameSet.find((e) => e.location === "Two Handed");
-      if (twoHanded) {
-        return `Cannot equip: ${twoHanded.item.name} is two-handed in Set ${weaponSet}`;
-      }
-      const sameSlot = sameSet.find((e) => e.location === location);
-      if (sameSlot) {
-        return `${location} is occupied by ${sameSlot.item.name} (Set ${weaponSet})`;
-      }
-    }
-  }
-
-  return null;
-}
-
-function formatSlotDisplay(entry: InventoryEntry): string {
-  if (!entry.equipped || !entry.location) return "\u2014";
-  if (HAND_SLOTS.has(entry.location as LocationValue) && entry.weaponSet !== null) {
-    return `${entry.location} (Set ${entry.weaponSet})`;
-  }
-  return entry.location;
 }
 
 export function EquipmentSection({
@@ -234,34 +81,14 @@ export function EquipmentSection({
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ApiValidationIssue[]>([]);
+  const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues();
   const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [itemSearch, setItemSearch] = useState("");
   const debouncedItemSearch = useDebouncedValue(itemSearch);
 
-  const addForm = useForm<AddItemFormData>({
-    defaultValues: {
-      selectedItem: null,
-      quantity: 1,
-      equipped: false,
-      location: "none",
-      weaponSet: 0,
-      totalCharges: 0,
-      remainingCharges: 0,
-    },
-  });
-
-  const editForm = useForm<EditItemFormData>({
-    defaultValues: {
-      quantity: 1,
-      equipped: false,
-      location: "none",
-      weaponSet: 0,
-      totalCharges: 0,
-      remainingCharges: 0,
-    },
-  });
+  const addForm = useForm<InventoryFormData>({ defaultValues: EMPTY_INVENTORY_FORM });
+  const editForm = useForm<InventoryFormData>({ defaultValues: EMPTY_INVENTORY_FORM });
 
   const selectedItem = addForm.watch("selectedItem");
   const addLocation = addForm.watch("location");
@@ -272,13 +99,9 @@ export function EquipmentSection({
   // Fetch item details when an item is selected in the add dialog
   const { data: itemDetail } = useQuery({
     queryKey: queryKeys.characters.rulesetItem(rulesetId, selectedItem?.id ?? ""),
-    queryFn: async () => {
-      const response = await rpc.api.rulesets[":id"].items[":itemId"].$get({
-        param: { id: rulesetId, itemId: selectedItem!.id },
-      });
-      return parseResponse(response) as Promise<ItemDetail>;
-    },
-    enabled: !!selectedItem,
+    queryFn: selectedItem
+      ? () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId: selectedItem.id } }))
+      : skipToken,
   });
 
   const addItemProperties = useMemo(
@@ -291,14 +114,10 @@ export function EquipmentSection({
     [itemDetail],
   );
 
-  const addIsWeapon = useMemo(() => isWeaponItem(addItemColumns), [addItemColumns]);
-  const addIsShield = useMemo(() => isShieldItem(addItemColumns), [addItemColumns]);
-  const addIsArmor = useMemo(() => addItemColumns.type === "Armor", [addItemColumns]);
-  const addIsEquipable = useMemo(() => isEquipableItem(addItemColumns), [addItemColumns]);
-  const addIsSlotless = useMemo(() => isSlotlessEquipable(addItemColumns), [addItemColumns]);
-  const addChargesInfo = useMemo(() => hasChargesProperty(addItemProperties), [addItemProperties]);
-  const addShowHandPicker = addIsWeapon;
-  const addShowWeaponSet = addIsWeapon || addIsShield;
+  const addProfile = useMemo(
+    () => (itemDetail ? placementProfile(addItemColumns, addItemProperties) : null),
+    [itemDetail, addItemColumns, addItemProperties],
+  );
 
   // Auto-detect slot when item details load (add dialog)
   useEffect(() => {
@@ -306,15 +125,15 @@ export function EquipmentSection({
     const detected = detectSlotFromItem(addItemColumns);
     if (detected) {
       addForm.setValue("location", detected);
-    } else if (!addIsWeapon) {
+    } else if (!addProfile?.isWeapon) {
       addForm.setValue("location", "none");
     }
     // Auto-fill charges
-    if (addChargesInfo.has) {
-      addForm.setValue("totalCharges", addChargesInfo.defaultCount);
-      addForm.setValue("remainingCharges", addChargesInfo.defaultCount);
+    if (addProfile?.charges.has) {
+      addForm.setValue("totalCharges", addProfile.charges.defaultCount);
+      addForm.setValue("remainingCharges", addProfile.charges.defaultCount);
     }
-  }, [itemDetail, addItemColumns, addIsWeapon, addChargesInfo, addForm]);
+  }, [itemDetail, addItemColumns, addProfile, addForm]);
 
   // Edit dialog properties from the inventory entry
   const editItemProperties = useMemo(
@@ -325,24 +144,20 @@ export function EquipmentSection({
     () => ({ type: editingEntry?.item.type ?? null, slot: editingEntry?.item.slot ?? "Other" }),
     [editingEntry],
   );
-  const editIsWeapon = useMemo(() => isWeaponItem(editItemColumns), [editItemColumns]);
-  const editIsShield = useMemo(() => isShieldItem(editItemColumns), [editItemColumns]);
-  const editIsArmor = useMemo(() => editItemColumns.type === "Armor", [editItemColumns]);
-  const editIsEquipable = useMemo(() => isEquipableItem(editItemColumns), [editItemColumns]);
-  const editIsSlotless = useMemo(() => isSlotlessEquipable(editItemColumns), [editItemColumns]);
-  const editChargesInfo = useMemo(() => hasChargesProperty(editItemProperties), [editItemProperties]);
-  const editShowHandPicker = editIsWeapon;
-  const editShowWeaponSet = editIsWeapon || editIsShield;
+  const editProfile = useMemo(
+    () => placementProfile(editItemColumns, editItemProperties),
+    [editItemColumns, editItemProperties],
+  );
 
   // Slot conflict warnings
   const addSlotWarning = useMemo(
-    () => getSlotConflictWarning(addLocation as LocationValue | "none", addWeaponSet, inventoryItems),
+    () => getSlotConflictWarning(addLocation, addWeaponSet, inventoryItems),
     [addLocation, addWeaponSet, inventoryItems],
   );
 
   const editSlotWarning = useMemo(
     () => getSlotConflictWarning(
-      editLocation as LocationValue | "none",
+      editLocation,
       editWeaponSet,
       inventoryItems,
       editingEntry?.itemId,
@@ -352,12 +167,10 @@ export function EquipmentSection({
 
   // Item search infinite query
   const {
-    data: searchData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    items: searchItems,
     isLoading: isLoadingSearch,
-  } = useInfiniteQuery({
+    onScroll: handleItemsScroll,
+  } = useListboxQuery({
     queryKey: queryKeys.characters.itemSearch(rulesetId, debouncedItemSearch),
     queryFn: async ({ pageParam }) => {
       return parseResponse(rpc.api.rulesets[":id"].items.$get({
@@ -374,28 +187,13 @@ export function EquipmentSection({
     enabled: addDialogOpen,
   });
 
-  const searchItems = searchData?.pages.flatMap((page) => page.items) ?? [];
-
-  const handleItemsScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
-
   // Mutations
   const addMutation = useMutation({
-    mutationFn: async ({ data, force = false }: { data: AddItemFormData; force?: boolean }) => {
+    mutationFn: async ({ data, force = false }: { data: InventoryFormData; force?: boolean }) => {
       if (!data.selectedItem) throw new Error("No item selected");
-      const location = data.location && data.location !== "none" ? data.location : null;
-      const equipped = !!location;
       return rpc.api.characters.inventory[":characterId"].$post({
         param: { characterId },
-        json: {
-          itemId: data.selectedItem.id,
-          quantity: data.quantity,
-          equipped,
-          location,
-          totalCharges: addChargesInfo.has ? data.totalCharges : null,
-          remainingCharges: addChargesInfo.has ? data.remainingCharges : null,
-          weaponSet: location && HAND_SLOTS.has(location as LocationValue) ? data.weaponSet : null,
-          force,
-        },
+        json: { itemId: data.selectedItem.id, ...placementPayload(data, !!addProfile?.charges.has), force },
       });
     },
     onSuccess: () => {
@@ -408,13 +206,7 @@ export function EquipmentSection({
       setItemSearch("");
       setValidationErrors([]);
     },
-    onError: (error) => {
-      if (error instanceof ApiError && error.issues && error.issues.length > 0) {
-        setValidationErrors(error.issues);
-      } else {
-        snackbar.error(error);
-      }
-    },
+    onError: handleSaveError,
   });
 
   const updateMutation = useMutation({
@@ -424,23 +216,12 @@ export function EquipmentSection({
       force = false,
     }: {
       itemId: string;
-      data: EditItemFormData;
+      data: InventoryFormData;
       force?: boolean;
     }) => {
-      const location = data.location && data.location !== "none" ? data.location : null;
-      const equipped = !!location;
       return rpc.api.characters.inventory[":characterId"][":itemId"].$put({
         param: { characterId, itemId },
-        json: {
-          quantity: data.quantity,
-          equipped,
-          location,
-          totalCharges: editChargesInfo.has ? data.totalCharges : null,
-          remainingCharges: editChargesInfo.has ? data.remainingCharges : null,
-          weaponSet: location && HAND_SLOTS.has(location as LocationValue) ? data.weaponSet : null,
-          force,
-          updatedAt: editingEntry?.updatedAt,
-        },
+        json: { ...placementPayload(data, editProfile.charges.has), force, updatedAt: editingEntry?.updatedAt },
       });
     },
     onSuccess: () => {
@@ -453,13 +234,7 @@ export function EquipmentSection({
       editForm.reset();
       setValidationErrors([]);
     },
-    onError: (error) => {
-      if (error instanceof ApiError && error.issues && error.issues.length > 0) {
-        setValidationErrors(error.issues);
-      } else {
-        snackbar.error(error);
-      }
-    },
+    onError: handleSaveError,
   });
 
   const removeMutation = useMutation({
@@ -485,8 +260,7 @@ export function EquipmentSection({
     setEditingEntry(entry);
     editForm.reset({
       quantity: entry.quantity ?? 1,
-      equipped: entry.equipped ?? false,
-      location: (entry.location as LocationValue) || "none",
+      location: oneOf(entry.location, LOCATION_CHOICES, "none"),
       weaponSet: entry.weaponSet ?? 0,
       totalCharges: entry.totalCharges ?? 0,
       remainingCharges: entry.remainingCharges ?? 0,
@@ -498,23 +272,6 @@ export function EquipmentSection({
     setDeletingItemId(itemId);
     setDeleteDialogOpen(true);
   };
-
-  // Determine which location options to show in add dialog
-  const addLocationOptions = useMemo(() => {
-    if (addShowHandPicker) return (["Main Hand", "Off Hand", "Two Handed"] as const).slice();
-    if (addIsShield) return ["Off Hand" as const];
-    if (addIsArmor) return ["Torso" as const];
-    if (addItemColumns.slot === "Other") return ["Other" as const];
-    return LOCATION_VALUES;
-  }, [addShowHandPicker, addIsShield, addIsArmor, addItemColumns.slot]);
-
-  const editLocationOptions = useMemo(() => {
-    if (editShowHandPicker) return (["Main Hand", "Off Hand", "Two Handed"] as const).slice();
-    if (editIsShield) return ["Off Hand" as const];
-    if (editIsArmor) return ["Torso" as const];
-    if (editItemColumns.slot === "Other") return ["Other" as const];
-    return LOCATION_VALUES;
-  }, [editShowHandPicker, editIsShield, editIsArmor, editItemColumns.slot]);
 
   const requirementAlert = (visible: boolean, onForce?: () => void) => visible ? (
     <AnimatedAlert
@@ -576,139 +333,27 @@ export function EquipmentSection({
       )}
     >
       {hasItems ? (
-        <>
-          <TableContainer sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Item</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>
-                    Slot
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>
-                    Quantity
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>
-                    Weight
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>
-                    Value
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                  {!isArchived && (
-                    <TableCell align="center" sx={{ fontWeight: 600 }}>
-                      Actions
-                    </TableCell>
-                  )}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inventoryItems.map((entry) => (
-                  <TableRow
-                    key={entry.itemId}
-                    sx={entry.equipped ? { backgroundColor: "action.hover" } : {}}
-                  >
-                    <TableCell>
-                      <MuiLink
-                        component={Link}
-                        to={`/rulesets/${rulesetId}/items/${entry.item.id}/customization`}
-                        target="_blank"
-                        underline="hover"
-                      >
-                        {entry.item.name || "Unknown Item"}
-                      </MuiLink>
-                      {entry.totalCharges !== null &&
-                        entry.totalCharges !== undefined && (
-                          <Typography
-                            variant="caption"
-                            sx={{ display: "block", color: "text.secondary" }}
-                          >
-                            Charges: {entry.remainingCharges ?? 0}/
-                            {entry.totalCharges}
-                          </Typography>
-                        )}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2">
-                        {formatSlotDisplay(entry)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">{entry.quantity || 1}</TableCell>
-                    <TableCell align="center">
-                      {(() => {
-                        const w = formatDecimal(entry.item.weight);
-                        return w ? `${w} lbs` : "\u2014";
-                      })()}
-                    </TableCell>
-                    <TableCell align="center">
-                      {(() => {
-                        const c = formatDecimal(entry.item.costGp);
-                        return c ? `${c} gp` : "\u2014";
-                      })()}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: "0.875rem" }}>
-                      {entry.item.description || "\u2014"}
-                    </TableCell>
-                    {!isArchived && (
-                      <TableCell align="center">
-                        <Stack direction="row" spacing={0} sx={{
-                          justifyContent: "center"
-                        }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditItem(entry)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteItem(entry.itemId)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Stack>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          {encumbrance && (
-            <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 2 }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
-                Carried Weight: {encumbrance.carriedweight ?? 0} lbs
-              </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Light: {encumbrance.lightload ?? 0}
-              </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Medium: {encumbrance.mediumload ?? 0}
-              </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Heavy: {encumbrance.heavyload ?? 0}
-              </Typography>
-              {encumbrance.load && encumbrance.load !== "light" && (
-                <Chip
-                  label={encumbrance.load.charAt(0).toUpperCase() + encumbrance.load.slice(1)}
-                  size="small"
-                  color={
-                    encumbrance.load === "overloaded" ? "error"
-                      : encumbrance.load === "heavy" ? "warning"
-                      : "info"
-                  }
-                />
-              )}
-            </Box>
+        <EquipmentTable
+          rows={inventoryItems.map((entry) => ({
+            ...entry,
+            name: entry.item.name,
+            description: entry.item.description,
+            weight: entry.item.weight,
+            costGp: entry.item.costGp,
+          }))}
+          encumbrance={encumbrance}
+          rulesetId={rulesetId}
+          renderActions={isArchived ? undefined : (entry) => (
+            <Stack direction="row" spacing={0} sx={{ justifyContent: "center" }}>
+              <IconButton size="small" aria-label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" color="error" aria-label={`Remove ${entry.name}`} onClick={() => handleDeleteItem(entry.itemId)}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Stack>
           )}
-        </>
+        />
       ) : (
         <BlankState
           title="No equipment"
@@ -797,14 +442,10 @@ export function EquipmentSection({
                   <Box>
                     <Typography variant="body2">{option.name}</Typography>
                     {(() => {
-                      const c = formatDecimal(option.costGp);
-                      const w = formatDecimal(option.weight);
-                      if (!c) return null;
-                      return (
-                        <Typography variant="caption" sx={{
-                          color: "text.secondary"
-                        }}>
-                          {c}gp{w ? ` | ${w} lbs` : ""}
+                      const details = [formatCost(option.costGp), formatWeight(option.weight)].filter(Boolean).join(" | ");
+                      return details && (
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          {details}
                         </Typography>
                       );
                     })()}
@@ -815,94 +456,12 @@ export function EquipmentSection({
               slotProps={{
                 listbox: {
                   component: ScrollSafeListbox,
-
-                  ...{
-                    onScroll: handleItemsScroll,
-                    style: { maxHeight: 300 },
-                  }
+                  onScroll: handleItemsScroll,
                 }
               }} />
           )}
         />
-        <TextField
-          {...addForm.register("quantity", {
-            valueAsNumber: true,
-            min: { value: 1, message: "Minimum 1" },
-          })}
-          label="Quantity"
-          type="number"
-          fullWidth
-          error={!!addForm.formState.errors.quantity}
-          helperText={addForm.formState.errors.quantity?.message}
-          slotProps={{
-            htmlInput: { min: 1 }
-          }}
-        />
-        {selectedItem && addIsEquipable && addIsSlotless && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={addForm.watch("equipped")}
-                onChange={(e) => addForm.setValue("equipped", e.target.checked)}
-              />
-            }
-            label="Equipped"
-          />
-        )}
-        {selectedItem && addIsEquipable && !addIsSlotless && (
-          <>
-            <TextField
-              select
-              label={addShowHandPicker ? "Hand Slot" : "Equipment Slot"}
-              value={addForm.watch("location")}
-              onChange={(e) =>
-                addForm.setValue("location", e.target.value as LocationValue | "none")}
-              fullWidth
-            >
-              <MenuItem value="none">Not Equipped</MenuItem>
-              {addLocationOptions.map((loc) => (
-                <MenuItem key={loc} value={loc}>
-                  {loc}
-                </MenuItem>
-              ))}
-            </TextField>
-            {addLocation && addShowWeaponSet && HAND_SLOTS.has(addLocation as LocationValue) && (
-              <TextField
-                {...addForm.register("weaponSet", { valueAsNumber: true })}
-                label="Weapon Set"
-                type="number"
-                fullWidth
-                slotProps={{
-                  htmlInput: { min: 0 }
-                }}
-              />
-            )}
-          </>
-        )}
-        {addChargesInfo.has && (
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField
-              {...addForm.register("totalCharges", { valueAsNumber: true })}
-              label="Total Charges"
-              type="number"
-              fullWidth
-              slotProps={{
-                htmlInput: { min: 0 }
-              }}
-            />
-            <TextField
-              {...addForm.register("remainingCharges", {
-                valueAsNumber: true,
-              })}
-              label="Remaining Charges"
-              type="number"
-              fullWidth
-              slotProps={{
-                htmlInput: { min: 0 }
-              }}
-            />
-          </Stack>
-        )}
+        <InventoryPlacementFields form={addForm} profile={selectedItem ? addProfile : null} />
       </CreateDialog>
       {/* Edit Item Dialog */}
       <EditDialog
@@ -933,85 +492,7 @@ export function EquipmentSection({
           fullWidth
           disabled
         />
-        <TextField
-          {...editForm.register("quantity", {
-            valueAsNumber: true,
-            min: { value: 1, message: "Minimum 1" },
-          })}
-          label="Quantity"
-          type="number"
-          fullWidth
-          error={!!editForm.formState.errors.quantity}
-          helperText={editForm.formState.errors.quantity?.message}
-          slotProps={{
-            htmlInput: { min: 1 }
-          }}
-        />
-        {editIsEquipable && editIsSlotless && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={editForm.watch("equipped")}
-                onChange={(e) => editForm.setValue("equipped", e.target.checked)}
-              />
-            }
-            label="Equipped"
-          />
-        )}
-        {editIsEquipable && !editIsSlotless && (
-          <>
-            <TextField
-              select
-              label={editShowHandPicker ? "Hand Slot" : "Equipment Slot"}
-              value={editForm.watch("location")}
-              onChange={(e) =>
-                editForm.setValue("location", e.target.value as LocationValue | "none")}
-              fullWidth
-            >
-              <MenuItem value="none">Not Equipped</MenuItem>
-              {editLocationOptions.map((loc) => (
-                <MenuItem key={loc} value={loc}>
-                  {loc}
-                </MenuItem>
-              ))}
-            </TextField>
-            {editLocation && editShowWeaponSet && HAND_SLOTS.has(editLocation as LocationValue) && (
-              <TextField
-                {...editForm.register("weaponSet", { valueAsNumber: true })}
-                label="Weapon Set"
-                type="number"
-                fullWidth
-                slotProps={{
-                  htmlInput: { min: 0 }
-                }}
-              />
-            )}
-          </>
-        )}
-        {editChargesInfo.has && (
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField
-              {...editForm.register("totalCharges", { valueAsNumber: true })}
-              label="Total Charges"
-              type="number"
-              fullWidth
-              slotProps={{
-                htmlInput: { min: 0 }
-              }}
-            />
-            <TextField
-              {...editForm.register("remainingCharges", {
-                valueAsNumber: true,
-              })}
-              label="Remaining Charges"
-              type="number"
-              fullWidth
-              slotProps={{
-                htmlInput: { min: 0 }
-              }}
-            />
-          </Stack>
-        )}
+        <InventoryPlacementFields form={editForm} profile={editProfile} />
       </EditDialog>
       {/* Remove Confirmation */}
       <DeleteDialog

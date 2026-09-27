@@ -365,4 +365,25 @@ describe("campaigns players", () => {
       // Should fail since this user already has a pending invite
       expect(secondResponse.status >= 400).toBe(true);
     });
+  
+  test("filters the players by username or email", async () => {
+    const campaignId = await createTestCampaign();
+    const headers = { cookie: "session-id=00000000-0000-4000-8000-000000000123" };
+    const list = async (search?: string) => {
+      const response = await api.api.campaigns[":id"].players.$get(
+        { param: { id: campaignId }, query: { limit: "10", page: "1", ...(search && { search }) } },
+        { headers },
+      );
+      if (!response.ok) throw new Error(`Search failed with ${response.status}`);
+      return (await response.json()).items;
+    };
+
+    const [gameMaster] = await list();
+    const email = gameMaster.usersInAccount?.emailAddress;
+    expect(email).toBeDefined();
+
+    const matches = await list(email?.slice(0, 6));
+    expect(matches.map((player) => player.id)).toContain(gameMaster.id);
+    expect(await list("no-player-matches-this")).toHaveLength(0);
   });
+});

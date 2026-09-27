@@ -41,5 +41,5 @@ export function InfoPill({ icon: Icon, label, color = "default", tooltip }: Info
     </Box>
   );
 
-  return tooltip ? <Tooltip title={tooltip}>{pill}</Tooltip> : pill;
+  return tooltip ? <Tooltip describeChild title={tooltip}>{pill}</Tooltip> : pill;
 }

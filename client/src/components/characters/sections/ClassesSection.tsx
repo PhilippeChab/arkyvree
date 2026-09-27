@@ -20,7 +20,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import type { CharacterData } from "@/client/src/components/characters/index.ts";
+import type { CharacterData } from "./characterData.ts";
 import { SheetSection } from "./SheetSection.tsx";
 
 type SheetClasses = NonNullable<CharacterData["classes"]>;
@@ -65,15 +65,17 @@ export function ClassesSection({
         ? (
           <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 1 }}>
             {Object.values(classes).map((cls) => {
-              const className = cls.klass?.name || "Unknown";
-              const currentLevel = cls.levels?.length || cls.level || 1;
-              const hasLevels = cls.levels && cls.levels.length > 0;
+              const { klass } = cls;
+              const levels = cls.levels ?? [];
+              const className = klass?.name || "Unknown";
+              const currentLevel = levels.length || cls.level || 1;
 
-              const classLink = rulesetId && cls.klass?.id
-                ? `/rulesets/${rulesetId}/classes/${cls.klass.id}`
+              const classLink = rulesetId && klass?.id
+                ? `/rulesets/${rulesetId}/classes/${klass.id}`
                 : undefined;
 
-              if (!hasLevels || !onEditLevel) {
+              // Levels can only be edited on a class the sheet carries in full.
+              if (!klass || levels.length === 0 || !onEditLevel) {
                 return (
                   <Chip
                     key={className}
@@ -113,7 +115,7 @@ export function ClassesSection({
                     </Typography>
                   </AccordionSummary>
                   <AccordionDetails sx={{ pt: 0 }}>
-                    {cls.levels!.map((lvl) => (
+                    {levels.map((lvl) => (
                       <Stack
                         key={lvl.characterLevel.id}
                         direction="row"
@@ -133,10 +135,10 @@ export function ClassesSection({
                             size="small"
                             onClick={() => onEditLevel({
                               characterLevelId: lvl.characterLevel.id,
-                              klassId: cls.klass!.id,
-                              klassName: cls.klass!.name,
+                              klassId: klass.id,
+                              klassName: klass.name,
                               level: lvl.klassLevel.level,
-                              hd: cls.klass!.hd,
+                              hd: klass.hd,
                             })}
                             aria-label={`Edit ${className} level ${lvl.klassLevel.level}`}
                           >

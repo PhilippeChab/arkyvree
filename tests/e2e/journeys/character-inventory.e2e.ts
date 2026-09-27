@@ -112,7 +112,7 @@ test.describe('Character inventory CRUD', () => {
     const itemSearch = addDialog.getByRole('combobox', { name: 'Search Item' });
     await itemSearch.click();
     await itemSearch.fill('Longsword');
-    // Option labels include cost+weight, e.g. "Longsword 15.00gp | 4.00 lbs".
+    // Option labels include cost+weight, e.g. "Longsword 15.00 gp | 4.00 lbs".
     // Anchor on word-boundary to avoid matching "Masterwork Cold Iron Longsword".
     await page.getByRole('option', { name: /^Longsword\s/ }).first().click();
 

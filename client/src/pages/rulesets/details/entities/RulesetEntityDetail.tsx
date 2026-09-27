@@ -1,3 +1,4 @@
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { useMutation, useQuery, useQueryClient, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { useForm, type DefaultValues, type FieldValues, type UseFormReturn } from "react-hook-form";
@@ -9,8 +10,8 @@ import { useFormSync, usePageTitle } from "@/client/src/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import { EntityDetailLayout, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { EntityDetailLayout, EntityDetailsCard, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
+import { useRulesetPermissions, entityPageState } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 interface EntityBase {
   id: string;
@@ -60,11 +61,11 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const location = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const backUrl = (location.state as { from?: string } | null)?.from ?? `/rulesets/${rulesetId}/${section}`;
+  const backUrl = entityPageState(location.state).from ?? `/rulesets/${rulesetId}/${section}`;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data: ruleset, isLoading: isRulesetLoading } = useQuery(rulesetDetailQuery(rulesetId));
-  const { data: entity, isLoading: isEntityLoading } = useQuery(query(entityId));
+  const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
+  const { data: entity, isLoading: isEntityLoading, error: entityError } = useQuery(query(entityId));
 
   usePageTitle(entity?.name);
 
@@ -82,9 +83,13 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
     queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: TForm) => ({ sourceId: entityId, saved: await editing!.update(data, sync.updatedAt()) }),
-    onSuccess: ({ saved, sourceId }) => {
-      sync.saved(editing!.toFormValues(saved), saved.updatedAt);
+    mutationFn: async (data: TForm) => {
+      if (!editing) throw new Error(`${label} can't be edited`);
+      const saved = await editing.update(data, sync.updatedAt());
+      return { sourceId: entityId, saved, values: editing.toFormValues(saved) };
+    },
+    onSuccess: ({ saved, sourceId, values }) => {
+      sync.saved(values, saved.updatedAt);
       const savedKey = query(saved.id).queryKey;
       queryClient.setQueryData<TEntity>(savedKey, saved);
       // Supersede any refetch that left before the save committed.
@@ -101,7 +106,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => editing!.remove(),
+    mutationFn: () => (editing ? editing.remove() : Promise.reject(new Error(`${label} can't be deleted`))),
     onSuccess: () => {
       void invalidateSection();
       snackbar.success(`${label} deleted`);
@@ -109,6 +114,16 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
     },
     onError: (err) => snackbar.error(err, `Failed to delete ${label.toLowerCase()}`),
   });
+
+  if (!isRulesetLoading && !isEntityLoading && (!ruleset || !entity)) {
+    return (
+      <EntityPageError
+        message={!ruleset ? loadFailureMessage("Ruleset", rulesetError) : loadFailureMessage(label, entityError)}
+        backLabel="Back"
+        onBack={() => navigate(backUrl)}
+      />
+    );
+  }
 
   return (
     <>

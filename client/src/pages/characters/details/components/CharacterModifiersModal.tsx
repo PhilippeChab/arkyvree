@@ -70,7 +70,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const editForm = useForm<ModifierFormData>({ defaultValues: { target: "", value: "", operator: "" } });
 
   const { data: modifiers = [], isLoading } = useQuery({
-    queryKey: [...queryKeys.characters.detail(characterId), "modifiers"],
+    queryKey: queryKeys.characters.modifiers(characterId),
     queryFn: async () => {
       return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers.$get({
         param: { characterId },
@@ -176,7 +176,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
             >
               Add
             </Button>
-            <IconButton edge="end" onClick={onClose}>
+            <IconButton edge="end" aria-label="Close" onClick={onClose}>
               <CloseIcon />
             </IconButton>
           </Stack>
@@ -184,9 +184,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
 
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
           {isLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 8 }}>
-              <DiceSpinner />
-            </Box>
+            <DiceSpinner sx={{ py: 8 }} />
           ) : modifiers.length === 0 ? (
             <BlankState
               icon={TuneIcon}
@@ -245,13 +243,13 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                             transition: "opacity 0.2s ease",
                           }}
                         >
-                          <IconButton size="small" onClick={() => handleEdit(mod)}>
+                          <IconButton size="small" aria-label="Edit modifier" onClick={() => handleEdit(mod)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" onClick={() => handleDuplicate(mod)}>
+                          <IconButton size="small" aria-label="Duplicate modifier" onClick={() => handleDuplicate(mod)}>
                             <ContentCopyIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDelete(mod)}>
+                          <IconButton size="small" color="error" aria-label="Delete modifier" onClick={() => handleDelete(mod)}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Box>

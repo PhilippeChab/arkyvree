@@ -1,13 +1,14 @@
-import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { RulesetSave } from "@/client/src/hooks/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { SaveFormFields, type SaveFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Shield as SavesIcon } from "@mui/icons-material";
 import {
-  Box,
   Typography,
 } from "@mui/material";
 import {
@@ -15,10 +16,8 @@ import {
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const SAVES_COLUMNS = [
@@ -27,22 +26,18 @@ const SAVES_COLUMNS = [
   { key: "ability", label: "Linked Ability", width: "30%" },
 ];
 
-type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
-type Save = SavesPaginated["items"][number];
+type Save = RulesetSave;
 
 export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    createDialogOpen,
-    setCreateDialogOpen,
     createForm,
-    createMutation,
     handleCreate,
+    createDialogProps,
   } = useRulesetSection<Save, SaveFormData>({
     rulesetId: ruleset.id,
     sectionName: "saves",
@@ -53,7 +48,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         json: data,
       }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/saves/${created.id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`saves/${created.id}`),
   });
 
   const { data: abilities = [] } = useRulesetAbilities(ruleset.id);
@@ -63,11 +58,11 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     placeholderData: keepPreviousData,
   });
 
-  const saves = data?.pages.flatMap((page) => page.items) ?? [];
+  const saves = pageItems(data);
   const abilityLookup = new Map(abilities.map((a) => [a.id, a.name]));
 
   const handleRowClick = (save: Save) => {
-    navigate(`/rulesets/${ruleset.id}/saves/${save.id}`, { state: { from: location.pathname + location.search } });
+    openEntity(`saves/${save.id}`);
   };
 
   const handleRowMouseEnter = useCallback((save: Save) => {
@@ -80,16 +75,12 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         return save.name;
       case "description":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {save.description || "-"}
-          </Typography>
+          <DescriptionCell text={save.description} />
         );
       case "ability":
         return (
           <Typography variant="body2">
-            {abilityLookup.get(save.abilityId) || "-"}
+            {abilityLookup.get(save.abilityId) || "—"}
           </Typography>
         );
       default:
@@ -98,7 +89,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -116,6 +107,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
       <RulesetSectionTable
         data={saves}
+        search={searchQuery}
         isLoading={isLoading}
         columns={SAVES_COLUMNS}
         onRowClick={handleRowClick}
@@ -133,15 +125,11 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Save"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
       >
         <SaveFormFields form={createForm} abilities={abilities} />
       </CreateDialog>
-    </Box>
+    </SectionContent>
   );
 }

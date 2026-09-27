@@ -1,3 +1,4 @@
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { Check } from "@mui/icons-material";
 import {
   Alert,
@@ -22,7 +23,7 @@ import { ApiError } from "@/client/src/services/rpc.ts";
 import { InviteActionButtons } from "./InviteActionButtons.tsx";
 
 /** What the landing page needs to know about an invite, whatever its kind. */
-export interface InviteDetails {
+interface InviteDetails {
   status: string;
   entityName: string | undefined;
   entityId: string | null | undefined;
@@ -149,9 +150,7 @@ export function InviteLandingPage({
   if (isLoading) {
     return (
       <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
-          <DiceSpinner size="large" />
-        </Box>
+        <DiceSpinner size="large" sx={{ minHeight: 300 }} />
       </Container>
     );
   }
@@ -239,7 +238,7 @@ export function InviteLandingPage({
                 )}
                 {invite.invitedAt && (
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Invited on {new Date(invite.invitedAt).toLocaleDateString()}
+                    Invited on {formatDate(invite.invitedAt)}
                   </Typography>
                 )}
               </Box>

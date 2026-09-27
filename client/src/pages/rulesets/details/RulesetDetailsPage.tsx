@@ -1,3 +1,6 @@
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   DetailPageHeader,
   DiceSpinner,
@@ -6,6 +9,8 @@ import {
   PageTransition,
   SectionTabs,
   type SectionTab,
+  PageError,
+  ActionMenuItem,
 } from "@/client/src/components/common/index.ts";
 import {
   ArchiveRulesetDialog,
@@ -57,18 +62,14 @@ import {
 import {
   Alert,
   Box,
-  Button,
   Chip,
   Container,
   DialogContent,
   DialogTitle,
   Divider,
   IconButton,
-  ListItemIcon,
-  ListItemText,
   Menu,
   MenuItem,
-  Paper,
   Popover,
   Tooltip,
   Typography,
@@ -89,7 +90,6 @@ import {
 import { getSections, type RulesetSectionProps } from "./sectionFactory.ts";
 import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 
-
 function HelpLabel({ label, help }: { label: string; help: string }) {
   return (
     <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -99,11 +99,11 @@ function HelpLabel({ label, help }: { label: string; help: string }) {
   );
 }
 
-function getStatusChip(status: "Draft" | "Published" | "Archived") {
+function getStatusChip(status: RulesetDetail["status"]) {
   switch (status) {
     case "Draft":
       return (
-        <Tooltip title="Fully editable — add, edit, and delete entities. Only visible to you until published.">
+        <Tooltip describeChild title="Fully editable — add, edit, and delete entities. Only visible to you until published.">
           <Chip
             icon={<DraftIcon />}
             label="Draft"
@@ -116,7 +116,7 @@ function getStatusChip(status: "Draft" | "Published" | "Archived") {
       );
     case "Published":
       return (
-        <Tooltip title="Available for others to use and fork. You can still add, edit, and delete entities — characters that depend on a deletion will block it.">
+        <Tooltip describeChild title="Available for others to use and fork. You can still add, edit, and delete entities — characters that depend on a deletion will block it.">
           <Chip
             icon={<PublishedIcon />}
             label="Published"
@@ -129,7 +129,7 @@ function getStatusChip(status: "Draft" | "Published" | "Archived") {
       );
     case "Archived":
       return (
-        <Tooltip title="Read-only. Can be un-archived later.">
+        <Tooltip describeChild title="Read-only. Can be un-archived later.">
           <Chip
             icon={<ArchiveIcon />}
             label="Archived"
@@ -163,7 +163,7 @@ export default function RulesetDetailsPage() {
   usePageTitle(ruleset?.name);
 
   const { data: subscribedExtensions } = useQuery({
-    queryKey: [...queryKeys.rulesets.detail(id), "extensions"],
+    queryKey: queryKeys.rulesets.extensions(id),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].extensions.$get({ param: { id } })),
     enabled: !!ruleset?.rulesetId,
   });
@@ -226,6 +226,10 @@ export default function RulesetDetailsPage() {
     }, { replace: true });
   }, [setSearchParams]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const closeMenuAnd = (then: () => void) => () => {
+    setAnchorEl(null);
+    then();
+  };
   const [extensionsAnchor, setExtensionsAnchor] = useState<null | HTMLElement>(null);
   if (!subscribedExtensions?.length && extensionsAnchor !== null) {
     setExtensionsAnchor(null);
@@ -239,7 +243,7 @@ export default function RulesetDetailsPage() {
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
   type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => React.ReactNode };
   const tabConfig = useMemo((): TabConfig[] => {
-    const sections = getSections(baseRules ?? "Dungeons & Dragons: 3.5");
+    const sections = getSections(baseRules ?? DEFAULT_BASE_RULES);
     return [
       { key: "races", label: "Races", icon: RacesIcon, component: RacesSection },
       { key: "languages", label: "Languages", icon: LanguagesIcon, component: LanguagesSection },
@@ -267,16 +271,7 @@ export default function RulesetDetailsPage() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: 400,
-          }}
-        >
-          <DiceSpinner />
-        </Box>
+        <DiceSpinner sx={{ minHeight: 400 }} />
       </Container>
     );
   }
@@ -284,18 +279,7 @@ export default function RulesetDetailsPage() {
   if (error || !ruleset) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
-          <Typography variant="h5" color="error" gutterBottom>
-            Failed to load ruleset
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate("/rulesets")}
-            sx={{ mt: 2 }}
-          >
-            Back to Rulesets
-          </Button>
-        </Paper>
+        <PageError message="Failed to load ruleset" backLabel="Back to Rulesets" onBack={() => navigate("/rulesets")} />
       </Container>
     );
   }
@@ -362,7 +346,7 @@ export default function RulesetDetailsPage() {
             <>
               <Chip
                 icon={<ExtensionIcon />}
-                label={`${subscribedExtensions.length} ${subscribedExtensions.length === 1 ? "extension" : "extensions"}`}
+                label={formatCount(subscribedExtensions.length, "extension")}
                 size="medium"
                 color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
                 variant="outlined"
@@ -441,50 +425,36 @@ export default function RulesetDetailsPage() {
           slotProps={{ paper: { sx: { minWidth: 200 } } }}
         >
           {ruleset.status === "Published" && !isExtension && !isFork && (
-            <MenuItem
-              onClick={() => {
-                setAnchorEl(null);
-                handleFork({ ...ruleset, rulesetName: undefined });
-              }}
-            >
-              <ListItemIcon><ForkIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary="Fork" secondary="Create your own editable copy" />
-            </MenuItem>
+            <ActionMenuItem
+              icon={ForkIcon}
+              label="Fork"
+              description="Create your own editable copy"
+              onClick={closeMenuAnd(() => handleFork(ruleset))}
+            />
           )}
-          {!!ruleset.rulesetId && [
-            <MenuItem
-              key="local-changes"
-              onClick={() => {
-                setAnchorEl(null);
-                setOverridesDialogOpen(true);
-              }}
-            >
-              <ListItemIcon><CompareArrowsIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary="Local changes" secondary="View added, modified, and deleted entities" />
-            </MenuItem>,
-          ]}
+          {!!ruleset.rulesetId && (
+            <ActionMenuItem
+              icon={CompareArrowsIcon}
+              label="Local changes"
+              description="View added, modified, and deleted entities"
+              onClick={closeMenuAnd(() => setOverridesDialogOpen(true))}
+            />
+          )}
           {isOwner && ruleset.rulesetId && ruleset.status !== "Archived" && !ruleset.isUsedAsExtension && !isExtension && (
-            <MenuItem
-              key="subscribe-extension"
-              onClick={() => {
-                setAnchorEl(null);
-                handleSubscribe({ ...ruleset, rulesetName: undefined });
-              }}
-            >
-              <ListItemIcon><ExtensionIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary="Subscribe" secondary="Add content from a sourcebook" />
-            </MenuItem>
+            <ActionMenuItem
+              icon={ExtensionIcon}
+              label="Subscribe"
+              description="Add content from a sourcebook"
+              onClick={closeMenuAnd(() => handleSubscribe(ruleset))}
+            />
           )}
           {showContributorsMenu && (
-            <MenuItem
-              onClick={() => {
-                setAnchorEl(null);
-                setContributorsDialogOpen(true);
-              }}
-            >
-              <ListItemIcon><ContributorsIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary="Contributors" secondary="Admin, Editor, Viewer" />
-            </MenuItem>
+            <ActionMenuItem
+              icon={ContributorsIcon}
+              label="Contributors"
+              description="Admin, Editor, Viewer"
+              onClick={closeMenuAnd(() => setContributorsDialogOpen(true))}
+            />
           )}
           {isOwner && ruleset.rulesetId && ruleset.status !== "Archived" && [
             <Divider key="sync-divider" />,
@@ -497,62 +467,37 @@ export default function RulesetDetailsPage() {
               onClick={() => setAnchorEl(null)}
               sx={{ justifyContent: "center" }}
             >
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 Learn more in Help Center
               </Typography>
             </MenuItem>,
           ]}
           {canEditRuleset && ruleset.status !== "Archived" && [
-            <MenuItem
-              key="edit"
-              onClick={() => {
-                setAnchorEl(null);
-                handleEdit({ ...ruleset, rulesetName: undefined });
-              }}
-            >
-              <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary="Edit" />
-            </MenuItem>,
+            <ActionMenuItem key="edit" icon={EditIcon} label="Edit" onClick={closeMenuAnd(() => handleEdit(ruleset))} />,
             canPublish && ruleset.status === "Draft" && (
-              <MenuItem
+              <ActionMenuItem
                 key="publish"
-                onClick={() => {
-                  setAnchorEl(null);
-                  handlePublish({ ...ruleset, rulesetName: undefined });
-                }}
-                sx={{ color: "success.main" }}
-              >
-                <ListItemIcon sx={{ color: "inherit" }}><PublishIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="Publish" />
-              </MenuItem>
+                icon={PublishIcon}
+                label="Publish"
+                intent="positive"
+                onClick={closeMenuAnd(() => handlePublish(ruleset))}
+              />
             ),
-            <MenuItem
+            <ActionMenuItem
               key="archive"
-              onClick={() => {
-                setAnchorEl(null);
-                handleArchive({ ...ruleset, rulesetName: undefined });
-              }}
-              sx={{ color: "warning.main" }}
-            >
-              <ListItemIcon sx={{ color: "inherit" }}><ArchiveIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary="Archive" />
-            </MenuItem>,
+              icon={ArchiveIcon}
+              label="Archive"
+              intent="caution"
+              onClick={closeMenuAnd(() => handleArchive(ruleset))}
+            />,
           ]}
           {isOwner && ruleset.status === "Archived" && (
-            <MenuItem
-              onClick={() => {
-                setAnchorEl(null);
-                if (id) {
-                  unarchiveMutation.mutate(id);
-                }
-              }}
-              sx={{ color: "success.main" }}
-            >
-              <ListItemIcon sx={{ color: "inherit" }}><UnarchiveIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary="Unarchive" />
-            </MenuItem>
+            <ActionMenuItem
+              icon={UnarchiveIcon}
+              label="Unarchive"
+              intent="positive"
+              onClick={closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
+            />
           )}
         </Menu>
 

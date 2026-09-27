@@ -1,27 +1,28 @@
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { MenuItem, TextField } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormReturn } from "react-hook-form";
-import { DECIMAL_PATTERN, type ItemFormInternal } from "./itemForm.ts";
+import { DECIMAL_PATTERN, isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
 
-function isTypeWithTemplate(type?: string) {
-  return type === "Weapon" || type === "Armor" || type === "Shield";
+interface TemplateSelectorProps {
+  form: UseFormReturn<ItemFormInternal>;
+  rulesetId: string;
+  type: TemplateType;
+  disabled?: boolean;
 }
 
-function TemplateSelector({ form, rulesetId, type }: { form: UseFormReturn<ItemFormInternal>; rulesetId: string; type: string }) {
+function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {
   const { data: templates, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, `templates-${type}`),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].templates.$get({
-        param: { id: rulesetId },
-        query: { type: type as "Weapon" | "Armor" | "Shield" },
-      }));
-    },
+    queryFn: () => parseResponse(rpc.api.rulesets[":id"].templates.$get({ param: { id: rulesetId }, query: { type } })),
   });
 
-  const rawValue = form.watch("sourceItemId" as keyof ItemFormInternal) || "";
+  const rawValue = form.watch("sourceItemId") || "";
+  // A template this ruleset no longer has shows as "None".
   const value = !templates ? rawValue : rawValue && templates.some((t) => t.id === rawValue) ? rawValue : "";
 
   return (
@@ -31,8 +32,8 @@ function TemplateSelector({ form, rulesetId, type }: { form: UseFormReturn<ItemF
       fullWidth
       select
       value={value}
-      onChange={(e) => form.setValue("sourceItemId" as keyof ItemFormInternal, e.target.value as never, { shouldDirty: true })}
-      disabled={isLoading}
+      onChange={(e) => form.setValue("sourceItemId", e.target.value, { shouldDirty: true })}
+      disabled={isLoading || disabled}
     >
       <MenuItem value="">None</MenuItem>
       {templates?.map((t) => (
@@ -45,38 +46,32 @@ function TemplateSelector({ form, rulesetId, type }: { form: UseFormReturn<ItemF
 interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormInternal>;
   rulesetId: string;
+  /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
+  lockType?: boolean;
 }
 
-export function ItemFormFields({ form, rulesetId }: ItemFormFieldsProps) {
-  const itemType = form.watch("type") as string | undefined;
+export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProps) {
+  const itemType = form.watch("type");
   const isTemplate = form.watch("isTemplate");
-  const slot = form.watch("slot") as string | undefined;
+  const slot = form.watch("slot");
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newType = e.target.value;
-    form.setValue("type", newType as ItemFormInternal["type"], { shouldDirty: true });
-    if (isTypeWithTemplate(newType)) {
+    form.setValue("type", newType, { shouldDirty: true });
+    if (isTemplateType(newType)) {
       form.setValue("slot", "", { shouldDirty: true });
-      form.setValue("sourceItemId" as keyof ItemFormInternal, "" as never, { shouldDirty: true });
+      form.setValue("sourceItemId", "", { shouldDirty: true });
     }
   };
 
   return (
     <>
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
-        label="Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={3}
-        sx={{ "& textarea": { resize: "vertical" } }}
       />
       <TextField
         {...form.register("costGp", { pattern: DECIMAL_PATTERN })}
@@ -107,14 +102,15 @@ export function ItemFormFields({ form, rulesetId }: ItemFormFieldsProps) {
         select
         value={itemType || ""}
         onChange={handleTypeChange}
+        disabled={lockType}
       >
         <MenuItem value="">None</MenuItem>
         {ITEM_TYPE_OPTIONS.map((opt) => (
           <MenuItem key={opt} value={opt}>{opt}</MenuItem>
         ))}
       </TextField>
-      {isTypeWithTemplate(itemType)
-        ? !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType!} />
+      {isTemplateType(itemType)
+        ? !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType} disabled={lockType} />
         : (
           <TextField
             {...form.register("slot")}
@@ -122,6 +118,7 @@ export function ItemFormFields({ form, rulesetId }: ItemFormFieldsProps) {
             fullWidth
             select
             value={slot || ""}
+            disabled={lockType}
           >
             <MenuItem value="">None</MenuItem>
             {SLOT_OPTIONS.map((slot) => (

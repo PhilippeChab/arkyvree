@@ -1,7 +1,9 @@
+import { isRecord } from "@/client/src/lib/isRecord.ts";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type WarningKey = "abilityDecrease";
+const WARNING_KEYS = ["abilityDecrease"] as const;
+export type WarningKey = (typeof WARNING_KEYS)[number];
 
 interface WarningPreference {
   enabled: boolean;
@@ -44,11 +46,13 @@ export const useUserPreferencesStore = create<UserPreferencesState>()(
         ),
       }),
       merge: (persisted, current) => {
-        const saved = (persisted as { warnings?: Partial<Record<WarningKey, { enabled?: boolean }>> } | undefined)
-          ?.warnings ?? {};
-        const warnings = {} as Record<WarningKey, WarningPreference>;
-        for (const key of Object.keys(current.warnings) as WarningKey[]) {
-          warnings[key] = { ...current.warnings[key], enabled: saved[key]?.enabled ?? current.warnings[key].enabled };
+        // Only the known warnings' saved `enabled` flags are taken from storage.
+        const saved = isRecord(persisted) && isRecord(persisted.warnings) ? persisted.warnings : {};
+        const warnings = { ...current.warnings };
+        for (const key of WARNING_KEYS) {
+          const entry = saved[key];
+          const enabled = isRecord(entry) && typeof entry.enabled === "boolean" ? entry.enabled : current.warnings[key].enabled;
+          warnings[key] = { ...current.warnings[key], enabled };
         }
         return { ...current, warnings };
       },

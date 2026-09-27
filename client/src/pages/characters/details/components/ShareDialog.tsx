@@ -85,9 +85,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
         <Stack spacing={2} sx={{ mt: 1 }}>
           {shareUrl ? (
             <>
-              <Typography variant="body2" sx={{
-                color: "text.secondary"
-              }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Anyone with this link can view this character sheet and download the PDF. Private notes are not included.
               </Typography>
               <TextField
@@ -118,12 +116,8 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                   Regenerate
                 </Button>
                 {confirmRevoke ? (
-                  <Stack direction="row" spacing={1} sx={{
-                    alignItems: "center"
-                  }}>
-                    <Typography variant="body2" sx={{
-                      color: "text.secondary"
-                    }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       Are you sure?
                     </Typography>
                     <Button
@@ -161,9 +155,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
             </>
           ) : (
             <>
-              <Typography variant="body2" sx={{
-                color: "text.secondary"
-              }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Generate a public link to share this character sheet. Anyone with the link will be able to view the sheet and download the PDF. Private notes will not be visible.
               </Typography>
               <Button

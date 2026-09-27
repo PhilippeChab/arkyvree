@@ -43,11 +43,11 @@ export function AppMain({ banner, railWidth = 0 }: {
     const duration = 250;
     let frame: number;
 
-    function step(now: number) {
+    const step = (now: number) => {
       const progress = Math.min((now - startTime) / duration, 1);
-      el!.scrollTop = start * Math.pow(1 - progress, 3);
+      el.scrollTop = start * Math.pow(1 - progress, 3);
       if (progress < 1) frame = requestAnimationFrame(step);
-    }
+    };
 
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
@@ -74,7 +74,7 @@ export function AppMain({ banner, railWidth = 0 }: {
       {banner}
       {/* No side padding here: every page brings its own gutter (Container or padded Box). */}
       <Box sx={{ width: "100%", maxWidth: "1200px", flex: 1 }}>
-        <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><DiceSpinner /></Box>}>
+        <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
           <Outlet />
         </Suspense>
       </Box>

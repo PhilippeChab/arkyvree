@@ -1,4 +1,4 @@
-import { and, eq, exists, isNull, inArray, not, or } from "drizzle-orm";
+import { and, eq, isNull, inArray, not, or } from "drizzle-orm";
 
 import { campaignsInCampaign, charactersInCharacter, playerCharactersInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
@@ -136,14 +136,14 @@ class PlayerCharactersRepository
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
+    // Not correlated: the relational query aliases the table, which a subquery
+    // referencing `this.table` would miss.
     const searchCondition = search
-      ? exists(
+      ? inArray(
+        this.table.characterId,
         db.select({ id: charactersInCharacter.id })
           .from(charactersInCharacter)
-          .where(and(
-            eq(charactersInCharacter.id, this.table.characterId),
-            this.search(search, [charactersInCharacter.name, charactersInCharacter.description]) || undefined,
-          )),
+          .where(this.search(search, [charactersInCharacter.name, charactersInCharacter.description]) || undefined),
       )
       : false;
 

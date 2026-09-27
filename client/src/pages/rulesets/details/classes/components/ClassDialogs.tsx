@@ -1,14 +1,9 @@
-import type { rpc } from "@/client/src/services/rpc.ts";
+import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { TextField } from "@mui/material";
 import { CreateDialog, DeleteDialog } from "@/client/src/components/common/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
-
-type CreateLevelFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
->["json"];
 
 interface CreateLevelDialogProps {
   open: boolean;

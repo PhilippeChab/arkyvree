@@ -166,12 +166,7 @@ export function AttachmentField({
               component="img"
               src={url}
               alt={label ?? name}
-              sx={{
-                width: dimension,
-                height: dimension,
-                objectFit: "cover",
-                display: "block",
-              }}
+              sx={{ width: dimension, height: dimension, objectFit: "cover", display: "block" }}
             />
           )
         ) : (

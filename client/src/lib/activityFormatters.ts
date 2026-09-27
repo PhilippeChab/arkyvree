@@ -1,30 +1,34 @@
+import type { ChangedField } from "@/shared/activity.ts";
+import { isRecord } from "./isRecord.ts";
 import { getActivityLabelOverrides } from "./rulesetLabels.ts";
 
-function extractBaseRules(data: unknown): string | undefined {
-  if (data && typeof data === "object" && "baseRules" in data) {
-    const br = (data as Record<string, unknown>).baseRules;
-    return typeof br === "string" ? br : undefined;
-  }
-  return undefined;
-}
+/** An activity's payload: the fields its type records, or none. */
+const payload = (data: unknown): Record<string, unknown> => (isRecord(data) ? data : {});
+
+const isChangedField = (value: unknown): value is ChangedField =>
+  isRecord(value) && typeof value.field === "string";
 
 export function formatActivityType(type: string, data?: unknown): string {
   let formatted = type.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 
-  const baseRules = extractBaseRules(data);
-  if (baseRules) {
-    const overrides = getActivityLabelOverrides(baseRules);
+  const d = payload(data);
+  if (typeof d.baseRules === "string") {
+    const overrides = getActivityLabelOverrides(d.baseRules);
     for (const [generic, specific] of Object.entries(overrides)) {
       formatted = formatted.replaceAll(generic, specific);
     }
   }
 
-  const d = (data ?? {}) as Record<string, unknown>;
   if (d.entityName) {
     formatted += `: ${d.entityName}`;
   }
 
   return formatted;
+}
+
+/** A date on its own ("9/27/2026"), in the viewer's locale. */
+export function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString();
 }
 
 export function formatActivityDate(dateString: string): string {
@@ -130,8 +134,8 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 };
 
 export function formatNotificationMessage(type: string, data: unknown): string {
-  const d = (data ?? {}) as Record<string, unknown>;
-  const actorName = (d.actorName as string) || "Someone";
+  const d = payload(data);
+  const actorName = typeof d.actorName === "string" && d.actorName ? d.actorName : "Someone";
 
   const formatter = NOTIFICATION_MESSAGES[type];
   if (formatter) return formatter(actorName, d);
@@ -156,7 +160,7 @@ const FIELD_LABELS: Record<string, string> = {
   saveId: "Save",
 };
 
-function formatChange(change: { field: string; from?: string; to?: string }): string {
+function formatChange(change: ChangedField): string {
   const label = FIELD_LABELS[change.field] ?? change.field;
   if (change.from == null && change.to == null) {
     return `${label} updated`;
@@ -171,12 +175,11 @@ function formatChange(change: { field: string; from?: string; to?: string }): st
 }
 
 export function formatActivityDetails(data: unknown): string | null {
-  const d = (data ?? {}) as Record<string, unknown>;
+  const d = payload(data);
   const parts: string[] = [];
 
-  if (d.changedFields && Array.isArray(d.changedFields)) {
-    const changes = d.changedFields as { field: string; from?: string; to?: string }[];
-    for (const change of changes) {
+  if (Array.isArray(d.changedFields)) {
+    for (const change of d.changedFields.filter(isChangedField)) {
       parts.push(formatChange(change));
     }
   }
@@ -188,8 +191,8 @@ export function formatActivityDetails(data: unknown): string | null {
     parts.push(`${d.operator} ${d.value ?? ""} on ${d.target}`.trim());
   }
   // Property details
-  if (d.propertyType) {
-    parts.push(`${FIELD_LABELS[d.propertyType as string] ?? d.propertyType}: ${d.value ?? ""}`);
+  if (typeof d.propertyType === "string" && d.propertyType) {
+    parts.push(`${FIELD_LABELS[d.propertyType] ?? d.propertyType}: ${d.value ?? ""}`);
   }
   return parts.length > 0 ? parts.join("\n") : null;
 }
