@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { abilityQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
 export default function AbilityDetailPage() {
@@ -12,9 +12,7 @@ export default function AbilityDetailPage() {
       entityId={abilityId}
       section="abilities"
       label="Ability"
-      fetchEntity={() => parseResponse(rpc.api.rulesets[":id"].abilities[":abilityId"].$get({
-        param: { id: rulesetId, abilityId },
-      }))}
+      query={(id) => abilityQuery(rulesetId, id)}
     />
   );
 }

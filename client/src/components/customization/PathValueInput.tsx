@@ -1,9 +1,11 @@
+import type { PathValueType } from "@/shared/customization/target.ts";
 import { MenuItem, TextField } from "@mui/material";
+import { pathChoices } from "./pathValues.ts";
 
 interface PathValueInputProps {
   value: string;
   onChange: (value: string) => void;
-  valueType?: "number" | "string" | "boolean";
+  valueType?: PathValueType;
   possibleValues?: { value: string; label: string }[];
   label?: string;
   placeholder?: string;
@@ -13,11 +15,6 @@ interface PathValueInputProps {
   fullWidth?: boolean;
   disabled?: boolean;
 }
-
-const BOOLEAN_OPTIONS: { value: string; label: string }[] = [
-  { value: "true", label: "True" },
-  { value: "false", label: "False" },
-];
 
 export function PathValueInput({
   value,
@@ -32,34 +29,12 @@ export function PathValueInput({
   fullWidth = true,
   disabled = false,
 }: PathValueInputProps) {
-  const options = possibleValues ?? (valueType === "boolean" ? BOOLEAN_OPTIONS : null);
-
-  if (options) {
-    return (
-      <TextField
-        select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        label={label}
-        placeholder={placeholder}
-        required={required}
-        error={error}
-        helperText={helperText}
-        fullWidth={fullWidth}
-        disabled={disabled}
-      >
-        {options.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
-            {option.label}
-          </MenuItem>
-        ))}
-      </TextField>
-    );
-  }
+  const options = pathChoices(valueType, possibleValues);
 
   return (
     <TextField
-      type={valueType === "number" ? "number" : "text"}
+      select={!!options}
+      type={options || valueType !== "number" ? "text" : "number"}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       label={label}
@@ -69,6 +44,12 @@ export function PathValueInput({
       helperText={helperText}
       fullWidth={fullWidth}
       disabled={disabled}
-    />
+    >
+      {options?.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label}
+        </MenuItem>
+      ))}
+    </TextField>
   );
 }

@@ -1,20 +1,18 @@
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import {
   AptitudesAutocomplete,
   type Aptitude,
 } from "@/client/src/components/customization/index.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
 import {
   Autocomplete,
   Box,
   Chip,
-  FormControl,
-  InputLabel,
   MenuItem,
-  Select,
   TextField,
   Typography,
 } from "@mui/material";
-import type { InferResponseType } from "hono/client";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/aptitudeLookup.ts";
 import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
@@ -27,9 +25,7 @@ import {
   SPELL_RESISTANCE_OPTIONS,
 } from "@/shared/dnd3.5/spells.ts";
 
-
-type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
-type Save = SavesPaginated["items"][number];
+type Save = RulesetSave;
 
 function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
   return (
@@ -72,26 +68,7 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
           )}
         />
       </Box>
-      <Controller
-        name="descriptors"
-        control={form.control}
-        render={({ field }) => (
-          <Autocomplete
-            multiple
-            freeSolo
-            options={SPELL_DESCRIPTORS}
-            value={field.value ?? []}
-            onChange={(_, newValue) => field.onChange(newValue)}
-            renderValue={(value, getItemProps) =>
-              value.map((option, index) => {
-                const { key, ...tagProps } = getItemProps({ index });
-                return <Chip key={key} label={option} size="small" {...tagProps} />;
-              })
-            }
-            renderInput={(params) => <TextField {...params} label="Descriptors" />}
-          />
-        )}
-      />
+      <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
         <TextField
           {...form.register("castingTime")}
@@ -158,27 +135,39 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
           )}
         />
       </Box>
-      <Controller
-        name="components"
-        control={form.control}
-        render={({ field }) => (
-          <Autocomplete
-            multiple
-            freeSolo
-            options={SPELL_COMPONENTS}
-            value={field.value ?? []}
-            onChange={(_, newValue) => field.onChange(newValue)}
-            renderValue={(value, getItemProps) =>
-              value.map((option, index) => {
-                const { key, ...tagProps } = getItemProps({ index });
-                return <Chip key={key} label={option} size="small" {...tagProps} />;
-              })
-            }
-            renderInput={(params) => <TextField {...params} label="Components" />}
-          />
-        )}
-      />
+      <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
     </>
+  );
+}
+
+/** A free-text list with suggestions, shown as chips. */
+function TagsField({ form, name, label, options }: {
+  form: UseFormReturn<SpellFormData>;
+  name: "descriptors" | "components";
+  label: string;
+  options: readonly string[];
+}) {
+  return (
+    <Controller
+      name={name}
+      control={form.control}
+      render={({ field }) => (
+        <Autocomplete
+          multiple
+          freeSolo
+          options={options}
+          value={field.value ?? []}
+          onChange={(_, newValue) => field.onChange(newValue)}
+          renderValue={(value, getItemProps) =>
+            value.map((option, index) => {
+              const { key, ...tagProps } = getItemProps({ index });
+              return <Chip key={key} label={option} size="small" {...tagProps} />;
+            })
+          }
+          renderInput={(params) => <TextField {...params} label={label} />}
+        />
+      )}
+    />
   );
 }
 
@@ -207,40 +196,19 @@ export function SpellFormFields({
 
   return (
     <>
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
-        label="Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={3}
-        sx={{ "& textarea": { resize: "vertical" } }}
       />
-      <Controller
-        name="saveId"
+      <SelectField
         control={form.control}
-        render={({ field }) => (
-          <FormControl fullWidth>
-            <InputLabel>Saving Throw</InputLabel>
-            <Select
-              {...field}
-              value={field.value && saves.some((s) => s.id === field.value) ? field.value : ""}
-              onChange={(e) => field.onChange(e.target.value || null)}
-              label="Saving Throw"
-            >
-              <MenuItem value="">None</MenuItem>
-              {saves.map((save) => (
-                <MenuItem key={save.id} value={save.id}>{save.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
+        name="saveId"
+        label="Saving Throw"
+        emptyLabel="None"
+        options={saves.map((save) => ({ value: save.id, label: save.name }))}
       />
       <TextField
         {...form.register("saveEffect")}
@@ -259,9 +227,7 @@ export function SpellFormFields({
       />
       {selectedAptitudes.length > 0 && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <Typography variant="subtitle2" sx={{
-            color: "text.secondary"
-          }}>Aptitude Settings</Typography>
+          <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>Aptitude Settings</Typography>
           {selectedAptitudes.map((apt) => {
             return (
               <Box key={apt.id} sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>

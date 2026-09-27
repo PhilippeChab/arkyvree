@@ -7,6 +7,7 @@ import {
   type SkillFormData,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { skillQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
 export default function SkillDetailPage() {
@@ -21,11 +22,11 @@ export default function SkillDetailPage() {
       entityId={skillId}
       section="skills"
       label="Skill"
-      fetchEntity={() => parseResponse(endpoint.$get({ param }))}
+      query={(id) => skillQuery(rulesetId, id)}
       editing={{
         toFormValues: (skill): SkillFormData => ({
           name: skill.name,
-          description: skill.description ?? undefined,
+          description: skill.description ?? "",
           primaryAbilityId: skill.primaryAbilityId,
           impactedByWeight: skill.impactedByWeight,
           usableWithoutTraining: skill.usableWithoutTraining,

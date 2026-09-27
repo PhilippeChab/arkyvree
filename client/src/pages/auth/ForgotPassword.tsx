@@ -1,14 +1,12 @@
-import { AuthPage } from "@/client/src/components/auth/index.ts";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { AuthPage, AuthSubmitButton } from "@/client/src/components/auth/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { EmailField } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
-  Alert,
   Box,
-  Button,
-  TextField,
   Typography,
   Link as MuiLink,
 } from "@mui/material";
@@ -44,45 +42,23 @@ export default function ForgotPassword() {
       await forgotPassword(data.emailAddress);
       navigate("/reset-password");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to send reset code");
+      setError(errorMessage(error, "Failed to send reset code"));
     }
   };
 
   return (
     <AuthPage
+      error={error}
       title="Forgot Password"
       subtitle="Enter your email address and we'll send you a code to reset your password."
     >
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <TextField
+        <EmailField
           {...register("emailAddress", emailRules)}
-          label="Email"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          error={!!errors.emailAddress}
-          helperText={errors.emailAddress?.message}
-          type="email"
-          slotProps={{
-            htmlInput: { autoComplete: "email" }
-          }}
+          error={errors.emailAddress}
         />
 
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mt: 3, mb: 2 }}
-          disabled={isLoading}
-        >
-          <DiceSpinner size="small" loading={isLoading}>Send Reset Code</DiceSpinner>
-        </Button>
+        <AuthSubmitButton loading={isLoading}>Send Reset Code</AuthSubmitButton>
       </form>
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2">

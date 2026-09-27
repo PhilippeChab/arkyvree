@@ -1,20 +1,15 @@
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from "@mui/material";
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import type { RulesetAbility } from "@/client/src/hooks/index.ts";
 import type { UseFormReturn } from "react-hook-form";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferRequestType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 export type SaveFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["saves"]["$post"]
 >["json"];
 
-type AbilitiesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>;
-type Ability = AbilitiesPaginated["items"][number];
+type Ability = RulesetAbility;
 
 interface SaveFormFieldsProps {
   form: UseFormReturn<SaveFormData>;
@@ -24,33 +19,20 @@ interface SaveFormFieldsProps {
 export function SaveFormFields({ form, abilities }: SaveFormFieldsProps) {
   return (
     <>
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
-        label="Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={3}
-        sx={{ "& textarea": { resize: "vertical" } }}
       />
-      <FormControl fullWidth>
-        <InputLabel>Linked Ability</InputLabel>
-        <Select
-          {...form.register("abilityId", { required: "Ability is required" })}
-          label="Linked Ability"
-          value={(() => { const v = form.watch("abilityId"); return v && abilities.some((a) => a.id === v) ? v : ""; })()}
-        >
-          {abilities.map((ability) => (
-            <MenuItem key={ability.id} value={ability.id}>{ability.name}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <SelectField
+        control={form.control}
+        name="abilityId"
+        label="Linked Ability"
+        rules={{ required: "Ability is required" }}
+        options={abilities.map((ability) => ({ value: ability.id, label: ability.name }))}
+      />
     </>
   );
 }

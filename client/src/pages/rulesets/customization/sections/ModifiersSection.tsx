@@ -1,3 +1,5 @@
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   ModifierForm,
   TargetPathBreadcrumbs,
@@ -8,6 +10,7 @@ import {
   CreateDialog,
   DeleteDialog,
   EditDialog,
+  SectionContent,
 } from "@/client/src/components/common/index.ts";
 import {
   useRulesetPermissions,
@@ -17,14 +20,15 @@ import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Tune as ModifiersIcon } from "@mui/icons-material";
-import { Box, Button, Chip, Typography } from "@mui/material";
+import { Tune as ModifiersIcon } from "@mui/icons-material";
+import { Chip, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
 const MODIFIERS_COLUMNS = [
@@ -42,12 +46,7 @@ type ModifierFormData = InferRequestType<
 >["json"];
 
 interface ModifiersSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
   entityType: BaseEntityType;
   entityId: string;
   data?: Modifier[];
@@ -65,7 +64,8 @@ export function ModifiersSection({
 }: ModifiersSectionProps) {
   const navigate = useNavigate();
 
-  const { tag, follow: handleResolvedEntityId } = useCopyFollow(entityId, onEntityIdChange);
+  const { tag, follow: handleResolvedEntityId, followCopies } = useCopyFollow(entityId, onEntityIdChange);
+  const entityParam = { id: ruleset.id, entityType, entityId };
 
   const {
     data: modifiers,
@@ -86,7 +86,7 @@ export function ModifiersSection({
     handleEdit,
     handleDelete,
     confirmDelete,
-  } = useRulesetSection<Modifier, ModifierFormData>({
+  } = useRulesetSection({
     rulesetId: ruleset.id,
     sectionName: `customization-${entityType}-${entityId}-modifiers`,
     label: "Modifier",
@@ -95,7 +95,7 @@ export function ModifiersSection({
       return parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers.$get({
-        param: { id: ruleset.id, entityType, entityId },
+        param: entityParam,
       }));
     } : undefined,
     queryKeysToInvalidate,
@@ -103,7 +103,7 @@ export function ModifiersSection({
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers.$post({
-        param: { id: ruleset.id, entityType: entityType, entityId: entityId },
+        param: entityParam,
         json: data,
       })));
     },
@@ -111,12 +111,7 @@ export function ModifiersSection({
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].$put({
-        param: {
-          id: ruleset.id,
-          entityType: entityType,
-          entityId: entityId,
-          modifierId: modifierId,
-        },
+        param: { ...entityParam, modifierId },
         json: data,
       })));
     },
@@ -124,17 +119,10 @@ export function ModifiersSection({
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].$delete({
-        param: {
-          id: ruleset.id,
-          entityType: entityType,
-          entityId: entityId,
-          modifierId: modifierId,
-        },
+        param: { ...entityParam, modifierId },
       })));
     },
-    onCreateSuccess: handleResolvedEntityId,
-    onUpdateSuccess: handleResolvedEntityId,
-    onDeleteSuccess: handleResolvedEntityId,
+    ...followCopies,
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
@@ -149,6 +137,12 @@ export function ModifiersSection({
   };
 
   const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
+
+  const handleAddModifier = () => {
+    createForm.reset();
+    setDuplicateSourceId(null);
+    handleCreate();
+  };
 
   const handleDuplicateModifier = (modifier: Modifier) => {
     createForm.reset({
@@ -168,12 +162,7 @@ export function ModifiersSection({
       return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].duplicate.$post({
-        param: {
-          id: ruleset.id,
-          entityType,
-          entityId,
-          modifierId: sourceId,
-        },
+        param: { ...entityParam, modifierId: sourceId },
         json: data,
       })));
     },
@@ -240,10 +229,8 @@ export function ModifiersSection({
         );
       case "createdAt":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {new Date(modifier.createdAt).toLocaleDateString()}
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {formatDate(modifier.createdAt)}
           </Typography>
         );
       default:
@@ -252,22 +239,8 @@ export function ModifiersSection({
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-      {canEdit && (
-        <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              createForm.reset();
-              setDuplicateSourceId(null);
-              handleCreate();
-            }}
-          >
-            Add Modifier
-          </Button>
-        </Box>
-      )}
+    <SectionContent>
+      {canEdit && <SectionAddButton label="Add Modifier" onClick={handleAddModifier} />}
 
       <RulesetSectionTable
         data={modifiers}
@@ -329,6 +302,6 @@ export function ModifiersSection({
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
       />
-    </Box>
+    </SectionContent>
   );
 }

@@ -77,21 +77,13 @@ export class ErrorBoundary extends Component<Props, State> {
           </Typography>
           <Typography
             variant="h4"
-            sx={{
-              fontFamily: '"Lora Variable", Georgia, serif',
-              color: "#d2b48c",
-              fontWeight: 600,
-            }}
+            sx={{ fontFamily: '"Lora Variable", Georgia, serif', color: "#d2b48c", fontWeight: 600 }}
           >
             A Critical Failure
           </Typography>
           <Typography
             variant="body1"
-            sx={{
-              color: "#e0d4b8",
-              maxWidth: 420,
-              lineHeight: 1.7,
-            }}
+            sx={{ color: "#e0d4b8", maxWidth: 420, lineHeight: 1.7 }}
           >
             You rolled a natural 1.<br />
             Something broke unexpectedly.

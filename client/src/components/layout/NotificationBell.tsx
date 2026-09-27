@@ -134,7 +134,7 @@ export function NotificationBell() {
                   />
                 </Box>
               ) : (
-                <Tooltip
+                <Tooltip describeChild
                   key={notification.id}
                   title={formatActivityDetails(notification.data) ?? ""}
                   arrow
@@ -157,7 +157,7 @@ export function NotificationBell() {
               onClick={() => closeAnd(() => navigate("/notifications"))}
               sx={{ justifyContent: "center" }}
             >
-              <Typography variant="body2" color="primary">
+              <Typography variant="body2" sx={{ color: "primary.main" }}>
                 View all notifications
               </Typography>
             </MenuItem>,

@@ -11,6 +11,12 @@ export const queryKeys = {
       ["rulesets", "detail", id] as const,
     section: (id: string, section: string) =>
       ["rulesets", "detail", id, section] as const,
+    /** A picker's search in a section; nested under the section so it refreshes with it. */
+    sectionSearch: (id: string, section: string, search: string, scope?: string) =>
+      ["rulesets", "detail", id, section, "autocomplete", search, scope] as const,
+    /** The extensions a ruleset subscribes to. */
+    extensions: (id: string) =>
+      ["rulesets", "detail", id, "extensions"] as const,
     /**
      * Every ability of the ruleset, for pickers. Nested under the Abilities
      * section key so invalidating the section refreshes the pickers too.
@@ -76,6 +82,8 @@ export const queryKeys = {
       ["characters", "detail", id, "contributors"] as const,
     inventory: (id: string) =>
       ["characters", "detail", id, "inventory"] as const,
+    modifiers: (id: string) =>
+      ["characters", "detail", id, "modifiers"] as const,
     unlinked: (campaignId: string, filters?: Record<string, unknown>) =>
       filters
         ? (["characters", "unlinked", campaignId, filters] as const)

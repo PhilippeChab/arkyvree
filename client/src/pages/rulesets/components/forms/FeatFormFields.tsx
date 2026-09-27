@@ -1,8 +1,9 @@
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import {
   AptitudesAutocomplete,
   type Aptitude,
 } from "@/client/src/components/customization/index.ts";
-import { TextField } from "@mui/material";
 import type { UseFormReturn } from "react-hook-form";
 import type { InferRequestType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -24,20 +25,12 @@ export function FeatFormFields({ form, rulesetId, knownAptitudes = [] }: FeatFor
   const aptitudes = useAptitudeLookup(knownAptitudes);
   return (
     <>
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
-        label="Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={3}
-        sx={{ "& textarea": { resize: "vertical" } }}
       />
       <AptitudesAutocomplete
         rulesetId={rulesetId}

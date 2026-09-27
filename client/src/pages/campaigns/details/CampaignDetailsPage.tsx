@@ -1,3 +1,4 @@
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import {
   EditCampaignDialog,
   type EditCampaignFormData,
@@ -10,6 +11,8 @@ import {
   PageTransition,
   SectionTabs,
   type SectionTab,
+  PageError,
+  ActionMenuItem,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
@@ -26,20 +29,16 @@ import {
 import {
   Alert,
   Box,
-  Button,
   Chip,
   Container,
-  ListItemIcon,
   Menu,
-  MenuItem,
-  Paper,
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { CharactersSection, PlayersSection } from "./sections/index.ts";
 import type { CampaignSection } from "./sectionQueries.ts";
 
@@ -61,6 +60,7 @@ const isTabSection = (section: string | undefined): section is TabSection =>
 export default function CampaignDetailsPage() {
   const { id = "", section } = useParams<{ id: string; section?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const currentTab: TabSection = isTabSection(section) ? section : "characters";
@@ -130,9 +130,7 @@ export default function CampaignDetailsPage() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-          <DiceSpinner />
-        </Box>
+        <DiceSpinner sx={{ minHeight: 400 }} />
       </Container>
     );
   }
@@ -140,14 +138,7 @@ export default function CampaignDetailsPage() {
   if (error || !campaign) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
-          <Typography variant="h5" color="error" gutterBottom>
-            Failed to load campaign
-          </Typography>
-          <Button variant="contained" onClick={() => navigate("/campaigns")} sx={{ mt: 2 }}>
-            Back to Campaigns
-          </Button>
-        </Paper>
+        <PageError message="Failed to load campaign" backLabel="Back to Campaigns" onBack={() => navigate("/campaigns")} />
       </Container>
     );
   }
@@ -167,7 +158,7 @@ export default function CampaignDetailsPage() {
           chips={(
             <>
               <Chip
-                label={`${campaign.currentPlayers} ${campaign.currentPlayers === 1 ? "player" : "players"}`}
+                label={formatCount(campaign.currentPlayers, "player")}
                 color="primary"
                 sx={{ fontWeight: 600 }}
               />
@@ -189,7 +180,8 @@ export default function CampaignDetailsPage() {
         <SectionTabs
           tabs={TABS}
           value={currentTab}
-          onChange={(key) => navigate(`/campaigns/${id}/${key}`)}
+          // Each tab's search has its own URL param, so switching keeps both.
+          onChange={(key) => navigate({ pathname: `/campaigns/${id}/${key}`, search: location.search })}
           aria-label="campaign details tabs"
         />
 
@@ -211,34 +203,42 @@ export default function CampaignDetailsPage() {
         >
           {campaign.deletedAt ? (
             [
-              <MenuItem key="unarchive" onClick={closeMenuAnd(() => unarchiveMutation.mutate())} sx={{ color: "success.main" }}>
-                <ListItemIcon sx={{ color: "inherit" }}><UnarchiveIcon fontSize="small" /></ListItemIcon>
-                Unarchive
-              </MenuItem>,
-              <MenuItem key="hard-delete" onClick={closeMenuAnd(() => setHardDeleteDialogOpen(true))} sx={{ color: "error.main" }}>
-                <ListItemIcon sx={{ color: "inherit" }}><DeleteForeverIcon fontSize="small" /></ListItemIcon>
-                Delete permanently
-              </MenuItem>,
+              <ActionMenuItem
+                key="unarchive"
+                icon={UnarchiveIcon}
+                label="Unarchive"
+                intent="positive"
+                onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
+              />,
+              <ActionMenuItem
+                key="hard-delete"
+                icon={DeleteForeverIcon}
+                label="Delete permanently"
+                intent="destructive"
+                onClick={closeMenuAnd(() => setHardDeleteDialogOpen(true))}
+              />,
             ]
           ) : (
             [
-              <MenuItem
+              <ActionMenuItem
                 key="edit"
+                icon={EditIcon}
+                label="Edit"
                 onClick={closeMenuAnd(() => {
                   editForm.reset({
                     name: campaign.name,
-                    description: campaign.description ?? undefined,
+                    description: campaign.description ?? "",
                   });
                   setEditDialogOpen(true);
                 })}
-              >
-                <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
-                Edit
-              </MenuItem>,
-              <MenuItem key="archive" onClick={closeMenuAnd(() => setArchiveDialogOpen(true))} sx={{ color: "warning.main" }}>
-                <ListItemIcon sx={{ color: "inherit" }}><ArchiveIcon fontSize="small" /></ListItemIcon>
-                Archive
-              </MenuItem>,
+              />,
+              <ActionMenuItem
+                key="archive"
+                icon={ArchiveIcon}
+                label="Archive"
+                intent="caution"
+                onClick={closeMenuAnd(() => setArchiveDialogOpen(true))}
+              />,
             ]
           )}
         </Menu>

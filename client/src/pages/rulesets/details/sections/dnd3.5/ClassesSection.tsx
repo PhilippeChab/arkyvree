@@ -1,18 +1,17 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, parseEntityFilters } from "@/client/src/pages/rulesets/details/sections/kindFilterOptions.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { SearchBar, CreateDialog, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { AccessibilityNew as ClassesIcon, Add as AddIcon } from "@mui/icons-material";
-import { Box, Button, Chip, ToggleButton, Typography } from "@mui/material";
+import { AccessibilityNew as ClassesIcon } from "@mui/icons-material";
+import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import type { ClassesSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { classDetailQuery, prefetchClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const CLASSES_COLUMNS = [
@@ -21,31 +20,19 @@ const CLASSES_COLUMNS = [
   { key: "description", label: "Description", width: "60%" },
 ];
 
-
 type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
 type Class = ClassesPaginated["items"][number];
 
-
-export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: ClassesSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
-  const [searchQuery, setSearchQuery] = useSearchParam("search");
-  const [kindParam, setKindParam] = useSearchParam("kind");
-  const [orderByParam, setOrderByParam] = useSearchParam("orderBy");
-  const [orderDirParam, setOrderDirParam] = useSearchParam("orderDir");
-
-  const { kind: kindFilter, orderBy: sortField, orderDir: sortDirection } =
-    parseEntityFilters(kindParam, orderByParam, orderDirParam);
+  const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters();
 
   const {
-    createDialogOpen,
-    setCreateDialogOpen,
     createForm,
-    createMutation,
     handleCreate,
+    createDialogProps,
   } = useRulesetSection<Class, ClassFormData>({
     rulesetId: ruleset.id,
     sectionName: "classes",
@@ -57,39 +44,23 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
         json: data,
       }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/classes/${created.id}/levels`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`classes/${created.id}/levels`),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    ...classesQuery(ruleset.id, { search: searchQuery, childOnly, kind: kindFilter, orderBy: sortField, orderDir: sortDirection }),
+    ...classesQuery(ruleset.id, { search, childOnly, kind, orderBy, orderDir }),
     placeholderData: keepPreviousData,
   });
 
-  const classes = data?.pages.flatMap((page) => page.items) ?? [];
+  const classes = pageItems(data);
 
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-
-  const handleClassClick = (class_: Class) => {
-    navigate(`/rulesets/${ruleset.id}/classes/${class_.id}/levels`, { state: { from: location.pathname + location.search } });
+  const handleRowClick = (class_: Class) => {
+    openEntity(`classes/${class_.id}/levels`);
   };
 
-  const handleClassMouseEnter = useCallback((class_: Class) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.classDetail(ruleset.id, class_.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
-          param: { id: ruleset.id, classId: class_.id },
-        }));
-      },
-    });
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.classLevels(ruleset.id, class_.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
-          param: { id: ruleset.id, classId: class_.id },
-        }));
-      },
-    });
+  const handleRowMouseEnter = useCallback((class_: Class) => {
+    void queryClient.prefetchQuery(classDetailQuery(ruleset.id, class_.id));
+    void prefetchClassSection(queryClient, ruleset.id, class_.id, "levels");
   }, [queryClient, ruleset.id]);
 
   const formatHitDie = (hitDie: number) => `d${hitDie}`;
@@ -113,18 +84,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
         );
       case "description":
         return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical"
-            }}>
-            {klass.description || "-"}
-          </Typography>
+          <DescriptionCell text={klass.description} />
         );
       default:
         return null;
@@ -132,52 +92,28 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchBarProps}
         searchPlaceholder="Search classes..."
-        filterOptions={KIND_FILTER_OPTIONS}
-        filterValue={kindFilter}
-        onFilterChange={(value) => setKindParam(value ?? "pc")}
-        sortOptions={ENTITY_SORT_OPTIONS}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSortChange={(field, direction) => {
-          setOrderByParam(field);
-          setOrderDirParam(direction);
-        }}
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Class
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Class"
+            onAdd={handleCreate}
+          />
         }
       />
 
       <RulesetSectionTable
         data={classes}
+        search={search}
         isLoading={isLoading}
         columns={CLASSES_COLUMNS}
-        onRowClick={handleClassClick}
-        onRowMouseEnter={handleClassMouseEnter}
+        onRowClick={handleRowClick}
+        onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
         emptyIcon={ClassesIcon}
         emptyTitle="No classes"
@@ -191,16 +127,12 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Add New Class"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
         maxWidth="xs"
       >
         <ClassFormFields form={createForm} />
       </CreateDialog>
-    </Box>
+    </SectionContent>
   );
 }

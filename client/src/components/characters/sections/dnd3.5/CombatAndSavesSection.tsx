@@ -1,15 +1,17 @@
+import { capitalize } from "@/shared/utils.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { BlankState } from "@/client/src/components/common/index.ts";
 import { Box, Stack, Typography } from "@mui/material";
 import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
-import { StatField, fmt } from "./statHelpers.tsx";
+import { StatField } from "./statHelpers.tsx";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
 function iterativeAttacks(bab: number): string {
   const attacks: string[] = [];
   for (let bonus = bab; bonus > 0; bonus -= 5) {
-    attacks.push(fmt(bonus));
+    attacks.push(formatSigned(bonus));
   }
-  return attacks.length > 0 ? attacks.join("/") : fmt(bab);
+  return attacks.length > 0 ? attacks.join("/") : formatSigned(bab);
 }
 
 export function CombatAndSavesSection({
@@ -30,11 +32,11 @@ export function CombatAndSavesSection({
             {/* Combat stat grid — single grid so columns align across rows */}
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
               <StatField label="HP" value={combat?.hp?.total ?? 0} />
-              <StatField label="Initiative" value={fmt(combat?.initiative?.total)} />
+              <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
               <StatField label="Speed" value={`${combat?.speed?.total ?? 30} ft.`} />
 
               <StatField label="BAB" value={iterativeAttacks(bab)} />
-              <StatField label="Grapple" value={fmt(combat?.grapple?.total)} />
+              <StatField label="Grapple" value={formatSigned(combat?.grapple?.total)} />
               <Box />
 
               <StatField label="AC" value={combat?.ac?.total ?? 10} />
@@ -44,35 +46,23 @@ export function CombatAndSavesSection({
 
             {/* AC Breakdown */}
             <Box sx={{ ml: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Armor: {fmt(combat?.ac?.armor)}
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Armor: {formatSigned(combat?.ac?.armor)}
               </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Shield: {fmt(combat?.ac?.shield)}
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Shield: {formatSigned(combat?.ac?.shield)}
               </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Dex: {fmt(combat?.ac?.dexterity)}
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Dex: {formatSigned(combat?.ac?.dexterity)}
               </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Natural: {fmt(combat?.ac?.natural)}
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Natural: {formatSigned(combat?.ac?.natural)}
               </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Deflection: {fmt(combat?.ac?.deflection)}
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Deflection: {formatSigned(combat?.ac?.deflection)}
               </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
-                Misc: {fmt(combat?.ac?.misc)}
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Misc: {formatSigned(combat?.ac?.misc)}
               </Typography>
             </Box>
           </Stack>
@@ -88,27 +78,21 @@ export function CombatAndSavesSection({
               <Stack spacing={3}>
                 {Object.entries(saves).map(([save, saveData]) => {
                   const total = saveData?.total ?? 0;
-                  const displayName = saveData?.name || save.charAt(0).toUpperCase() + save.slice(1);
+                  const displayName = saveData?.name || capitalize(save);
                   return (
                     <Box key={save}>
                       <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1 }}>
-                        {displayName}: {total >= 0 ? `+${total}` : total}
+                        {displayName}: {formatSigned(total)}
                       </Typography>
                       <Box sx={{ ml: 2, display: "flex", gap: 3 }}>
-                        <Typography variant="caption" sx={{
-                          color: "text.secondary"
-                        }}>
-                          Base: {fmt(saveData?.base)}
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          Base: {formatSigned(saveData?.base)}
                         </Typography>
-                        <Typography variant="caption" sx={{
-                          color: "text.secondary"
-                        }}>
-                          Ability: {fmt(saveData?.ability)}
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          Ability: {formatSigned(saveData?.ability)}
                         </Typography>
-                        <Typography variant="caption" sx={{
-                          color: "text.secondary"
-                        }}>
-                          Misc: {fmt(saveData?.misc)}
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          Misc: {formatSigned(saveData?.misc)}
                         </Typography>
                       </Box>
                     </Box>

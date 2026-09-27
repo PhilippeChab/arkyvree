@@ -47,9 +47,7 @@ export function RecentNotificationsCard() {
         )}
       </Box>
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <DiceSpinner />
-        </Box>
+        <DiceSpinner sx={{ py: 4 }} />
       ) : items.length === 0 ? (
         <BlankState
           icon={NotificationsIcon}

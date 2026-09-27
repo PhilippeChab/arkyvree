@@ -1,5 +1,5 @@
 import { diceRoll, EASING, prefersReducedMotion } from "@/client/src/lib/animations.ts";
-import { Box, Typography } from "@mui/material";
+import { Box, type SxProps, type Theme, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 
@@ -15,6 +15,8 @@ interface DiceSpinnerProps {
    */
   loading?: boolean;
   children?: ReactNode;
+  /** Standalone medium / large only: the centered block's spacing (`py`, `minHeight`). */
+  sx?: SxProps<Theme>;
 }
 
 const SIZES = {
@@ -23,7 +25,7 @@ const SIZES = {
   large: 48,
 } as const;
 
-export function DiceSpinner({ size = "medium", loading, children }: DiceSpinnerProps) {
+export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpinnerProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const [overlay, setOverlay] = useState(false);
 
@@ -62,7 +64,8 @@ export function DiceSpinner({ size = "medium", loading, children }: DiceSpinnerP
             {dice}
           </Box>
         )}
-        <Box component="span" sx={{ visibility: loading ? "hidden" : "visible" }}>{children}</Box>
+        {/* "inherit", not "visible": a button hidden with visibility must hide its label too. */}
+        <Box component="span" sx={{ visibility: loading ? "hidden" : "inherit" }}>{children}</Box>
       </Box>
     );
   }
@@ -76,7 +79,7 @@ export function DiceSpinner({ size = "medium", loading, children }: DiceSpinnerP
   if (size === "small") return dice;
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+    <Box sx={[{ display: "flex", justifyContent: "center", alignItems: "center", py: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}>
       {dice}
     </Box>
   );

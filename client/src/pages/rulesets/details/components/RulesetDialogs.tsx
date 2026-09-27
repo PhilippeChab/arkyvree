@@ -1,3 +1,5 @@
+import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import {
   Archive as ArchiveIcon,
@@ -8,11 +10,10 @@ import {
   Publish as PublishIcon,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { ConfirmDialog, CreateDialog, EditDialog } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, CreateDialog, EditDialog, DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import {
   Box,
   Stack,
-  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -27,8 +28,6 @@ export type EditRulesetFormData = InferRequestType<
 export type ForkRulesetFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["fork"]["$post"]
 >["json"];
-
-type RulesetKind = NonNullable<InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"]>;
 
 /** Public / Private choice; the selected option can't be toggled off. */
 function PrivacyToggle({ value, onChange, disabled }: {
@@ -67,8 +66,8 @@ function PrivacyToggle({ value, onChange, disabled }: {
 
 /** Ruleset / Extension choice made when publishing; the selected option can't be toggled off. */
 function RulesetKindToggle({ value, onChange, disabled }: {
-  value: RulesetKind;
-  onChange: (kind: RulesetKind) => void;
+  value: PublishKind;
+  onChange: (kind: PublishKind) => void;
   disabled: boolean;
 }) {
   return (
@@ -79,7 +78,7 @@ function RulesetKindToggle({ value, onChange, disabled }: {
       <ToggleButtonGroup
         value={value}
         exclusive
-        onChange={(_, next: RulesetKind | null) => next && onChange(next)}
+        onChange={(_, next: PublishKind | null) => next && onChange(next)}
         disabled={disabled}
         size="small"
       >
@@ -132,23 +131,16 @@ export function EditRulesetDialog({
       isLoading={isLoading}
       submitLabel="Save Changes"
     >
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
-        label="Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
         autoFocus
         disabled={isLoading}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={4}
         disabled={isLoading}
-        sx={{ "& textarea": { resize: "vertical" } }}
+        rows={4}
       />
       {!isPublic && (
         <PrivacyToggle
@@ -193,23 +185,17 @@ export function ForkRulesetDialog({
       isLoading={isLoading}
       submitLabel="Fork Ruleset"
     >
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
         label="New Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
         autoFocus
         disabled={isLoading}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={4}
         disabled={isLoading}
-        sx={{ "& textarea": { resize: "vertical" } }}
+        rows={4}
       />
       <PrivacyToggle
         value={form.watch("private") ?? false}
@@ -246,10 +232,10 @@ export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: Ar
 interface PublishRulesetDialogProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (kind: RulesetKind) => void;
+  onConfirm: (kind: PublishKind) => void;
   isLoading: boolean;
   canBeExtension: boolean;
-  initialKind?: RulesetKind;
+  initialKind?: PublishKind;
 }
 
 export function PublishRulesetDialog({
@@ -260,7 +246,7 @@ export function PublishRulesetDialog({
   canBeExtension,
   initialKind = "ruleset",
 }: PublishRulesetDialogProps) {
-  const [kind, setKind] = useState<RulesetKind>(initialKind);
+  const [kind, setKind] = useState<PublishKind>(initialKind);
 
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect

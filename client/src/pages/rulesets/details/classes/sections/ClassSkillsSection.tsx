@@ -1,28 +1,13 @@
-import { BlankState } from "@/client/src/components/common/index.ts";
+import type { ClassSectionProps } from "./types.ts";
+import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import {
   RemoveSkillDialog,
 } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { Autocomplete, Box, Chip, Paper, Skeleton, TextField, Typography } from "@mui/material";
-import type { InferResponseType } from "hono/client";
 
-type ClassSkillsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"], 200>;
-type ClassSkill = ClassSkillsArray[number];
-
-interface ClassSkillsSectionProps {
-  rulesetId: string;
-  classId: string;
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
-}
-
-export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSkillsSectionProps) {
+export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const {
@@ -65,9 +50,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSkillsS
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {option.name}
                       </Typography>
-                      <Typography variant="caption" sx={{
-                        color: "text.secondary"
-                      }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {(option.description?.length ?? 0) > 60
                           ? `${option.description?.substring(0, 60)}...`
                           : option.description ?? ""
@@ -100,8 +83,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSkillsS
               noOptionsText="No skills found"
               slotProps={{
                 listbox: {
+                  component: ScrollSafeListbox,
                   onScroll: handleSkillsScroll,
-                  style: { maxHeight: 300 },
                 }
               }}
             />
@@ -133,7 +116,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSkillsS
         : (
           <Paper sx={{ p: 2, boxShadow: 1, borderRadius: 2 }}>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {classSkills.map((classSkill: ClassSkill) => (
+              {classSkills.map((classSkill) => (
                 <Chip
                   key={classSkill.skillId}
                   label={classSkill.skillsInRule.name}

@@ -1,8 +1,6 @@
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
 } from "@mui/material";
 import type { UseFormReturn } from "react-hook-form";
@@ -21,33 +19,14 @@ interface RaceFormFieldsProps {
 export function RaceFormFields({ form }: RaceFormFieldsProps) {
   return (
     <>
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
-        label="Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={3}
-        sx={{ "& textarea": { resize: "vertical" } }}
       />
-      <FormControl fullWidth>
-        <InputLabel>Size</InputLabel>
-        <Select
-          {...form.register("size")}
-          label="Size"
-          value={form.watch("size") || "Medium"}
-        >
-          {SIZE_OPTIONS.map((size) => (
-            <MenuItem key={size} value={size}>{size}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <SelectField control={form.control} name="size" label="Size" options={SIZE_OPTIONS} />
       <TextField
         {...form.register("baseSpeed", { valueAsNumber: true })}
         label="Base Speed (feet)"

@@ -4,8 +4,14 @@ export {
   EditCampaignDialog,
   type EditCampaignFormData,
   AddPlayerDialog,
-  type AddPlayerFormData,
   EditPlayerDialog,
-  type EditPlayerFormData,
   RemovePlayerDialog,
 } from "./CampaignDialogs.tsx";
+export {
+  type CampaignPlayer,
+  getPlayerSlot,
+  playerDisplay,
+  type PlayerFormData,
+  type PlayerState,
+  toPlayerPayload,
+} from "./players.ts";

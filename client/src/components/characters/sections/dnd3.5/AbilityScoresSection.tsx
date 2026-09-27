@@ -1,7 +1,8 @@
+import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { BlankState, ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
 import { Box } from "@mui/material";
@@ -21,7 +22,7 @@ export function AbilityScoresSection({
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  const queryKey = queryKeys.characters.detail(characterId);
+  const queryKey = characterDetailQuery(characterId).queryKey;
 
   const updateMutation = useMutation({
     mutationFn: async ({ abilityId, score }: { abilityId: string; score: number }) => {
@@ -34,17 +35,16 @@ export function AbilityScoresSection({
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
 
-      queryClient.setQueryData(queryKey, (old: Record<string, unknown> | undefined) => {
-        if (!old || !old.abilities) return old;
-        const abilities = old.abilities as Record<string, { abilityId?: string; base?: number; level?: number; misc?: number; total?: number; modifier?: number }>;
-        const updated = { ...abilities };
+      queryClient.setQueryData(queryKey, (old) => {
+        if (!old) return old;
+        const updated = { ...old.abilities };
         for (const [name, data] of Object.entries(updated)) {
           if (data.abilityId === abilityId) {
             const base = score;
             const level = data.level || 0;
             const misc = data.misc || 0;
             const total = base + level + misc;
-            const modifier = Math.floor((total - 10) / 2);
+            const modifier = abilityModifier(total);
             updated[name] = { ...data, base, total, modifier };
             break;
           }
@@ -70,9 +70,7 @@ export function AbilityScoresSection({
   const suppressWarningForSession = useUserPreferencesStore((s) => s.suppressWarningForSession);
 
   const handleBaseChange = (abilityId: string, score: number) => {
-    const current = Object.values(abilities).find(
-      (a) => (a as { abilityId?: string }).abilityId === abilityId,
-    ) as { base?: number } | undefined;
+    const current = Object.values(abilities).find((a) => a.abilityId === abilityId);
     const currentBase = current?.base || 10;
 
     if (score > currentBase || !shouldWarn("abilityDecrease")) {
@@ -87,16 +85,9 @@ export function AbilityScoresSection({
       {sortedEntries.length > 0
         ? (
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
-            {sortedEntries.map(([ability, data]) => {
-              const abilityData = data as {
-                abilityId?: string;
-                base?: number;
-                level?: number;
-                misc?: number;
-                total?: number;
-              };
+            {sortedEntries.map(([ability, abilityData]) => {
               const total = abilityData.total || abilityData.base || 10;
-              const modifier = Math.floor((total - 10) / 2);
+              const modifier = abilityModifier(total);
               return (
                 <Box key={ability} sx={{ minWidth: { xs: 120, sm: 140 } }}>
                   <AbilityScoreBox

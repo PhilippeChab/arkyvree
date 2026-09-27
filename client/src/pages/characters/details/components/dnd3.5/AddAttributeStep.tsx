@@ -1,29 +1,21 @@
 import type { AddAttributeStepProps } from "./levelUpFactory.ts";
-import type { LeveledUpAttribute } from "./levelUp/useLevelWizard.ts";
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
-import {
-  Alert,
-  Box,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Stack, Typography } from "@mui/material";
+import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
 
 export function AddAttributeStep({
-  attributeData,
-  isLoadingAttributes,
-  attributesError,
-  abilityIncreaseLevels,
-  abilityIncreases,
-  onAbilityIncreaseChange,
-  levelDetails,
+  wizard,
   baseRules,
 }: AddAttributeStepProps) {
+  const {
+    attributeData,
+    isLoadingAttributes,
+    attributesError,
+    abilityIncreaseLevels,
+    abilityIncreases,
+    handleAbilityIncreaseChange: onAbilityIncreaseChange,
+    levelDetails,
+  } = wizard;
   if (isLoadingAttributes) return <DiceSpinner />;
   if (attributesError)
     return <Alert severity="error">Error loading attributes.</Alert>;
@@ -46,41 +38,13 @@ export function AddAttributeStep({
                 ? `${detail.klassName} Level ${detail.level}`
                 : `Level ${index + 1}`}
             </Typography>
-            <FormControl component="fieldset" sx={{ "& .MuiFormLabel-root": { mb: 0.25 } }}>
-              <FormLabel component="legend">
-                Select an attribute to increase
-              </FormLabel>
-              <RadioGroup
-                aria-label={`attribute-increase-${index}`}
-                name={`attribute-increase-${index}`}
-                value={selected ?? ""}
-                onChange={(e) =>
-                  onAbilityIncreaseChange(index, e.target.value)
-                }
-              >
-                {sortAbilities(
-                  Object.entries(attributeData.attributes),
-                  baseRules,
-                  ([key]) => key,
-                ).map(
-                  ([key, value]: [string, LeveledUpAttribute[string]]) => {
-                    const modifier = Math.floor((value.total - 10) / 2);
-                    const capitalizedKey =
-                      key.charAt(0).toUpperCase() + key.slice(1);
-                    return (
-                      <FormControlLabel
-                        key={value.abilityId}
-                        value={value.abilityId}
-                        control={<Radio />}
-                        label={`${capitalizedKey}: ${value.total} (${
-                          modifier >= 0 ? "+" : ""
-                        }${modifier})`}
-                      />
-                    );
-                  },
-                )}
-              </RadioGroup>
-            </FormControl>
+            <AttributeIncreaseField
+              attributes={attributeData.attributes}
+              baseRules={baseRules}
+              name={`attribute-increase-${index}`}
+              value={selected}
+              onChange={(abilityId) => onAbilityIncreaseChange(index, abilityId)}
+            />
           </Box>
         );
       })}

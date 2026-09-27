@@ -25,6 +25,7 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   maxWidth?: DialogProps["maxWidth"];
   fixedHeight?: boolean | string;
   submitLabel: string;
+  submitIcon?: ReactNode;
 }
 
 function FormActionDialog<T extends FieldValues = FieldValues>({
@@ -38,6 +39,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
   maxWidth = "sm",
   fixedHeight = false,
   submitLabel,
+  submitIcon,
 }: FormActionDialogProps<T>) {
   return (
     <FormDialog
@@ -63,7 +65,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
           <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
             Cancel
           </Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
+          <Button type="submit" variant="contained" disabled={isLoading} startIcon={submitIcon}>
             <DiceSpinner size="small" loading={isLoading}>{submitLabel}</DiceSpinner>
           </Button>
         </DialogActions>

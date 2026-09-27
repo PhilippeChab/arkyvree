@@ -1,3 +1,5 @@
+import { isRecord } from "./isRecord.ts";
+
 /**
  * Deep equality for plain values, with form-friendly normalization:
  * `undefined`, `null`, and `""` are treated as equivalent. Used by
@@ -11,18 +13,13 @@ export function valuesEqual(a: unknown, b: unknown): boolean {
   if (isBlank(a) && isBlank(b)) return true;
   if (a == null && typeof b === "object") return valuesEqual({}, b);
   if (b == null && typeof a === "object") return valuesEqual(a, {});
-  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
-  if (Array.isArray(a) !== Array.isArray(b)) return false;
-  if (Array.isArray(a)) {
-    const arrB = b as unknown[];
-    if (a.length !== arrB.length) return false;
-    return a.every((v, i) => valuesEqual(v, arrB[i]));
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => valuesEqual(v, b[i]));
   }
-  const objA = a as Record<string, unknown>;
-  const objB = b as Record<string, unknown>;
-  const keys = new Set([...Object.keys(objA), ...Object.keys(objB)]);
+  if (!isRecord(a) || !isRecord(b)) return false;
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
   for (const k of keys) {
-    if (!valuesEqual(objA[k], objB[k])) return false;
+    if (!valuesEqual(a[k], b[k])) return false;
   }
   return true;
 }

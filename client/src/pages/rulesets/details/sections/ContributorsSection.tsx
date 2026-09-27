@@ -1,4 +1,6 @@
-import { BlankState, ConfirmDialog, DiceSpinner, EditDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { BlankState, ConfirmDialog, DiceSpinner, EditDialog, LoadMoreButton, SelectField } from "@/client/src/components/common/index.ts";
 import {
   ContributorsTable,
   InviteContributorDialog,
@@ -19,11 +21,7 @@ import {
   Alert,
   Box,
   Button,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
   Tooltip,
 } from "@mui/material";
 import {
@@ -32,20 +30,15 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
+import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
+type ContributorInvite = InferRequestType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$post"]>["json"];
 type Contributor = InferResponseType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$get"], 200>["items"][number];
 
 interface ContributorsSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-    contributorRole?: string | null;
-  };
+  ruleset: RulesetDetail;
   onLeave?: () => void;
 }
 
@@ -86,11 +79,11 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
     placeholderData: keepPreviousData,
   });
 
-  const contributors = data?.pages.flatMap((page) => page.items) ?? [];
+  const contributors = pageItems(data);
   const owner = data?.pages[0]?.owner ?? null;
 
   const inviteMutation = useMutation({
-    mutationFn: (invite: { email: string; role: ContributorRole }) =>
+    mutationFn: (invite: ContributorInvite) =>
       rpc.api.rulesets[":id"].contributors.$post({ param: { id: ruleset.id }, json: invite }),
     onSuccess: () => {
       snackbar.success("Contributor invited");
@@ -140,9 +133,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
 
   if (isLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-        <DiceSpinner />
-      </Box>
+      <DiceSpinner sx={{ py: 4 }} />
     );
   }
 
@@ -249,18 +240,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
         submitLabel="Save"
         maxWidth="xs"
       >
-        <Controller
-          name="role"
-          control={roleForm.control}
-          render={({ field }) => (
-            <FormControl fullWidth>
-              <InputLabel>Role</InputLabel>
-              <Select {...field} label="Role">
-                {assignableRoles.map((role) => <MenuItem key={role} value={role}>{role}</MenuItem>)}
-              </Select>
-            </FormControl>
-          )}
-        />
+        <SelectField control={roleForm.control} name="role" label="Role" options={assignableRoles} />
       </EditDialog>
       {removeTarget && (
         <ConfirmDialog

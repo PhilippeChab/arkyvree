@@ -128,3 +128,8 @@ export function SectionTabs<K extends string>({
     </Box>
   );
 }
+
+/** A detail page tab's content: the page's centered column, up to 1200px. */
+export function SectionContent({ children }: { children: ReactNode }) {
+  return <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>{children}</Box>;
+}

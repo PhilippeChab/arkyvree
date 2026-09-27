@@ -2,14 +2,15 @@ import { Box, Button, Chip, IconButton, Stack, TextField, Typography } from "@mu
 import { Casino as CasinoIcon } from "@mui/icons-material";
 import type { AddHpStepProps } from "./levelUpFactory.ts";
 
-export function AddHpStep({
-  levels,
-  hpValues,
-  onHpChange,
-  onRoll,
-  onRollAll,
-  onMaxAll,
-}: AddHpStepProps) {
+export function AddHpStep({ wizard }: AddHpStepProps) {
+  const {
+    hpLevels: levels,
+    hpValues,
+    handleHpChange: onHpChange,
+    handleHpRoll: onRoll,
+    handleHpRollAll: onRollAll,
+    handleHpMaxAll: onMaxAll,
+  } = wizard;
   return (
     <Stack spacing={3}>
       <Box sx={{ display: "flex", gap: 1 }}>
@@ -22,9 +23,7 @@ export function AddHpStep({
       </Box>
       {levels.map((level, index) => (
         <Box key={index}>
-          <Stack direction="row" spacing={1} sx={{
-            alignItems: "center"
-          }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Typography variant="h6">
               Set HP for {level.className} Level {level.nextLevel}
             </Typography>
@@ -43,7 +42,7 @@ export function AddHpStep({
               onClick={() => onHpChange(index, level.hd)}
             />
           </Stack>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
+          <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
             Enter HP gain (1 to {level.hd}). Average:{" "}
             {Math.ceil(level.hd / 2)}, Maximum: {level.hd}
           </Typography>

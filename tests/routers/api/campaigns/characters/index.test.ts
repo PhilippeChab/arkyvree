@@ -307,6 +307,27 @@ describe("campaigns characters", () => {
     expect(found).toBeDefined();
   });
 
+  test("filters the campaign's characters by name", async () => {
+    const { campaignId, characterId } = await createTestData();
+    const link = await api.api.campaigns[":id"].characters.$post(
+      { param: { id: campaignId }, json: { characterId } },
+      { headers },
+    );
+    expect(link.status).toBe(201);
+
+    const list = async (search: string) => {
+      const response = await api.api.campaigns[":id"].characters.$get(
+        { param: { id: campaignId }, query: { limit: "10", page: "1", search } },
+        { headers },
+      );
+      if (!response.ok) throw new Error(`Search failed with ${response.status}`);
+      return (await response.json()).items;
+    };
+
+    expect((await list("Test Character")).map((item) => item.id)).toContain(characterId);
+    expect(await list("no-character-matches-this")).toHaveLength(0);
+  });
+
   test("should link a character with explicit visibility", async () => {
     const { campaignId, characterId } = await createTestData();
 

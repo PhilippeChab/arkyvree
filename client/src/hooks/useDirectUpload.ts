@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -10,6 +10,13 @@ interface SlotParams {
   recordId: string | undefined;
   name: string;
 }
+
+/** Refetches the slot's attachment once it changed. */
+const refreshSlot = (queryClient: QueryClient, slot: SlotParams) => {
+  if (slot.recordId) {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.attachments.slot(slot.recordType, slot.recordId, slot.name) });
+  }
+};
 
 export function useDirectUpload(slot: SlotParams) {
   const queryClient = useQueryClient();
@@ -46,13 +53,7 @@ export function useDirectUpload(slot: SlotParams) {
 
       return parseResponse(rpc.api.attachments[":signedId"].attach.$post({ param: { signedId } }));
     },
-    onSuccess: () => {
-      if (slot.recordId) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.attachments.slot(slot.recordType, slot.recordId, slot.name),
-        });
-      }
-    },
+    onSuccess: () => refreshSlot(queryClient, slot),
     onError: (error) => {
       snackbar.error(error);
     },
@@ -66,13 +67,7 @@ export function useDetachAttachment(slot: SlotParams) {
   return useMutation({
     mutationFn: (attachmentId: string) =>
       parseResponse(rpc.api.attachments[":id"].$delete({ param: { id: attachmentId } })),
-    onSuccess: () => {
-      if (slot.recordId) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.attachments.slot(slot.recordType, slot.recordId, slot.name),
-        });
-      }
-    },
+    onSuccess: () => refreshSlot(queryClient, slot),
     onError: (error) => snackbar.error(error),
   });
 }

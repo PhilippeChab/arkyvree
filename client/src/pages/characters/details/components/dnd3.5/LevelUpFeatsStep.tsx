@@ -1,9 +1,7 @@
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
-import {
-  type AptitudePool,
-  type AvailableFeat,
-  type SelectedFeat,
-} from "./levelUp/useLevelWizard.ts";
+import type { AptitudePool, FeatsData, SelectedFeat } from "./levelUp/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -27,31 +25,34 @@ import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 export function LevelUpFeatsStep({
-  featData,
-  isLoadingFeats,
-  featsError,
-  adjustedFeatPools,
-  selectedFeats,
-  selectedAptitude,
-  setSelectedAptitude,
-  groupedFeats,
-  isLoadingAvailableFeats,
-  isFetchingNextFeatsPage,
-  expandedFeatFamilies,
-  toggleFeatFamily,
+  wizard,
   characterId,
   klassId,
   klassLevel,
   editingLevelId,
-  allSelectedFeatPickString,
   pendingLevelKlassLevelIds,
   pendingLevelFeatPicks,
-  featSearch,
-  setFeatSearch,
-  handleFeatsScroll,
-  setValue,
-  handleDeleteFeat,
 }: LevelUpFeatsStepProps) {
+  const {
+    featData,
+    isLoadingFeats,
+    featsError,
+    adjustedFeatPools,
+    selectedFeats,
+    selectedAptitude,
+    setSelectedAptitude,
+    groupedFeats,
+    isLoadingAvailableFeats,
+    isFetchingNextFeatsPage,
+    expandedFeatFamilies,
+    toggleFeatFamily,
+    allSelectedFeatPickString,
+    featSearch,
+    setFeatSearch,
+    handleFeatsScroll,
+    setValue,
+    handleDeleteFeat,
+  } = wizard;
   if (isLoadingFeats) return <DiceSpinner />;
   if (featsError)
     return <Alert severity="error">Error loading feats.</Alert>;
@@ -71,12 +72,7 @@ export function LevelUpFeatsStep({
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        flex: 1,
-        minHeight: 0,
-      }}
+      sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
     >
       <Box sx={{ flexShrink: 0 }}>
         <Typography variant="h6" gutterBottom>
@@ -125,13 +121,7 @@ export function LevelUpFeatsStep({
 
           return (
             <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                mt: 3,
-                flex: 1,
-                minHeight: 0,
-              }}
+              sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}
             >
               {/* Selected Feats (always reserve space) */}
               <Box sx={{ flexShrink: 0, mb: 2 }}>
@@ -139,15 +129,11 @@ export function LevelUpFeatsStep({
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </Typography>
                 <Box
-                  sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 0.5,
-                  }}
+                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
                 >
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (
-                        <Tooltip key={feat.id} title={feat.description ? feat.description.length > 200 ? `${feat.description.slice(0, 200)}…` : feat.description : ""} placement="right" enterDelay={300} arrow>
+                        <Tooltip describeChild key={feat.id} title={feat.description ? feat.description.length > 200 ? `${feat.description.slice(0, 200)}…` : feat.description : ""} placement="right" enterDelay={300} arrow>
                           <Chip
                             label={feat.name}
                             onDelete={() =>
@@ -170,12 +156,7 @@ export function LevelUpFeatsStep({
               {currentPoolFeats.length <
                 (currentPool?.available || 0) && (
                 <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    flex: 1,
-                    minHeight: 0,
-                  }}
+                  sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
                 >
                   <TextField
                     label={`Search ${currentPool?.name} Feats`}
@@ -191,27 +172,19 @@ export function LevelUpFeatsStep({
                   ) : (
                     <List
                       dense
-                      sx={{
-                        flex: 1,
-                        minHeight: 0,
-                        overflow: "auto",
-                      }}
+                      sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
                       onScroll={handleFeatsScroll}
                     >
                       {groupedFeats.map((row) => {
-                        const isFamily =
-                          row.family !== null &&
-                          row.variantCount > 1;
-                        const isExpanded =
-                          isFamily &&
-                          expandedFeatFamilies.has(row.family!);
+                        const family = row.variantCount > 1 ? row.family : null;
+                        const isExpanded = family !== null && expandedFeatFamilies.has(family);
 
-                        if (isFamily) {
+                        if (family !== null) {
                           return (
                             <Box key={row.family}>
                               <ListItemButton
                                 onClick={() =>
-                                  toggleFeatFamily(row.family!)
+                                  toggleFeatFamily(family)
                                 }
                               >
                                 {isExpanded ? (
@@ -227,7 +200,7 @@ export function LevelUpFeatsStep({
                                 )}
                                 <ListItemText
                                   primary={row.displayName}
-                                  secondary={`${row.variantCount} variants`}
+                                  secondary={formatCount(row.variantCount, "variant")}
                                 />
                               </ListItemButton>
                               {isExpanded && (
@@ -236,7 +209,7 @@ export function LevelUpFeatsStep({
                                   aptitudeId={selectedAptitude}
                                   klassId={klassId}
                                   klassLevel={klassLevel}
-                                  family={row.family!}
+                                  family={family}
                                   editingLevelId={editingLevelId}
                                   allSelectedFeatPickString={allSelectedFeatPickString}
                                   pendingLevelKlassLevelIds={pendingLevelKlassLevelIds}
@@ -257,7 +230,7 @@ export function LevelUpFeatsStep({
                         // Wizard Spellcasting on multi-level Archmage)
                         // should remain pickable across batch levels.
                         return (
-                          <Tooltip key={row.representativeId} title={!row.eligible && "requirementTree" in row ? String(row.requirementTree) : "description" in row ? String(row.description) : ""} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !row.eligible && "requirementTree" in row ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
+                          <Tooltip describeChild key={row.representativeId} title={!row.eligible && "requirementTree" in row ? String(row.requirementTree) : row.description} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !row.eligible && "requirementTree" in row ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
                             <span>
                               <ListItemButton
                                 disabled={!row.eligible}
@@ -271,9 +244,8 @@ export function LevelUpFeatsStep({
                                       {
                                         id: row.representativeId,
                                         name: row.displayName,
-                                        description: "description" in row ? String(row.description) : undefined,
-                                        aptitudeModifiers:
-                                          row.aptitudeModifiers,
+                                        description: row.description,
+                                        aptitudeModifiers: row.aptitudeModifiers,
                                       },
                                     ],
                                   });
@@ -289,11 +261,7 @@ export function LevelUpFeatsStep({
                       })}
                       {isFetchingNextFeatsPage && (
                         <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            py: 1,
-                          }}
+                          sx={{ display: "flex", justifyContent: "center", py: 1 }}
                         >
                           <DiceSpinner size="small" />
                         </Box>
@@ -310,12 +278,10 @@ export function LevelUpFeatsStep({
   );
 }
 
-function AutoGrantedFeats({ feats, defaultCollapsed }: { feats: { id: string; name: string }[]; defaultCollapsed: boolean }) {
+function AutoGrantedFeats({ feats, defaultCollapsed }: { feats: FeatsData["autoGrantedFeats"]; defaultCollapsed: boolean }) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
-    <Box sx={{
-      mb: 1
-    }}>
+    <Box sx={{ mb: 1 }}>
       <Box
         sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
         onClick={() => setOpen(!open)}
@@ -375,10 +341,10 @@ function FeatFamilyExpansion({
           limit: "50",
           page: pageParam.toString(),
           family,
-          ...(editingLevelId && { characterLevelId: editingLevelId }),
-          ...(allSelectedFeatPickString && { selectedFeatPicks: allSelectedFeatPickString }),
-          ...(pendingLevelKlassLevelIds && { pendingLevelKlassLevelIds }),
-          ...(pendingLevelFeatPicks && { pendingLevelFeatPicks }),
+          characterLevelId: editingLevelId || undefined,
+          selectedFeatPicks: allSelectedFeatPickString || undefined,
+          pendingLevelKlassLevelIds: pendingLevelKlassLevelIds || undefined,
+          pendingLevelFeatPicks: pendingLevelFeatPicks || undefined,
         },
       }));
     },
@@ -387,7 +353,7 @@ function FeatFamilyExpansion({
     placeholderData: keepPreviousData,
   });
 
-  const variants = query.data?.pages.flatMap((p) => p.items) as AvailableFeat[] | undefined;
+  const variants = pageItems(query.data);
   const pages = query.data?.pages ?? [];
   const previousItemCount = pages.slice(0, -1).reduce((sum, p) => sum + p.items.length, 0);
 
@@ -402,10 +368,10 @@ function FeatFamilyExpansion({
 
   return (
     <>
-      {variants?.map((feat, i) => {
+      {variants.map((feat, i) => {
           const isNew = i >= previousItemCount;
           return (
-            <Tooltip key={feat.id} title={!feat.eligible && feat.requirementTree ? feat.requirementTree : feat.description ?? ""} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !feat.eligible && feat.requirementTree ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
+            <Tooltip describeChild key={feat.id} title={!feat.eligible && feat.requirementTree ? feat.requirementTree : feat.description ?? ""} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !feat.eligible && feat.requirementTree ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
               <Box component="span" sx={{ display: "block", ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}>
                 <ListItemButton
                   sx={{ pl: 6 }}

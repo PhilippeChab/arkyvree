@@ -1,3 +1,4 @@
+import type { ChangedField } from "@/shared/activity.ts";
 import { getTableName } from "drizzle-orm";
 
 import {
@@ -67,8 +68,8 @@ function normalize(v: unknown): string {
 export function getChangedFields(
   existing: Record<string, unknown>,
   body: Record<string, unknown>,
-): { field: string; from?: string; to?: string }[] {
-  const changes: { field: string; from?: string; to?: string }[] = [];
+): ChangedField[] {
+  const changes: ChangedField[] = [];
   for (const key of Object.keys(body)) {
     if (!(key in existing)) continue;
     const oldVal = existing[key];

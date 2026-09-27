@@ -1,10 +1,17 @@
-import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton } from "@/client/src/components/common/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import type { CampaignDetail } from "@/client/src/lib/queries.ts";
+import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton, SectionContent, NoMatchesState } from "@/client/src/components/common/index.ts";
 import {
   AddPlayerDialog,
-  type AddPlayerFormData,
+  type CampaignPlayer,
   EditPlayerDialog,
-  type EditPlayerFormData,
+  getPlayerSlot,
+  playerDisplay,
+  type PlayerFormData,
+  type PlayerState,
   RemovePlayerDialog,
+  toPlayerPayload,
 } from "@/client/src/pages/campaigns/components/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
@@ -44,81 +51,21 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
-import { useState } from "react";
+import { useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
-type PlayersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["players"]["$get"], 200>;
-type Player = PlayersPaginated["items"][number];
-
 interface PlayersSectionProps {
-  campaign: {
-    id: string;
-    name: string;
-    currentUserRole: string | null;
-    deletedAt: string | null;
-  };
+  campaign: CampaignDetail;
 }
 
-// Helper function to determine player state
-function getPlayerState(player: Player): "assigned" | "pending" | "unassigned" {
-  // Player is assigned if they have a userId and usersInAccount
-  if (player.userId && player.usersInAccount?.id) {
-    return "assigned";
-  }
-
-  // Player has pending invitation if there's an active invite
-  if (player.invitesInCampaigns && player.invitesInCampaigns.length > 0) {
-    const pendingInvite = player.invitesInCampaigns[0]; // Latest invite due to ordering
-    if (pendingInvite.status === "Pending") {
-      return "pending";
-    }
-  }
-
-  // Otherwise unassigned
-  return "unassigned";
-}
-
-// Helper function to get player display info
-function getPlayerDisplayInfo(player: Player) {
-  const state = getPlayerState(player);
-
-  switch (state) {
-    case "assigned":
-      return {
-        name: player.usersInAccount?.username ?? `Player ${player.id.slice(0, 4)}`,
-        email: player.usersInAccount?.emailAddress,
-        statusChip: null,
-      };
-    case "pending": {
-      const pendingInvite = player.invitesInCampaigns?.[0];
-      return {
-        name: pendingInvite?.usersInAccount?.username ??
-          pendingInvite?.email ??
-          `User ${pendingInvite?.userId?.slice(0, 4)}`,
-        email: pendingInvite?.usersInAccount?.emailAddress ?? pendingInvite?.email,
-        statusChip: {
-          icon: <PendingIcon sx={{ fontSize: 14 }} />,
-          label: "Invite Pending",
-          color: "warning" as const,
-        },
-      };
-    }
-    case "unassigned":
-      return {
-        name: "Unassigned Player Slot",
-        email: "No player assigned",
-        statusChip: {
-          icon: <UnassignedIcon sx={{ fontSize: 14 }} />,
-          label: "Unassigned",
-          color: "default" as const,
-        },
-      };
-  }
-}
+const STATUS_CHIPS = {
+  assigned: null,
+  pending: { icon: <PendingIcon sx={{ fontSize: 14 }} />, label: "Invite Pending", color: "warning" },
+  unassigned: { icon: <UnassignedIcon sx={{ fontSize: 14 }} />, label: "Unassigned", color: "default" },
+} as const satisfies Record<PlayerState, { icon: ReactNode; label: string; color: "warning" | "default" } | null>;
 
 export function PlayersSection({ campaign }: PlayersSectionProps) {
   const isMobile = useIsMobile();
@@ -128,11 +75,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  // Kept after its dialog closes, so the dialog doesn't change while it fades out.
+  const [selectedPlayer, setSelectedPlayer] = useState<CampaignPlayer | null>(null);
+  const selectedSlot = selectedPlayer && getPlayerSlot(selectedPlayer);
 
   // Search state with debounce
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearchQuery = useDebouncedValue(searchQuery);
+  const [searchQuery, setSearchQuery] = useSearchParam("playerSearch");
 
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedInviteId, setSelectedInviteId] = useState<string | null>(null);
@@ -141,14 +89,14 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const { canManagePlayers, canManageInvites } = useCampaignPermissions(campaign);
   const currentUserId = useAuthStore((s) => s.user?.id);
 
-  const addForm = useForm<AddPlayerFormData>({
+  const addForm = useForm<PlayerFormData>({
     defaultValues: {
       role: "Player Character",
       email: "",
     },
   });
 
-  const editForm = useForm<EditPlayerFormData>({
+  const editForm = useForm<PlayerFormData>({
     defaultValues: {
       role: "Player Character",
       email: "",
@@ -162,18 +110,15 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({ ...campaignPlayersQuery(campaign.id, debouncedSearchQuery), placeholderData: keepPreviousData });
+  } = useInfiniteQuery({ ...campaignPlayersQuery(campaign.id, searchQuery), placeholderData: keepPreviousData });
 
-  const players = data?.pages.flatMap((page) => page.items) ?? [];
+  const players = pageItems(data);
 
   const addMutation = useMutation({
-    mutationFn: async (data: AddPlayerFormData) => {
+    mutationFn: async (data: PlayerFormData) => {
       return parseResponse(rpc.api.campaigns[":id"].players.$post({
         param: { id: campaign.id },
-        json: {
-          role: data.role,
-          email: data.email,
-        },
+        json: toPlayerPayload(data),
       }));
     },
     onSuccess: () => {
@@ -190,13 +135,10 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   });
 
   const editMutation = useMutation({
-    mutationFn: async ({ playerId, data }: { playerId: string; data: EditPlayerFormData }) => {
+    mutationFn: async ({ playerId, data }: { playerId: string; data: PlayerFormData }) => {
       return parseResponse(rpc.api.campaigns[":id"].players[":playerId"].$put({
         param: { id: campaign.id, playerId },
-        json: {
-          role: data.role,
-          email: data.email,
-        },
+        json: toPlayerPayload(data),
       }));
     },
     onSuccess: () => {
@@ -205,7 +147,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
       setEditDialogOpen(false);
-      setSelectedPlayer(null);
     },
     onError: (error) => {
       snackbar.error(error);
@@ -230,7 +171,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "characters") });
         queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
         setRemoveDialogOpen(false);
-        setSelectedPlayer(null);
       }
     },
     onError: (error) => {
@@ -267,14 +207,15 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   };
 
   const handleAddPlayer = () => {
+    addForm.reset();
     setAddDialogOpen(true);
   };
 
-  const confirmAddPlayer = (data: AddPlayerFormData) => {
+  const confirmAddPlayer = (data: PlayerFormData) => {
     addMutation.mutate(data);
   };
 
-  const handleEditPlayer = (player: Player) => {
+  const handleEditPlayer = (player: CampaignPlayer) => {
     setSelectedPlayer(player);
     editForm.reset({
       role: player.role,
@@ -283,12 +224,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     setEditDialogOpen(true);
   };
 
-  const confirmEditPlayer = (data: EditPlayerFormData) => {
+  const confirmEditPlayer = (data: PlayerFormData) => {
     if (!selectedPlayer) return;
     editMutation.mutate({ playerId: selectedPlayer.id, data });
   };
 
-  const handleRemovePlayer = (player: Player) => {
+  const handleRemovePlayer = (player: CampaignPlayer) => {
     setSelectedPlayer(player);
     setRemoveDialogOpen(true);
   };
@@ -299,7 +240,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       {/* Header */}
       <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
         Players
@@ -321,9 +262,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       />
       {/* Loading State */}
       {playersLoading && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <DiceSpinner />
-        </Box>
+        <DiceSpinner sx={{ py: 4 }} />
       )}
       {/* Error State */}
       {playersError && (
@@ -363,13 +302,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                   </TableHead>
                   <TableBody>
                     {players.map((player) => {
-                      const playerState = getPlayerState(player);
-                      const displayInfo = getPlayerDisplayInfo(player);
+                      const slot = getPlayerSlot(player);
+                      const displayInfo = { ...playerDisplay(player, slot), statusChip: STATUS_CHIPS[slot.state] };
                       const isGameMaster = player.role === "Game Master";
                       const isCurrentUser = player.userId === currentUserId;
-                      const canRevokeInvite = playerState === "pending" && canManageInvites && !campaign.deletedAt;
+                      const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
                       const canEditPlayer =
-                        (!campaign.deletedAt && (canManagePlayers && (!isGameMaster || playerState !== "assigned") || isCurrentUser))
+                        (!campaign.deletedAt && (canManagePlayers && (!isGameMaster || slot.state !== "assigned") || isCurrentUser))
                         || canRevokeInvite;
 
                       return (
@@ -388,9 +327,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                 {displayInfo.name}
                               </Typography>
-                              <Typography variant="caption" sx={{
-                                color: "text.secondary"
-                              }}>
+                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
                                 {displayInfo.email}
                               </Typography>
                             </Box>
@@ -431,18 +368,14 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                               )}
                           </TableCell>
                           <TableCell>
-                            {playerState === "assigned"
+                            {slot.state === "assigned"
                               ? (
-                                <Typography variant="body2" sx={{
-                                  color: "text.secondary"
-                                }}>
-                                  {new Date(player.createdAt).toLocaleDateString()}
+                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                  {formatDate(player.createdAt)}
                                 </Typography>
                               )
                               : (
-                                <Typography variant="body2" sx={{
-                                  color: "text.disabled"
-                                }}>
+                                <Typography variant="body2" sx={{ color: "text.disabled" }}>
                                   —
                                 </Typography>
                               )}
@@ -472,13 +405,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                                     </IconButton>
                                   </Tooltip>
                                 )}
-                                {playerState === "pending" && canManageInvites && !campaign.deletedAt && (
+                                {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
                                   <Tooltip title="Revoke Invite">
                                     <IconButton
                                       size="small"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleRevokeInvite(player.invitesInCampaigns?.[0]?.id ?? "");
+                                        handleRevokeInvite(slot.pendingInvite.id);
                                       }}
                                       sx={{ color: "warning.main" }}
                                       disabled={revokeInviteMutation.isPending}
@@ -518,7 +451,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               />
               </>
             )
-            : (
+            : searchQuery ? (
+              <NoMatchesState search={searchQuery} />
+            ) : (
               <BlankState
                 icon={PlayerIcon}
                 title="No players in this campaign"
@@ -550,26 +485,20 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       {/* Edit Player Dialog */}
       <EditPlayerDialog
         open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false);
-          setSelectedPlayer(null);
-        }}
+        onClose={() => setEditDialogOpen(false)}
         form={editForm}
         onSubmit={confirmEditPlayer}
         isLoading={editMutation.isPending}
-        selectedPlayer={selectedPlayer}
+        slot={selectedSlot}
       />
       {/* Remove Player Dialog */}
       <RemovePlayerDialog
         open={removeDialogOpen}
-        onClose={() => {
-          setRemoveDialogOpen(false);
-          setSelectedPlayer(null);
-        }}
+        onClose={() => setRemoveDialogOpen(false)}
         onConfirm={confirmRemovePlayer}
         isLoading={removeMutation.isPending}
         isSelfRemoval={selectedPlayer?.userId === currentUserId}
-        selectedPlayer={selectedPlayer}
+        slot={selectedSlot}
       />
       {/* Revoke Invite Dialog */}
       <ConfirmDialog
@@ -581,6 +510,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         confirmLabel="Revoke Invitation"
         isLoading={revokeInviteMutation.isPending}
       />
-    </Box>
+    </SectionContent>
   );
 }

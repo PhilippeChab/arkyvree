@@ -1,3 +1,4 @@
+import { isRecord } from "@/client/src/lib/isRecord.ts";
 import { formatPropertyType, stripSeparators } from "@/shared/utils.ts";
 import {
   ExpandLess as ExpandLessIcon,
@@ -57,7 +58,7 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
       >
         <TableCell>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <IconButton size="small" sx={{ p: 0 }}>
+            <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${spell.name}'s details`} sx={{ p: 0 }}>
               {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </IconButton>
             {spellLink
@@ -87,9 +88,7 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
                   }}
                 >
                   {detailProps.map(([key, value]) => (
-                    <Typography key={key} variant="body2" sx={{
-                      color: "text.secondary"
-                    }}>
+                    <Typography key={key} variant="body2" sx={{ color: "text.secondary" }}>
                       <strong>{formatPropertyType(key)}:</strong> {value}
                     </Typography>
                   ))}
@@ -118,7 +117,7 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
         onClick={() => setOpen((prev) => !prev)}
         sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 0.5 }}
       >
-        <IconButton size="small" sx={{ p: 0 }}>
+        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
         </IconButton>
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -127,10 +126,7 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
             <Typography
               component="span"
               variant="body2"
-              sx={{
-                color: "text.secondary",
-                ml: 1
-              }}>
+              sx={{ color: "text.secondary", ml: 1 }}>
               — {group.uses}/day
             </Typography>
           )}
@@ -175,7 +171,7 @@ function CollapsibleClass({ apt, rulesetId }: { apt: { aptitudeName: string; lev
         onClick={() => setOpen((prev) => !prev)}
         sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 1 }}
       >
-        <IconButton size="small" sx={{ p: 0 }}>
+        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -205,11 +201,10 @@ export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spell
     const getUsesPerDay = (aptitudeName: string, spellLevel: number): number | null => {
       if (!aptitudes) return null;
       const key = stripSeparators(aptitudeName);
-      const apt = aptitudes[key] as Record<string, unknown> | undefined;
-      if (!apt) return null;
-      const levelData = apt[String(spellLevel)] as { uses?: number } | undefined;
-      if (!levelData || levelData.uses == null) return null;
-      return levelData.uses;
+      // Leveled aptitudes carry a per-spell-level entry the sheet type doesn't declare.
+      const aptitude: Record<string, unknown> | undefined = aptitudes[key];
+      const levelData = aptitude?.[String(spellLevel)];
+      return isRecord(levelData) && typeof levelData.uses === "number" ? levelData.uses : null;
     };
 
     const groupMap = new Map<string, SpellGroup>();

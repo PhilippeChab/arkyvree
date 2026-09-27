@@ -2,25 +2,13 @@ import { Chip } from "@mui/material";
 import { useForm } from "react-hook-form";
 
 import { useFormSync } from "@/client/src/hooks/index.ts";
-import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import { ItemFormFields, type ItemFormInternal, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { ItemFormFields, type ItemFormInternal, toItemForm, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";
-
-const toItemForm = (item: Item): ItemFormInternal => ({
-  name: item.name,
-  description: item.description ?? "",
-  costGp: formatDecimal(item.costGp) ?? "",
-  weight: formatDecimal(item.weight) ?? "",
-  type: item.type,
-  slot: item.slot ?? undefined,
-  isTemplate: item.isTemplate,
-  sourceItemId: item.isTemplate ? undefined : item.sourceItemId ?? undefined,
-});
 
 export function ItemEditor({ rulesetId, entityId, recordKey, adoptKey, entity: item, canEdit, locked, onSaved }: EditorProps<Item>) {
   const form = useForm<ItemFormInternal>();

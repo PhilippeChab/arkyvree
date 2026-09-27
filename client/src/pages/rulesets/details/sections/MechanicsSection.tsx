@@ -1,25 +1,20 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { mechanicQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { MechanicFormFields, type MechanicFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Gavel as MechanicsIcon } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  ToggleButton,
-  Typography,
-} from "@mui/material";
+import { Gavel as MechanicsIcon } from "@mui/icons-material";
 import {
   keepPreviousData,
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { mechanicsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const MECHANICS_COLUMNS = [
@@ -30,34 +25,16 @@ const MECHANICS_COLUMNS = [
 type MechanicsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>;
 type Mechanic = MechanicsPaginated["items"][number];
 
-type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$post"]>["json"];
-
-interface MechanicsSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    rulesetId?: string | null;
-    userId?: string | null;
-    status?: string;
-  };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: MechanicsSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    createDialogOpen,
-    setCreateDialogOpen,
     createForm,
-    createMutation,
     handleCreate,
+    createDialogProps,
   } = useRulesetSection<Mechanic, MechanicFormData>({
     rulesetId: ruleset.id,
     sectionName: "mechanics",
@@ -68,7 +45,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
         json: data,
       }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/mechanics/${created.id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`mechanics/${created.id}`),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -76,23 +53,14 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
     placeholderData: keepPreviousData,
   });
 
-  const mechanics = data?.pages.flatMap((page) => page.items) ?? [];
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
+  const mechanics = pageItems(data);
 
   const handleRowClick = (mechanic: Mechanic) => {
-    navigate(`/rulesets/${ruleset.id}/mechanics/${mechanic.id}`, { state: { from: location.pathname + location.search } });
+    openEntity(`mechanics/${mechanic.id}`);
   };
 
   const handleRowMouseEnter = useCallback((mechanic: Mechanic) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "mechanics", mechanic.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].mechanics[":mechanicId"].$get({
-          param: { id: ruleset.id, mechanicId: mechanic.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(mechanicQuery(ruleset.id, mechanic.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (mechanic: Mechanic, columnKey: string) => {
@@ -101,11 +69,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
         return mechanic.name;
       case "description":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {mechanic.description || "-"}
-          </Typography>
+          <DescriptionCell text={mechanic.description} />
         );
       default:
         return null;
@@ -113,38 +77,25 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search mechanics..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Mechanic
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Mechanic"
+            onAdd={handleCreate}
+          />
         }
       />
 
       <RulesetSectionTable
         data={mechanics}
+        search={searchQuery}
         isLoading={isLoading}
         columns={MECHANICS_COLUMNS}
         onRowClick={handleRowClick}
@@ -162,16 +113,12 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Mechanic"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
         maxWidth="md"
       >
         <MechanicFormFields form={createForm} />
       </CreateDialog>
-    </Box>
+    </SectionContent>
   );
 }

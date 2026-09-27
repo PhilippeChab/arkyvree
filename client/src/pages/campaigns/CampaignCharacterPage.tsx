@@ -1,3 +1,4 @@
+import { PageError, ActionMenuItem } from "@/client/src/components/common/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -16,9 +17,7 @@ import {
   Container,
   Fade,
   IconButton,
-  ListItemIcon,
   Menu,
-  MenuItem,
   Paper,
   Stack,
   Typography,
@@ -28,15 +27,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 export default function CampaignCharacterPage() {
-  const { id: campaignId, characterId } = useParams<{ id: string; characterId: string }>();
+  const { id: campaignId = "", characterId = "" } = useParams<{ id: string; characterId: string }>();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.campaigns.characterDetail(campaignId!, characterId!),
+    queryKey: queryKeys.campaigns.characterDetail(campaignId, characterId),
     queryFn: async () => {
       return parseResponse(rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
-        param: { id: campaignId!, characterId: characterId! },
+        param: { id: campaignId, characterId },
       }));
     },
     enabled: !!campaignId && !!characterId,
@@ -44,13 +43,17 @@ export default function CampaignCharacterPage() {
 
   const pdfExport = usePdfExport(() =>
     rpc.api.campaigns[":id"].characters[":characterId"]["pdf"]["$post"]({
-      param: { id: campaignId!, characterId: characterId! },
+      param: { id: campaignId, characterId },
     }),
   );
 
   usePageTitle(data?.identity?.physiology?.name);
 
   const handleClose = () => setAnchorEl(null);
+  const closeMenuAnd = (then: () => void) => () => {
+    handleClose();
+    then();
+  };
 
   if (!campaignId || !characterId) {
     return (
@@ -71,7 +74,11 @@ export default function CampaignCharacterPage() {
   if (error || !data) {
     return (
       <Container maxWidth="xl" sx={{ py: 2 }}>
-        <Alert severity="error">Failed to load character details.</Alert>
+        <PageError
+          message="Failed to load character"
+          backLabel="Back to Campaign"
+          onBack={() => navigate(`/campaigns/${campaignId}/characters`)}
+        />
       </Container>
     );
   }
@@ -81,20 +88,12 @@ export default function CampaignCharacterPage() {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Stack
           direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 1
-          }}>
+          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
           <Stack
             direction="row"
             spacing={2}
-            sx={{
-              alignItems: "center",
-              minWidth: 0
-            }}>
-            <IconButton onClick={() => navigate(`/campaigns/${campaignId}`)}>
+            sx={{ alignItems: "center", minWidth: 0 }}>
+            <IconButton aria-label="Back" onClick={() => navigate(`/campaigns/${campaignId}`)}>
               <ArrowBackIcon />
             </IconButton>
             <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
@@ -104,34 +103,12 @@ export default function CampaignCharacterPage() {
 
           {data.canDownloadPdf && !data.deletedAt && (
             <Stack direction="row" spacing={1}>
-              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: "text.secondary" }}>
+              <IconButton aria-label="More actions" onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: "text.secondary" }}>
                 <MoreVertIcon />
               </IconButton>
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                {data.canEdit && (
-                  <MenuItem
-                    onClick={() => {
-                      navigate(`/characters/${characterId}`);
-                      handleClose();
-                    }}
-                  >
-                    <ListItemIcon>
-                      <EditIcon fontSize="small" />
-                    </ListItemIcon>
-                    Edit Character
-                  </MenuItem>
-                )}
-                <MenuItem
-                  onClick={() => {
-                    pdfExport.mutate();
-                    handleClose();
-                  }}
-                >
-                  <ListItemIcon>
-                    <DownloadIcon fontSize="small" />
-                  </ListItemIcon>
-                  Download PDF
-                </MenuItem>
+                {data.canEdit && <ActionMenuItem icon={EditIcon} label="Edit Character" onClick={closeMenuAnd(() => navigate(`/characters/${characterId}`))} />}
+                <ActionMenuItem icon={DownloadIcon} label="Download PDF" onClick={closeMenuAnd(() => pdfExport.mutate())} />
               </Menu>
             </Stack>
           )}

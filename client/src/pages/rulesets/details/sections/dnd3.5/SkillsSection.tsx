@@ -1,25 +1,21 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { SkillFormFields, type SkillFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Psychology as SkillsIcon } from "@mui/icons-material";
+import { Psychology as SkillsIcon } from "@mui/icons-material";
 import {
-  Box,
-  Button,
   Chip,
-  ToggleButton,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import type { SkillsSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-
 
 const SKILLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -31,21 +27,16 @@ const SKILLS_COLUMNS = [
 type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
 type Skill = SkillsPaginated["items"][number];
 
-
-export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    createDialogOpen,
-    setCreateDialogOpen,
     createForm,
-    createMutation,
     handleCreate,
+    createDialogProps,
   } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
@@ -57,7 +48,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
         json: data,
       }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/skills/${created.id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`skills/${created.id}`),
   });
 
   const { data: rulesetAbilities = [] } = useRulesetAbilities(ruleset.id);
@@ -67,23 +58,14 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
     placeholderData: keepPreviousData,
   });
 
-  const skills = data?.pages.flatMap((page) => page.items) ?? [];
+  const skills = pageItems(data);
 
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-
-  const handleRowClick = useCallback((skill: Skill) => {
-    navigate(`/rulesets/${ruleset.id}/skills/${skill.id}`, { state: { from: location.pathname + location.search } });
-  }, [navigate, ruleset.id, location.pathname, location.search]);
+  const handleRowClick = (skill: Skill) => {
+    openEntity(`skills/${skill.id}`);
+  };
 
   const handleRowMouseEnter = useCallback((skill: Skill) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "skills", skill.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].skills[":skillId"].$get({
-          param: { id: ruleset.id, skillId: skill.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(skillQuery(ruleset.id, skill.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (skill: Skill, columnKey: string) => {
@@ -105,19 +87,13 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
         return skill.usableWithoutTraining === false
           ? <Chip label="Yes" size="small" color="warning" />
           : (
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               No
             </Typography>
           );
       case "description":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {skill.description || "-"}
-          </Typography>
+          <DescriptionCell text={skill.description} />
         );
       default:
         return null;
@@ -125,38 +101,25 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search skills..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Skill
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Skill"
+            onAdd={handleCreate}
+          />
         }
       />
 
       <RulesetSectionTable
         data={skills}
+        search={searchQuery}
         isLoading={isLoading}
         columns={SKILLS_COLUMNS}
         onRowClick={handleRowClick}
@@ -174,16 +137,12 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Skill"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
       >
         <SkillFormFields form={createForm} abilities={rulesetAbilities} />
       </CreateDialog>
 
-    </Box>
+    </SectionContent>
   );
 }

@@ -1,21 +1,16 @@
+import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
 export type Level = LevelsArray[number];
-
-type CreateLevelFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
->["json"];
-
-type ClassSkillsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["skills"]["$get"], 200>;
 
 export function useClassLevels(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
@@ -49,7 +44,7 @@ export function useClassLevels(rulesetId: string, classId: string) {
     onSuccess: () => {
       snackbar.success("Level created successfully");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
+        queryKey: classLevelsQuery(rulesetId, classId).queryKey,
       });
       setCreateDialogOpen(false);
       createForm.reset();
@@ -115,27 +110,27 @@ export function useClassSkills(rulesetId: string, classId: string) {
   const [skillToRemove, setSkillToRemove] = useState<string | null>(null);
 
   // Fetch class skills data
-  const { data: classSkills, isLoading } = useQuery({ ...classSkillsQuery(rulesetId, classId), enabled: !!rulesetId && !!classId });
+  const skillsQuery = classSkillsQuery(rulesetId, classId);
+  const classSkillsKey = skillsQuery.queryKey;
+  const { data: classSkills, isLoading } = useQuery({ ...skillsQuery, enabled: !!rulesetId && !!classId });
 
   // Available skills with server-side search and pagination
   const [skillSearch, setSkillSearch] = useState("");
   const debouncedSkillSearch = useDebouncedValue(skillSearch);
 
   const {
-    data: availableSkillsData,
+    items: availableSkills,
     isLoading: isAvailableSkillsLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.section(rulesetId, "skills"), "autocomplete", debouncedSkillSearch],
+    onScroll: handleSkillsScroll,
+  } = useListboxQuery({
+    queryKey: queryKeys.rulesets.sectionSearch(rulesetId, "skills", debouncedSkillSearch),
     queryFn: async ({ pageParam }) => {
       return parseResponse(rpc.api.rulesets[":id"].skills.$get({
         param: { id: rulesetId },
         query: {
           limit: "20",
           page: pageParam.toString(),
-          ...(debouncedSkillSearch && { search: debouncedSkillSearch }),
+          search: debouncedSkillSearch || undefined,
         },
       }));
     },
@@ -143,15 +138,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
     getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled: !!rulesetId,
   });
-  const availableSkills = availableSkillsData?.pages.flatMap((page) => page.items) ?? [];
-
-  const handleSkillsScroll = (event: React.UIEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-    if (bottom && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
 
   // Add skill mutation
   const addSkillMutation = useMutation({
@@ -164,29 +150,28 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({
-        queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
+        queryKey: classSkillsKey,
       });
 
       // Snapshot the previous value
       const previousClassSkills = queryClient.getQueryData(
-        queryKeys.rulesets.classSkills(rulesetId, classId),
+        classSkillsKey,
       );
 
       // Find the skill being added
-      const skill = availableSkills?.find((s) => s.id === skillId);
+      const skill = availableSkills.find((s) => s.id === skillId);
 
       if (skill) {
         // Optimistically update to the new value
         queryClient.setQueryData(
-          queryKeys.rulesets.classSkills(rulesetId, classId),
-          (old: ClassSkillsArray | undefined) => {
+          classSkillsKey,
+          (old) => {
             if (!old) return [];
+            // A stand-in row until the refetch brings the real one.
+            const now = new Date().toISOString();
             return [
               ...old,
-              {
-                skillId: skillId,
-                skillsInRule: skill,
-              },
+              { skillId, klassId: classId, skillsInRule: skill, createdAt: now, updatedAt: now, deletedAt: null },
             ];
           },
         );
@@ -202,14 +187,14 @@ export function useClassSkills(rulesetId: string, classId: string) {
       snackbar.error(err, "Failed to add skill to class");
       // If the mutation fails, use the context returned from onMutate to roll back
       queryClient.setQueryData(
-        queryKeys.rulesets.classSkills(rulesetId, classId),
+        classSkillsKey,
         context?.previousClassSkills,
       );
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
       queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
+        queryKey: classSkillsKey,
       });
     },
   });
@@ -226,18 +211,18 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({
-        queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
+        queryKey: classSkillsKey,
       });
 
       // Snapshot the previous value
       const previousClassSkills = queryClient.getQueryData(
-        queryKeys.rulesets.classSkills(rulesetId, classId),
+        classSkillsKey,
       );
 
       // Optimistically remove the skill
       queryClient.setQueryData(
-        queryKeys.rulesets.classSkills(rulesetId, classId),
-        (old: ClassSkillsArray | undefined) => {
+        classSkillsKey,
+        (old) => {
           if (!old) return [];
           return old.filter((cs) => cs.skillId !== skillId);
         },
@@ -253,14 +238,14 @@ export function useClassSkills(rulesetId: string, classId: string) {
       snackbar.error(err, "Failed to remove skill from class");
       // If the mutation fails, use the context returned from onMutate to roll back
       queryClient.setQueryData(
-        queryKeys.rulesets.classSkills(rulesetId, classId),
+        classSkillsKey,
         context?.previousClassSkills,
       );
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
       queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
+        queryKey: classSkillsKey,
       });
       setDeleteDialogOpen(false);
       setSkillToRemove(null);

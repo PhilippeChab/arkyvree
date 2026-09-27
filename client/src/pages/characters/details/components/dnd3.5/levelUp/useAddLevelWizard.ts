@@ -1,27 +1,24 @@
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { useListboxQuery } from "@/client/src/hooks/index.ts";
+import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError, type ApiValidationIssue, parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { InferRequestType } from "hono/client";
 import {
-  useInfiniteQuery,
   useMutation,
   useQuery,
-  useQueryClient,
   keepPreviousData,
+  skipToken,
 } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import {
   computeMaxPointsForSkill,
 } from "@/shared/dnd3.5/skills.ts";
-import type {
-  AptitudePool,
-  BaseRules,
-  LevelUpFormData,
-  SelectedKlass,
-} from "./useLevelWizard.ts";
+import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
+import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 // ── Step definitions ─────────────────────────────────────────────────
 
@@ -47,6 +44,8 @@ export const addStepLabels = [
 
 // ── Types ────────────────────────────────────────────────────────────
 
+type FinalizeJson = InferRequestType<(typeof rpc.api.characters.levels)[":characterId"]["finalize"]["$post"]>["json"];
+
 interface UseAddLevelWizardParams {
   open: boolean;
   onClose: () => void;
@@ -63,22 +62,38 @@ export function useAddLevelWizard({
   baseRules,
 }: UseAddLevelWizardParams) {
   const snackbar = useSnackbar();
-  const queryClient = useQueryClient();
+  const base = useLevelWizardBase(characterId);
+  const {
+    getValues,
+    setValue,
+    selectedFeats,
+    activeStep,
+    setActiveStep,
+    selectedAptitude,
+    selectedPowerAptitude,
+    selectedPowerLevel,
+    setShowCancelConfirm,
+    debouncedFeatSearch,
+    debouncedPowerSearch,
+    allSelectedFeatPickString,
+    setValidationErrors,
+    resetPicks,
+    refreshAfterSave,
+    handleSaveError,
+  } = base;
   const levelUpSections = getLevelUpSections(baseRules);
 
   // Step index mapping
   const featsStep = addStepContent.indexOf("feats");
   const powersStep = addStepContent.indexOf("powers");
 
-  // ── Stepper ──────────────────────────────────────────────────────
-
-  const [activeStep, setActiveStep] = useState(0);
-
   // ── Class plan state ─────────────────────────────────────────────
 
   const slotCounter = useRef(0);
   const [slotKeys, setSlotKeys] = useState<number[]>([]);
   const [classPlan, setClassPlan] = useState<(SelectedKlass | null)[]>([]);
+  const [hpValues, setHpValues] = useState<(number | null)[]>([]);
+  const [abilityIncreases, setAbilityIncreases] = useState<Record<number, string | null>>({});
 
   const handleClassChange = (index: number, klass: SelectedKlass | null) => {
     const next = [...classPlan];
@@ -110,31 +125,25 @@ export function useAddLevelWizard({
   }, []);
 
   const handleRemoveLevel = useCallback((index: number) => {
-    setClassPlan((prev) => {
-      const wasNull = prev[index] === null;
-      const validIndex = wasNull ? -1 : prev.slice(0, index).filter((k) => k !== null).length;
-
-      if (!wasNull) {
-        setHpValues((hp) => hp.filter((_, i) => i !== validIndex));
-        setAbilityIncreases((ai) => {
-          const next: Record<number, string | null> = {};
-          for (const [k, v] of Object.entries(ai)) {
-            const idx = Number(k);
-            if (idx < validIndex) next[idx] = v;
-            else if (idx > validIndex) next[idx - 1] = v;
-          }
-          return next;
-        });
-      }
-
-      return prev.filter((_, i) => i !== index);
-    });
+    // HP and ability increases are kept per filled level, not per slot.
+    if (classPlan[index] !== null) {
+      const levelIndex = classPlan.slice(0, index).filter((k) => k !== null).length;
+      setHpValues((hp) => hp.filter((_, i) => i !== levelIndex));
+      setAbilityIncreases((ai) => {
+        const next: Record<number, string | null> = {};
+        for (const [k, v] of Object.entries(ai)) {
+          const idx = Number(k);
+          if (idx < levelIndex) next[idx] = v;
+          else if (idx > levelIndex) next[idx - 1] = v;
+        }
+        return next;
+      });
+    }
+    setClassPlan((prev) => prev.filter((_, i) => i !== index));
     setSlotKeys((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  }, [classPlan]);
 
   // ── HP state ─────────────────────────────────────────────────────
-
-  const [hpValues, setHpValues] = useState<(number | null)[]>([]);
 
   // Only non-null entries matter for downstream steps
   const validClassPlan = useMemo(
@@ -144,6 +153,7 @@ export function useAddLevelWizard({
 
   // Sync hpValues length with valid (non-null) class plan entries
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     setHpValues((prev) => {
       if (prev.length === validClassPlan.length) return prev;
       if (prev.length < validClassPlan.length) {
@@ -201,50 +211,9 @@ export function useAddLevelWizard({
     [adjustedClassPlan],
   );
 
-  // ── Ability increase state ───────────────────────────────────────
-
-  const [abilityIncreases, setAbilityIncreases] = useState<
-    Record<number, string | null>
-  >({});
-
-  // ── Form (for steps 3-6) ─────────────────────────────────────────
-
-  const { getValues, setValue, reset, watch } = useForm<LevelUpFormData>({
-    defaultValues: {
-      selectedClass: null,
-      selectedHP: null,
-      selectedAttribute: null,
-      selectedFeats: {},
-      selectedPowers: {},
-      skillPointAllocations: {},
-    },
-    mode: "onChange",
-  });
-
-  const selectedFeats = watch("selectedFeats");
-  const selectedPowers = watch("selectedPowers");
-  const skillPointAllocations = watch("skillPointAllocations");
-
-  // ── UI state ─────────────────────────────────────────────────────
-
-  const [selectedAptitude, setSelectedAptitude] = useState<string | null>(null);
-  const [selectedPowerAptitude, setSelectedPowerAptitude] = useState<
-    string | null
-  >(null);
-  const [selectedPowerLevel, setSelectedPowerLevel] = useState<number | null>(
-    null,
-  );
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [featSearch, setFeatSearch] = useState("");
-  const debouncedFeatSearch = useDebouncedValue(featSearch);
-  const [expandedFeatFamilies, setExpandedFeatFamilies] = useState<Set<string>>(
-    new Set(),
-  );
-  const [powerSearch, setPowerSearch] = useState("");
-  const debouncedPowerSearch = useDebouncedValue(powerSearch);
-  const [validationErrors, setValidationErrors] = useState<
-    ApiValidationIssue[]
-  >([]);
+  const handleAbilityIncreaseChange = useCallback((index: number, abilityId: string) => {
+    setAbilityIncreases((prev) => ({ ...prev, [index]: abilityId }));
+  }, []);
 
   // ── Derived: valid class count and class plan key ────────────────
 
@@ -253,18 +222,14 @@ export function useAddLevelWizard({
     [classPlan],
   );
 
-  const classPlanKey = useMemo(() => {
-    const entries = adjustedClassPlan
+  // In plan order: the preview's levels pair by index with the plan's HP and ability increases.
+  const classPlanKey = useMemo(
+    () => adjustedClassPlan
       .filter((k): k is SelectedKlass => k !== null)
       .map((k) => `${k.id}:${k.nextLevel}`)
-      .sort();
-    return entries.join("|");
-  }, [adjustedClassPlan]);
-
-  const prevClassPlanKey = useRef(classPlanKey);
-  useEffect(() => {
-    prevClassPlanKey.current = classPlanKey;
-  }, [classPlanKey]);
+      .join("|"),
+    [adjustedClassPlan],
+  );
 
   // ── Preview query ────────────────────────────────────────────────
 
@@ -323,7 +288,7 @@ export function useAddLevelWizard({
         const bonus = increaseCounts[attr.abilityId] ?? 0;
         if (bonus === 0) return [key, attr];
         const newTotal = attr.total + bonus;
-        return [key, { ...attr, level: attr.level + bonus, total: newTotal, modifier: Math.floor((newTotal - 10) / 2) }];
+        return [key, { ...attr, level: attr.level + bonus, total: newTotal, modifier: abilityModifier(newTotal) }];
       }),
     );
 
@@ -350,7 +315,7 @@ export function useAddLevelWizard({
     if (!intAttr) return null;
     const intIncreases = Object.values(abilityIncreases).filter((id) => id === intAttr.abilityId).length;
     if (intIncreases === 0) return null;
-    const newIntMod = Math.floor((intAttr.total + intIncreases - 10) / 2);
+    const newIntMod = abilityModifier(intAttr.total + intIncreases);
     const modDelta = newIntMod - intAttr.modifier;
     if (modDelta === 0) return null;
     return { modDelta };
@@ -409,20 +374,12 @@ export function useAddLevelWizard({
 
   // ── Pending level context for feat/power queries ─────────────────
 
+  const previewLevelDetails = previewQuery.data?.levelDetails;
   const allKlassLevelIds = useMemo(() => {
-    if (!previewQuery.data?.levelDetails) return undefined;
-    const ids = previewQuery.data.levelDetails.map(
-      (d) => d.klassLevelId,
-    );
+    if (!previewLevelDetails) return undefined;
+    const ids = previewLevelDetails.map((d) => d.klassLevelId);
     return ids.length > 0 ? ids.join(",") : undefined;
-  }, [previewQuery.data?.levelDetails]);
-
-  const allSelectedFeatPickString = useMemo(() => {
-    const pairs = Object.entries(selectedFeats).flatMap(([aptitudeId, feats]) =>
-      feats.map((f) => `${f.id}:${aptitudeId}`),
-    );
-    return pairs.length > 0 ? pairs.sort().join(",") : undefined;
-  }, [selectedFeats]);
+  }, [previewLevelDetails]);
 
   // ── Current slot level context (for feat/power queries) ──────────
 
@@ -477,12 +434,11 @@ export function useAddLevelWizard({
   }, [previewQuery.data?.levelDetails, currentFeatSlotLevelIndex, abilityIncreases]);
 
   const {
-    data: groupedFeatsData,
+    items: groupedFeats,
     isLoading: isLoadingAvailableFeats,
-    fetchNextPage: fetchNextFeatsPage,
-    hasNextPage: hasNextFeatsPage,
+    onScroll: handleFeatsScroll,
     isFetchingNextPage: isFetchingNextFeatsPage,
-  } = useInfiniteQuery({
+  } = useListboxQuery({
     queryKey: queryKeys.characters.levelUp.availableFeatsGrouped(
       characterId,
       selectedAptitude,
@@ -493,10 +449,8 @@ export function useAddLevelWizard({
       pendingKlassLevelIdsUpToSlot,
       allSelectedFeatPickString,
     ),
-    queryFn: async ({ pageParam }) => {
-      if (!selectedAptitude || !slotLevelDetail)
-        throw new Error("No aptitude or level detail available");
-      return parseResponse(rpc.api.characters.levels[":characterId"][
+    queryFn: open && activeStep === featsStep && selectedAptitude && slotLevelDetail
+      ? ({ pageParam }) => parseResponse(rpc.api.characters.levels[":characterId"][
         "available-feats"
       ]["grouped"]["$get"]({
         param: { characterId },
@@ -506,69 +460,26 @@ export function useAddLevelWizard({
           level: slotLevelDetail.level.toString(),
           limit: "20",
           page: pageParam.toString(),
-          ...(debouncedFeatSearch && { search: debouncedFeatSearch }),
-          ...(allSelectedFeatPickString && {
-            selectedFeatPicks: allSelectedFeatPickString,
-          }),
-          ...(pendingKlassLevelIdsUpToSlot && {
-            pendingLevelKlassLevelIds: pendingKlassLevelIdsUpToSlot,
-          }),
-          ...(pendingAbilityIdsUpToSlot && {
-            pendingLevelAbilityIds: pendingAbilityIdsUpToSlot,
-          }),
-          ...(allSelectedFeatPickString && {
-            pendingLevelFeatPicks: allSelectedFeatPickString,
-          }),
+          search: debouncedFeatSearch || undefined,
+          selectedFeatPicks: allSelectedFeatPickString || undefined,
+          pendingLevelKlassLevelIds: pendingKlassLevelIdsUpToSlot || undefined,
+          pendingLevelAbilityIds: pendingAbilityIdsUpToSlot || undefined,
+          pendingLevelFeatPicks: allSelectedFeatPickString || undefined,
         },
-      }));
-    },
+      }))
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled:
-      open &&
-      activeStep === featsStep &&
-      !!selectedAptitude &&
-      !!slotLevelDetail,
   });
-
-  const groupedFeats = useMemo(
-    () => groupedFeatsData?.pages.flatMap((p) => p.items) ?? [],
-    [groupedFeatsData?.pages],
-  );
-
-  const toggleFeatFamily = useCallback((family: string) => {
-    setExpandedFeatFamilies((prev) => {
-      const next = new Set(prev);
-      if (next.has(family)) {
-        next.delete(family);
-      } else {
-        next.add(family);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleFeatsScroll = useCallback(
-    (event: React.UIEvent<HTMLElement>) => {
-      const target = event.target as HTMLElement;
-      const bottom =
-        target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-      if (bottom && hasNextFeatsPage && !isFetchingNextFeatsPage) {
-        fetchNextFeatsPage();
-      }
-    },
-    [hasNextFeatsPage, isFetchingNextFeatsPage, fetchNextFeatsPage],
-  );
 
   // ── Available powers query ───────────────────────────────────────
 
   const {
-    data: availablePowersData,
+    items: availablePowers,
     isLoading: isLoadingAvailablePowers,
-    fetchNextPage: fetchNextPowersPage,
-    hasNextPage: hasNextPowersPage,
+    onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
-  } = useInfiniteQuery({
+  } = useListboxQuery({
     queryKey: queryKeys.characters.levelUp.availablePowers(
       characterId,
       selectedPowerAptitude,
@@ -582,10 +493,8 @@ export function useAddLevelWizard({
       // so selectedFeatPicks and pendingLevelFeatPicks are the same set.
       allSelectedFeatPickString,
     ),
-    queryFn: async ({ pageParam }) => {
-      if (!selectedPowerAptitude || !firstClass)
-        throw new Error("No aptitude or class selected");
-      return parseResponse(rpc.api.characters.levels[":characterId"][
+    queryFn: open && activeStep === powersStep && selectedPowerAptitude && firstClass
+      ? ({ pageParam }) => parseResponse(rpc.api.characters.levels[":characterId"][
         "available-powers"
       ]["$get"]({
         param: { characterId },
@@ -593,108 +502,23 @@ export function useAddLevelWizard({
           aptitudeId: selectedPowerAptitude,
           klassId: firstClass.id,
           level: lastLevel.toString(),
-          ...(selectedPowerLevel != null && {
-            powerLevel: selectedPowerLevel.toString(),
-          }),
+          powerLevel: selectedPowerLevel?.toString(),
           limit: "20",
           page: pageParam.toString(),
-          ...(debouncedPowerSearch && { search: debouncedPowerSearch }),
-          ...(allSelectedFeatPickString && {
-            selectedFeatPicks: allSelectedFeatPickString,
-          }),
-          ...(allKlassLevelIds && {
-            pendingLevelKlassLevelIds: allKlassLevelIds,
-          }),
-          ...(allSelectedFeatPickString && {
-            pendingLevelFeatPicks: allSelectedFeatPickString,
-          }),
+          search: debouncedPowerSearch || undefined,
+          selectedFeatPicks: allSelectedFeatPickString || undefined,
+          pendingLevelKlassLevelIds: allKlassLevelIds || undefined,
+          pendingLevelFeatPicks: allSelectedFeatPickString || undefined,
         },
-      }));
-    },
+      }))
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled:
-      open &&
-      activeStep === powersStep &&
-      !!selectedPowerAptitude &&
-      !!firstClass,
   });
-
-  const availablePowers = useMemo(
-    () => availablePowersData?.pages.flatMap((p) => p.items) ?? [],
-    [availablePowersData?.pages],
-  );
-
-  const handlePowersScroll = useCallback(
-    (event: React.UIEvent<HTMLElement>) => {
-      const target = event.target as HTMLElement;
-      const bottom =
-        target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-      if (bottom && hasNextPowersPage && !isFetchingNextPowersPage) {
-        fetchNextPowersPage();
-      }
-    },
-    [hasNextPowersPage, isFetchingNextPowersPage, fetchNextPowersPage],
-  );
 
   // ── Computed: adjusted feat pools ────────────────────────────────
 
-  const adjustedFeatPools = useMemo(() => {
-    if (!featData?.aptitudePools) return {};
-    const pools = { ...featData.aptitudePools } as Record<
-      string,
-      AptitudePool
-    >;
-
-    const adjustments = new Map<string, number>();
-    for (const feats of Object.values(selectedFeats)) {
-      for (const feat of feats) {
-        for (const mod of feat.aptitudeModifiers ?? []) {
-          if (mod.operator === "add") {
-            adjustments.set(
-              mod.aptitudeId,
-              (adjustments.get(mod.aptitudeId) ?? 0) + mod.value,
-            );
-          }
-        }
-      }
-    }
-
-    for (const [aptitudeId, delta] of adjustments) {
-      if (pools[aptitudeId]) {
-        pools[aptitudeId] = {
-          ...pools[aptitudeId],
-          allowed: pools[aptitudeId].allowed + delta,
-          available: pools[aptitudeId].available + delta,
-        };
-      }
-    }
-
-    return pools;
-  }, [featData?.aptitudePools, selectedFeats]);
-
-  // Trim feat selections when pool shrinks
-  useEffect(() => {
-    let changed = false;
-    const currentFeats = getValues("selectedFeats");
-    const updated = { ...currentFeats };
-    for (const [poolId, feats] of Object.entries(updated)) {
-      const pool = adjustedFeatPools[poolId];
-      const max = pool ? Math.max(0, pool.available) : 0;
-      if (feats.length > max) {
-        updated[poolId] = feats.slice(0, max);
-        changed = true;
-      }
-    }
-    if (changed) setValue("selectedFeats", updated);
-    if (
-      selectedAptitude &&
-      adjustedFeatPools[selectedAptitude]?.available !== undefined &&
-      adjustedFeatPools[selectedAptitude].available <= 0
-    ) {
-      setSelectedAptitude(null);
-    }
-  }, [adjustedFeatPools, getValues, setValue, selectedAptitude, setSelectedAptitude]);
+  const adjustedFeatPools = useAdjustedFeatPools(featData?.aptitudePools, base);
 
   // Trim power selections when pools shrink
   useEffect(() => {
@@ -769,127 +593,28 @@ export function useAddLevelWizard({
     if (changed) setValue("skillPointAllocations", updated);
   }, [skillData, perLevelClassSkillIds, perLevelSkillPoints, getValues, setValue]);
 
-  // ── Computed: power pool helpers ─────────────────────────────────
-
-  // ── Handlers ─────────────────────────────────────────────────────
-
-  const handleDeleteFeat = useCallback(
-    (featId: string, aptitudeId: string) => {
-      setValue("selectedFeats", {
-        ...selectedFeats,
-        [aptitudeId]: (selectedFeats[aptitudeId] || []).filter(
-          (f) => f.id !== featId,
-        ),
-      });
-    },
-    [selectedFeats, setValue],
-  );
-
-  const handleDeletePower = useCallback(
-    (powerId: string, aptitudeId: string) => {
-      setValue("selectedPowers", {
-        ...selectedPowers,
-        [aptitudeId]: (selectedPowers[aptitudeId] || []).filter(
-          (p) => p.id !== powerId,
-        ),
-      });
-    },
-    [selectedPowers, setValue],
-  );
-
   // ── Finalize mutation ────────────────────────────────────────────
 
   const finalizeMutation = useMutation({
-    mutationFn: async ({
-      levels,
-      skills,
-      feats,
-      powers,
-      force = false,
-    }: {
-      levels: Array<{ klassId: string; level: number; hp: number; abilityId: string | null }>;
-      skills: Record<string, number>;
-      feats: Record<string, string[]>;
-      powers: Record<string, string[]>;
-      force?: boolean;
-    }) => {
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "finalize"
-      ]["$post"]({
-        param: { characterId },
-        json: { levels, skills, feats, powers, force },
-      }));
-    },
+    mutationFn: (json: FinalizeJson) =>
+      parseResponse(rpc.api.characters.levels[":characterId"].finalize.$post({ param: { characterId }, json })),
     onSuccess: async () => {
-      queryClient.removeQueries({
-        queryKey: queryKeys.characters.levelUp.all(characterId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.detail(characterId),
-      });
-      snackbar.success(`Added ${classPlan.filter((k) => k !== null).length} levels`);
+      await refreshAfterSave();
+      snackbar.success(`Added ${formatCount(validClassCount, "level")}`);
       resetWizard();
       onClose();
     },
-    onError: (error) => {
-      if (
-        error instanceof ApiError &&
-        error.issues &&
-        error.issues.length > 0
-      ) {
-        setValidationErrors(error.issues);
-      } else {
-        snackbar.error(error, "Failed to finalize level up");
-      }
-    },
+    onError: handleSaveError,
   });
 
   // ── Navigation ───────────────────────────────────────────────────
 
-  const handleNext = useCallback(() => {
-    if (activeStep === addStepContent.length - 1) {
-      // Review step — submit pool-level data; backend distributes to per-level payloads
-      const preview = previewQuery.data;
-      if (!preview) return;
+  const isLastStep = activeStep === addStepContent.length - 1;
 
-      const selectedFeats = getValues("selectedFeats");
-      const selectedPowers = getValues("selectedPowers");
-
-      finalizeMutation.mutate({
-        levels: preview.levelDetails.map((d, i) => ({
-          klassId: d.klassId,
-          level: d.level,
-          hp: hpValues[i] ?? 1,
-          abilityId: abilityIncreases[i] ?? null,
-        })),
-        skills: getValues("skillPointAllocations"),
-        feats: Object.fromEntries(
-          Object.entries(selectedFeats).map(([aptId, feats]) => [aptId, feats.map((f) => f.id)]),
-        ),
-        powers: Object.fromEntries(
-          Object.entries(selectedPowers).map(([aptId, powers]) => [aptId, powers.map((p) => p.id)]),
-        ),
-        force: false,
-      });
-    } else {
-      setActiveStep((prev) => prev + 1);
-    }
-  }, [
-    activeStep,
-    previewQuery.data,
-    hpValues,
-    abilityIncreases,
-    getValues,
-    finalizeMutation,
-  ]);
-
-  const handleForceSubmit = useCallback(() => {
-    setValidationErrors([]);
+  // Pool-level picks; the backend distributes them to the levels.
+  const finalize = useCallback((force: boolean) => {
     const preview = previewQuery.data;
     if (!preview) return;
-
-    const selectedFeats = getValues("selectedFeats");
-    const selectedPowers = getValues("selectedPowers");
 
     finalizeMutation.mutate({
       levels: preview.levelDetails.map((d, i) => ({
@@ -899,13 +624,9 @@ export function useAddLevelWizard({
         abilityId: abilityIncreases[i] ?? null,
       })),
       skills: getValues("skillPointAllocations"),
-      feats: Object.fromEntries(
-        Object.entries(selectedFeats).map(([aptId, feats]) => [aptId, feats.map((f) => f.id)]),
-      ),
-      powers: Object.fromEntries(
-        Object.entries(selectedPowers).map(([aptId, powers]) => [aptId, powers.map((p) => p.id)]),
-      ),
-      force: true,
+      feats: pickIds(getValues("selectedFeats")),
+      powers: pickIds(getValues("selectedPowers")),
+      force,
     });
   }, [
     previewQuery.data,
@@ -915,28 +636,27 @@ export function useAddLevelWizard({
     finalizeMutation,
   ]);
 
-  const handleBack = useCallback(() => {
+  const handleNext = useCallback(() => {
+    if (isLastStep) {
+      finalize(false);
+    } else {
+      setActiveStep((prev) => prev + 1);
+    }
+  }, [isLastStep, finalize, setActiveStep]);
+
+  const handleForceSubmit = useCallback(() => {
     setValidationErrors([]);
-    setActiveStep((prev) => prev - 1);
-  }, []);
+    finalize(true);
+  }, [finalize, setValidationErrors]);
 
   const resetWizard = useCallback(() => {
-    setShowCancelConfirm(false);
-    reset();
+    resetPicks();
     slotCounter.current = 0;
     setSlotKeys([]);
     setClassPlan([]);
     setHpValues([]);
     setAbilityIncreases({});
-    setSelectedAptitude(null);
-    setSelectedPowerAptitude(null);
-    setSelectedPowerLevel(null);
-    setFeatSearch("");
-    setExpandedFeatFamilies(new Set());
-    setPowerSearch("");
-    setValidationErrors([]);
-    setActiveStep(0);
-  }, [reset]);
+  }, [resetPicks]);
 
   const hasProgress = activeStep > 0 || classPlan.some((k) => k !== null);
 
@@ -946,7 +666,7 @@ export function useAddLevelWizard({
     } else {
       onClose();
     }
-  }, [hasProgress, onClose]);
+  }, [hasProgress, onClose, setShowCancelConfirm]);
 
   const handleConfirmCancel = useCallback(() => {
     resetWizard();
@@ -955,9 +675,8 @@ export function useAddLevelWizard({
 
   // ── isNextDisabled logic ─────────────────────────────────────────
 
+  // The dialog also disables it while the save runs.
   const isNextDisabled = useMemo(() => {
-    if (finalizeMutation.isPending) return true;
-
     const content = addStepContent[activeStep];
     switch (content) {
       case "class-plan":
@@ -968,25 +687,14 @@ export function useAddLevelWizard({
         return false;
     }
   }, [
-    finalizeMutation.isPending,
     activeStep,
     validClassCount,
     hpValues,
   ]);
 
-  // ── Next button label ────────────────────────────────────────────
-
-  const nextButtonLabel = useMemo(() => {
-    if (activeStep === addStepContent.length - 1) return "Finish All";
-    return "Next";
-  }, [activeStep]);
-
-  // ── Return ───────────────────────────────────────────────────────
-
   return {
-    // Stepper
-    activeStep,
-    setActiveStep,
+    ...base,
+    isLastStep,
 
     // Class plan (step 1)
     classPlan: adjustedClassPlan,
@@ -1010,69 +718,43 @@ export function useAddLevelWizard({
     attributesError,
     abilityIncreaseLevels,
     abilityIncreases,
-    setAbilityIncreases,
+    handleAbilityIncreaseChange,
 
     // Skills (step 4)
     skillData,
     isLoadingSkills,
     skillsError,
-    skillPointAllocations,
     perLevelClassSkillIds,
     perLevelSkillPoints,
-    setValue,
-    getValues,
 
     // Feats (step 5)
     featData,
     isLoadingFeats,
     featsError,
     adjustedFeatPools,
-    selectedFeats,
-    selectedAptitude,
-    setSelectedAptitude,
     groupedFeats,
     isLoadingAvailableFeats,
     isFetchingNextFeatsPage,
-    expandedFeatFamilies,
-    toggleFeatFamily,
-    allSelectedFeatPickString,
     allKlassLevelIds,
-    featSearch,
-    setFeatSearch,
+    firstClass,
+    lastLevel,
     handleFeatsScroll,
-    handleDeleteFeat,
 
     // Powers (step 6)
     powerData,
     isLoadingPowers,
     powersError,
-    selectedPowers,
-    selectedPowerAptitude,
-    selectedPowerLevel,
-    setSelectedPowerAptitude,
-    setSelectedPowerLevel,
     availablePowers,
     isLoadingAvailablePowers,
     isFetchingNextPowersPage,
-    powerSearch,
-    setPowerSearch,
     handlePowersScroll,
-    handleDeletePower,
 
     // Navigation
     handleNext,
-    handleBack,
     handleCancel,
     handleConfirmCancel,
     handleForceSubmit,
     isNextDisabled,
-    nextButtonLabel,
-
-    // UI state
-    showCancelConfirm,
-    setShowCancelConfirm,
-    validationErrors,
-    setValidationErrors,
 
     // Mutation
     finalizeMutation,
@@ -1086,5 +768,3 @@ export function useAddLevelWizard({
     levelDetails: previewQuery.data?.levelDetails ?? [],
   };
 }
-
-export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;

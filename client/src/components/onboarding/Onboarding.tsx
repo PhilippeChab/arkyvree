@@ -1,3 +1,4 @@
+import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import {
   DURATION,
   EASING,
@@ -95,10 +96,8 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   const theme = useTheme();
   const darkMode = theme.palette.mode === "dark";
 
-  const gold = darkMode ? "#f5c542" : "#bf9000";
-  const goldFaint = darkMode
-    ? "rgba(245, 197, 66, 0.12)"
-    : "rgba(191, 144, 0, 0.10)";
+  const gold = brandGold(darkMode);
+  const goldFaint = brandGoldTint(darkMode, darkMode ? 0.12 : 0.1);
 
   const step = steps[activeStep];
   const isLastStep = activeStep === steps.length - 1;
@@ -185,13 +184,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
       >
         {/* Icon circle */}
         <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 3,
-          }}
+          sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", mb: 3 }}
         >
           <Box
             sx={{
@@ -224,7 +217,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 sx={{
                   width: effectiveMode === "dialog" ? 48 : 34,
                   height: effectiveMode === "dialog" ? 48 : 34,
-                  filter: "drop-shadow(0 2px 8px rgba(191, 144, 0, 0.35))",
+                  filter: `drop-shadow(0 2px 8px ${brandGoldTint(false, 0.35)})`,
                 }}
               />
             ) : step.icon ? (
@@ -283,7 +276,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         </Typography>
 
         {step.tooltip && (
-          <Tooltip title={step.tooltip} arrow placement="top">
+          <Tooltip describeChild title={step.tooltip} arrow placement="top">
             <Box
               sx={{
                 display: "inline-flex",

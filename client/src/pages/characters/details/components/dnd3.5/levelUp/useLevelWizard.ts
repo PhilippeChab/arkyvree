@@ -1,133 +1,16 @@
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
+import { useListboxQuery } from "@/client/src/hooks/index.ts";
+import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError, type ApiValidationIssue, parseResponse, type RPC, rpc } from "@/client/src/services/rpc.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
 import {
-  useInfiniteQuery,
+  skipToken,
   useMutation,
-
   useQuery,
-  useQueryClient,
 } from "@tanstack/react-query";
-import { type InferResponseType } from "hono/client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
-
-// ── Shared types ──────────────────────────────────────────────────────
-
-type AvailableKlassesResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["available-classes"]["$get"]
->;
-type AvailableKlass = Exclude<
-  AvailableKlassesResponse,
-  { error: string; cause: string; message: string }
->["items"][number];
-
-type LeveledUpAttributesResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["attribute-slots"]["$get"]
->;
-type LeveledUpAttribute = Exclude<
-  LeveledUpAttributesResponse,
-  { error: string; cause: string; message: string }
->["attributes"];
-
-type LeveledUpFeatsResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["feat-slots"]["$get"]
->;
-
-type AptitudePool = LeveledUpFeatsResponse extends {
-  aptitudePools: Record<string, infer T>;
-}
-  ? T
-  : {
-      id: string;
-      name: string;
-      allowed: number;
-      spent: number;
-      available: number;
-      shared: boolean;
-    };
-
-type AvailableFeatsResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["available-feats"]["$get"]
->;
-type AvailableFeatsPaginated = Exclude<
-  AvailableFeatsResponse,
-  { error: string; cause: string; message: string }
->;
-type AvailableFeat = AvailableFeatsPaginated["items"][number];
-
-type LeveledUpPowersResponse = InferResponseType<
-  RPC["api"]["characters"]["levels"][":characterId"]["power-slots"]["$get"]
->;
-
-type PowerAptitudePool = LeveledUpPowersResponse extends {
-  aptitudePools: Record<string, infer T>;
-}
-  ? T
-  : {
-      id: string;
-      name: string;
-      allowed: number;
-      spent: number;
-      available: number;
-      leveled?: boolean;
-      levels?: Record<
-        string,
-        { allowed: number; spent: number; available: number }
-      >;
-    };
-
-type CharacterResponse = InferResponseType<
-  RPC["api"]["characters"][":id"]["$get"],
-  200
->;
-type BaseRules = NonNullable<CharacterResponse["baseRules"]>;
-
-interface AptitudeModifier {
-  aptitudeId: string;
-  value: number;
-  operator: string;
-}
-
-interface SelectedFeat {
-  id: string;
-  name: string;
-  description?: string;
-  aptitudeModifiers?: AptitudeModifier[];
-}
-
-type SelectedKlass = Pick<
-  AvailableKlass,
-  "id" | "name" | "nextLevel" | "maxLevel" | "hd" | "eligible"
->;
-
-interface LevelUpFormData {
-  selectedClass: SelectedKlass | null;
-  selectedHP: number | null;
-  selectedAttribute: string | null;
-  selectedFeats: Record<string, SelectedFeat[]>;
-  selectedPowers: Record<
-    string,
-    Array<{ id: string; name: string; description?: string; powerLevel?: number }>
-  >;
-  skillPointAllocations: Record<string, number>;
-}
-
-export type {
-  AvailableKlass,
-  AvailableFeat,
-  AptitudePool,
-  AptitudeModifier,
-  SelectedFeat,
-  SelectedKlass,
-  LevelUpFormData,
-  LeveledUpAttribute,
-  PowerAptitudePool,
-  BaseRules,
-};
+import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 // ── Step content types ────────────────────────────────────────────────
 
@@ -157,7 +40,6 @@ interface UseLevelWizardParams {
   characterId: string;
   baseRules: BaseRules;
   editingLevelId: string;
-  stepContent: readonly string[];
   onReset?: () => void;
 }
 
@@ -167,42 +49,35 @@ export function useLevelWizard({
   characterId,
   baseRules,
   editingLevelId,
-  stepContent,
   onReset,
 }: UseLevelWizardParams) {
-  const isMobile = useIsMobile();
-  const snackbar = useSnackbar();
-  const queryClient = useQueryClient();
+  const base = useLevelWizardBase(characterId);
+  const {
+    handleSubmit,
+    getValues,
+    setValue,
+    watch,
+    activeStep,
+    setActiveStep,
+    selectedAptitude,
+    selectedPowerAptitude,
+    selectedPowerLevel,
+    debouncedFeatSearch,
+    debouncedPowerSearch,
+    allSelectedFeatPickString,
+    resetPicks,
+    refreshAfterSave,
+    handleSaveError,
+    setValidationErrors,
+    setShowCancelConfirm,
+  } = base;
   const levelUpSections = getLevelUpSections(baseRules);
 
   // Step index mapping
-  const attributeStep = stepContent.indexOf("attributes");
-  const skillsStep = stepContent.indexOf("skills");
-  const featsStep = stepContent.indexOf("feats");
-  const powersStep = stepContent.indexOf("powers");
-
-  // ── Stepper ───────────────────────────────────────────────────────
-  const [activeStep, setActiveStep] = useState(0);
-
-  // ── UI state ──────────────────────────────────────────────────────
-  const [selectedAptitude, setSelectedAptitude] = useState<string | null>(null);
-  const [selectedPowerAptitude, setSelectedPowerAptitude] = useState<
-    string | null
-  >(null);
-  const [selectedPowerLevel, setSelectedPowerLevel] = useState<number | null>(
-    null,
-  );
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [featSearch, setFeatSearch] = useState("");
-  const debouncedFeatSearch = useDebouncedValue(featSearch);
-  const [expandedFeatFamilies, setExpandedFeatFamilies] = useState<
-    Set<string>
-  >(new Set());
-  const [powerSearch, setPowerSearch] = useState("");
-  const debouncedPowerSearch = useDebouncedValue(powerSearch);
-  const [validationErrors, setValidationErrors] = useState<
-    ApiValidationIssue[]
-  >([]);
+  const attributeStep = editStepContent.indexOf("attributes");
+  const skillsStep = editStepContent.indexOf("skills");
+  const featsStep = editStepContent.indexOf("feats");
+  const powersStep = editStepContent.indexOf("powers");
 
   // ── HP roll animation ─────────────────────────────────────────────
   const [hpRolling, setHpRolling] = useState(false);
@@ -224,56 +99,30 @@ export function useLevelWizard({
 
   useEffect(() => cleanupHpRoll, [cleanupHpRoll]);
 
-  // ── Form ──────────────────────────────────────────────────────────
-  const { handleSubmit, getValues, setValue, reset, watch } =
-    useForm<LevelUpFormData>({
-      defaultValues: {
-        selectedClass: null,
-        selectedHP: null,
-        selectedAttribute: null,
-        selectedFeats: {},
-        selectedPowers: {},
-        skillPointAllocations: {},
-      },
-      mode: "onChange",
-    });
-
   const selectedClass = watch("selectedClass");
   const selectedHP = watch("selectedHP");
   const selectedAttribute = watch("selectedAttribute");
-  const selectedFeats = watch("selectedFeats");
-  const selectedPowers = watch("selectedPowers");
-  const skillPointAllocations = watch("skillPointAllocations");
-
-  const allSelectedFeatPickString = useMemo(() => {
-    const pairs = Object.entries(selectedFeats).flatMap(([aptitudeId, feats]) =>
-      feats.map((f) => `${f.id}:${aptitudeId}`),
-    );
-    return pairs.length > 0 ? pairs.sort().join(",") : undefined;
-  }, [selectedFeats]);
 
   // ── Queries ───────────────────────────────────────────────────────
+
+  const levels = rpc.api.characters.levels[":characterId"];
+  const param = { characterId };
+  // The edited level's class and level, which the slot and picker endpoints take.
+  const levelQuery = selectedClass && {
+    klassId: selectedClass.id,
+    level: selectedClass.nextLevel.toString(),
+    characterLevelId: editingLevelId,
+  };
 
   const {
     data: attributeData,
     isLoading: isLoadingAttributes,
     error: attributesError,
   } = useQuery({
-    queryKey: queryKeys.characters.levelUp.attributes(
-      characterId,
-      editingLevelId,
-    ),
-    queryFn: async () => {
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "attribute-slots"
-      ]["$get"]({
-        param: { characterId },
-        query: {
-          characterLevelId: editingLevelId,
-        },
-      }));
-    },
-    enabled: open && activeStep === attributeStep,
+    queryKey: queryKeys.characters.levelUp.attributes(characterId, editingLevelId),
+    queryFn: open && activeStep === attributeStep
+      ? () => parseResponse(levels["attribute-slots"].$get({ param, query: { characterLevelId: editingLevelId } }))
+      : skipToken,
   });
 
   const {
@@ -281,27 +130,13 @@ export function useLevelWizard({
     isLoading: isLoadingSkills,
     error: skillsError,
   } = useQuery({
-    queryKey: queryKeys.characters.levelUp.skills(
-      characterId,
-      selectedClass?.id,
-      editingLevelId,
-      selectedAttribute,
-    ),
-    queryFn: async () => {
-      if (!selectedClass?.id) return null;
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "skill-slots"
-      ]["$get"]({
-        param: { characterId },
-        query: {
-          klassId: selectedClass.id,
-          level: selectedClass.nextLevel.toString(),
-          characterLevelId: editingLevelId,
-          ...(selectedAttribute && { abilityId: selectedAttribute }),
-        },
-      }));
-    },
-    enabled: open && activeStep === skillsStep && !!selectedClass?.id,
+    queryKey: queryKeys.characters.levelUp.skills(characterId, selectedClass?.id, editingLevelId, selectedAttribute),
+    queryFn: open && activeStep === skillsStep && levelQuery
+      ? () => parseResponse(levels["skill-slots"].$get({
+        param,
+        query: { ...levelQuery, abilityId: selectedAttribute || undefined },
+      }))
+      : skipToken,
   });
 
   const {
@@ -309,35 +144,19 @@ export function useLevelWizard({
     isLoading: isLoadingFeats,
     error: featsError,
   } = useQuery({
-    queryKey: queryKeys.characters.levelUp.feats(
-      characterId,
-      selectedClass?.id,
-      editingLevelId,
-    ),
-    queryFn: async () => {
-      if (!selectedClass?.id) return null;
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "feat-slots"
-      ]["$get"]({
-        param: { characterId },
-        query: {
-          klassId: selectedClass.id,
-          level: selectedClass.nextLevel.toString(),
-          characterLevelId: editingLevelId,
-        },
-      }));
-    },
-    enabled: open && !!selectedClass?.id,
+    queryKey: queryKeys.characters.levelUp.feats(characterId, selectedClass?.id, editingLevelId),
+    queryFn: open && levelQuery
+      ? () => parseResponse(levels["feat-slots"].$get({ param, query: levelQuery }))
+      : skipToken,
   });
 
   // Grouped available feats
   const {
-    data: groupedFeatsData,
+    items: groupedFeats,
     isLoading: isLoadingAvailableFeats,
-    fetchNextPage: fetchNextFeatsPage,
-    hasNextPage: hasNextFeatsPage,
+    onScroll: handleFeatsScroll,
     isFetchingNextPage: isFetchingNextFeatsPage,
-  } = useInfiniteQuery({
+  } = useListboxQuery({
     queryKey: queryKeys.characters.levelUp.availableFeatsGrouped(
       characterId,
       selectedAptitude,
@@ -346,62 +165,22 @@ export function useLevelWizard({
       editingLevelId,
       allSelectedFeatPickString,
     ),
-    queryFn: async ({ pageParam }) => {
-      if (!selectedAptitude || !selectedClass)
-        throw new Error("No aptitude or class selected");
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "available-feats"
-      ]["grouped"]["$get"]({
-        param: { characterId },
+    queryFn: open && activeStep === featsStep && selectedAptitude && levelQuery
+      ? ({ pageParam }) => parseResponse(levels["available-feats"].grouped.$get({
+        param,
         query: {
+          ...levelQuery,
           aptitudeId: selectedAptitude,
-          klassId: selectedClass.id,
-          level: selectedClass.nextLevel.toString(),
           limit: "20",
           page: pageParam.toString(),
-          ...(debouncedFeatSearch && { search: debouncedFeatSearch }),
-          characterLevelId: editingLevelId,
-          ...(allSelectedFeatPickString && { selectedFeatPicks: allSelectedFeatPickString }),
+          search: debouncedFeatSearch || undefined,
+          selectedFeatPicks: allSelectedFeatPickString || undefined,
         },
-      }));
-    },
+      }))
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled:
-      open &&
-      activeStep === featsStep &&
-      !!selectedAptitude &&
-      !!selectedClass,
   });
-
-  const groupedFeats = useMemo(
-    () => groupedFeatsData?.pages.flatMap((p) => p.items) ?? [],
-    [groupedFeatsData?.pages],
-  );
-
-  const toggleFeatFamily = (family: string) => {
-    setExpandedFeatFamilies((prev) => {
-      const next = new Set(prev);
-      if (next.has(family)) {
-        next.delete(family);
-      } else {
-        next.add(family);
-      }
-      return next;
-    });
-  };
-
-  const handleFeatsScroll = useCallback(
-    (event: React.UIEvent<HTMLElement>) => {
-      const target = event.target as HTMLElement;
-      const bottom =
-        target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-      if (bottom && hasNextFeatsPage && !isFetchingNextFeatsPage) {
-        fetchNextFeatsPage();
-      }
-    },
-    [hasNextFeatsPage, isFetchingNextFeatsPage, fetchNextFeatsPage],
-  );
 
   // Powers queries
   const {
@@ -409,34 +188,18 @@ export function useLevelWizard({
     isLoading: isLoadingPowers,
     error: powersError,
   } = useQuery({
-    queryKey: queryKeys.characters.levelUp.powers(
-      characterId,
-      selectedClass?.id,
-      editingLevelId,
-    ),
-    queryFn: async () => {
-      if (!selectedClass?.id) return null;
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "power-slots"
-      ]["$get"]({
-        param: { characterId },
-        query: {
-          klassId: selectedClass.id,
-          level: selectedClass.nextLevel.toString(),
-          characterLevelId: editingLevelId,
-        },
-      }));
-    },
-    enabled: open && !!selectedClass?.id,
+    queryKey: queryKeys.characters.levelUp.powers(characterId, selectedClass?.id, editingLevelId),
+    queryFn: open && levelQuery
+      ? () => parseResponse(levels["power-slots"].$get({ param, query: levelQuery }))
+      : skipToken,
   });
 
   const {
-    data: availablePowersData,
+    items: availablePowers,
     isLoading: isLoadingAvailablePowers,
-    fetchNextPage: fetchNextPowersPage,
-    hasNextPage: hasNextPowersPage,
+    onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
-  } = useInfiniteQuery({
+  } = useListboxQuery({
     queryKey: queryKeys.characters.levelUp.availablePowers(
       characterId,
       selectedPowerAptitude,
@@ -446,132 +209,36 @@ export function useLevelWizard({
       editingLevelId,
       allSelectedFeatPickString,
     ),
-    queryFn: async ({ pageParam }) => {
-      if (!selectedPowerAptitude || !selectedClass)
-        throw new Error("No aptitude or class selected");
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "available-powers"
-      ]["$get"]({
-        param: { characterId },
+    queryFn: open && activeStep === powersStep && selectedPowerAptitude && levelQuery
+      ? ({ pageParam }) => parseResponse(levels["available-powers"].$get({
+        param,
         query: {
+          ...levelQuery,
           aptitudeId: selectedPowerAptitude,
-          klassId: selectedClass.id,
-          level: selectedClass.nextLevel.toString(),
-          ...(selectedPowerLevel != null && {
-            powerLevel: selectedPowerLevel.toString(),
-          }),
+          powerLevel: selectedPowerLevel?.toString(),
           limit: "20",
           page: pageParam.toString(),
-          ...(debouncedPowerSearch && { search: debouncedPowerSearch }),
-          characterLevelId: editingLevelId,
-          ...(allSelectedFeatPickString && { selectedFeatPicks: allSelectedFeatPickString }),
+          search: debouncedPowerSearch || undefined,
+          selectedFeatPicks: allSelectedFeatPickString || undefined,
         },
-      }));
-    },
+      }))
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled:
-      open &&
-      activeStep === powersStep &&
-      !!selectedPowerAptitude &&
-      !!selectedClass,
   });
 
-  const availablePowers = useMemo(
-    () => availablePowersData?.pages.flatMap((p) => p.items) ?? [],
-    [availablePowersData?.pages],
-  );
-
-  const handlePowersScroll = useCallback(
-    (event: React.UIEvent<HTMLElement>) => {
-      const target = event.target as HTMLElement;
-      const bottom =
-        target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-      if (bottom && hasNextPowersPage && !isFetchingNextPowersPage) {
-        fetchNextPowersPage();
-      }
-    },
-    [hasNextPowersPage, isFetchingNextPowersPage, fetchNextPowersPage],
-  );
-
-  // ── Computed: adjusted feat pools ─────────────────────────────────
-
-  const adjustedFeatPools = useMemo(() => {
-    if (!featData?.aptitudePools) return {};
-    const pools = { ...featData.aptitudePools } as Record<
-      string,
-      AptitudePool
-    >;
-
-    const adjustments = new Map<string, number>();
-    for (const feats of Object.values(selectedFeats)) {
-      for (const feat of feats) {
-        for (const mod of feat.aptitudeModifiers ?? []) {
-          if (mod.operator === "add") {
-            adjustments.set(
-              mod.aptitudeId,
-              (adjustments.get(mod.aptitudeId) ?? 0) + mod.value,
-            );
-          }
-        }
-      }
-    }
-
-    for (const [aptitudeId, delta] of adjustments) {
-      if (pools[aptitudeId]) {
-        pools[aptitudeId] = {
-          ...pools[aptitudeId],
-          allowed: pools[aptitudeId].allowed + delta,
-          available: pools[aptitudeId].available + delta,
-        };
-      }
-    }
-
-    return pools;
-  }, [featData?.aptitudePools, selectedFeats]);
-
-  // Trim feat selections when pool shrinks
-  useEffect(() => {
-    let changed = false;
-    const currentFeats = getValues("selectedFeats");
-    const updated = { ...currentFeats };
-    for (const [poolId, feats] of Object.entries(updated)) {
-      const pool = adjustedFeatPools[poolId];
-      const max = pool ? Math.max(0, pool.available) : 0;
-      if (feats.length > max) {
-        updated[poolId] = feats.slice(0, max);
-        changed = true;
-      }
-    }
-    if (changed) setValue("selectedFeats", updated);
-    if (
-      selectedAptitude &&
-      adjustedFeatPools[selectedAptitude]?.available !== undefined &&
-      adjustedFeatPools[selectedAptitude].available <= 0
-    ) {
-      setSelectedAptitude(null);
-    }
-  }, [adjustedFeatPools, getValues, setValue, selectedAptitude, setSelectedAptitude]);
+  const adjustedFeatPools = useAdjustedFeatPools(featData?.aptitudePools, base);
 
   // ── Mutation ──────────────────────────────────────────────────────
+
+  const resetWizard = useCallback(() => {
+    onReset?.();
+    resetPicks();
+  }, [onReset, resetPicks]);
 
   const finalizeMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: LevelUpFormData; force?: boolean }) => {
       if (!data.selectedHP) throw new Error("HP not selected");
-
-      const featsPayload = Object.fromEntries(
-        Object.entries(data.selectedFeats).map(([k, v]) => [
-          k,
-          v.map((f) => f.id),
-        ]),
-      );
-      const powersPayload = Object.fromEntries(
-        Object.entries(data.selectedPowers).map(([k, v]) => [
-          k,
-          v.map((p) => p.id),
-        ]),
-      );
-
       return parseResponse(rpc.api.characters.levels[":characterId"][
         ":characterLevelId"
       ]["$put"]({
@@ -580,102 +247,45 @@ export function useLevelWizard({
           hp: data.selectedHP,
           abilityId: data.selectedAttribute,
           skills: data.skillPointAllocations,
-          feats: featsPayload,
-          powers: powersPayload,
+          feats: pickIds(data.selectedFeats),
+          powers: pickIds(data.selectedPowers),
           force,
         },
       }));
     },
     onSuccess: async () => {
-      queryClient.removeQueries({
-        queryKey: queryKeys.characters.levelUp.all(characterId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.detail(characterId),
-      });
-      onReset?.();
+      await refreshAfterSave();
       resetWizard();
       onClose();
     },
-    onError: (error) => {
-      if (
-        error instanceof ApiError &&
-        error.issues &&
-        error.issues.length > 0
-      ) {
-        setValidationErrors(error.issues);
-      } else {
-        snackbar.error(error, "Failed to finalize level up");
-      }
-    },
+    onError: handleSaveError,
   });
 
   // ── Handlers ──────────────────────────────────────────────────────
 
-  const handleDeleteFeat = useCallback(
-    (featId: string, aptitudeId: string) => {
-      setValue("selectedFeats", {
-        ...selectedFeats,
-        [aptitudeId]: (selectedFeats[aptitudeId] || []).filter(
-          (f) => f.id !== featId,
-        ),
-      });
-    },
-    [selectedFeats, setValue],
-  );
-
-  const handleDeletePower = useCallback(
-    (powerId: string, aptitudeId: string) => {
-      setValue("selectedPowers", {
-        ...selectedPowers,
-        [aptitudeId]: (selectedPowers[aptitudeId] || []).filter(
-          (p) => p.id !== powerId,
-        ),
-      });
-    },
-    [selectedPowers, setValue],
-  );
+  const isLastStep = activeStep === editStepContent.length - 1;
 
   const handleNext = useCallback(() => {
-    if (activeStep === stepContent.length - 1) {
+    if (isLastStep) {
       handleSubmit((data) => finalizeMutation.mutate({ data }))();
     } else {
       setActiveStep((prev) => prev + 1);
     }
-  }, [activeStep, stepContent.length, handleSubmit, finalizeMutation]);
+  }, [isLastStep, handleSubmit, finalizeMutation, setActiveStep]);
 
   const handleForceSubmit = useCallback(() => {
     setValidationErrors([]);
     finalizeMutation.mutate({ data: getValues(), force: true });
-  }, [finalizeMutation, getValues]);
-
-  const handleBack = useCallback(() => {
-    setValidationErrors([]);
-    setActiveStep((prev) => prev - 1);
-  }, []);
-
-  const resetWizard = useCallback(() => {
-    setShowCancelConfirm(false);
-    reset();
-    setSelectedAptitude(null);
-    setSelectedPowerAptitude(null);
-    setSelectedPowerLevel(null);
-    setFeatSearch("");
-    setExpandedFeatFamilies(new Set());
-    setPowerSearch("");
-    setValidationErrors([]);
-    setActiveStep(0);
-  }, [reset]);
+  }, [finalizeMutation, getValues, setValidationErrors]);
 
   const handleCancel = useCallback(() => {
     setShowCancelConfirm(true);
-  }, []);
+  }, [setShowCancelConfirm]);
 
   const handleConfirmCancel = useCallback(() => {
-    onReset?.();
     resetWizard();
     onClose();
-  }, [onReset, resetWizard, onClose]);
+  }, [resetWizard, onClose]);
 
   // ── HP roll trigger ───────────────────────────────────────────────
 
@@ -703,48 +313,15 @@ export function useLevelWizard({
     [hpRolling, cleanupHpRoll, setValue],
   );
 
-  // ── Next button disabled logic ────────────────────────────────────
-
-  const isNextDisabled = useMemo(() => {
-    if (finalizeMutation.isPending) return true;
-    if (stepContent[activeStep] === "hp") return !selectedHP;
-    return false;
-  }, [finalizeMutation.isPending, stepContent, activeStep, selectedHP]);
+  // The dialog also disables Next while the save runs.
+  const isNextDisabled = editStepContent[activeStep] === "hp" && !selectedHP;
 
   return {
-    // Form values
+    ...base,
     selectedClass,
     selectedHP,
     selectedAttribute,
-    selectedFeats,
-    selectedPowers,
-    skillPointAllocations,
-    setValue,
-    getValues,
-
-    // Stepper
-    activeStep,
-    setActiveStep,
-    stepContent,
-
-    // UI state
-    isMobile,
-    selectedAptitude,
-    setSelectedAptitude,
-    selectedPowerAptitude,
-    setSelectedPowerAptitude,
-    selectedPowerLevel,
-    setSelectedPowerLevel,
-    showCancelConfirm,
-    setShowCancelConfirm,
-    validationErrors,
-    setValidationErrors,
-    featSearch,
-    setFeatSearch,
-    expandedFeatFamilies,
-    toggleFeatFamily,
-    powerSearch,
-    setPowerSearch,
+    isLastStep,
 
     // HP roll
     hpRolling,
@@ -772,29 +349,19 @@ export function useLevelWizard({
     isLoadingAvailablePowers,
     isFetchingNextPowersPage,
 
-    // Mutation
     finalizeMutation,
 
     // Handlers
-    handleDeleteFeat,
-    handleDeletePower,
     handleNext,
-    handleBack,
     handleCancel,
     handleConfirmCancel,
     handleForceSubmit,
     handleFeatsScroll,
     handlePowersScroll,
-    resetWizard,
 
-    // Computed
-    allSelectedFeatPickString,
     adjustedFeatPools,
     isNextDisabled,
-
-    // Sections
     levelUpSections,
-    baseRules,
   };
 }
 

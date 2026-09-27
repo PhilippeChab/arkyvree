@@ -1,3 +1,5 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import {
   BlankState,
   InfoPill,
@@ -11,9 +13,13 @@ import {
   type FilterOption,
   type SortOption,
   DiceSpinner,
+  CREATED_SORTS,
+  NAME_SORTS,
+  UPDATED_SORTS,
+  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import { CreateCampaignDialog } from "@/client/src/pages/campaigns/components/index.ts";
-import { useDebouncedValue, usePageTitle, useStaggerAnimation, useUpdateSearchParams } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
 import { useCampaignOperations } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -26,7 +32,6 @@ import {
 } from "@mui/icons-material";
 import {
   Alert,
-  Box,
   Button,
   Container,
 } from "@mui/material";
@@ -35,7 +40,7 @@ import {
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { prefetchCampaignSections } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
 type SortField = CampaignListFilters["orderBy"];
@@ -45,28 +50,19 @@ const CAMPAIGN_FILTER_OPTIONS: FilterOption<"active" | "archived">[] = [
   { value: "archived", label: "Archived" },
 ];
 
-const CAMPAIGN_SORT_OPTIONS: SortOption<SortField>[] = [
-  { field: "name", direction: "asc", label: "Name (A-Z)" },
-  { field: "name", direction: "desc", label: "Name (Z-A)" },
-  { field: "createdAt", direction: "desc", label: "Newest First" },
-  { field: "createdAt", direction: "asc", label: "Oldest First" },
-  { field: "updatedAt", direction: "desc", label: "Recently Updated" },
-  { field: "updatedAt", direction: "asc", label: "Least Recently Updated" },
-];
+const CAMPAIGN_SORT_OPTIONS: SortOption<SortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...UPDATED_SORTS];
 
 export default function CampaignsPage() {
   usePageTitle("Campaigns");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const updateSearchParams = useUpdateSearchParams();
+  const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
+    ["name", "createdAt", "updatedAt"],
+    { orderBy: "createdAt", orderDir: "desc" },
+  );
   const isDemo = useAuthStore((s) => !!s.user?.expiresAt);
 
   const view = oneOf(searchParams.get("view"), ["active", "archived"], "active");
-  const searchQuery = searchParams.get("search") || "";
-  const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const orderBy = oneOf(searchParams.get("orderBy"), ["name", "createdAt", "updatedAt"], "createdAt");
-  const orderDir = oneOf(searchParams.get("orderDir"), ["asc", "desc"], "desc");
 
   const {
     createDialogOpen,
@@ -77,7 +73,7 @@ export default function CampaignsPage() {
     confirmCreate,
   } = useCampaignOperations();
 
-  const listQuery = campaignListQuery({ view, search: debouncedSearchQuery, orderBy, orderDir });
+  const listQuery = campaignListQuery({ view, search, orderBy, orderDir });
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
   const {
@@ -89,7 +85,7 @@ export default function CampaignsPage() {
     isFetchingNextPage,
   } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
 
-  const campaigns = data?.pages.flatMap((page) => page.items) ?? [];
+  const campaigns = pageItems(data);
 
   // Warm the detail page and its tabs while the pointer is on a card.
   const prefetchCampaign = (id: string) => {
@@ -110,29 +106,23 @@ export default function CampaignsPage() {
         />
 
         <SearchBar
-          searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
+          {...searchBarProps}
           searchPlaceholder="Search campaigns..."
           filterOptions={CAMPAIGN_FILTER_OPTIONS}
           filterValue={view}
           onFilterChange={(value) => updateSearchParams({ view: value })}
           sortOptions={CAMPAIGN_SORT_OPTIONS}
-          sortField={orderBy}
-          sortDirection={orderDir}
-          onSortChange={(field, direction) => updateSearchParams({ orderBy: field, orderDir: direction })}
         />
 
         {isLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: { xs: 4, sm: 8 } }}>
-            <DiceSpinner />
-          </Box>
+          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
         ) : error ? (
           <Alert severity="error">Failed to load campaigns.</Alert>
         ) : campaigns.length > 0 ? (
           <>
             <ListCardGrid>
               {campaigns.map((campaign, index) => {
-                const players = `${campaign.currentPlayers} ${campaign.currentPlayers === 1 ? "player" : "players"}`;
+                const players = formatCount(campaign.currentPlayers, "player");
                 return (
                   <ListCard
                     key={campaign.id}
@@ -142,7 +132,6 @@ export default function CampaignsPage() {
                     onClick={() => navigate(`/campaigns/${campaign.id}`)}
                     onMouseEnter={() => prefetchCampaign(campaign.id)}
                     onFocus={() => prefetchCampaign(campaign.id)}
-                    avatar={campaign.name.charAt(0).toUpperCase()}
                     avatarTone="secondary"
                     title={campaign.name}
                     description={campaign.description}
@@ -167,6 +156,8 @@ export default function CampaignsPage() {
               }}
             />
           </>
+        ) : search ? (
+          <NoMatchesState search={search} />
         ) : view === "archived" ? (
           <BlankState
             icon={ArchiveIcon}

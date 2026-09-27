@@ -1,3 +1,5 @@
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import type { RulesetListItem } from "@/client/src/lib/queries.ts";
 import type {
   EditRulesetFormData,
   ForkRulesetFormData,
@@ -6,15 +8,15 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
 
-type RulesetArray = InferResponseType<typeof rpc.api.rulesets.$get, 200>;
-type Ruleset = RulesetArray["items"][number];
-type PublishKind = InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"];
+type Ruleset = RulesetListItem;
+/** Published as a base ruleset or as an extension. */
+export type PublishKind = NonNullable<InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"]>;
 
 export function useRulesetOperations() {
   const queryClient = useQueryClient();
@@ -33,6 +35,12 @@ export function useRulesetOperations() {
   // Selected item state
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | null>(null);
 
+  /** Refetches a ruleset and the lists that show it. */
+  const refreshRuleset = (id: string) => Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(id) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists }),
+  ]);
+
   // Forms
   const editForm = useForm<EditRulesetFormData>();
   const forkForm = useForm<ForkRulesetFormData>();
@@ -47,12 +55,7 @@ export function useRulesetOperations() {
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset updated successfully");
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
+      void refreshRuleset(id);
       setEditDialogOpen(false);
       editForm.reset();
     },
@@ -92,12 +95,7 @@ export function useRulesetOperations() {
     },
     onSuccess: (_, id) => {
       snackbar.success("Ruleset archived successfully");
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
+      void refreshRuleset(id);
       setArchiveDialogOpen(false);
     },
     onError: (error) => {
@@ -114,12 +112,7 @@ export function useRulesetOperations() {
     },
     onSuccess: (_, id) => {
       snackbar.success("Ruleset unarchived successfully");
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
+      void refreshRuleset(id);
     },
     onError: (error) => {
       snackbar.error(error, "Failed to unarchive ruleset");
@@ -138,12 +131,7 @@ export function useRulesetOperations() {
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset published successfully");
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
+      void refreshRuleset(id);
       setPublishDialogOpen(false);
     },
     onError: (error) => {
@@ -160,18 +148,9 @@ export function useRulesetOperations() {
       }));
     },
     onSuccess: (_, { id, extensionIds }) => {
-      snackbar.success(
-        extensionIds.length === 1
-          ? "Subscribed to extension successfully"
-          : `Subscribed to ${extensionIds.length} extensions successfully`,
-      );
+      snackbar.success(`Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")} successfully`);
       setSubscribeDialogOpen(false);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
+      void refreshRuleset(id);
     },
     onError: (error) => {
       snackbar.error(error, "Failed to subscribe to extension");
@@ -190,12 +169,7 @@ export function useRulesetOperations() {
       snackbar.success("Unsubscribed from extension successfully");
       setUnsubscribeDialogOpen(false);
       setUnsubscribeTarget(null);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.detail(id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
-      });
+      void refreshRuleset(id);
     },
     onError: (error) => {
       snackbar.error(error, "Failed to unsubscribe from extension");

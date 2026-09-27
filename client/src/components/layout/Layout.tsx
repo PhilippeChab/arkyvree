@@ -1,3 +1,5 @@
+import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
+import { ActionMenuItem } from "@/client/src/components/common/index.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import {
   campaignListQuery,
@@ -37,7 +39,6 @@ import {
   ListItemIcon,
   ListItemText,
   Menu,
-  MenuItem,
   Toolbar,
   Typography,
   useTheme,
@@ -164,8 +165,8 @@ export function Layout() {
   const effectiveExpanded = sidebarExpanded || !!isPopoverStep;
 
   const darkMode = theme.palette.mode === "dark";
-  const gold = darkMode ? "#f5c542" : "#bf9000";
-  const goldFaint = darkMode ? "rgba(245, 197, 66, 0.25)" : "rgba(191, 144, 0, 0.20)";
+  const gold = brandGold(darkMode);
+  const goldFaint = brandGoldTint(darkMode, darkMode ? 0.25 : 0.2);
 
   const { mutate: completeOnboarding } = useMutation({
     mutationFn: () => rpc.auth["complete-onboarding"].$post(),
@@ -274,31 +275,11 @@ export function Layout() {
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={handleProfile}>
-              <ListItemIcon>
-                <AccountCircle fontSize="small" />
-              </ListItemIcon>
-              Profile
-            </MenuItem>
-            <MenuItem onClick={() => { handleMenuClose(); navigate("/activities"); }}>
-              <ListItemIcon>
-                <HistoryIcon fontSize="small" />
-              </ListItemIcon>
-              Activity
-            </MenuItem>
-            <MenuItem onClick={handleSettings}>
-              <ListItemIcon>
-                <SettingsIcon fontSize="small" />
-              </ListItemIcon>
-              Settings
-            </MenuItem>
+            <ActionMenuItem icon={AccountCircle} label="Profile" onClick={handleProfile} />
+            <ActionMenuItem icon={HistoryIcon} label="Activity" onClick={() => { handleMenuClose(); navigate("/activities"); }} />
+            <ActionMenuItem icon={SettingsIcon} label="Settings" onClick={handleSettings} />
             <Divider />
-            <MenuItem onClick={handleSignOut}>
-              <ListItemIcon>
-                <Logout fontSize="small" />
-              </ListItemIcon>
-              Sign Out
-            </MenuItem>
+            <ActionMenuItem icon={Logout} label="Sign Out" onClick={handleSignOut} />
           </Menu>
         </Toolbar>
       </AppBar>
@@ -327,13 +308,7 @@ export function Layout() {
       >
         <Toolbar />
         <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            flex: 1,
-            minHeight: 0,
-            position: "relative",
-          }}
+          sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, position: "relative" }}
         >
           <List sx={{ flex: 1, pt: 2, px: 1 }}>
             {sidebarItems.map((item) => (

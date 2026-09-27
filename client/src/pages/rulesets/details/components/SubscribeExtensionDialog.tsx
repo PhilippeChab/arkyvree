@@ -1,7 +1,7 @@
+import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
+import type { RulesetListItem } from "@/client/src/lib/queries.ts";
 import { ScrollSafeListbox, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { Extension as ExtensionIcon } from "@mui/icons-material";
 import {
   Autocomplete,
@@ -14,13 +14,9 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
-import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type RulesetsPaginated = InferResponseType<typeof rpc.api.rulesets.$get, 200>;
-type ExtensionRuleset = RulesetsPaginated["items"][number];
+type ExtensionRuleset = RulesetListItem;
 
 interface SubscribeExtensionDialogProps {
   open: boolean;
@@ -49,29 +45,15 @@ export function SubscribeExtensionDialog({
     }
   }, [open]);
 
-  const { data, isLoading: isLoadingExtensions, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: [...queryKeys.rulesets.lists, "extensions", debouncedSearch],
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets.$get({
-        query: {
-          scope: "extensions",
-          limit: "10",
-          page: pageParam.toString(),
-          ...(debouncedSearch && { search: debouncedSearch }),
-        },
-      }));
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+  const { items: extensions, isLoading: isLoadingExtensions, onScroll } = useListboxQuery({
+    ...rulesetPickerQuery("extensions", debouncedSearch),
     enabled: open,
   });
 
-  const options = useMemo(() => {
-    const all = data?.pages.flatMap((page) => page.items) ?? [];
-    return all.filter((ext) => !subscribedExtensionIds.includes(ext.id));
-  }, [data, subscribedExtensionIds]);
-
-  const handleScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
+  const options = useMemo(
+    () => extensions.filter((ext) => !subscribedExtensionIds.includes(ext.id)),
+    [extensions, subscribedExtensionIds],
+  );
 
   const handleClose = () => {
     if (isLoading) return;
@@ -123,11 +105,7 @@ export function SubscribeExtensionDialog({
             slotProps={{
               listbox: {
                 component: ScrollSafeListbox,
-
-                ...{
-                  onScroll: handleScroll,
-                  style: { maxHeight: 280 },
-                }
+                onScroll,
               }
             }} />
         </Stack>

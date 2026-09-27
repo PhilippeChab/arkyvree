@@ -1,3 +1,4 @@
+import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useMemo } from "react";
 import {
   Autocomplete,
@@ -12,22 +13,25 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import type { AvailableKlass } from "./levelUp/useLevelWizard.ts";
+import type { AvailableKlass } from "./levelUp/index.ts";
 import type { AddClassPlanStepProps } from "./levelUpFactory.ts";
 
 export function AddClassPlanStep({
-  levels,
-  slotKeys,
+  wizard,
   availableKlasses,
   quickAddKlasses,
   isLoadingKlasses,
-  onClassChange,
-  onAddLevel,
-  onQuickAddLevel,
-  onRemoveLevel,
   handleKlassListScroll,
   setKlassSearch,
 }: AddClassPlanStepProps) {
+  const {
+    classPlan: levels,
+    slotKeys,
+    handleClassChange: onClassChange,
+    handleAddLevel: onAddLevel,
+    handleQuickAddLevel: onQuickAddLevel,
+    handleRemoveLevel: onRemoveLevel,
+  } = wizard;
   const getAdjustedNextLevel = (klassId: string, index: number) => {
     const klass = availableKlasses.find((k) => k.id === klassId)
       ?? quickAddKlasses.find((k) => k.id === klassId);
@@ -135,7 +139,7 @@ export function AddClassPlanStep({
               renderOption={({ key, ...props }, option) => {
                 const adjustedLevel = getAdjustedNextLevel(option.id, index);
                 return (
-                  <Tooltip
+                  <Tooltip describeChild
                     key={key}
                     title={!option.eligible && option.requirementTree ? option.requirementTree : option.description ?? ""}
                     placement="right"
@@ -146,7 +150,7 @@ export function AddClassPlanStep({
                     <li {...props} style={{ ...props.style, pointerEvents: "auto" }}>
                       <Box>
                         <Typography>{option.name}</Typography>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
                           {option.eligible
                             ? `Level ${adjustedLevel}`
                             : `Level ${adjustedLevel} — Requirements not met`}
@@ -165,12 +169,12 @@ export function AddClassPlanStep({
               )}
               slotProps={{
                 listbox: {
+                  component: ScrollSafeListbox,
                   onScroll: handleKlassListScroll,
-                  style: { maxHeight: 300 },
                 }
               }}
             />
-            <IconButton size="small" onClick={() => onRemoveLevel(index)}>
+            <IconButton size="small" aria-label={`Remove level ${index + 1}`} onClick={() => onRemoveLevel(index)}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>

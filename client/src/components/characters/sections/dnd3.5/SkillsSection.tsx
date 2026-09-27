@@ -1,8 +1,8 @@
+import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { Dnd35SkillsSectionProps } from "./types.ts";
 import { BlankState } from "@/client/src/components/common/index.ts";
-import ExpandLess from "@mui/icons-material/ExpandLess";
 import {
-  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -11,68 +11,21 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
-function getSkillGroup(name: string): string | null {
-  const match = name.match(/^(.+?)\s*\(/);
-  return match ? match[1] : null;
-}
-
-type Skill = Dnd35SkillsSectionProps["skills"][string];
-
-function formatValue(value: number): string {
-  return value >= 0 ? `+${value}` : `${value}`;
-}
-
-type Row =
-  | { type: "skill"; skill: Skill; group: null }
-  | { type: "skill"; skill: Skill; group: string }
-  | { type: "group"; prefix: string; count: number };
+/** The narrow number columns' headers. */
+const columnHeaderSx = { fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-
-  const rows = useMemo(() => {
-    const sorted = Object.values(skills).sort((a, b) => a.name.localeCompare(b.name));
-
-    const prefixCounts = new Map<string, number>();
-    for (const skill of sorted) {
-      const prefix = getSkillGroup(skill.name);
-      if (prefix) prefixCounts.set(prefix, (prefixCounts.get(prefix) ?? 0) + 1);
-    }
-
-    const result: Row[] = [];
-    let lastPrefix: string | null = null;
-
-    for (const skill of sorted) {
-      const prefix = getSkillGroup(skill.name);
-      const isGrouped = prefix !== null && (prefixCounts.get(prefix) ?? 0) >= 2;
-
-      if (isGrouped && prefix !== lastPrefix) {
-        result.push({ type: "group", prefix: prefix!, count: prefixCounts.get(prefix!)! });
-        lastPrefix = prefix;
-      }
-
-      result.push({ type: "skill", skill, group: isGrouped ? prefix : null });
-    }
-
-    return result;
-  }, [skills]);
-
-  const toggle = (prefix: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(prefix)) { next.delete(prefix); } else { next.add(prefix); }
-      return next;
-    });
-  };
-
-  const hasSkills = skills && typeof skills === "object" && Object.keys(skills).length > 0;
+  const sortedSkills = useMemo(
+    () => Object.values(skills).sort((a, b) => a.name.localeCompare(b.name)),
+    [skills],
+  );
 
   return (
     <SheetSection title="Skills">
-      {hasSkills
+      {sortedSkills.length > 0
         ? (
           <>
             <Typography variant="body2" sx={{ mb: 2, color: "text.secondary", fontStyle: "italic" }}>
@@ -91,70 +44,38 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600 }}>Skill</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Rank</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Abil</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Misc</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Wt</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}>Total</TableCell>
+                    <TableCell align="center" sx={columnHeaderSx}>Rank</TableCell>
+                    <TableCell align="center" sx={columnHeaderSx}>Abil</TableCell>
+                    <TableCell align="center" sx={columnHeaderSx}>Misc</TableCell>
+                    <TableCell align="center" sx={columnHeaderSx}>Wt</TableCell>
+                    <TableCell align="center" sx={columnHeaderSx}>Total</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row) => {
-                    if (row.type === "group") {
-                      const isExpanded = expanded.has(row.prefix);
-                      return (
-                        <TableRow
-                          key={`group-${row.prefix}`}
-                          sx={{ bgcolor: "action.hover", cursor: "pointer" }}
-                          onClick={() => toggle(row.prefix)}
-                        >
-                          <TableCell sx={{ fontWeight: 600 }}>
-                            {row.prefix} ({row.count})
-                          </TableCell>
-                          <TableCell colSpan={4} />
-                          <TableCell align="center">
-                            <IconButton size="small" sx={{ transition: "transform 200ms", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>
-                              <ExpandLess fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    }
-
-                    const { skill, group } = row;
-                    const hidden = !!group && !expanded.has(group);
-                    return (
-                      <TableRow
+                  <GroupedSkillRows
+                    skills={sortedSkills}
+                    columns={6}
+                    renderSkill={(skill, placement) => (
+                      <SkillRow
                         key={skill.name}
-                        sx={{
-                          ...(hidden && { display: "none" }),
-                          ...(!hidden && group ? {
-                            animation: "fadeInRow 200ms ease-out",
-                            "@keyframes fadeInRow": {
-                              from: { opacity: 0 },
-                              to: { opacity: 1 },
-                            },
-                          } : {}),
-                        }}
+                        name={skill.name}
+                        {...placement}
+                        renderName={(label) => `${label}${skill.innate ? " *" : ""}`}
                       >
-                        <TableCell sx={group ? { pl: 5 } : undefined}>
-                          {group ? skill.name.replace(/^.+?\s*\(/, "(") : skill.name}
-                          {skill.innate ? " *" : ""}
-                        </TableCell>
                         <TableCell align="center">{skill.rank || 0}</TableCell>
-                        <TableCell align="center">{formatValue(skill.ability)}</TableCell>
+                        <TableCell align="center">{formatSigned(skill.ability)}</TableCell>
                         <TableCell align="center">
-                          {skill.misc !== 0 ? formatValue(skill.misc) : "—"}
+                          {skill.misc !== 0 ? formatSigned(skill.misc) : "—"}
                         </TableCell>
                         <TableCell align="center">
                           {skill.weight ? `-${skill.weight}` : "—"}
                         </TableCell>
                         <TableCell align="center" sx={{ fontWeight: 600 }}>
-                          {formatValue(skill.total)}
+                          {formatSigned(skill.total)}
                         </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                      </SkillRow>
+                    )}
+                  />
                 </TableBody>
               </Table>
             </TableContainer>

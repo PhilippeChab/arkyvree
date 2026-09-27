@@ -1,6 +1,7 @@
-import type { ComponentProps } from "react";
-import type { InferResponseType } from "hono/client";
-import type { RPC } from "@/client/src/services/rpc.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import type { SheetCombat } from "./sections/dnd3.5/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 import { getSections } from "./sectionFactory.ts";
 import {
@@ -8,19 +9,13 @@ import {
   ClassesSection,
   DiagnosticsSection,
   EquipmentSection,
-  type EncumbranceData,
   FeatsSection,
   ReadOnlyEquipmentSection,
   WeaponsSection,
+  type CharacterData,
 } from "./sections/index.ts";
 import { Stack } from "@mui/material";
-import { BONDED_LABEL_BY_KIND } from "@/shared/dnd3.5/bondedKinds.ts";
-
-type OwnerCharacterData = InferResponseType<RPC["api"]["characters"][":id"]["$get"], 200>;
-type CampaignCharacterData = InferResponseType<RPC["api"]["campaigns"][":id"]["characters"][":characterId"]["$get"], 200>;
-type SharedCharacterData = InferResponseType<RPC["api"]["shared"]["characters"][":shareToken"]["$get"], 200>;
-
-export type CharacterData = OwnerCharacterData | CampaignCharacterData | SharedCharacterData;
+import { BONDED_KIND_SLUGS, BONDED_LABEL_BY_KIND } from "@/shared/dnd3.5/bondedKinds.ts";
 
 type CharacterSheetBodyProps = {
   character: CharacterData;
@@ -34,7 +29,8 @@ type CharacterSheetBodyProps = {
   onViewBondedSheet?: (bondedId: string) => void;
   equipmentMode: "editable" | "readonly";
   rulesetId?: string;
-  showDiagnostics?: boolean;
+  /** The owner's view only: the character's diagnostics, shown under the sheet. */
+  diagnostics?: Pick<CharacterDetail, "validation" | "requirements" | "modifiers">;
   /** Pre-resolved portrait URL for unauthenticated views. */
   portraitUrl?: string | null;
 };
@@ -51,14 +47,14 @@ export function CharacterSheetBody({
   onViewBondedSheet,
   equipmentMode,
   rulesetId,
-  showDiagnostics = false,
+  diagnostics,
   portraitUrl,
 }: CharacterSheetBodyProps) {
   const abilities = character.abilities || {};
   const saves = character.savingThrows || {};
-  const combat = character.combat || {};
-  const encumbrance = (combat as { encumbrance?: EncumbranceData }).encumbrance;
-  const sections = getSections(character.baseRules!);
+  const combat: SheetCombat = character.combat || {};
+  const encumbrance = combat.encumbrance;
+  const sections = getSections(character.baseRules ?? DEFAULT_BASE_RULES);
 
   return (
     <Stack spacing={3}>
@@ -108,8 +104,9 @@ export function CharacterSheetBody({
               const matches: { suffix: string; bonded: NonNullable<typeof bondedMap[string]> }[] = [];
               for (const [kind, bonded] of Object.entries(bondedMap)) {
                 if (!bonded) continue;
-                const suffix = BONDED_LABEL_BY_KIND[kind as keyof typeof BONDED_LABEL_BY_KIND];
-                if (!suffix) continue;
+                const bondedKind = oneOf(kind, BONDED_KIND_SLUGS);
+                if (!bondedKind) continue;
+                const suffix = BONDED_LABEL_BY_KIND[bondedKind];
                 matches.push({ suffix, bonded });
               }
               if (matches.length === 0) return undefined;
@@ -150,11 +147,11 @@ export function CharacterSheetBody({
             />
           )}
 
-          {showDiagnostics && "invalidRequirements" in character.requirements && Object.values(character.classes || {}).some((cls) => cls.levels.length > 0) && (
+          {diagnostics && Object.values(character.classes || {}).some((cls) => cls.levels.length > 0) && (
             <DiagnosticsSection
-              validation={character.validation}
-              requirements={character.requirements}
-              modifiers={character.modifiers as ComponentProps<typeof DiagnosticsSection>["modifiers"]}
+              validation={diagnostics.validation}
+              requirements={diagnostics.requirements}
+              modifiers={diagnostics.modifiers}
             />
           )}
         </>

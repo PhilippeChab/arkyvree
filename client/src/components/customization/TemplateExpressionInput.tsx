@@ -134,6 +134,7 @@ export const TemplateExpressionInput = forwardRef<
                   <span>
                     <IconButton
                       size="small"
+                      aria-label="Insert path"
                       onClick={openPicker}
                       disabled={disabled}
                       edge="end"

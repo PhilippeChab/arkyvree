@@ -1,35 +1,20 @@
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import type { ClassSectionProps } from "./types.ts";
+import type { Level } from "@/client/src/pages/rulesets/hooks/index.ts";
 import {
   CreateLevelDialog,
 } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { useClassLevels, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useClassLevels, useRulesetPermissions, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, FormatListNumbered as LevelsIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 
-type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
-type Level = LevelsArray[number];
-
-interface ClassLevelsSectionProps {
-  rulesetId: string;
-  classId: string;
-  className?: string;
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
-}
-
-export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassLevelsSectionProps) {
-  const navigate = useNavigate();
+export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
+  const openEntity = useOpenEntity(rulesetId);
   const queryClient = useQueryClient();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
@@ -63,7 +48,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   } = useClassLevels(rulesetId, classId);
 
   const handleRowClick = (level: Level) => {
-    navigate(`/rulesets/${rulesetId}/klass_levels/${level.id}/customization`);
+    openEntity(`klass_levels/${level.id}/customization`);
   };
 
   const handleRowMouseEnter = useCallback((level: Level) => {
@@ -73,10 +58,10 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   const renderCell = (level: Level, columnKey: string) => {
     if (columnKey.startsWith("save_")) {
       const saveId = columnKey.replace("save_", "");
-      const levelSave = level.saves?.find((s: { saveId: string; base: number }) => s.saveId === saveId);
+      const levelSave = level.saves?.find((s) => s.saveId === saveId);
       return (
         <Typography variant="body2">
-          +{levelSave?.base ?? 0}
+          {formatSigned(levelSave?.base)}
         </Typography>
       );
     }
@@ -93,7 +78,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
       case "bab":
         return (
           <Typography variant="body2">
-            +{level.bab}
+            {formatSigned(level.bab)}
           </Typography>
         );
       case "skills":
@@ -106,13 +91,13 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         return (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
             {level.feats && level.feats.length > 0
-              ? level.feats.map((feat: { id: string; name: string; description?: string | null }) => {
+              ? level.feats.map((feat) => {
                 const suffix = className ? ` (${className})` : "";
                 const label = suffix && feat.name.endsWith(suffix)
                   ? feat.name.slice(0, -suffix.length)
                   : feat.name;
                 return (
-                <Tooltip
+                <Tooltip describeChild
                   key={feat.id}
                   title={feat.description || ""}
                   arrow
@@ -130,9 +115,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
                 );
               })
               : (
-                <Typography variant="body2" sx={{
-                  color: "text.secondary"
-                }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   —
                 </Typography>
               )}
@@ -159,7 +142,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
       </Box>
 
       <RulesetSectionTable
-        data={levels?.sort((a, b) => a.level - b.level)}
+        data={levels && [...levels].sort((a, b) => a.level - b.level)}
         isLoading={isLoading}
         columns={levelsColumns}
         onRowClick={handleRowClick}

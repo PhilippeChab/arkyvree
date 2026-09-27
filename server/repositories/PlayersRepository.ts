@@ -1,4 +1,4 @@
-import { and, eq, exists, isNull, not } from "drizzle-orm";
+import { and, eq, inArray, isNull, not } from "drizzle-orm";
 
 import { playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -98,14 +98,14 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerI
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
     const { search, orderBy = "createdAt", orderDir = "asc" } = where;
+    // Not correlated: the relational query aliases the players table, which a
+    // subquery referencing `this.table` would miss.
     const searchCondition = search
-      ? exists(
+      ? inArray(
+        this.table.userId,
         db.select({ id: usersInAccount.id })
           .from(usersInAccount)
-          .where(and(
-            eq(usersInAccount.id, this.table.userId),
-            this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined,
-          )),
+          .where(this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined),
       )
       : false;
 

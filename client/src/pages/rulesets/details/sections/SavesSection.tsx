@@ -1,14 +1,14 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { RulesetSave } from "@/client/src/hooks/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { SaveFormFields, type SaveFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Shield as SavesIcon } from "@mui/icons-material";
+import { Shield as SavesIcon } from "@mui/icons-material";
 import {
-  Box,
-  Button,
-  ToggleButton,
   Typography,
 } from "@mui/material";
 import {
@@ -16,10 +16,8 @@ import {
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const SAVES_COLUMNS = [
@@ -28,36 +26,18 @@ const SAVES_COLUMNS = [
   { key: "ability", label: "Linked Ability", width: "30%" },
 ];
 
-type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
-type Save = SavesPaginated["items"][number];
+type Save = RulesetSave;
 
-
-interface SavesSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    rulesetId?: string | null;
-    userId?: string | null;
-    status?: string;
-  };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSectionProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
+export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
+  const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
-    createDialogOpen,
-    setCreateDialogOpen,
     createForm,
-    createMutation,
     handleCreate,
+    createDialogProps,
   } = useRulesetSection<Save, SaveFormData>({
     rulesetId: ruleset.id,
     sectionName: "saves",
@@ -68,7 +48,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
         json: data,
       }));
     },
-    onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/saves/${created.id}`, { state: { from: location.pathname + location.search } }),
+    onCreateSuccess: (created) => openEntity(`saves/${created.id}`),
   });
 
   const { data: abilities = [] } = useRulesetAbilities(ruleset.id);
@@ -78,24 +58,15 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
     placeholderData: keepPreviousData,
   });
 
-  const saves = data?.pages.flatMap((page) => page.items) ?? [];
+  const saves = pageItems(data);
   const abilityLookup = new Map(abilities.map((a) => [a.id, a.name]));
 
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-
   const handleRowClick = (save: Save) => {
-    navigate(`/rulesets/${ruleset.id}/saves/${save.id}`, { state: { from: location.pathname + location.search } });
+    openEntity(`saves/${save.id}`);
   };
 
   const handleRowMouseEnter = useCallback((save: Save) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "saves", save.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].saves[":saveId"].$get({
-          param: { id: ruleset.id, saveId: save.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (save: Save, columnKey: string) => {
@@ -104,16 +75,12 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
         return save.name;
       case "description":
         return (
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            {save.description || "-"}
-          </Typography>
+          <DescriptionCell text={save.description} />
         );
       case "ability":
         return (
           <Typography variant="body2">
-            {abilityLookup.get(save.abilityId) || "-"}
+            {abilityLookup.get(save.abilityId) || "—"}
           </Typography>
         );
       default:
@@ -122,38 +89,25 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+    <SectionContent>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search saves..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Save
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Save"
+            onAdd={handleCreate}
+          />
         }
       />
 
       <RulesetSectionTable
         data={saves}
+        search={searchQuery}
         isLoading={isLoading}
         columns={SAVES_COLUMNS}
         onRowClick={handleRowClick}
@@ -171,15 +125,11 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
       />
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create New Save"
-        form={createForm}
-        onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
       >
         <SaveFormFields form={createForm} abilities={abilities} />
       </CreateDialog>
-    </Box>
+    </SectionContent>
   );
 }

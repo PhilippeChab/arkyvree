@@ -1,12 +1,24 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-interface RulesetData {
-  userId?: string | null;
-  status?: string;
-  contributorRole?: string | null;
+/** The fields permissions depend on; ruleset details and list items both carry them. */
+type RulesetData = Pick<RulesetDetail, "userId" | "status" | "contributorRole">;
+
+interface RulesetPermissions {
+  isOwner: boolean;
+  isContributor: boolean;
+  contributorRole: string | null;
+  /** Owner, Admin, or Editor — can CRUD entities (feats, skills, etc.) */
+  canEditEntities: boolean;
+  /** Owner or Admin — can update ruleset name/description/privacy, archive */
+  canEditRuleset: boolean;
+  /** Owner or Admin — can invite/remove contributors. Demo users blocked. */
+  canManageContributors: boolean;
+  /** Owner only. Demo users blocked. */
+  canPublish: boolean;
 }
 
-export function useRulesetPermissions(ruleset: RulesetData | undefined) {
+export function useRulesetPermissions(ruleset: RulesetData | undefined): RulesetPermissions {
   const currentUserId = useAuthStore((state) => state.user?.id);
   // Demo users own everything they fork, but cross-user / publish actions are
   // server-blocked. Suppress the affordances here so the menu items don't
@@ -21,7 +33,7 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined) {
       canManageContributors: false,
       canPublish: false,
       isContributor: false,
-      contributorRole: null as string | null,
+      contributorRole: null,
     };
   }
 
@@ -36,13 +48,9 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined) {
     isOwner,
     isContributor,
     contributorRole,
-    /** Owner, Admin, or Editor — can CRUD entities (feats, skills, etc.) */
     canEditEntities: (isOwner || isAdmin || isEditor) && isNotArchived,
-    /** Owner or Admin — can update ruleset name/description/privacy, archive */
     canEditRuleset: (isOwner || isAdmin) && isNotArchived,
-    /** Owner or Admin — can invite/remove contributors. Demo users blocked. */
     canManageContributors: (isOwner || isAdmin) && !isDemo,
-    /** Owner only. Demo users blocked. */
     canPublish: isOwner && !isDemo,
   };
 }

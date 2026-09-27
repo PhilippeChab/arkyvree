@@ -1,3 +1,4 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   BlankState,
   ListCard,
@@ -10,8 +11,12 @@ import {
   type FilterOption,
   type SortOption,
   DiceSpinner,
+  CREATED_SORTS,
+  NAME_SORTS,
+  UPDATED_SORTS,
+  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
-import { useAttachments, useDebouncedValue, usePageTitle, useStaggerAnimation, useUpdateSearchParams } from "@/client/src/hooks/index.ts";
+import { useAttachments, usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { characterDetailQuery, characterListQuery, type CharacterListFilters } from "@/client/src/lib/queries.ts";
 import { CreateCharacterDialog } from "@/client/src/pages/characters/components/index.ts";
@@ -22,14 +27,13 @@ import {
 } from "@mui/icons-material";
 import {
   Alert,
-  Box,
   Button,
   Chip,
   Container,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type CharacterView = CharacterListFilters["view"];
 type SortField = CharacterListFilters["orderBy"];
@@ -40,30 +44,21 @@ const CHARACTER_FILTER_OPTIONS: FilterOption<CharacterView>[] = [
   { value: "archived", label: "Archived" },
 ];
 
-const CHARACTER_SORT_OPTIONS: SortOption<SortField>[] = [
-  { field: "name", direction: "asc", label: "Name (A-Z)" },
-  { field: "name", direction: "desc", label: "Name (Z-A)" },
-  { field: "createdAt", direction: "desc", label: "Newest First" },
-  { field: "createdAt", direction: "asc", label: "Oldest First" },
-  { field: "updatedAt", direction: "desc", label: "Recently Updated" },
-  { field: "updatedAt", direction: "asc", label: "Least Recently Updated" },
-];
+const CHARACTER_SORT_OPTIONS: SortOption<SortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...UPDATED_SORTS];
 
 export default function CharactersPage() {
   usePageTitle("Characters");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [searchParams] = useSearchParams();
-  const updateSearchParams = useUpdateSearchParams();
+  const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
+    ["name", "createdAt", "updatedAt"],
+    { orderBy: "createdAt", orderDir: "desc" },
+  );
 
   const view = oneOf(searchParams.get("view"), ["active", "shared", "archived"], "active");
-  const searchQuery = searchParams.get("search") || "";
-  const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const orderBy = oneOf(searchParams.get("orderBy"), ["name", "createdAt", "updatedAt"], "createdAt");
-  const orderDir = oneOf(searchParams.get("orderDir"), ["asc", "desc"], "desc");
 
-  const listQuery = characterListQuery({ view, search: debouncedSearchQuery, orderBy, orderDir });
+  const listQuery = characterListQuery({ view, search, orderBy, orderDir });
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
   const {
@@ -75,7 +70,7 @@ export default function CharactersPage() {
     isFetchingNextPage,
   } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
 
-  const characters = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
+  const characters = useMemo(() => pageItems(data), [data]);
 
   const characterIds = useMemo(() => characters.map((c) => c.id), [characters]);
   const { data: portraitsByCharacterId } = useAttachments({
@@ -105,22 +100,16 @@ export default function CharactersPage() {
         />
 
         <SearchBar
-          searchValue={searchQuery}
-          onSearchChange={(value) => updateSearchParams({ search: value }, { replace: true })}
+          {...searchBarProps}
           searchPlaceholder="Search characters..."
           filterOptions={CHARACTER_FILTER_OPTIONS}
           filterValue={view}
           onFilterChange={(value) => updateSearchParams({ view: value })}
           sortOptions={CHARACTER_SORT_OPTIONS}
-          sortField={orderBy}
-          sortDirection={orderDir}
-          onSortChange={(field, direction) => updateSearchParams({ orderBy: field, orderDir: direction })}
         />
 
         {isLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: { xs: 4, sm: 8 } }}>
-            <DiceSpinner />
-          </Box>
+          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
         ) : error ? (
           <Alert severity="error">Failed to load characters.</Alert>
         ) : characters.length > 0 ? (
@@ -135,7 +124,6 @@ export default function CharactersPage() {
                   onClick={() => navigate(`/characters/${character.id}`)}
                   onMouseEnter={() => prefetchCharacter(character.id)}
                   onFocus={() => prefetchCharacter(character.id)}
-                  avatar={character.name.charAt(0).toUpperCase()}
                   avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
                   title={character.name}
                   description={character.description}
@@ -174,6 +162,8 @@ export default function CharactersPage() {
               }}
             />
           </>
+        ) : search ? (
+          <NoMatchesState search={search} />
         ) : view === "archived" ? (
           <BlankState
             icon={ArchiveIcon}

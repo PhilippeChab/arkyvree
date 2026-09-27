@@ -1,3 +1,7 @@
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import type { SheetCombat } from "./dnd3.5/index.ts";
+import { shownWeaponSet } from "./equipment.ts";
 import { BlankState } from "@/client/src/components/common/index.ts";
 import {
   Table,
@@ -10,29 +14,11 @@ import {
 } from "@mui/material";
 import { SheetSection } from "./SheetSection.tsx";
 
-interface WeaponSlot {
-  name: string;
-  itemId?: string | null;
-  proficient?: boolean;
-  range?: number;
-  tohit?: { total?: number[] };
-  damage?: {
-    total?: string;
-    critical?: { range?: number; multiplier?: number };
-    types?: string[];
-  };
-}
-
-interface WeaponSet {
-  mainhand?: WeaponSlot | null;
-  offhand?: WeaponSlot | null;
-  twohanded?: WeaponSlot | null;
-}
+type WeaponSet = CharacterDetail["combat"]["weaponsets"][string];
+type WeaponSlot = NonNullable<WeaponSet["mainhand"]>;
 
 interface WeaponsSectionProps {
-  combat: {
-    weaponsets?: Record<string, WeaponSet>;
-  };
+  combat: SheetCombat;
 }
 
 const SLOT_LABELS: Record<string, string> = {
@@ -65,7 +51,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
             return (
               <TableContainer key={setIndex} sx={{ mb: 2, overflowX: "auto" }}>
                 <Typography variant="subtitle2" sx={{ mb: 1, color: "text.secondary" }}>
-                  Set {Number(setIndex) + 1}
+                  Set {shownWeaponSet(Number(setIndex))}
                 </Typography>
                 <Table size="small" sx={{ minWidth: 600 }}>
                   <colgroup>
@@ -108,7 +94,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                         </TableCell>
                         <TableCell align="center">
                           {weapon.tohit?.total?.length
-                            ? weapon.tohit.total.map((v) => (v >= 0 ? `+${v}` : String(v))).join("/")
+                            ? weapon.tohit.total.map(formatSigned).join("/")
                             : "+0"}
                         </TableCell>
                         <TableCell align="center">

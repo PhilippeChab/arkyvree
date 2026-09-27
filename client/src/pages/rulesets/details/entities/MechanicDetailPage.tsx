@@ -5,6 +5,7 @@ import {
   type MechanicFormData,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { mechanicQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
 export default function MechanicDetailPage() {
@@ -18,11 +19,11 @@ export default function MechanicDetailPage() {
       entityId={mechanicId}
       section="mechanics"
       label="Mechanic"
-      fetchEntity={() => parseResponse(endpoint.$get({ param }))}
+      query={(id) => mechanicQuery(rulesetId, id)}
       editing={{
         toFormValues: (mechanic): MechanicFormData => ({
           name: mechanic.name,
-          description: mechanic.description ?? undefined,
+          description: mechanic.description ?? "",
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
         remove: () => endpoint.$delete({ param }),

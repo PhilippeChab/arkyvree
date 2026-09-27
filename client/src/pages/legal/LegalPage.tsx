@@ -1,4 +1,4 @@
-import { Box, Container, Paper, Typography } from "@mui/material";
+import { Container, Paper, Typography } from "@mui/material";
 
 import { DiceSpinner, PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
 import { useOglLicense, usePageTitle } from "@/client/src/hooks/index.ts";
@@ -17,13 +17,11 @@ export default function LegalPage() {
 
         <Paper sx={{ p: { xs: 2, sm: 4 } }}>
           {isError ? (
-            <Typography variant="body2" color="error">
+            <Typography variant="body2" sx={{ color: "error.main" }}>
               Failed to load the license text. Please refresh.
             </Typography>
           ) : text === undefined ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <DiceSpinner />
-            </Box>
+            <DiceSpinner sx={{ py: 4 }} />
           ) : (
             <Typography
               component="pre"

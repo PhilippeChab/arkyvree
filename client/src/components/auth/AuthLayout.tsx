@@ -1,9 +1,10 @@
+import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
+import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
@@ -13,8 +14,8 @@ function DesktopBranding() {
   const theme = useTheme();
   const darkMode = theme.palette.mode === "dark";
 
-  const gold = darkMode ? "#f5c542" : "#bf9000";
-  const goldFaint = darkMode ? "rgba(245, 197, 66, 0.12)" : "rgba(191, 144, 0, 0.10)";
+  const gold = brandGold(darkMode);
+  const goldFaint = brandGoldTint(darkMode, darkMode ? 0.12 : 0.1);
 
   const animBase = {
     [prefersReducedMotion]: { animation: "none" },
@@ -92,7 +93,7 @@ function DesktopBranding() {
           width: 120,
           height: 120,
           position: "relative",
-          filter: `drop-shadow(0 4px 12px rgba(191, 144, 0, ${darkMode ? 0.4 : 0.3}))`,
+          filter: `drop-shadow(0 4px 12px ${brandGoldTint(false, darkMode ? 0.4 : 0.3)})`,
           ...stagger(0),
         }}
       />
@@ -167,11 +168,7 @@ function MobileBranding() {
         component="img"
         src="/pwa-192x192.png"
         alt="Arkyvree"
-        sx={{
-          width: 48,
-          height: 48,
-          filter: "drop-shadow(0 2px 6px rgba(191, 144, 0, 0.3))",
-        }}
+        sx={{ width: 48, height: 48, filter: `drop-shadow(0 2px 6px ${brandGoldTint(false, 0.3)})` }}
       />
       <Box>
         <Typography
@@ -188,10 +185,7 @@ function MobileBranding() {
         </Typography>
         <Typography
           variant="body2"
-          sx={{
-            color: "rgba(255,255,255,0.6)",
-            fontStyle: "italic",
-          }}
+          sx={{ color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}
         >
           A programmable engine for tabletop rulesets
         </Typography>
@@ -262,9 +256,7 @@ export function AuthLayoutRoute() {
 
   if (isClearingDemo) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-        <DiceSpinner />
-      </Box>
+      <DiceSpinner sx={{ minHeight: "100vh" }} />
     );
   }
 
@@ -275,18 +267,11 @@ export function AuthLayoutRoute() {
   if (isMobile) {
     return (
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          justifyContent: "center",
-          px: 2,
-          py: 4,
-        }}
+        sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}
       >
         <Card sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
-          <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><DiceSpinner /></Box>}>
+          <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
             <Outlet />
           </Suspense>
         </Card>
@@ -297,10 +282,7 @@ export function AuthLayoutRoute() {
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        minHeight: "100vh",
-      }}
+      sx={{ display: "flex", minHeight: "100vh" }}
     >
       <DesktopBranding />
 
@@ -314,7 +296,7 @@ export function AuthLayoutRoute() {
           px: 4,
         }}
       >
-        <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><DiceSpinner /></Box>}>
+        <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
           <Outlet />
         </Suspense>
         <AuthFooterLinks />
@@ -329,9 +311,13 @@ interface AuthPageProps {
   children: ReactNode;
   title: string;
   subtitle?: ReactNode;
+  /** The last request's failure, shown above the form. */
+  error?: string | null;
+  /** A confirmation shown above the form ("A new code has been sent"). */
+  notice?: string | null;
 }
 
-export function AuthPage({ children, title, subtitle }: AuthPageProps) {
+export function AuthPage({ children, title, subtitle, error, notice }: AuthPageProps) {
   return (
     <PageTransition>
       <Card sx={{ width: "100%", maxWidth: 450 }}>
@@ -356,6 +342,9 @@ export function AuthPage({ children, title, subtitle }: AuthPageProps) {
                 {subtitle}
               </Typography>
             )}
+
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {notice && <Alert severity="success" sx={{ mb: 2 }}>{notice}</Alert>}
 
             {children}
           </Box>

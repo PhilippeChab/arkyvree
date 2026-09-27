@@ -1,10 +1,10 @@
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, skipToken } from "@tanstack/react-query";
 import { useState } from "react";
 import { type DefaultValues, type FieldValues, useForm } from "react-hook-form";
 
-interface RulesetSectionConfig<TData, TFormData extends FieldValues> {
+interface RulesetSectionConfig<TData, TFormData extends FieldValues, TCreated extends { id: string }, TUpdated, TDeleted> {
   rulesetId: string;
   sectionName: string;
   label: string;
@@ -12,19 +12,23 @@ interface RulesetSectionConfig<TData, TFormData extends FieldValues> {
   data?: TData[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   /** Resolves to the created entity; its id is handed to `onCreateSuccess`. */
-  createFn: (data: TFormData) => Promise<{ id: string }>;
-  updateFn?: (id: string, data: TFormData) => Promise<unknown>;
-  deleteFn?: (id: string) => Promise<unknown>;
-  onCreateSuccess?: (created: { id: string }) => void;
-  onUpdateSuccess?: (data: unknown) => void;
-  onDeleteSuccess?: (data: unknown) => void;
+  createFn: (data: TFormData) => Promise<TCreated>;
+  updateFn?: (id: string, data: TFormData) => Promise<TUpdated>;
+  deleteFn?: (id: string) => Promise<TDeleted>;
+  onCreateSuccess?: (created: TCreated) => void;
+  onUpdateSuccess?: (data: TUpdated) => void;
+  onDeleteSuccess?: (data: TDeleted) => void;
   onEditDialogClose?: () => void;
   createDefaults?: DefaultValues<TFormData>;
 }
 
-const noopMutationFn = async () => {};
-
-export function useRulesetSection<TData extends { id: string }, TFormData extends FieldValues>({
+export function useRulesetSection<
+  TData extends { id: string },
+  TFormData extends FieldValues,
+  TCreated extends { id: string } = { id: string },
+  TUpdated = unknown,
+  TDeleted = unknown,
+>({
   rulesetId,
   sectionName,
   label,
@@ -39,7 +43,7 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
   onDeleteSuccess,
   onEditDialogClose,
   createDefaults,
-}: RulesetSectionConfig<TData, TFormData>) {
+}: RulesetSectionConfig<TData, TFormData, TCreated, TUpdated, TDeleted>) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -57,11 +61,9 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
   const editForm = useForm<TFormData>();
 
   // Data query (only when queryFn is provided and no external data)
-  const noopQueryFn = async () => [] as TData[];
   const { data: queryData, isLoading, error } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, sectionName),
-    queryFn: queryFn ?? noopQueryFn,
-    enabled: !externalData && !!queryFn && !!rulesetId,
+    queryFn: !externalData && queryFn && rulesetId ? queryFn : skipToken,
   });
 
   const data = externalData ?? queryData;
@@ -97,9 +99,8 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateFn
-      ? ({ id, data }: { id: string; data: TFormData }) => updateFn(id, data)
-      : noopMutationFn,
+    mutationFn: ({ id, data }: { id: string; data: TFormData }) =>
+      updateFn ? updateFn(id, data) : Promise.reject(new Error(`${label} can't be updated here`)),
     onSuccess: (data) => {
       snackbar.success(`${label} updated successfully`);
       invalidateOnMutation();
@@ -112,7 +113,7 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteFn ?? noopMutationFn,
+    mutationFn: (id: string) => (deleteFn ? deleteFn(id) : Promise.reject(new Error(`${label} can't be deleted here`))),
     onSuccess: (data) => {
       invalidateOnMutation();
       setDeleteDialogOpen(false);
@@ -183,5 +184,14 @@ export function useRulesetSection<TData extends { id: string }, TFormData extend
     handleEdit,
     handleDelete,
     confirmDelete,
+
+    /** The create dialog's wiring: `<CreateDialog {...createDialogProps} title="…">`. */
+    createDialogProps: {
+      open: createDialogOpen,
+      onClose: () => setCreateDialogOpen(false),
+      form: createForm,
+      onSubmit: (data: TFormData) => createMutation.mutate(data),
+      isLoading: createMutation.isPending,
+    },
   };
 }

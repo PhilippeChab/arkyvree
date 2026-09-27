@@ -1,3 +1,5 @@
+import { useToggleSet } from "@/client/src/hooks/index.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import {
   ChevronRight as ChevronRightIcon,
   ExpandMore as ExpandMoreIcon,
@@ -19,341 +21,211 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { Fragment, useMemo, useState } from "react";
-
-interface Requirement {
-  level: string;
-  target: string | null;
-  operator: string | null;
-  value: string | null;
-  chainingOperator: string | null;
-  entityId: string;
-  entityType: string;
-}
-
-interface Modifier {
-  sourceType: string;
-  target: string;
-  operator: string;
-  value: string;
-  valueType: string;
-  sourceName?: string;
-}
-
-interface RequirementGroup {
-  sourceName?: string;
-  sourceType?: string;
-  requirements: Requirement[];
-}
-
-interface ValidationIssue {
-  category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
-  message: string;
-  entityName?: string | null;
-  entityType?: string | null;
-  requirementTree?: string;
-}
+import { Fragment, type ReactNode, useMemo } from "react";
 
 interface DiagnosticsSectionProps {
-  validation: {
-    valid: boolean;
-    issues: ValidationIssue[];
-  };
-  requirements: {
-    invalidRequirements: { warning: string; requirement: Requirement; sourceName?: string }[];
-    unmetRequirementGroups: RequirementGroup[];
-    fulfilledRequirementGroups: RequirementGroup[];
-  };
-  modifiers: {
-    modifiers: Modifier[];
-    appliedModifiers: Modifier[];
-    unappliedModifiers: Modifier[];
-    inactiveModifiers: Modifier[];
-    skippedModifiers: { warning: string; modifier: Modifier }[];
-  };
+  validation: CharacterDetail["validation"];
+  requirements: CharacterDetail["requirements"];
+  modifiers: CharacterDetail["modifiers"];
 }
+
+type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
+/** A modifier in the applied, unapplied or inactive list, with its source's name. */
+type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
 
 const tableCellSx = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
 const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
+const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
+const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
-function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label: string }) {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
-
-  if (groups.length === 0) return null;
-
-  const toggle = (index: number) =>
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-
+/** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
+function DiagnosticsGroup({ label, count, children }: { label: string; count: number; children: ReactNode }) {
+  if (count === 0) return null;
   return (
-    <Accordion disableGutters sx={{ boxShadow: "none", "&:before": { display: "none" } }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } }}>
-        <Typography variant="subtitle2">{label} ({groups.length})</Typography>
+    <Accordion disableGutters sx={accordionSx}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
+        <Typography variant="subtitle2">{label} ({count})</Typography>
       </AccordionSummary>
       <AccordionDetails sx={{ px: 0, pt: 1 }}>
         <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={headerCellSx} width={28} />
-                <TableCell sx={headerCellSx}>Source</TableCell>
-                <TableCell sx={headerCellSx}>Target</TableCell>
-                <TableCell sx={headerCellSx} align="center">Operator</TableCell>
-                <TableCell sx={headerCellSx} align="center">Value</TableCell>
-                <TableCell sx={headerCellSx} align="center">Chaining</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {groups.map((group, groupIndex) => {
-                const isOpen = expanded.has(groupIndex);
-                const source = group.sourceName ?? group.sourceType ?? "—";
-                const single = group.requirements.length === 1;
-                const req0 = group.requirements[0];
-                if (single) {
-                  return (
-                    <TableRow key={groupIndex}>
-                      <TableCell sx={tableCellSx} />
-                      <TableCell sx={tableCellSx}>{source}</TableCell>
-                      <TableCell sx={tableCellSx}>{req0.target || "—"}</TableCell>
-                      <TableCell sx={tableCellSx} align="center">{req0.operator || "—"}</TableCell>
-                      <TableCell sx={tableCellSx} align="center">{req0.value || "—"}</TableCell>
-                      <TableCell sx={tableCellSx} align="center">{req0.chainingOperator || "—"}</TableCell>
-                    </TableRow>
-                  );
-                }
-                return (
-                  <Fragment key={groupIndex}>
-                    <TableRow
-                      hover
-                      onClick={() => toggle(groupIndex)}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      <TableCell sx={{ ...tableCellSx, pr: 0 }}>
-                        <IconButton size="small" sx={{ p: 0 }}>
-                          {isOpen ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
-                        </IconButton>
-                      </TableCell>
-                      <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
-                      <TableCell sx={tableCellSx} colSpan={4}>
-                        <Chip label={group.requirements.length} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.75rem" }} />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
-                        <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                          <Table size="small">
-                            <TableBody>
-                              {group.requirements.map((req, reqIndex) => (
-                                <TableRow key={reqIndex} sx={{ bgcolor: "action.hover" }}>
-                                  <TableCell sx={tableCellSx} />
-                                  <TableCell sx={tableCellSx}>{req.target || "—"}</TableCell>
-                                  <TableCell sx={tableCellSx} align="center">{req.operator || "—"}</TableCell>
-                                  <TableCell sx={tableCellSx} align="center">{req.value || "—"}</TableCell>
-                                  <TableCell sx={tableCellSx} align="center">{req.chainingOperator || "—"}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <Table size="small">{children}</Table>
         </TableContainer>
       </AccordionDetails>
     </Accordion>
+  );
+}
+
+function HeaderRow({ labels }: { labels: string[] }) {
+  return (
+    <TableHead>
+      <TableRow>
+        {labels.map((label) => <TableCell key={label} sx={headerCellSx}>{label}</TableCell>)}
+      </TableRow>
+    </TableHead>
+  );
+}
+
+/** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
+type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
+
+function RuleCellsRow({ cells }: { cells: RuleCells }) {
+  const [target, ...rest] = cells;
+  return (
+    <>
+      <TableCell sx={tableCellSx}>{target}</TableCell>
+      {rest.map((cell, i) => <TableCell key={i} sx={tableCellSx} align="center">{cell}</TableCell>)}
+    </>
+  );
+}
+
+interface RuleGroup {
+  key: string;
+  source: string;
+  rules: RuleCells[];
+}
+
+/** Rules by source: a source with one rule is a row, one with several expands to list them. */
+function GroupedRuleTable({ label, count, lastColumn, groups }: { label: string; count: number; lastColumn: string; groups: RuleGroup[] }) {
+  const [expanded, toggle] = useToggleSet();
+
+  return (
+    <DiagnosticsGroup label={label} count={count}>
+      <TableHead>
+        <TableRow>
+          <TableCell sx={headerCellSx} width={28} />
+          <TableCell sx={headerCellSx}>Source</TableCell>
+          <TableCell sx={headerCellSx}>Target</TableCell>
+          {["Operator", "Value", lastColumn].map((column) => (
+            <TableCell key={column} sx={headerCellSx} align="center">{column}</TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {groups.map(({ key, source, rules }) => {
+          if (rules.length === 1) {
+            return (
+              <TableRow key={key}>
+                <TableCell sx={tableCellSx} />
+                <TableCell sx={tableCellSx}>{source}</TableCell>
+                <RuleCellsRow cells={rules[0]} />
+              </TableRow>
+            );
+          }
+          const isOpen = expanded.has(key);
+          return (
+            <Fragment key={key}>
+              <TableRow hover onClick={() => toggle(key)} sx={{ cursor: "pointer" }}>
+                <TableCell sx={{ ...tableCellSx, pr: 0 }}>
+                  <IconButton size="small" aria-label={`${isOpen ? "Hide" : "Show"} ${source}'s rules`} sx={{ p: 0 }}>
+                    {isOpen ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
+                  </IconButton>
+                </TableCell>
+                <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
+                <TableCell sx={tableCellSx} colSpan={4}>
+                  <Chip label={rules.length} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.75rem" }} />
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
+                  <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                    <Table size="small">
+                      <TableBody>
+                        {rules.map((cells, i) => (
+                          <TableRow key={i} sx={{ bgcolor: "action.hover" }}>
+                            <TableCell sx={tableCellSx} />
+                            <RuleCellsRow cells={cells} />
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Collapse>
+                </TableCell>
+              </TableRow>
+            </Fragment>
+          );
+        })}
+      </TableBody>
+    </DiagnosticsGroup>
+  );
+}
+
+function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label: string }) {
+  return (
+    <GroupedRuleTable
+      label={label}
+      count={groups.length}
+      lastColumn="Chaining"
+      groups={groups.map((group, index) => ({
+        key: String(index),
+        source: group.sourceName ?? group.sourceType ?? "—",
+        rules: group.requirements.map((req): RuleCells => [
+          req.target || "—",
+          req.operator || "—",
+          req.value || "—",
+          req.chainingOperator || "—",
+        ]),
+      }))}
+    />
   );
 }
 
 function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: string }) {
-  const grouped = useMemo(() => {
-    const map = new Map<string, Modifier[]>();
+  const groups = useMemo(() => {
+    const bySource = new Map<string, RuleCells[]>();
     for (const mod of modifiers) {
-      const key = mod.sourceName ?? mod.sourceType;
-      const list = map.get(key);
-      if (list) list.push(mod);
-      else map.set(key, [mod]);
+      const source = mod.sourceName ?? mod.sourceType;
+      const cells: RuleCells = [mod.target, mod.operator, mod.value, mod.valueType];
+      const rules = bySource.get(source);
+      if (rules) rules.push(cells);
+      else bySource.set(source, [cells]);
     }
-    return map;
+    return [...bySource].map(([source, rules]) => ({ key: source, source, rules }));
   }, [modifiers]);
 
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  return <GroupedRuleTable label={label} count={modifiers.length} lastColumn="Type" groups={groups} />;
+}
 
-  if (modifiers.length === 0) return null;
-
-  const toggle = (key: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-
+function SkippedModifierTable({ items }: { items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"] }) {
   return (
-    <Accordion disableGutters sx={{ boxShadow: "none", "&:before": { display: "none" } }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } }}>
-        <Typography variant="subtitle2">{label} ({modifiers.length})</Typography>
-      </AccordionSummary>
-      <AccordionDetails sx={{ px: 0, pt: 1 }}>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={headerCellSx} width={28} />
-                <TableCell sx={headerCellSx}>Source</TableCell>
-                <TableCell sx={headerCellSx}>Target</TableCell>
-                <TableCell sx={headerCellSx} align="center">Operator</TableCell>
-                <TableCell sx={headerCellSx} align="center">Value</TableCell>
-                <TableCell sx={headerCellSx} align="center">Type</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {[...grouped.entries()].map(([source, mods]) => {
-                const isOpen = expanded.has(source);
-                const single = mods.length === 1;
-                if (single) {
-                  const mod = mods[0];
-                  return (
-                    <TableRow key={source}>
-                      <TableCell sx={tableCellSx} />
-                      <TableCell sx={tableCellSx}>{source}</TableCell>
-                      <TableCell sx={tableCellSx}>{mod.target}</TableCell>
-                      <TableCell sx={tableCellSx} align="center">{mod.operator}</TableCell>
-                      <TableCell sx={tableCellSx} align="center">{mod.value}</TableCell>
-                      <TableCell sx={tableCellSx} align="center">{mod.valueType}</TableCell>
-                    </TableRow>
-                  );
-                }
-                return (
-                  <Fragment key={source}>
-                    <TableRow
-                      hover
-                      onClick={() => toggle(source)}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      <TableCell sx={{ ...tableCellSx, pr: 0 }}>
-                        <IconButton size="small" sx={{ p: 0 }}>
-                          {isOpen ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
-                        </IconButton>
-                      </TableCell>
-                      <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
-                      <TableCell sx={tableCellSx} colSpan={4}>
-                        <Chip label={mods.length} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.75rem" }} />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
-                        <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                          <Table size="small">
-                            <TableBody>
-                              {mods.map((mod, i) => (
-                                <TableRow key={i} sx={{ bgcolor: "action.hover" }}>
-                                  <TableCell sx={tableCellSx} />
-                                  <TableCell sx={tableCellSx}>{mod.target}</TableCell>
-                                  <TableCell sx={tableCellSx} align="center">{mod.operator}</TableCell>
-                                  <TableCell sx={tableCellSx} align="center">{mod.value}</TableCell>
-                                  <TableCell sx={tableCellSx} align="center">{mod.valueType}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </AccordionDetails>
-    </Accordion>
+    <DiagnosticsGroup label="Skipped" count={items.length}>
+      <HeaderRow labels={["Source Type", "Target", "Warning"]} />
+      <TableBody>
+        {items.map((item, i) => (
+          <TableRow key={i}>
+            <TableCell sx={tableCellSx}>{item.modifier.sourceType}</TableCell>
+            <TableCell sx={tableCellSx}>{item.modifier.target}</TableCell>
+            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DiagnosticsGroup>
   );
 }
 
-function SkippedModifierTable({ items }: { items: { warning: string; modifier: Modifier }[] }) {
-  if (items.length === 0) return null;
+function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["requirements"]["invalidRequirements"] }) {
   return (
-    <Accordion disableGutters sx={{ boxShadow: "none", "&:before": { display: "none" } }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } }}>
-        <Typography variant="subtitle2">Skipped ({items.length})</Typography>
-      </AccordionSummary>
-      <AccordionDetails sx={{ px: 0, pt: 1 }}>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={headerCellSx}>Source Type</TableCell>
-                <TableCell sx={headerCellSx}>Target</TableCell>
-                <TableCell sx={headerCellSx}>Warning</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items.map((item, i) => (
-                <TableRow key={i}>
-                  <TableCell sx={tableCellSx}>{item.modifier.sourceType}</TableCell>
-                  <TableCell sx={tableCellSx}>{item.modifier.target}</TableCell>
-                  <TableCell sx={tableCellSx}>{item.warning}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </AccordionDetails>
-    </Accordion>
-  );
-}
-
-function InvalidRequirementTable({ items }: { items: { warning: string; requirement: Requirement; sourceName?: string }[] }) {
-  if (items.length === 0) return null;
-  return (
-    <Accordion disableGutters sx={{ boxShadow: "none", "&:before": { display: "none" } }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } }}>
-        <Typography variant="subtitle2">Invalid ({items.length})</Typography>
-      </AccordionSummary>
-      <AccordionDetails sx={{ px: 0, pt: 1 }}>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={headerCellSx}>Source</TableCell>
-                <TableCell sx={headerCellSx}>Level</TableCell>
-                <TableCell sx={headerCellSx}>Target</TableCell>
-                <TableCell sx={headerCellSx}>Warning</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items.map((item, i) => (
-                <TableRow key={i}>
-                  <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
-                  <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
-                  <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
-                  <TableCell sx={tableCellSx}>{item.warning}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </AccordionDetails>
-    </Accordion>
+    <DiagnosticsGroup label="Invalid" count={items.length}>
+      <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
+      <TableBody>
+        {items.map((item, i) => (
+          <TableRow key={i}>
+            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
+            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DiagnosticsGroup>
   );
 }
 
 export function DiagnosticsSection({ validation, requirements, modifiers }: DiagnosticsSectionProps) {
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Accordion defaultExpanded={false} disableGutters sx={{ boxShadow: "none", "&:before": { display: "none" } }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } }}>
-          <Stack direction="row" spacing={1.5} sx={{
-            alignItems: "center"
-          }}>
+      <Accordion defaultExpanded={false} disableGutters sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Typography variant="h6">Diagnostics</Typography>
             <Chip
               label={validation.valid ? "Valid" : "Invalid"}
@@ -381,10 +253,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <Stack
                 direction="row"
                 spacing={2}
-                sx={{
-                  alignItems: "center",
-                  mb: 1
-                }}>
+                sx={{ alignItems: "center", mb: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Requirements</Typography>
                 <Stack direction="row" spacing={1}>
                   <Chip label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`} color="success" size="small" variant="outlined" />
@@ -404,10 +273,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <Stack
                 direction="row"
                 spacing={2}
-                sx={{
-                  alignItems: "center",
-                  mb: 1
-                }}>
+                sx={{ alignItems: "center", mb: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Modifiers</Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.5 }}>
                   <Chip label={`Applied: ${modifiers.appliedModifiers.length}`} color="success" size="small" variant="outlined" />

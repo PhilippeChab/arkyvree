@@ -1,3 +1,4 @@
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -74,9 +75,9 @@ export function TargetPathBrowser({
           partialPath: queryPrefix,
           position: queryPrefix.length,
           kind,
-          ...(entityType && { entityType }),
-          ...(debouncedSearch && { search: debouncedSearch }),
-          ...(flatMode && { flat: true }),
+          entityType: entityType || undefined,
+          search: debouncedSearch || undefined,
+          flat: flatMode || undefined,
           limit: 50,
           page: pageParam,
         },
@@ -92,15 +93,15 @@ export function TargetPathBrowser({
   // Segment labels from the completions response
   const segmentLabels = useMemo(() => {
     return completionsData?.pages[0]?.segmentLabels ?? {};
-  }, [completionsData?.pages]);
+  }, [completionsData]);
 
   const completions = useMemo(() => {
-    const items = completionsData?.pages.flatMap((page) => page.items) ?? [];
+    const items = pageItems(completionsData);
     return items.reduce((acc: PathCompletion[], item) => {
       if (!acc.some((c) => c.insertText === item.insertText)) acc.push(item);
       return acc;
     }, []);
-  }, [completionsData?.pages]);
+  }, [completionsData]);
 
   // Detect selected leaf from completions. In flat mode insertText is the full
   // path; in drill mode it's the last segment.
@@ -169,7 +170,7 @@ export function TargetPathBrowser({
           </Box>
         ))}
         {breadcrumbSegments.length > 0 && !disabled && (
-          <IconButton size="small" onClick={handleClear} sx={{ ml: 0.5 }}>
+          <IconButton size="small" aria-label="Clear path" onClick={handleClear} sx={{ ml: 0.5 }}>
             <Clear fontSize="small" />
           </IconButton>
         )}
@@ -218,7 +219,7 @@ export function TargetPathBrowser({
                 ? option.path.split(".").map((seg) => segmentLabels[seg] || formatSegment(seg)).join(" › ")
                 : null;
               return (
-                <Tooltip title={option.detail} placement="right" enterDelay={400} arrow key={option.insertText}>
+                <Tooltip describeChild title={option.detail} placement="right" enterDelay={400} arrow key={option.insertText}>
                   <ListItemButton
                     selected={isSelected}
                     onClick={() => handleNavigate(option)}
@@ -248,11 +249,7 @@ export function TargetPathBrowser({
             {completions.length === 0 && !isLoading && (
               <Typography
                 variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  px: 2,
-                  py: 1
-                }}>
+                sx={{ color: "text.secondary", px: 2, py: 1 }}>
                 No results
               </Typography>
             )}

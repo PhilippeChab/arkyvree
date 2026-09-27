@@ -1,23 +1,23 @@
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import type { RPC } from "@/client/src/services/rpc.ts";
-import type { InferResponseType } from "hono/client";
+import type { Dnd35BondedSectionProps } from "./types.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
-import { StatField, fmt } from "./statHelpers.tsx";
+import { StatField } from "./statHelpers.tsx";
 
-type CharacterResponse = InferResponseType<RPC["api"]["characters"][":id"]["$get"], 200>;
-type Bonded = NonNullable<NonNullable<CharacterResponse["bonded"]>[string]>;
+type FeatEntry = NonNullable<Dnd35BondedSectionProps["bonded"]["feats"]>[string];
 
-interface BondedSectionProps {
-  bonded: Bonded;
-  linkable?: boolean;
-}
+/** A feat entry, as opposed to a family of variants keyed by name. */
+const isFeat = (entry: FeatEntry): entry is Extract<FeatEntry, { possessed: boolean }> =>
+  "possessed" in entry && typeof entry.possessed === "boolean";
 
-export function BondedSection({ bonded, linkable = false }: BondedSectionProps) {
+export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionProps) {
   const abilityEntries = sortAbilities(
     Object.entries(bonded.abilities ?? {}),
-    bonded.baseRules ?? "Dungeons & Dragons: 3.5",
+    bonded.baseRules ?? DEFAULT_BASE_RULES,
     ([name]) => name,
   );
 
@@ -25,37 +25,18 @@ export function BondedSection({ bonded, linkable = false }: BondedSectionProps) 
   const saves = bonded.savingThrows ?? {};
 
   const featNames = Object.values(bonded.feats ?? {})
-    .filter((f): f is { name: string; possessed: boolean; count: number } =>
-      typeof f === "object" && f !== null && "possessed" in f && Boolean(f.possessed),
-    )
-    .map((f) => f.name)
+    .filter(isFeat)
+    .filter((feat) => feat.possessed)
+    .map((feat) => feat.name)
     .sort();
 
+  const nameSx = { fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" }, width: "fit-content" };
   const nameNode = linkable ? (
-    <MuiLink
-      component={Link}
-      to={`/characters/${bonded.id}`}
-      underline="hover"
-      sx={{
-        fontWeight: 600,
-        color: "primary.main",
-        typography: { xs: "body1", sm: "h6" },
-        width: "fit-content",
-      }}
-    >
+    <MuiLink component={Link} to={`/characters/${bonded.id}`} underline="hover" sx={nameSx}>
       {bonded.name}
     </MuiLink>
   ) : (
-    <Typography
-      sx={{
-        fontWeight: 600,
-        color: "primary.main",
-        typography: { xs: "body1", sm: "h6" },
-        width: "fit-content",
-      }}
-    >
-      {bonded.name}
-    </Typography>
+    <Typography sx={nameSx}>{bonded.name}</Typography>
   );
 
   return (
@@ -69,9 +50,8 @@ export function BondedSection({ bonded, linkable = false }: BondedSectionProps) 
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(64px, 80px))", md: "repeat(3, minmax(72px, 88px))" }, gap: 1 }}>
             {abilityEntries.map(([name, data]) => {
-              const a = data as { total?: number };
-              const total = a.total ?? 10;
-              const modifier = Math.floor((total - 10) / 2);
+              const total = data.total ?? 10;
+              const modifier = abilityModifier(total);
               return (
                 <AbilityScoreBox
                   key={name}
@@ -94,7 +74,7 @@ export function BondedSection({ bonded, linkable = false }: BondedSectionProps) 
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
                 <StatField label="AC" value={combat?.ac?.total ?? 10} />
-                <StatField label="BAB" value={fmt(combat?.bab)} />
+                <StatField label="BAB" value={formatSigned(combat?.bab)} />
                 <StatField label="Speed" value={`${combat?.speed?.total ?? 0} ft.`} />
               </Stack>
               <Stack spacing={1.5}>
@@ -102,7 +82,7 @@ export function BondedSection({ bonded, linkable = false }: BondedSectionProps) 
                   <StatField
                     key={key}
                     label={save.name ?? key}
-                    value={fmt(save.total)}
+                    value={formatSigned(save.total)}
                   />
                 ))}
               </Stack>

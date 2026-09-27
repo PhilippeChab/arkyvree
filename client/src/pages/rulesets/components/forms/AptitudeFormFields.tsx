@@ -1,4 +1,5 @@
-import { TextField } from "@mui/material";
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import type { UseFormReturn } from "react-hook-form";
 import type { InferRequestType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -10,20 +11,12 @@ export type AptitudeFormData = InferRequestType<
 export function AptitudeFormFields({ form }: { form: UseFormReturn<AptitudeFormData> }) {
   return (
     <>
-      <TextField
-        {...form.register("name", { required: "Name is required" })}
-        label="Name"
-        fullWidth
-        error={!!form.formState.errors.name}
-        helperText={form.formState.errors.name?.message}
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
       />
-      <TextField
+      <DescriptionField
         {...form.register("description")}
-        label="Description"
-        fullWidth
-        multiline
-        minRows={3}
-        sx={{ "& textarea": { resize: "vertical" } }}
       />
     </>
   );

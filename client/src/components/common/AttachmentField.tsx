@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 
@@ -63,7 +64,9 @@ export function AttachmentField({
   const attachment = attachmentQuery.data;
   const url = sharedMode ? urlOverride : (attachment?.url ?? null);
   const busy = upload.isPending || detach.isPending;
-  const interactive = !sharedMode && !readOnly && !busy && !!recordId && !isDemo;
+  // Whether this viewer may upload at all; `interactive` also waits out a running upload.
+  const canUpload = !sharedMode && !readOnly && !!recordId && !isDemo;
+  const interactive = canUpload && !busy;
   const showRing = ring && !!url;
 
   function pick() {
@@ -110,7 +113,7 @@ export function AttachmentField({
           onDragOver={onDragOver}
           onDragLeave={() => setDragOver(false)}
           role={interactive ? "button" : undefined}
-          aria-label={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}
+          aria-label={canUpload ? (url ? `Change ${label ?? name}` : `Upload ${label ?? name}`) : undefined}
           tabIndex={interactive ? 0 : -1}
           onKeyDown={(e) => {
             if (!interactive) return;
@@ -127,7 +130,7 @@ export function AttachmentField({
             overflow: "hidden",
             cursor: interactive && !url ? "pointer" : "default",
             bgcolor: url ? "transparent" : "action.hover",
-            border: showRing ? "4px solid" : "2px dashed",
+            border: showRing ? "4px solid" : canUpload ? "2px dashed" : "2px solid",
             borderColor: showRing
               ? "background.paper"
               : dragOver
@@ -166,12 +169,7 @@ export function AttachmentField({
               component="img"
               src={url}
               alt={label ?? name}
-              sx={{
-                width: dimension,
-                height: dimension,
-                objectFit: "cover",
-                display: "block",
-              }}
+              sx={{ width: dimension, height: dimension, objectFit: "cover", display: "block" }}
             />
           )
         ) : (
@@ -187,10 +185,21 @@ export function AttachmentField({
               textAlign: "center",
             }}
           >
-            <CloudUploadOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
-            <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
-              {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
-            </Typography>
+            {canUpload ? (
+              <>
+                <CloudUploadOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                  {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
+                </Typography>
+              </>
+            ) : (
+              <>
+                <ImageOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                  No {label ?? name}
+                </Typography>
+              </>
+            )}
           </Stack>
         )}
 

@@ -4,12 +4,22 @@
  */
 import { infiniteQueryOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
 
+import type { InferResponseType } from "hono/client";
+
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
+export type ClassDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["$get"], 200>;
 
 export type ClassSection = "levels" | "skills" | "feat-pools" | "spells-known" | "spell-list" | "spells";
 
 const classParam = (rulesetId: string, classId: string) => ({ param: { id: rulesetId, classId } });
+
+/** The class itself, shared by the class page and the classes table's row hover. */
+export const classDetailQuery = (rulesetId: string, classId: string) => queryOptions({
+  queryKey: queryKeys.rulesets.classDetail(rulesetId, classId),
+  queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get(classParam(rulesetId, classId))),
+});
 
 export const classLevelsQuery = (rulesetId: string, classId: string) => queryOptions({
   queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),

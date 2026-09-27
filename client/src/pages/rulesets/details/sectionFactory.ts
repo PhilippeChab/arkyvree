@@ -1,22 +1,17 @@
-import type { RPC } from "@/client/src/services/rpc.ts";
-import type { InferResponseType } from "hono/client";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { ReactNode } from "react";
 import { ClassesSection, ItemsSection, SkillsSection, SpellsSection } from "./sections/dnd3.5/index.ts";
 
-type RulesetResponse = InferResponseType<RPC["api"]["rulesets"][":id"]["$get"], 200>;
-type BaseRules = RulesetResponse["baseRules"];
+type BaseRules = RulesetDetail["baseRules"];
 
-export interface SkillsSectionProps {
-  ruleset: RulesetResponse;
+/** What the ruleset page passes every section tab. */
+export interface RulesetSectionProps {
+  ruleset: RulesetDetail;
   childOnly: boolean;
   onChildOnlyChange: (childOnly: boolean) => void;
 }
 
-export type ClassesSectionProps = SkillsSectionProps;
-export type ItemsSectionProps = SkillsSectionProps;
-export type PowersSectionProps = SkillsSectionProps;
-
-type SectionComponent<P extends SkillsSectionProps = SkillsSectionProps> = (props: P) => ReactNode;
+type SectionComponent = (props: RulesetSectionProps) => ReactNode;
 
 interface SectionMap {
   ClassesSection: SectionComponent;
