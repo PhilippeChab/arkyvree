@@ -12,7 +12,7 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { ClassesSectionProps } from "../../sectionFactory.ts";
+import type { ClassesSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const CLASSES_COLUMNS = [

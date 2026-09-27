@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getLevelUpSections } from "../levelUpFactory.ts";
+import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import {
   computeMaxPointsForSkill,
 } from "@/shared/dnd3.5/skills.ts";

@@ -102,16 +102,6 @@ interface ConfirmActionProps {
   isLoading: boolean;
 }
 
-export function DeleteLevelDialog(props: ConfirmActionProps) {
-  return (
-    <DeleteDialog
-      {...props}
-      title="Delete Level"
-      message="Are you sure you want to delete this level? This action cannot be undone."
-    />
-  );
-}
-
 export function RemoveSkillDialog(props: ConfirmActionProps) {
   return (
     <DeleteDialog

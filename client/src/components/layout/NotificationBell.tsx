@@ -15,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { keyframes } from "@mui/system";
+import { keyframes } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";

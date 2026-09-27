@@ -23,19 +23,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type { UseFormReturn } from "react-hook-form";
 import { BulkVariantsDialog } from "@/client/src/pages/rulesets/details/sections/dnd3.5/BulkVariantsDialog.tsx";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
+import type { ItemsSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
 type ItemsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>;
 type Item = ItemsPaginated["items"][number];
-
-interface ItemsSectionProps {
-  ruleset: { id: string; name: string; rulesetId?: string | null; userId?: string | null; status?: string };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
-import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
 const ITEMS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

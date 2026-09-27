@@ -13,7 +13,7 @@ import {
 import { type InferResponseType } from "hono/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getLevelUpSections } from "../levelUpFactory.ts";
+import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 
 // ── Shared types ──────────────────────────────────────────────────────
 

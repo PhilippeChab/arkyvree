@@ -77,6 +77,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 - Functional components with explicit prop interfaces
 - Group related components in folders with `index.ts` exports
+- Keep every folder's `index.ts`, even one nothing imports yet (routes lazy-load page files directly, so page barrels look unused). Don't delete them as dead code
 
 **API Layer:**
 

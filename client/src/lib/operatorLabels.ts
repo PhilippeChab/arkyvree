@@ -14,8 +14,3 @@ export const REQUIREMENT_OPERATOR_LABELS: Record<string, string> = {
   greater_than_or_equal: ">=",
   less_than_or_equal: "<=",
 };
-
-export const OPERATOR_LABELS: Record<string, string> = {
-  ...MODIFIER_OPERATOR_LABELS,
-  ...REQUIREMENT_OPERATOR_LABELS,
-};

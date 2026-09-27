@@ -40,13 +40,3 @@ export function extractTemplatePath(value: string): string | null {
   if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(candidate)) return null;
   return candidate;
 }
-
-/** True if the template is a single-path reference (bracketed or bare). */
-export function isSinglePathTemplate(value: string): boolean {
-  return extractTemplatePath(value) !== null;
-}
-
-/** Build the canonical template-value string for a path. */
-export function formatTemplatePath(path: string): string {
-  return `{{ [${path}] }}`;
-}
