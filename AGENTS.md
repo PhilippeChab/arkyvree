@@ -145,6 +145,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Never skip failing tests or use mocks
 - Use seed data from test database
 - Run with `bun run test`
+- E2E (`bun run test:e2e`) runs on a quarter of the CPU cores locally so the machine stays usable; pass `--workers N` to change it for one run
 
 **Test Structure:**
 

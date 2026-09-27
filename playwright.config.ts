@@ -17,8 +17,13 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /*
+   * One worker on CI. Locally a quarter of the cores: each worker drives its
+   * own browser against the shared dev server, API and database, and the
+   * default (half the cores) saturates the machine and makes timing-sensitive
+   * journeys flaky. Override for one run with `--workers N`.
+   */
+  workers: process.env.CI ? 1 : '25%',
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI
     ? [['html'], ['list'], ['github']]
