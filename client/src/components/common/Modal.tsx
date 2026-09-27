@@ -11,7 +11,7 @@ export type ModalProps = DialogProps;
  * React Hook Form. For form dialogs use `FormDialog` (which wraps this
  * with a dirty-state close-block) or `CreateDialog`/`EditDialog`.
  *
- * Singletary place in the codebase that imports raw MUI `Dialog` —
+ * The single place in the codebase that imports raw MUI `Dialog` —
  * the lint config bans the direct import everywhere else.
  */
 export function Modal({

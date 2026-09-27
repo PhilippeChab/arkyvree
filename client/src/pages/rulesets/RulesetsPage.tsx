@@ -18,13 +18,11 @@ import {
 import { usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
 import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery, rulesetListQuery, type RulesetListFilters } from "@/client/src/lib/queries.ts";
 import {
-  Archive as ArchiveIcon,
-  CheckCircle as PublishedIcon,
   ContentCopy as ForkIcon,
-  EditNote as DraftIcon,
   Extension as ExtensionIcon,
   Lock as LockIcon,
   MenuBook as BookIcon,
@@ -59,24 +57,6 @@ const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
 ];
 
 const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [...CREATED_SORTS, ...UPDATED_SORTS];
-
-const STATUS_PILLS = {
-  Draft: {
-    icon: DraftIcon,
-    color: "info",
-    tooltip: "Fully editable — add, edit, and delete entities. Only visible to you until published.",
-  },
-  Published: {
-    icon: PublishedIcon,
-    color: "success",
-    tooltip: "Available for others to use and fork. You can still add, edit, and delete entities — characters that depend on a deletion will block it.",
-  },
-  Archived: {
-    icon: ArchiveIcon,
-    color: "default",
-    tooltip: "Read-only. Can be un-archived later.",
-  },
-} as const;
 
 function RulesetList({ filters }: { filters: RulesetListFilters }) {
   const navigate = useNavigate();
@@ -127,7 +107,7 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
     <>
       <ListCardGrid>
         {rulesets.map((ruleset, index) => {
-          const status = STATUS_PILLS[ruleset.status];
+          const status = RULESET_STATUS[ruleset.status];
           // The page opens on the Races tab, with "Local changes" on for extensions.
           const prefetch = () => {
             void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));

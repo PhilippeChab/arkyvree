@@ -6,7 +6,7 @@
 
 **Properties** are typed key-value tags attached to an entity. They're data the engine reads to compute the sheet, and metadata the customization layer references in [requirements](#what-are-requirements) and [modifiers](#what-are-modifiers).
 
-In the editor: **Property type** + **value**. Example properties on the Longsword item:
+In the editor: a **Type** and a **Value**. Example properties on the Longsword item:
 
 - `WEAPON_PROFICIENCY = Martial`
 - `WEAPON_FAMILY = Sword`

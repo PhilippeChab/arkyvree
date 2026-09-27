@@ -8,11 +8,12 @@
  *     `lockEntityForMutation` / `delete*WithCascade` helpers for admin CRUD mutations.
  *     `cowCustomizationForMutation` resolves the row a customization update or delete changes.
  *
- *   Forking primitives (only `RulesetsService` fork/publish):
- *     `buildOverrideMap`, `copyEntity*`, `fetch*`,
- *     `ENTITY_TYPE_TO_SOURCE_TYPE`. These live here because they share
- *     utilities with the runtime COW path; they aren't "internal" in any
- *     enforceable sense — they're just owned by the fork flow.
+ *   Copy and fork primitives: `fetchEntityCustomizations` /
+ *     `copyEntityCustomizations*` (the COW write path and the item /
+ *     modifier duplicate flows), `ENTITY_TYPE_TO_SOURCE_TYPE` and
+ *     `NAME_FALLBACK_ENTITY_TYPES` (`RulesetsService` fork/publish), and
+ *     `buildOverrideMap`, which only `cow/` calls. A fork copies no rows:
+ *     `cowEntity` copies an entity on its first edit.
  *
  *   Framework internals (used by the cache compose step + the ruleset
  *     implementation layer — `DetailedCharacterDataLoader`, `TargetPaths`,
@@ -36,7 +37,7 @@ export {
   entityHasCharacterPicks,
 } from "./cascade.ts";
 
-// Forking primitives — RulesetsService only.
+// Copy and fork primitives.
 export { buildOverrideMap } from "./overrideMap.ts";
 export { ENTITY_TYPE_TO_SOURCE_TYPE, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";

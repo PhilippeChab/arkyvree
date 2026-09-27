@@ -13,10 +13,10 @@ In a fork you can:
 - Add new entities — homebrew feats, custom races, new magic items.
 - Edit anything inherited from the parent.
 - Delete entities — for inherited content this hides it from your fork; for your own additions it's a permanent removal. Either way, deletion is blocked if a character has the entity picked.
-- Install [extensions](#what-are-extensions) on your fork independently of the parent.
+- Subscribe your fork to [extensions](#what-are-extensions) independently of the parent.
 - Build characters on it.
 
-Only base rulesets can be forked — you can't fork someone else's fork. To use someone's published homebrew, install it as a community extension on your own fork instead. See [What are Extensions?](#what-are-extensions)
+Only base rulesets can be forked — you can't fork someone else's fork. To use someone's homebrew, subscribe your own fork to it, once they've published it as an extension. See [What are Extensions?](#what-are-extensions)
 
 When the parent ruleset is updated, your fork picks up the changes for any entities you haven't edited. See [How do forks stay up to date?](#how-do-forks-stay-up-to-date)
 
@@ -32,7 +32,7 @@ To re-pull the parent's update onto an entity you've already edited, delete your
 
 ## What are Extensions?
 
-**Extensions** are content packages you can install on a fork to add a book's worth of feats, classes, spells, and items — without forking again.
+**Extensions** are content packages a fork can subscribe to, adding a book's worth of feats, classes, spells, and items — without forking again.
 
 **Official extensions** for Core SRD 3.5:
 
@@ -43,10 +43,10 @@ To re-pull the parent's update onto an entity you've already edited, delete your
 - **Complete Scoundrel** — skill tricks, rogue-style content.
 - **DMG** — additional magic items, prestige classes, optional rules.
 
-**Community extensions.** Any published, public fork that has no extensions of its own is automatically eligible to be installed as an extension by anyone forking the same base. There's no separate publish step — they show up in the same Browse list alongside the official ones, just publish your fork as public.
+**Community extensions.** When you publish a fork, the publish dialog asks whether it's a **Ruleset** (playable directly) or an **Extension**. A public fork published as an extension, with no extensions of its own, can be subscribed to from any fork of the same base. It's listed alongside the official ones.
 
-To install: from your fork, **Extensions → Browse → Install**. The new content appears in your fork immediately.
+To subscribe: from your fork, **More → Subscribe**, pick one or more extensions, and click **Subscribe**. The new content appears in your fork immediately.
 
-To uninstall: **Extensions → Uninstall**. Uninstall is blocked once any of your characters has picked content from the extension — switch those characters off the affected entities first.
+To unsubscribe: click the extensions chip in your fork's header and remove the extension. Your edits to that extension's content are deleted with it. Unsubscribing is blocked once any character on your fork has picked content from the extension — switch those characters off the affected entities first.
 
-If a community extension's author archives it, existing installations keep working — only new installs are blocked until the author unarchives.
+If a community extension's author archives it, existing subscriptions keep working. New subscriptions are blocked until the author unarchives it and publishes it again.

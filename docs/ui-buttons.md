@@ -41,7 +41,7 @@ For confirmations, `ConfirmDialog` takes the intent directly: `confirmColor="war
 - ❌ `<Button>Delete</Button>` with no color on a destructive confirm — reads as a default action. Use `color="error" variant="contained"`.
 - ❌ `<Button>Cancel</Button>` in a dialog with no variant/color — reads heavier than intended next to a contained submit. Use `variant="outlined" color="inherit"`, or rely on `StandardDialogs`.
 - ❌ Confirming an Archive with `DeleteDialog` — its red "Delete" button reads as destruction. Use `ConfirmDialog` with `confirmColor="warning"` and a label like "Archive Character".
-- ❌ Splitting Cancel into a Modal that wraps a `<form>` — `Modal` doesn't run the dirty-form close guard. Use `FormDialog` (see [CLAUDE.md](../CLAUDE.md) → Dialog Conventions).
+- ❌ Splitting Cancel into a Modal that wraps a `<form>` — `Modal` doesn't run the dirty-form close guard. Use `FormDialog` (see [AGENTS.md](../AGENTS.md) → Dialog Conventions).
 
 ## Loading state
 

@@ -149,7 +149,7 @@ Modifiers, properties, and requirements live on a parent entity (a feat, item, k
 
 ## Ruleset entities — `RulesetEntitiesPolicy`
 
-Stub class. All methods return `true`. Real authorization for these surfaces is on the parent ruleset (`RulesetsPolicy.canUpdateEntity`). The class exists so service code has a consistent `policy.canX()` shape regardless of entity type.
+Stub class that no service calls: all its methods return `true`. Real authorization for these surfaces is on the parent ruleset (`RulesetsPolicy.canUpdateEntity` / `canDeleteEntity`).
 
 ## Identity vs. policy
 
@@ -160,17 +160,17 @@ There are still a few inline `entity.userId === session.userId` checks in servic
 - Self-removal predicates: `isSelfRemoval = player.userId === session.userId` branches behavior, doesn't gate it.
 - Boolean predicates returned by attachment registration: `Attachable.isOwner = (s, id) => character?.userId === s.userId`.
 
-Anything that *throws* on the basis of ownership is a permission gate and belongs in a policy. The CLAUDE.md's "Permission Checks (Policy vs. Identity)" section is the canonical guidance.
+Anything that *throws* on the basis of ownership is a permission gate and belongs in a policy. The "Permission Checks (Policy vs. Identity)" section of [AGENTS.md](../AGENTS.md) is the canonical guidance.
 
 ## Where each policy is wired
 
 | Policy | Service callers |
 |---|---|
-| `RulesetsPolicy` | `RulesetsService`, all `*RulesetService` files under `server/services/rulesets/`, `ContributorsService` (rulesets), `ExtensionsService` |
+| `RulesetsPolicy` | `RulesetsService` (including extension subscribe / unsubscribe), the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `getRulesetPolicy` in `server/services/rulesets/helpers.ts`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `Characters.findOneEditable` instead and skip the policy class — same effective rule, fewer object instantiations |
 | `CampaignsPolicy` | `CampaignsService`, `PlayersService`, campaigns sub-services |
-| `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization), `CharacterModifiersService` |
-| `RulesetEntitiesPolicy` | nominal hook for ruleset entity services; real check is `getRulesetPolicy(...).canUpdateEntity()` |
+| `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization). `CharacterModifiersService` uses `Characters.findOneEditable`, like the other character writes |
+| `RulesetEntitiesPolicy` | no service calls it; entity services check `getRulesetPolicy(...).canUpdateEntity()` / `canDeleteEntity()` |
 | `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 
 Campaign creation validates ruleset access before inserting the campaign or GM membership. It uses the character-creation access policy: public published, owner, contributor, or existing active campaign membership. Archived rulesets and extensions cannot be used to create campaigns or characters. A newly requested campaign cannot grant its own ruleset access.

@@ -146,11 +146,13 @@ From `server/cache/rulesetCache.ts` (re-exported via `server/cache/index.ts`):
 | `warmSystemRulesetCache` | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`. |
 | `CachedCowData`, `CachedRulesetData` (types) | Parameter / return types for scope callbacks and framework extension points. |
 
-### Framework / forking primitives
+### Framework / copy primitives
 
-Used by `RulesetsService` (fork/publish) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
+Used by the copy flows, `RulesetsService` (fork/publish) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
-- **Forking** (`RulesetsService` only): `buildOverrideMap`, `buildRootResolver`, `copyEntityCustomizations`, `copyEntityRelationships`, `fetchEntityCustomizations`, `fetchKlassLevelCustomizations`, `fetchKlassRelationships`, `remapEntityFKs`, `archiveModifiersWithCascade`, `ENTITY_TYPE_TO_SOURCE_TYPE`.
+- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `bulkCreateVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow.ts` doesn't re-export.
+- **Fork / publish** (`RulesetsService`): `ENTITY_TYPE_TO_SOURCE_TYPE`, `NAME_FALLBACK_ENTITY_TYPES`. A fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)); `cowEntity` copies an entity on its first edit.
+- **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
 - **Source-chain construction**: `buildSourceChain`, shared by fork/publish and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
@@ -459,23 +461,23 @@ sequenceDiagram
 2. Fetch it in the appropriate round of `fetchRulesetRawData` (rounds gate on dependencies — klass-level fetches need `klasses` first, customizations need all entity IDs).
 3. Add the composed array to `CachedRulesetData`.
 4. Extend the compose step: concat across chain → filter `isExcluded(id)` → `resolveOverrides` if it has FKs.
-5. Build an `entityById` Map alongside (`buildById(resolvedX)`) **and** wrap it with `cowResolvingMap(map, overriddenIds)` before returning so `.get` auto-resolves stored pre-COW ids.
+5. Build a `<entity>ById` Map alongside (`buildById(resolvedX)`, like `featsById`) **and** wrap it with `cowResolvingMap(map, overriddenIds)` before returning so `.get` auto-resolves stored pre-COW ids.
 6. If callers need a filter like "X by Y", build that index in the compose step too and wrap it the same way.
 7. If the entity carries inline join arrays (like `powersAptitudesInRules`), remap the nested ids in the compose step too — `resolveOverrides` only touches top-level fields.
 8. Update `tests/cache/rulesetCache.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
-9. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.entityById.get(id)`. No canonicalize needed — the wrapper handles it. Either access pattern works; the cache Map is preferred when you already have `rulesetData` in scope.
+9. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.<entity>ById.get(id)`. No canonicalize needed — the wrapper handles it. Either access pattern works; the cache Map is preferred when you already have `rulesetData` in scope.
 
 ## Adding a new write-method prefix
 
-The Proxy detects writes by matching method names against a prefix list (`create`, `update`, `archive`, `unarchive`, `restore`, `delete`, `save`, `upsert`, `insert`, `link`, `unlink`, `orphan`) plus an explicit set of grandfathered full names (`publish`, `markRead`, `markAllRead`, `backfillUserId`). If a repository adds a mutation whose name doesn't match any of those, update `isWriteMethod` in `server/repositories/index.ts`. Otherwise a stale cached read could be returned after the mutation.
+The Proxy detects writes by matching method names against a prefix list (`create`, `update`, `archive`, `unarchive`, `restore`, `delete`, `save`, `upsert`, `insert`, `link`, `unlink`, `orphan`) plus an explicit set of grandfathered full names (`publish`, `markRead`, `markReadByTarget`, `markAllRead`, `backfillUserId`, `claim`). If a repository adds a mutation whose name doesn't match any of those, update `isWriteMethod` in `server/repositories/index.ts`. Otherwise a stale cached read could be returned after the mutation.
 
-**Prefer renaming over adding new matchers.** An explicit `updateStatus` or `updateReadAt` is safer than another one-off verb because it can't drift into a future read method that gets misclassified (e.g. a hypothetical `markupSummary()` would have been caught by `prop.startsWith("mark")` as a spurious write — which is why the `mark*` prefix was dropped in favor of exact names).
+**Prefer renaming over adding new matchers.** An `update*` name (say, `updateStatus`) is safer than another one-off verb because it can't drift into a future read method that gets misclassified (e.g. a hypothetical `markupSummary()` would have been caught by `prop.startsWith("mark")` as a spurious write — which is why the `mark*` prefix was dropped in favor of exact names).
 
 ## References
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
 - `server/cache/rulesetCache.ts` — raw-tier cache, compose step (sibling merging + FK remap), accessor maps (incl. `cowResolvingMap` wrapper), invalidation
-- `server/services/rulesets/cow.ts` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, forking primitives, `resolveOverrides`, invalidation hooks
+- `server/services/rulesets/cow.ts` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
 - `server/services/rulesets/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `currentCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/index.ts` — Proxy wrapping every repo with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve

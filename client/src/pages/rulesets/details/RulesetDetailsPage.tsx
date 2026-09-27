@@ -23,6 +23,7 @@ import {
   UnsubscribeExtensionDialog,
 } from "@/client/src/pages/rulesets/details/components/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   useRulesetOperations,
   useRulesetPermissions,
@@ -38,11 +39,9 @@ import {
   Archive as ArchiveIcon,
   CompareArrows as CompareArrowsIcon,
   Bolt as PowersIcon,
-  CheckCircle as PublishedIcon,
   Construction as ItemsIcon,
   ContentCopy as ForkIcon,
   Edit as EditIcon,
-  EditNote as DraftIcon,
   Extension as ExtensionIcon,
   Gavel as MechanicsIcon,
   Lock as PrivateIcon,
@@ -102,50 +101,21 @@ function HelpLabel({ label, help }: { label: string; help: string }) {
 }
 
 function getStatusChip(status: RulesetDetail["status"]) {
-  switch (status) {
-    case "Draft":
-      return (
-        <Tooltip describeChild title="Fully editable — add, edit, and delete entities. Only visible to you until published.">
-          <Chip
-            icon={<DraftIcon />}
-            label="Draft"
-            size="medium"
-            color="info"
-            variant="filled"
-            sx={{ fontWeight: 600 }}
-          />
-        </Tooltip>
-      );
-    case "Published":
-      return (
-        <Tooltip describeChild title="Available for others to use and fork. You can still add, edit, and delete entities — characters that depend on a deletion will block it.">
-          <Chip
-            icon={<PublishedIcon />}
-            label="Published"
-            size="medium"
-            color="success"
-            variant="filled"
-            sx={{ fontWeight: 600 }}
-          />
-        </Tooltip>
-      );
-    case "Archived":
-      return (
-        <Tooltip describeChild title="Read-only. Can be un-archived later.">
-          <Chip
-            icon={<ArchiveIcon />}
-            label="Archived"
-            size="medium"
-            sx={{
-              fontWeight: 600,
-              bgcolor: "grey.400",
-              color: "grey.700",
-              "& .MuiChip-icon": { color: "grey.600" },
-            }}
-          />
-        </Tooltip>
-      );
-  }
+  const { icon: StatusIcon, color, tooltip } = RULESET_STATUS[status];
+  return (
+    <Tooltip describeChild title={tooltip}>
+      <Chip
+        icon={<StatusIcon />}
+        label={status}
+        size="medium"
+        color={color}
+        variant="filled"
+        sx={status === "Archived"
+          ? { fontWeight: 600, bgcolor: "grey.400", color: "grey.700", "& .MuiChip-icon": { color: "grey.600" } }
+          : { fontWeight: 600 }}
+      />
+    </Tooltip>
+  );
 }
 
 export default function RulesetDetailsPage() {

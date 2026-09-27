@@ -70,12 +70,13 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Develop mobile first — all new components and layouts must work on small screens (375px) before scaling up
 - Use `useIsMobile()` hook (`client/src/hooks/useIsMobile.ts`) for mobile-specific branching
 - Use MUI responsive sx props (`{ xs: ..., sm: ..., md: ... }`) over static values
-- All `<Dialog>` components must include `fullScreen={isMobile}`
+- All `<Dialog>` components must include `fullScreen={isMobile}`. A full-screen dialog has no backdrop to tap, so every dialog needs its own way out: a Close or Cancel button
 - Never use hover-only interactions without a touch-friendly fallback
 
 **Components:**
 
 - Functional components with explicit prop interfaces
+- Every control has an accessible name. An icon-only `IconButton` takes an `aria-label` (a `Tooltip` around it names it, but not when the tooltip wraps a `<span>` for a disabled button). A `Tooltip` on an element that already has text (a chip, a list option, a labelled button) takes `describeChild`, otherwise its title replaces the element's name
 - Group related components in folders with `index.ts` exports. Code outside a folder imports it through its `index.ts`, never a file inside it; files within the folder (its subfolders included) import each other directly, and a subfolder with its own `index.ts` is imported through that
 - An `index.ts` exports what code outside its folder uses. An entry, or a whole `index.ts`, that nothing imports is dead code: delete it. Page folders have none: routes import each page file directly (most lazily, so each gets its own chunk)
 
@@ -91,7 +92,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 - **Server state**: TanStack React Query for all API data
 - **Auth state**: Zustand store (`stores/authStore.ts`) with localStorage persistence
-- **Form state**: React Hook Form — use `form.reset()` to populate edit forms, never `key={}` remounting or `defaultValue={}`
+- **Form state**: React Hook Form — use `form.reset()` to populate edit forms, never `key={}` remounting or `defaultValue={}`. Map a nullable text column to `""` in the form values (`description: x.description ?? ""`): an input holds `""`, so `undefined` makes the form dirty on mount. A custom input bound through `Controller` passes `field.ref` to the input element (`inputRef`), so a failed submit can focus it
 
 **Hooks & Patterns:**
 
@@ -111,7 +112,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Untyped JSON (activity and notification payloads, stored state) is read through `isRecord` (`lib/isRecord.ts`) guards, not casts
 - Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()`
 
-**Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `PageActionButton` (the create action in a list page header and empty state), `LoadMoreButton` (paginated lists), `BlankState` (empty lists; pass the icon component, it applies the standard size and tint), `SectionContent` (a tab's centered column), `PageError` (a page that failed to load, with its way back), `ActionMenuItem` (a page's action menu item, colored by intent), `NameField` / `DescriptionField` / `EmailField` / `PasswordField` (with `nameRules` from `lib/validation.ts`), `SelectField` (a form's select), `RulesetPicker` + `BaseRulesetAlert` (a create dialog's ruleset), `ValidationIssueList`. A select outside a form is a `TextField select`: `FormControl` + `InputLabel` + `Select` leaves the combobox without an accessible name. Ruleset tables use `DescriptionCell` and `AptitudeChipsCell`, and spell lists `SpellLevelFilter` (`pages/rulesets/components`). Formatting helpers live in `lib/formatNumeric.ts` (`formatSigned`, `formatCount`, `formatCost`, `formatWeight`) and `lib/errorMessage.ts`; an empty value reads "—". Reuse them rather than restyling a copy.
+**Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `PageActionButton` (the create action in a list page header and empty state), `LoadMoreButton` (paginated lists), `BlankState` (empty lists; pass the icon component, it applies the standard size and tint), `SectionContent` (a tab's centered column), `PageError` (a page that failed to load, with its way back; `loadFailureMessage(what, error)` from `lib/errorMessage.ts` gives its "not found" / "Failed to load" text), `ActionMenuItem` (a page's action menu item, colored by intent), `NameField` / `DescriptionField` / `EmailField` / `PasswordField` (with `nameRules` from `lib/validation.ts`), `SelectField` (a form's select), `RulesetPicker` + `BaseRulesetAlert` (a create dialog's ruleset), `ValidationIssueList`. A select outside a form is a `TextField select`: `FormControl` + `InputLabel` + `Select` leaves the combobox without an accessible name. Ruleset tables use `DescriptionCell` and `AptitudeChipsCell`, and spell lists `SpellLevelFilter` (`pages/rulesets/components`). Formatting helpers live in `lib/formatNumeric.ts` (`formatSigned`, `formatCount`, `formatCost`, `formatWeight`) and `lib/errorMessage.ts`; an empty value reads "—". Reuse them rather than restyling a copy.
 
 **Toast/Snackbar:**
 
