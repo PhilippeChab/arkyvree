@@ -2,6 +2,7 @@ import { Chip } from "@mui/material";
 import { useForm } from "react-hook-form";
 
 import { useFormSync } from "@/client/src/hooks/index.ts";
+import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import { ItemFormFields, type ItemFormInternal, toItemForm, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
@@ -25,6 +26,9 @@ export function ItemEditor({ rulesetId, entityId, recordKey, adoptKey, entity: i
     })),
   });
 
+  const cost = formatCost(item.costGp);
+  const weight = formatWeight(item.weight);
+
   return (
     <EntityDetailsCard
       title="Item Details"
@@ -34,8 +38,8 @@ export function ItemEditor({ rulesetId, entityId, recordKey, adoptKey, entity: i
         <>
           {item.type && <Chip label={item.type} size="small" color="secondary" sx={{ fontWeight: 600 }} />}
           {item.slot && <Chip label={item.slot} size="small" color="info" variant="outlined" />}
-          {item.costGp && <Chip label={`${item.costGp} gp`} size="small" variant="outlined" />}
-          {item.weight && <Chip label={`${item.weight} lb`} size="small" variant="outlined" />}
+          {cost && <Chip label={cost} size="small" variant="outlined" />}
+          {weight && <Chip label={weight} size="small" variant="outlined" />}
         </>
       )}
       edit={canEdit ? {

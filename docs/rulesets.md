@@ -10,14 +10,14 @@ Rulesets define game rules (races, classes, feats, skills, items, powers, etc.) 
 Base Ruleset (D&D 3.5)           ← system-owned, userId: null, no parent
 ├── Complete Warrior (extension)  ← system-owned, rulesetId: baseId, published
 ├── User's Fork (draft)           ← userId set, rulesetId: baseId
-│   └── Complete Warrior (installed extension)
+│   └── Complete Warrior (subscribed extension)
 └── Another User's Fork
 ```
 
 | Type | `userId` | `rulesetId` | `kind` | Description |
 |---|---|---|---|---|
 | **Base** | `null` | `null` | `ruleset` | System-owned root ruleset (e.g., D&D 3.5). Immutable |
-| **System Extension** | `null` | parent ID | `extension` | System-owned supplement (e.g., Complete Warrior). Published, installed by reference |
+| **System Extension** | `null` | parent ID | `extension` | System-owned supplement (e.g., Complete Warrior). Published, subscribed to by reference |
 | **User Fork (playable)** | user ID | parent ID | `ruleset` | User's editable copy of a published ruleset; intended to be played directly |
 | **User Fork (extension)** | user ID | parent ID | `extension` | User fork published as an extension; can be subscribed to by other users' forks of the same base, but cannot be used to create characters directly |
 
@@ -27,7 +27,7 @@ Base Ruleset (D&D 3.5)           ← system-owned, userId: null, no parent
 |---|---|
 | `rulesetId` | Parent ruleset (null for base rulesets) |
 | `ancestorRulesetIds` | `[parentId]` — only base rulesets can be forked, so the chain has at most one entry |
-| `extensionRulesetIds` | Installed extension IDs (appended on install, removed on uninstall) |
+| `extensionRulesetIds` | Subscribed extension IDs (appended on subscribe, removed on unsubscribe) |
 | `status` | `Draft`, `Published`, or `Archived` |
 | `kind` | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog. Setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (`extensionRulesetIds = []`) |
 
@@ -175,7 +175,7 @@ rename, so picks of the source keep resolving to that copy.
 
 ### Multi-Extension COW (Sibling Map)
 
-When multiple extensions COW the same base entity, each extension creates its own independent copy. At runtime, one copy "wins" (the first extension in install order) and the others become **siblings**. Their data is merged transparently so the user sees a single entity with combined customizations.
+When multiple extensions COW the same base entity, each extension creates its own independent copy. At runtime, one copy "wins" (the first extension in subscription order, `extensionRulesetIds`) and the others become **siblings**. Their data is merged transparently so the user sees a single entity with combined customizations.
 
 Merged requirements are **ANDed**: the winner's requirements and each sibling's requirement trees all apply. An OR chain added by one extension therefore does not widen eligibility for another extension's requirements. Illustrative example:
 
@@ -183,7 +183,7 @@ Merged requirements are **ANDed**: the winner's requirements and each sibling's 
 Base Ruleset
 └── Power Attack (requires: Strength >= 13)
 
-Extension A (installed first)
+Extension A (subscribed first)
 └── Power Attack (COW copy: Strength >= 13, adds BAB >= 1)
 
 Extension B
@@ -212,7 +212,7 @@ User's Fork (subscribed to A, then B)
 
 **Key rule**: A local (child fork) COW always wins completely — no sibling merging. The sibling map only applies to extension-vs-extension COW conflicts. If the user's own fork has COW'd a base entity, that fork's copy is authoritative and extension copies are ignored.
 
-This also applies when an extension is installed after the local copy was made:
+This also applies when an extension is subscribed to after the local copy was made:
 its unrelated entities remain available, but its contributions to that overridden
 entity are not merged into the local copy. Restoring the override resumes the
 normal merged view of the currently subscribed extensions. Hidden sibling IDs
@@ -256,11 +256,11 @@ After COW:
 | **Properties** | Inserts sibling properties | `type + value` |
 | **Aptitude links** | Inserts sibling `feats_aptitudes` / `powers_aptitudes` rows | `aptitudeId` |
 
-Each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later uninstall one of the extensions, their fork retains the full merged data since it's baked into their own copy.
+Each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy.
 
 ## Extensions
 
-Extensions add supplemental entities to a base ruleset. They come in two flavors that share the same data model — installation is by reference, never copy:
+Extensions add supplemental entities to a base ruleset. They come in two flavors that share the same data model — a subscription is by reference, never a copy:
 
 Eligibility is determined by `kind = 'extension'` on the ruleset row, set explicitly by the author (or seeded for system extensions). Both flavors share the same row shape:
 
@@ -269,18 +269,18 @@ Eligibility is determined by `kind = 'extension'` on the ruleset row, set explic
 
 The validators that set `kind = 'extension'` enforce: must be a fork, must not subscribe to other extensions. That keeps the dependency graph one level deep — subscribers never need to walk a transitive chain. The same invariant is enforced on the subscribe path: a host whose own `kind = 'extension'` cannot subscribe to anything (`canSubscribeExtension` policy).
 
-### Install
+### Subscribe (`subscribeExtension`)
 
 1. Validates: ruleset is a fork, not archived, user is owner, extension is `kind = 'extension'` + published + shares the same base + (if user-owned) public + the host's own `kind` is `'ruleset'`
-2. Checks not already installed (`extensionRulesetIds.includes`)
+2. Checks not already subscribed (`extensionRulesetIds.includes`)
 3. Appends `extensionId` to `extensionRulesetIds` array
 4. Creates tracking row in `ruleset_extensions` (UI metadata: name, `updateAvailable` flag)
 
 No entities are copied. They become visible immediately via the source chain.
 
-### Uninstall
+### Unsubscribe (`unsubscribeExtension`)
 
-1. Validates: user is owner, extension is installed, ruleset not archived
+1. Validates: user is owner, extension is subscribed, ruleset not archived
 2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one. The shadow case matters because step 3 below hard-deletes those shadows; without this guard the character pick would silently dangle. (Scoped to the host only; fork-of-fork is blocked at policy time so descendant forks aren't a concern. If that ever changes, `existsBy*PickFromExtension` would need to widen the join.)
 3. Finds snapshots whose `sourceEntityId` belongs to the extension (COW copies of extension entities)
 4. Deletes those COW copies and their snapshots
@@ -293,7 +293,7 @@ When a ruleset with extensions is forked, the child inherits:
 - `extensionRulesetIds` — copied as-is
 - `ruleset_extensions` metadata rows — duplicated for the child
 
-The child can independently install/uninstall extensions without affecting the parent.
+The child can subscribe to and unsubscribe from extensions independently of the parent.
 
 ## Authorization
 

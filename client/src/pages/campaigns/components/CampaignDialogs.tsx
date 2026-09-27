@@ -30,7 +30,7 @@ import {
 } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState, type ElementType } from "react";
-import { type UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
 
 export type CreateCampaignFormData = InferRequestType<
@@ -58,8 +58,6 @@ export function CreateCampaignDialog({
 }: CreateCampaignDialogProps) {
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
-
-  form.register("rulesetId", { required: "Ruleset is required" });
 
   const {
     items: publishedRulesets,
@@ -91,19 +89,26 @@ export function CreateCampaignDialog({
         autoFocus
         disabled={isLoading}
       />
-      <RulesetPicker
-        rulesets={rulesets}
-        value={selectedRuleset}
-        onChange={(ruleset) => {
-          setSelectedRuleset(ruleset);
-          // Re-check it only once a submit has shown the error, like the other fields.
-          form.setValue("rulesetId", ruleset?.id ?? "", { shouldValidate: form.formState.isSubmitted });
-        }}
-        onSearch={setRulesetSearch}
-        onScroll={handleRulesetsScroll}
-        loading={rulesetsLoading}
-        disabled={isLoading}
-        error={form.formState.errors.rulesetId}
+      <Controller
+        name="rulesetId"
+        control={form.control}
+        rules={{ required: "Ruleset is required" }}
+        render={({ field, fieldState }) => (
+          <RulesetPicker
+            rulesets={rulesets}
+            value={selectedRuleset}
+            onChange={(ruleset) => {
+              setSelectedRuleset(ruleset);
+              field.onChange(ruleset?.id ?? "");
+            }}
+            onSearch={setRulesetSearch}
+            onScroll={handleRulesetsScroll}
+            loading={rulesetsLoading}
+            disabled={isLoading}
+            error={fieldState.error}
+            inputRef={field.ref}
+          />
+        )}
       />
       <DescriptionField
         {...form.register("description")}

@@ -14,7 +14,7 @@ Steps:
 4. **Ability scores.** Roll them (4d6 drop lowest or 3d6 straight), use the standard array, or point-buy. What you enter is the *base* score — racial modifiers stack on top.
 5. **First level.** The [level-up wizard](#what-is-the-level-up-wizard) takes over: pick a class, roll HP, allocate skill points within the rank cap, pick feats from the available pools, pick spells if your class has them, review and confirm.
 
-The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out, skill ranks above the level-1 cap are blocked, feats whose prerequisites you don't meet won't appear.
+The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out, skill ranks above the level-1 cap are blocked, feats whose prerequisites you don't meet are greyed out, with a tooltip saying what's missing.
 
 A character can't be switched to a different ruleset later — build a new character on the new ruleset.
 
@@ -27,27 +27,27 @@ A **campaign** is a shared space tied to one ruleset. The person who creates it 
 A campaign holds:
 
 - **Players** — anyone the GM has invited and who has accepted.
-- **Characters** — linked by their owner from their own character list, with a per-character [visibility setting](#what-is-character-visibility).
+- **Characters** — linked by their owner from the campaign's **Characters** tab (**Link Character**), each with its own [visibility setting](#what-is-character-visibility). A character can be in one campaign at a time.
 - **Pending invites** (visible to the GM).
 
 A campaign is tied to one ruleset. Every linked character must be built on that exact ruleset, not a fork or parent.
 
-If you have house rules, fork the SRD ruleset, **publish** the fork, then point the campaign at the published fork. Players invited to the campaign can build characters on it. An unpublished fork (Draft) is private to you, so a campaign on a Draft fork prevents players from creating characters.
+If you have house rules, fork the SRD ruleset and point the campaign at your fork. Players invited to the campaign can build characters on it, even while it's a private Draft: joining the campaign gives them that access.
 
 Roles:
 
-- **GM** — creates the campaign, invites and removes players, sees every linked character's full sheet regardless of visibility, edits the description.
+- **GM** — creates the campaign, invites and removes players, sees every linked character's full sheet regardless of visibility and can download its PDF, edits the description.
 - **Players** — see other characters according to each character's visibility; edit their own characters; can leave at any time.
 
 Campaigns are a character / ruleset organization layer. They aren't a virtual tabletop — no initiative tracker, dice roller, combat state, maps, or in-app chat.
 
 ## What is character visibility?
 
-When you link a character to a campaign, you choose how much other players can see. The setting is per-campaign — the same character can be Private in one campaign and Public in another. Change it any time from the campaign roster.
+When you link a character to a campaign, you choose how much other players can see. Change it any time from the visibility chip on the campaign roster.
 
 | Visibility | What other players see |
 |---|---|
-| **Private** | Nothing — the character appears in the roster as yours but the sheet isn't viewable. |
+| **Private** | Nothing — the character doesn't appear in their roster. |
 | **Partial** | Physical traits only — race, class, level, name, public notes. Stats, feats, spells, equipment hidden. |
 | **Public** | The full sheet. |
 
@@ -88,6 +88,8 @@ Yes. Every character can be exported as a printable PDF.
 From the character page: **More → Download PDF.** Generation runs server-side and is queued — usually a few seconds. You'll get a notification when it's ready, with a download link.
 
 The PDF is **edition-aware**: a Core SRD 3.5 character produces a 3.5-flavored sheet — spells organized by level and school, save bonuses split into Fortitude / Reflex / Will, skill columns matching the 3.5 layout. Characters built on a different ruleset produce sheets matching that ruleset's structure.
+
+In a campaign, the GM can also download the PDF of any linked character, whatever its visibility: **More → Download PDF** on the character's campaign page.
 
 The PDF is a snapshot at the moment of export. It doesn't update when you level up — re-export to get the latest.
 

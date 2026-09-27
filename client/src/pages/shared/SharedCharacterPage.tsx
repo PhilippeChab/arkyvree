@@ -1,4 +1,5 @@
 import { PageTransition, DiceSpinner, PageError } from "@/client/src/components/common/index.ts";
+import { accessLost } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
@@ -43,7 +44,8 @@ export default function SharedCharacterPage() {
     );
   }
 
-  if (error || !character) {
+  // A passing refetch failure keeps the loaded sheet; a revoked link hides it.
+  if (!character || accessLost(error)) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <PageError message="This character sheet is not available or the link has been revoked." />

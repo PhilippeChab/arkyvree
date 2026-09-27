@@ -1,7 +1,10 @@
-export interface VariantRow {
-  name: string;
-  description?: string;
-}
+import type { rpc } from "@/client/src/services/rpc.ts";
+import type { InferRequestType } from "hono/client";
+
+type VariantsRequest = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["variants"]["$post"]>;
+
+/** One variant to create, as the variants endpoint takes it. */
+export type VariantRow = VariantsRequest["json"]["variants"][number];
 
 export interface BulkVariantsFormValues {
   variants: VariantRow[];

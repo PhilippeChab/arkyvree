@@ -1,4 +1,5 @@
 import { PageError, ActionMenuItem } from "@/client/src/components/common/index.ts";
+import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -71,11 +72,12 @@ export default function CampaignCharacterPage() {
     );
   }
 
-  if (error || !data) {
+  // A passing refetch failure keeps the loaded sheet; a revoked visibility or unlink hides it.
+  if (!data || accessLost(error)) {
     return (
       <Container maxWidth="xl" sx={{ py: 2 }}>
         <PageError
-          message="Failed to load character"
+          message={loadFailureMessage("Character", error)}
           backLabel="Back to Campaign"
           onBack={() => navigate(`/campaigns/${campaignId}/characters`)}
         />

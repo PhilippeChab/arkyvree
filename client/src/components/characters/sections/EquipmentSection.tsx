@@ -285,10 +285,7 @@ export function EquipmentSection({
             size="small"
             variant="outlined"
             color="warning"
-            onClick={() => {
-              setValidationErrors([]);
-              onForce();
-            }}
+            onClick={onForce}
             disabled={addMutation.isPending || updateMutation.isPending}
             sx={{ whiteSpace: "nowrap" }}
           >
@@ -389,7 +386,11 @@ export function EquipmentSection({
       >
         {requirementAlert(
           validationErrors.length > 0 && addDialogOpen,
-          () => addMutation.mutate({ data: addForm.getValues(), force: true }),
+          // Through the form, so its own rules still hold on a forced save; the warnings clear once it passes.
+          () => void addForm.handleSubmit((data) => {
+            setValidationErrors([]);
+            addMutation.mutate({ data, force: true });
+          })(),
         )}
         {addSlotWarning && <AnimatedAlert in severity="warning">{addSlotWarning}</AnimatedAlert>}
         <Controller
@@ -418,6 +419,7 @@ export function EquipmentSection({
               renderInput={(params) => (
                 <TextField
                   {...params}
+                  inputRef={field.ref}
                   label="Search Item"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
@@ -483,7 +485,10 @@ export function EquipmentSection({
         {requirementAlert(
           validationErrors.length > 0 && editDialogOpen,
           editingEntry
-            ? () => updateMutation.mutate({ itemId: editingEntry.itemId, data: editForm.getValues(), force: true })
+            ? () => void editForm.handleSubmit((data) => {
+              setValidationErrors([]);
+              updateMutation.mutate({ itemId: editingEntry.itemId, data, force: true });
+            })()
             : undefined,
         )}
         {editSlotWarning && <AnimatedAlert in severity="warning">{editSlotWarning}</AnimatedAlert>}

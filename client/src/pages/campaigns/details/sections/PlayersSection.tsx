@@ -1,7 +1,7 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
-import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton, SectionContent, NoMatchesState } from "@/client/src/components/common/index.ts";
+import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton, SectionContent, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
 import {
   AddPlayerDialog,
   type CampaignPlayer,
@@ -51,7 +51,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -68,7 +68,6 @@ const STATUS_CHIPS = {
 } as const satisfies Record<PlayerState, { icon: ReactNode; label: string; color: "warning" | "default" } | null>;
 
 export function PlayersSection({ campaign }: PlayersSectionProps) {
-  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const navigate = useNavigate();
@@ -317,9 +316,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                           hover
                           sx={{
                             position: "relative",
-                            "&:hover .row-actions": {
-                              opacity: canEditPlayer ? 1 : 0,
-                            },
+                            ...ROW_ACTIONS_HOVER_SX,
                           }}
                         >
                           <TableCell>
@@ -385,8 +382,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                               <Box
                                 className="row-actions"
                                 sx={{
-                                  opacity: isMobile ? 1 : 0,
-                                  transition: "opacity 0.2s ease",
+                                  ...ROW_ACTIONS_SX,
                                   display: "flex",
                                   gap: 0.5,
                                 }}

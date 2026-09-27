@@ -40,7 +40,6 @@ import type { EntityType } from "@/client/src/pages/rulesets/customization/types
 
 type TabSection = "properties" | "modifiers" | "requirements";
 
-/** Router state of a customization page. */
 const tabLabel = (label: string, help: string) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
     {label}

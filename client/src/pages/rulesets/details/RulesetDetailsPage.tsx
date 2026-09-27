@@ -1,3 +1,4 @@
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
@@ -75,7 +76,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -123,14 +124,9 @@ export default function RulesetDetailsPage() {
   const navigate = useNavigate();
   const currentUserId = useAuthStore((state) => state.user?.id);
 
-  const {
-    data: ruleset,
-    isLoading,
-    error,
-  } = useQuery({
-    ...rulesetDetailQuery(id),
-    placeholderData: keepPreviousData,
-  });
+  // No placeholder data: opening another ruleset (a fork or extension chip) must not show,
+  // or act on, the previous one while it loads.
+  const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(id));
 
   usePageTitle(ruleset?.name);
 
@@ -248,10 +244,11 @@ export default function RulesetDetailsPage() {
     );
   }
 
-  if (error || !ruleset) {
+  // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
+  if (!ruleset) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError message="Failed to load ruleset" backLabel="Back to Rulesets" onBack={() => navigate("/rulesets")} />
+        <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" onBack={() => navigate("/rulesets")} />
       </Container>
     );
   }
@@ -387,7 +384,8 @@ export default function RulesetDetailsPage() {
         />
 
         <Box role="tabpanel" sx={{ py: 3 }}>
-          <currentTab.component ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={setChildOnly} />
+          {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
+          <currentTab.component key={ruleset.id} ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={setChildOnly} />
         </Box>
 
         <Menu

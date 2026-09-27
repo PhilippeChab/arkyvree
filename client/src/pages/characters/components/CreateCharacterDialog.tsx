@@ -1,6 +1,6 @@
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
+import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { BaseRulesetAlert, CreateDialog, DescriptionField, NameField, RulesetPicker, SelectField } from "@/client/src/components/common/index.ts";
@@ -36,7 +36,7 @@ import {
 } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { type Control, useForm, useWatch } from "react-hook-form";
+import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
@@ -346,33 +346,37 @@ export function CreateCharacterDialog({
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
 
-  register("rulesetId", { required: "Ruleset is required" });
-
   const {
     data: rulesetsData,
+    isLoading: isRulesetsLoading,
     fetchNextPage: fetchNextRulesetsPage,
     hasNextPage: hasNextRulesetsPage,
     isFetchingNextPage: isFetchingNextRulesetsPage,
   } = useInfiniteQuery({
     ...rulesetPickerQuery("published", debouncedRulesetSearch),
+    enabled: open,
   });
 
   const {
     data: campaignRulesetsData,
+    isLoading: isCampaignRulesetsLoading,
     fetchNextPage: fetchNextCampaignRulesetsPage,
     hasNextPage: hasNextCampaignRulesetsPage,
     isFetchingNextPage: isFetchingNextCampaignRulesetsPage,
   } = useInfiniteQuery({
     ...rulesetPickerQuery("campaignAccessible", debouncedRulesetSearch),
+    enabled: open,
   });
 
   const {
     data: myDraftsData,
+    isLoading: isMyDraftsLoading,
     fetchNextPage: fetchNextMyDraftsPage,
     hasNextPage: hasNextMyDraftsPage,
     isFetchingNextPage: isFetchingNextMyDraftsPage,
   } = useInfiniteQuery({
     ...rulesetPickerQuery("myDrafts", debouncedRulesetSearch),
+    enabled: open,
   });
 
   const rulesets = useMemo(() => {
@@ -531,26 +535,36 @@ export function CreateCharacterDialog({
           label="Character Name"
         />
         <TextField
-          {...register("xp", { valueAsNumber: true, min: 0 })}
+          {...register("xp", wholeNumberRules(0, "Experience points are required"))}
           label="Experience Points"
           type="number"
           fullWidth
+          error={!!errors.xp}
+          helperText={errors.xp?.message}
         />
       </Stack>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <RulesetPicker
-          rulesets={rulesets}
-          value={selectedRuleset}
-          onChange={(ruleset) => {
-            setSelectedRuleset(ruleset);
-            // Re-check it only once a submit has shown the error, like the other fields.
-            setValue("rulesetId", ruleset?.id ?? "", { shouldValidate: form.formState.isSubmitted });
-            if (!ruleset) setValue("raceId", "");
-          }}
-          onSearch={setRulesetSearch}
-          onScroll={handleRulesetsScroll}
-          error={errors.rulesetId}
+        <Controller
+          name="rulesetId"
+          control={control}
+          rules={{ required: "Ruleset is required" }}
+          render={({ field, fieldState }) => (
+            <RulesetPicker
+              rulesets={rulesets}
+              value={selectedRuleset}
+              onChange={(ruleset) => {
+                setSelectedRuleset(ruleset);
+                field.onChange(ruleset?.id ?? "");
+                if (!ruleset) setValue("raceId", "");
+              }}
+              onSearch={setRulesetSearch}
+              onScroll={handleRulesetsScroll}
+              loading={isRulesetsLoading || isCampaignRulesetsLoading || isMyDraftsLoading}
+              error={fieldState.error}
+              inputRef={field.ref}
+            />
+          )}
         />
 
         <SelectField

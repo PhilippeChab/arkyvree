@@ -19,6 +19,7 @@ export { PageActionButton } from "./PageActionButton.tsx";
 export { PageError } from "./PageError.tsx";
 export { PageHeader } from "./PageHeader.tsx";
 export { PageTransition } from "./PageTransition.tsx";
+export { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "./rowActions.ts";
 export { BaseRulesetAlert, RulesetPicker } from "./RulesetPicker.tsx";
 export { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 export { SearchBar, type FilterOption, type SortOption } from "./SearchBar.tsx";

@@ -1,5 +1,5 @@
 import { Autocomplete, TextField } from "@mui/material";
-import type { UIEventHandler } from "react";
+import type { Ref, UIEventHandler } from "react";
 import type { FieldError } from "react-hook-form";
 import { AnimatedAlert } from "./AnimatedAlert.tsx";
 import { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
@@ -24,6 +24,8 @@ interface RulesetPickerProps<R extends PickableRuleset> {
   loading?: boolean;
   disabled?: boolean;
   error?: FieldError;
+  /** The Controller's `field.ref`, so a failed submit focuses the input. */
+  inputRef?: Ref<HTMLInputElement>;
 }
 
 /** A create dialog's ruleset field, with the rulesets under their group headings. */
@@ -36,6 +38,7 @@ export function RulesetPicker<R extends PickableRuleset>({
   loading,
   disabled,
   error,
+  inputRef,
 }: RulesetPickerProps<R>) {
   return (
     <Autocomplete
@@ -52,7 +55,7 @@ export function RulesetPicker<R extends PickableRuleset>({
       loading={loading}
       disabled={disabled}
       renderInput={(params) => (
-        <TextField {...params} label="Ruleset" error={!!error} helperText={error?.message} />
+        <TextField {...params} inputRef={inputRef} label="Ruleset" error={!!error} helperText={error?.message} />
       )}
       fullWidth
       slotProps={{ listbox: { component: ScrollSafeListbox, onScroll } }}

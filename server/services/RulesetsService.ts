@@ -162,7 +162,7 @@ async function isExtensionInUseByHost(
 
 // Hard-deletes an entity along with its junctions and customizations
 // (and, for klasses, its klass_levels). Used by revertOverride and
-// extension-uninstall flows.
+// unsubscribeExtension.
 async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId: string) {
   // A tombstone may already have no row. Still clean up any remaining children
   // when restoring it; creation cannot succeed against an absent owner.

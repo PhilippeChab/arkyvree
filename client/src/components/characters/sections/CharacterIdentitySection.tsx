@@ -34,6 +34,8 @@ interface CharacterIdentitySectionProps {
   characterId: string;
   rulesetId?: string;
   readOnly?: boolean;
+  /** The portrait can't be changed; defaults to `readOnly`. */
+  portraitReadOnly?: boolean;
   partial?: boolean;
   /** Pre-resolved portrait URL for unauthenticated views (shared character page). */
   portraitUrl?: string | null;
@@ -60,6 +62,7 @@ export function CharacterIdentitySection({
   rulesetId,
   character,
   readOnly = false,
+  portraitReadOnly = readOnly,
   partial = false,
   portraitUrl,
 }: CharacterIdentitySectionProps) {
@@ -269,7 +272,7 @@ export function CharacterIdentitySection({
             name="portrait"
             variant="portrait"
             size={140}
-            readOnly={readOnly}
+            readOnly={portraitReadOnly}
             url={portraitUrl}
           />
 
