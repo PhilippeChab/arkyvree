@@ -1,6 +1,6 @@
 import { BlankState } from "@/client/src/components/common/index.ts";
 import { Box, Stack, Typography } from "@mui/material";
-import type { CombatAndSavesSectionProps } from "../../sectionFactory.ts";
+import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
 import { StatField, fmt } from "./statHelpers.tsx";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
@@ -15,7 +15,7 @@ function iterativeAttacks(bab: number): string {
 export function CombatAndSavesSection({
   combat,
   saves,
-}: CombatAndSavesSectionProps) {
+}: Dnd35CombatAndSavesSectionProps) {
   const bab = combat?.bab ?? 0;
 
   return (

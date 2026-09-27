@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import type { PowersSectionProps } from "../../sectionFactory.ts";
+import type { Dnd35PowersSectionProps } from "./types.ts";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
 const SCHOOL_KEY = "SPELL_SCHOOL";
@@ -193,7 +193,7 @@ function CollapsibleClass({ apt, rulesetId }: { apt: { aptitudeName: string; lev
   );
 }
 
-export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spellTags, rulesetId }: PowersSectionProps) {
+export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spellTags, rulesetId }: Dnd35PowersSectionProps) {
   const groups = useMemo(() => {
     const aptitudeNameById = new Map<string, string>();
     if (aptitudes) {

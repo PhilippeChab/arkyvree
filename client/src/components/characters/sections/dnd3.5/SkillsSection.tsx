@@ -1,4 +1,4 @@
-import type { SkillsSectionProps } from "../../sectionFactory.ts";
+import type { Dnd35SkillsSectionProps } from "./types.ts";
 import { BlankState } from "@/client/src/components/common/index.ts";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import {
@@ -19,7 +19,7 @@ function getSkillGroup(name: string): string | null {
   return match ? match[1] : null;
 }
 
-type Skill = SkillsSectionProps["skills"][string];
+type Skill = Dnd35SkillsSectionProps["skills"][string];
 
 function formatValue(value: number): string {
   return value >= 0 ? `+${value}` : `${value}`;
@@ -30,7 +30,7 @@ type Row =
   | { type: "skill"; skill: Skill; group: string }
   | { type: "group"; prefix: string; count: number };
 
-export function SkillsSection({ skills }: SkillsSectionProps) {
+export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
   const rows = useMemo(() => {

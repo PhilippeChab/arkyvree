@@ -25,14 +25,13 @@ export interface BondedSectionProps {
   linkable?: boolean;
 }
 
-// Re-export the 3.5 prop shapes under the generic-sounding names the app
-// consumes today. When a second ruleset ships, this file will grow
-// per-ruleset prop types and the SectionMap will become a discriminated
-// union rather than a single shape.
-export type CombatAndSavesSectionProps = Dnd35CombatAndSavesSectionProps;
-export type PowersSectionProps = Dnd35PowersSectionProps;
-export type AbilityScoresSectionProps = Dnd35AbilityScoresSectionProps;
-export type SkillsSectionProps = Dnd35SkillsSectionProps;
+// The 3.5 prop shapes under the generic names the SectionMap uses. When a
+// second ruleset ships, this file will grow per-ruleset prop types and the
+// SectionMap will become a discriminated union rather than a single shape.
+type CombatAndSavesSectionProps = Dnd35CombatAndSavesSectionProps;
+type PowersSectionProps = Dnd35PowersSectionProps;
+type AbilityScoresSectionProps = Dnd35AbilityScoresSectionProps;
+type SkillsSectionProps = Dnd35SkillsSectionProps;
 
 interface SectionMap {
   AbilityScoresSection: ComponentType<AbilityScoresSectionProps>;

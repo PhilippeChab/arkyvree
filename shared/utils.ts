@@ -17,7 +17,6 @@ export type { ErrorResult, Result, SuccessResult };
 
 export const sanitizeText = (text: string) => text.normalize("NFKC").trim();
 export const sanitizeEmail = (email: string) => sanitizeText(email).toLowerCase();
-export const sanitizeURL = (url: string) => encodeURIComponent(url.normalize("NFKC"));
 
 const cryptoHash = async (text: string) => {
   const messageBuffer = new TextEncoder().encode(text);

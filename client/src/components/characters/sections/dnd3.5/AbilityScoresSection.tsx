@@ -7,7 +7,7 @@ import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStor
 import { Box } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import type { AbilityScoresSectionProps } from "../../sectionFactory.ts";
+import type { Dnd35AbilityScoresSectionProps } from "./types.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 
@@ -15,7 +15,7 @@ export function AbilityScoresSection({
   abilities,
   characterId,
   readOnly,
-}: AbilityScoresSectionProps) {
+}: Dnd35AbilityScoresSectionProps) {
   const entries = Object.entries(abilities);
   const sortedEntries = sortAbilities(entries, "Dungeons & Dragons: 3.5", ([name]) => name);
   const queryClient = useQueryClient();
