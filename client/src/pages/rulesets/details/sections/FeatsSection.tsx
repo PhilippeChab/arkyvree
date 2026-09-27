@@ -47,6 +47,7 @@ import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -150,14 +151,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
   };
 
   const handleRowMouseEnter = useCallback((feat: Feat) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "feats", feat.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].feats[":featId"].$get({
-          param: { id: ruleset.id, featId: feat.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "feats", feat.id));
   }, [queryClient, ruleset.id]);
 
   const toggleFamily = (family: string) => {

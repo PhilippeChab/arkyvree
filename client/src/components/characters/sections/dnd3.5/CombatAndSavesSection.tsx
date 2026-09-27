@@ -28,7 +28,7 @@ export function CombatAndSavesSection({
           </Typography>
           <Stack spacing={2}>
             {/* Combat stat grid — single grid so columns align across rows */}
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
               <StatField label="HP" value={combat?.hp?.total ?? 0} />
               <StatField label="Initiative" value={fmt(combat?.initiative?.total)} />
               <StatField label="Speed" value={`${combat?.speed?.total ?? 30} ft.`} />

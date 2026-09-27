@@ -3,7 +3,6 @@ import { RaceFormFields, type RaceFormData } from "@/client/src/pages/rulesets/c
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, parseEntityFilters } from "./kindFilterOptions.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
@@ -22,6 +21,7 @@ import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
 const RACES_COLUMNS = [
   { key: "name", label: "Name", width: "15%" },
@@ -95,14 +95,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RacesSec
   };
 
   const handleRowMouseEnter = useCallback((race: Race) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "races", race.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].races[":raceId"].$get({
-          param: { id: ruleset.id, raceId: race.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "races", race.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (race: Race, columnKey: string) => {

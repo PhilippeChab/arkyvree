@@ -1,3 +1,5 @@
+export { ClassLevelFields } from "./ClassLevelFields.tsx";
+export { allLevelSaves, type LevelFeat, type LevelSave } from "./classLevelForm.ts";
 export { ItemFormFields } from "./ItemFormFields.tsx";
 export { DECIMAL_PATTERN, type ItemFormData, type ItemFormInternal, toItemPayload } from "./itemForm.ts";
 export { SkillFormFields, type SkillFormData } from "./SkillFormFields.tsx";

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { FieldValues, UseFormReturn } from "react-hook-form";
+import type { FieldValues, SubmitHandler, UseFormReturn } from "react-hook-form";
 
 interface ServerVersion {
   key: string | undefined;
@@ -24,10 +24,12 @@ interface FormSyncOptions {
  * while it is dirty waits until the edits are saved or undone. Pass
  * `undefined` while loading.
  *
- * - `updatedAt()` is the token of the server values the form is based on;
- *   call it when sending the save. Send it, not the query's current
- *   `updatedAt`: when the record changed under the user's edits, the save is
- *   then rejected as stale instead of silently overwriting the newer values.
+ * - `handleSubmit(onValid)` replaces `form.handleSubmit`: it remembers which
+ *   record the save is for.
+ * - `updatedAt()` is the token of the server values the form is based on.
+ *   Send it with the save, not the query's current `updatedAt`: when the
+ *   record changed under the user's edits, the save is then rejected as
+ *   stale instead of silently overwriting the newer values.
  * - `saved(values, updatedAt?)` replaces `form.reset()` after a successful
  *   save: the form shows what was saved under the token the server returned,
  *   and the pre-save data still in the cache is ignored until the refetch
@@ -81,11 +83,14 @@ export function useFormSync<T extends FieldValues>(
     synced.current = { key: savingKey.current, snapshot: JSON.stringify(savedValues), updatedAt: savedUpdatedAt };
   };
 
+  const handleSubmit = (onValid: SubmitHandler<T>) => form.handleSubmit((data, event) => {
+    savingKey.current = synced.current?.key;
+    return onValid(data, event);
+  });
+
   return {
-    updatedAt: () => {
-      savingKey.current = synced.current?.key;
-      return synced.current?.updatedAt;
-    },
+    handleSubmit,
+    updatedAt: () => synced.current?.updatedAt,
     saved,
   };
 }

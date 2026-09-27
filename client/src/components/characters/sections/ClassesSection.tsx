@@ -20,21 +20,13 @@ import {
   Typography,
 } from "@mui/material";
 import { Link } from "react-router-dom";
+import type { CharacterData } from "@/client/src/components/characters/index.ts";
 import { SheetSection } from "./SheetSection.tsx";
 
-interface ClassLevel {
-  klassLevel: { id: string; level: number; klassId: string };
-  characterLevel: { id: string; hp: number; abilityId: string | null };
-}
-
-interface ClassData {
-  klass?: { id: string; name: string; hd: number };
-  levels?: ClassLevel[];
-  level?: number;
-}
+type SheetClasses = NonNullable<CharacterData["classes"]>;
 
 interface ClassesSectionProps {
-  classes: Record<string, ClassData>;
+  classes: SheetClasses;
   rulesetId?: string;
   onEditLevel?: (editingLevel: EditingLevel) => void;
   onAddLevel?: () => void;

@@ -14,6 +14,7 @@ export { usePageTitle } from "./usePageTitle.ts";
 export { usePdfExport } from "./usePdfExport.ts";
 export { usePrefetch } from "./usePrefetch.ts";
 export { useRulesetAbilities } from "./useRulesetAbilities.ts";
+export { useRulesetSaves } from "./useRulesetSaves.ts";
 export { useSearchParam, useUpdateSearchParams } from "./useSearchParam.ts";
 export { useStaggerAnimation } from "./useStaggerAnimation.ts";
 export { useStartDemo } from "./useStartDemo.ts";

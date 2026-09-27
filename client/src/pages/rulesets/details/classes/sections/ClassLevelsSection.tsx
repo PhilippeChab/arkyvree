@@ -3,11 +3,12 @@ import {
 } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { useClassLevels, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useRulesetSaves } from "@/client/src/hooks/index.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 import { Add as AddIcon, FormatListNumbered as LevelsIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Tooltip, Typography } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -32,23 +33,14 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   const queryClient = useQueryClient();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
-  // Fetch saves for dynamic columns
-  const { data: savesData } = useQuery({
-    queryKey: queryKeys.rulesets.section(rulesetId, "saves"),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"]["saves"]["$get"]({
-        param: { id: rulesetId },
-        query: { limit: "100", page: "1" },
-      }));
-    },
-  });
+  // One column per ruleset save.
+  const { data: rulesetSaves } = useRulesetSaves(rulesetId);
   // Build dynamic columns based on ruleset saves
   const levelsColumns = useMemo(() => {
-    const rulesetSaves = savesData?.items ?? [];
-    const saveColumns = rulesetSaves.map((save) => ({
+    const saveColumns = (rulesetSaves ?? []).map((save) => ({
       key: `save_${save.id}`,
       label: save.name,
-      width: `${Math.floor(36 / Math.max(rulesetSaves.length, 1))}%`,
+      width: `${Math.floor(36 / Math.max(rulesetSaves?.length ?? 0, 1))}%`,
     }));
     return [
       { key: "level", label: "Level", width: "8%" },
@@ -57,7 +49,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
       { key: "skills", label: "Skill Points", width: "13%" },
       { key: "feats", label: "Feats", width: "28%" },
     ];
-  }, [savesData?.items]);
+  }, [rulesetSaves]);
 
   const {
     levels,
@@ -75,14 +67,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   };
 
   const handleRowMouseEnter = useCallback((level: Level) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(rulesetId, "klass_levels", level.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].class_levels[":classLevelId"].$get({
-          param: { id: rulesetId, classLevelId: level.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id));
   }, [queryClient, rulesetId]);
 
   const renderCell = (level: Level, columnKey: string) => {

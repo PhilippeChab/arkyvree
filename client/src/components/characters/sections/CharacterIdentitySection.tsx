@@ -234,7 +234,7 @@ export function CharacterIdentitySection({
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <form onSubmit={form.handleSubmit(handleSubmit)}>
+      <form onSubmit={sync.handleSubmit(handleSubmit)}>
         <Box
           sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 1 }}
         >

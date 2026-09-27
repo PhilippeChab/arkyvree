@@ -125,7 +125,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
             description={entity.description}
             edit={canEdit ? {
               fields: editing.renderFields(form),
-              onSubmit: form.handleSubmit((data) => saveMutation.mutate(data)),
+              onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
               canSave: form.formState.isDirty,
               isSaving: saveMutation.isPending,
             } : undefined}

@@ -23,7 +23,8 @@ import { useState } from "react";
 interface EntityDetailLayoutProps {
   entityName?: string;
   rulesetName?: string;
-  subtitle?: string;
+  /** Replaces "<ruleset> Ruleset" under the title. */
+  subtitle?: ReactNode;
   onBack: () => void;
   canDelete: boolean;
   onDelete?: () => void;
@@ -99,9 +100,7 @@ export function EntityDetailLayout({
           <Typography sx={{ fontWeight: 600, mb: 0.5, typography: { xs: "h5", md: "h4" } }}>
             {entityName}
           </Typography>
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
+          <Typography component="div" variant="body2" sx={{ color: "text.secondary" }}>
             {subtitle || `${rulesetName} Ruleset`}
           </Typography>
         </Box>

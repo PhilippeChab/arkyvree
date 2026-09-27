@@ -71,7 +71,8 @@ type ItemDetail = InferResponseType<RPC["api"]["rulesets"][":id"]["items"][":ite
 type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
 type InventoryEntry = InventoryItems[number];
 
-interface EncumbranceData {
+/** The sheet's carried weight and load thresholds (the combat section's `encumbrance`). */
+export interface EncumbranceData {
   carriedweight?: number;
   lightload?: number;
   mediumload?: number;

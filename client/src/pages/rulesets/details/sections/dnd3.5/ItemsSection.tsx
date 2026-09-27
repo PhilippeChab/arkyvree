@@ -35,6 +35,7 @@ interface ItemsSectionProps {
 
 import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
 const ITEMS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -181,14 +182,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
   });
 
   const handleRowMouseEnter = useCallback((item: Item) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "items", item.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({
-          param: { id: ruleset.id, itemId: item.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "items", item.id));
   }, [queryClient, ruleset.id]);
 
   const formatCost = (costGp: string | null) => {

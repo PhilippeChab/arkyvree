@@ -253,7 +253,7 @@ export default function ClassDetailsPage() {
                     </TextField>
                   </>
                 ),
-                onSubmit: editForm.handleSubmit((data) => updateMutation.mutate(data)),
+                onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
                 canSave: editForm.formState.isDirty,
                 isSaving: updateMutation.isPending,
               } : undefined}

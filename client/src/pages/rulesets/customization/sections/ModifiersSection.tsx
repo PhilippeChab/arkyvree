@@ -24,6 +24,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
 const MODIFIERS_COLUMNS = [
   { key: "target", label: "Target", width: "30%" },
@@ -208,31 +209,9 @@ export function ModifiersSection({
     );
   };
 
-  const handleRowMouseEnter = useCallback(
-    (modifier: Modifier) => {
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.rulesets.entity(ruleset.id, "modifiers", modifier.id),
-        queryFn: async () => {
-          const response = await rpc.api.rulesets[":id"].customization[
-            ":entityType"
-          ][":entityId"].modifiers[":modifierId"].$get({
-            param: {
-              id: ruleset.id,
-              entityType,
-              entityId,
-              modifierId: modifier.id,
-            },
-          });
-          const data = await parseResponse(response);
-          return {
-            ...data,
-            name: `${data.target} ${data.operator} ${data.value}`,
-          };
-        },
-      });
-    },
-    [queryClient, ruleset.id, entityType, entityId],
-  );
+  const handleRowMouseEnter = useCallback((modifier: Modifier) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "modifiers", modifier.id));
+  }, [queryClient, ruleset.id]);
 
   const renderCell = (modifier: Modifier, columnKey: string) => {
     switch (columnKey) {
