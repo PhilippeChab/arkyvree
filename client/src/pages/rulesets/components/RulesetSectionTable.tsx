@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon, LibraryAdd as LibraryAddIcon } from "@mui/icons-material";
-import { BlankState, NoMatchesState } from "@/client/src/components/common/index.ts";
+import { BlankState, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { type ElementType, type ReactNode, useMemo, useRef } from "react";
@@ -141,9 +141,7 @@ export function RulesetSectionTable<T extends { id: string }>({
               sx={{
                 position: "relative",
                 cursor: onRowClick ? "pointer" : "default",
-                "&:hover .row-actions": {
-                  opacity: showInlineActions ? 1 : 0
-                },
+                ...ROW_ACTIONS_HOVER_SX,
                 ...fadeInUpSx(index),
               }}
             >
@@ -171,8 +169,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                           right: 8,
                           top: "50%",
                           transform: "translateY(-50%)",
-                          opacity: isMobile ? 1 : 0,
-                          transition: "opacity 0.2s ease",
+                          ...ROW_ACTIONS_SX,
                           display: "flex",
                           gap: 0.5,
                           bgcolor: "background.paper",

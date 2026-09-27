@@ -63,7 +63,7 @@ export default function ProfilePage() {
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data: userData, isLoading, error } = useQuery({
+  const { data: userData, isLoading } = useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: () => parseResponse(rpc.auth.me.$get()),
   });
@@ -165,7 +165,8 @@ export default function ProfilePage() {
     );
   }
 
-  if (error) {
+  // A failed background refetch keeps the loaded profile (and any edits in progress) on screen.
+  if (!userData) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
         <PageError message="Failed to load your profile. Please try again later." />

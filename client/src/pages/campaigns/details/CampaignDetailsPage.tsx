@@ -1,3 +1,4 @@
+import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import {
   EditCampaignDialog,
@@ -39,6 +40,7 @@ import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { CharactersSection, PlayersSection } from "./sections/index.ts";
 import type { CampaignSection } from "./sectionQueries.ts";
 
@@ -66,6 +68,8 @@ export default function CampaignDetailsPage() {
   const currentTab: TabSection = isTabSection(section) ? section : "characters";
 
   const { data: campaign, isLoading, error } = useQuery(campaignDetailQuery(id));
+  // Editing, archiving and deleting are the Game Master's.
+  const { canEdit } = useCampaignPermissions(campaign);
 
   usePageTitle(campaign?.name);
 
@@ -135,10 +139,11 @@ export default function CampaignDetailsPage() {
     );
   }
 
-  if (error || !campaign) {
+  // A passing refetch failure keeps the loaded page; a deleted campaign or a removed member leaves it.
+  if (!campaign || accessLost(error)) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError message="Failed to load campaign" backLabel="Back to Campaigns" onBack={() => navigate("/campaigns")} />
+        <PageError message={loadFailureMessage("Campaign", error)} backLabel="Back to Campaigns" onBack={() => navigate("/campaigns")} />
       </Container>
     );
   }
@@ -154,7 +159,7 @@ export default function CampaignDetailsPage() {
         <DetailPageHeader
           title={`⚔️ ${campaign.name}`}
           onBack={() => navigate("/campaigns")}
-          onMenuOpen={(e) => setAnchorEl(e.currentTarget)}
+          onMenuOpen={canEdit ? (e) => setAnchorEl(e.currentTarget) : undefined}
           chips={(
             <>
               <Chip

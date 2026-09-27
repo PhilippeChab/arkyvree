@@ -15,7 +15,8 @@ export function useToggleRulesetStar() {
     },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(id) });
+      // Only the ruleset's own record shows the star; its sections share the key prefix.
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(id), exact: true });
     },
     onError: (error, { starred }) => snackbar.error(error, starred ? "Failed to unstar ruleset" : "Failed to star ruleset"),
   });

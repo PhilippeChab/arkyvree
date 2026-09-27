@@ -39,7 +39,7 @@ Inside the scope:
 
 COW ownership resolution needs stored IDs. Inside `cow.ts`, use `withCowContext(undefined, () => Modifiers.findOne(db, { id }))` for that lookup. This existing infrastructure scope disables remapping for the read and restores the caller's context afterward. SQL stays in the shared repository; ordinary service reads continue to use `withRulesetScope`.
 
-**Callers don't think about COW for lookups.** `rulesetData.featsById.get(id)` works whether `id` is pre-COW or post-COW. Character-scoped repo reads (`CharacterLevels.findMany`, etc.) return rows whose `*Id` fields are already post-COW when they happen inside a scope. The only place you reach past the scope is ruleset management (fork/publish in `RulesetsService`) and framework internals (`DetailedCharacterDataLoader` for PMR distribution, `TargetPathsService` for path generation) — both are covered by `@internal` helpers described below.
+**Callers don't think about COW for lookups.** `rulesetData.featsById.get(id)` works whether `id` is pre-COW or post-COW. Character-scoped repo reads (`CharacterLevels.findMany`, etc.) return rows whose `*Id` fields are already post-COW when they happen inside a scope. The only place you reach past the scope is ruleset management (publish, extensions and reverts in `RulesetsService`) and framework internals (`DetailedCharacterDataLoader` for PMR distribution, `TargetPathsService` for path generation) — both are covered by `@internal` helpers described below.
 
 ```mermaid
 flowchart LR
@@ -148,12 +148,12 @@ From `server/cache/rulesetCache.ts` (re-exported via `server/cache/index.ts`):
 
 ### Framework / copy primitives
 
-Used by the copy flows, `RulesetsService` (fork/publish) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
+Used by the copy flows, `RulesetsService` (publish, extensions, reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `bulkCreateVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow.ts` doesn't re-export.
-- **Fork / publish** (`RulesetsService`): `ENTITY_TYPE_TO_SOURCE_TYPE`, `NAME_FALLBACK_ENTITY_TYPES`. A fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)); `cowEntity` copies an entity on its first edit.
+- **Extensions and reverts** (`RulesetsService`): `ENTITY_TYPE_TO_SOURCE_TYPE` finds a COW copy's customizations when `unsubscribeExtension` / `revertOverride` delete it, and `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
 - **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
-- **Source-chain construction**: `buildSourceChain`, shared by fork/publish and target-path cache keys.
+- **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `getOrFetchRulesetRawData`, `isRulesetRawDataPinned`.

@@ -6,6 +6,8 @@ import {
   EditDialog,
   DiceSpinner,
   Modal,
+  ROW_ACTIONS_HOVER_SX,
+  ROW_ACTIONS_SX,
 } from "@/client/src/components/common/index.ts";
 import {
   ModifierForm,
@@ -15,7 +17,6 @@ import {
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -57,7 +58,6 @@ interface CharacterModifiersModalProps {
 }
 
 export function CharacterModifiersModal({ open, onClose, characterId, rulesetId }: CharacterModifiersModalProps) {
-  const isMobile = useIsMobile();
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
 
@@ -209,7 +209,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                       hover
                       sx={{
                         position: "relative",
-                        "&:hover .row-actions": { opacity: 1 },
+                        ...ROW_ACTIONS_HOVER_SX,
                       }}
                     >
                       <TableCell>
@@ -239,8 +239,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                             display: "flex",
                             justifyContent: "flex-end",
                             gap: 0.5,
-                            opacity: isMobile ? 1 : 0,
-                            transition: "opacity 0.2s ease",
+                            ...ROW_ACTIONS_SX,
                           }}
                         >
                           <IconButton size="small" aria-label="Edit modifier" onClick={() => handleEdit(mod)}>

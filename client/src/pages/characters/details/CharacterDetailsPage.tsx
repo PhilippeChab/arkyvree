@@ -1,3 +1,4 @@
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 import { ConfirmDialog, DeleteDialog, PageTransition, PageError, ActionMenuItem } from "@/client/src/components/common/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
@@ -150,10 +151,11 @@ export default function CharacterDetailsPage() {
     );
   }
 
-  if (error || !character) {
+  // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
+  if (!character) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError message="Failed to load character" backLabel="Back to Characters" onBack={() => navigate("/characters")} />
+        <PageError message={loadFailureMessage("Character", error)} backLabel="Back to Characters" onBack={() => navigate("/characters")} />
       </Container>
     );
   }
@@ -310,6 +312,8 @@ export default function CharacterDetailsPage() {
             character={character}
             characterId={id}
             readOnly={isArchived}
+            // Contributors edit the sheet, but only the owner changes a player character's portrait.
+            portraitReadOnly={isArchived || !isOwner}
             onEditLevel={!isArchived ? setEditingLevel : undefined}
             onAddLevel={() => setAddLevelOpen(true)}
             onRemoveLevel={() => setConfirmOpen(true)}

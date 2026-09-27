@@ -315,7 +315,7 @@ function GroupedRow({
   onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
 }) {
   const variantQuery = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.familyVariants(rulesetId, family ?? ""),
+    queryKey: queryKeys.rulesets.familyVariants(rulesetId, family ?? "", childOnly),
     queryFn: family ? async ({ pageParam }) => {
       return parseResponse(rpc.api.rulesets[":id"].feats.$get({
         param: { id: rulesetId },

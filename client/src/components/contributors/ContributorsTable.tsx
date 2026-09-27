@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import type { ReactNode } from "react";
 
+import { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
@@ -101,7 +102,7 @@ export function ContributorsTable<T extends ContributorRow>({
             </TableRow>
           )}
           {contributors.map((contributor) => (
-            <TableRow key={contributor.id} sx={{ "&:hover .row-actions": { opacity: 1 } }}>
+            <TableRow key={contributor.id} sx={ROW_ACTIONS_HOVER_SX}>
               {userCell(contributor.user?.username, contributor.email)}
               {!isMobile && <TableCell>{contributor.email}</TableCell>}
               {showRoles && (
@@ -118,15 +119,7 @@ export function ContributorsTable<T extends ContributorRow>({
                 <TableCell align="right">
                   <Box
                     className="row-actions"
-                    sx={{
-                      display: "flex",
-                      gap: 0.5,
-                      justifyContent: "flex-end",
-                      // Revealed on row hover where there is a pointer; always shown on touch screens.
-                      "@media (hover: hover)": { opacity: 0 },
-                      "&:focus-within": { opacity: 1 },
-                      transition: "opacity 0.2s ease",
-                    }}
+                    sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
                   >
                     {renderActions(contributor)}
                   </Box>

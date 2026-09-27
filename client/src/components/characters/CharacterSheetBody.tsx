@@ -22,6 +22,8 @@ type CharacterSheetBodyProps = {
   characterId: string;
   readOnly?: boolean;
   identityReadOnly?: boolean;
+  /** The portrait can't be changed; defaults to the identity's read-only state. */
+  portraitReadOnly?: boolean;
   partial?: boolean;
   onEditLevel?: (editingLevel: EditingLevel) => void;
   onAddLevel?: () => void;
@@ -40,6 +42,7 @@ export function CharacterSheetBody({
   characterId,
   readOnly = false,
   identityReadOnly,
+  portraitReadOnly,
   partial = false,
   onEditLevel,
   onAddLevel,
@@ -64,6 +67,7 @@ export function CharacterSheetBody({
         rulesetId={rulesetId}
         character={character}
         readOnly={identityReadOnly ?? readOnly}
+        portraitReadOnly={portraitReadOnly}
         partial={partial}
         portraitUrl={portraitUrl}
       />

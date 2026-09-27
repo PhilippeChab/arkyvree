@@ -96,7 +96,7 @@ Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo d
 
 ### Ruleset entity / class cascade (`deleteEntityWithCascade`)
 
-`deleteEntityWithCascade` (`server/services/RulesetsService.ts`) is the shared cleanup helper used in two flows: extension uninstall and `revertOverride`. It:
+`deleteEntityWithCascade` (`server/services/RulesetsService.ts`) is the shared cleanup helper used in two flows: `unsubscribeExtension` and `revertOverride`. It:
 
 - Hard-deletes the entity's junction rows (aptitude links, class-structure rows referencing it).
 - Hard-deletes the entity's customizations (modifiers / properties / requirements).

@@ -81,7 +81,7 @@ Constructed with `(session, character, isActiveContributor?)`. The boolean comes
 
 **Edit-permission lookup helper:** `Characters.findOneEditable(db, { id, userId })` returns the character iff the session user can edit it (owner OR active contributor). Most write services call this as their first guard so the rest of the function can assume edit rights.
 
-**Character creation against a ruleset** — `CharactersService.createCharacter` does its own ruleset access check separate from `RulesetsPolicy`. The ruleset must be one of:
+**Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `getRulesetPolicy`), and `CampaignsService` calls `canCreateCampaign`, which applies the same rule. A deleted ruleset is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
 
 1. Public published (`!ruleset.private && status === "Published"`), OR
 2. Owned by the session user, OR

@@ -27,3 +27,16 @@ export function confirmPasswordRules<T extends object>(passwordField: keyof T) {
     validate: (value: unknown, formValues: T) => value === formValues[passwordField] || "Passwords do not match",
   };
 }
+
+/**
+ * React Hook Form rules for a whole number of at least `min`, registered with `valueAsNumber`. Use these rather
+ * than native `min`: the browser's own check would block the submit before the field shows why.
+ */
+export function wholeNumberRules(min: number, required?: string) {
+  return {
+    valueAsNumber: true as const,
+    required,
+    min: { value: min, message: `Minimum ${min}` },
+    validate: (value: number) => Number.isNaN(value) || Number.isInteger(value) || "Whole numbers only",
+  };
+}

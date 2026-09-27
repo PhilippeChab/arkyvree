@@ -39,8 +39,8 @@ export const queryKeys = {
       ["rulesets", "detail", id, "class", classId, "featPools"] as const,
     sectionGrouped: (id: string, section: string) =>
       ["rulesets", "detail", id, section, "grouped"] as const,
-    familyVariants: (id: string, family: string) =>
-      ["rulesets", "detail", id, "feats", "family", family] as const,
+    familyVariants: (id: string, family: string, childOnly: boolean) =>
+      ["rulesets", "detail", id, "feats", "family", family, childOnly] as const,
     entity: (id: string, entityType: string, entityId: string) =>
       ["rulesets", "detail", id, "entity", entityType, entityId] as const,
     targetCompletions: (id: string, prefix: string, kind: string, search: string, entityType?: string) =>
