@@ -8,17 +8,17 @@ Character creation is a guided flow. Pick a ruleset, fill in the basics, and the
 
 Steps:
 
-1. **Pick a ruleset.Core SRD 3.5** is available to everyone; any forks you own or have access to via campaigns are also listed.
-2. **Identity.** Name, gender, age, height, weight, alignment, deity, description.
+1. **Pick a ruleset.** **Core SRD 3.5** is available to everyone; any forks you own or have access to via campaigns are also listed.
+2. **Identity.** Name, gender, age, height, weight, alignment, deity, notes.
 3. **Race.** Picking a race seeds size, base speed, and racial modifiers automatically.
-4. **Ability scores.** Roll, point-buy, or enter manually. What you enter is the *base* score — racial modifiers stack on top.
+4. **Ability scores.** Roll them (4d6 drop lowest or 3d6 straight), use the standard array, or point-buy. What you enter is the *base* score — racial modifiers stack on top.
 5. **First level.** The [level-up wizard](#what-is-the-level-up-wizard) takes over: pick a class, roll HP, allocate skill points within the rank cap, pick feats from the available pools, pick spells if your class has them, review and confirm.
 
 The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out, skill ranks above the level-1 cap are blocked, feats whose prerequisites you don't meet won't appear.
 
 A character can't be switched to a different ruleset later — build a new character on the new ruleset.
 
-There's no "permanent delete" — *delete* archives a character (read-only, hidden from lists).
+**Archive** makes a character read-only and hides it from your lists; **Unarchive** it from the Archived view. An archived character can also be removed for good with **Delete permanently**.
 
 ## What are Campaigns?
 
@@ -64,20 +64,20 @@ The **level-up wizard** is the step-by-step modal that handles every choice for 
 Steps on Core SRD 3.5:
 
 1. **Class plan.** Pick the class for this level. Multiclassing is supported. Classes whose prerequisites you don't meet are listed but disabled.
-2. **HP.** Roll the class's hit die or take the average. Constitution modifier applies automatically per level.
+2. **HP.** Roll the class's hit die, take the maximum, or type a value (the step shows the average). Constitution modifier applies automatically per level.
 3. **Ability score increase.** Only on levels 4, 8, 12, 16, 20.
 4. **Skills.** Skill points come from the class formula. Class skills are highlighted; the rank cap is enforced (level + 3 for class skills, half for cross-class).
 5. **Feats.** Standard feats at levels 1, 3, 6, 9, 12, 15, 18. Class bonus feats appear at the levels their class grants them. Each slot is tied to its [aptitude pool](rulesets.md#what-are-aptitudes) — only feats tagged for that pool are offered.
 6. **Spells / powers.** For prepared casters (Cleric, Druid, Wizard) you pick which spells go into your spellbook / domain. For spontaneous casters (Sorcerer, Bard) you pick spells known.
-7. **Review.** Final summary of every change. Nothing commits until you click **Confirm**.
+7. **Review.** Final summary of every change. Nothing is saved until you click **Finish All**.
 
 A feat you expected isn't offered — three reasons, in this order:
 
 1. **Prerequisite not met.** Hover the greyed-out feat — the tooltip explains what's missing.
 2. **Wrong aptitude.** A General feat won't appear in a Fighter Bonus Feat slot.
-3. **Not in your ruleset.** Some feats only exist in extensions like Complete Warrior. Install the extension on your fork.
+3. **Not in your ruleset.** Some feats only exist in extensions like Complete Warrior. Subscribe your fork to the extension.
 
-For mid-campaign characters joining at higher levels, **Add multiple levels** plans the full path up front and commits in one go.
+For mid-campaign characters joining at higher levels, add several levels to the class plan (**Add Level**, or a class's quick-add button): the wizard plans the full path up front and saves it in one go.
 
 The engine validates the *base, permanent character sheet*. Temporary buffs, conditional bonuses (Dodge's `+1`, Mobility's `+4` vs AoO) and activated abilities (Power Attack, Combat Expertise, Smite Evil, Rage) aren't auto-applied. Apply them at the table.
 
@@ -85,7 +85,7 @@ The engine validates the *base, permanent character sheet*. Temporary buffs, con
 
 Yes. Every character can be exported as a printable PDF.
 
-From the character page: **More → Export PDF.** Generation runs server-side and is queued — usually a few seconds. You'll get a notification when it's ready, with a download link.
+From the character page: **More → Download PDF.** Generation runs server-side and is queued — usually a few seconds. You'll get a notification when it's ready, with a download link.
 
 The PDF is **edition-aware**: a Core SRD 3.5 character produces a 3.5-flavored sheet — spells organized by level and school, save bonuses split into Fortitude / Reflex / Will, skill columns matching the 3.5 layout. Characters built on a different ruleset produce sheets matching that ruleset's structure.
 

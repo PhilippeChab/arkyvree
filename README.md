@@ -86,12 +86,14 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md#verification) for focused checks.
 ```
 client/
   src/
-    components/         # Shared UI components (auth, characters, common, customization, layout)
-    contexts/           # React contexts (toast, websocket)
-    hooks/              # Shared hooks (useIsMobile, useDebouncedValue, usePrefetch)
+    components/         # Shared UI components (auth, characters, common, contributors, customization, invites, layout, onboarding)
+    contexts/           # React contexts (theme, toast, websocket)
+    hooks/              # Shared hooks (useIsMobile, useListParams, useListboxQuery, useFormSync, …)
+    lib/                # Query factories and keys, formatters, type guards, helpers
     pages/              # Page components organized by domain
     services/           # RPC client
-    stores/             # Zustand stores (auth)
+    stores/             # Zustand stores (auth, user preferences, dirty forms)
+    types/              # Client-only types
 
 server/
   routers/
@@ -103,7 +105,7 @@ server/
     campaigns/          # Campaign, player, invite services
     characters/         # Character, inventory, levels, modifiers services
       levels/           # Level-up wizard (slot queries, pick queries, finalize, batch)
-    rulesets/            # Ruleset entity services (feats, powers, classes, etc.)
+    rulesets/           # Ruleset entity services (feats, powers, classes, etc.)
       customization/    # Modifiers, requirements, properties, target paths
     policies/           # Authorization policies
   repositories/         # Database access layer (Drizzle ORM)
@@ -113,6 +115,10 @@ server/
   middlewares/          # Session, rate limiting, request logging
   errors/               # Error classes
   cache/                # In-memory cache (ruleset COW data)
+  database/             # Database connection and request-scoped query cache
+  jobs/                 # Background jobs run by the worker (PDF export, emails, cleanup)
+  emails/               # Email templates and sending
+  storage/              # S3 attachment storage
 
 database/
   packages/             # Content packages (dnd35, extensions)
