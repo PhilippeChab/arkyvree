@@ -61,7 +61,7 @@ const CASTER_TYPE_PROPERTY_TYPE = "KLASS_CASTER_TYPE";
 
 const toClassForm = (klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData => ({
   name: klass.name,
-  description: klass.description ?? undefined,
+  description: klass.description ?? "",
   hd: isHitDie(klass.hd) ? klass.hd : 8,
 });
 

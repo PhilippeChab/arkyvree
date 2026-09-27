@@ -18,11 +18,14 @@ export type EncumbranceData = Omit<CharacterDetail["combat"]["encumbrance"], "ma
 /** The slots a weapon set applies to. */
 export const HAND_SLOTS: ReadonlySet<string> = new Set<LocationValue>(["Main Hand", "Off Hand", "Two Handed"]);
 
+/** A weapon set as the user sees it: stored from 0, shown from 1 ("Set 1"), as on the sheet and the PDF. */
+export const shownWeaponSet = (stored: number) => stored + 1;
+
 /** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
 export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
   if (!entry.equipped || !entry.location) return "—";
   if (HAND_SLOTS.has(entry.location) && entry.weaponSet !== null) {
-    return `${entry.location} (Set ${entry.weaponSet})`;
+    return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
   }
   return entry.location;
 }
@@ -44,6 +47,7 @@ export interface InventoryFormData {
   selectedItem: RulesetItem | null;
   quantity: number;
   location: LocationValue | "none";
+  /** As shown, from 1 (see `shownWeaponSet`). */
   weaponSet: number;
   totalCharges: number;
   remainingCharges: number;
@@ -53,7 +57,7 @@ export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   selectedItem: null,
   quantity: 1,
   location: "none",
-  weaponSet: 0,
+  weaponSet: shownWeaponSet(0),
   totalCharges: 0,
   remainingCharges: 0,
 };
@@ -67,7 +71,7 @@ export function placementPayload(data: InventoryFormData, hasCharges: boolean) {
     location,
     totalCharges: hasCharges ? data.totalCharges : null,
     remainingCharges: hasCharges ? data.remainingCharges : null,
-    weaponSet: location && HAND_SLOTS.has(location) ? data.weaponSet : null,
+    weaponSet: location && HAND_SLOTS.has(location) ? data.weaponSet - 1 : null,
   };
 }
 
@@ -113,6 +117,7 @@ export function detectSlotFromItem(item: ItemColumns): LocationValue | null {
 /** Why the slot is taken (by another item, or a two-handed weapon in the same set), if it is. */
 export function getSlotConflictWarning(
   location: LocationValue | "none",
+  /** As the form shows it, from 1. */
   weaponSet: number,
   inventoryItems: InventoryEntry[],
   excludeItemId?: string,
@@ -139,7 +144,7 @@ export function getSlotConflictWarning(
 
   if (HAND_SLOTS.has(location)) {
     const sameSet = equipped.filter(
-      (e) => !!e.location && HAND_SLOTS.has(e.location) && e.weaponSet === weaponSet,
+      (e) => !!e.location && HAND_SLOTS.has(e.location) && e.weaponSet !== null && shownWeaponSet(e.weaponSet) === weaponSet,
     );
 
     if (location === "Two Handed") {

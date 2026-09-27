@@ -64,7 +64,8 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
             {dice}
           </Box>
         )}
-        <Box component="span" sx={{ visibility: loading ? "hidden" : "visible" }}>{children}</Box>
+        {/* "inherit", not "visible": a button hidden with visibility must hide its label too. */}
+        <Box component="span" sx={{ visibility: loading ? "hidden" : "inherit" }}>{children}</Box>
       </Box>
     );
   }

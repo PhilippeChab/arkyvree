@@ -43,6 +43,7 @@ import {
   LOCATION_CHOICES,
   placementPayload,
   placementProfile,
+  shownWeaponSet,
 } from "./equipment.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
@@ -261,7 +262,7 @@ export function EquipmentSection({
     editForm.reset({
       quantity: entry.quantity ?? 1,
       location: oneOf(entry.location, LOCATION_CHOICES, "none"),
-      weaponSet: entry.weaponSet ?? 0,
+      weaponSet: shownWeaponSet(entry.weaponSet ?? 0),
       totalCharges: entry.totalCharges ?? 0,
       remainingCharges: entry.remainingCharges ?? 0,
     });
@@ -503,6 +504,7 @@ export function EquipmentSection({
         }}
         title="Remove Item"
         message="Are you sure you want to remove this item from the inventory?"
+        confirmLabel="Remove"
         onConfirm={() => deletingItemId && removeMutation.mutate(deletingItemId)}
         isLoading={removeMutation.isPending}
       />

@@ -23,7 +23,7 @@ export default function AptitudeDetailPage() {
       editing={{
         toFormValues: (aptitude): AptitudeFormData => ({
           name: aptitude.name,
-          description: aptitude.description ?? undefined,
+          description: aptitude.description ?? "",
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
         remove: () => endpoint.$delete({ param }),

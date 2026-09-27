@@ -44,7 +44,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   } = useRulesetSection<Spell, SpellFormData>({
     rulesetId: ruleset.id,
     sectionName: "powers",
-    label: "Power",
+    label: "Spell",
     createFn: async (data) => {
       if (!data.aptitudes?.length) {
         throw new Error("At least one aptitude must be selected");

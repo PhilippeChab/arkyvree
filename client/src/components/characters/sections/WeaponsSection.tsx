@@ -1,6 +1,7 @@
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import type { SheetCombat } from "./dnd3.5/index.ts";
+import { shownWeaponSet } from "./equipment.ts";
 import { BlankState } from "@/client/src/components/common/index.ts";
 import {
   Table,
@@ -50,7 +51,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
             return (
               <TableContainer key={setIndex} sx={{ mb: 2, overflowX: "auto" }}>
                 <Typography variant="subtitle2" sx={{ mb: 1, color: "text.secondary" }}>
-                  Set {Number(setIndex) + 1}
+                  Set {shownWeaponSet(Number(setIndex))}
                 </Typography>
                 <Table size="small" sx={{ minWidth: 600 }}>
                   <colgroup>

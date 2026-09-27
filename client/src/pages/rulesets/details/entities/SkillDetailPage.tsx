@@ -26,7 +26,7 @@ export default function SkillDetailPage() {
       editing={{
         toFormValues: (skill): SkillFormData => ({
           name: skill.name,
-          description: skill.description ?? undefined,
+          description: skill.description ?? "",
           primaryAbilityId: skill.primaryAbilityId,
           impactedByWeight: skill.impactedByWeight,
           usableWithoutTraining: skill.usableWithoutTraining,

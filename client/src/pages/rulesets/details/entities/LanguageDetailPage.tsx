@@ -24,7 +24,7 @@ export default function LanguageDetailPage() {
       editing={{
         toFormValues: (language): LanguageFormData => ({
           name: language.name,
-          description: language.description ?? undefined,
+          description: language.description ?? "",
           type: language.type,
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),

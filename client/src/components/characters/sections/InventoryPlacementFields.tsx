@@ -49,7 +49,7 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
               label="Weapon Set"
               type="number"
               fullWidth
-              slotProps={numberSlotProps(0)}
+              slotProps={numberSlotProps(1)}
             />
           )}
           {profile.charges.has && (

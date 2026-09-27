@@ -43,9 +43,7 @@ test.describe('Link Character to Campaign', () => {
     await linkDialog.getByRole('combobox', { name: 'Character' }).click();
     await page.getByRole('option', { name: characterName }).click();
 
-    // Visibility is a MUI Select with no aria-label on the combobox, so locate
-    // by the InputLabel "Visibility" and click the sibling combobox.
-    await linkDialog.locator('label', { hasText: 'Visibility' }).locator('..').locator('[role="combobox"]').click();
+    await linkDialog.getByRole('combobox', { name: 'Visibility' }).click();
     await page.getByRole('option', { name: /^Public/ }).click();
 
     const linkResponse = page.waitForResponse(

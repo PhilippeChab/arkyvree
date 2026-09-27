@@ -26,7 +26,7 @@ export default function SaveDetailPage() {
       editing={{
         toFormValues: (save): SaveFormData => ({
           name: save.name,
-          description: save.description ?? undefined,
+          description: save.description ?? "",
           abilityId: save.abilityId,
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),

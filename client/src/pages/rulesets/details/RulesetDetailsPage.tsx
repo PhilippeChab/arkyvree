@@ -62,8 +62,10 @@ import {
 import {
   Alert,
   Box,
+  Button,
   Chip,
   Container,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -589,6 +591,9 @@ export default function RulesetDetailsPage() {
           <DialogContent>
             <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
           </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setContributorsDialogOpen(false)} variant="outlined" color="inherit">Close</Button>
+          </DialogActions>
         </Modal>
       </Container>
     </PageTransition>

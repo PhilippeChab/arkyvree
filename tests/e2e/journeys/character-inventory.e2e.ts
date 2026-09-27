@@ -88,7 +88,7 @@ test.describe('Character inventory CRUD', () => {
     await page.locator('table tbody tr', { hasText: 'Amulet of Health +2' }).first().locator('[data-testid="DeleteIcon"]').click();
     const deleteDialog = page.getByRole('dialog', { name: 'Remove Item' });
     await expect(deleteDialog).toBeVisible();
-    await deleteDialog.getByRole('button', { name: /^Delete$/ }).click();
+    await deleteDialog.getByRole('button', { name: /^Remove$/ }).click();
     await expect(deleteDialog).toBeHidden({ timeout: 10_000 });
 
     await expect(page.getByText('No equipment')).toBeVisible({ timeout: 10_000 });
@@ -124,7 +124,7 @@ test.describe('Character inventory CRUD', () => {
     // Pick "Main Hand" — selectOption scopes to the open modal dialog
     await selectOption(page, 'Hand Slot', 'Main Hand');
 
-    // weaponSet defaults to 0; leave it as-is.
+    // the weapon set defaults to Set 1; leave it as-is.
     const addItemResponse = page.waitForResponse(
       (r) => r.url().includes('/api/characters/inventory') && r.request().method() === 'POST' && r.ok(),
       { timeout: 15_000 },
@@ -150,7 +150,7 @@ test.describe('Character inventory CRUD', () => {
     const inventoryPaper = page.locator('div', { hasText: /^Equipment & Inventory/ }).first();
     const longswordRow = inventoryPaper.locator('table tbody tr', { hasText: 'Longsword' }).first();
     await expect(longswordRow).toBeVisible();
-    await expect(longswordRow.getByText('Main Hand (Set 0)')).toBeVisible();
+    await expect(longswordRow.getByText('Main Hand (Set 1)')).toBeVisible();
 
     // Under load the auto-opened Level Up wizard occasionally reappears
     // mid-test via a delayed character refetch. Dismiss if present.
@@ -176,9 +176,9 @@ test.describe('Character inventory CRUD', () => {
     }
     await expect(editDialog).toBeHidden({ timeout: 10_000 });
 
-    // Row's Slot column now reads "Two Handed (Set 0)"
+    // Row's Slot column now reads "Two Handed (Set 1)"
     await expect(
-      inventoryPaper.locator('table tbody tr', { hasText: 'Longsword' }).first().getByText('Two Handed (Set 0)'),
+      inventoryPaper.locator('table tbody tr', { hasText: 'Longsword' }).first().getByText('Two Handed (Set 1)'),
     ).toBeVisible();
   });
 });

@@ -227,7 +227,7 @@ export default function CampaignDetailsPage() {
                 onClick={closeMenuAnd(() => {
                   editForm.reset({
                     name: campaign.name,
-                    description: campaign.description ?? undefined,
+                    description: campaign.description ?? "",
                   });
                   setEditDialogOpen(true);
                 })}

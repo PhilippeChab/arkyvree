@@ -6,8 +6,10 @@ import { CompareArrows as CompareArrowsIcon, Restore as RestoreIcon } from "@mui
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import {
   Box,
+  Button,
   Chip,
   Collapse,
+  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
@@ -190,6 +192,9 @@ export function OverridesDialog({
           </Box>
         </Collapse>
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant="outlined" color="inherit">Close</Button>
+      </DialogActions>
     </Modal>
   );
 }

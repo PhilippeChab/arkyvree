@@ -23,7 +23,7 @@ export default function MechanicDetailPage() {
       editing={{
         toFormValues: (mechanic): MechanicFormData => ({
           name: mechanic.name,
-          description: mechanic.description ?? undefined,
+          description: mechanic.description ?? "",
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
         remove: () => endpoint.$delete({ param }),
