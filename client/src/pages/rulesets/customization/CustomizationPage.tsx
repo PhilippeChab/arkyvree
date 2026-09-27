@@ -1,141 +1,84 @@
-import {
-  TargetPathBreadcrumbs,
-  type Aptitude,
-} from "@/client/src/components/customization/index.ts";
-import { FaqHelpIcon, DeleteDialog, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import { DeleteDialog, DiceSpinner, FaqHelpIcon, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
+import { EntityDetailLayout } from "@/client/src/pages/rulesets/components/index.ts";
 import {
-  ItemFormFields,
-  type ItemFormInternal,
-  toItemPayload,
-  SpellFormFields,
-  type SpellFormData,
-  type AptitudeMetadata,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
+  ClassLevelEditor,
+  FeatEditor,
+  ItemEditor,
+  RaceEditor,
+  SpellEditor,
+  type EditorProps,
+} from "@/client/src/pages/rulesets/customization/editors/index.ts";
 import {
-  FeatFormFields,
-  type FeatFormData,
-  RaceFormFields,
-  type RaceFormData,
-} from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { Modifier, Property } from "@/shared/relations.ts";
+  customizationEntityQuery,
+  type CustomizationEntity,
+} from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import {
-  ArrowBack,
   Label as PropertiesIcon,
-  MoreVert as MoreVertIcon,
   Rule as RequirementsIcon,
   Settings as ModifiersIcon,
 } from "@mui/icons-material";
-import {
-  Autocomplete,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  IconButton,
-  Menu,
-  MenuItem,
-  Paper,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
-import { useLatest, usePageTitle } from "@/client/src/hooks/index.ts";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import type { InferResponseType } from "hono/client";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
-import type { BaseEntityType, EntityType } from "./types.ts";
+import {
+  ModifiersSection,
+  PropertiesSection,
+  RequirementsSection,
+} from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 
-type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
-type Save = SavesPaginated["items"][number];
+type Ruleset = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
 
-type ItemResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$get"], 200>;
+type TabSection = "properties" | "modifiers" | "requirements";
 
-type ClassLevelFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"][":levelId"]["$put"]>["json"];
-
-type FeatAptitudeOption = {
-  featId: string;
-  aptitudeId: string;
-  featName: string;
-  aptitudeName: string;
-  label: string;
-};
-
-// Snapshots of editor state kept outside the forms, compared with the snapshot
-// taken on load or save for dirty tracking.
-const aptitudesSnapshot = (aptitudes: Aptitude[]) => JSON.stringify(aptitudes.map((a) => a.id).sort());
-const aptitudeMetadataSnapshot = (metadata: AptitudeMetadata) => JSON.stringify(Array.from(metadata.entries()).sort());
-const levelFeatsSnapshot = (feats: FeatAptitudeOption[]) => JSON.stringify(feats.map((f) => `${f.featId}-${f.aptitudeId}`).sort());
-const levelSavesSnapshot = (values: Record<string, number>) => JSON.stringify(Object.entries(values).sort());
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+/** Router state of a customization page. */
+interface CustomizationState {
+  /** The list to go back to. */
+  from?: string;
+  /** Set when a copy-on-write moved the page from this entity to its copy. */
+  copiedFrom?: string;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+const tabLabel = (label: string, help: string) => (
+  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+    {label}
+    <FaqHelpIcon text={help} />
+  </Box>
+);
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`customization-tabpanel-${index}`}
-      aria-labelledby={`customization-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-type TabSection = "modifiers" | "requirements" | "properties";
-
-const ALL_TAB_CONFIG = [
+const TABS: SectionTab<TabSection>[] = [
   {
     key: "properties",
-    label: "Properties",
     icon: PropertiesIcon,
-    component: PropertiesSection,
-    helpIcon: <FaqHelpIcon text="Properties are additional attributes that can be applied to entities, providing extra characteristics or metadata." />,
+    label: tabLabel("Properties", "Properties are additional attributes that can be applied to entities, providing extra characteristics or metadata."),
   },
   {
     key: "modifiers",
-    label: "Modifiers",
     icon: ModifiersIcon,
-    component: ModifiersSection,
-    helpIcon: <FaqHelpIcon text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc." />,
+    label: tabLabel("Modifiers", "Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."),
   },
   {
     key: "requirements",
-    label: "Requirements",
     icon: RequirementsIcon,
-    component: RequirementsSection,
-    helpIcon: <FaqHelpIcon text="Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc." />,
+    label: tabLabel("Requirements", "Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc."),
   },
-] as const;
+];
 
-// For modifiers, only show requirements tab
-const getTabConfig = (entityType: EntityType) => {
-  if (entityType === "modifiers") {
-    return ALL_TAB_CONFIG.filter((tab) => tab.key === "requirements");
-  }
-  return ALL_TAB_CONFIG;
-};
+// A modifier can only carry requirements.
+const tabsFor = (type: EntityType) => (type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS);
 
-const entityType_LABELS: Record<EntityType, string> = {
+const ENTITY_LABELS: Record<EntityType, string> = {
   feats: "Feat",
   klass_levels: "Class Level",
   klasses: "Class",
@@ -145,14 +88,16 @@ const entityType_LABELS: Record<EntityType, string> = {
   modifiers: "Modifier",
 };
 
-const EDITABLE_ENTITY_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
+const isEntityType = (type: string | undefined): type is EntityType => !!type && Object.hasOwn(ENTITY_LABELS, type);
 
-function isEditable(type: string): type is (typeof EDITABLE_ENTITY_TYPES)[number] {
-  return (EDITABLE_ENTITY_TYPES as readonly string[]).includes(type);
-}
+// Entities with an editor on this page, which can also be deleted from it.
+const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
+type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
+const isEditable = (data: CustomizationEntity): data is EditableEntity =>
+  (EDITABLE_TYPES as readonly string[]).includes(data.type);
 
 export default function CustomizationPage() {
-  const { id, entityType, entityId, section } = useParams<{
+  const { id: rulesetId = "", entityType, entityId = "", section } = useParams<{
     id: string;
     entityType: string;
     entityId: string;
@@ -160,1098 +105,295 @@ export default function CustomizationPage() {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const backUrl = (location.state as { from?: string })?.from;
+  const validType = isEntityType(entityType) ? entityType : undefined;
 
-  // Validate entityType
-  const isValidEntityType = (type: string | undefined): type is EntityType => {
-    return type !== undefined &&
-      (["feats", "klass_levels", "klasses", "items", "powers", "races", "modifiers"] as const).includes(
-        type as EntityType,
-      );
-  };
+  const copiedFrom = (location.state as CustomizationState | null)?.copiedFrom;
 
-  const {
-    data: ruleset,
-    isLoading: rulesetLoading,
-    error: rulesetError,
-  } = useQuery({
-    queryKey: queryKeys.rulesets.detail(id!),
-    queryFn: async () => {
-      if (!id) throw new Error("No ruleset ID provided");
-      return parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } }));
-    },
+  const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
+  const { data, isLoading: isEntityLoading, isPlaceholderData, error: entityError } = useQuery({
+    ...customizationEntityQuery(rulesetId, validType ?? "feats", entityId),
+    enabled: !!validType && !!entityId,
+    // Right after a copy-on-write, keep showing the entity the copy was made
+    // from until the copy loads, so the page and any unsaved edits stay; the
+    // page is locked meanwhile. A refetch of the source may already return the
+    // copy, as the server resolves an inherited entity to its copy. The
+    // ruleset must match too: an inherited entity keeps its id in every fork.
+    placeholderData: (previous, previousQuery) =>
+      copiedFrom && previous && previousQuery?.queryKey[2] === rulesetId
+        && (previous.entity.id === copiedFrom || previous.entity.id === entityId)
+        ? previous
+        : undefined,
   });
+  // Load the editors' pickers alongside the entity.
+  const { canEditEntities } = useRulesetPermissions(ruleset);
+  useRulesetSaves(rulesetId, validType === "powers" || validType === "klass_levels");
+  useRulesetFeats(rulesetId, validType === "klass_levels" && canEditEntities);
 
-  // Fetch entity details based on entityType
-  const {
-    data: entityData,
-    isLoading: entityLoading,
-    error: entityError,
-  } = useQuery({
-    queryKey: queryKeys.rulesets.entity(id!, entityType!, entityId!),
-    queryFn: async () => {
-      if (!id || !entityType || !entityId) throw new Error("Missing parameters");
+  const tabs = validType ? tabsFor(validType) : [];
+  const currentTab = tabs.find((tab) => tab.key === section)?.key;
 
-      let response;
-      switch (entityType) {
-        case "modifiers": {
-          response = await rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-            .modifiers[":modifierId"].$get({
-              param: { id, entityType, entityId, modifierId: entityId },
-            });
-          const modifier = await parseResponse(response);
-          return {
-            ...modifier,
-            name: `${modifier.target} ${modifier.operator} ${modifier.value}`,
-          };
-        }
-        case "feats": {
-          response = await rpc.api.rulesets[":id"].feats[":featId"].$get({
-            param: { id, featId: entityId },
-          });
-          return parseResponse(response);
-        }
-        case "items": {
-          response = await rpc.api.rulesets[":id"].items[":itemId"].$get({
-            param: { id, itemId: entityId },
-          });
-          return parseResponse(response);
-        }
-        case "powers": {
-          response = await rpc.api.rulesets[":id"].powers[":powerId"].$get({
-            param: { id, powerId: entityId },
-          });
-          return parseResponse(response);
-        }
-        case "klass_levels": {
-          response = await rpc.api.rulesets[":id"].class_levels[":classLevelId"]
-            .$get({
-              param: { id, classLevelId: entityId },
-            });
-          return parseResponse(response);
-        }
-        case "races": {
-          response = await rpc.api.rulesets[":id"].races[":raceId"].$get({
-            param: { id, raceId: entityId },
-          });
-          return parseResponse(response);
-        }
-        case "klasses": {
-          response = await rpc.api.rulesets[":id"].classes[":classId"].$get({
-            param: { id, classId: entityId },
-          });
-          return parseResponse(response);
-        }
-        default:
-          throw new Error("Invalid entity type");
-      }
-    },
-    enabled: !!id && !!entityType && !!entityId,
-  });
-
-  const snackbar = useSnackbar();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  // Feat form state
-  const featForm = useForm<FeatFormData>();
-  const [selectedFeatAptitudes, setSelectedFeatAptitudes] = useState<Aptitude[]>([]);
-
-  // Entity-specific form state
-  const raceForm = useForm<RaceFormData>();
-  const itemForm = useForm<ItemFormInternal>();
-  const spellForm = useForm<SpellFormData>();
-
-  // Spell aptitude state
-  const [selectedSpellAptitudes, setSelectedSpellAptitudes] = useState<Aptitude[]>([]);
-  const [spellAptitudeMetadata, setSpellAptitudeMetadata] = useState<AptitudeMetadata>(new Map());
-
-  // Class level form state
-  const classLevelForm = useForm<ClassLevelFormData>();
-  const [selectedLevelFeats, setSelectedLevelFeats] = useState<FeatAptitudeOption[]>([]);
-  const [levelSaveValues, setLevelSaveValues] = useState<Record<string, number>>({});
-
-  // Snapshots of the external state as loaded or last saved, for dirty tracking
-  const [initialFeatAptitudes, setInitialFeatAptitudes] = useState("");
-  const [initialSpellAptitudes, setInitialSpellAptitudes] = useState("");
-  const [initialSpellMetadata, setInitialSpellMetadata] = useState("");
-  const [initialLevelFeats, setInitialLevelFeats] = useState("");
-  const [initialLevelSaves, setInitialLevelSaves] = useState("");
-
-  const isFeatDirty = featForm.formState.isDirty ||
-    aptitudesSnapshot(selectedFeatAptitudes) !== initialFeatAptitudes;
-
-  const isSpellDirty = spellForm.formState.isDirty ||
-    aptitudesSnapshot(selectedSpellAptitudes) !== initialSpellAptitudes ||
-    aptitudeMetadataSnapshot(spellAptitudeMetadata) !== initialSpellMetadata;
-
-  const isClassLevelDirty =
-    levelFeatsSnapshot(selectedLevelFeats) !== initialLevelFeats ||
-    levelSavesSnapshot(levelSaveValues) !== initialLevelSaves;
-
-  const isEditorDirty: Record<string, boolean> = {
-    feats: isFeatDirty,
-    races: raceForm.formState.isDirty,
-    items: itemForm.formState.isDirty,
-    powers: isSpellDirty,
-    klass_levels: isClassLevelDirty,
-  };
-  const editorDirtyRef = useLatest(!!entityType && !!isEditorDirty[entityType]);
-  const populatedEntityId = useRef<string | null>(null);
-
-  // The populate effects below re-run on every refetch of the entity, such as
-  // the one after a save. Skip those while the editor has unsaved edits to the
-  // same entity, so a refetch never discards them.
-  const shouldPopulate = useCallback((loadedId: string) => {
-    if (editorDirtyRef.current && populatedEntityId.current === loadedId) return false;
-    populatedEntityId.current = loadedId;
-    return true;
-  }, [editorDirtyRef]);
-
-  // Saves query (for spell saveId select and class level saves)
-  const { data: savesData } = useQuery({
-    queryKey: queryKeys.rulesets.section(id!, "saves"),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].saves.$get({
-        param: { id: id! },
-        query: { limit: "100" },
-      }));
-    },
-    enabled: !!id && (entityType === "powers" || entityType === "klass_levels"),
-  });
-  const saves: Save[] = savesData?.items ?? [];
-
-  // Feats query (for class level feat selection)
-  const { data: featsData } = useQuery({
-    queryKey: queryKeys.rulesets.section(id!, "feats"),
-    queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].feats.$get({
-        param: { id: id! },
-        query: { limit: "100", page: "1" },
-      }));
-    },
-    enabled: !!id && entityType === "klass_levels",
-  });
-
-  const featOptions = useMemo(() => {
-    const feats = featsData?.items ?? [];
-    return feats.flatMap((feat) =>
-      feat.featsAptitudesInRules?.map((fa) => ({
-        featId: feat.id,
-        aptitudeId: fa.aptitudeId,
-        featName: feat.name,
-        aptitudeName: fa.aptitudesInRule?.name || "Unknown",
-        label: `${feat.name} (${fa.aptitudesInRule?.name || "Unknown"})`,
-      })) || [],
-    );
-  }, [featsData?.items]);
-
-  usePageTitle((entityData as { name?: string } | undefined)?.name);
-
+  // Normalize the URL to a tab the entity has.
   useEffect(() => {
-    if (entityData && entityType === "feats" && shouldPopulate(entityData.id)) {
-      const feat = entityData as { name: string; description: string; featsAptitudesInRules?: { aptitudeId: string; aptitudesInRule?: Aptitude }[] };
-      const aptitudes = (feat.featsAptitudesInRules ?? [])
-        .filter((fa) => fa.aptitudesInRule)
-        .map((fa) => fa.aptitudesInRule!);
-      // oxlint-disable-next-line react/set-state-in-effect
-      setSelectedFeatAptitudes(aptitudes);
-      setInitialFeatAptitudes(aptitudesSnapshot(aptitudes));
-      featForm.reset({
-        name: feat.name,
-        description: feat.description,
-        aptitudeIds: aptitudes.map((a) => a.id),
-      });
-    }
-  }, [entityData, entityType, featForm, shouldPopulate]);
-
-  useEffect(() => {
-    if (entityData && entityType === "races" && shouldPopulate(entityData.id)) {
-      const race = entityData as { name: string; description: string; size: RaceFormData["size"]; baseSpeed: number };
-      raceForm.reset({
-        name: race.name,
-        description: race.description,
-        size: race.size,
-        baseSpeed: race.baseSpeed,
-      });
-    }
-  }, [entityData, entityType, raceForm, shouldPopulate]);
-
-  useEffect(() => {
-    if (entityData && entityType === "items" && shouldPopulate(entityData.id)) {
-      const item = entityData as ItemResponse;
-      itemForm.reset({
-        name: item.name,
-        description: item.description ?? "",
-        costGp: formatDecimal(item.costGp) ?? "",
-        weight: formatDecimal(item.weight) ?? "",
-        type: item.type,
-        slot: (item.slot ?? undefined) as ItemFormInternal["slot"],
-        isTemplate: item.isTemplate,
-        sourceItemId: item.isTemplate ? undefined : item.sourceItemId ?? undefined,
-      });
-    }
-  }, [entityData, entityType, itemForm, shouldPopulate]);
-
-  useEffect(() => {
-    if (entityData && entityType === "powers" && shouldPopulate(entityData.id)) {
-      const spell = entityData as {
-        name: string;
-        description: string;
-        saveId: string | null;
-        saveEffect: string | null;
-        powersAptitudesInRules?: { aptitudeId: string; level: number | null; aptitudesInRule?: Aptitude }[];
-      };
-      spellForm.reset({
-        name: spell.name,
-        description: spell.description,
-        saveId: spell.saveId ?? null,
-        saveEffect: spell.saveEffect ?? null,
-      });
-      const aptitudes = (spell.powersAptitudesInRules ?? [])
-        .filter((pa) => pa.aptitudesInRule)
-        .map((pa) => pa.aptitudesInRule!);
-      // oxlint-disable-next-line react/set-state-in-effect
-      setSelectedSpellAptitudes(aptitudes);
-      setInitialSpellAptitudes(aptitudesSnapshot(aptitudes));
-      const metadata = new Map<string, { level?: number }>();
-      for (const pa of spell.powersAptitudesInRules ?? []) {
-        const entry: { level?: number } = {};
-        if (pa.level != null) entry.level = pa.level;
-        if (Object.keys(entry).length > 0) metadata.set(pa.aptitudeId, entry);
-      }
-      setSpellAptitudeMetadata(metadata);
-      setInitialSpellMetadata(aptitudeMetadataSnapshot(metadata));
-    }
-  }, [entityData, entityType, spellForm, shouldPopulate]);
-
-  useEffect(() => {
-    if (entityData && entityType === "klass_levels" && shouldPopulate(entityData.id)) {
-      const level = entityData as {
-        bab: number;
-        skills: number;
-        feats?: { id: string; name: string; aptitudeId: string; aptitudeName: string | null; free: boolean }[];
-        saves?: { saveId: string; base: number }[];
-      };
-      classLevelForm.reset({});
-      // Populate feats
-      if (level.feats && level.feats.length > 0) {
-        const feats = level.feats.map((feat) => {
-          const matchingOption = featOptions.find((o) => o.featId === feat.id && o.aptitudeId === feat.aptitudeId);
-          const aptitudeName = matchingOption?.aptitudeName ?? feat.aptitudeName ?? "Unknown";
-          return matchingOption || {
-            featId: feat.id,
-            aptitudeId: feat.aptitudeId,
-            featName: feat.name,
-            aptitudeName,
-            label: `${feat.name} (${aptitudeName})`,
-          };
-        });
-        // oxlint-disable-next-line react/set-state-in-effect
-        setSelectedLevelFeats(feats);
-        setInitialLevelFeats(levelFeatsSnapshot(feats));
-      } else {
-        setSelectedLevelFeats([]);
-        setInitialLevelFeats(levelFeatsSnapshot([]));
-      }
-      // Populate saves
-      if (level.saves && level.saves.length > 0) {
-        const values: Record<string, number> = {};
-        for (const save of level.saves) {
-          values[save.saveId] = save.base;
-        }
-        setLevelSaveValues(values);
-        setInitialLevelSaves(levelSavesSnapshot(values));
-      } else {
-        setLevelSaveValues({});
-        setInitialLevelSaves(levelSavesSnapshot({}));
-      }
-    }
-  }, [entityData, entityType, classLevelForm, featOptions, shouldPopulate]);
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const canDelete = canEdit;
-
-  const showDeleteAction = entityType ? isEditable(entityType) && canDelete : false;
-
-  // PUT responses omit relations (aptitude links, class-level feats and saves),
-  // so they never seed the entity cache: callers rebaseline the editor on what
-  // was saved, then the entity is refetched. The mutation stays pending until
-  // that refetch lands, so a quick second save can't send a stale updatedAt.
-  const handleEntitySaved = (newId: string, listKey: QueryKey, message: string) => {
-    if (newId !== entityId) {
-      navigate(`/rulesets/${id}/${entityType}/${newId}/customization${section ? `/${section}` : ""}`, { replace: true, state: location.state });
-    }
-    queryClient.invalidateQueries({ queryKey: listKey });
-    snackbar.success(message);
-    return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(id!, entityType!, newId) });
-  };
-
-  // Feat update mutation
-  const updateFeatMutation = useMutation({
-    mutationFn: async (data: FeatFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].feats[":featId"].$put({
-        param: { id: id!, featId: entityId! },
-        json: {
-          ...data,
-          aptitudeIds: selectedFeatAptitudes.map((a) => a.id),
-          updatedAt: (entityData as { updatedAt?: string } | undefined)?.updatedAt,
-        },
-      }));
-    },
-    onMutate: () => ({ aptitudes: aptitudesSnapshot(selectedFeatAptitudes) }),
-    onSuccess: (data, submitted, snapshot) => {
-      featForm.reset(submitted, { keepValues: true });
-      setInitialFeatAptitudes(snapshot.aptitudes);
-      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Feat updated");
-    },
-    onError: (err) => snackbar.error(err, "Failed to update feat"),
-  });
-
-  // Race update mutation
-  const updateRaceMutation = useMutation({
-    mutationFn: async (data: RaceFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].races[":raceId"].$put({
-        param: { id: id!, raceId: entityId! },
-        json: { ...data, updatedAt: (entityData as { updatedAt?: string } | undefined)?.updatedAt },
-      }));
-    },
-    onSuccess: (data, submitted) => {
-      raceForm.reset(submitted, { keepValues: true });
-      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Race updated");
-    },
-    onError: (err) => snackbar.error(err, "Failed to update race"),
-  });
-
-  // Item update mutation
-  const updateItemMutation = useMutation({
-    mutationFn: async (data: ItemFormInternal) => {
-      const loadedUpdatedAt = (entityData as { updatedAt?: string } | undefined)?.updatedAt;
-      return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$put({
-        param: { id: id!, itemId: entityId! },
-        json: { ...toItemPayload(data), updatedAt: loadedUpdatedAt },
-      }));
-    },
-    onSuccess: (data, submitted) => {
-      itemForm.reset(submitted, { keepValues: true });
-      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Item updated");
-    },
-    onError: (err) => snackbar.error(err, "Failed to update item"),
-  });
-
-  // Spell update mutation
-  const updateSpellMutation = useMutation({
-    mutationFn: async (data: SpellFormData & { aptitudes: { id: string; level?: number }[] }) => {
-      const { aptitudes, ...rest } = data;
-      return parseResponse(rpc.api.rulesets[":id"].powers[":powerId"].$put({
-        param: { id: id!, powerId: entityId! },
-        json: {
-          ...rest,
-          aptitudes,
-          updatedAt: (entityData as { updatedAt?: string } | undefined)?.updatedAt,
-        },
-      }));
-    },
-    onMutate: () => ({
-      aptitudes: aptitudesSnapshot(selectedSpellAptitudes),
-      metadata: aptitudeMetadataSnapshot(spellAptitudeMetadata),
-    }),
-    onSuccess: (data, { aptitudes: _aptitudes, ...submitted }, snapshot) => {
-      spellForm.reset(submitted, { keepValues: true });
-      setInitialSpellAptitudes(snapshot.aptitudes);
-      setInitialSpellMetadata(snapshot.metadata);
-      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.section(id!, entityType!), "Spell updated");
-    },
-    onError: (err) => snackbar.error(err, "Failed to update spell"),
-  });
-
-  // Class level update mutation
-  const updateClassLevelMutation = useMutation({
-    mutationFn: async () => {
-      const klassId = (entityData as unknown as { klassId: string }).klassId;
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
-        param: { id: id!, classId: klassId, levelId: entityId! },
-        json: {
-          saves: saves.map((save) => ({
-            saveId: save.id,
-            base: levelSaveValues[save.id] ?? 0,
-          })),
-          feats: selectedLevelFeats.map((f) => ({ featId: f.featId, aptitudeId: f.aptitudeId, free: true })),
-        },
-      }));
-    },
-    onMutate: () => ({
-      feats: levelFeatsSnapshot(selectedLevelFeats),
-      saves: levelSavesSnapshot(levelSaveValues),
-    }),
-    onSuccess: (data, _submitted, snapshot) => {
-      setInitialLevelFeats(snapshot.feats);
-      setInitialLevelSaves(snapshot.saves);
-      const klassId = (entityData as unknown as { klassId: string }).klassId;
-      return handleEntitySaved((data as { id: string }).id, queryKeys.rulesets.classLevels(id!, klassId), "Class level updated");
-    },
-    onError: (err) => snackbar.error(err, "Failed to update class level"),
-  });
-
-  // Delete mutation (switches per entity type)
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      let response;
-      switch (entityType) {
-        case "feats":
-          response = await rpc.api.rulesets[":id"].feats[":featId"].$delete({
-            param: { id: id!, featId: entityId! },
-          });
-          break;
-        case "races":
-          response = await rpc.api.rulesets[":id"].races[":raceId"].$delete({
-            param: { id: id!, raceId: entityId! },
-          });
-          break;
-        case "items":
-          response = await rpc.api.rulesets[":id"].items[":itemId"].$delete({
-            param: { id: id!, itemId: entityId! },
-          });
-          break;
-        case "powers":
-          response = await rpc.api.rulesets[":id"].powers[":powerId"].$delete({
-            param: { id: id!, powerId: entityId! },
-          });
-          break;
-        case "klass_levels": {
-          const klassId = (entityData as unknown as { klassId: string }).klassId;
-          response = await rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$delete({
-            param: { id: id!, classId: klassId, levelId: entityId! },
-          });
-          break;
-        }
-        default:
-          throw new Error("Invalid entity type for delete");
-      }
-      return parseResponse(response);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(id!, entityType!) });
-      const label = entityType_LABELS[entityType as EntityType];
-      if (entityType === "klass_levels") {
-        const klassId = (entityData as unknown as { klassId: string }).klassId;
-        queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classLevels(id!, klassId) });
-        navigate(`/rulesets/${id}/classes/${klassId}/levels`);
-        snackbar.success(`${label} deleted`);
-      } else {
-        navigate(backUrl ?? `/rulesets/${id}/${entityType}`);
-        snackbar.success(`${label} deleted`);
-      }
-    },
-    onError: (err) => snackbar.error(err, `Failed to delete ${entityType_LABELS[entityType as EntityType].toLowerCase()}`),
-  });
-
-  const currentTabConfig = getTabConfig(entityType as EntityType);
-  const currentTabSections = currentTabConfig.map((tab) => tab.key);
-
-  const currentTabValue = (() => {
-    if (!section) return 0;
-    const index = currentTabSections.indexOf(section as TabSection);
-    return index >= 0 ? index : 0;
-  })();
-
-  const queryClient = useQueryClient();
-
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    const newSection = currentTabSections[newValue];
-    navigate(`/rulesets/${id}/${entityType}/${entityId}/customization/${newSection}`);
-  };
-
-  const handleBack = () => {
-    if (entityType === "modifiers") {
-      const modifier = entityData as unknown as Modifier;
-      navigate(
-        `/rulesets/${id}/${modifier.sourceType}/${modifier.sourceId}/customization`,
-      );
-    } else if (entityType === "klass_levels") {
-      const klassId = (entityData as unknown as { klassId: string }).klassId;
-      navigate(`/rulesets/${id}/classes/${klassId}/levels`);
-    } else if (entityType === "klasses") {
-      navigate(`/rulesets/${id}/classes/${entityId}`);
-    } else {
-      navigate(backUrl ?? `/rulesets/${id}/${entityType}`);
-    }
-  };
-
-  const handleEntityIdChange = useCallback((newEntityId: string) => {
-    navigate(`/rulesets/${id}/${entityType}/${newEntityId}/customization/${section}`, { replace: true, state: location.state });
-  }, [navigate, id, entityType, section, location.state]);
-
-  // Redirect to first available tab if no section specified
-  useEffect(() => {
-    if (
-      id && entityType && entityId &&
-      (!section || !currentTabSections.includes(section as TabSection))
-    ) {
-      const defaultSection = currentTabSections[0] || "properties";
-      navigate(`/rulesets/${id}/${entityType}/${entityId}/customization/${defaultSection}`, {
+    if (validType && entityId && !currentTab) {
+      navigate(`/rulesets/${rulesetId}/${validType}/${entityId}/customization/${tabsFor(validType)[0].key}`, {
         replace: true,
         state: location.state,
       });
     }
-  }, [id, entityType, entityId, section, navigate, currentTabSections, location.state]);
+  }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
 
-  const isLoading = rulesetLoading || entityLoading;
-  const error = rulesetError || entityError;
-
-  // Check for invalid entity type
-  if (!isValidEntityType(entityType)) {
+  if (!validType || rulesetError || entityError || (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Box sx={{ maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } }}>
         <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
           <Typography variant="h5" color="error" gutterBottom>
-            Invalid entity type: {entityType}
+            {validType ? "Failed to load customization data" : `Invalid entity type: ${entityType}`}
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate(`/rulesets/${id}`)}
-            sx={{ mt: 2 }}
-          >
+          <Button variant="contained" onClick={() => navigate(`/rulesets/${rulesetId}`)} sx={{ mt: 2 }}>
             Back to Ruleset
           </Button>
         </Paper>
-      </Container>
+      </Box>
     );
   }
 
-  if (isLoading) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: 400,
-          }}
-        >
-          <DiceSpinner />
-        </Box>
-      </Container>
-    );
-  }
-
-  if (error || !ruleset || !entityData) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
-          <Typography variant="h5" color="error" gutterBottom>
-            Failed to load customization data
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate(`/rulesets/${id}`)}
-            sx={{ mt: 2 }}
-          >
-            Back to Ruleset
-          </Button>
-        </Paper>
-      </Container>
-    );
+  if (!ruleset || !data || !currentTab) {
+    return <EntityDetailLayout onBack={() => navigate(-1)} canDelete={false} isLoading>{null}</EntityDetailLayout>;
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box
-        sx={{
-          mb: 4,
-          display: "flex",
-          alignItems: "center",
-          py: 2,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "relative",
-        }}
-      >
-        <IconButton
-          onClick={handleBack}
-          size="large"
-          sx={{
-            position: "absolute",
-            left: 0,
-            "&:hover": {
-              bgcolor: "action.hover",
-            },
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-        <Box
-          sx={{
-            flexGrow: 1,
-            textAlign: "center",
-            px: { xs: 5, md: 8 },
-          }}
-        >
-          <Typography sx={{ typography: { xs: "h5", md: "h3" }, fontWeight: 700, mb: 1 }}>
-            Customize{" "}
-            {entityType === "modifiers"
-              ? (entityData as unknown as { sourceName: string }).sourceName
-              : (
-                <>
-                  {entityData.name}
-                  {entityType === "klass_levels" && "level" in entityData ? ` Level ${entityData.level}` : ""}
-                </>
-              )}
-          </Typography>
-          {entityType === "modifiers" && "target" in entityData
-            ? (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 2 }}>
-                <TargetPathBreadcrumbs target={(entityData as unknown as Modifier).target} targetLabels={"targetLabels" in entityData ? entityData.targetLabels as Record<string, string> : undefined} />
-                <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
-                  {MODIFIER_OPERATOR_LABELS[(entityData as unknown as Modifier).operator]} {(entityData as unknown as Modifier).value}
-                </Typography>
-              </Box>
-            )
-            : (
-              <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary", mb: 2 }}>
-                {entityType_LABELS[entityType as EntityType]} in {ruleset.name}
-              </Typography>
-            )}
-        </Box>
-        {showDeleteAction && (
-          <>
-            <IconButton
-              size="large"
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{
-                position: "absolute",
-                right: 0,
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              <MoreVertIcon />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={() => setAnchorEl(null)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-              <MenuItem onClick={() => { setAnchorEl(null); setDeleteDialogOpen(true); }} sx={{ color: "error.main" }}>
-                Delete
-              </MenuItem>
-            </Menu>
-          </>
+    <CustomizationView
+      rulesetId={rulesetId}
+      entityId={entityId}
+      section={currentTab}
+      tabs={tabs}
+      ruleset={ruleset}
+      data={data}
+      canEdit={canEditEntities}
+      locked={isPlaceholderData}
+    />
+  );
+}
+
+/** What surrounds the editor: the header and where Back goes. */
+function describe(data: CustomizationEntity, rulesetId: string, entityId: string): {
+  title: string;
+  pageTitle: string;
+  subtitle?: ReactNode;
+  backPath?: string;
+} {
+  switch (data.type) {
+    case "modifiers": {
+      const modifier = data.entity;
+      return {
+        title: modifier.sourceName,
+        pageTitle: `${modifier.target} ${modifier.operator} ${modifier.value}`,
+        subtitle: (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+            <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />
+            <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
+              {MODIFIER_OPERATOR_LABELS[modifier.operator]} {modifier.value}
+            </Typography>
+          </Box>
+        ),
+        backPath: `/rulesets/${rulesetId}/${modifier.sourceType}/${modifier.sourceId}/customization`,
+      };
+    }
+    case "klass_levels":
+      return {
+        title: `${data.entity.name} Level ${data.entity.level}`,
+        pageTitle: `${data.entity.name} Level ${data.entity.level}`,
+        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}/levels`,
+      };
+    case "klasses":
+      return { title: data.entity.name, pageTitle: data.entity.name, backPath: `/rulesets/${rulesetId}/classes/${entityId}` };
+    default:
+      return { title: data.entity.name, pageTitle: data.entity.name };
+  }
+}
+
+function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
+  switch (data.type) {
+    case "feats":
+      return <FeatEditor {...props} entity={data.entity} />;
+    case "races":
+      return <RaceEditor {...props} entity={data.entity} />;
+    case "items":
+      return <ItemEditor {...props} entity={data.entity} />;
+    case "powers":
+      return <SpellEditor {...props} entity={data.entity} />;
+    case "klass_levels":
+      return <ClassLevelEditor {...props} entity={data.entity} />;
+    default:
+      return data satisfies never;
+  }
+}
+
+async function deleteEntity(data: EditableEntity, id: string, entityId: string) {
+  const api = rpc.api.rulesets[":id"];
+  switch (data.type) {
+    case "feats":
+      await api.feats[":featId"].$delete({ param: { id, featId: entityId } });
+      return;
+    case "races":
+      await api.races[":raceId"].$delete({ param: { id, raceId: entityId } });
+      return;
+    case "items":
+      await api.items[":itemId"].$delete({ param: { id, itemId: entityId } });
+      return;
+    case "powers":
+      await api.powers[":powerId"].$delete({ param: { id, powerId: entityId } });
+      return;
+    case "klass_levels":
+      await api.classes[":classId"].levels[":levelId"].$delete({ param: { id, classId: data.entity.klassId, levelId: entityId } });
+      return;
+    default:
+      return data satisfies never;
+  }
+}
+
+interface CustomizationViewProps {
+  rulesetId: string;
+  entityId: string;
+  section: TabSection;
+  tabs: SectionTab<TabSection>[];
+  ruleset: Ruleset;
+  data: CustomizationEntity;
+  canEdit: boolean;
+  /** Still showing the entity a copy was made from, while the copy loads. */
+  locked: boolean;
+}
+
+function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, canEdit, locked }: CustomizationViewProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const type = data.type;
+  const label = ENTITY_LABELS[type];
+  const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, entityId);
+  const state = (location.state as CustomizationState | null) ?? {};
+  const listPath = state.from ?? `/rulesets/${rulesetId}/${type}`;
+  usePageTitle(pageTitle);
+
+  const entityKey = queryKeys.rulesets.entity(rulesetId, type, entityId);
+  const klassLevelsKey = data.type === "klass_levels" ? queryKeys.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
+
+  // Editing or customizing an inherited entity copies it into this ruleset
+  // under a new id: move to the copy, unless the page has left the source
+  // since. `copiedFrom` keeps the source on screen while the copy loads and
+  // lets the editor carry its unsaved edits over.
+  const followCopy = (copyId: string, sourceId: string) => {
+    const sourcePath = `/rulesets/${rulesetId}/${type}/${sourceId}`;
+    if (!isStillOpen(sourcePath)) return;
+    // Onto the tab shown now, which may have changed while the request ran.
+    navigate(`/rulesets/${rulesetId}/${type}/${copyId}${window.location.pathname.slice(sourcePath.length)}`, {
+      replace: true,
+      state: { ...state, copiedFrom: sourceId },
+    });
+  };
+
+  // Once the copy's own data is in, forget where it came from, so going
+  // back and forth in history never carries edits between the two.
+  useEffect(() => {
+    const current = location.state as CustomizationState | null;
+    if (!current?.copiedFrom || locked) return;
+    // A navigation still loading has moved the address bar on: leave it be.
+    if (window.location.pathname !== location.pathname) return;
+    const { copiedFrom: _done, ...rest } = current;
+    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: rest });
+  }, [location.state, locked, location.pathname, location.search, location.hash, navigate]);
+
+  const handleSaved = (sourceId: string, saved: { id: string }, listKey: QueryKey, message: string) => {
+    if (saved.id !== sourceId) followCopy(saved.id, sourceId);
+    void queryClient.invalidateQueries({ queryKey: listKey });
+    snackbar.success(message);
+    // Save responses lack relations (aptitudes, level feats): refetch the entity.
+    return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(rulesetId, type, saved.id) });
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: () => {
+      if (!isEditable(data)) throw new Error(`${label} can't be deleted here`);
+      return deleteEntity(data, rulesetId, entityId);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, type) });
+      if (klassLevelsKey) void queryClient.invalidateQueries({ queryKey: klassLevelsKey });
+      snackbar.success(`${label} deleted`);
+      navigate(backPath ?? listPath);
+      // Gone: don't let Back render it from the cache.
+      queryClient.removeQueries({ queryKey: entityKey });
+    },
+    onError: (err) => snackbar.error(err, `Failed to delete ${label.toLowerCase()}`),
+  });
+
+  const sectionProps = {
+    ruleset,
+    entityId,
+    data: undefined,
+    onEntityIdChange: followCopy,
+  };
+
+  return (
+    <EntityDetailLayout
+      entityName={`Customize ${title}`}
+      subtitle={subtitle ?? `${label} in ${ruleset.name}`}
+      onBack={() => navigate(backPath ?? listPath)}
+      backDisabled={locked}
+      canDelete={canEdit && isEditable(data) && !locked}
+      onDelete={() => setDeleteDialogOpen(true)}
+    >
+      {isEditable(data) && renderEditor(data, {
+        rulesetId,
+        entityId,
+        recordKey: `${rulesetId}/${entityId}`,
+        adoptKey: state.copiedFrom && `${rulesetId}/${state.copiedFrom}`,
+        canEdit,
+        locked,
+        onSaved: handleSaved,
+      })}
+
+      <SectionTabs
+        tabs={tabs}
+        value={section}
+        // While locked the entry still says where the copy came from: replace it
+        // rather than leave more entries to clean up.
+        onChange={(key) => navigate(`/rulesets/${rulesetId}/${type}/${entityId}/customization/${key}`, {
+          state: location.state,
+          replace: locked,
+        })}
+        aria-label="customization tabs"
+      />
+
+      <Box role="tabpanel" sx={{ py: 3 }}>
+        {/* The source's customizations don't belong to the copy: wait for it. */}
+        {locked ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><DiceSpinner /></Box>
+        ) : section === "requirements" ? (
+          <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
+        ) : data.type === "modifiers" ? null : section === "modifiers" ? (
+          <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
+        ) : (
+          <PropertiesSection
+            {...sectionProps}
+            entityType={data.type}
+            data={"properties" in data.entity ? data.entity.properties : undefined}
+            queryKeysToInvalidate={klassLevelsKey ? [entityKey, klassLevelsKey] : [entityKey]}
+          />
         )}
       </Box>
-      {/* Feat Details Card */}
-      {entityType === "feats" && (
-        <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                  Feat Details
-                </Typography>
-                {!canEdit && selectedFeatAptitudes.length > 0 && (
-                  <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                    {selectedFeatAptitudes.map((apt) => (
-                      <Chip key={apt.id} label={apt.name} size="small" color="primary" variant="outlined" />
-                    ))}
-                  </Box>
-                )}
-              </Box>
-            </Box>
-            <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {canEdit ? (
-                <form onSubmit={featForm.handleSubmit((data) => updateFeatMutation.mutate(data))}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <FeatFormFields
-                      form={featForm}
-                      rulesetId={id!}
-                      selectedAptitudes={selectedFeatAptitudes}
-                      onAptitudesChange={setSelectedFeatAptitudes}
-                    />
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                      <Button type="submit" variant="contained" disabled={!isFeatDirty || updateFeatMutation.isPending}>
-                        <DiceSpinner size="small" loading={updateFeatMutation.isPending}>Save</DiceSpinner>
-                      </Button>
-                    </Box>
-                  </Box>
-                </form>
-              ) : (
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: "text.secondary",
-                    lineHeight: 1.6
-                  }}>
-                  {(entityData as { description?: string })?.description || "No description provided."}
-                </Typography>
-              )}
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-      {/* Race Details Card */}
-      {entityType === "races" && (
-        <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                  Race Details
-                </Typography>
-                {!canEdit && (() => {
-                  const race = entityData as { size?: string; baseSpeed?: number } | undefined;
-                  return race ? (
-                    <Box sx={{ display: "flex", gap: 0.5 }}>
-                      {race.size && <Chip label={race.size} size="small" color="secondary" variant="filled" sx={{ fontWeight: 600 }} />}
-                      {race.baseSpeed != null && <Chip label={`${race.baseSpeed} ft`} size="small" color="info" variant="outlined" />}
-                    </Box>
-                  ) : null;
-                })()}
-              </Box>
-            </Box>
-            <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {canEdit ? (
-                <form onSubmit={raceForm.handleSubmit((data) => updateRaceMutation.mutate(data))}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <RaceFormFields form={raceForm} />
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                      <Button type="submit" variant="contained" disabled={!raceForm.formState.isDirty || updateRaceMutation.isPending}>
-                        <DiceSpinner size="small" loading={updateRaceMutation.isPending}>Save</DiceSpinner>
-                      </Button>
-                    </Box>
-                  </Box>
-                </form>
-              ) : (
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: "text.secondary",
-                    lineHeight: 1.6
-                  }}>
-                  {(entityData as { description?: string })?.description || "No description provided."}
-                </Typography>
-              )}
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-      {/* Item Details Card */}
-      {entityType === "items" && (
-        <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                  Item Details
-                </Typography>
-                {!canEdit && (() => {
-                  const item = entityData as { type?: string | null; slot?: string | null; costGp?: string | null; weight?: string | null } | undefined;
-                  return item ? (
-                    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                      {item.type && <Chip label={item.type} size="small" color="secondary" variant="filled" sx={{ fontWeight: 600 }} />}
-                      {item.slot && <Chip label={item.slot} size="small" color="info" variant="outlined" />}
-                      {item.costGp && <Chip label={`${item.costGp} gp`} size="small" variant="outlined" />}
-                      {item.weight && <Chip label={`${item.weight} lb`} size="small" variant="outlined" />}
-                    </Box>
-                  ) : null;
-                })()}
-              </Box>
-            </Box>
-            <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {canEdit ? (
-                <form onSubmit={itemForm.handleSubmit((data) => updateItemMutation.mutate(data))}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <ItemFormFields form={itemForm} rulesetId={id!} />
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                      <Button type="submit" variant="contained" disabled={!itemForm.formState.isDirty || updateItemMutation.isPending}>
-                        <DiceSpinner size="small" loading={updateItemMutation.isPending}>Save</DiceSpinner>
-                      </Button>
-                    </Box>
-                  </Box>
-                </form>
-              ) : (
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: "text.secondary",
-                    lineHeight: 1.6
-                  }}>
-                  {(entityData as { description?: string })?.description || "No description provided."}
-                </Typography>
-              )}
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-      {/* Spell Details Card */}
-      {entityType === "powers" && (
-        <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                  Spell Details
-                </Typography>
-                {!canEdit && (() => {
-                  const spell = entityData as { saveId?: string | null; saveEffect?: string | null } | undefined;
-                  const saveName = spell?.saveId ? saves.find((s) => s.id === spell.saveId)?.name : null;
-                  return (
-                    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                      {selectedSpellAptitudes.map((apt) => (
-                        <Chip key={apt.id} label={apt.name} size="small" color="primary" variant="outlined" />
-                      ))}
-                      {saveName && <Chip label={`Save: ${saveName}${spell?.saveEffect ? ` (${spell.saveEffect})` : ""}`} size="small" color="warning" variant="outlined" />}
-                    </Box>
-                  );
-                })()}
-              </Box>
-            </Box>
-            <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {canEdit ? (
-                <form onSubmit={spellForm.handleSubmit((data) => updateSpellMutation.mutate({
-                  ...data,
-                  aptitudes: selectedSpellAptitudes.map((a) => ({
-                    id: a.id,
-                    ...spellAptitudeMetadata.get(a.id),
-                  })),
-                }))}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <SpellFormFields
-                      form={spellForm}
-                      rulesetId={id!}
-                      selectedAptitudes={selectedSpellAptitudes}
-                      onAptitudesChange={setSelectedSpellAptitudes}
-                      aptitudeMetadata={spellAptitudeMetadata}
-                      onAptitudeMetadataChange={setSpellAptitudeMetadata}
-                      saves={saves}
-                      hideProperties
-                    />
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                      <Button type="submit" variant="contained" disabled={!isSpellDirty || updateSpellMutation.isPending}>
-                        <DiceSpinner size="small" loading={updateSpellMutation.isPending}>Save</DiceSpinner>
-                      </Button>
-                    </Box>
-                  </Box>
-                </form>
-              ) : (
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: "text.secondary",
-                    lineHeight: 1.6
-                  }}>
-                  {(entityData as { description?: string })?.description || "No description provided."}
-                </Typography>
-              )}
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-      {/* Class Level Details Card */}
-      {entityType === "klass_levels" && (
-        <Card sx={{ mb: 4, boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }}>
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                  Class Level Details
-                </Typography>
-                {!canEdit && (
-                  <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                    {Object.entries(levelSaveValues).map(([saveId, base]) => {
-                      const saveName = saves.find((s) => s.id === saveId)?.name;
-                      return saveName ? <Chip key={saveId} label={`${saveName}: +${base}`} size="small" variant="outlined" /> : null;
-                    })}
-                  </Box>
-                )}
-              </Box>
-            </Box>
-            <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {canEdit ? (
-                <form onSubmit={classLevelForm.handleSubmit(() => updateClassLevelMutation.mutate())}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {saves.length > 0 && (
-                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: `repeat(${Math.min(saves.length, 3)}, 1fr)` }, gap: 2 }}>
-                        {saves.map((save) => (
-                          <TextField
-                            key={save.id}
-                            label={`${save.name} Save`}
-                            type="number"
-                            slotProps={{ htmlInput: { min: 0, max: 12 } }}
-                            value={levelSaveValues[save.id] ?? 0}
-                            onChange={(e) => setLevelSaveValues((prev) => ({
-                              ...prev,
-                              [save.id]: Number(e.target.value),
-                            }))}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                    <Autocomplete
-                      multiple
-                      options={featOptions}
-                      getOptionLabel={(option) => option.label}
-                      value={selectedLevelFeats}
-                      onChange={(_, newValue) => setSelectedLevelFeats(newValue)}
-                      isOptionEqualToValue={(option, value) =>
-                        option.featId === value.featId && option.aptitudeId === value.aptitudeId
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Feats"
-                          placeholder="Select feats with aptitudes granted at this level"
-                        />
-                      )}
-                      renderValue={(value, getItemProps) =>
-                        value.map((option, index) => {
-                          const tagProps = getItemProps({ index });
-                          return (
-                            <Chip
-                              variant="outlined"
-                              label={option.label}
-                              {...tagProps}
-                              onDelete={() => {
-                                setSelectedLevelFeats((prev) => prev.filter((_, i) => i !== index));
-                              }}
-                              key={`${option.featId}-${option.aptitudeId}`}
-                            />
-                          );
-                        })
-                      }
-                    />
-                    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                      <Button type="submit" variant="contained" disabled={!isClassLevelDirty || updateClassLevelMutation.isPending}>
-                        <DiceSpinner size="small" loading={updateClassLevelMutation.isPending}>Save</DiceSpinner>
-                      </Button>
-                    </Box>
-                  </Box>
-                </form>
-              ) : (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {selectedLevelFeats.length > 0 && (
-                    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                      {selectedLevelFeats.map((feat) => (
-                        <Chip key={`${feat.featId}-${feat.aptitudeId}`} label={feat.label} size="small" variant="outlined" />
-                      ))}
-                    </Box>
-                  )}
-                  {selectedLevelFeats.length === 0 && (
-                    <Typography variant="body2" sx={{
-                      color: "text.secondary"
-                    }}>No feats at this level.</Typography>
-                  )}
-                </Box>
-              )}
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-      <Box
-        sx={{
-          borderRadius: 2,
-          bgcolor: "action.hover",
-          p: 1,
-          mb: 4,
-        }}
-      >
-        <Tabs
-          value={currentTabValue}
-          onChange={handleTabChange}
-          aria-label="customization tabs"
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            "& .MuiTabs-indicator": {
-              height: 3,
-              borderRadius: 1.5,
-            },
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              minHeight: 48,
-              borderRadius: 1,
-              mx: 0.5,
-              "&:hover": {
-                bgcolor: "action.hover",
-              },
-              "&.Mui-selected": {
-                bgcolor: "background.default",
-                boxShadow: 1,
-              },
-            },
-          }}
-        >
-          {currentTabConfig.map((tab) => (
-            <Tab
-              key={tab.key}
-              icon={<tab.icon />}
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  {tab.label}
-                  {tab.helpIcon}
-                </Box>
-              }
-              iconPosition="start"
-            />
-          ))}
-        </Tabs>
-      </Box>
-      <Box sx={{ width: "100%" }}>
-        {id && entityType && entityId &&
-          currentTabConfig.map((tab, index) => (
-            <TabPanel key={tab.key} value={currentTabValue} index={index}>
-              {tab.component === RequirementsSection
-                ? (
-                  <RequirementsSection
-                    ruleset={ruleset}
-                    entityType={entityType as EntityType}
-                    entityId={entityId}
-                    data={undefined}
-                    queryKeysToInvalidate={[queryKeys.rulesets.entity(id, entityType, entityId)]}
-                    onEntityIdChange={handleEntityIdChange}
-                  />
-                )
-                : tab.component === ModifiersSection
-                ? (
-                  <ModifiersSection
-                    ruleset={ruleset}
-                    entityType={entityType as BaseEntityType}
-                    entityId={entityId}
-                    data={undefined}
-                    queryKeysToInvalidate={[queryKeys.rulesets.entity(id, entityType, entityId)]}
-                    onEntityIdChange={handleEntityIdChange}
-                  />
-                )
-                : (
-                  <PropertiesSection
-                    ruleset={ruleset}
-                    entityType={entityType as BaseEntityType}
-                    entityId={entityId}
-                    data={"properties" in entityData ? (entityData as Record<string, unknown>).properties as Property[] : undefined}
-                    queryKeysToInvalidate={entityType === "klass_levels" && "klassId" in entityData
-                      ? [
-                        queryKeys.rulesets.entity(id, entityType, entityId),
-                        queryKeys.rulesets.classLevels(id, (entityData as { klassId: string }).klassId),
-                      ]
-                      : [queryKeys.rulesets.entity(id, entityType, entityId)]}
-                    onEntityIdChange={handleEntityIdChange}
-                  />
-                )}
-            </TabPanel>
-          ))}
-      </Box>
+
       <DeleteDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        title={`Delete ${entityType_LABELS[entityType as EntityType] ?? "Entity"}`}
-        message={`Are you sure you want to delete this ${(entityType_LABELS[entityType as EntityType] ?? "entity").toLowerCase()}? This action cannot be undone.`}
+        title={`Delete ${label}`}
+        message={`Are you sure you want to delete this ${label.toLowerCase()}? This action cannot be undone.`}
         onConfirm={() => deleteMutation.mutate()}
         isLoading={deleteMutation.isPending}
       />
-    </Container>
+    </EntityDetailLayout>
   );
 }

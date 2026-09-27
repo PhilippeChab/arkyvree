@@ -44,6 +44,12 @@ export const queryKeys = {
     /** Every language of the ruleset, for pickers; nested like `abilities`. */
     languages: (id: string) =>
       ["rulesets", "detail", id, "languages", "options"] as const,
+    /** Feats of the ruleset with their aptitudes, for pickers; nested like `abilities`. */
+    feats: (id: string) =>
+      ["rulesets", "detail", id, "feats", "options"] as const,
+    /** Every save of the ruleset, for pickers and columns; nested like `abilities`. */
+    saves: (id: string) =>
+      ["rulesets", "detail", id, "saves", "options"] as const,
     propertyTypeCompletions: (id: string, search: string, entityType?: string) =>
       ["rulesets", "detail", id, "propertyTypeCompletions", search, entityType] as const,
     propertyValueCompletions: (id: string, propertyType: string, search: string) =>

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { FieldValues, UseFormReturn } from "react-hook-form";
+import type { FieldValues, SubmitHandler, UseFormReturn } from "react-hook-form";
 
 interface ServerVersion {
   key: string | undefined;
@@ -9,11 +9,16 @@ interface ServerVersion {
 
 interface FormSyncOptions {
   /**
-   * The record the page is on, from the URL: opening another record resets
-   * the form, edits included. Not the fetched id, which a copy-on-write
-   * can change under the same page.
+   * The record the form edits, from the URL: opening another record resets
+   * the form, edits included. Not the fetched id, which a copy-on-write can
+   * change under the same page.
    */
   key?: string;
+  /**
+   * The record this one was copied from, when a copy-on-write moved the page
+   * to the copy: a form still holding it carries its edits over to `key`.
+   */
+  adoptKey?: string;
   /** The record's `updatedAt`, used as the stale-edit token. */
   updatedAt?: string;
 }
@@ -24,10 +29,12 @@ interface FormSyncOptions {
  * while it is dirty waits until the edits are saved or undone. Pass
  * `undefined` while loading.
  *
- * - `updatedAt()` is the token of the server values the form is based on;
- *   call it when sending the save. Send it, not the query's current
- *   `updatedAt`: when the record changed under the user's edits, the save is
- *   then rejected as stale instead of silently overwriting the newer values.
+ * - `handleSubmit(onValid)` replaces `form.handleSubmit`: it remembers which
+ *   record the save is for.
+ * - `updatedAt()` is the token of the server values the form is based on.
+ *   Send it with the save, not the query's current `updatedAt`: when the
+ *   record changed under the user's edits, the save is then rejected as
+ *   stale instead of silently overwriting the newer values.
  * - `saved(values, updatedAt?)` replaces `form.reset()` after a successful
  *   save: the form shows what was saved under the token the server returned,
  *   and the pre-save data still in the cache is ignored until the refetch
@@ -36,7 +43,7 @@ interface FormSyncOptions {
 export function useFormSync<T extends FieldValues>(
   form: UseFormReturn<T>,
   values: NoInfer<T> | undefined,
-  { key, updatedAt }: FormSyncOptions = {},
+  { key, adoptKey, updatedAt }: FormSyncOptions = {},
 ) {
   const { isDirty } = form.formState;
   // Compare by content: a refetch returns new objects even when nothing changed.
@@ -50,6 +57,11 @@ export function useFormSync<T extends FieldValues>(
   useEffect(() => {
     if (snapshot === undefined) return;
     const current = synced.current;
+    if (current && adoptKey !== undefined && current.key !== key && current.key === adoptKey) {
+      // Moved to the copy of the record the form holds: keep its edits.
+      current.key = key;
+      if (savingKey.current === adoptKey) savingKey.current = key;
+    }
     if (!current || current.key !== key) {
       // First load, or another record: start from its values.
       form.reset(JSON.parse(snapshot) as T);
@@ -71,7 +83,7 @@ export function useFormSync<T extends FieldValues>(
       synced.current = { key, snapshot, updatedAt };
     }
     // Otherwise the change waits behind the user's edits.
-  }, [key, snapshot, updatedAt, isDirty, form]);
+  }, [key, adoptKey, snapshot, updatedAt, isDirty, form]);
 
   const saved = (savedValues: T, savedUpdatedAt?: string) => {
     // The user moved to another record while the save was in flight.
@@ -81,11 +93,16 @@ export function useFormSync<T extends FieldValues>(
     synced.current = { key: savingKey.current, snapshot: JSON.stringify(savedValues), updatedAt: savedUpdatedAt };
   };
 
+  const handleSubmit = (onValid: SubmitHandler<T>) => form.handleSubmit((data, event) => {
+    savingKey.current = synced.current?.key;
+    return onValid(data, event);
+  });
+
   return {
-    updatedAt: () => {
-      savingKey.current = synced.current?.key;
-      return synced.current?.updatedAt;
-    },
+    handleSubmit,
+    updatedAt: () => synced.current?.updatedAt,
     saved,
   };
 }
+
+export type FormSync<T extends FieldValues> = ReturnType<typeof useFormSync<T>>;

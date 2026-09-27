@@ -43,13 +43,14 @@ test.describe('Account capacity — Characters', () => {
     await page.waitForURL('/dashboard', { timeout: 10_000 });
     await page.getByRole('button', { name: /^Skip$/ }).click();
 
-    // First six characters succeed. The Level Up wizard auto-opens
-    // after the URL transition; wait for it explicitly, then Escape.
+    // First six characters succeed. Creating a character opens the Level Up
+    // wizard once its sheet loads, which can take a while under load: wait
+    // for it before dismissing it.
     const wizard = page.getByRole('dialog', { name: 'Add Level' });
     for (let i = 1; i <= 6; i++) {
       await fastCreateCharacter(page, `Capacity Hero ${i} ${Date.now()}`);
       await expect(page).toHaveURL(/\/characters\/[a-f0-9-]+/, { timeout: 15_000 });
-      await wizard.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {/* didn't auto-open */});
+      await expect(wizard).toBeVisible({ timeout: 15_000 });
       await page.keyboard.press('Escape');
       await expect(page.locator('[role="dialog"][aria-modal="true"]')).toHaveCount(0);
     }

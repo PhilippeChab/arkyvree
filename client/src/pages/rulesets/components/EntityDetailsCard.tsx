@@ -6,7 +6,9 @@ interface EntityDetailsCardProps {
   title: string;
   /** Facts shown next to the title in the read-only view. */
   chips?: ReactNode;
-  description: string | null | undefined;
+  description?: string | null;
+  /** Read-only body for entities without a description; replaces it. */
+  readOnlyBody?: ReactNode;
   /** The inline edit form, for editors; everyone else sees the description. */
   edit?: {
     fields: ReactNode;
@@ -18,7 +20,7 @@ interface EntityDetailsCardProps {
 }
 
 /** Card at the top of a ruleset entity page: its edit form, or its description. */
-export function EntityDetailsCard({ title, chips, description, edit, sx }: EntityDetailsCardProps) {
+export function EntityDetailsCard({ title, chips, description, readOnlyBody, edit, sx }: EntityDetailsCardProps) {
   return (
     <Card sx={[{ boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }, ...(Array.isArray(sx) ? sx : [sx])]}>
       <CardContent sx={{ p: 0 }}>
@@ -42,7 +44,7 @@ export function EntityDetailsCard({ title, chips, description, edit, sx }: Entit
                 </Box>
               </Box>
             </form>
-          ) : (
+          ) : readOnlyBody ?? (
             <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
               {description || "No description provided."}
             </Typography>

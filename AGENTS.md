@@ -84,7 +84,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - `ApiError` includes `status` (HTTP code) and `errorName` (server error class name)
 - The RPC fetch throws `ApiError` on every non-2xx response, so never check `response.ok`. Read bodies with `parseResponse(rpc.api.x.$get(...))` (re-exported from `rpc.ts`), which also narrows to the success type. To react to a specific status (e.g. show "not found"), catch `ApiError` and test `error.status`
 - Use `InferRequestType` / `InferResponseType` from `hono/client` for all API types — never recreate manually
-- Queries shared between a page and a prefetch (sidebar hover, card hover) live in `client/src/lib/queries.ts` as `queryOptions` factories, so the key, page size and params can't drift apart. Ruleset and campaign tab lists do the same in `pages/rulesets/details/sectionQueries.ts` and `pages/campaigns/details/sectionQueries.ts`: a section renders with its factory and the hover prefetch (ruleset tab, campaign card) goes through it. Every query key comes from `lib/queryKeys.ts`
+- Queries shared between a page and a prefetch (sidebar hover, card hover) live in `client/src/lib/queries.ts` as `queryOptions` factories, so the key, page size and params can't drift apart. Ruleset and campaign tab lists do the same in `pages/rulesets/details/sectionQueries.ts` and `pages/campaigns/details/sectionQueries.ts`, and the customization page's entity (and the section rows' hover prefetch) in `pages/rulesets/customization/entityQueries.ts`: a section renders with its factory and the hover prefetch (ruleset tab, campaign card) goes through it. Every query key comes from `lib/queryKeys.ts`
 
 **State Management:**
 
@@ -97,10 +97,10 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - `useDebouncedValue(value, delay?)` — shared hook for debouncing search inputs (default 300ms)
 - `useRulesetSection` — generic CRUD hook for ruleset detail sections (queries, mutations, dialogs, forms)
 - `useRulesetPermissions(ruleset)` — the single source of ruleset edit / manage / publish rights on the client
-- `useFormSync(form, values, { key, updatedAt })` — keeps an inline edit form in step with server data without wiping unsaved edits on refetch; use it instead of an effect that calls `form.reset()` whenever the query data changes. `key` is the record from the URL (include the ruleset id for ruleset entities: inherited ones keep their id in every fork), so opening another record resets the form. Send `sync.updatedAt()` as the save's stale-edit token, and on success call `sync.saved(values, response.updatedAt)` instead of `form.reset()`
+- `useFormSync(form, values, { key, updatedAt })` — keeps an inline edit form in step with server data without wiping unsaved edits on refetch; use it instead of an effect that calls `form.reset()` whenever the query data changes. `key` is the record from the URL (include the ruleset id for ruleset entities: inherited ones keep their id in every fork), so opening another record resets the form. A page that follows a copy-on-write to the copy passes the source's key as `adoptKey`: a form still holding the source takes the new key over and keeps its unsaved edits. Submit through `sync.handleSubmit`, send `sync.updatedAt()` as the save's stale-edit token, and on success call `sync.saved(values, response.updatedAt)` instead of `form.reset()`
 - `useSearchParam` / `useUpdateSearchParams` — list filters and sort live in the URL; `oneOf()` (`lib/oneOf.ts`) validates enum params
 - `useNotificationActions` — accept / reject invites, download exports and open targets for any notification surface
-- `useRulesetAbilities(rulesetId)` — the full ability list for pickers; don't query abilities ad hoc
+- `useRulesetAbilities(rulesetId)` / `useRulesetSaves(rulesetId)` / `useRulesetFeats(rulesetId)` — the ability / save / feat lists for pickers and columns (the first 100 of each, the most one request returns); don't query them ad hoc
 - `usePrefetch` — returns `{ onMouseEnter, onFocus }` props for prefetching on hover/focus
 - Infinite listboxes: `createListboxScrollHandler` (`lib/listboxScroll.ts`) with `ScrollSafeListbox`
 - Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()`
@@ -145,6 +145,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Never skip failing tests or use mocks
 - Use seed data from test database
 - Run with `bun run test`
+- E2E (`bun run test:e2e`) runs on a quarter of the CPU cores locally so the machine stays usable; pass `--workers N` to change it for one run
 
 **Test Structure:**
 

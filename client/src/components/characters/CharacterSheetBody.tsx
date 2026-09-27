@@ -8,6 +8,7 @@ import {
   ClassesSection,
   DiagnosticsSection,
   EquipmentSection,
+  type EncumbranceData,
   FeatsSection,
   ReadOnlyEquipmentSection,
   WeaponsSection,
@@ -56,7 +57,7 @@ export function CharacterSheetBody({
   const abilities = character.abilities || {};
   const saves = character.savingThrows || {};
   const combat = character.combat || {};
-  const encumbrance = (combat as { encumbrance?: { carriedweight?: number; lightload?: number; mediumload?: number; heavyload?: number; load?: string } })?.encumbrance;
+  const encumbrance = (combat as { encumbrance?: EncumbranceData }).encumbrance;
   const sections = getSections(character.baseRules!);
 
   return (

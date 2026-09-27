@@ -228,7 +228,7 @@ export default function ProfilePage() {
             />
 
             <Box sx={{ flex: 1, width: "100%" }}>
-              <form onSubmit={profileForm.handleSubmit((data) => profileMutation.mutate(data))} noValidate>
+              <form onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))} noValidate>
                 <TextField
                   {...profileForm.register("username", {
                     minLength: { value: 3, message: "Username must be at least 3 characters" },

@@ -14,8 +14,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferResponseType } from "hono/client";
 import { Controller, type UseFormReturn } from "react-hook-form";
+import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/aptitudeLookup.ts";
+import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
 import {
   SPELL_SCHOOLS,
   SPELL_SUBSCHOOLS,
@@ -25,13 +27,9 @@ import {
   SPELL_RESISTANCE_OPTIONS,
 } from "@/shared/dnd3.5/spells.ts";
 
-export type SpellFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["powers"]["$post"]
->["json"];
 
 type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type Save = SavesPaginated["items"][number];
-export type AptitudeMetadata = Map<string, { level?: number }>;
 
 function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
   return (
@@ -187,43 +185,26 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
 interface SpellFormFieldsProps {
   form: UseFormReturn<SpellFormData>;
   rulesetId: string;
-  selectedAptitudes: Aptitude[];
-  onAptitudesChange: (aptitudes: Aptitude[]) => void;
-  aptitudeMetadata: AptitudeMetadata;
-  onAptitudeMetadataChange: React.Dispatch<React.SetStateAction<AptitudeMetadata>>;
   saves: Save[];
   hideProperties?: boolean;
-}
-
-function updateMetadata(
-  setter: React.Dispatch<React.SetStateAction<AptitudeMetadata>>,
-  aptitudeId: string,
-  field: "level",
-  value: number | undefined,
-) {
-  setter((prev) => {
-    const next = new Map(prev);
-    const entry = { ...next.get(aptitudeId) };
-    if (value === undefined) {
-      delete entry[field];
-    } else {
-      (entry as Record<string, unknown>)[field] = value;
-    }
-    next.set(aptitudeId, entry);
-    return next;
-  });
+  /** Aptitudes the form may already hold (the spell's own), so they show by name. */
+  knownAptitudes?: Aptitude[];
 }
 
 export function SpellFormFields({
   form,
   rulesetId,
-  selectedAptitudes,
-  onAptitudesChange,
-  aptitudeMetadata,
-  onAptitudeMetadataChange,
   saves,
   hideProperties,
+  knownAptitudes = [],
 }: SpellFormFieldsProps) {
+  // Aptitudes and their levels live in the form, sorted by aptitude name.
+  const aptitudes = useAptitudeLookup(knownAptitudes);
+  const selected = form.watch("aptitudes") ?? [];
+  const selectedAptitudes = aptitudes.resolve(selected.map((a) => a.id));
+  const setSelected = (next: SpellAptitude[]) => form.setValue("aptitudes", next, { shouldDirty: true });
+  const levelOf = (id: string) => selected.find((a) => a.id === id)?.level;
+
   return (
     <>
       <TextField
@@ -271,7 +252,10 @@ export function SpellFormFields({
       <AptitudesAutocomplete
         rulesetId={rulesetId}
         value={selectedAptitudes}
-        onChange={onAptitudesChange}
+        onChange={(next) => {
+          aptitudes.remember(next);
+          setSelected([...next].sort(byName).map((a) => spellAptitude(a.id, levelOf(a.id))));
+        }}
       />
       {selectedAptitudes.length > 0 && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -279,7 +263,6 @@ export function SpellFormFields({
             color: "text.secondary"
           }}>Aptitude Settings</Typography>
           {selectedAptitudes.map((apt) => {
-            const meta = aptitudeMetadata.get(apt.id) ?? {};
             return (
               <Box key={apt.id} sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
                 <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>{apt.name}</Typography>
@@ -288,10 +271,10 @@ export function SpellFormFields({
                 type="number"
                 size="small"
                 slotProps={{ htmlInput: { min: 0, max: 9 } }}
-                value={meta.level ?? ""}
+                value={levelOf(apt.id) ?? ""}
                 onChange={(e) => {
-                  const v = e.target.value;
-                  updateMetadata(onAptitudeMetadataChange, apt.id, "level", v === "" ? undefined : parseInt(v));
+                  const level = e.target.value === "" ? undefined : parseInt(e.target.value);
+                  setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));
                 }}
                 sx={{ width: 80 }}
               />

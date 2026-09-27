@@ -4,6 +4,7 @@ import { EntityDetailLayout, EntityDetailsCard } from "@/client/src/pages/rulese
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import {
   ClassFormFields,
   type ClassFormData,
@@ -108,20 +109,25 @@ export default function ClassDetailsPage() {
   const { data: abilities } = useRulesetAbilities(rulesetId);
 
   const updateMutation = useMutation({
-    mutationFn: (data: ClassFormData) => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
-      param: { id: rulesetId, classId },
-      json: { ...data, updatedAt: sync.updatedAt() },
-    })),
-    onSuccess: (data) => {
+    mutationFn: async (data: ClassFormData) => ({
+      sourceId: classId,
+      saved: await parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
+        param: { id: rulesetId, classId },
+        json: { ...data, updatedAt: sync.updatedAt() },
+      })),
+    }),
+    onSuccess: ({ saved: data, sourceId }) => {
+      // The page may have left that class while the save was in flight.
+      const stillOpen = isStillOpen(`/rulesets/${rulesetId}/classes/${sourceId}`);
       sync.saved(toClassForm(data), data.updatedAt);
+      const savedKey = queryKeys.rulesets.classDetail(rulesetId, data.id);
       // The PUT returns the bare class row: keep showing the property fields
       // (bonus spell ability, caster type) until the refetch brings the saved
       // class's own; their selects stay disabled until then.
-      const savedKey = queryKeys.rulesets.classDetail(rulesetId, data.id);
-      if (classData) queryClient.setQueryData(savedKey, { ...classData, ...data });
+      if (classData && stillOpen) queryClient.setQueryData(savedKey, { ...classData, ...data });
       queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
       // Editing an inherited class copies it into this ruleset under a new id.
-      if (data.id !== classId) {
+      if (stillOpen && data.id !== sourceId) {
         navigate(`/rulesets/${rulesetId}/classes/${data.id}/${currentTab}`, { replace: true, state: location.state });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, "classes") });
@@ -253,7 +259,7 @@ export default function ClassDetailsPage() {
                     </TextField>
                   </>
                 ),
-                onSubmit: editForm.handleSubmit((data) => updateMutation.mutate(data)),
+                onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
                 canSave: editForm.formState.isDirty,
                 isSaving: updateMutation.isPending,
               } : undefined}

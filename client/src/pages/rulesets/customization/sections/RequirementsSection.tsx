@@ -50,6 +50,7 @@ import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useCopyFollow } from "./useCopyFollow.ts";
 
 type RequirementsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"][
     "$get"
@@ -90,18 +91,13 @@ interface RequirementsSectionProps {
   entityId: string;
   data?: Requirement[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
-  onEntityIdChange?: (newEntityId: string) => void;
+  onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
 export function RequirementsSection(
   { ruleset, entityType, entityId, data: externalData, queryKeysToInvalidate, onEntityIdChange }: RequirementsSectionProps,
 ) {
-  const handleResolvedEntityId = useMemo(() => (data: unknown) => {
-    const resolved = (data as { resolvedEntityId?: string }).resolvedEntityId;
-    if (resolved && resolved !== entityId) {
-      onEntityIdChange?.(resolved);
-    }
-  }, [entityId, onEntityIdChange]);
+  const { tag, follow: handleResolvedEntityId } = useCopyFollow(entityId, onEntityIdChange);
 
   // Path state management for operator selection
   const [selectedCreatePath, setSelectedCreatePath] = useState<RequirementPath | null>(null);
@@ -201,14 +197,14 @@ export function RequirementsSection(
     } : undefined,
     queryKeysToInvalidate,
     createFn: async (data: RequirementFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements.$post({
           param: { id: ruleset.id, entityType: entityType, entityId: entityId },
           json: data,
-        }));
+        })));
     },
     updateFn: async (requirementId: string, data: RequirementFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements[":requirement_id"].$put({
           param: {
             id: ruleset.id,
@@ -217,10 +213,10 @@ export function RequirementsSection(
             requirement_id: requirementId,
           },
           json: data,
-        }));
+        })));
     },
     deleteFn: async (requirementId: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .requirements[":requirement_id"].$delete({
           param: {
             id: ruleset.id,
@@ -228,7 +224,7 @@ export function RequirementsSection(
             entityId: entityId,
             requirement_id: requirementId,
           },
-        }));
+        })));
     },
     onCreateSuccess: handleResolvedEntityId,
     onUpdateSuccess: handleResolvedEntityId,

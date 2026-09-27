@@ -11,7 +11,7 @@ import type { EntityType } from "@/shared/customization/properties.ts";
 import { Add as AddIcon, ListAlt as PropertiesIcon } from "@mui/icons-material";
 import { Box, Button, Chip, TextField, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
-import { useMemo } from "react";
+import { useCopyFollow } from "./useCopyFollow.ts";
 
 const PROPERTIES_COLUMNS = [
   { key: "type", label: "Type", width: "20%" },
@@ -41,18 +41,13 @@ interface PropertiesSectionProps {
   entityId: string;
   data?: Property[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
-  onEntityIdChange?: (newEntityId: string) => void;
+  onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
 export function PropertiesSection(
   { ruleset, entityType, entityId, data: externalData, queryKeysToInvalidate, onEntityIdChange }: PropertiesSectionProps,
 ) {
-  const handleResolvedEntityId = useMemo(() => (data: unknown) => {
-    const resolved = (data as { resolvedEntityId?: string }).resolvedEntityId;
-    if (resolved && resolved !== entityId) {
-      onEntityIdChange?.(resolved);
-    }
-  }, [entityId, onEntityIdChange]);
+  const { tag, follow: handleResolvedEntityId } = useCopyFollow(entityId, onEntityIdChange);
 
   const {
     data: properties,
@@ -80,14 +75,14 @@ export function PropertiesSection(
     data: externalData,
     queryKeysToInvalidate,
     createFn: async (data: PropertyFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties.$post({
           param: { id: ruleset.id, entityType: entityType, entityId: entityId },
           json: data,
-        }));
+        })));
     },
     updateFn: async (propertyId: string, data: PropertyFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties[":property_id"].$put({
           param: {
             id: ruleset.id,
@@ -96,10 +91,10 @@ export function PropertiesSection(
             property_id: propertyId,
           },
           json: data,
-        }));
+        })));
     },
     deleteFn: async (propertyId: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
         .properties[":property_id"].$delete({
           param: {
             id: ruleset.id,
@@ -107,7 +102,7 @@ export function PropertiesSection(
             entityId: entityId,
             property_id: propertyId,
           },
-        }));
+        })));
     },
     onCreateSuccess: handleResolvedEntityId,
     onUpdateSuccess: handleResolvedEntityId,

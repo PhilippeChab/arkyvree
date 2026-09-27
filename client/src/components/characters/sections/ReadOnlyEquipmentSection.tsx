@@ -11,6 +11,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import type { EncumbranceData } from "./EquipmentSection.tsx";
 import { SheetSection } from "./SheetSection.tsx";
 
 interface EquipmentEntry {
@@ -36,14 +37,6 @@ function formatSlotDisplay(entry: EquipmentEntry): string {
     return `${entry.location} (Set ${entry.weaponSet})`;
   }
   return entry.location;
-}
-
-interface EncumbranceData {
-  carriedweight?: number;
-  lightload?: number;
-  mediumload?: number;
-  heavyload?: number;
-  load?: string;
 }
 
 export function ReadOnlyEquipmentSection({

@@ -1,4 +1,4 @@
-import type { SpellFormData } from "./SpellFormFields.tsx";
+import type { SpellFormData } from "./spellForm.ts";
 
 export function extractSpellFormFields(properties: { type: string; value: string }[]): Partial<SpellFormData> {
   const fields: Partial<SpellFormData> = {};
