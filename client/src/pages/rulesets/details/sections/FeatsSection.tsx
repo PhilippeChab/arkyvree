@@ -93,7 +93,6 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
   const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
   const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
-  const [selectedCreateAptitudes, setSelectedCreateAptitudes] = useState<Aptitude[]>([]);
   const [groupedParam, setGroupedParam] = useSearchParam("grouped", "true");
   const grouped = groupedParam === "true";
   const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
@@ -108,16 +107,10 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
     sectionName: "feats",
     label: "Feat",
     createFn: async (data) => {
-      if (selectedCreateAptitudes.length === 0) {
+      if (!data.aptitudeIds?.length) {
         throw new Error("At least one aptitude must be selected");
       }
-      return parseResponse(rpc.api.rulesets[":id"].feats.$post({
-        param: { id: ruleset.id },
-        json: {
-          ...data,
-          aptitudeIds: selectedCreateAptitudes.map((a) => a.id),
-        },
-      }));
+      return parseResponse(rpc.api.rulesets[":id"].feats.$post({ param: { id: ruleset.id }, json: data }));
     },
     onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/feats/${created.id}/customization`, { state: { from: location.pathname + location.search } }),
   });
@@ -142,7 +135,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleCreate = () => {
-    setSelectedCreateAptitudes([]);
+    createForm.reset();
     setCreateDialogOpen(true);
   };
 
@@ -374,12 +367,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
         onSubmit={(data) => createMutation.mutate(data)}
         isLoading={createMutation.isPending}
       >
-        <FeatFormFields
-          form={createForm}
-          rulesetId={ruleset.id}
-          selectedAptitudes={selectedCreateAptitudes}
-          onAptitudesChange={setSelectedCreateAptitudes}
-        />
+        <FeatFormFields form={createForm} rulesetId={ruleset.id} />
       </CreateDialog>
     </Box>
   );

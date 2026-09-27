@@ -6,7 +6,6 @@ export { defaultValueForPath } from "./defaultValueForPath.ts";
 export { PropertyTypeInput } from "./PropertyTypeInput.tsx";
 export { PropertyValueInput } from "./PropertyValueInput.tsx";
 export { RequirementOperationSelect } from "./RequirementOperationSelect.tsx";
-export { SavesAutocomplete, type Save } from "./SavesAutocomplete.tsx";
 export { TargetPathBreadcrumbs } from "./TargetPathBreadcrumbs.tsx";
 export { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 export { TargetPathInput } from "./TargetPathInput.tsx";

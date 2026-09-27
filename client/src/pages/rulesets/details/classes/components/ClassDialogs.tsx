@@ -27,7 +27,7 @@ export function CreateLevelDialog({
   isLoading,
   rulesetId,
 }: CreateLevelDialogProps) {
-  const { data: rulesetSaves = [] } = useRulesetSaves(rulesetId, open);
+  const { data: rulesetSaves } = useRulesetSaves(rulesetId, open);
 
   // The endpoint takes every ruleset save, 0 when unset.
   const handleSubmit = (data: CreateLevelFormData) =>

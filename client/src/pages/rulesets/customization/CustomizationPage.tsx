@@ -1,11 +1,24 @@
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { DeleteDialog, FaqHelpIcon, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
+import { DeleteDialog, DiceSpinner, FaqHelpIcon, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  ClassLevelEditor,
+  FeatEditor,
+  ItemEditor,
+  RaceEditor,
+  SpellEditor,
+  type EditorProps,
+} from "@/client/src/pages/rulesets/customization/editors/index.ts";
+import {
+  customizationEntityQuery,
+  type CustomizationEntity,
+} from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -18,14 +31,24 @@ import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/
 import type { InferResponseType } from "hono/client";
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ClassLevelEditor, FeatEditor, ItemEditor, RaceEditor, SpellEditor } from "./editors/index.ts";
-import { customizationEntityQuery, type CustomizationEntity } from "./entityQueries.ts";
-import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
-import type { EntityType } from "./types.ts";
+import {
+  ModifiersSection,
+  PropertiesSection,
+  RequirementsSection,
+} from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 
 type Ruleset = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
 
 type TabSection = "properties" | "modifiers" | "requirements";
+
+/** Router state of a customization page. */
+interface CustomizationState {
+  /** The list to go back to. */
+  from?: string;
+  /** Set when a copy-on-write moved the page from this entity to its copy. */
+  copiedFrom?: string;
+}
 
 const tabLabel = (label: string, help: string) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -65,7 +88,13 @@ const ENTITY_LABELS: Record<EntityType, string> = {
   modifiers: "Modifier",
 };
 
-const isEntityType = (type: string | undefined): type is EntityType => !!type && type in ENTITY_LABELS;
+const isEntityType = (type: string | undefined): type is EntityType => !!type && Object.hasOwn(ENTITY_LABELS, type);
+
+// Entities with an editor on this page, which can also be deleted from it.
+const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
+type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
+const isEditable = (data: CustomizationEntity): data is EditableEntity =>
+  (EDITABLE_TYPES as readonly string[]).includes(data.type);
 
 export default function CustomizationPage() {
   const { id: rulesetId = "", entityType, entityId = "", section } = useParams<{
@@ -78,11 +107,27 @@ export default function CustomizationPage() {
   const location = useLocation();
   const validType = isEntityType(entityType) ? entityType : undefined;
 
+  const copiedFrom = (location.state as CustomizationState | null)?.copiedFrom;
+
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
-  const { data, isLoading: isEntityLoading, error: entityError } = useQuery({
+  const { data, isLoading: isEntityLoading, isPlaceholderData, error: entityError } = useQuery({
     ...customizationEntityQuery(rulesetId, validType ?? "feats", entityId),
     enabled: !!validType && !!entityId,
+    // Right after a copy-on-write, keep showing the entity the copy was made
+    // from until the copy loads, so the page and any unsaved edits stay; the
+    // page is locked meanwhile. A refetch of the source may already return the
+    // copy, as the server resolves an inherited entity to its copy. The
+    // ruleset must match too: an inherited entity keeps its id in every fork.
+    placeholderData: (previous, previousQuery) =>
+      copiedFrom && previous && previousQuery?.queryKey[2] === rulesetId
+        && (previous.entity.id === copiedFrom || previous.entity.id === entityId)
+        ? previous
+        : undefined,
   });
+  // Load the editors' pickers alongside the entity.
+  const { canEditEntities } = useRulesetPermissions(ruleset);
+  useRulesetSaves(rulesetId, validType === "powers" || validType === "klass_levels");
+  useRulesetFeats(rulesetId, validType === "klass_levels" && canEditEntities);
 
   const tabs = validType ? tabsFor(validType) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;
@@ -124,6 +169,8 @@ export default function CustomizationPage() {
       tabs={tabs}
       ruleset={ruleset}
       data={data}
+      canEdit={canEditEntities}
+      locked={isPlaceholderData}
     />
   );
 }
@@ -165,8 +212,24 @@ function describe(data: CustomizationEntity, rulesetId: string, entityId: string
   }
 }
 
-// Delete the entity; the endpoint depends on its type.
-async function deleteEntity(data: CustomizationEntity, id: string, entityId: string) {
+function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
+  switch (data.type) {
+    case "feats":
+      return <FeatEditor {...props} entity={data.entity} />;
+    case "races":
+      return <RaceEditor {...props} entity={data.entity} />;
+    case "items":
+      return <ItemEditor {...props} entity={data.entity} />;
+    case "powers":
+      return <SpellEditor {...props} entity={data.entity} />;
+    case "klass_levels":
+      return <ClassLevelEditor {...props} entity={data.entity} />;
+    default:
+      return data satisfies never;
+  }
+}
+
+async function deleteEntity(data: EditableEntity, id: string, entityId: string) {
   const api = rpc.api.rulesets[":id"];
   switch (data.type) {
     case "feats":
@@ -185,7 +248,7 @@ async function deleteEntity(data: CustomizationEntity, id: string, entityId: str
       await api.classes[":classId"].levels[":levelId"].$delete({ param: { id, classId: data.entity.klassId, levelId: entityId } });
       return;
     default:
-      throw new Error(`${ENTITY_LABELS[data.type]} can't be deleted here`);
+      return data satisfies never;
   }
 }
 
@@ -196,79 +259,120 @@ interface CustomizationViewProps {
   tabs: SectionTab<TabSection>[];
   ruleset: Ruleset;
   data: CustomizationEntity;
+  canEdit: boolean;
+  /** Still showing the entity a copy was made from, while the copy loads. */
+  locked: boolean;
 }
 
-function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data }: CustomizationViewProps) {
+function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, canEdit, locked }: CustomizationViewProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const type = data.type;
   const label = ENTITY_LABELS[type];
   const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, entityId);
-  const listPath = (location.state as { from?: string } | null)?.from ?? `/rulesets/${rulesetId}/${type}`;
+  const state = (location.state as CustomizationState | null) ?? {};
+  const listPath = state.from ?? `/rulesets/${rulesetId}/${type}`;
   usePageTitle(pageTitle);
 
   const entityKey = queryKeys.rulesets.entity(rulesetId, type, entityId);
   const klassLevelsKey = data.type === "klass_levels" ? queryKeys.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
 
-  const handleSaved = (savedId: string, listKey: QueryKey, message: string) => {
-    // Editing an inherited entity copies it into this ruleset under a new id.
-    if (savedId !== entityId) {
-      navigate(`/rulesets/${rulesetId}/${type}/${savedId}/customization/${section}`, { replace: true, state: location.state });
-    }
+  // Editing or customizing an inherited entity copies it into this ruleset
+  // under a new id: move to the copy, unless the page has left the source
+  // since. `copiedFrom` keeps the source on screen while the copy loads and
+  // lets the editor carry its unsaved edits over.
+  const followCopy = (copyId: string, sourceId: string) => {
+    const sourcePath = `/rulesets/${rulesetId}/${type}/${sourceId}`;
+    if (!isStillOpen(sourcePath)) return;
+    // Onto the tab shown now, which may have changed while the request ran.
+    navigate(`/rulesets/${rulesetId}/${type}/${copyId}${window.location.pathname.slice(sourcePath.length)}`, {
+      replace: true,
+      state: { ...state, copiedFrom: sourceId },
+    });
+  };
+
+  // Once the copy's own data is in, forget where it came from, so going
+  // back and forth in history never carries edits between the two.
+  useEffect(() => {
+    const current = location.state as CustomizationState | null;
+    if (!current?.copiedFrom || locked) return;
+    // A navigation still loading has moved the address bar on: leave it be.
+    if (window.location.pathname !== location.pathname) return;
+    const { copiedFrom: _done, ...rest } = current;
+    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: rest });
+  }, [location.state, locked, location.pathname, location.search, location.hash, navigate]);
+
+  const handleSaved = (sourceId: string, saved: { id: string }, listKey: QueryKey, message: string) => {
+    if (saved.id !== sourceId) followCopy(saved.id, sourceId);
     void queryClient.invalidateQueries({ queryKey: listKey });
     snackbar.success(message);
     // Save responses lack relations (aptitudes, level feats): refetch the entity.
-    return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(rulesetId, type, savedId) });
+    return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(rulesetId, type, saved.id) });
   };
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteEntity(data, rulesetId, entityId),
+    mutationFn: () => {
+      if (!isEditable(data)) throw new Error(`${label} can't be deleted here`);
+      return deleteEntity(data, rulesetId, entityId);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, type) });
       if (klassLevelsKey) void queryClient.invalidateQueries({ queryKey: klassLevelsKey });
       snackbar.success(`${label} deleted`);
       navigate(backPath ?? listPath);
+      // Gone: don't let Back render it from the cache.
+      queryClient.removeQueries({ queryKey: entityKey });
     },
     onError: (err) => snackbar.error(err, `Failed to delete ${label.toLowerCase()}`),
   });
 
-  const editorProps = { rulesetId, entityId, canEdit, onSaved: handleSaved };
-  const canDelete = canEdit && (type === "feats" || type === "races" || type === "items" || type === "powers" || type === "klass_levels");
-
-  // Customizations of an inherited entity copy it; follow the copy.
-  const handleEntityIdChange = (newEntityId: string) =>
-    navigate(`/rulesets/${rulesetId}/${type}/${newEntityId}/customization/${section}`, { replace: true, state: location.state });
-
-  const sectionProps = { ruleset, entityId, data: undefined, onEntityIdChange: handleEntityIdChange };
+  const sectionProps = {
+    ruleset,
+    entityId,
+    data: undefined,
+    onEntityIdChange: followCopy,
+  };
 
   return (
     <EntityDetailLayout
       entityName={`Customize ${title}`}
       subtitle={subtitle ?? `${label} in ${ruleset.name}`}
       onBack={() => navigate(backPath ?? listPath)}
-      canDelete={canDelete}
+      backDisabled={locked}
+      canDelete={canEdit && isEditable(data) && !locked}
       onDelete={() => setDeleteDialogOpen(true)}
     >
-      {data.type === "feats" && <FeatEditor {...editorProps} entity={data.entity} />}
-      {data.type === "races" && <RaceEditor {...editorProps} entity={data.entity} />}
-      {data.type === "items" && <ItemEditor {...editorProps} entity={data.entity} />}
-      {data.type === "powers" && <SpellEditor {...editorProps} entity={data.entity} />}
-      {data.type === "klass_levels" && <ClassLevelEditor {...editorProps} entity={data.entity} />}
+      {isEditable(data) && renderEditor(data, {
+        rulesetId,
+        entityId,
+        recordKey: `${rulesetId}/${entityId}`,
+        adoptKey: state.copiedFrom && `${rulesetId}/${state.copiedFrom}`,
+        canEdit,
+        locked,
+        onSaved: handleSaved,
+      })}
 
       <SectionTabs
         tabs={tabs}
         value={section}
-        onChange={(key) => navigate(`/rulesets/${rulesetId}/${type}/${entityId}/customization/${key}`)}
+        // While locked the entry still says where the copy came from: replace it
+        // rather than leave more entries to clean up.
+        onChange={(key) => navigate(`/rulesets/${rulesetId}/${type}/${entityId}/customization/${key}`, {
+          state: location.state,
+          replace: locked,
+        })}
         aria-label="customization tabs"
       />
 
       <Box role="tabpanel" sx={{ py: 3 }}>
-        {section === "requirements" ? (
+        {/* The source's customizations don't belong to the copy: wait for it. */}
+        {locked ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><DiceSpinner /></Box>
+        ) : section === "requirements" ? (
           <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
         ) : data.type === "modifiers" ? null : section === "modifiers" ? (
           <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />

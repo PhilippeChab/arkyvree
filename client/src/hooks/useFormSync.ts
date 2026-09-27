@@ -9,11 +9,16 @@ interface ServerVersion {
 
 interface FormSyncOptions {
   /**
-   * The record the page is on, from the URL: opening another record resets
-   * the form, edits included. Not the fetched id, which a copy-on-write
-   * can change under the same page.
+   * The record the form edits, from the URL: opening another record resets
+   * the form, edits included. Not the fetched id, which a copy-on-write can
+   * change under the same page.
    */
   key?: string;
+  /**
+   * The record this one was copied from, when a copy-on-write moved the page
+   * to the copy: a form still holding it carries its edits over to `key`.
+   */
+  adoptKey?: string;
   /** The record's `updatedAt`, used as the stale-edit token. */
   updatedAt?: string;
 }
@@ -38,7 +43,7 @@ interface FormSyncOptions {
 export function useFormSync<T extends FieldValues>(
   form: UseFormReturn<T>,
   values: NoInfer<T> | undefined,
-  { key, updatedAt }: FormSyncOptions = {},
+  { key, adoptKey, updatedAt }: FormSyncOptions = {},
 ) {
   const { isDirty } = form.formState;
   // Compare by content: a refetch returns new objects even when nothing changed.
@@ -52,6 +57,11 @@ export function useFormSync<T extends FieldValues>(
   useEffect(() => {
     if (snapshot === undefined) return;
     const current = synced.current;
+    if (current && adoptKey !== undefined && current.key !== key && current.key === adoptKey) {
+      // Moved to the copy of the record the form holds: keep its edits.
+      current.key = key;
+      if (savingKey.current === adoptKey) savingKey.current = key;
+    }
     if (!current || current.key !== key) {
       // First load, or another record: start from its values.
       form.reset(JSON.parse(snapshot) as T);
@@ -73,7 +83,7 @@ export function useFormSync<T extends FieldValues>(
       synced.current = { key, snapshot, updatedAt };
     }
     // Otherwise the change waits behind the user's edits.
-  }, [key, snapshot, updatedAt, isDirty, form]);
+  }, [key, adoptKey, snapshot, updatedAt, isDirty, form]);
 
   const saved = (savedValues: T, savedUpdatedAt?: string) => {
     // The user moved to another record while the save was in flight.
@@ -94,3 +104,5 @@ export function useFormSync<T extends FieldValues>(
     saved,
   };
 }
+
+export type FormSync<T extends FieldValues> = ReturnType<typeof useFormSync<T>>;

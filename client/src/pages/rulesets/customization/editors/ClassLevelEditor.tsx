@@ -1,55 +1,60 @@
 import { Box, Chip, Typography } from "@mui/material";
-import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useFormSync, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   allLevelSaves,
   ClassLevelFields,
+  featKey,
+  levelFeatLabel,
   type LevelFeat,
   type LevelSave,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { editorKey, type EditorProps } from "./types.ts";
+import type { EditorProps } from "./types.ts";
+import { useEditorSave } from "./useEditorSave.ts";
 
 interface ClassLevelForm {
   saves: LevelSave[];
   feats: LevelFeat[];
 }
 
+type LevelFeatRow = ClassLevel["feats"][number];
+
+const asLevelFeat = (feat: LevelFeatRow): LevelFeat => ({ featId: feat.id, aptitudeId: feat.aptitudeId });
+const featLabel = (feat: LevelFeatRow) => levelFeatLabel(feat.name, feat.aptitudeName);
+
+// Feats in the form's (label) order, like ClassLevelFields keeps them.
+const sortedFeats = (level: ClassLevel) => [...level.feats].sort((a, b) => featLabel(a).localeCompare(featLabel(b)));
+
 const toClassLevelForm = (level: ClassLevel): ClassLevelForm => ({
   saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
-  feats: level.feats.map((feat) => ({ featId: feat.id, aptitudeId: feat.aptitudeId })),
+  feats: sortedFeats(level).map(asLevelFeat),
 });
 
-const featLabel = (feat: ClassLevel["feats"][number]) => `${feat.name} (${feat.aptitudeName ?? "Unknown"})`;
-
-export function ClassLevelEditor({ rulesetId, entityId, entity: level, canEdit, onSaved }: EditorProps<ClassLevel>) {
-  const snackbar = useSnackbar();
+export function ClassLevelEditor({ rulesetId, entityId, recordKey, adoptKey, entity: level, canEdit, locked, onSaved }: EditorProps<ClassLevel>) {
   const form = useForm<ClassLevelForm>();
-  const sync = useFormSync(form, toClassLevelForm(level), { key: editorKey(rulesetId, entityId) });
-  const { data: rulesetSaves = [] } = useRulesetSaves(rulesetId);
-
-  const saveMutation = useMutation({
-    mutationFn: (data: ClassLevelForm) => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
+  const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey });
+  const { data: rulesetSaves } = useRulesetSaves(rulesetId);
+  const saveMutation = useEditorSave({
+    sync,
+    entityId,
+    onSaved,
+    listKey: queryKeys.rulesets.classLevels(rulesetId, level.klassId),
+    label: "Class level",
+    save: (data: ClassLevelForm) => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
       param: { id: rulesetId, classId: level.klassId, levelId: entityId },
       json: {
         saves: allLevelSaves(rulesetSaves, data.saves),
         feats: data.feats.map((feat) => ({ ...feat, free: true })),
       },
     })),
-    onSuccess: (saved, submitted) => {
-      sync.saved(submitted);
-      return onSaved(saved.id, queryKeys.rulesets.classLevels(rulesetId, level.klassId), "Class level updated");
-    },
-    onError: (err) => snackbar.error(err, "Failed to update class level"),
   });
 
-  const saveName = (saveId: string) => rulesetSaves.find((s) => s.id === saveId)?.name;
+  const saveName = (saveId: string) => rulesetSaves?.find((s) => s.id === saveId)?.name;
 
   return (
     <EntityDetailsCard
@@ -60,8 +65,8 @@ export function ClassLevelEditor({ rulesetId, entityId, entity: level, canEdit, 
       ))}
       readOnlyBody={level.feats.length > 0 ? (
         <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-          {level.feats.map((feat) => (
-            <Chip key={`${feat.id}-${feat.aptitudeId}`} label={featLabel(feat)} size="small" variant="outlined" />
+          {sortedFeats(level).map((feat) => (
+            <Chip key={featKey(asLevelFeat(feat))} label={featLabel(feat)} size="small" variant="outlined" />
           ))}
         </Box>
       ) : (
@@ -75,11 +80,11 @@ export function ClassLevelEditor({ rulesetId, entityId, entity: level, canEdit, 
             onSavesChange={(saves) => form.setValue("saves", saves, { shouldDirty: true })}
             feats={form.watch("feats") ?? []}
             onFeatsChange={(feats) => form.setValue("feats", feats, { shouldDirty: true })}
-            featLabels={new Map(level.feats.map((feat) => [`${feat.id}-${feat.aptitudeId}`, featLabel(feat)]))}
+            featLabels={new Map(level.feats.map((feat) => [featKey(asLevelFeat(feat)), featLabel(feat)]))}
           />
         ),
         onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-        canSave: form.formState.isDirty,
+        canSave: form.formState.isDirty && !locked,
         isSaving: saveMutation.isPending,
       } : undefined}
     />

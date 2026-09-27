@@ -21,10 +21,11 @@ import { Add as AddIcon, Tune as ModifiersIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useCopyFollow } from "./useCopyFollow.ts";
 
 const MODIFIERS_COLUMNS = [
   { key: "target", label: "Target", width: "30%" },
@@ -51,7 +52,7 @@ interface ModifiersSectionProps {
   entityId: string;
   data?: Modifier[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
-  onEntityIdChange?: (newEntityId: string) => void;
+  onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
 export function ModifiersSection({
@@ -64,12 +65,7 @@ export function ModifiersSection({
 }: ModifiersSectionProps) {
   const navigate = useNavigate();
 
-  const handleResolvedEntityId = useMemo(() => (data: unknown) => {
-    const resolved = (data as { resolvedEntityId?: string }).resolvedEntityId;
-    if (resolved && resolved !== entityId) {
-      onEntityIdChange?.(resolved);
-    }
-  }, [entityId, onEntityIdChange]);
+  const { tag, follow: handleResolvedEntityId } = useCopyFollow(entityId, onEntityIdChange);
 
   const {
     data: modifiers,
@@ -104,15 +100,15 @@ export function ModifiersSection({
     } : undefined,
     queryKeysToInvalidate,
     createFn: async (data: ModifierFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers.$post({
         param: { id: ruleset.id, entityType: entityType, entityId: entityId },
         json: data,
-      }));
+      })));
     },
     updateFn: async (modifierId: string, data: ModifierFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].$put({
         param: {
@@ -122,10 +118,10 @@ export function ModifiersSection({
           modifierId: modifierId,
         },
         json: data,
-      }));
+      })));
     },
     deleteFn: async (modifierId: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].$delete({
         param: {
@@ -134,7 +130,7 @@ export function ModifiersSection({
           entityId: entityId,
           modifierId: modifierId,
         },
-      }));
+      })));
     },
     onCreateSuccess: handleResolvedEntityId,
     onUpdateSuccess: handleResolvedEntityId,
@@ -169,7 +165,7 @@ export function ModifiersSection({
 
   const duplicateMutation = useMutation({
     mutationFn: async ({ sourceId, data }: { sourceId: string; data: ModifierFormData }) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[
+      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
         ":entityType"
       ][":entityId"].modifiers[":modifierId"].duplicate.$post({
         param: {
@@ -179,7 +175,7 @@ export function ModifiersSection({
           modifierId: sourceId,
         },
         json: data,
-      }));
+      })));
     },
     onSuccess: (data) => {
       snackbar.success("Modifier created successfully");

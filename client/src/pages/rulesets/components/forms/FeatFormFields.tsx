@@ -6,6 +6,7 @@ import { TextField } from "@mui/material";
 import type { UseFormReturn } from "react-hook-form";
 import type { InferRequestType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { byName, useAptitudeLookup } from "./aptitudeLookup.ts";
 
 export type FeatFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["feats"]["$post"]
@@ -14,11 +15,13 @@ export type FeatFormData = InferRequestType<
 interface FeatFormFieldsProps {
   form: UseFormReturn<FeatFormData>;
   rulesetId: string;
-  selectedAptitudes: Aptitude[];
-  onAptitudesChange: (aptitudes: Aptitude[]) => void;
+  /** Aptitudes the form may already hold (the feat's own), so they show by name. */
+  knownAptitudes?: Aptitude[];
 }
 
-export function FeatFormFields({ form, rulesetId, selectedAptitudes, onAptitudesChange }: FeatFormFieldsProps) {
+/** Name, description and aptitudes of a feat; the aptitudes live in the form as `aptitudeIds`, sorted by name. */
+export function FeatFormFields({ form, rulesetId, knownAptitudes = [] }: FeatFormFieldsProps) {
+  const aptitudes = useAptitudeLookup(knownAptitudes);
   return (
     <>
       <TextField
@@ -38,8 +41,11 @@ export function FeatFormFields({ form, rulesetId, selectedAptitudes, onAptitudes
       />
       <AptitudesAutocomplete
         rulesetId={rulesetId}
-        value={selectedAptitudes}
-        onChange={onAptitudesChange}
+        value={aptitudes.resolve(form.watch("aptitudeIds") ?? [])}
+        onChange={(selected) => {
+          aptitudes.remember(selected);
+          form.setValue("aptitudeIds", [...selected].sort(byName).map((a) => a.id), { shouldDirty: true });
+        }}
       />
     </>
   );

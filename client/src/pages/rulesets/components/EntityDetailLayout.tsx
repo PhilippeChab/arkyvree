@@ -26,6 +26,8 @@ interface EntityDetailLayoutProps {
   /** Replaces "<ruleset> Ruleset" under the title. */
   subtitle?: ReactNode;
   onBack: () => void;
+  /** Momentarily nowhere sensible to go back to. */
+  backDisabled?: boolean;
   canDelete: boolean;
   onDelete?: () => void;
   isLoading?: boolean;
@@ -37,6 +39,7 @@ export function EntityDetailLayout({
   rulesetName,
   subtitle,
   onBack,
+  backDisabled,
   canDelete,
   onDelete,
   isLoading,
@@ -81,6 +84,7 @@ export function EntityDetailLayout({
       >
         <IconButton
           onClick={onBack}
+          disabled={backDisabled}
           size={isMobile ? "medium" : "large"}
           sx={{
             position: "absolute",
@@ -119,7 +123,9 @@ export function EntityDetailLayout({
             </IconButton>
             <Menu
               anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
+              // The menu button can unmount and come back (e.g. while a copy loads): only
+              // anchor to one still on the page.
+              open={!!anchorEl?.isConnected}
               onClose={() => setAnchorEl(null)}
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}

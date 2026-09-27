@@ -1,8 +1,6 @@
 import { Chip } from "@mui/material";
-import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useFormSync } from "@/client/src/hooks/index.ts";
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -10,7 +8,8 @@ import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.
 import { ItemFormFields, type ItemFormInternal, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { editorKey, type EditorProps } from "./types.ts";
+import type { EditorProps } from "./types.ts";
+import { useEditorSave } from "./useEditorSave.ts";
 
 const toItemForm = (item: Item): ItemFormInternal => ({
   name: item.name,
@@ -23,21 +22,19 @@ const toItemForm = (item: Item): ItemFormInternal => ({
   sourceItemId: item.isTemplate ? undefined : item.sourceItemId ?? undefined,
 });
 
-export function ItemEditor({ rulesetId, entityId, entity: item, canEdit, onSaved }: EditorProps<Item>) {
-  const snackbar = useSnackbar();
+export function ItemEditor({ rulesetId, entityId, recordKey, adoptKey, entity: item, canEdit, locked, onSaved }: EditorProps<Item>) {
   const form = useForm<ItemFormInternal>();
-  const sync = useFormSync(form, toItemForm(item), { key: editorKey(rulesetId, entityId), updatedAt: item.updatedAt });
-
-  const saveMutation = useMutation({
-    mutationFn: (data: ItemFormInternal) => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$put({
+  const sync = useFormSync(form, toItemForm(item), { key: recordKey, adoptKey, updatedAt: item.updatedAt });
+  const saveMutation = useEditorSave({
+    sync,
+    entityId,
+    onSaved,
+    listKey: queryKeys.rulesets.section(rulesetId, "items"),
+    label: "Item",
+    save: (data: ItemFormInternal) => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$put({
       param: { id: rulesetId, itemId: entityId },
       json: { ...toItemPayload(data), updatedAt: sync.updatedAt() },
     })),
-    onSuccess: (saved, submitted) => {
-      sync.saved(submitted, saved.updatedAt);
-      return onSaved(saved.id, queryKeys.rulesets.section(rulesetId, "items"), "Item updated");
-    },
-    onError: (err) => snackbar.error(err, "Failed to update item"),
   });
 
   return (
@@ -56,7 +53,7 @@ export function ItemEditor({ rulesetId, entityId, entity: item, canEdit, onSaved
       edit={canEdit ? {
         fields: <ItemFormFields form={form} rulesetId={rulesetId} />,
         onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-        canSave: form.formState.isDirty,
+        canSave: form.formState.isDirty && !locked,
         isSaving: saveMutation.isPending,
       } : undefined}
     />

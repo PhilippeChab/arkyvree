@@ -8,6 +8,7 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useFormSync, usePageTitle } from "@/client/src/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
@@ -81,15 +82,16 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
     queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
 
   const saveMutation = useMutation({
-    mutationFn: (data: TForm) => editing!.update(data, sync.updatedAt()),
-    onSuccess: (saved) => {
+    mutationFn: async (data: TForm) => ({ sourceId: entityId, saved: await editing!.update(data, sync.updatedAt()) }),
+    onSuccess: ({ saved, sourceId }) => {
       sync.saved(editing!.toFormValues(saved), saved.updatedAt);
       const savedKey = queryKeys.rulesets.entity(rulesetId, section, saved.id);
       queryClient.setQueryData(savedKey, saved);
       // Supersede any refetch that left before the save committed.
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
-      // Editing an inherited entity copies it into this ruleset under a new id.
-      if (saved.id !== entityId) {
+      // Editing an inherited entity copies it into this ruleset under a new id:
+      // follow it, unless the page has left that entity since.
+      if (isStillOpen(`/rulesets/${rulesetId}/${section}/${sourceId}`) && saved.id !== sourceId) {
         navigate(`/rulesets/${rulesetId}/${section}/${saved.id}`, { replace: true, state: location.state });
       }
       void invalidateSection();

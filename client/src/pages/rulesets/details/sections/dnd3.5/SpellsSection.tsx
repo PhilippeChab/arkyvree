@@ -34,12 +34,6 @@ const SPELLS_COLUMNS = [
 type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
 type Spell = SpellsPaginated["items"][number];
 
-type SpellAptitude = {
-  aptitudeId: string;
-  level: number | null;
-  aptitudesInRule?: Aptitude;
-};
-
 
 export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersSectionProps) {
   const navigate = useNavigate();
@@ -52,8 +46,6 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
   const [levelParam, setLevelParam] = useSearchParam("level");
   const parsed = Number(levelParam);
   const selectedLevel: number | "" = levelParam === "" || Number.isNaN(parsed) ? "" : parsed;
-  const [selectedCreateAptitudes, setSelectedCreateAptitudes] = useState<Aptitude[]>([]);
-  const [createAptitudeMetadata, setCreateAptitudeMetadata] = useState<Map<string, { level?: number }>>(new Map());
 
   const {
     createDialogOpen,
@@ -65,19 +57,10 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
     sectionName: "powers",
     label: "Power",
     createFn: async (data) => {
-      if (selectedCreateAptitudes.length === 0) {
+      if (!data.aptitudes?.length) {
         throw new Error("At least one aptitude must be selected");
       }
-      return parseResponse(rpc.api.rulesets[":id"].powers.$post({
-        param: { id: ruleset.id },
-        json: {
-          ...data,
-          aptitudes: selectedCreateAptitudes.map((a) => {
-            const level = createAptitudeMetadata.get(a.id)?.level;
-            return level === undefined ? { id: a.id } : { id: a.id, level };
-          }),
-        },
-      }));
+      return parseResponse(rpc.api.rulesets[":id"].powers.$post({ param: { id: ruleset.id }, json: data }));
     },
     onCreateSuccess: (created) => navigate(`/rulesets/${ruleset.id}/powers/${created.id}/customization`, { state: { from: location.pathname + location.search } }),
   });
@@ -98,8 +81,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
   const { data: createSaves = [] } = useRulesetSaves(ruleset.id, createDialogOpen);
 
   const handleCreate = () => {
-    setSelectedCreateAptitudes([]);
-    setCreateAptitudeMetadata(new Map());
+    createForm.reset();
     setCreateDialogOpen(true);
   };
 
@@ -120,10 +102,10 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
           <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
             {spell.powersAptitudesInRules && spell.powersAptitudesInRules.length > 0
               ? (
-                spell.powersAptitudesInRules.map((spellAptitude: SpellAptitude) => (
+                spell.powersAptitudesInRules.map((link) => (
                   <Chip
-                    key={spellAptitude.aptitudeId}
-                    label={spellAptitude.aptitudesInRule?.name || "Unknown"}
+                    key={link.aptitudeId}
+                    label={link.aptitudesInRule?.name || "Unknown"}
                     size="small"
                     color="primary"
                     variant="outlined"
@@ -238,15 +220,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersS
         maxWidth="md"
         fixedHeight
       >
-        <SpellFormFields
-          form={createForm}
-          rulesetId={ruleset.id}
-          selectedAptitudes={selectedCreateAptitudes}
-          onAptitudesChange={setSelectedCreateAptitudes}
-          aptitudeMetadata={createAptitudeMetadata}
-          onAptitudeMetadataChange={setCreateAptitudeMetadata}
-          saves={createSaves}
-        />
+        <SpellFormFields form={createForm} rulesetId={ruleset.id} saves={createSaves} />
       </CreateDialog>
     </Box>
   );

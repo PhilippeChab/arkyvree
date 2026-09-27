@@ -2,7 +2,7 @@ export { useAttachment, useAttachments, type Attachment, type AttachmentResponse
 export { useDebouncedValue } from "./useDebouncedValue.ts";
 export { useDirtyForm } from "./useDirtyForm.ts";
 export { useDetachAttachment, useDirectUpload } from "./useDirectUpload.ts";
-export { useFormSync } from "./useFormSync.ts";
+export { useFormSync, type FormSync } from "./useFormSync.ts";
 export { useDemoTimeRemaining, type DemoTimeRemaining, type DemoUrgency } from "./useDemoTimeRemaining.ts";
 export { useGoogleSignIn } from "./useGoogleSignIn.ts";
 export { useIsMobile } from "./useIsMobile.ts";
@@ -14,6 +14,7 @@ export { usePageTitle } from "./usePageTitle.ts";
 export { usePdfExport } from "./usePdfExport.ts";
 export { usePrefetch } from "./usePrefetch.ts";
 export { useRulesetAbilities } from "./useRulesetAbilities.ts";
+export { useRulesetFeats } from "./useRulesetFeats.ts";
 export { useRulesetSaves } from "./useRulesetSaves.ts";
 export { useSearchParam, useUpdateSearchParams } from "./useSearchParam.ts";
 export { useStaggerAnimation } from "./useStaggerAnimation.ts";
