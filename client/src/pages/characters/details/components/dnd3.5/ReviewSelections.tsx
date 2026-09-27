@@ -63,8 +63,9 @@ export function ReviewSelections({
           <Typography variant="h6" gutterBottom>
             New Feats
           </Typography>
-          {selectedFeatsData.map((feat) => (
-            <Typography key={feat.id} variant="body1">
+          {selectedFeatsData.map((feat, i) => (
+            // A stackable feat can be picked at several levels.
+            <Typography key={`${feat.id}-${i}`} variant="body1">
               <strong>{feat.name}</strong>
             </Typography>
           ))}
@@ -93,8 +94,9 @@ export function ReviewSelections({
           <Typography variant="h6" gutterBottom>
             New Spells
           </Typography>
-          {selectedPowersData.map((power) => (
-            <Typography key={power.id} variant="body1">
+          {selectedPowersData.map((power, i) => (
+            // A stackable power can be picked at several levels.
+            <Typography key={`${power.id}-${i}`} variant="body1">
               <strong>{power.name}</strong>
             </Typography>
           ))}

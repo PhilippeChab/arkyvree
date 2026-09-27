@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { useForm, type DefaultValues, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -27,14 +27,15 @@ interface EntityEditing<TEntity, TForm extends FieldValues> {
   renderFields: (form: UseFormReturn<TForm>) => ReactNode;
 }
 
-interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues> {
+interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> {
   rulesetId: string;
   entityId: string;
   /** Ruleset tab and URL segment, e.g. "languages". */
   section: string;
   /** Singular display name, e.g. "Language". */
   label: string;
-  fetchEntity: () => Promise<TEntity>;
+  /** The entity's detail query by id, from `entityDetailQueries.ts`: the page reads it, and a save seeds the copy's. */
+  query: (entityId: string) => UseQueryOptions<TEntity, Error, TEntity, TKey>;
   /** Omitted for entities that can't be edited (abilities). */
   editing?: EntityEditing<TEntity, TForm>;
   /** Facts shown next to the title in the read-only view. */
@@ -46,15 +47,15 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
  * mechanics, aptitudes, abilities): an edit form for editors, the description
  * for everyone else.
  */
-export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends FieldValues>({
+export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey>({
   rulesetId,
   entityId,
   section,
   label,
-  fetchEntity,
+  query,
   editing,
   renderChips,
-}: RulesetEntityDetailProps<TEntity, TForm>) {
+}: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -63,8 +64,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: ruleset, isLoading: isRulesetLoading } = useQuery(rulesetDetailQuery(rulesetId));
-  const entityKey = queryKeys.rulesets.entity(rulesetId, section, entityId);
-  const { data: entity, isLoading: isEntityLoading } = useQuery({ queryKey: entityKey, queryFn: fetchEntity });
+  const { data: entity, isLoading: isEntityLoading } = useQuery(query(entityId));
 
   usePageTitle(entity?.name);
 
@@ -85,8 +85,8 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
     mutationFn: async (data: TForm) => ({ sourceId: entityId, saved: await editing!.update(data, sync.updatedAt()) }),
     onSuccess: ({ saved, sourceId }) => {
       sync.saved(editing!.toFormValues(saved), saved.updatedAt);
-      const savedKey = queryKeys.rulesets.entity(rulesetId, section, saved.id);
-      queryClient.setQueryData(savedKey, saved);
+      const savedKey = query(saved.id).queryKey;
+      queryClient.setQueryData<TEntity>(savedKey, saved);
       // Supersede any refetch that left before the save committed.
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
       // Editing an inherited entity copies it into this ruleset under a new id:

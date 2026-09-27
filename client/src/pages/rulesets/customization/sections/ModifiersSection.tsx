@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   ModifierForm,
   TargetPathBreadcrumbs,
@@ -42,12 +43,7 @@ type ModifierFormData = InferRequestType<
 >["json"];
 
 interface ModifiersSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
   entityType: BaseEntityType;
   entityId: string;
   data?: Modifier[];

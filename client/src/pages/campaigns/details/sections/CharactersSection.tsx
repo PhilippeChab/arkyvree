@@ -1,3 +1,4 @@
+import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import {
   BlankState,
   faqTooltip,
@@ -52,11 +53,7 @@ type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
 
 interface CharactersSectionProps {
-  campaign: {
-    id: string;
-    name: string;
-    deletedAt: string | null;
-  };
+  campaign: CampaignDetail;
 }
 
 const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const;

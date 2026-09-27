@@ -636,13 +636,15 @@ export function useLevelWizard({
     [selectedPowers, setValue],
   );
 
+  const isLastStep = activeStep === stepContent.length - 1;
+
   const handleNext = useCallback(() => {
-    if (activeStep === stepContent.length - 1) {
+    if (isLastStep) {
       handleSubmit((data) => finalizeMutation.mutate({ data }))();
     } else {
       setActiveStep((prev) => prev + 1);
     }
-  }, [activeStep, stepContent.length, handleSubmit, finalizeMutation]);
+  }, [isLastStep, handleSubmit, finalizeMutation]);
 
   const handleForceSubmit = useCallback(() => {
     setValidationErrors([]);
@@ -705,11 +707,11 @@ export function useLevelWizard({
 
   // ── Next button disabled logic ────────────────────────────────────
 
+  // The dialog also disables it while the save runs.
   const isNextDisabled = useMemo(() => {
-    if (finalizeMutation.isPending) return true;
     if (stepContent[activeStep] === "hp") return !selectedHP;
     return false;
-  }, [finalizeMutation.isPending, stepContent, activeStep, selectedHP]);
+  }, [stepContent, activeStep, selectedHP]);
 
   return {
     // Form values
@@ -726,6 +728,7 @@ export function useLevelWizard({
     activeStep,
     setActiveStep,
     stepContent,
+    isLastStep,
 
     // UI state
     isMobile,

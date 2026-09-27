@@ -1,9 +1,9 @@
 import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { SaveFormFields, type SaveFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Shield as SavesIcon } from "@mui/icons-material";
 import {
@@ -71,14 +71,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   };
 
   const handleRowMouseEnter = useCallback((save: Save) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "saves", save.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].saves[":saveId"].$get({
-          param: { id: ruleset.id, saveId: save.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (save: Save, columnKey: string) => {

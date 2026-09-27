@@ -6,7 +6,7 @@
  * cache with pages of the wrong size.
  */
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import type { InferRequestType } from "hono/client";
+import type { InferRequestType, InferResponseType } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -16,6 +16,9 @@ export const LIST_PAGE_SIZE = 10;
 type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query"];
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
+
+export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
+export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
 
 type Direction = "asc" | "desc";
 

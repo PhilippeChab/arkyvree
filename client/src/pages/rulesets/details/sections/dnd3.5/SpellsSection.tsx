@@ -18,7 +18,7 @@ import type { InferResponseType } from "hono/client";
 import { useRulesetSaves, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { PowersSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { SpellFormFields, type SpellFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
@@ -32,7 +32,7 @@ const SPELLS_COLUMNS = [
 type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
 type Spell = SpellsPaginated["items"][number];
 
-export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: PowersSectionProps) {
+export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();

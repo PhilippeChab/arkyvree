@@ -11,6 +11,12 @@ export type ClassSection = "levels" | "skills" | "feat-pools" | "spells-known" |
 
 const classParam = (rulesetId: string, classId: string) => ({ param: { id: rulesetId, classId } });
 
+/** The class itself, shared by the class page and the classes table's row hover. */
+export const classDetailQuery = (rulesetId: string, classId: string) => queryOptions({
+  queryKey: queryKeys.rulesets.classDetail(rulesetId, classId),
+  queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get(classParam(rulesetId, classId))),
+});
+
 export const classLevelsQuery = (rulesetId: string, classId: string) => queryOptions({
   queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
   queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get(classParam(rulesetId, classId))),

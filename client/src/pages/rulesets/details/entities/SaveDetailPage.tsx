@@ -7,6 +7,7 @@ import {
   type SaveFormData,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { saveQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
 export default function SaveDetailPage() {
@@ -21,7 +22,7 @@ export default function SaveDetailPage() {
       entityId={saveId}
       section="saves"
       label="Save"
-      fetchEntity={() => parseResponse(endpoint.$get({ param }))}
+      query={(id) => saveQuery(rulesetId, id)}
       editing={{
         toFormValues: (save): SaveFormData => ({
           name: save.name,

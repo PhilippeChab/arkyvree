@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   CreateLevelDialog,
 } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
@@ -20,12 +21,7 @@ interface ClassLevelsSectionProps {
   rulesetId: string;
   classId: string;
   className?: string;
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
 }
 
 export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassLevelsSectionProps) {

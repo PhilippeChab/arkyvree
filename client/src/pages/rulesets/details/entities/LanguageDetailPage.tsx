@@ -6,6 +6,7 @@ import {
   type LanguageFormData,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { languageQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
 export default function LanguageDetailPage() {
@@ -19,7 +20,7 @@ export default function LanguageDetailPage() {
       entityId={languageId}
       section="languages"
       label="Language"
-      fetchEntity={() => parseResponse(endpoint.$get({ param }))}
+      query={(id) => languageQuery(rulesetId, id)}
       editing={{
         toFormValues: (language): LanguageFormData => ({
           name: language.name,

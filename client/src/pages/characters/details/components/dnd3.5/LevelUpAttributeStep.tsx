@@ -1,6 +1,7 @@
 import type { LevelUpAttributeStepProps } from "./levelUpFactory.ts";
 import type { LeveledUpAttribute } from "./levelUp/useLevelWizard.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
+import { capitalize } from "@/shared/utils.ts";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { Alert, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 
@@ -38,8 +39,7 @@ export function LevelUpAttributeStep({
           ([key]) => key,
         ).map(([key, value]: [string, LeveledUpAttribute[string]]) => {
           const modifier = Math.floor((value.total - 10) / 2);
-          const capitalizedKey =
-            key.charAt(0).toUpperCase() + key.slice(1);
+          const capitalizedKey = capitalize(key);
           return (
             <FormControlLabel
               key={value.abilityId}

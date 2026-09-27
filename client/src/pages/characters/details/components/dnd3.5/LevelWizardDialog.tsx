@@ -1,4 +1,4 @@
-import { AnimatedAlert, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { AnimatedAlert, DiceSpinner, Modal, ValidationIssueList } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import {
   Box,
@@ -29,6 +29,7 @@ type WizardControls = Pick<
   | "handleBack"
   | "handleNext"
   | "isNextDisabled"
+  | "isLastStep"
 >;
 
 interface LevelWizardDialogProps {
@@ -59,7 +60,8 @@ export function LevelWizardDialog({
     <Modal
       open={open}
       onClose={(_, reason) => {
-        if (reason !== "backdropClick") wizard.handleCancel();
+        // Discarding mid-save would still save: wait for it.
+        if (reason !== "backdropClick" && !isSaving) wizard.handleCancel();
       }}
       maxWidth="md"
       sx={{
@@ -97,6 +99,7 @@ export function LevelWizardDialog({
                 variant="outlined"
                 color="error"
                 onClick={wizard.handleConfirmCancel}
+                disabled={isSaving}
               >
                 Discard
               </Button>
@@ -132,47 +135,7 @@ export function LevelWizardDialog({
           <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
             Validation warnings
           </Typography>
-          <Box
-            component="ul"
-            sx={{ m: 0, pl: 2, maxWidth: "100%", overflow: "hidden" }}
-          >
-            {wizard.validationErrors.map((issue, i) => (
-              <li key={i}>
-                {issue.entityName && (
-                  <Typography
-                    component="span"
-                    variant="body2"
-                    sx={{ fontWeight: "bold" }}
-                  >
-                    {issue.entityName}
-                    {issue.entityType ? ` (${issue.entityType})` : ""}
-                    {": "}
-                  </Typography>
-                )}
-                <Typography component="span" variant="body2">
-                  {issue.message}
-                </Typography>
-                {issue.requirementTree && (
-                  <Typography
-                    component="pre"
-                    variant="caption"
-                    sx={{
-                      mt: 0.5,
-                      whiteSpace: "pre-wrap",
-                      fontFamily: "monospace",
-                      bgcolor: "action.hover",
-                      p: 0.5,
-                      borderRadius: 0.5,
-                      maxWidth: "100%",
-                      overflow: "auto",
-                    }}
-                  >
-                    {issue.requirementTree}
-                  </Typography>
-                )}
-              </li>
-            ))}
-          </Box>
+          <ValidationIssueList issues={wizard.validationErrors} />
         </AnimatedAlert>
 
         {/* Stepper */}
@@ -219,14 +182,14 @@ export function LevelWizardDialog({
         </Box>
       </DialogContent>
       <DialogActions sx={{ flexShrink: 0 }}>
-        <Button onClick={wizard.handleCancel} variant="outlined" color="inherit">Cancel</Button>
+        <Button onClick={wizard.handleCancel} disabled={isSaving} variant="outlined" color="inherit">Cancel</Button>
         <Box sx={{ flex: "1 1 auto" }} />
         {wizard.activeStep !== 0 && (
-          <Button onClick={wizard.handleBack}>Back</Button>
+          <Button onClick={wizard.handleBack} disabled={isSaving}>Back</Button>
         )}
-        <Button onClick={wizard.handleNext} disabled={wizard.isNextDisabled}>
+        <Button onClick={wizard.handleNext} disabled={wizard.isNextDisabled || isSaving}>
           <DiceSpinner size="small" loading={isSaving}>
-            {wizard.activeStep === stepLabels.length - 1 ? finishLabel : "Next"}
+            {wizard.isLastStep ? finishLabel : "Next"}
           </DiceSpinner>
         </Button>
       </DialogActions>

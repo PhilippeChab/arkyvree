@@ -1,9 +1,9 @@
 import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { mechanicQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Gavel as MechanicsIcon } from "@mui/icons-material";
 import {
@@ -69,14 +69,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   };
 
   const handleRowMouseEnter = useCallback((mechanic: Mechanic) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "mechanics", mechanic.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].mechanics[":mechanicId"].$get({
-          param: { id: ruleset.id, mechanicId: mechanic.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(mechanicQuery(ruleset.id, mechanic.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (mechanic: Mechanic, columnKey: string) => {

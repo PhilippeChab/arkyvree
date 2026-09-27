@@ -1,5 +1,6 @@
 import type { AddReviewStepProps } from "./levelUpFactory.ts";
 import { ReviewSelections } from "./ReviewSelections.tsx";
+import { attributeName } from "./attributeName.ts";
 import { Box, Typography } from "@mui/material";
 
 export function AddReviewStep({
@@ -44,20 +45,11 @@ export function AddReviewStep({
             <Typography variant="h6" gutterBottom>
               Attribute Increases
             </Typography>
-            {Object.entries(abilityIncreases).map(([index, abilityId]) => {
-              if (!abilityId) return null;
-              const entry = Object.entries(
-                attributeData?.attributes ?? {},
-              ).find(([, v]) => v.abilityId === abilityId);
-              const name = entry
-                ? entry[0].charAt(0).toUpperCase() + entry[0].slice(1)
-                : abilityId;
-              return (
-                <Typography key={index} variant="body1">
-                  <strong>{name}</strong> +1
-                </Typography>
-              );
-            })}
+            {Object.entries(abilityIncreases).map(([index, abilityId]) => abilityId && (
+              <Typography key={index} variant="body1">
+                <strong>{attributeName(attributeData, abilityId)}</strong> +1
+              </Typography>
+            ))}
           </Box>
         )}
       <ReviewSelections

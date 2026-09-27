@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { BlankState, ConfirmDialog, DiceSpinner, EditDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import {
   ContributorsTable,
@@ -39,13 +40,7 @@ import { Controller, useForm } from "react-hook-form";
 type Contributor = InferResponseType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$get"], 200>["items"][number];
 
 interface ContributorsSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-    contributorRole?: string | null;
-  };
+  ruleset: RulesetDetail;
   onLeave?: () => void;
 }
 

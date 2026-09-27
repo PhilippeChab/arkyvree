@@ -3,7 +3,6 @@ import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets
 import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, parseEntityFilters } from "@/client/src/pages/rulesets/details/sections/kindFilterOptions.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { AccessibilityNew as ClassesIcon } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
@@ -12,7 +11,8 @@ import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { ClassesSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { classDetailQuery, prefetchClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const CLASSES_COLUMNS = [
@@ -24,7 +24,7 @@ const CLASSES_COLUMNS = [
 type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
 type Class = ClassesPaginated["items"][number];
 
-export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: ClassesSectionProps) {
+export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -69,22 +69,8 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
   };
 
   const handleClassMouseEnter = useCallback((class_: Class) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.classDetail(ruleset.id, class_.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
-          param: { id: ruleset.id, classId: class_.id },
-        }));
-      },
-    });
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.classLevels(ruleset.id, class_.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get({
-          param: { id: ruleset.id, classId: class_.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(classDetailQuery(ruleset.id, class_.id));
+    void prefetchClassSection(queryClient, ruleset.id, class_.id, "levels");
   }, [queryClient, ruleset.id]);
 
   const formatHitDie = (hitDie: number) => `d${hitDie}`;

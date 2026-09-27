@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { type rpc } from "@/client/src/services/rpc.ts";
 import { EmojiEvents as FeatPoolsIcon } from "@mui/icons-material";
@@ -13,12 +14,7 @@ type FeatPoolLevel = FeatPoolsArray[number];
 interface ClassFeatPoolsSectionProps {
   rulesetId: string;
   classId: string;
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
 }
 
 export function ClassFeatPoolsSection({ rulesetId, classId }: ClassFeatPoolsSectionProps) {

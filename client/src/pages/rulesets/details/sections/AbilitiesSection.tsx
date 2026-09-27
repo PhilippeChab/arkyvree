@@ -1,7 +1,7 @@
 import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { abilityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 import { FitnessCenter as AbilitiesIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -48,23 +48,15 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   };
 
   const handleRowMouseEnter = useCallback((ability: Ability) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "abilities", ability.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].abilities[":abilityId"].$get({
-          param: { id: ruleset.id, abilityId: ability.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(abilityQuery(ruleset.id, ability.id));
   }, [queryClient, ruleset.id]);
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-      {!!ruleset.rulesetId && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-          <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
-        </Box>
-      )}
+      {/* No search bar here: the actions sit alone, and take no space when there are none. */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1, "&:empty": { display: "none" } }}>
+        <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
+      </Box>
       <RulesetSectionTable
         data={abilities}
         isLoading={isLoading}

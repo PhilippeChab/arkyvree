@@ -20,3 +20,4 @@ export { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 export { SearchBar, type FilterOption, type SortOption } from "./SearchBar.tsx";
 export { CreateDialog, EditDialog, ConfirmDialog, DeleteDialog, type ConfirmDialogProps } from "./StandardDialogs.tsx";
 export { StyledCard } from "./StyledCard.tsx";
+export { ValidationIssueList } from "./ValidationIssueList.tsx";

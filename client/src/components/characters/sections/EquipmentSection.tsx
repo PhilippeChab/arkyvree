@@ -6,6 +6,7 @@ import {
   EditDialog,
   DiceSpinner,
   ScrollSafeListbox,
+  ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
@@ -542,44 +543,7 @@ export function EquipmentSection({
       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
         Equipment warnings
       </Typography>
-      <Box component="ul" sx={{ m: 0, pl: 2, maxWidth: "100%", overflow: "hidden" }}>
-        {validationErrors.map((issue, i) => (
-          <li key={i}>
-            {issue.entityName && (
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{ fontWeight: "bold" }}
-              >
-                {issue.entityName}
-                {issue.entityType ? ` (${issue.entityType})` : ""}
-                {": "}
-              </Typography>
-            )}
-            <Typography component="span" variant="body2">
-              {issue.message}
-            </Typography>
-            {issue.requirementTree && (
-              <Typography
-                component="pre"
-                variant="caption"
-                sx={{
-                  mt: 0.5,
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "monospace",
-                  bgcolor: "action.hover",
-                  p: 0.5,
-                  borderRadius: 0.5,
-                  maxWidth: "100%",
-                  overflow: "auto",
-                }}
-              >
-                {issue.requirementTree}
-              </Typography>
-            )}
-          </li>
-        ))}
-      </Box>
+      <ValidationIssueList issues={validationErrors} />
     </AnimatedAlert>
   ) : null;
 

@@ -27,7 +27,7 @@ type SkillsData = InferResponseType<RPC["api"]["characters"]["levels"][":charact
 
 type PowersData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["power-slots"]["$get"], 200>;
 
-type AttributesData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["attribute-slots"]["$get"], 200>;
+export type AttributesData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["attribute-slots"]["$get"], 200>;
 
 type FeatsData = InferResponseType<RPC["api"]["characters"]["levels"][":characterId"]["feat-slots"]["$get"], 200>;
 

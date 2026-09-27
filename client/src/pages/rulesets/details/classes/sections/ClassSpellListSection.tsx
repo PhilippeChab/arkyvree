@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
@@ -21,12 +22,7 @@ const COLUMNS = [
 interface ClassSpellListSectionProps {
   rulesetId: string;
   classId: string;
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
 }
 
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSpellListSectionProps) {

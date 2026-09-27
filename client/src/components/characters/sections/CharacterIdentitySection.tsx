@@ -1,3 +1,4 @@
+import type { CharacterData } from "@/client/src/components/characters/index.ts";
 import { AttachmentField, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
@@ -36,35 +37,7 @@ interface CharacterIdentitySectionProps {
   partial?: boolean;
   /** Pre-resolved portrait URL for unauthenticated views (shared character page). */
   portraitUrl?: string | null;
-  character: {
-    updatedAt?: string;
-    parentCharacterId?: string | null;
-    identity?: {
-      physiology?: {
-        race?: { name: string };
-        age?: number;
-        gender?: string;
-        height?: string;
-        weight?: string;
-        description?: string;
-        languages?: LanguageOption[];
-      };
-      beliefs?: {
-        alignment?: string;
-        deity?: string;
-      };
-      meta?: {
-        xp?: number;
-      };
-      background?: {
-        notes?: string;
-      };
-    };
-    classes?: Record<string, {
-      levels?: unknown[];
-      level?: number;
-    }>;
-  };
+  character: CharacterData;
 }
 
 const toIdentityForm = ({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData => ({

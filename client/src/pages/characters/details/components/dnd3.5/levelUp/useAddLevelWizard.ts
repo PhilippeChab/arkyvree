@@ -846,45 +846,10 @@ export function useAddLevelWizard({
 
   // ── Navigation ───────────────────────────────────────────────────
 
-  const handleNext = useCallback(() => {
-    if (activeStep === addStepContent.length - 1) {
-      // Review step — submit pool-level data; backend distributes to per-level payloads
-      const preview = previewQuery.data;
-      if (!preview) return;
+  const isLastStep = activeStep === addStepContent.length - 1;
 
-      const selectedFeats = getValues("selectedFeats");
-      const selectedPowers = getValues("selectedPowers");
-
-      finalizeMutation.mutate({
-        levels: preview.levelDetails.map((d, i) => ({
-          klassId: d.klassId,
-          level: d.level,
-          hp: hpValues[i] ?? 1,
-          abilityId: abilityIncreases[i] ?? null,
-        })),
-        skills: getValues("skillPointAllocations"),
-        feats: Object.fromEntries(
-          Object.entries(selectedFeats).map(([aptId, feats]) => [aptId, feats.map((f) => f.id)]),
-        ),
-        powers: Object.fromEntries(
-          Object.entries(selectedPowers).map(([aptId, powers]) => [aptId, powers.map((p) => p.id)]),
-        ),
-        force: false,
-      });
-    } else {
-      setActiveStep((prev) => prev + 1);
-    }
-  }, [
-    activeStep,
-    previewQuery.data,
-    hpValues,
-    abilityIncreases,
-    getValues,
-    finalizeMutation,
-  ]);
-
-  const handleForceSubmit = useCallback(() => {
-    setValidationErrors([]);
+  // Pool-level picks; the backend distributes them to the levels.
+  const finalize = useCallback((force: boolean) => {
     const preview = previewQuery.data;
     if (!preview) return;
 
@@ -905,7 +870,7 @@ export function useAddLevelWizard({
       powers: Object.fromEntries(
         Object.entries(selectedPowers).map(([aptId, powers]) => [aptId, powers.map((p) => p.id)]),
       ),
-      force: true,
+      force,
     });
   }, [
     previewQuery.data,
@@ -914,6 +879,19 @@ export function useAddLevelWizard({
     getValues,
     finalizeMutation,
   ]);
+
+  const handleNext = useCallback(() => {
+    if (isLastStep) {
+      finalize(false);
+    } else {
+      setActiveStep((prev) => prev + 1);
+    }
+  }, [isLastStep, finalize]);
+
+  const handleForceSubmit = useCallback(() => {
+    setValidationErrors([]);
+    finalize(true);
+  }, [finalize]);
 
   const handleBack = useCallback(() => {
     setValidationErrors([]);
@@ -955,9 +933,8 @@ export function useAddLevelWizard({
 
   // ── isNextDisabled logic ─────────────────────────────────────────
 
+  // The dialog also disables it while the save runs.
   const isNextDisabled = useMemo(() => {
-    if (finalizeMutation.isPending) return true;
-
     const content = addStepContent[activeStep];
     switch (content) {
       case "class-plan":
@@ -968,7 +945,6 @@ export function useAddLevelWizard({
         return false;
     }
   }, [
-    finalizeMutation.isPending,
     activeStep,
     validClassCount,
     hpValues,
@@ -980,6 +956,7 @@ export function useAddLevelWizard({
     // Stepper
     activeStep,
     setActiveStep,
+    isLastStep,
 
     // Class plan (step 1)
     classPlan: adjustedClassPlan,

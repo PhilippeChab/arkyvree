@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   BlankState,
   CreateDialog,
@@ -81,12 +82,7 @@ interface RequirementPath {
 }
 
 interface RequirementsSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
   entityType: EntityType;
   entityId: string;
   data?: Requirement[];

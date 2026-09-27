@@ -22,7 +22,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { BulkVariantsDialog } from "@/client/src/pages/rulesets/details/sections/dnd3.5/BulkVariantsDialog.tsx";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
-import type { ItemsSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
@@ -68,7 +68,7 @@ function TemplateSelector({ form, rulesetId, type, disabled }: { form: UseFormRe
   );
 }
 
-export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSectionProps) {
+export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();

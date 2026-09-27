@@ -2,7 +2,6 @@ import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets
 import { SkillFormFields, type SkillFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Psychology as SkillsIcon } from "@mui/icons-material";
 import {
@@ -15,7 +14,8 @@ import type { InferResponseType } from "hono/client";
 import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { SkillsSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const SKILLS_COLUMNS = [
@@ -28,7 +28,7 @@ const SKILLS_COLUMNS = [
 type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
 type Skill = SkillsPaginated["items"][number];
 
-export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsSectionProps) {
+export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -69,14 +69,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
   }, [navigate, ruleset.id, location.pathname, location.search]);
 
   const handleRowMouseEnter = useCallback((skill: Skill) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "skills", skill.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].skills[":skillId"].$get({
-          param: { id: ruleset.id, skillId: skill.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(skillQuery(ruleset.id, skill.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (skill: Skill, columnKey: string) => {

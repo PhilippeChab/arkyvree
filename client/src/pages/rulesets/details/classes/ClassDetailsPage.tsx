@@ -30,7 +30,7 @@ import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hoo
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { prefetchClassSection, type ClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { classDetailQuery, prefetchClassSection, type ClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,
@@ -86,12 +86,9 @@ export default function ClassDetailsPage() {
 
   const { data: ruleset, isLoading: isRulesetLoading } = useQuery(rulesetDetailQuery(rulesetId));
 
-  const { data: classData, isLoading: isClassLoading, isFetching: isClassFetching } = useQuery({
-    queryKey: queryKeys.rulesets.classDetail(rulesetId, classId),
-    queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get({
-      param: { id: rulesetId, classId },
-    })),
-  });
+  const { data: classData, isLoading: isClassLoading, isFetching: isClassFetching } = useQuery(
+    classDetailQuery(rulesetId, classId),
+  );
 
   usePageTitle(classData?.name);
 
@@ -120,7 +117,7 @@ export default function ClassDetailsPage() {
       // The page may have left that class while the save was in flight.
       const stillOpen = isStillOpen(`/rulesets/${rulesetId}/classes/${sourceId}`);
       sync.saved(toClassForm(data), data.updatedAt);
-      const savedKey = queryKeys.rulesets.classDetail(rulesetId, data.id);
+      const savedKey = classDetailQuery(rulesetId, data.id).queryKey;
       // The PUT returns the bare class row: keep showing the property fields
       // (bonus spell ability, caster type) until the refetch brings the saved
       // class's own; their selects stay disabled until then.
@@ -160,7 +157,7 @@ export default function ClassDetailsPage() {
   };
 
   const onClassPropertySaved = (message: string) => () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.classDetail(rulesetId, classId) });
+    queryClient.invalidateQueries({ queryKey: classDetailQuery(rulesetId, classId).queryKey });
     snackbar.success(message);
   };
 

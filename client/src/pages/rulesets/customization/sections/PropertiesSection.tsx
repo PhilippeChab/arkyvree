@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   PropertyTypeInput,
   PropertyValueInput,
@@ -31,12 +32,7 @@ type PropertyFormData = InferRequestType<
 >["json"];
 
 interface PropertiesSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
   entityType: BaseEntityType;
   entityId: string;
   data?: Property[];

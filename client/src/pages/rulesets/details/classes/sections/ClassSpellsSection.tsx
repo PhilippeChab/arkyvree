@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { type rpc } from "@/client/src/services/rpc.ts";
 import { AutoStories as SpellsIcon } from "@mui/icons-material";
@@ -13,12 +14,7 @@ type SpellLevel = SpellsArray[number];
 interface ClassSpellsSectionProps {
   rulesetId: string;
   classId: string;
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
 }
 
 const ORDINAL_SUFFIXES: Record<number, string> = {

@@ -3,7 +3,7 @@ import { DeleteDialog, DiceSpinner, FaqHelpIcon, SectionTabs, type SectionTab } 
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { rulesetDetailQuery, type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout } from "@/client/src/pages/rulesets/components/index.ts";
@@ -28,7 +28,6 @@ import {
 } from "@mui/icons-material";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
@@ -37,8 +36,6 @@ import {
   RequirementsSection,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
-
-type Ruleset = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
 
 type TabSection = "properties" | "modifiers" | "requirements";
 
@@ -257,7 +254,7 @@ interface CustomizationViewProps {
   entityId: string;
   section: TabSection;
   tabs: SectionTab<TabSection>[];
-  ruleset: Ruleset;
+  ruleset: RulesetDetail;
   data: CustomizationEntity;
   canEdit: boolean;
   /** Still showing the entity a copy was made from, while the copy loads. */

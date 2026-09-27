@@ -1,9 +1,9 @@
 import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { languageQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { LanguageFormFields, type LanguageFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Translate as LanguagesIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
@@ -61,14 +61,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   };
 
   const handleRowMouseEnter = useCallback((language: Language) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "languages", language.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].languages[":languageId"].$get({
-          param: { id: ruleset.id, languageId: language.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(languageQuery(ruleset.id, language.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (language: Language, columnKey: string) => {

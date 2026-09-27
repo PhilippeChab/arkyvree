@@ -21,6 +21,7 @@ import {
   Autocomplete,
   Box,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -28,10 +29,11 @@ import {
   Typography,
 } from "@mui/material";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
+import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
+import type { PlayerFormData, PlayerSlot } from "./players.ts";
 
 export type CreateCampaignFormData = InferRequestType<
   (typeof rpc.api.campaigns)["$post"]
@@ -40,19 +42,6 @@ export type CreateCampaignFormData = InferRequestType<
 export type EditCampaignFormData = InferRequestType<
   (typeof rpc.api.campaigns)[":id"]["$put"]
 >["json"];
-
-export type AddPlayerFormData = InferRequestType<
-  (typeof rpc.api.campaigns)[":id"]["players"]["$post"]
->["json"];
-
-export type EditPlayerFormData = InferRequestType<
-  (typeof rpc.api.campaigns)[":id"]["players"][":playerId"]["$put"]
->["json"];
-
-export type CampaignPlayer = InferResponseType<
-  (typeof rpc.api.campaigns)[":id"]["players"]["$get"],
-  200
->["items"][number];
 
 interface CreateCampaignDialogProps {
   open: boolean;
@@ -218,7 +207,7 @@ export function EditCampaignDialog({
 }
 
 interface PlayerFieldProps {
-  form: UseFormReturn<AddPlayerFormData | EditPlayerFormData>;
+  form: UseFormReturn<PlayerFormData>;
   isLoading: boolean;
 }
 
@@ -240,10 +229,11 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
     <Controller
       name="role"
       control={form.control}
-      render={({ field }) => (
-        <FormControl fullWidth disabled={isLoading}>
+      rules={{ required: "Role is required" }}
+      render={({ field, fieldState }) => (
+        <FormControl fullWidth disabled={isLoading} error={!!fieldState.error}>
           <InputLabel>Role</InputLabel>
-          <Select {...field} label="Role">
+          <Select {...field} value={field.value ?? ""} label="Role">
             <MenuItem value="Player Character">
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <PersonIcon sx={{ fontSize: 20 }} />
@@ -257,6 +247,7 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
               </Box>
             </MenuItem>
           </Select>
+          {fieldState.error && <FormHelperText>{fieldState.error.message}</FormHelperText>}
         </FormControl>
       )}
     />
@@ -266,8 +257,8 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
 interface AddPlayerDialogProps {
   open: boolean;
   onClose: () => void;
-  form: UseFormReturn<AddPlayerFormData>;
-  onSubmit: (data: AddPlayerFormData) => void;
+  form: UseFormReturn<PlayerFormData>;
+  onSubmit: (data: PlayerFormData) => void;
   isLoading: boolean;
 }
 
@@ -305,10 +296,11 @@ export function AddPlayerDialog({
 interface EditPlayerDialogProps {
   open: boolean;
   onClose: () => void;
-  form: UseFormReturn<EditPlayerFormData>;
-  onSubmit: (data: EditPlayerFormData) => void;
+  form: UseFormReturn<PlayerFormData>;
+  onSubmit: (data: PlayerFormData) => void;
   isLoading: boolean;
-  selectedPlayer?: CampaignPlayer | null;
+  /** The slot being edited, from `getPlayerSlot`. */
+  slot: PlayerSlot | null;
 }
 
 export function EditPlayerDialog({
@@ -317,12 +309,9 @@ export function EditPlayerDialog({
   form,
   onSubmit,
   isLoading,
-  selectedPlayer,
+  slot,
 }: EditPlayerDialogProps) {
-  const pendingInvite = selectedPlayer?.invitesInCampaigns?.[0];
-  const hasPendingInvite = pendingInvite?.status === "Pending";
-  const isAssigned = !!selectedPlayer?.usersInAccount;
-  const pendingInviteEmail = pendingInvite?.usersInAccount?.emailAddress ?? pendingInvite?.email;
+  const pendingInvite = slot?.pendingInvite;
   const inviting = !!form.watch("email");
 
   return (
@@ -333,10 +322,10 @@ export function EditPlayerDialog({
       form={form}
       onSubmit={onSubmit}
       isLoading={isLoading}
-      submitLabel={hasPendingInvite ? "Update Role" : inviting ? "Send Invite" : "Update Player"}
+      submitLabel={pendingInvite ? "Update Role" : inviting ? "Send Invite" : "Update Player"}
       submitIcon={inviting ? <SendIcon /> : <EditIcon />}
     >
-      {isAssigned
+      {slot?.state === "assigned"
         ? (
           <Alert severity="info">
             <Typography variant="body2">
@@ -344,7 +333,7 @@ export function EditPlayerDialog({
             </Typography>
           </Alert>
         )
-        : hasPendingInvite
+        : pendingInvite
         ? (
           <Alert severity="warning">
             <Typography variant="body2">
@@ -362,12 +351,12 @@ export function EditPlayerDialog({
           </Alert>
         )}
 
-      {hasPendingInvite
+      {pendingInvite
         ? (
           <TextField
             label="Invited email"
             fullWidth
-            value={pendingInviteEmail ?? ""}
+            value={pendingInvite.usersInAccount?.emailAddress ?? pendingInvite.email ?? ""}
             disabled
             slotProps={{
               input: {
@@ -376,7 +365,7 @@ export function EditPlayerDialog({
             }}
           />
         )
-        : !isAssigned && <PlayerEmailField form={form} isLoading={isLoading} />}
+        : slot?.state === "unassigned" && <PlayerEmailField form={form} isLoading={isLoading} />}
 
       <PlayerRoleSelect form={form} isLoading={isLoading} />
     </EditDialog>
@@ -389,7 +378,8 @@ interface RemovePlayerDialogProps {
   onConfirm: () => void;
   isLoading: boolean;
   isSelfRemoval?: boolean;
-  selectedPlayer?: CampaignPlayer | null;
+  /** The slot being removed, from `getPlayerSlot`. */
+  slot: PlayerSlot | null;
 }
 
 export function RemovePlayerDialog({
@@ -398,23 +388,8 @@ export function RemovePlayerDialog({
   onConfirm,
   isLoading,
   isSelfRemoval = false,
-  selectedPlayer,
+  slot,
 }: RemovePlayerDialogProps) {
-  const pendingInvite = selectedPlayer?.invitesInCampaigns?.[0];
-  const hasPendingInvite = pendingInvite?.status === "Pending";
-  const isAssigned = !!selectedPlayer?.usersInAccount;
-
-  const getPlayerName = () => {
-    if (isAssigned) {
-      return selectedPlayer.usersInAccount!.username ?? selectedPlayer.usersInAccount!.emailAddress;
-    }
-    if (hasPendingInvite) {
-      return pendingInvite.usersInAccount?.username ?? pendingInvite.usersInAccount?.emailAddress ??
-        pendingInvite.email ?? "invited user";
-    }
-    return "this player";
-  };
-
   return (
     <ConfirmDialog
       open={open}
@@ -426,8 +401,8 @@ export function RemovePlayerDialog({
         "Are you sure you want to leave this campaign? You will lose access unless re-invited."
       ) : (
         <>
-          Are you sure you want to remove <strong>{getPlayerName()}</strong> from this campaign?
-          {hasPendingInvite && " This will also cancel any pending invitations."}{" "}
+          Are you sure you want to remove <strong>{slot?.name}</strong> from this campaign?
+          {slot?.pendingInvite && " This will also cancel any pending invitations."}{" "}
           This action cannot be undone.
         </>
       )}

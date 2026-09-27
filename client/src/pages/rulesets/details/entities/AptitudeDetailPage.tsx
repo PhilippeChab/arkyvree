@@ -5,6 +5,7 @@ import {
   type AptitudeFormData,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { aptitudeQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
 export default function AptitudeDetailPage() {
@@ -18,7 +19,7 @@ export default function AptitudeDetailPage() {
       entityId={aptitudeId}
       section="aptitudes"
       label="Aptitude"
-      fetchEntity={() => parseResponse(endpoint.$get({ param }))}
+      query={(id) => aptitudeQuery(rulesetId, id)}
       editing={{
         toFormValues: (aptitude): AptitudeFormData => ({
           name: aptitude.name,

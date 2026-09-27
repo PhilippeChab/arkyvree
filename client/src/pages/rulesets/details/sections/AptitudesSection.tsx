@@ -1,9 +1,9 @@
 import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { aptitudeQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { AptitudeFormFields, type AptitudeFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Stars as AptitudesIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
@@ -60,14 +60,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   };
 
   const handleRowMouseEnter = useCallback((aptitude: Aptitude) => {
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.rulesets.entity(ruleset.id, "aptitudes", aptitude.id),
-      queryFn: async () => {
-        return parseResponse(rpc.api.rulesets[":id"].aptitudes[":aptitudeId"].$get({
-          param: { id: ruleset.id, aptitudeId: aptitude.id },
-        }));
-      },
-    });
+    void queryClient.prefetchQuery(aptitudeQuery(ruleset.id, aptitude.id));
   }, [queryClient, ruleset.id]);
 
   const renderCell = (aptitude: Aptitude, columnKey: string) => {

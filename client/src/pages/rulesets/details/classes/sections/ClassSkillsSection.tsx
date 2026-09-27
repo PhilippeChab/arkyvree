@@ -1,3 +1,4 @@
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { BlankState } from "@/client/src/components/common/index.ts";
 import {
   RemoveSkillDialog,
@@ -14,12 +15,7 @@ type ClassSkill = ClassSkillsArray[number];
 interface ClassSkillsSectionProps {
   rulesetId: string;
   classId: string;
-  ruleset: {
-    id: string;
-    name: string;
-    userId?: string | null;
-    status?: string;
-  };
+  ruleset: RulesetDetail;
 }
 
 export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSkillsSectionProps) {
