@@ -1,14 +1,13 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { SaveFormFields, type SaveFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Shield as SavesIcon } from "@mui/icons-material";
+import { Shield as SavesIcon } from "@mui/icons-material";
 import {
   Box,
-  Button,
-  ToggleButton,
   Typography,
 } from "@mui/material";
 import {
@@ -31,25 +30,11 @@ const SAVES_COLUMNS = [
 type SavesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>;
 type Save = SavesPaginated["items"][number];
 
-
-interface SavesSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    rulesetId?: string | null;
-    userId?: string | null;
-    status?: string;
-  };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSectionProps) {
+export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
@@ -80,8 +65,6 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
 
   const saves = data?.pages.flatMap((page) => page.items) ?? [];
   const abilityLookup = new Map(abilities.map((a) => [a.id, a.name]));
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (save: Save) => {
     navigate(`/rulesets/${ruleset.id}/saves/${save.id}`, { state: { from: location.pathname + location.search } });
@@ -128,27 +111,13 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: SavesSec
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search saves..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Save
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Save"
+            onAdd={handleCreate}
+          />
         }
       />
 

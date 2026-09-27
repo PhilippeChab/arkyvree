@@ -12,16 +12,17 @@ import {
 } from "@/client/src/components/common/index.ts";
 import {
   RulesetSectionTable,
+  SectionActions,
   TABLE_CONTAINER_LOADING_STYLE,
   TABLE_CONTAINER_STYLE,
   TABLE_STYLE,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
-  Add as AddIcon,
   ExpandLess as ExpandLessIcon,
   ExpandMore as ExpandMoreIcon,
   Spoke as FeatsIcon,
@@ -67,30 +68,16 @@ type Feat = FeatsPaginated["items"][number];
 type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 type GroupedFeatRow = GroupedPaginated["items"][number];
 
-
 type FeatAptitude = {
   aptitudeId: string;
   aptitudesInRule?: Aptitude;
 };
 
-interface FeatsSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    rulesetId?: string | null;
-    userId?: string | null;
-    status?: string;
-  };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSectionProps) {
+export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
   const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
   const [groupedParam, setGroupedParam] = useSearchParam("grouped", "true");
@@ -131,8 +118,6 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
 
   const feats = flatQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const groupedFeats = groupedQuery.data?.pages.flatMap((page) => page.items) ?? [];
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleCreate = () => {
     createForm.reset();
@@ -305,7 +290,13 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
           </Box>
         }
         actions={
-          <>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Feat"
+            onAdd={handleCreate}
+          >
             <ToggleButton
               value="grouped"
               selected={grouped}
@@ -314,26 +305,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: FeatsSec
             >
               Group families
             </ToggleButton>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Feat
-              </Button>
-            )}
-          </>
+          </SectionActions>
         }
       />
 

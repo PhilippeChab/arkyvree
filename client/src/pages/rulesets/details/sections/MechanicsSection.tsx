@@ -1,14 +1,13 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Gavel as MechanicsIcon } from "@mui/icons-material";
+import { Gavel as MechanicsIcon } from "@mui/icons-material";
 import {
   Box,
-  Button,
-  ToggleButton,
   Typography,
 } from "@mui/material";
 import {
@@ -32,24 +31,11 @@ type Mechanic = MechanicsPaginated["items"][number];
 
 type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$post"]>["json"];
 
-interface MechanicsSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    rulesetId?: string | null;
-    userId?: string | null;
-    status?: string;
-  };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: MechanicsSectionProps) {
+export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
@@ -77,8 +63,6 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
   });
 
   const mechanics = data?.pages.flatMap((page) => page.items) ?? [];
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (mechanic: Mechanic) => {
     navigate(`/rulesets/${ruleset.id}/mechanics/${mechanic.id}`, { state: { from: location.pathname + location.search } });
@@ -119,27 +103,13 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Mech
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search mechanics..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Mechanic
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Mechanic"
+            onAdd={handleCreate}
+          />
         }
       />
 

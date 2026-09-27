@@ -1,18 +1,14 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { RaceFormFields, type RaceFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, parseEntityFilters } from "./kindFilterOptions.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  Add as AddIcon,
-  People as RacesIcon,
-} from "@mui/icons-material";
+import { People as RacesIcon } from "@mui/icons-material";
 import {
   Box,
-  Button,
   Chip,
-  ToggleButton,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,29 +26,14 @@ const RACES_COLUMNS = [
   { key: "description", label: "Description", width: "65%" },
 ];
 
-
 type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
 type Race = RacesPaginated["items"][number];
 
-
-interface RacesSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    rulesetId?: string | null;
-    userId?: string | null;
-    status?: string;
-  };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RacesSectionProps) {
+export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
   const [kindParam, setKindParam] = useSearchParam("kind");
   const [orderByParam, setOrderByParam] = useSearchParam("orderBy");
@@ -87,8 +68,6 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RacesSec
   });
 
   const races = data?.pages.flatMap((page) => page.items) ?? [];
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (race: Race) => {
     navigate(`/rulesets/${ruleset.id}/races/${race.id}/customization`, { state: { from: location.pathname + location.search } });
@@ -147,27 +126,13 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RacesSec
           setOrderDirParam(direction);
         }}
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Race
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Race"
+            onAdd={handleCreate}
+          />
         }
       />
 

@@ -974,13 +974,6 @@ export function useAddLevelWizard({
     hpValues,
   ]);
 
-  // ── Next button label ────────────────────────────────────────────
-
-  const nextButtonLabel = useMemo(() => {
-    if (activeStep === addStepContent.length - 1) return "Finish All";
-    return "Next";
-  }, [activeStep]);
-
   // ── Return ───────────────────────────────────────────────────────
 
   return {
@@ -1066,7 +1059,6 @@ export function useAddLevelWizard({
     handleConfirmCancel,
     handleForceSubmit,
     isNextDisabled,
-    nextButtonLabel,
 
     // UI state
     showCancelConfirm,

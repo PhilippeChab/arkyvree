@@ -86,7 +86,7 @@ import {
   RacesSection,
   SavesSection,
 } from "./sections/index.ts";
-import { getSections } from "./sectionFactory.ts";
+import { getSections, type RulesetSectionProps } from "./sectionFactory.ts";
 import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 
 
@@ -237,7 +237,7 @@ export default function RulesetDetailsPage() {
 
   const baseRules = ruleset?.baseRules;
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
-  type TabConfig = SectionTab<RulesetSection> & { component: (props: { ruleset: NonNullable<typeof ruleset>; childOnly: boolean; onChildOnlyChange: (value: boolean) => void }) => React.ReactNode };
+  type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => React.ReactNode };
   const tabConfig = useMemo((): TabConfig[] => {
     const sections = getSections(baseRules ?? "Dungeons & Dragons: 3.5");
     return [

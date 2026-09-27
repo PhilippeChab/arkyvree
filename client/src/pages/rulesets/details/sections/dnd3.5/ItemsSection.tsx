@@ -1,18 +1,16 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { DECIMAL_PATTERN, type ItemFormInternal, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { Add as AddIcon, Construction as ItemsIcon } from "@mui/icons-material";
+import { Construction as ItemsIcon } from "@mui/icons-material";
 import {
   Box,
-  Button,
   Chip,
   MenuItem,
   TextField,
-  ToggleButton,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -75,7 +73,6 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
@@ -262,27 +259,13 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: ItemsSec
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search items..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddItem}
-              >
-                Add Item
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Item"
+            onAdd={handleAddItem}
+          />
         }
       />
       <RulesetSectionTable

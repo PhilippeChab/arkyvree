@@ -1,22 +1,11 @@
-import { AnimatedAlert, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Stack,
-  Step,
-  StepLabel,
-  Stepper,
-  Typography,
-} from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { BaseRules, SelectedKlass } from "./levelUp/useLevelWizard.ts";
+import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 import {
   useAddLevelWizard,
   addStepContent,
@@ -40,8 +29,6 @@ export function AddLevelModal({
   characterId,
   baseRules,
 }: AddLevelModalProps) {
-  const isMobile = useIsMobile();
-
   const wizard = useAddLevelWizard({
     open,
     onClose,
@@ -279,181 +266,15 @@ export function AddLevelModal({
   };
 
   return (
-    <Modal
+    <LevelWizardDialog
       open={open}
-      onClose={(_, reason) => {
-        if (reason !== "backdropClick") wizard.handleCancel();
-      }}
-      maxWidth="md"
-      sx={{
-        ...(!isMobile && {
-          "& .MuiDialog-paper": {
-            height: "90vh",
-            maxHeight: "90vh",
-          },
-        }),
-      }}
+      title="Add Level"
+      wizard={wizard}
+      stepLabels={addStepLabels}
+      finishLabel="Finish All"
+      isSaving={wizard.finalizeMutation.isPending}
     >
-      <DialogTitle>Add Level</DialogTitle>
-      <DialogContent
-        sx={{
-          height: "100%",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {/* Cancel confirm */}
-        <AnimatedAlert
-          in={wizard.showCancelConfirm}
-          severity="warning"
-          action={
-            <Stack direction="row" spacing={1}>
-              <Button
-                size="small"
-                onClick={() => wizard.setShowCancelConfirm(false)}
-              >
-                Keep editing
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                onClick={wizard.handleConfirmCancel}
-              >
-                Discard
-              </Button>
-            </Stack>
-          }
-          sx={{ mb: 2 }}
-        >
-          Discard all level-up progress?
-        </AnimatedAlert>
-
-        {/* Validation errors */}
-        <AnimatedAlert
-          in={wizard.validationErrors.length > 0}
-          severity="warning"
-          onClose={() => wizard.setValidationErrors([])}
-          action={
-            <Button
-              size="small"
-              variant="outlined"
-              color="warning"
-              onClick={wizard.handleForceSubmit}
-              disabled={wizard.finalizeMutation.isPending}
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              Proceed Anyway
-            </Button>
-          }
-          sx={{
-            mb: 2,
-            "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 },
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-            Validation warnings
-          </Typography>
-          <Box
-            component="ul"
-            sx={{ m: 0, pl: 2, maxWidth: "100%", overflow: "hidden" }}
-          >
-            {wizard.validationErrors.map((issue, i) => (
-              <li key={i}>
-                {issue.entityName && (
-                  <Typography
-                    component="span"
-                    variant="body2"
-                    sx={{ fontWeight: "bold" }}
-                  >
-                    {issue.entityName}
-                    {issue.entityType ? ` (${issue.entityType})` : ""}
-                    {": "}
-                  </Typography>
-                )}
-                <Typography component="span" variant="body2">
-                  {issue.message}
-                </Typography>
-                {issue.requirementTree && (
-                  <Typography
-                    component="pre"
-                    variant="caption"
-                    sx={{
-                      mt: 0.5,
-                      whiteSpace: "pre-wrap",
-                      fontFamily: "monospace",
-                      bgcolor: "action.hover",
-                      p: 0.5,
-                      borderRadius: 0.5,
-                      maxWidth: "100%",
-                      overflow: "auto",
-                    }}
-                  >
-                    {issue.requirementTree}
-                  </Typography>
-                )}
-              </li>
-            ))}
-          </Box>
-        </AnimatedAlert>
-
-        {/* Stepper */}
-        <Stepper
-          activeStep={wizard.activeStep}
-          alternativeLabel={isMobile}
-          sx={{
-            mb: 3,
-            flexShrink: 0,
-            "& .MuiStepLabel-iconContainer": {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            },
-            "& svg text": {
-              dominantBaseline: "middle",
-              textAnchor: "middle",
-            },
-            ...(isMobile && {
-              "& .MuiStepLabel-label": {
-                fontSize: "0.65rem",
-              },
-            }),
-          }}
-        >
-          {addStepLabels.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        {/* Step content */}
-        <Box
-          sx={{
-            flex: 1,
-            overflow: "auto",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-          }}
-        >
-          {renderStepContent(wizard.activeStep)}
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ flexShrink: 0 }}>
-        <Button onClick={wizard.handleCancel} variant="outlined" color="inherit">Cancel</Button>
-        <Box sx={{ flex: "1 1 auto" }} />
-        {wizard.activeStep !== 0 && (
-          <Button onClick={wizard.handleBack}>Back</Button>
-        )}
-        <Button
-          onClick={wizard.handleNext}
-          disabled={wizard.isNextDisabled || wizard.finalizeMutation.isPending}
-        >
-          <DiceSpinner size="small" loading={wizard.finalizeMutation.isPending}>{wizard.nextButtonLabel}</DiceSpinner>
-        </Button>
-      </DialogActions>
-    </Modal>
+      {renderStepContent(wizard.activeStep)}
+    </LevelWizardDialog>
   );
 }

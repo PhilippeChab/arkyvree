@@ -1,12 +1,12 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { SearchBar, CreateDialog, LoadMoreButton } from "@/client/src/components/common/index.ts";
 import { ENTITY_SORT_OPTIONS, KIND_FILTER_OPTIONS, parseEntityFilters } from "@/client/src/pages/rulesets/details/sections/kindFilterOptions.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { AccessibilityNew as ClassesIcon, Add as AddIcon } from "@mui/icons-material";
-import { Box, Button, Chip, ToggleButton, Typography } from "@mui/material";
+import { AccessibilityNew as ClassesIcon } from "@mui/icons-material";
+import { Box, Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
@@ -21,17 +21,14 @@ const CLASSES_COLUMNS = [
   { key: "description", label: "Description", width: "60%" },
 ];
 
-
 type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
 type Class = ClassesPaginated["items"][number];
-
 
 export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: ClassesSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
   const [kindParam, setKindParam] = useSearchParam("kind");
   const [orderByParam, setOrderByParam] = useSearchParam("orderBy");
@@ -66,8 +63,6 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
   });
 
   const classes = data?.pages.flatMap((page) => page.items) ?? [];
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleClassClick = (class_: Class) => {
     navigate(`/rulesets/${ruleset.id}/classes/${class_.id}/levels`, { state: { from: location.pathname + location.search } });
@@ -148,27 +143,13 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Classe
           setOrderDirParam(direction);
         }}
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Class
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Class"
+            onAdd={handleCreate}
+          />
         }
       />
 

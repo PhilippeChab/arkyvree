@@ -6,17 +6,19 @@ import { ClassesSection, ItemsSection, SkillsSection, SpellsSection } from "./se
 type RulesetResponse = InferResponseType<RPC["api"]["rulesets"][":id"]["$get"], 200>;
 type BaseRules = RulesetResponse["baseRules"];
 
-export interface SkillsSectionProps {
+/** What the ruleset page passes every section tab. */
+export interface RulesetSectionProps {
   ruleset: RulesetResponse;
   childOnly: boolean;
   onChildOnlyChange: (childOnly: boolean) => void;
 }
 
-export type ClassesSectionProps = SkillsSectionProps;
-export type ItemsSectionProps = SkillsSectionProps;
-export type PowersSectionProps = SkillsSectionProps;
+export type ClassesSectionProps = RulesetSectionProps;
+export type ItemsSectionProps = RulesetSectionProps;
+export type PowersSectionProps = RulesetSectionProps;
+export type SkillsSectionProps = RulesetSectionProps;
 
-type SectionComponent<P extends SkillsSectionProps = SkillsSectionProps> = (props: P) => ReactNode;
+type SectionComponent<P extends RulesetSectionProps = RulesetSectionProps> = (props: P) => ReactNode;
 
 interface SectionMap {
   ClassesSection: SectionComponent;

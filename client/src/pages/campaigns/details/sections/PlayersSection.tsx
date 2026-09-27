@@ -2,6 +2,7 @@ import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton } fro
 import {
   AddPlayerDialog,
   type AddPlayerFormData,
+  type CampaignPlayer,
   EditPlayerDialog,
   type EditPlayerFormData,
   RemovePlayerDialog,
@@ -44,15 +45,11 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { useDebouncedValue, useIsMobile } from "@/client/src/hooks/index.ts";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
-
-type PlayersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["players"]["$get"], 200>;
-type Player = PlayersPaginated["items"][number];
 
 interface PlayersSectionProps {
   campaign: {
@@ -64,7 +61,7 @@ interface PlayersSectionProps {
 }
 
 // Helper function to determine player state
-function getPlayerState(player: Player): "assigned" | "pending" | "unassigned" {
+function getPlayerState(player: CampaignPlayer): "assigned" | "pending" | "unassigned" {
   // Player is assigned if they have a userId and usersInAccount
   if (player.userId && player.usersInAccount?.id) {
     return "assigned";
@@ -83,7 +80,7 @@ function getPlayerState(player: Player): "assigned" | "pending" | "unassigned" {
 }
 
 // Helper function to get player display info
-function getPlayerDisplayInfo(player: Player) {
+function getPlayerDisplayInfo(player: CampaignPlayer) {
   const state = getPlayerState(player);
 
   switch (state) {
@@ -128,7 +125,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<CampaignPlayer | null>(null);
 
   // Search state with debounce
   const [searchQuery, setSearchQuery] = useState("");
@@ -172,7 +169,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         param: { id: campaign.id },
         json: {
           role: data.role,
-          email: data.email,
+          // An empty field means no invite.
+          email: data.email || undefined,
         },
       }));
     },
@@ -195,7 +193,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         param: { id: campaign.id, playerId },
         json: {
           role: data.role,
-          email: data.email,
+          // An empty field means no invite.
+          email: data.email || undefined,
         },
       }));
     },
@@ -267,6 +266,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   };
 
   const handleAddPlayer = () => {
+    addForm.reset();
     setAddDialogOpen(true);
   };
 
@@ -274,7 +274,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     addMutation.mutate(data);
   };
 
-  const handleEditPlayer = (player: Player) => {
+  const handleEditPlayer = (player: CampaignPlayer) => {
     setSelectedPlayer(player);
     editForm.reset({
       role: player.role,
@@ -288,7 +288,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     editMutation.mutate({ playerId: selectedPlayer.id, data });
   };
 
-  const handleRemovePlayer = (player: Player) => {
+  const handleRemovePlayer = (player: CampaignPlayer) => {
     setSelectedPlayer(player);
     setRemoveDialogOpen(true);
   };

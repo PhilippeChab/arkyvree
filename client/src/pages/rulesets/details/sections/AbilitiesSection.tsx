@@ -1,8 +1,9 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { FitnessCenter as AbilitiesIcon } from "@mui/icons-material";
-import { Box, ToggleButton, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
@@ -17,23 +18,9 @@ const ABILITIES_COLUMNS = [
 type AbilitiesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>;
 type Ability = AbilitiesPaginated["items"][number];
 
-interface AbilitiesSectionProps {
-  ruleset: {
-    id: string;
-    name: string;
-    rulesetId?: string | null;
-    userId?: string | null;
-    status?: string;
-  };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: AbilitiesSectionProps) {
+export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  const isFork = !!ruleset.rulesetId;
 
   const { data, isLoading } = useQuery(abilitiesQuery(ruleset.id, childOnly));
 
@@ -73,16 +60,9 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Abil
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-      {isFork && (
+      {!!ruleset.rulesetId && (
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-          <ToggleButton
-            value="childOnly"
-            selected={childOnly}
-            onChange={() => onChildOnlyChange(!childOnly)}
-            sx={{ textTransform: "none" }}
-          >
-            Local changes
-          </ToggleButton>
+          <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
         </Box>
       )}
       <RulesetSectionTable

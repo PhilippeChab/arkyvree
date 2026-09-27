@@ -1,15 +1,13 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { SkillFormFields, type SkillFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Psychology as SkillsIcon } from "@mui/icons-material";
+import { Psychology as SkillsIcon } from "@mui/icons-material";
 import {
   Box,
-  Button,
   Chip,
-  ToggleButton,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +17,6 @@ import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { SkillsSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-
 
 const SKILLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -31,13 +28,11 @@ const SKILLS_COLUMNS = [
 type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
 type Skill = SkillsPaginated["items"][number];
 
-
 export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
@@ -68,8 +63,6 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
   });
 
   const skills = data?.pages.flatMap((page) => page.items) ?? [];
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = useCallback((skill: Skill) => {
     navigate(`/rulesets/${ruleset.id}/skills/${skill.id}`, { state: { from: location.pathname + location.search } });
@@ -131,27 +124,13 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: SkillsS
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search skills..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Skill
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Skill"
+            onAdd={handleCreate}
+          />
         }
       />
 

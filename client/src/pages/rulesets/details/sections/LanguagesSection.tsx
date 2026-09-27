@@ -1,11 +1,12 @@
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { LanguageFormFields, type LanguageFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { CreateDialog, SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Translate as LanguagesIcon } from "@mui/icons-material";
-import { Box, Button, ToggleButton, Typography } from "@mui/material";
+import { Translate as LanguagesIcon } from "@mui/icons-material";
+import { Box, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
@@ -22,19 +23,11 @@ const LANGUAGES_COLUMNS = [
 type LanguagesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>;
 type Language = LanguagesPaginated["items"][number];
 
-
-interface LanguagesSectionProps {
-  ruleset: { id: string; name: string; rulesetId?: string | null; userId?: string | null; status?: string };
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
-export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: LanguagesSectionProps) {
+export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  const isFork = !!ruleset.rulesetId;
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
   const {
@@ -62,8 +55,6 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
   });
 
   const languages = data?.pages.flatMap((page) => page.items) ?? [];
-
-  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (language: Language) => {
     navigate(`/rulesets/${ruleset.id}/languages/${language.id}`, { state: { from: location.pathname + location.search } });
@@ -113,27 +104,13 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Lang
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search languages..."
         actions={
-          <>
-            {isFork && (
-              <ToggleButton
-                value="childOnly"
-                selected={childOnly}
-                onChange={() => onChildOnlyChange(!childOnly)}
-                sx={{ textTransform: "none" }}
-              >
-                Local changes
-              </ToggleButton>
-            )}
-            {canEdit && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
-                Add Language
-              </Button>
-            )}
-          </>
+          <SectionActions
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={onChildOnlyChange}
+            addLabel="Add Language"
+            onAdd={handleCreate}
+          />
         }
       />
 

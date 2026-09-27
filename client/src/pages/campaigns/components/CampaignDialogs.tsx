@@ -2,9 +2,7 @@ import {
   AnimatedAlert,
   ConfirmDialog,
   CreateDialog,
-  DiceSpinner,
   EditDialog,
-  FormDialog,
 } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -22,23 +20,17 @@ import {
   Alert,
   Autocomplete,
   Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControl,
-  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import type { InferRequestType } from "hono/client";
+import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
 export type CreateCampaignFormData = InferRequestType<
@@ -49,15 +41,18 @@ export type EditCampaignFormData = InferRequestType<
   (typeof rpc.api.campaigns)[":id"]["$put"]
 >["json"];
 
-export type AddPlayerFormData = {
-  role: "Game Master" | "Player Character";
-  email?: string;
-};
+export type AddPlayerFormData = InferRequestType<
+  (typeof rpc.api.campaigns)[":id"]["players"]["$post"]
+>["json"];
 
-export type EditPlayerFormData = {
-  role: "Game Master" | "Player Character";
-  email?: string;
-};
+export type EditPlayerFormData = InferRequestType<
+  (typeof rpc.api.campaigns)[":id"]["players"][":playerId"]["$put"]
+>["json"];
+
+export type CampaignPlayer = InferResponseType<
+  (typeof rpc.api.campaigns)[":id"]["players"]["$get"],
+  200
+>["items"][number];
 
 interface CreateCampaignDialogProps {
   open: boolean;
@@ -222,6 +217,52 @@ export function EditCampaignDialog({
   );
 }
 
+interface PlayerFieldProps {
+  form: UseFormReturn<AddPlayerFormData | EditPlayerFormData>;
+  isLoading: boolean;
+}
+
+function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
+  return (
+    <TextField
+      {...form.register("email")}
+      label="Email address"
+      placeholder="Enter an email to send an invite..."
+      type="email"
+      fullWidth
+      disabled={isLoading}
+    />
+  );
+}
+
+function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
+  return (
+    <Controller
+      name="role"
+      control={form.control}
+      render={({ field }) => (
+        <FormControl fullWidth disabled={isLoading}>
+          <InputLabel>Role</InputLabel>
+          <Select {...field} label="Role">
+            <MenuItem value="Player Character">
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <PersonIcon sx={{ fontSize: 20 }} />
+                Player Character
+              </Box>
+            </MenuItem>
+            <MenuItem value="Game Master">
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <GMIcon sx={{ fontSize: 20 }} />
+                Game Master
+              </Box>
+            </MenuItem>
+          </Select>
+        </FormControl>
+      )}
+    />
+  );
+}
+
 interface AddPlayerDialogProps {
   open: boolean;
   onClose: () => void;
@@ -237,95 +278,27 @@ export function AddPlayerDialog({
   onSubmit,
   isLoading,
 }: AddPlayerDialogProps) {
-  const handleSubmit = (data: AddPlayerFormData) => {
-    onSubmit({
-      ...data,
-      email: data.email || undefined,
-    });
-  };
-
-  const handleClose = () => {
-    form.reset();
-    onClose();
-  };
-
-  const emailValue = form.watch("email") ?? "";
+  const inviting = !!form.watch("email");
 
   return (
-    <FormDialog
+    <CreateDialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
+      title="Add Player"
       form={form}
+      onSubmit={onSubmit}
       isLoading={isLoading}
+      submitLabel={inviting ? "Send Invite" : "Create Player"}
+      submitIcon={inviting ? <SendIcon /> : <PersonAddIcon />}
     >
-      <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <DialogTitle>Add Player</DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <Alert severity="info">
-              <Typography variant="body2">
-                You can either create an empty player slot or enter an email address to send an
-                invite.
-              </Typography>
-            </Alert>
-
-            <TextField
-              {...form.register("email")}
-              label="Email address"
-              placeholder="Enter an email to send an invite..."
-              type="email"
-              fullWidth
-              disabled={isLoading}
-            />
-
-            <FormControl fullWidth disabled={isLoading}>
-              <InputLabel>Role</InputLabel>
-              <Select
-                {...form.register("role", { required: "Role is required" })}
-                value={form.watch("role") ?? "Player Character"}
-                onChange={(e) =>
-                  form.setValue("role", e.target.value as "Game Master" | "Player Character")}
-                label="Role"
-                error={!!form.formState.errors.role}
-              >
-                <MenuItem value="Player Character">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PersonIcon sx={{ fontSize: 20 }} />
-                    Player Character
-                  </Box>
-                </MenuItem>
-                <MenuItem value="Game Master">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <GMIcon sx={{ fontSize: 20 }} />
-                    Game Master
-                  </Box>
-                </MenuItem>
-              </Select>
-              {form.formState.errors.role && (
-                <FormHelperText error>
-                  {form.formState.errors.role.message}
-                </FormHelperText>
-              )}
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isLoading}
-            startIcon={emailValue ? <SendIcon /> : <PersonAddIcon />}
-          >
-            <DiceSpinner size="small" loading={isLoading}>
-              {emailValue ? "Send Invite" : "Create Player"}
-            </DiceSpinner>
-          </Button>
-        </DialogActions>
-      </form>
-    </FormDialog>
+      <Alert severity="info">
+        <Typography variant="body2">
+          You can either create an empty player slot or enter an email address to send an invite.
+        </Typography>
+      </Alert>
+      <PlayerEmailField form={form} isLoading={isLoading} />
+      <PlayerRoleSelect form={form} isLoading={isLoading} />
+    </CreateDialog>
   );
 }
 
@@ -335,28 +308,7 @@ interface EditPlayerDialogProps {
   form: UseFormReturn<EditPlayerFormData>;
   onSubmit: (data: EditPlayerFormData) => void;
   isLoading: boolean;
-  selectedPlayer?: {
-    id: string;
-    role: "Game Master" | "Player Character";
-    usersInAccount?: {
-      id: string;
-      username?: string | null;
-      emailAddress: string;
-    } | null;
-    invitesInCampaigns?: Array<{
-      id: string;
-      userId: string | null;
-      email: string | null;
-      status: string;
-      createdAt: string;
-      updatedAt: string;
-      usersInAccount?: {
-        id: string;
-        username?: string | null;
-        emailAddress: string;
-      } | null;
-    }>;
-  } | null;
+  selectedPlayer?: CampaignPlayer | null;
 }
 
 export function EditPlayerDialog({
@@ -367,139 +319,67 @@ export function EditPlayerDialog({
   isLoading,
   selectedPlayer,
 }: EditPlayerDialogProps) {
-  // Check if there's a pending invite
   const pendingInvite = selectedPlayer?.invitesInCampaigns?.[0];
   const hasPendingInvite = pendingInvite?.status === "Pending";
   const isAssigned = !!selectedPlayer?.usersInAccount;
-
   const pendingInviteEmail = pendingInvite?.usersInAccount?.emailAddress ?? pendingInvite?.email;
-
-  const emailValue = form.watch("email") ?? "";
-
-  const handleSubmit = (data: EditPlayerFormData) => {
-    onSubmit({
-      ...data,
-      email: data.email || undefined,
-    });
-  };
-
-  const handleClose = () => {
-    form.reset();
-    onClose();
-  };
+  const inviting = !!form.watch("email");
 
   return (
-    <FormDialog
+    <EditDialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
+      title="Edit Player"
       form={form}
+      onSubmit={onSubmit}
       isLoading={isLoading}
+      submitLabel={hasPendingInvite ? "Update Role" : inviting ? "Send Invite" : "Update Player"}
+      submitIcon={inviting ? <SendIcon /> : <EditIcon />}
     >
-      <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <DialogTitle>Edit Player</DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            {isAssigned
-              ? (
-                <Alert severity="info">
-                  <Typography variant="body2">
-                    This player slot is assigned to an active user.
-                  </Typography>
-                </Alert>
-              )
-              : hasPendingInvite
-              ? (
-                <Alert severity="warning">
-                  <Typography variant="body2">
-                    This player slot has a pending invite sent on{" "}
-                    {new Date(pendingInvite.createdAt).toLocaleDateString()}.
-                  </Typography>
-                </Alert>
-              )
-              : (
-                <Alert severity="warning">
-                  <Typography variant="body2">
-                    This player slot is not linked to any user. Enter an email address to send an
-                    invite.
-                  </Typography>
-                </Alert>
-              )}
+      {isAssigned
+        ? (
+          <Alert severity="info">
+            <Typography variant="body2">
+              This player slot is assigned to an active user.
+            </Typography>
+          </Alert>
+        )
+        : hasPendingInvite
+        ? (
+          <Alert severity="warning">
+            <Typography variant="body2">
+              This player slot has a pending invite sent on{" "}
+              {new Date(pendingInvite.createdAt).toLocaleDateString()}.
+            </Typography>
+          </Alert>
+        )
+        : (
+          <Alert severity="warning">
+            <Typography variant="body2">
+              This player slot is not linked to any user. Enter an email address to send an
+              invite.
+            </Typography>
+          </Alert>
+        )}
 
-            {hasPendingInvite
-              ? (
-                <TextField
-                  label="Invited email"
-                  fullWidth
-                  value={pendingInviteEmail ?? ""}
-                  disabled
-                  slotProps={{
-                    input: {
-                      readOnly: true,
-                    },
-                  }}
-                />
-              )
-              : !isAssigned && (
-                <TextField
-                  {...form.register("email")}
-                  label="Email address"
-                  placeholder="Enter an email to send an invite..."
-                  type="email"
-                  fullWidth
-                  disabled={isLoading}
-                />
-              )}
+      {hasPendingInvite
+        ? (
+          <TextField
+            label="Invited email"
+            fullWidth
+            value={pendingInviteEmail ?? ""}
+            disabled
+            slotProps={{
+              input: {
+                readOnly: true,
+              },
+            }}
+          />
+        )
+        : !isAssigned && <PlayerEmailField form={form} isLoading={isLoading} />}
 
-            <FormControl fullWidth disabled={isLoading}>
-              <InputLabel>Role</InputLabel>
-              <Select
-                {...form.register("role", { required: "Role is required" })}
-                value={form.watch("role") ?? selectedPlayer?.role ?? "Player Character"}
-                onChange={(e) =>
-                  form.setValue("role", e.target.value as "Game Master" | "Player Character")}
-                label="Role"
-                error={!!form.formState.errors.role}
-              >
-                <MenuItem value="Player Character">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PersonIcon sx={{ fontSize: 20 }} />
-                    Player Character
-                  </Box>
-                </MenuItem>
-                <MenuItem value="Game Master">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <GMIcon sx={{ fontSize: 20 }} />
-                    Game Master
-                  </Box>
-                </MenuItem>
-              </Select>
-              {form.formState.errors.role && (
-                <FormHelperText error>
-                  {form.formState.errors.role.message}
-                </FormHelperText>
-              )}
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isLoading}
-            startIcon={emailValue ? <SendIcon /> : <EditIcon />}
-          >
-            <DiceSpinner size="small" loading={isLoading}>
-              {hasPendingInvite
-                ? "Update Role"
-                : (emailValue ? "Send Invite" : "Update Player")}
-            </DiceSpinner>
-          </Button>
-        </DialogActions>
-      </form>
-    </FormDialog>
+      <PlayerRoleSelect form={form} isLoading={isLoading} />
+    </EditDialog>
   );
 }
 
@@ -509,28 +389,7 @@ interface RemovePlayerDialogProps {
   onConfirm: () => void;
   isLoading: boolean;
   isSelfRemoval?: boolean;
-  selectedPlayer?: {
-    id: string;
-    role: "Game Master" | "Player Character";
-    usersInAccount?: {
-      id: string;
-      username?: string | null;
-      emailAddress: string;
-    } | null;
-    invitesInCampaigns?: Array<{
-      id: string;
-      userId: string | null;
-      email: string | null;
-      status: string;
-      createdAt: string;
-      updatedAt: string;
-      usersInAccount?: {
-        id: string;
-        username?: string | null;
-        emailAddress: string;
-      } | null;
-    }>;
-  } | null;
+  selectedPlayer?: CampaignPlayer | null;
 }
 
 export function RemovePlayerDialog({
