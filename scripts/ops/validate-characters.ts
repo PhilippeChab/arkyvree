@@ -50,7 +50,7 @@ const levelSubq = `(SELECT id FROM character.levels WHERE character_id = ANY(${c
 console.log(`Validating ${characters.length} characters...\n`);
 
 // ──────────────────────────────────────────────────────────────
-// Data counts (mirrors migrate-packages countCharacterData)
+// Data counts
 // ──────────────────────────────────────────────────────────────
 
 const [counts] = await query<{

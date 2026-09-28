@@ -4,7 +4,7 @@ import { stripSeparators } from "@/shared/utils.ts";
 import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";
 import { seedAptitudes } from "@/database/packages/dnd35/seed/aptitudes.ts";
 import type { SeedContext } from "@/database/packages/dnd35/seed/context.ts";
-import { ownPower } from "@/database/packages/dnd35/seed/cow.ts";
+import { powerFinder } from "@/database/packages/dnd35/seed/cow.ts";
 import { seedFeats } from "@/database/packages/dnd35/seed/feats.ts";
 import { insertAll, insertGatedSpellSlots, modifierRows, spellListSlots, uniqueBy } from "@/database/packages/dnd35/seed/customization.ts";
 
@@ -22,10 +22,11 @@ export async function seedDomains(db: Db, ctx: SeedContext, domains: DomainDefin
     return [...spellListSlots(featId, "feats", `${stripSeparators(d.name)}domainspells`), ...modifierRows(featId, "feats", d.modifiers)];
   }), "classes.cleric.level", clericSpellLevels);
 
+  const findPower = powerFinder(db, ctx);
   const links = [];
   for (const d of domains) {
     for (const spell of d.spells) {
-      const powerId = await ownPower(db, ctx, spell.name);
+      const powerId = await findPower(spell.name);
       if (!powerId) {
         console.warn(`[domain seed] Domain spell not found in DB: "${spell.name}" (${d.name} Domain)`);
         continue;

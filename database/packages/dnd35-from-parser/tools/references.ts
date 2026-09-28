@@ -95,16 +95,44 @@ export function resolveReference<T extends ReferenceType>(type: T, stored: Store
   return JSON.parse(stableStringify(resolve(stored)));
 }
 
-/** The reference stored at `path`, checked to be of `type`. */
+const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
+
+/**
+ * The reference stored at `path`, checked to be of `type` and to store nothing else: anything else (a correction
+ * written in `mapping`, say) would be ignored, then lost at the next scrape.
+ */
 export function readStoredReference<T extends ReferenceType>(path: string, type: T): StoredReference<T> {
   const stored: StoredReference<T> = JSON.parse(readFileSync(path, "utf-8"));
   if (stored._meta.type !== type) throw new Error(`${path} is a ${stored._meta.type} reference, not a ${type} one`);
+  const extra = Object.keys(stored).filter((key) => !STORED_KEYS.has(key));
+  if (extra.length > 0) throw new Error(`${path} stores ${extra.join(", ")}: a reference stores _meta, raw and overrides only`);
   return stored;
 }
 
-/** Loads a reference of `type`, with what the generator reads derived from it. */
+/** Freezes a value and everything in it. */
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
+
+const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
+  class: new Map(), feat: new Map(), spell: new Map(), domain: new Map(), race: new Map(), item: new Map(), magicItem: new Map(), wizardSchool: new Map(),
+};
+
+/**
+ * Loads a reference of `type`, with what the generator reads derived from it. A process loads each file once (the
+ * generator reads the same references many times, and writes none): the reference is frozen, since others share it.
+ */
 export function loadReference<T extends ReferenceType>(path: string, type: T): ReferenceByType[T] {
-  return resolveReference(type, readStoredReference(path, type));
+  const cache: Map<string, ReferenceByType[T]> = loaded[type];
+  const cached = cache.get(path);
+  if (cached) return cached;
+  const reference = deepFreeze(resolveReference(type, readStoredReference(path, type)));
+  cache.set(path, reference);
+  return reference;
 }
 
 /** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */

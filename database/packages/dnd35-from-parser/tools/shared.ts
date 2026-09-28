@@ -7,7 +7,6 @@ import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { SIMPLE_WEAPONS, MARTIAL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
@@ -137,30 +136,7 @@ export function stripClassSuffix(name: string, className: string): string | unde
 }
 
 // ---------------------------------------------------------------------------
-// mergedFeatures — used by buildSeeds, generator/class
-// ---------------------------------------------------------------------------
-
-export function mergedFeatures(ref: ClassReference): ClassReference["mapping"]["features"] {
-  const base = ref.mapping.features ?? {};
-  const overrideFeatures = ref.mapping.overrides?.features;
-  if (!overrideFeatures) return base;
-  const result = structuredClone(base);
-  for (const [name, fields] of Object.entries(overrideFeatures)) {
-    if (name in result) {
-      Object.assign(result[name], fields);
-      for (const [k, v] of Object.entries(result[name])) {
-        if (v === null) delete (result[name] as Record<string, unknown>)[k];
-      }
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      result[name] = fields as any;
-    }
-  }
-  return result;
-}
-
-// ---------------------------------------------------------------------------
-// discoverRefs — used by sync, overrides
+// discoverRefs — used by the generator, sync, validate, overrides
 // ---------------------------------------------------------------------------
 
 type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string; filter?: string } };
@@ -178,7 +154,7 @@ export function discoverRefs(refDir: string): { path: string; type: ReferenceTyp
 }
 
 // ---------------------------------------------------------------------------
-// deepEqual — used by cleanupOverrides
+// deepEqual — used by validate
 // ---------------------------------------------------------------------------
 
 export function deepEqual(a: unknown, b: unknown): boolean {

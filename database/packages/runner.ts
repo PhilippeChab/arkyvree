@@ -18,14 +18,34 @@ function updatesOf(pkg: ContentPackage) {
 /** The version a package's code brings a database to: its last update's, or its seeds'. */
 export const packageVersion = (pkg: ContentPackage) => updatesOf(pkg).at(-1)?.version ?? pkg.seedsVersion;
 
-/** Installs every registered package missing from the database, and brings the others up to date. */
-export async function applyPackages(db: Db) {
+/**
+ * A database's version of a package below its seeds can't be brought up to date: the updates it lacks were folded
+ * into the seeds. Undefined when there's nothing to refuse.
+ */
+export function refusal(pkg: ContentPackage, applied: number | undefined) {
+  return applied !== undefined && applied < pkg.seedsVersion ? `${pkg.name} v${applied} (its seeds are v${pkg.seedsVersion})` : undefined;
+}
+
+/**
+ * Installs the packages missing from the database, and brings the others up to date. It applies none when one is
+ * below its seeds (`refusal`).
+ */
+export async function applyPackages(db: Db, packages: ContentPackage[] = registry) {
   const applied = new Map(
     (await db.select({ name: contentPackagesInRules.name, version: contentPackagesInRules.version }).from(contentPackagesInRules))
       .map((row) => [row.name, row.version]),
   );
 
-  for (const pkg of registry) {
+  const refused = packages.map((pkg) => refusal(pkg, applied.get(pkg.name))).filter((line) => line !== undefined);
+  if (refused.length > 0) {
+    throw new Error([
+      "No package applied: these are below their seeds, which now contain the updates they lack:",
+      ...refused.map((line) => `  - ${line}`),
+      "Reset a development database. Any other needs those updates back (from git history) until it has them.",
+    ].join("\n"));
+  }
+
+  for (const pkg of packages) {
     const updates = updatesOf(pkg);
     const version = packageVersion(pkg);
     const from = applied.get(pkg.name);
@@ -33,9 +53,6 @@ export async function applyPackages(db: Db) {
     if (from !== undefined && from >= version) {
       console.log(`  ✓ ${pkg.name} v${from} already up to date`);
       continue;
-    }
-    if (from !== undefined && from < pkg.seedsVersion) {
-      throw new Error(`${pkg.name} is at v${from}, but its changes up to v${pkg.seedsVersion} are now part of its seeds: reset this database`);
     }
 
     console.log(from === undefined ? `  Installing ${pkg.name} v${version}...` : `  Updating ${pkg.name} v${from} → v${version}...`);

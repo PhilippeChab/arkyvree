@@ -22,7 +22,7 @@
 import { readFileSync } from "node:fs";
 import { Pool, type PoolClient } from "pg";
 import { registry } from "@/database/packages/registry.ts";
-import { packageVersion } from "@/database/packages/runner.ts";
+import { packageVersion, refusal } from "@/database/packages/runner.ts";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -91,7 +91,7 @@ try {
     );
 
     const remoteMap = new Map(remotePackages.map((p) => [p.name, p]));
-    const codeMap = new Map(registry.map((p) => [p.name, { version: packageVersion(p) }]));
+    const codeMap = new Map(registry.map((p) => [p.name, { pkg: p, version: packageVersion(p) }]));
     const allNames = [...new Set([...remoteMap.keys(), ...codeMap.keys()])].sort();
 
     const pad = Math.max(...allNames.map((n) => n.length), 4);
@@ -112,6 +112,9 @@ try {
         hasDrift = true;
       } else if (r.version === c.version) {
         status = "in sync";
+      } else if (refusal(c.pkg, r.version)) {
+        status = `next deploy will be REFUSED (v${r.version} is below the seeds, v${c.pkg.seedsVersion})`;
+        hasDrift = true;
       } else if (r.version < c.version) {
         status = `next deploy will upgrade (v${r.version} -> v${c.version})`;
         hasDrift = true;

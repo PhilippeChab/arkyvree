@@ -117,7 +117,6 @@ export type DomainDefinition = {
   name: string;
   description: string;
   modifiers?: Modifier[];
-  properties?: Property[];
   /** Its spells, each at its level in the domain (1 to 9). */
   spells: { name: string; level: number }[];
 };

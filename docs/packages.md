@@ -82,7 +82,7 @@ A package's `seeds` install it at `seedsVersion`. A change after that goes in `u
 
 - A new database runs the seeds, then every update.
 - An existing database runs the updates past its version.
-- A database older than `seedsVersion` is refused: the changes it lacks are now part of the seeds, so reset it.
+- A database older than `seedsVersion` is refused: the updates it lacks are now part of the seeds, so none can bring it up to date. The runner checks every package first and applies none if one is refused. Reset a development database; any other needs those updates back (from git history) until it has them. `scripts/ops/diff-prod.ts` shows whether production's versions would be refused before a deploy.
 
 ```ts
 const dnd35Dmg: ContentPackage = {
@@ -96,7 +96,7 @@ const dnd35Dmg: ContentPackage = {
 };
 ```
 
-Once every database (production included) has an update, fold it: change the seeds so a new database gets the same rows, drop the update, and raise `seedsVersion` to its version. The seeds alone then describe the package. Check a fold by seeding a new database both ways and comparing their content.
+Once every database has an update (production, staging and any other shared database: the runner refuses one below the new `seedsVersion`), fold it: change the seeds so a new database gets the same rows, drop the update, and raise `seedsVersion` to its version. The seeds alone then describe the package. Check a fold by seeding a new database both ways and comparing their content.
 
 ## Reference files
 
@@ -152,6 +152,6 @@ bun db:packages    # Apply all registered packages
 - Never delete seed data — characters reference rows by ID
 - Never change the seeds to fix deployed data — add an `updates` entry
 - Never add requirements to existing feats/class features without careful consideration — it can retroactively invalidate characters
-- Never remove, reorder or skip entries in `updates`
+- Never remove or reorder an update some database doesn't have yet, and never skip a version in `updates`
 - Never hardcode entity IDs — always look them up by name
 - Never edit `generated/` by hand — regenerate it

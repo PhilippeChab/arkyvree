@@ -17,7 +17,7 @@ import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { stripSeparators, stripClassSuffix, mergedFeatures, normalizeDescription, expandTemplateDescription, SIMPLE_SET, MARTIAL_SET, matchesWithPluralVariants, pluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { stripSeparators, stripClassSuffix, normalizeDescription, expandTemplateDescription, SIMPLE_SET, MARTIAL_SET, matchesWithPluralVariants, pluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
@@ -204,7 +204,7 @@ export function classAptitudePicks(ref: ClassReference) {
 
 function buildClassFeats(ref: ClassReference): FeatSeed[] {
   const m = ref.mapping;
-  const mf = mergedFeatures(ref);
+  const mf = ref.mapping.features;
   const classSlug = stripSeparators(ref.raw.name);
   const existingFeats = loadExistingFeats(ref._meta.book);
 

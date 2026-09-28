@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 import type { ClassReference, DomainReference, FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { toCamelCase, discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
@@ -25,6 +25,10 @@ function generateRef(jsonPath: string, bookOverride?: string) {
     return;
   }
 
+  if (meta.type === "domain" && !bookOverride) {
+    console.error(`The domains reference is generated for a book: pass --book <book>`);
+    process.exit(1);
+  }
   const book = bookOverride ?? meta.book;
 
   switch (meta.type) {
@@ -100,19 +104,36 @@ function writeGenerated(path: string, code: string) {
   if (!quiet) console.log(`Generated: ${path}`);
 }
 
-/** Regenerates every reference (of a book, type or name, when given), then each book's domains. */
+/**
+ * Regenerates every reference (of a book, type or name, when given), then each book's domains unless a name picks
+ * one reference. A reference that fails doesn't stop the others: the failures are listed at the end.
+ */
 function generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>) {
   const refDir = join(BASE_DIR, "reference");
   const refs = discoverRefs(refDir).filter((r) =>
     (!bookFilter || r.book === bookFilter) && (!typeFilter || r.type === typeFilter) && (!nameFilter || basename(r.path, ".json").toLowerCase() === nameFilter));
 
   quiet = true;
+  const failures: string[] = [];
+  const generate = (path: string, book?: string) => {
+    try {
+      generateRef(path, book);
+    } catch (error) {
+      failures.push(`${relative(refDir, path)}${book ? ` (${book})` : ""}: ${error instanceof Error ? error.message : error}`);
+    }
+  };
   // The domains reference lists every domain: each book with spells gets the domains they complete.
-  for (const ref of refs.filter((r) => r.type !== "domain")) generateRef(ref.path);
-  if (typeFilter && typeFilter !== "domain") return;
-  for (const book of readdirSync(refDir, { withFileTypes: true })) {
-    if (!book.isDirectory() || !existsSync(join(refDir, book.name, "spells.json")) || (bookFilter && book.name !== bookFilter)) continue;
-    generateRef(join(refDir, "domains.json"), book.name);
+  for (const ref of refs.filter((r) => r.type !== "domain")) generate(ref.path);
+  if (typeFilter === "domain" || (!typeFilter && !nameFilter)) {
+    for (const book of readdirSync(refDir, { withFileTypes: true })) {
+      if (!book.isDirectory() || !existsSync(join(refDir, book.name, "spells.json")) || (bookFilter && book.name !== bookFilter)) continue;
+      generate(join(refDir, "domains.json"), book.name);
+    }
+  }
+
+  if (failures.length > 0) {
+    console.error(`${failures.length} reference(s) failed:\n${failures.map((f) => `  ${f}`).join("\n")}`);
+    process.exit(1);
   }
 }
 

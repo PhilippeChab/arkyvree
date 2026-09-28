@@ -1,7 +1,7 @@
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { buildAptitudeExpansionMaps, buildPoolParentNameMap, classAptitudePicks, detectClassFeatFamily, expandPerLevelAptitudePicks, insertOrdinalInName, loadExistingFeats, mergeAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, mergedFeatures, collectImportsFromReq, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, collectImportsFromReq, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   toConstName,
   escapeString,
@@ -146,7 +146,7 @@ export function generateClassSeed(ref: ClassReference): string {
     const { remap, perLevel } = buildAptitudeExpansionMaps(mergedPicks, aptitudePicks);
 
     // Strip picks already handled by feat modifiers on class features
-    const mf = mergedFeatures(ref);
+    const mf = ref.mapping.features;
     const featModTargets = new Set<string>();
     for (const feat of Object.values(mf)) {
       if (feat.modifiers) {
@@ -209,7 +209,7 @@ export function generateClassSeed(ref: ClassReference): string {
 
 export function generateFeatSeeds(ref: ClassReference): string {
   const mapping = ref.mapping;
-  const features = mergedFeatures(ref);
+  const features = ref.mapping.features;
   const constName = `${toConstName(ref.raw.name)}_FEATS`;
   const aptConst = "APT";
   const existingFeats = loadExistingFeats(ref._meta.book);
@@ -399,7 +399,7 @@ function buildClassFeatures(ref: ClassReference): {
   const autoFreeFeats: [number, string, string][] = [];
   const { detected, mapping } = ref;
   const overrides = mapping.overrides ?? {};
-  const features_ = mergedFeatures(ref);
+  const features_ = ref.mapping.features;
   const poolParentNames = buildPoolParentNameMap(features_, ref.raw.name, mapping.classFeatureAptitude);
   const existingFeats = loadExistingFeats(ref._meta.book);
 

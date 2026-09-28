@@ -13,6 +13,7 @@
 
 import { join } from "node:path";
 import { loadReference, readStoredReference, resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { deepEqual, discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 const REF_DIR = join(import.meta.dirname!, "../reference");
@@ -33,23 +34,43 @@ type Issue = {
   entityName?: string;
 };
 
-/** A class's overrides that change nothing: each equals what's derived without the overrides. */
+/** What each class override replaces, as derived without it. */
+const DERIVED: Record<string, (ref: ClassReference) => unknown> = {
+  spells: (ref) => ref.mapping.spells,
+  bonusSpellAbility: (ref) => ref.mapping.bonusSpellAbility,
+  // Kept while prerequisites are unresolved: it stands for the reviewed requirements.
+  requirements: (ref) => (ref.detected.unresolvedPrereqs?.length ? undefined : ref.detected.requirements),
+  bab: (ref) => ref.detected.bab,
+  saves: (ref) => ref.detected.saves,
+  aptitudePicks: (ref) => ref.detected.aptitudePicks,
+  casterType: (ref) => ref.detected.casterType,
+};
+
+/**
+ * A class's overrides that change nothing: each field equals what's derived with every other override applied,
+ * and a feature field leaves the feature as it would be without it.
+ */
 function redundantClassOverrides(stored: StoredReference<"class">): string[] {
   const { overrides } = stored;
   if (!overrides) return [];
-  const { detected, mapping } = resolveReference("class", { _meta: stored._meta, raw: stored.raw });
-  const same = (override: unknown, derived: unknown) => override !== undefined && derived !== undefined && deepEqual(override, derived);
+  const derive = (remove: (rest: NonNullable<typeof overrides>) => void) => {
+    const rest = structuredClone(overrides);
+    remove(rest);
+    return resolveReference("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
+  };
+  const withAll = resolveReference("class", stored);
+  const isSame = (a: unknown, b: unknown) => a !== undefined && b !== undefined && deepEqual(a, b);
   return [
-    ...same(overrides.spells, mapping.spells) ? ["spells"] : [],
     ...overrides.modifiers?.length === 0 ? ["modifiers"] : [],
-    ...same(overrides.bonusSpellAbility, mapping.bonusSpellAbility) ? ["bonusSpellAbility"] : [],
-    // Kept while prerequisites are unresolved: it stands for the reviewed requirements.
-    ...same(overrides.requirements, detected.requirements) && !detected.unresolvedPrereqs?.length ? ["requirements"] : [],
-    ...(["bab", "saves", "aptitudePicks", "casterType"] as const).filter((key) => same(overrides[key], detected[key])),
-    ...Object.entries(overrides.features ?? {}).flatMap(([name, fields]) => {
-      const derived: Record<string, unknown> | undefined = mapping.features[name];
-      return derived ? Object.entries(fields).filter(([key, value]) => deepEqual(value, derived[key])).map(([key]) => `features.${name}.${key}`) : [];
-    }),
+    ...Object.entries(DERIVED)
+      .filter(([key, derived]) => isSame(Reflect.get(overrides, key), derived(derive((rest) => Reflect.deleteProperty(rest, key)))))
+      .map(([key]) => key),
+    ...Object.entries(overrides.features ?? {}).flatMap(([name, fields]) => Object.keys(fields)
+      .filter((key) => {
+        const without = derive((rest) => rest.features?.[name] && Reflect.deleteProperty(rest.features[name], key)).mapping.features[name];
+        return deepEqual(Reflect.get(withAll.mapping.features[name] ?? {}, key), Reflect.get(without ?? {}, key));
+      })
+      .map((key) => `features.${name}.${key}`)),
   ];
 }
 

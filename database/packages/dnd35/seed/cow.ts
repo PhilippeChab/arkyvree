@@ -81,16 +81,25 @@ async function copySpellLists(db: Db, fromId: string, toId: string) {
   await linkPower(db, toId, links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)));
 }
 
-/** The ruleset's power named so (its own, or an inherited one it copies first), matched regardless of case. */
-export async function ownPower(db: Db, ctx: SeedContext, name: string): Promise<string | undefined> {
-  const named = (ids: Record<string, string>) => Object.entries(ids).find(([power]) => power.toLowerCase() === name.toLowerCase());
-  const own = named(ctx.powerMap);
-  if (own) return own[1];
-  const inherited = named(ctx.inheritedPowerMap);
-  if (!inherited) return undefined;
-  const [powerName, powerId] = inherited;
-  ctx.powerMap[powerName] = await cowPower(db, powerId, ctx.rulesetId);
-  return ctx.powerMap[powerName];
+/**
+ * Finds the ruleset's power by name, regardless of case: its own, or an inherited one it copies first. With two
+ * names that differ only in case, the later one wins.
+ */
+export function powerFinder(db: Db, ctx: SeedContext) {
+  const byLowerName = (ids: Record<string, string>) => new Map(Object.entries(ids).map(([name, id]) => [name.toLowerCase(), { name, id }]));
+  const own = byLowerName(ctx.powerMap);
+  const inherited = byLowerName(ctx.inheritedPowerMap);
+  return async (name: string): Promise<string | undefined> => {
+    const key = name.toLowerCase();
+    const found = own.get(key);
+    if (found) return found.id;
+    const original = inherited.get(key);
+    if (!original) return undefined;
+    const id = await cowPower(db, original.id, ctx.rulesetId);
+    ctx.powerMap[original.name] = id;
+    own.set(key, { name: original.name, id });
+    return id;
+  };
 }
 
 /**
