@@ -43,6 +43,10 @@ export const PlayerCharactersMethods = {
       if (character.kind !== "pc") {
         throw new BadRequestError("Only player characters can be linked to a campaign");
       }
+      // The campaign's exact ruleset: not a fork of it, nor its parent.
+      if (character.rulesetId !== campaign.rulesetId) {
+        throw new BadRequestError("Only characters built on the campaign's ruleset can be linked");
+      }
 
       const existingLink = await PlayerCharacters.findOne(tx, { characterId });
 

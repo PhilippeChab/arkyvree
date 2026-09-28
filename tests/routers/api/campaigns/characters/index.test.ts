@@ -352,6 +352,46 @@ describe("campaigns characters", () => {
     expect(linkedCharacter.visibility).toBe("Public");
   });
 
+  test("should refuse a character built on another ruleset", async () => {
+    const { campaignId, rulesetId, raceId, abilities } = await createTestData();
+
+    const forkResponse = await api.api.rulesets[":id"].fork.$post(
+      { param: { id: rulesetId }, json: { name: "Link Test Fork", description: "", private: true } },
+      { headers },
+    );
+    if (!forkResponse.ok) throw new Error("Failed to fork the ruleset");
+    const fork = await forkResponse.json();
+
+    const characterResponse = await api.api.characters.$post(
+      {
+        json: {
+          rulesetId: fork.id,
+          raceId,
+          name: "Fork Character",
+          xp: 0,
+          alignment: "True Neutral" as const,
+          abilities,
+          age: 25,
+          gender: "Male" as const,
+          height: "180",
+          weight: "80",
+        },
+      },
+      { headers },
+    );
+    if (!characterResponse.ok) throw new Error("Failed to create the fork's character");
+    const character = await characterResponse.json();
+
+    const linkResponse = await api.api.campaigns[":id"].characters.$post(
+      { param: { id: campaignId }, json: { characterId: character.id, visibility: "Public" as const } },
+      { headers },
+    );
+
+    expect(linkResponse.status).toBe(400);
+    const error = await linkResponse.json();
+    expect((error as { message: string }).message).toBe("Only characters built on the campaign's ruleset can be linked");
+  });
+
   test("should reject unauthenticated GET request", async () => {
     const { campaignId } = await createTestData();
 
