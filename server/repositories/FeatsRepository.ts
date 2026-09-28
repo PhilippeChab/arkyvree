@@ -122,7 +122,11 @@ class FeatsRepository extends BaseRepository<typeof featsInRules, FeatInstance> 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.featsInRules.findMany({
         where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, aptitudeCondition, familyCondition]),
-        orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+        // The id breaks ties, so paging never repeats or skips a row.
+        orderBy: [
+          this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+          this.orderBy(this.table.id),
+        ],
         with: {
           featsAptitudesInRules: {
             with: {
