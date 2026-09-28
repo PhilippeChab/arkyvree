@@ -1,100 +1,45 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+
+/** A new user whose only activities are forking the seeded ruleset, then adding an aptitude to the fork. */
+async function userWithActivities() {
+  const { rulesetId } = await getSeedCtx();
+  const { api } = await createSignedInUser("activity");
+  const fork = await expectOk(api.api.rulesets[":id"].fork.$post({ param: { id: rulesetId }, json: { name: "Activity Fork", description: "", private: true } }));
+  const aptitude = await expectOk(api.api.rulesets[":id"].aptitudes.$post({ param: { id: fork.id }, json: { name: "Activity Aptitude" } }));
+  return { activities: api.api.activities, fork, aptitude };
+}
 
 describe("activities", () => {
-  const api = testClient<Application>(application);
-  const sessionCookie = "session-id=00000000-0000-4000-8000-000000000123";
-
-  test("should reject unauthenticated requests", async () => {
-    const response = await api.api.activities.$get({
-      query: {},
-    });
-    expect(response.status).toBe(401);
+  test("lists, sorts and pages the user's activities", async () => {
+    const { activities } = await userWithActivities();
+    // Both rows share the test transaction's timestamp, so sort by type to get a stable order.
+    const ascending = await expectOk(activities.$get({ query: { orderBy: "type", orderDir: "asc" } }));
+    expect(ascending.items.map((a) => a.type)).toEqual(["createAptitude", "forkRuleset"]);
+    const descending = await expectOk(activities.$get({ query: { orderBy: "type", orderDir: "desc" } }));
+    expect(descending.items.map((a) => a.type)).toEqual(["forkRuleset", "createAptitude"]);
+    const firstPage = await expectOk(activities.$get({ query: { limit: "1" } }));
+    expect(firstPage.items).toHaveLength(1);
   });
 
-  test("should return paginated activities for authenticated user", async () => {
-    const response = await api.api.activities.$get(
-      { query: {} },
-      { headers: { cookie: sessionCookie } },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get activities: ${error.message}`);
-    }
-
-    const result = await response.json();
-    expect(result).toBeDefined();
-    expect(Array.isArray(result.items)).toBe(true);
-    expect(result.page).toBe(1);
+  test("filters activities by type and searches their type and table", async () => {
+    const { activities, aptitude } = await userWithActivities();
+    const byType = await expectOk(activities.$get({ query: { type: "createAptitude" } }));
+    expect(byType.items.map((a) => a.targetId)).toEqual([aptitude.id]);
+    const searched = await expectOk(activities.$get({ query: { search: "fork" } }));
+    expect(searched.items.map((a) => a.type)).toEqual(["forkRuleset"]);
+    expect((await expectOk(activities.$get({ query: { search: "zzzznonexistent" } }))).items).toEqual([]);
   });
 
-  test("should support pagination parameters", async () => {
-    const response = await api.api.activities.$get(
-      { query: { limit: "5", page: "1" } },
-      { headers: { cookie: sessionCookie } },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get activities: ${error.message}`);
-    }
-
-    const result = await response.json();
-    expect(result.items.length).toBeLessThanOrEqual(5);
+  test("resolves an activity's target to a page", async () => {
+    const { activities, fork, aptitude } = await userWithActivities();
+    const resolve = activities.resolve[":targetTable"][":targetId"];
+    expect(await expectOk(resolve.$get({ param: { targetTable: "aptitudes", targetId: aptitude.id } }))).toEqual({ url: `/rulesets/${fork.id}/aptitudes/${aptitude.id}` });
+    expect((await resolve.$get({ param: { targetTable: "aptitudes", targetId: NIL_UUID } })).status).toBe(404);
   });
 
-  test("should support sorting", async () => {
-    const response = await api.api.activities.$get(
-      { query: { orderBy: "createdAt", orderDir: "asc" } },
-      { headers: { cookie: sessionCookie } },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get activities: ${error.message}`);
-    }
-
-    const result = await response.json();
-    expect(Array.isArray(result.items)).toBe(true);
-
-    if (result.items.length >= 2) {
-      const dates = result.items.map((a) => new Date(a.createdAt).getTime());
-      for (let i = 1; i < dates.length; i++) {
-        expect(dates[i]).toBeGreaterThanOrEqual(dates[i - 1]);
-      }
-    }
-  });
-
-  test("should support type filtering", async () => {
-    const response = await api.api.activities.$get(
-      { query: { type: "nonExistentType" } },
-      { headers: { cookie: sessionCookie } },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get activities: ${error.message}`);
-    }
-
-    const result = await response.json();
-    expect(result.items.length).toBe(0);
-  });
-
-  test("should support search", async () => {
-    const response = await api.api.activities.$get(
-      { query: { search: "zzzznonexistent" } },
-      { headers: { cookie: sessionCookie } },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get activities: ${error.message}`);
-    }
-
-    const result = await response.json();
-    expect(result.items.length).toBe(0);
+  test("requires a session", async () => {
+    expect((await guestApi.api.activities.$get({ query: {} })).status).toBe(401);
   });
 });

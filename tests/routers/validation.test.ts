@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { testClient } from "hono/testing";
-
+import { toJson } from "@/server/errors/index.ts";
 import { application } from "@/server/routers/application.ts";
+import { api, expectOk, SEED_SESSION_ID } from "@/tests/api.ts";
 
-const headers = { cookie: "session-id=00000000-0000-4000-8000-000000000123" };
-const api = testClient(application);
+const headers = { cookie: `session-id=${SEED_SESSION_ID}` };
 
 describe("request validation", () => {
   test("invalid authentication JSON uses the standard error envelope without echoing credentials", async () => {
@@ -51,11 +50,7 @@ describe("request validation", () => {
   });
 
   test("valid queries retain coercion, defaults, and inferred success types", async () => {
-    const response = await api.api.characters.$get({ query: { limit: "1" } }, { headers });
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    if ("error" in body) throw new Error(body.message);
-
+    const body = await expectOk(api.api.characters.$get({ query: { limit: "1" } }));
     expect(body.items).toHaveLength(1);
   });
 });
@@ -85,4 +80,8 @@ test("modifier duplication rejects an invalid operator before a database mutatio
     body: JSON.stringify({ target: "abilities.strength.misc", value: "2", operator: "invalid" }),
   });
   expect(response.status).toBe(400);
+});
+
+test("an unexpected error answers 500 with the standard envelope, keeping its message to the logs", () => {
+  expect(toJson(new Error("connection string with a secret"))).toEqual([{ error: "InternalError", cause: "internal", message: "Internal Server Error" }, 500]);
 });

@@ -1,1530 +1,360 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
+import { describe, expect, test } from "bun:test";
+import { addClassLevels, addPowers, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
-import { eq } from "drizzle-orm";
-import { rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import { getSeedContext, addClassLevels, addPowers, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import { Rulesets } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
-import { testClient } from "hono/testing";
-import type { ClientResponse } from "hono/client";
-import { expect, describe, test } from "bun:test";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { createSeededTestRulesetWithExtensions, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
+import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/levelFixtures.ts";
 
-type SuccessBody<T extends ClientResponse<unknown>> = Exclude<Awaited<ReturnType<T["json"]>>, { error: string }>;
+const levels = api.api.characters.levels[":characterId"];
+const level = levels[":characterLevelId"];
 
-/** Narrow a Hono test-client response to its success body, failing if not ok. */
-async function jsonOk<T extends ClientResponse<unknown>>(response: T): Promise<SuccessBody<T>> {
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Request failed (${response.status}): ${JSON.stringify(error)}`);
-  }
-  return response.json() as Promise<SuccessBody<T>>;
+/** A new human character of the seeded user's (INT 12), on the seeded ruleset unless `rulesetId` says otherwise. */
+async function createCharacter(rulesetId?: string) {
+  const ctx = await getSeedCtx();
+  const scores: Record<string, number> = { Strength: 16, Dexterity: 14, Constitution: 14, Intelligence: 12, Wisdom: 10, Charisma: 8 };
+  const abilities = Object.fromEntries(Object.entries(scores).map(([name, score]) => [ctx.abilityMap[name], score]));
+  const character = await expectOk(api.api.characters.$post({
+    json: {
+      rulesetId: rulesetId ?? ctx.rulesetId, raceId: ctx.raceMap.pc["Human"], name: `Level Character ${uniqueId()}`, xp: 0,
+      alignment: "Neutral Good", abilities, age: 25, gender: "Male", height: "180", weight: "80",
+    },
+  }));
+  return { characterId: character.id, ctx };
 }
 
+/** Finalizes one level, returning the raw response. */
+function finalize(characterId: string, klassId: string, levelNumber: number, hp: number, levelPicks: Picks) {
+  return levels.finalize.$post({ param: { characterId }, json: { levels: [{ klassId, level: levelNumber, hp, abilityId: null }], ...levelPicks } });
+}
+
+/** Finalizes one level and returns it. */
+async function finalizeOk(characterId: string, klassId: string, levelNumber: number, hp: number, levelPicks: Picks) {
+  const [created] = await expectOk(finalize(characterId, klassId, levelNumber, hp, levelPicks));
+  return created;
+}
+
+// A human fighter (INT 12): 16 skill points, 2 General feats and a bonus feat at the first level; 4 points and a bonus feat at the second.
+const fighter1 = (ctx: SeedContext) => picks(ctx, FIGHTER_LEVELS[0]);
+const fighter2 = (ctx: SeedContext) => picks(ctx, FIGHTER_LEVELS[1]);
+
+const featIds = (feats: Record<string, { id: string }[]>, aptitudeId: string) => (feats[aptitudeId] ?? []).map((f) => f.id);
+
 describe("character levels", () => {
-  const api = testClient<Application>(application);
-  const headers = { cookie: "session-id=00000000-0000-4000-8000-000000000123" };
+  describe("level up", () => {
+    test("lists the classes a character can take, with the level each one is at", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const nextFighterLevel = async () =>
+        (await expectOk(levels["available-classes"].$get({ param: { characterId }, query: {} }))).items.find((k) => k.id === ctx.klassMap.pc["Fighter"]);
 
-  let seedCtx: SeedContext;
-
-  async function getCtx(): Promise<SeedContext> {
-    if (!seedCtx) {
-      seedCtx = await getSeedContext(db);
-    }
-    return seedCtx;
-  }
-
-  async function createSeedCharacter(cookie: string): Promise<{ characterId: string; ctx: SeedContext }> {
-    const c = await getCtx();
-
-    const abilityScores: Record<string, number> = {
-      Strength: 16, Dexterity: 14, Constitution: 14,
-      Intelligence: 12, Wisdom: 10, Charisma: 8,
-    };
-    const abilities: Record<string, number> = {};
-    for (const [name, score] of Object.entries(abilityScores)) {
-      abilities[c.abilityMap[name]] = score;
-    }
-
-    const response = await api.api.characters.$post(
-      {
-        json: {
-          rulesetId: c.rulesetId,
-          raceId: c.raceMap.pc["Human"],
-          name: `Test Character ${Math.random().toString(36).substr(2, 9)}`,
-          xp: 0,
-          alignment: "Neutral Good" as const,
-          abilities,
-          age: 25,
-          gender: "Male" as const,
-          height: "180",
-          weight: "80",
-        },
-      },
-      { headers: { cookie } },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to create character: ${error.message}`);
-    }
-
-    const character = await response.json();
-    return { characterId: character.id, ctx: c };
-  }
-
-  // Fighter L1, Human, INT 12: (2+1+1)*4 = 16 skill points, 2 General feats, 1 Fighter Bonus Feat
-  function fighterLevel1Picks(c: SeedContext) {
-    return {
-      skills: {
-        [c.skillMap["Climb"]]: 4,
-        [c.skillMap["Intimidate"]]: 4,
-        [c.skillMap["Jump"]]: 4,
-        [c.skillMap["Swim"]]: 4,
-      },
-      feats: {
-        [c.aptMap["General"]]: [c.featMap["Power Attack"], c.featMap["Cleave"]],
-        [c.aptMap["Fighter Bonus Feat"]]: [c.featMap["Improved Initiative"]],
-      },
-      powers: {},
-    };
-  }
-
-  /**
-   * Wraps the finalize endpoint with a single-level plan so call sites
-   * stay concise. Returns the HTTP response as-is; the body is an array of
-   * created levels, so consumers typically destructure `[level]` from `jsonOk`.
-   */
-  async function finalizeOneLevelRequest(
-    characterId: string,
-    params: {
-      klassId: string;
-      level: number;
-      hp: number;
-      abilityId: string | null;
-      skills: Record<string, number>;
-      feats: Record<string, string[]>;
-      powers: Record<string, string[]>;
-    },
-    reqHeaders?: { cookie: string },
-  ) {
-    const body = {
-      param: { characterId },
-      json: {
-        levels: [{ klassId: params.klassId, level: params.level, hp: params.hp, abilityId: params.abilityId }],
-        skills: params.skills,
-        feats: params.feats,
-        powers: params.powers,
-      },
-    };
-    return reqHeaders
-      ? api.api.characters.levels[":characterId"]["finalize"].$post(body, { headers: reqHeaders })
-      : api.api.characters.levels[":characterId"]["finalize"].$post(body);
-  }
-
-  // Fighter L2 (character level 2): (2+1+1)*1 = 4 skill points, 0 General feats, 1 Fighter Bonus Feat
-  function fighterLevel2Picks(c: SeedContext) {
-    return {
-      skills: {
-        [c.skillMap["Climb"]]: 1,
-        [c.skillMap["Swim"]]: 1,
-        [c.skillMap["Jump"]]: 1,
-        [c.skillMap["Intimidate"]]: 1,
-      },
-      feats: {
-        [c.aptMap["Fighter Bonus Feat"]]: [c.featMap["Dodge"]],
-      },
-      powers: {},
-    };
-  }
-
-  describe("GET /available-classes", () => {
-    test("should return available classes for a character", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["available-classes"].$get(
-        { param: { characterId }, query: {} },
-        { headers },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get available classes: ${error.message}`);
-      }
-
-      const data = await response.json();
-      expect(Array.isArray(data.items)).toBe(true);
-      expect(data.items.length).toBeGreaterThanOrEqual(1);
-
-      const fighter = data.items.find((k) => k.id === c.klassMap.pc["Fighter"]);
-      expect(fighter).toBeDefined();
-      expect(fighter!.nextLevel).toBe(1);
-      expect(fighter!.eligible).toBe(true);
+      expect(await nextFighterLevel()).toMatchObject({ nextLevel: 1, eligible: true });
+      const created = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
+      expect(created).toMatchObject({ characterId, hp: 8 });
+      expect(await nextFighterLevel()).toMatchObject({ nextLevel: 2 });
+      await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 2, 6, fighter2(ctx));
+      expect(await nextFighterLevel()).toMatchObject({ nextLevel: 3 });
     });
 
-    test("should reject unauthenticated requests", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
+    test("reports the slots a class level grants", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const query = { klassId: ctx.klassMap.pc["Fighter"], level: "1" };
 
-      const response = await api.api.characters.levels[":characterId"]["available-classes"].$get({
+      const skills = await expectOk(levels["skill-slots"].$get({ param: { characterId }, query }));
+      expect(skills).toMatchObject({ skillPointsToSpend: 16, totalCharacterLevel: 1 });
+
+      const feats = await expectOk(levels["feat-slots"].$get({ param: { characterId }, query }));
+      expect(feats.featsToSelect).toBe(3);
+      const pools = Object.values(feats.aptitudePools);
+      expect(pools.find((p) => p.name === "General")?.available).toBe(2);
+      expect(pools.find((p) => p.name === "Fighter Bonus Feat")?.available).toBe(1);
+
+      const powers = await expectOk(levels["power-slots"].$get({ param: { characterId }, query }));
+      expect(powers.powersToSelect).toBe(0);
+
+      // Ability increases only come every 4 character levels.
+      expect(await expectOk(levels["attribute-slots"].$get({ param: { characterId }, query: {} }))).toMatchObject({ isAvailable: false });
+    });
+
+    test("lists the feats of a pool, flat and grouped by family", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const query = { aptitudeId: ctx.aptMap["General"], klassId: ctx.klassMap.pc["Fighter"], level: "1", search: "Weapon Focus" };
+
+      const flat = await expectOk(levels["available-feats"].$get({ param: { characterId }, query }));
+      expect(flat.items.length).toBeGreaterThan(1);
+      const grouped = await expectOk(levels["available-feats"].grouped.$get({ param: { characterId }, query }));
+      expect(grouped.items.length).toBeLessThan(flat.items.length);
+    });
+
+    test("previews the pools of a planned level-up", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const preview = await expectOk(levels.preview.$post({
         param: { characterId },
-        query: {},
-      });
-
-      expect(response.status).toBe(401);
-    });
-
-    test("should return 404 for non-existent character", async () => {
-      const response = await api.api.characters.levels[":characterId"]["available-classes"].$get(
-        { param: { characterId: "00000000-0000-0000-0000-000000000000" }, query: {} },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
+        json: { levels: [{ klassId: ctx.klassMap.pc["Fighter"], level: 1 }, { klassId: ctx.klassMap.pc["Fighter"], level: 2 }], abilityIds: [null, null] },
+      }));
+      // Human Fighter 1–2, INT 12: 16 + 4 skill points; 2 General feats and 2 Fighter Bonus Feats.
+      expect(preview.skills).toMatchObject({ skillPointsToSpend: 20, totalCharacterLevel: 2 });
+      expect(preview.perLevelSkillPoints).toEqual([16, 4]);
+      const pools = Object.values(preview.feats.aptitudePools);
+      expect(pools.find((p) => p.name === "General")?.available).toBe(2);
+      expect(pools.find((p) => p.name === "Fighter Bonus Feat")?.available).toBe(2);
     });
   });
 
-  describe("level up lifecycle", () => {
-    test("should get available classes, finalize level, and check leveled-up attributes", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Step 1: Get available classes
-      const classesResponse = await api.api.characters.levels[":characterId"]["available-classes"].$get(
-        { param: { characterId }, query: {} },
-        { headers },
-      );
-
-      if (!classesResponse.ok) {
-        const error = await classesResponse.json();
-        throw new Error(`Failed to get available classes: ${error.message}`);
-      }
-
-      const classes = await classesResponse.json();
-      expect(classes.items.length).toBeGreaterThanOrEqual(1);
-
-      const selectedClass = classes.items.find((k) => k.id === classId);
-      expect(selectedClass).toBeDefined();
-
-      // Step 2: Finalize level 1 with valid picks
-      const picks = fighterLevel1Picks(c);
-      const finalizeResponse = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks },
-        headers,
-      );
-
-      if (!finalizeResponse.ok) {
-        const error = await finalizeResponse.json();
-        throw new Error(`Failed to finalize level: ${error.message}`);
-      }
-
-      const [newLevel] = await finalizeResponse.json();
-      expect(newLevel).toBeDefined();
-      expect(newLevel.characterId).toBe(characterId);
-      expect(newLevel.hp).toBe(8);
-
-      // Step 3: Check leveled-up attributes (at level 1, should not be available)
-      const attributesResponse = await api.api.characters.levels[":characterId"]["attribute-slots"].$get(
-        { param: { characterId }, query: {} },
-        { headers },
-      );
-
-      if (!attributesResponse.ok) {
-        const error = await attributesResponse.json();
-        throw new Error(`Failed to get leveled-up attributes: ${error.message}`);
-      }
-
-      const attributes = await attributesResponse.json();
-      expect(attributes).toBeDefined();
-      expect(attributes.isAvailable).toBe(false);
-
-      // Step 4: Verify the class next level incremented
-      const classesAfterResponse = await api.api.characters.levels[":characterId"]["available-classes"].$get(
-        { param: { characterId }, query: {} },
-        { headers },
-      );
-
-      if (!classesAfterResponse.ok) {
-        const error = await classesAfterResponse.json();
-        throw new Error(`Failed to get available classes after level: ${error.message}`);
-      }
-
-      const classesAfter = await classesAfterResponse.json();
-      const classAfterLevel = classesAfter.items.find((k) => k.id === classId);
-      expect(classAfterLevel).toBeDefined();
-      expect(classAfterLevel!.nextLevel).toBe(2);
-    });
-
-    test("should get leveled-up skills for class and level", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["skill-slots"].$get(
-        {
-          param: { characterId },
-          query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get leveled-up skills: ${error.message}`);
-      }
-
-      const data = await response.json();
-      expect(data).toBeDefined();
-      // Human Fighter L1, INT 12 (+1 mod): (2+1+1)*4 = 16 skill points
-      expect(data.skillPointsToSpend).toBe(16);
-      expect(data.totalCharacterLevel).toBe(1);
-      expect(Array.isArray(data.skills)).toBe(true);
-    });
-
-    test("should get leveled-up feats for class and level", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["feat-slots"].$get(
-        {
-          param: { characterId },
-          query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get leveled-up feats: ${error.message}`);
-      }
-
-      const data = await response.json();
-      expect(data).toBeDefined();
-      // Human Fighter L1: 2 General feats (1 base + 1 human), 1 Fighter Bonus Feat = 3 total
-      expect(data.featsToSelect).toBe(3);
-      expect(Array.isArray(data.autoGrantedFeats)).toBe(true);
-      const generalPool = Object.values(data.aptitudePools).find((p) => p.name === "General");
-      expect(generalPool).toBeDefined();
-      expect(generalPool!.available).toBe(2);
-      const fighterPool = Object.values(data.aptitudePools).find((p) => p.name === "Fighter Bonus Feat");
-      expect(fighterPool).toBeDefined();
-      expect(fighterPool!.available).toBe(1);
-    });
-
-    test("should get leveled-up powers for class and level", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["power-slots"].$get(
-        {
-          param: { characterId },
-          query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get leveled-up powers: ${error.message}`);
-      }
-
-      const data = await response.json();
-      expect(data).toBeDefined();
-      expect(typeof data.powersToSelect).toBe("number");
-      expect(Array.isArray(data.autoGrantedPowers)).toBe(true);
-      expect(typeof data.aptitudePools).toBe("object");
-    });
-
-    test("should finalize multiple levels sequentially", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Level 1
-      const picks1 = fighterLevel1Picks(c);
-      const level1Response = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks1 },
-        headers,
-      );
-      expect(level1Response.status).toBe(200);
-
-      // Level 2
-      const picks2 = fighterLevel2Picks(c);
-      const level2Response = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 2, hp: 6, abilityId: null, ...picks2 },
-        headers,
-      );
-      expect(level2Response.status).toBe(200);
-
-      // Verify available classes show next level as 3
-      const classesResponse = await api.api.characters.levels[":characterId"]["available-classes"].$get(
-        { param: { characterId }, query: {} },
-        { headers },
-      );
-
-      if (!classesResponse.ok) {
-        const error = await classesResponse.json();
-        throw new Error(`Failed to get available classes: ${error.message}`);
-      }
-
-      const classes = await classesResponse.json();
-      const fighter = classes.items.find((k) => k.id === classId);
-      expect(fighter).toBeDefined();
-      expect(fighter!.nextLevel).toBe(3);
-    });
-  });
-
-  describe("available feats and powers", () => {
-    test("should get available feats", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["available-feats"].$get(
-        {
-          param: { characterId },
-          query: { aptitudeId: c.aptMap["General"], klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get available feats: ${error.message}`);
-      }
-
-      const data = await response.json();
-      expect(data).toBeDefined();
-      expect(Array.isArray(data.items)).toBe(true);
-      expect(typeof data.page).toBe("number");
-    });
-
-    test("should get available powers", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["available-powers"].$get(
-        {
-          param: { characterId },
-          query: { aptitudeId: c.aptMap["General"], klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get available powers: ${error.message}`);
-      }
-
-      const data = await response.json();
-      expect(data).toBeDefined();
-      expect(Array.isArray(data.items)).toBe(true);
-      expect(typeof data.page).toBe("number");
-    });
-
-    test("should not exclude spells from a different class aptitude (multiclass)", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      // Add a Cleric level with "Detect Magic" picked as a Cleric spell
-      const clericLevelIds = await addClassLevels(db, c, characterId, "Cleric", [1], [8]);
-      await addPowers(db, c, clericLevelIds, [
-        { levelIndex: 0, powerName: "Detect Magic", aptitude: "Cleric Spells" },
-      ]);
-
-      // Query available Wizard spells — "Detect Magic" should still be available
-      // since it was picked under a different aptitude (Cleric Spells, not Wizard Spells)
-      const response = await api.api.characters.levels[":characterId"]["available-powers"].$get(
-        {
-          param: { characterId },
-          query: {
-            aptitudeId: c.aptMap["Wizard Spells"],
-            klassId: c.klassMap.pc["Wizard"],
-            level: "1",
-            powerLevel: "0",
-            search: "Detect Magic",
-          },
-        },
-        { headers },
-      );
-
-      const data = await jsonOk(response);
-      const names = data.items.map((p: { name: string }) => p.name);
-      expect(names).toContain("Detect Magic");
-    });
-
-    test("should not return duplicate spells from sibling extensions", async () => {
-      // Create a forked ruleset with extensions enabled (same pattern as aptitudeDedup.test.ts)
-      const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const extLinks = await db.select({ id: rulesetExtensionsInRules.extensionId })
-        .from(rulesetExtensionsInRules)
-        .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
-      if (extLinks.length > 0) {
-        await db.update(rulesetsInRules)
-          .set({ extensionRulesetIds: extLinks.map((e) => e.id) })
-          .where(eq(rulesetsInRules.id, fork.id));
-      }
-      invalidateRuleset(fork.id);
-
-      const ruleset = (await Rulesets.findOne(db, { id: fork.id }))!;
-      expect(ruleset.extensionRulesetIds.length).toBeGreaterThan(0);
-
-      // Create a character on the forked ruleset
-      const c = await getCtx();
-      const abilityScores: Record<string, number> = {
-        Strength: 10, Dexterity: 10, Constitution: 10,
-        Intelligence: 16, Wisdom: 16, Charisma: 10,
+  describe("available powers", () => {
+    test("keeps a spell another class picked, and drops one this class already picked", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const detectMagic = async (klassLevel: string) => {
+        const query = { aptitudeId: ctx.aptMap["Wizard Spells"], klassId: ctx.klassMap.pc["Wizard"], level: klassLevel, powerLevel: "0", search: "Detect Magic" };
+        return (await expectOk(levels["available-powers"].$get({ param: { characterId }, query }))).items.map((p) => p.name);
       };
-      const abilities: Record<string, number> = {};
-      for (const [name, score] of Object.entries(abilityScores)) {
-        abilities[c.abilityMap[name]] = score;
-      }
-      const charResponse = await api.api.characters.$post(
-        {
-          json: {
-            rulesetId: fork.id,
-            raceId: c.raceMap.pc["Human"],
-            name: `Dedup Test ${Math.random().toString(36).substr(2, 9)}`,
-            xp: 0,
-            alignment: "Neutral Good" as const,
-            abilities,
-            age: 25,
-            gender: "Male" as const,
-            height: "180",
-            weight: "80",
-          },
-        },
-        { headers },
-      );
-      const character = await jsonOk(charResponse);
 
-      // Fetch all cantrips for Wizard Spells — should have no duplicate names
-      const response = await api.api.characters.levels[":characterId"]["available-powers"].$get(
-        {
-          param: { characterId: character.id },
-          query: {
-            aptitudeId: c.aptMap["Wizard Spells"],
-            klassId: c.klassMap.pc["Wizard"],
-            level: "1",
-            powerLevel: "0",
-            limit: "100",
-          },
-        },
-        { headers },
-      );
+      const [clericLevel] = await addClassLevels(db, ctx, characterId, "Cleric", [1], [8]);
+      await addPowers(db, ctx, [clericLevel], [{ levelIndex: 0, powerName: "Detect Magic", aptitude: "Cleric Spells" }]);
+      expect(await detectMagic("1")).toContain("Detect Magic");
 
-      const data = await jsonOk(response);
-      const names = data.items.map((p: { name: string }) => p.name);
-      const uniqueNames = new Set(names);
-      expect(names.length).toBe(uniqueNames.size);
+      const [wizardLevel] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+      await addPowers(db, ctx, [wizardLevel], [{ levelIndex: 0, powerName: "Detect Magic", aptitude: "Wizard Spells" }]);
+      expect(await detectMagic("2")).not.toContain("Detect Magic");
     });
 
-    test("should exclude spells already picked under the same aptitude", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      // Add a Wizard level with "Detect Magic" picked as a Wizard spell
-      const wizardLevelIds = await addClassLevels(db, c, characterId, "Wizard", [1], [4]);
-      await addPowers(db, c, wizardLevelIds, [
-        { levelIndex: 0, powerName: "Detect Magic", aptitude: "Wizard Spells" },
-      ]);
-
-      // Query available Wizard cantrips — "Detect Magic" should NOT appear
-      const response = await api.api.characters.levels[":characterId"]["available-powers"].$get(
-        {
-          param: { characterId },
-          query: {
-            aptitudeId: c.aptMap["Wizard Spells"],
-            klassId: c.klassMap.pc["Wizard"],
-            level: "2",
-            powerLevel: "0",
-            search: "Detect Magic",
-          },
-        },
-        { headers },
-      );
-
-      const data = await jsonOk(response);
-      const names = data.items.map((p: { name: string }) => p.name);
-      expect(names).not.toContain("Detect Magic");
-    });
-
-    test("should show spells on extension-specific aptitudes even when another extension copy wins", async () => {
-      // Create a forked ruleset with extensions enabled
-      const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const extLinks = await db.select({ id: rulesetExtensionsInRules.extensionId })
-        .from(rulesetExtensionsInRules)
-        .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
-      if (extLinks.length > 0) {
-        await db.update(rulesetsInRules)
-          .set({ extensionRulesetIds: extLinks.map((e) => e.id) })
-          .where(eq(rulesetsInRules.id, fork.id));
-      }
-      invalidateRuleset(fork.id);
-
-      const ruleset = (await Rulesets.findOne(db, { id: fork.id }))!;
-      expect(ruleset.extensionRulesetIds.length).toBeGreaterThan(0);
-
-      // Create a character on the forked ruleset
-      const c = await getCtx();
-      const abilityScores: Record<string, number> = {
-        Strength: 10, Dexterity: 10, Constitution: 10,
-        Intelligence: 16, Wisdom: 16, Charisma: 10,
+    test("lists each spell once when sibling extensions both carry it", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
+      expect(fork.extensionRulesetIds.length).toBeGreaterThan(0);
+      const { characterId } = await createCharacter(fork.id);
+      const listNames = async (aptitudeId: string, klassId: string, powerLevel?: string) => {
+        const query = { aptitudeId, klassId, level: "1", powerLevel, limit: "100" };
+        return (await expectOk(levels["available-powers"].$get({ param: { characterId }, query }))).items.map((p) => p.name);
       };
-      const abilities: Record<string, number> = {};
-      for (const [name, score] of Object.entries(abilityScores)) {
-        abilities[c.abilityMap[name]] = score;
-      }
-      const charResponse = await api.api.characters.$post(
-        {
-          json: {
-            rulesetId: fork.id,
-            raceId: c.raceMap.pc["Human"],
-            name: `ExtApt Test ${Math.random().toString(36).substr(2, 9)}`,
-            xp: 0,
-            alignment: "Neutral Good" as const,
-            abilities,
-            age: 25,
-            gender: "Male" as const,
-            height: "180",
-            weight: "80",
-          },
-        },
-        { headers },
-      );
-      const character = await jsonOk(charResponse);
 
-      // "Blackguard Spells" is an extension-specific aptitude from Complete Divine.
-      // Spells COW'd by multiple extensions should still appear here even if
-      // the CD copy is the "loser" — DISTINCT ON keeps the only copy with this link.
-      const blackguardApt = c.aptMap["Blackguard Spells"];
-      if (blackguardApt) {
-        const response = await api.api.characters.levels[":characterId"]["available-powers"].$get(
-          {
-            param: { characterId: character.id },
-            query: {
-              aptitudeId: blackguardApt,
-              klassId: c.klassMap.pc["Blackguard"] ?? c.klassMap.pc["Wizard"],
-              level: "1",
-              limit: "100",
-            },
-          },
-          { headers },
-        );
+      const cantrips = await listNames(ctx.aptMap["Wizard Spells"], ctx.klassMap.pc["Wizard"], "0");
+      expect(cantrips.length).toBe(new Set(cantrips).size);
 
-        const data = await jsonOk(response);
-        // Should have spells and no duplicates
-        const names = data.items.map((p: { name: string }) => p.name);
-        const uniqueNames = new Set(names);
-        expect(names.length).toBe(uniqueNames.size);
-        expect(data.items.length).toBeGreaterThan(0);
-      }
+      // "Blackguard Spells" comes from the extensions (DMG and Complete Divine), not the
+      // base. A spell only one extension's copy links to it must still show when another
+      // extension's copy of that spell wins the dedup.
+      const ruleset = api.api.rulesets[":id"];
+      const [aptitude] = (await expectOk(ruleset.aptitudes.$get({ param: { id: fork.id }, query: { search: "Blackguard Spells" } }))).items;
+      const [klass] = (await expectOk(ruleset.classes.$get({ param: { id: fork.id }, query: { search: "Blackguard" } }))).items;
+      const blackguard = await listNames(aptitude.id, klass.id);
+      expect(blackguard.length).toBeGreaterThan(0);
+      expect(blackguard.length).toBe(new Set(blackguard).size);
     });
   });
 
-  describe("authentication", () => {
-    test("should reject unauthenticated finalize request", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
+  describe("reading and editing a level", () => {
+    test("reads a level's HP, skills and feats", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const created = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 7, fighter1(ctx));
 
-      const response = await finalizeOneLevelRequest(characterId, {
-        klassId: c.klassMap.pc["Fighter"],
-        level: 1,
-        hp: 8,
-        abilityId: null,
-        skills: {},
-        feats: {},
-        powers: {},
-      });
-
-      expect(response.status).toBe(401);
+      const data = await expectOk(level.$get({ param: { characterId, characterLevelId: created.id } }));
+      expect(data).toMatchObject({ characterLevelId: created.id, klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 7, abilityId: null });
+      expect(data.skills).toMatchObject(fighter1(ctx).skills);
+      expect(featIds(data.feats, ctx.aptMap["General"]).sort()).toEqual([ctx.featMap["Power Attack"], ctx.featMap["Great Fortitude"]].sort());
+      expect(featIds(data.feats, ctx.aptMap["Fighter Bonus Feat"])).toEqual([ctx.featMap["Improved Initiative"]]);
     });
 
-    test("should reject unauthenticated skill-slots request", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["skill-slots"].$get({
-        param: { characterId },
-        query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-      });
-
-      expect(response.status).toBe(401);
-    });
-
-    test("should reject unauthenticated feat-slots request", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["feat-slots"].$get({
-        param: { characterId },
-        query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-      });
-
-      expect(response.status).toBe(401);
-    });
-
-    test("should reject unauthenticated power-slots request", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["power-slots"].$get({
-        param: { characterId },
-        query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-      });
-
-      expect(response.status).toBe(401);
-    });
-
-    test("should reject unauthenticated delete request", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"].$delete({
-        param: { characterId },
-      });
-
-      expect(response.status).toBe(401);
-    });
-
-    test("should reject unauthenticated attribute-slots request", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"]["attribute-slots"].$get({
-        param: { characterId },
-        query: {},
-      });
-
-      expect(response.status).toBe(401);
-    });
-  });
-
-  describe("non-existent resources", () => {
-    test("should return 404 for non-existent character on skill-slots", async () => {
-      const c = await getCtx();
-
-      const response = await api.api.characters.levels[":characterId"]["skill-slots"].$get(
-        {
-          param: { characterId: "00000000-0000-0000-0000-000000000000" },
-          query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
-    });
-
-    test("should return 404 for non-existent character on finalize", async () => {
-      const c = await getCtx();
-
-      const response = await finalizeOneLevelRequest(
-        "00000000-0000-0000-0000-000000000000",
-        {
-          klassId: c.klassMap.pc["Fighter"],
-          level: 1,
-          hp: 8,
-          abilityId: null,
-          skills: {},
-          feats: {},
-          powers: {},
-        },
-        headers,
-      );
-
-      expect(response.status).toBe(404);
-    });
-
-    test("should return 404 for non-existent class level on finalize", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-
-      const response = await finalizeOneLevelRequest(
-        characterId,
-        {
-          klassId: c.klassMap.pc["Fighter"],
-          level: 999,
-          hp: 8,
-          abilityId: null,
-          skills: {},
-          feats: {},
-          powers: {},
-        },
-        headers,
-      );
-
-      expect(response.status).toBe(404);
-    });
-
-    test("should return 404 for non-existent character on feat-slots", async () => {
-      const c = await getCtx();
-
-      const response = await api.api.characters.levels[":characterId"]["feat-slots"].$get(
-        {
-          param: { characterId: "00000000-0000-0000-0000-000000000000" },
-          query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
-    });
-
-    test("should return 404 for non-existent character on power-slots", async () => {
-      const c = await getCtx();
-
-      const response = await api.api.characters.levels[":characterId"]["power-slots"].$get(
-        {
-          param: { characterId: "00000000-0000-0000-0000-000000000000" },
-          query: { klassId: c.klassMap.pc["Fighter"], level: "1" },
-        },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
-    });
-
-    test("should return 404 for non-existent character on attribute-slots", async () => {
-      const response = await api.api.characters.levels[":characterId"]["attribute-slots"].$get(
-        { param: { characterId: "00000000-0000-0000-0000-000000000000" }, query: {} },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe("get level", () => {
-    test("should return level data with skills, feats, and powers", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Finalize level 1
-      const picks = fighterLevel1Picks(c);
-      const finalizeResponse = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 7, abilityId: null, ...picks },
-        headers,
-      );
-
-      if (!finalizeResponse.ok) {
-        const error = await finalizeResponse.json();
-        throw new Error(`Failed to finalize level: ${error.message}`);
-      }
-
-      const [newLevel] = await finalizeResponse.json();
-
-      // GET the level
-      const response = await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-        { param: { characterId, characterLevelId: newLevel.id } },
-        { headers },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get level: ${error.message}`);
-      }
-
-      const data = await response.json();
-      expect(data.characterLevelId).toBe(newLevel.id);
-      expect(data.klassId).toBe(classId);
-      expect(data.level).toBe(1);
-      expect(data.hp).toBe(7);
-      expect(data.abilityId).toBeNull();
-
-      // Verify skills match what was submitted
-      expect(data.skills[c.skillMap["Climb"]]).toBe(4);
-      expect(data.skills[c.skillMap["Intimidate"]]).toBe(4);
-      expect(data.skills[c.skillMap["Jump"]]).toBe(4);
-      expect(data.skills[c.skillMap["Swim"]]).toBe(4);
-
-      // Verify feats are present under their aptitudes
-      const generalFeats = data.feats[c.aptMap["General"]];
-      expect(generalFeats).toBeDefined();
-      expect(generalFeats.length).toBe(2);
-      const generalFeatIds = generalFeats.map((f: { id: string }) => f.id);
-      expect(generalFeatIds).toContain(c.featMap["Power Attack"]);
-      expect(generalFeatIds).toContain(c.featMap["Cleave"]);
-
-      const bonusFeats = data.feats[c.aptMap["Fighter Bonus Feat"]];
-      expect(bonusFeats).toBeDefined();
-      expect(bonusFeats.length).toBe(1);
-      expect(bonusFeats[0].id).toBe(c.featMap["Improved Initiative"]);
-    });
-
-    test("should return 404 for non-existent character level", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-        { param: { characterId, characterLevelId: "00000000-0000-0000-0000-000000000000" } },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
-    });
-
-    test("should reject unauthenticated request", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"][":characterLevelId"].$get({
-        param: { characterId, characterLevelId: "00000000-0000-0000-0000-000000000000" },
-      });
-
-      expect(response.status).toBe(401);
-    });
-  });
-
-  describe("update level", () => {
-    test("should update a level's HP, skills, and feats", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Finalize level 1
-      const picks = fighterLevel1Picks(c);
-      const finalizeResponse = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks },
-        headers,
-      );
-
-      if (!finalizeResponse.ok) {
-        const error = await finalizeResponse.json();
-        throw new Error(`Failed to finalize level: ${error.message}`);
-      }
-
-      const [newLevel] = await finalizeResponse.json();
-
-      // Update the level with different HP and different skill allocation
-      const updateResponse = await api.api.characters.levels[":characterId"][":characterLevelId"].$put(
-        {
-          param: { characterId, characterLevelId: newLevel.id },
-          json: {
-            hp: 5,
-            abilityId: null,
-            skills: {
-              [c.skillMap["Climb"]]: 3,
-              [c.skillMap["Intimidate"]]: 3,
-              [c.skillMap["Jump"]]: 4,
-              [c.skillMap["Swim"]]: 4,
-              [c.skillMap["Handle Animal"]]: 2,
-            },
-            feats: picks.feats,
-            powers: {},
-          },
-        },
-        { headers },
-      );
-
-      if (!updateResponse.ok) {
-        const error = await updateResponse.json();
-        throw new Error(`Failed to update level: ${error.message}`);
-      }
-
-      expect(updateResponse.status).toBe(200);
-
-      // Verify the update by getting the level
-      const getResponse = await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-        { param: { characterId, characterLevelId: newLevel.id } },
-        { headers },
-      );
-
-      if (!getResponse.ok) {
-        const error = await getResponse.json();
-        throw new Error(`Failed to get level: ${error.message}`);
-      }
-
-      const data = await getResponse.json();
-      expect(data.hp).toBe(5);
-      expect(data.skills[c.skillMap["Jump"]]).toBe(4);
-      expect(data.skills[c.skillMap["Swim"]]).toBe(4);
-      expect(data.skills[c.skillMap["Climb"]]).toBe(3);
-      expect(data.skills[c.skillMap["Intimidate"]]).toBe(3);
-    });
-
-    test("should reject HP outside hit die range", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Finalize level 1
-      const picks = fighterLevel1Picks(c);
-      const finalizeResponse = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks },
-        headers,
-      );
-
-      if (!finalizeResponse.ok) {
-        const error = await finalizeResponse.json();
-        throw new Error(`Failed to finalize level: ${error.message}`);
-      }
-
-      const [newLevel] = await finalizeResponse.json();
-
-      // Try to update with HP > hit die (Fighter hd = 10)
-      const response = await api.api.characters.levels[":characterId"][":characterLevelId"].$put(
-        {
-          param: { characterId, characterLevelId: newLevel.id },
-          json: {
-            hp: 11,
-            abilityId: null,
-            skills: picks.skills,
-            feats: picks.feats,
-            powers: {},
-          },
-        },
-        { headers },
-      );
-
-      expect(response.status).toBe(400);
-    });
-
-    test("should return 404 for non-existent character level", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"][":characterLevelId"].$put(
-        {
-          param: { characterId, characterLevelId: "00000000-0000-0000-0000-000000000000" },
-          json: {
-            hp: 5,
-            abilityId: null,
-            skills: {},
-            feats: {},
-            powers: {},
-          },
-        },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
-    });
-
-    test("should reject unauthenticated request", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"][":characterLevelId"].$put({
-        param: { characterId, characterLevelId: "00000000-0000-0000-0000-000000000000" },
+    test("changes a level's HP, skills and feats", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const created = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
+      const param = { characterId, characterLevelId: created.id };
+
+      await expectOk(level.$put({
+        param,
         json: {
           hp: 5,
           abilityId: null,
-          skills: {},
-          feats: {},
+          skills: { [ctx.skillMap["Climb"]]: 3, [ctx.skillMap["Intimidate"]]: 3, [ctx.skillMap["Jump"]]: 4, [ctx.skillMap["Swim"]]: 4, [ctx.skillMap["Handle Animal"]]: 2 },
+          feats: {
+            [ctx.aptMap["General"]]: [ctx.featMap["Power Attack"], ctx.featMap["Toughness"]],
+            [ctx.aptMap["Fighter Bonus Feat"]]: [ctx.featMap["Combat Reflexes"]],
+          },
           powers: {},
         },
+      }));
+
+      const data = await expectOk(level.$get({ param }));
+      expect(data.hp).toBe(5);
+      expect(data.skills).toMatchObject({ [ctx.skillMap["Climb"]]: 3, [ctx.skillMap["Swim"]]: 4 });
+      expect(featIds(data.feats, ctx.aptMap["General"]).sort()).toEqual([ctx.featMap["Power Attack"], ctx.featMap["Toughness"]].sort());
+      expect(featIds(data.feats, ctx.aptMap["Fighter Bonus Feat"])).toEqual([ctx.featMap["Combat Reflexes"]]);
+    });
+
+    test("refuses HP above the class's hit die", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const created = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
+      const response = await level.$put({ param: { characterId, characterLevelId: created.id }, json: { hp: 11, abilityId: null, ...fighter1(ctx) } });
+      expect(response.status).toBe(400);
+    });
+
+    test("edits an earlier level without touching the later ones", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const first = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
+      const second = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 2, 6, fighter2(ctx));
+
+      const skills = { ...fighter1(ctx).skills, [ctx.skillMap["Climb"]]: 2, [ctx.skillMap["Handle Animal"]]: 2 };
+      await expectOk(level.$put({ param: { characterId, characterLevelId: first.id }, json: { ...fighter1(ctx), hp: 7, abilityId: null, skills } }));
+
+      expect(await expectOk(level.$get({ param: { characterId, characterLevelId: first.id } }))).toMatchObject({ hp: 7, skills: { [ctx.skillMap["Climb"]]: 2 } });
+      const later = await expectOk(level.$get({ param: { characterId, characterLevelId: second.id } }));
+      expect(later).toMatchObject({ hp: 6, skills: { [ctx.skillMap["Climb"]]: 1 } });
+      expect(featIds(later.feats, ctx.aptMap["Fighter Bonus Feat"])).toEqual([ctx.featMap["Dodge"]]);
+    });
+
+    test("frees the edited level's own picks in its feat pools", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const klassId = ctx.klassMap.pc["Fighter"];
+      const first = await finalizeOk(characterId, klassId, 1, 8, fighter1(ctx));
+      await finalizeOk(characterId, klassId, 2, 6, fighter2(ctx));
+
+      const general = async (characterLevelId?: string) => {
+        const slots = await expectOk(levels["feat-slots"].$get({ param: { characterId }, query: { klassId, level: "1", characterLevelId } }));
+        return Object.values(slots.aptitudePools).find((p) => p.name === "General")!;
+      };
+      const editing = await general(first.id);
+      expect(editing.available).toBeGreaterThan(0);
+      expect(editing.spent).toBeLessThan((await general()).spent);
+    });
+
+    test("shows the Ranger's combat style pool when editing level 2, not level 1", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const rangerId = ctx.klassMap.pc["Ranger"];
+      const skill = (names: string[], ranks: number) => Object.fromEntries(names.map((name) => [ctx.skillMap[name], ranks]));
+
+      // Ranger 1: (6+1+1)×4 = 32 skill points, 2 General feats and a favored enemy.
+      const first = await finalizeOk(characterId, rangerId, 1, 8, {
+        skills: skill(["Hide", "Move Silently", "Listen", "Spot", "Survival", "Search", "Knowledge (Nature)", "Climb"], 4),
+        feats: {
+          [ctx.aptMap["General"]]: [ctx.featMap["Point Blank Shot"], ctx.featMap["Toughness"]],
+          [ctx.aptMap["Favored Enemy"]]: [ctx.featMap["Favored Enemy: Humanoid (Goblinoid)"]],
+        },
+        powers: {},
       });
-
-      expect(response.status).toBe(401);
-    });
-
-    test("should swap feats when editing a level", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Finalize L1 with Power Attack + Cleave (General), Improved Initiative (Fighter Bonus)
-      const picks = fighterLevel1Picks(c);
-      const finalizeResponse = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks },
-        headers,
-      );
-      const [level1] = await jsonOk(finalizeResponse);
-
-      // Edit L1: swap Cleave for Toughness (General), swap Improved Initiative for Combat Reflexes (Fighter Bonus)
-      const updateResponse = await api.api.characters.levels[":characterId"][":characterLevelId"].$put(
-        {
-          param: { characterId, characterLevelId: level1.id },
-          json: {
-            hp: 8,
-            abilityId: null,
-            skills: picks.skills,
-            feats: {
-              [c.aptMap["General"]]: [c.featMap["Power Attack"], c.featMap["Toughness"]],
-              [c.aptMap["Fighter Bonus Feat"]]: [c.featMap["Combat Reflexes"]],
-            },
-            powers: {},
-          },
-        },
-        { headers },
-      );
-
-      if (!updateResponse.ok) {
-        const error = await updateResponse.json();
-        throw new Error(`Failed to update level: ${error.message}`);
-      }
-
-      // Verify via GET that old feats are gone and new feats are present
-      const getResponse = await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-        { param: { characterId, characterLevelId: level1.id } },
-        { headers },
-      );
-      const data = await jsonOk(getResponse);
-      const generalFeatIds = data.feats[c.aptMap["General"]].map((f: { id: string }) => f.id);
-      expect(generalFeatIds).toContain(c.featMap["Power Attack"]);
-      expect(generalFeatIds).toContain(c.featMap["Toughness"]);
-      expect(generalFeatIds).not.toContain(c.featMap["Cleave"]);
-
-      const bonusFeatIds = data.feats[c.aptMap["Fighter Bonus Feat"]].map((f: { id: string }) => f.id);
-      expect(bonusFeatIds).toContain(c.featMap["Combat Reflexes"]);
-      expect(bonusFeatIds).not.toContain(c.featMap["Improved Initiative"]);
-    });
-
-    test("should edit a non-last level without breaking later levels", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Finalize L1 and L2
-      const picks1 = fighterLevel1Picks(c);
-      const l1Response = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks1 },
-        headers,
-      );
-      const [level1] = await jsonOk(l1Response);
-
-      const picks2 = fighterLevel2Picks(c);
-      const l2Response = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 2, hp: 6, abilityId: null, ...picks2 },
-        headers,
-      );
-      const [level2] = await jsonOk(l2Response);
-
-      // Edit L1: change skill allocation (shift points from Climb to Swim)
-      const editResponse = await api.api.characters.levels[":characterId"][":characterLevelId"].$put(
-        {
-          param: { characterId, characterLevelId: level1.id },
-          json: {
-            hp: 7,
-            abilityId: null,
-            skills: {
-              [c.skillMap["Climb"]]: 2,
-              [c.skillMap["Intimidate"]]: 4,
-              [c.skillMap["Jump"]]: 4,
-              [c.skillMap["Swim"]]: 4,
-              [c.skillMap["Handle Animal"]]: 2,
-            },
-            feats: picks1.feats,
-            powers: {},
-          },
-        },
-        { headers },
-      );
-
-      if (!editResponse.ok) {
-        const error = await editResponse.json();
-        throw new Error(`Failed to edit level 1: ${error.message}`);
-      }
-
-      // Verify L1 has updated data
-      const l1Get = await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-        { param: { characterId, characterLevelId: level1.id } },
-        { headers },
-      );
-      const l1Data = await jsonOk(l1Get);
-      expect(l1Data.hp).toBe(7);
-      expect(l1Data.skills[c.skillMap["Climb"]]).toBe(2);
-      expect(l1Data.skills[c.skillMap["Swim"]]).toBe(4);
-
-      // Verify L2 is still intact
-      const l2Get = await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-        { param: { characterId, characterLevelId: level2.id } },
-        { headers },
-      );
-      const l2Data = await jsonOk(l2Get);
-      expect(l2Data.hp).toBe(6);
-      expect(l2Data.skills[c.skillMap["Climb"]]).toBe(1);
-      const l2BonusFeatIds = l2Data.feats[c.aptMap["Fighter Bonus Feat"]].map((f: { id: string }) => f.id);
-      expect(l2BonusFeatIds).toContain(c.featMap["Dodge"]);
-    });
-
-    test("should return scoped feat pools when editing with characterLevelId", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Finalize L1 and L2
-      const picks1 = fighterLevel1Picks(c);
-      const l1Response = await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks1 },
-        headers,
-      );
-      const [level1] = await jsonOk(l1Response);
-
-      const picks2 = fighterLevel2Picks(c);
-      await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 2, hp: 6, abilityId: null, ...picks2 },
-        headers,
-      );
-
-      // Query feat pools WITH characterLevelId (edit mode) — scoped to L1's baseline
-      const editModeResponse = await api.api.characters.levels[":characterId"]["feat-slots"].$get(
-        {
-          param: { characterId },
-          query: {
-            klassId: classId,
-            level: "1",
-            characterLevelId: level1.id,
-          },
-        },
-        { headers },
-      );
-      const editModeData = await jsonOk(editModeResponse);
-
-      // Edit mode should give back L1's slots so the user can re-fill them
-      // L1 had 2 General feats and 1 Fighter Bonus Feat — edit scoping frees those slots
-      const editGeneralPool = Object.values(editModeData.aptitudePools).find((p: { name: string }) => p.name === "General");
-      expect(editGeneralPool).toBeDefined();
-      expect(editGeneralPool!.available).toBeGreaterThan(0);
-      const editFighterPool = Object.values(editModeData.aptitudePools).find((p: { name: string }) => p.name === "Fighter Bonus Feat");
-      expect(editFighterPool).toBeDefined();
-      expect(editFighterPool!.available).toBe(1);
-
-      // Query WITHOUT characterLevelId for the same level — pools include L1's picks as spent
-      const unscopedResponse = await api.api.characters.levels[":characterId"]["feat-slots"].$get(
-        {
-          param: { characterId },
-          query: { klassId: classId, level: "1" },
-        },
-        { headers },
-      );
-      const unscopedData = await jsonOk(unscopedResponse);
-      const unscopedGeneralPool = Object.values(unscopedData.aptitudePools).find((p: { name: string }) => p.name === "General");
-      expect(unscopedGeneralPool).toBeDefined();
-
-      // The unscoped query counts L1's picks as spent, so it has fewer available slots
-      expect(editGeneralPool!.spent).toBeLessThan(unscopedGeneralPool!.spent);
-    });
-
-    test("Ranger L2 edit should show Combat Style pool, L1 should not", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const rangerId = c.klassMap.pc["Ranger"];
-
-      // Ranger L1 Human: 2 General feats (1 base + 1 Human bonus), Track auto-granted free
-      // Skills: (6+1+1)*4 = 32 points
-      const rangerL1Skills = {
-        [c.skillMap["Hide"]]: 4,
-        [c.skillMap["Move Silently"]]: 4,
-        [c.skillMap["Listen"]]: 4,
-        [c.skillMap["Spot"]]: 4,
-        [c.skillMap["Survival"]]: 4,
-        [c.skillMap["Search"]]: 4,
-        [c.skillMap["Knowledge (Nature)"]]: 4,
-        [c.skillMap["Climb"]]: 4,
+      // Ranger 2: 8 skill points and a combat style pick.
+      const secondPicks: Picks = {
+        skills: skill(["Hide", "Move Silently", "Listen", "Spot", "Survival", "Climb", "Swim", "Search"], 1),
+        feats: { [ctx.aptMap["Ranger Combat Style (2nd)"]]: [ctx.featMap["Rapid Shot"]] },
+        powers: {},
       };
+      const second = await finalizeOk(characterId, rangerId, 2, 7, secondPicks);
 
-      const l1Response = await finalizeOneLevelRequest(
-        characterId,
-        {
-          klassId: rangerId,
-          level: 1,
-          hp: 8,
-          abilityId: null,
-          skills: rangerL1Skills,
+      const combatStyle = async (levelNumber: number, characterLevelId: string) => {
+        const slots = await expectOk(levels["feat-slots"].$get({ param: { characterId }, query: { klassId: rangerId, level: String(levelNumber), characterLevelId } }));
+        return Object.values(slots.aptitudePools).find((p) => p.name === "Ranger Combat Style (2nd)")?.available ?? 0;
+      };
+      expect(await combatStyle(2, second.id)).toBeGreaterThan(0);
+      expect(await combatStyle(1, first.id)).toBe(0);
+
+      await expectOk(level.$put({ param: { characterId, characterLevelId: second.id }, json: { hp: 5, abilityId: null, ...secondPicks } }));
+      const edited = await expectOk(level.$get({ param: { characterId, characterLevelId: second.id } }));
+      expect(edited.hp).toBe(5);
+      expect(featIds(edited.feats, ctx.aptMap["Ranger Combat Style (2nd)"])).toEqual([ctx.featMap["Rapid Shot"]]);
+    });
+
+    test("batch-added levels report character-wide pools and survive editing the middle one", async () => {
+      // Regression: edit-mode slot queries leave out only the level being edited (as
+      // updateLevel does), so each pool is the character-wide total minus what the
+      // other levels hold.
+      const { characterId, ctx } = await createCharacter();
+      const klassId = ctx.klassMap.pc["Fighter"];
+      // General: 2 at level 1 (1 + Human), 1 at level 3. Fighter Bonus Feat: 1 at levels 1 and 2.
+      const created = await expectOk(levels.finalize.$post({
+        param: { characterId },
+        json: {
+          levels: [{ klassId, level: 1, hp: 8, abilityId: null }, { klassId, level: 2, hp: 6, abilityId: null }, { klassId, level: 3, hp: 6, abilityId: null }],
+          skills: { [ctx.skillMap["Climb"]]: 6, [ctx.skillMap["Jump"]]: 6, [ctx.skillMap["Swim"]]: 6, [ctx.skillMap["Intimidate"]]: 6 },
           feats: {
-            [c.aptMap["General"]]: [c.featMap["Point Blank Shot"], c.featMap["Toughness"]],
-            [c.aptMap["Favored Enemy"]]: [c.featMap["Favored Enemy: Humanoid (Goblinoid)"]],
+            [ctx.aptMap["General"]]: [ctx.featMap["Power Attack"], ctx.featMap["Cleave"], ctx.featMap["Toughness"]],
+            [ctx.aptMap["Fighter Bonus Feat"]]: [ctx.featMap["Improved Initiative"], ctx.featMap["Dodge"]],
           },
           powers: {},
         },
-        headers,
-      );
-
-      const [level1] = await jsonOk(l1Response);
-
-      // Ranger L2: 0 General feats, 1 Ranger Combat Style pick
-      // Skills: (6+1+1)*1 = 8 points
-      const rangerL2Skills = {
-        [c.skillMap["Hide"]]: 1,
-        [c.skillMap["Move Silently"]]: 1,
-        [c.skillMap["Listen"]]: 1,
-        [c.skillMap["Spot"]]: 1,
-        [c.skillMap["Survival"]]: 1,
-        [c.skillMap["Climb"]]: 1,
-        [c.skillMap["Swim"]]: 1,
-        [c.skillMap["Search"]]: 1,
-      };
-
-      const l2Response = await finalizeOneLevelRequest(
-        characterId,
-        {
-          klassId: rangerId,
-          level: 2,
-          hp: 7,
-          abilityId: null,
-          skills: rangerL2Skills,
-          feats: {
-            [c.aptMap["Ranger Combat Style (2nd)"]]: [c.featMap["Rapid Shot"]],
-          },
-          powers: {},
-        },
-        headers,
-      );
-
-      const [level2] = await jsonOk(l2Response);
-
-      // Editing L2: should show Ranger Combat Style pool
-      const l2FeatsResponse = await api.api.characters.levels[":characterId"]["feat-slots"].$get(
-        {
-          param: { characterId },
-          query: { klassId: rangerId, level: "2", characterLevelId: level2.id },
-        },
-        { headers },
-      );
-      const l2FeatsData = await jsonOk(l2FeatsResponse);
-      const combatStylePool = Object.values(l2FeatsData.aptitudePools).find(
-        (p: { name: string }) => p.name === "Ranger Combat Style (2nd)",
-      );
-      expect(combatStylePool).toBeDefined();
-      expect(combatStylePool!.available).toBeGreaterThan(0);
-
-      // Editing L1: should NOT show Ranger Combat Style pool
-      const l1FeatsResponse = await api.api.characters.levels[":characterId"]["feat-slots"].$get(
-        {
-          param: { characterId },
-          query: { klassId: rangerId, level: "1", characterLevelId: level1.id },
-        },
-        { headers },
-      );
-      const l1FeatsData = await jsonOk(l1FeatsResponse);
-      const l1CombatStylePool = Object.values(l1FeatsData.aptitudePools).find(
-        (p: { name: string }) => p.name === "Ranger Combat Style (2nd)",
-      );
-      // L1 should have no Combat Style pool (or it should have 0 available)
-      if (l1CombatStylePool) {
-        expect(l1CombatStylePool.available).toBe(0);
-      }
-
-      // Edit L2: re-submit with same Archery pick but different HP
-      const editResponse = await api.api.characters.levels[":characterId"][":characterLevelId"].$put(
-        {
-          param: { characterId, characterLevelId: level2.id },
-          json: {
-            hp: 5,
-            abilityId: null,
-            skills: rangerL2Skills,
-            feats: {
-              [c.aptMap["Ranger Combat Style (2nd)"]]: [c.featMap["Rapid Shot"]],
-            },
-            powers: {},
-          },
-        },
-        { headers },
-      );
-
-      if (!editResponse.ok) {
-        const error = await editResponse.json();
-        throw new Error(`Failed to edit Ranger L2: ${error.message}`);
-      }
-
-      // Verify the edit: HP changed, Combat Style pick preserved
-      const l2Get = await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-        { param: { characterId, characterLevelId: level2.id } },
-        { headers },
-      );
-      const l2Data = await jsonOk(l2Get);
-      expect(l2Data.hp).toBe(5);
-      const combatStyleFeats = l2Data.feats[c.aptMap["Ranger Combat Style (2nd)"]];
-      expect(combatStyleFeats).toBeDefined();
-      expect(combatStyleFeats.length).toBe(1);
-      expect(combatStyleFeats[0].id).toBe(c.featMap["Rapid Shot"]);
-    });
-
-    test("batch-added levels return character-wide pool counts and survive editing the middle one", async () => {
-      // Regression: batch finalize → edit middle level. Edit-slot endpoints
-      // exclude only the level being edited (matching updateLevel's
-      // projection), so pool counts reflect character-wide totals minus
-      // what's already allocated at the other levels.
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
-
-      // Batch-finalize Fighter L1+L2+L3 in a single call (same shape as the
-      // batch-add wizard). Slot grants per character level:
-      //   General: L1=2 (1 base + 1 Human), L2=0, L3=1 (per-3-char-levels) = 3 total
-      //   Fighter Bonus Feat: L1=1, L2=1, L3=0 (only odd levels after L1) = 2 total
-      //   Skills: 16 + 4 + 4 = 24 points.
-      const batchResponse = await api.api.characters.levels[":characterId"]["finalize"].$post(
-        {
-          param: { characterId },
-          json: {
-            levels: [
-              { klassId: classId, level: 1, hp: 8, abilityId: null },
-              { klassId: classId, level: 2, hp: 6, abilityId: null },
-              { klassId: classId, level: 3, hp: 6, abilityId: null },
-            ],
-            skills: {
-              [c.skillMap["Climb"]]: 6,
-              [c.skillMap["Jump"]]: 6,
-              [c.skillMap["Swim"]]: 6,
-              [c.skillMap["Intimidate"]]: 6,
-            },
-            feats: {
-              [c.aptMap["General"]]: [
-                c.featMap["Power Attack"],
-                c.featMap["Cleave"],
-                c.featMap["Toughness"],
-              ],
-              [c.aptMap["Fighter Bonus Feat"]]: [
-                c.featMap["Improved Initiative"],
-                c.featMap["Dodge"],
-              ],
-            },
-            powers: {},
-          },
-        },
-        { headers },
-      );
-      const created = await jsonOk(batchResponse);
+      }));
       expect(created).toHaveLength(3);
       const [l1, l2, l3] = created;
 
-      // Each character level's edit-mode feat-slots query should return
-      // exactly the slots that level grants on its own — not the cumulative
-      // pool, not zero.
-      async function editFeatSlots(level: number, characterLevelId: string) {
-        const resp = await api.api.characters.levels[":characterId"]["feat-slots"].$get(
-          {
-            param: { characterId },
-            query: { klassId: classId, level: String(level), characterLevelId },
-          },
-          { headers },
-        );
-        return jsonOk(resp);
-      }
+      const pools = async (levelNumber: number, characterLevelId: string) => {
+        const slots = await expectOk(levels["feat-slots"].$get({ param: { characterId }, query: { klassId, level: String(levelNumber), characterLevelId } }));
+        const pool = (name: string) => Object.values(slots.aptitudePools).find((p) => p.name === name);
+        return { general: pool("General"), bonus: pool("Fighter Bonus Feat") };
+      };
+      // Level 1 holds Power Attack, Cleave and Improved Initiative; level 2 Dodge; level 3 Toughness.
+      expect(await pools(1, l1.id)).toMatchObject({ general: { allowed: 3, available: 2 }, bonus: { allowed: 2, available: 1 } });
+      expect(await pools(2, l2.id)).toMatchObject({ general: { allowed: 3, available: 0 }, bonus: { allowed: 2, available: 1 } });
+      expect(await pools(3, l3.id)).toMatchObject({ general: { allowed: 3, available: 1 }, bonus: { allowed: 2, available: 0 } });
 
-      const l1Slots = await editFeatSlots(1, l1.id);
-      const l2Slots = await editFeatSlots(2, l2.id);
-      const l3Slots = await editFeatSlots(3, l3.id);
-
-      // Total character-wide: General allowed=3 (1 base + 1 Human at char L1,
-      // +1 at char L3); Fighter Bonus Feat allowed=2 (Fighter L1, L2).
-      // `available` = total − spent at non-edited levels.
-      const generalOf = (slots: typeof l1Slots) =>
-        Object.values(slots.aptitudePools).find((p) => p.name === "General");
-      const bonusOf = (slots: typeof l1Slots) =>
-        Object.values(slots.aptitudePools).find((p) => p.name === "Fighter Bonus Feat");
-
-      // L1 saved: 2 general (Power Attack, Cleave), 1 Fighter Bonus (Improved Initiative).
-      // L2 saved: 0 general, 1 Fighter Bonus (Dodge). L3 saved: 1 general (Toughness), 0 Fighter Bonus.
-      expect(generalOf(l1Slots)?.allowed).toBe(3);
-      expect(generalOf(l1Slots)?.available).toBe(2); // 3 − 1 (Toughness@L3)
-      expect(bonusOf(l1Slots)?.allowed).toBe(2);
-      expect(bonusOf(l1Slots)?.available).toBe(1); // 2 − 1 (Dodge@L2)
-
-      expect(generalOf(l2Slots)?.allowed).toBe(3);
-      expect(generalOf(l2Slots)?.available).toBe(0); // 3 − 3 (L1's 2 + L3's 1)
-      expect(bonusOf(l2Slots)?.allowed).toBe(2);
-      expect(bonusOf(l2Slots)?.available).toBe(1); // 2 − 1 (Improved Initiative@L1)
-
-      expect(generalOf(l3Slots)?.allowed).toBe(3);
-      expect(generalOf(l3Slots)?.available).toBe(1); // 3 − 2 (L1's 2)
-      expect(bonusOf(l3Slots)?.allowed).toBe(2);
-      expect(bonusOf(l3Slots)?.available).toBe(0); // 2 − 2 (L1 + L2)
-
-      // Edit the middle level and verify L1 + L3 stay intact.
-      const editResponse = await api.api.characters.levels[":characterId"][":characterLevelId"].$put(
-        {
-          param: { characterId, characterLevelId: l2.id },
-          json: {
-            hp: 4,
-            abilityId: null,
-            skills: {
-              [c.skillMap["Listen"]]: 1,
-              [c.skillMap["Spot"]]: 1,
-              [c.skillMap["Climb"]]: 1,
-              [c.skillMap["Swim"]]: 1,
-            },
-            feats: {
-              [c.aptMap["Fighter Bonus Feat"]]: [c.featMap["Combat Reflexes"]],
-            },
-            powers: {},
-          },
+      await expectOk(level.$put({
+        param: { characterId, characterLevelId: l2.id },
+        json: {
+          hp: 4,
+          abilityId: null,
+          skills: { [ctx.skillMap["Listen"]]: 1, [ctx.skillMap["Spot"]]: 1, [ctx.skillMap["Climb"]]: 1, [ctx.skillMap["Swim"]]: 1 },
+          feats: { [ctx.aptMap["Fighter Bonus Feat"]]: [ctx.featMap["Combat Reflexes"]] },
+          powers: {},
         },
-        { headers },
-      );
-      if (!editResponse.ok) {
-        const error = await editResponse.json();
-        throw new Error(`Edit middle level failed: ${error.message}`);
-      }
-
-      const refetch = async (id: string) =>
-        jsonOk(await api.api.characters.levels[":characterId"][":characterLevelId"].$get(
-          { param: { characterId, characterLevelId: id } },
-          { headers },
-        ));
-
-      const l2After = await refetch(l2.id);
-      expect(l2After.hp).toBe(4);
-      const l2BonusFeats = l2After.feats[c.aptMap["Fighter Bonus Feat"]].map((f: { id: string }) => f.id);
-      expect(l2BonusFeats).toEqual([c.featMap["Combat Reflexes"]]);
-
-      const l1After = await refetch(l1.id);
-      expect(l1After.hp).toBe(8);
-      const l1BonusFeats = l1After.feats[c.aptMap["Fighter Bonus Feat"]].map((f: { id: string }) => f.id);
-      expect(l1BonusFeats).toContain(c.featMap["Improved Initiative"]);
-
-      const l3After = await refetch(l3.id);
-      expect(l3After.hp).toBe(6);
-      // L3 has no Fighter Bonus Feat slot, so the third General pick lands here.
-      const l3General2 = l3After.feats[c.aptMap["General"]].map((f: { id: string }) => f.id);
-      expect(l3General2).toContain(c.featMap["Toughness"]);
+      }));
+      const read = (characterLevelId: string) => expectOk(level.$get({ param: { characterId, characterLevelId } }));
+      const [after1, after2, after3] = [await read(l1.id), await read(l2.id), await read(l3.id)];
+      expect(after2.hp).toBe(4);
+      expect(featIds(after2.feats, ctx.aptMap["Fighter Bonus Feat"])).toEqual([ctx.featMap["Combat Reflexes"]]);
+      expect(after1.hp).toBe(8);
+      expect(featIds(after1.feats, ctx.aptMap["Fighter Bonus Feat"])).toContain(ctx.featMap["Improved Initiative"]);
+      expect(after3.hp).toBe(6);
+      expect(featIds(after3.feats, ctx.aptMap["General"])).toContain(ctx.featMap["Toughness"]);
     });
   });
 
-  describe("remove level", () => {
-    test("should remove the last level from a character", async () => {
-      const { characterId, ctx: c } = await createSeedCharacter(headers.cookie);
-      const classId = c.klassMap.pc["Fighter"];
+  describe("removing a level", () => {
+    test("removes the last level", async () => {
+      const { characterId, ctx } = await createCharacter();
+      await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
+      await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 2, 6, fighter2(ctx));
 
-      // Add two levels with valid picks
-      const picks1 = fighterLevel1Picks(c);
-      await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 1, hp: 8, abilityId: null, ...picks1 },
-        headers,
-      );
-
-      const picks2 = fighterLevel2Picks(c);
-      await finalizeOneLevelRequest(
-        characterId,
-        { klassId: classId, level: 2, hp: 6, abilityId: null, ...picks2 },
-        headers,
-      );
-
-      // Remove the last level
-      const deleteResponse = await api.api.characters.levels[":characterId"].$delete(
-        { param: { characterId } },
-        { headers },
-      );
-
-      if (!deleteResponse.ok) {
-        const error = await deleteResponse.json();
-        throw new Error(`Failed to remove level: ${error.message}`);
-      }
-
-      const deleteResult = await deleteResponse.json();
-      expect(deleteResult.success).toBe(true);
-
-      // Verify class now shows next level as 2 (was 3 before removal)
-      const classesResponse = await api.api.characters.levels[":characterId"]["available-classes"].$get(
-        { param: { characterId }, query: {} },
-        { headers },
-      );
-
-      if (!classesResponse.ok) {
-        const error = await classesResponse.json();
-        throw new Error(`Failed to get available classes: ${error.message}`);
-      }
-
-      const classes = await classesResponse.json();
-      const fighter = classes.items.find((k) => k.id === classId);
-      expect(fighter).toBeDefined();
-      expect(fighter!.nextLevel).toBe(2);
+      expect(await expectOk(levels.$delete({ param: { characterId } }))).toMatchObject({ success: true });
+      const classes = await expectOk(levels["available-classes"].$get({ param: { characterId }, query: {} }));
+      expect(classes.items.find((k) => k.id === ctx.klassMap.pc["Fighter"])).toMatchObject({ nextLevel: 2 });
     });
 
-    test("should return 404 when removing level from character with no levels", async () => {
-      const { characterId } = await createSeedCharacter(headers.cookie);
-
-      const response = await api.api.characters.levels[":characterId"].$delete(
-        { param: { characterId } },
-        { headers },
-      );
-
-      expect(response.status).toBe(404);
+    test("returns 404 for a character without levels", async () => {
+      const { characterId } = await createCharacter();
+      expect((await levels.$delete({ param: { characterId } })).status).toBe(404);
     });
+  });
 
-    test("should return 404 when removing level for non-existent character", async () => {
-      const response = await api.api.characters.levels[":characterId"].$delete(
-        { param: { characterId: "00000000-0000-0000-0000-000000000000" } },
-        { headers },
-      );
+  test("requires a session", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const guest = guestApi.api.characters.levels[":characterId"];
+    const query = { klassId: ctx.klassMap.pc["Fighter"], level: "1" };
+    const responses = await Promise.all([
+      guest["available-classes"].$get({ param: { characterId }, query: {} }),
+      guest["attribute-slots"].$get({ param: { characterId }, query: {} }),
+      guest["skill-slots"].$get({ param: { characterId }, query }),
+      guest["feat-slots"].$get({ param: { characterId }, query }),
+      guest["power-slots"].$get({ param: { characterId }, query }),
+      guest.finalize.$post({ param: { characterId }, json: { levels: [{ ...query, level: 1, hp: 8, abilityId: null }], skills: {}, feats: {}, powers: {} } }),
+      guest[":characterLevelId"].$get({ param: { characterId, characterLevelId: NIL_UUID } }),
+      guest[":characterLevelId"].$put({ param: { characterId, characterLevelId: NIL_UUID }, json: { hp: 5, abilityId: null, skills: {}, feats: {}, powers: {} } }),
+      guest.$delete({ param: { characterId } }),
+    ]);
+    expect(responses.map((r) => r.status)).toEqual(responses.map(() => 401));
+  });
 
-      expect(response.status).toBe(404);
-    });
+  test("returns 404 for a missing character, class level or character level", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const klassId = ctx.klassMap.pc["Fighter"];
+    const missing = { characterId: NIL_UUID };
+    const query = { klassId, level: "1" };
+    const noPicks = { skills: {}, feats: {}, powers: {} };
+
+    expect((await levels["available-classes"].$get({ param: missing, query: {} })).status).toBe(404);
+    expect((await levels["attribute-slots"].$get({ param: missing, query: {} })).status).toBe(404);
+    expect((await levels["skill-slots"].$get({ param: missing, query })).status).toBe(404);
+    expect((await levels["feat-slots"].$get({ param: missing, query })).status).toBe(404);
+    expect((await levels["power-slots"].$get({ param: missing, query })).status).toBe(404);
+    expect((await finalize(NIL_UUID, klassId, 1, 8, noPicks)).status).toBe(404);
+    expect((await levels.$delete({ param: missing })).status).toBe(404);
+    expect((await finalize(characterId, klassId, 999, 8, noPicks)).status).toBe(404);
+    const characterLevel = { characterId, characterLevelId: NIL_UUID };
+    expect((await level.$get({ param: characterLevel })).status).toBe(404);
+    expect((await level.$put({ param: characterLevel, json: { hp: 5, abilityId: null, ...noPicks } })).status).toBe(404);
   });
 });

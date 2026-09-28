@@ -1,403 +1,80 @@
+import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Aptitudes, Feats, Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets, Powers, Users } from "@/server/repositories/index.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { Feats, Items, Klasses, KlassLevels, Modifiers, Powers, Races } from "@/server/repositories/index.ts";
 import CustomizationsPolicy from "@/server/services/policies/CustomizationsPolicy.ts";
-import type { Modifier, Property, Session } from "@/shared/relations.ts";
-import { describe, expect, test } from "bun:test";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import type { Modifier, Property } from "@/shared/relations.ts";
+import { createTestUserAndRuleset, makeSession, NIL_UUID } from "@/tests/helpers.ts";
+
+const now = new Date().toISOString();
+const modifierOn = (sourceId: string, sourceType: string): Modifier => ({
+  id: "modifier-id", sourceId, sourceType, target: "combat.bab", value: "1", valueType: "number", operator: "add",
+  createdAt: now, updatedAt: now, deletedAt: null,
+});
+const propertyOn = (entityId: string, entityType: string): Property => ({
+  id: "property-id", entityId, entityType, type: "WEAPON_PROFICIENCY", value: "Longsword", description: null,
+  createdAt: now, updatedAt: now, deletedAt: null,
+});
 
 describe("CustomizationsPolicy", () => {
-  const createSession = (userId: string): Session => ({
-    id: `session-${Math.random().toString(36).substr(2, 9)}`,
-    userId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: null,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  test("sourceExists names the customized entity of each type", async () => {
+    const { ruleset } = await createTestUserAndRuleset();
+    const rulesetId = ruleset.id;
+    const [feat] = await Feats.create(db, { rulesetId, name: "Test Feat" });
+    const [item] = await Items.create(db, { rulesetId, name: "Test Item" });
+    const [power] = await Powers.create(db, { rulesetId, name: "Test Power" });
+    const [race] = await Races.create(db, { rulesetId, name: "Test Race", size: "Medium", baseSpeed: 30 });
+    const [klass] = await Klasses.create(db, { rulesetId, name: "Test Class", hd: 10 });
+    const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+    const [modifier] = await Modifiers.create(db, { sourceId: feat.id, sourceType: "feats", target: "combat.bab", value: "1", valueType: "number", operator: "add" });
+
+    const names = await Promise.all([
+      CustomizationsPolicy.sourceExists(feat.id, "feats"),
+      CustomizationsPolicy.sourceExists(item.id, "items"),
+      CustomizationsPolicy.sourceExists(power.id, "powers"),
+      CustomizationsPolicy.sourceExists(race.id, "races"),
+      CustomizationsPolicy.sourceExists(klass.id, "klasses"),
+      CustomizationsPolicy.sourceExists(klassLevel.id, "klass_levels"),
+      CustomizationsPolicy.sourceExists(modifier.id, "modifiers"),
+    ]);
+    expect(names).toEqual(["Test Feat", "Test Item", "Test Power", "Test Race", "Test Class", "Level 1", "combat.bab add 1"]);
   });
 
-  // Helper to create test user and ruleset
-  async function createTestUserAndRuleset() {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
+  test("sourceExists refuses a missing entity or an unsupported type", async () => {
+    for (const type of ["feats", "items", "powers", "races", "klasses", "klass_levels", "modifiers", "characters"]) {
+      await expect(CustomizationsPolicy.sourceExists(NIL_UUID, type)).rejects.toThrow(NotFoundError);
+    }
+    await expect(CustomizationsPolicy.sourceExists(NIL_UUID, "invalid_type")).rejects.toThrow("invalid_type not supported");
+  });
 
-    const users = await Users.create(db, {
-      username: `testuser-${uniqueId}`,
-      emailAddress: `test-${uniqueId}@example.com`,
-      password: "password1234",
+  test("sourceExists never looks outside the ruleset it's scoped to", async () => {
+    const { ruleset: mine } = await createTestUserAndRuleset();
+    const { ruleset: theirs } = await createTestUserAndRuleset();
+    const [feat] = await Feats.create(db, { rulesetId: theirs.id, name: "Their Feat" });
+
+    await withRulesetScope(db, mine.id, async ({ rulesetData }) => {
+      await expect(CustomizationsPolicy.sourceExists(feat.id, "feats", rulesetData)).rejects.toThrow(NotFoundError);
     });
-    const user = users[0];
-
-    const rulesets = await Rulesets.create(db, {
-      name: `Test Ruleset ${uniqueId}`,
-      description: "Test ruleset",
-      private: true,
-      baseRules: "Dungeons & Dragons: 3.5",
-      userId: user.id,
-    });
-    const ruleset = rulesets[0];
-
-    return { user, ruleset, session: createSession(user.id) };
-  }
-
-  const createModifier = (overrides: Partial<Modifier> = {}): Modifier => ({
-    id: "modifier-123",
-    sourceId: "feat-123",
-    sourceType: "feats",
-    target: "combat.bab",
-    value: "1",
-    valueType: "number",
-    operator: "add",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: null,
-    ...overrides,
-  });
-
-  const createProperty = (overrides: Partial<Property> = {}): Property => ({
-    id: "property-123",
-    entityId: "feat-123",
-    entityType: "feats",
-    type: "WEAPON_PROFICIENCY",
-    value: "Longsword",
-    description: "A longsword",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: null,
-    ...overrides,
-  });
-
-  describe("canCreate", () => {
-    test("should always return true", () => {
-      const session = createSession("user-123");
-      const modifier = createModifier();
-      const policy = new CustomizationsPolicy(session, modifier);
-
-      expect(policy.canCreate()).toBe(true);
+    await withRulesetScope(db, theirs.id, async ({ rulesetData }) => {
+      expect(await CustomizationsPolicy.sourceExists(feat.id, "feats", rulesetData)).toBe("Their Feat");
     });
   });
 
-  describe("canRead", () => {
-    test("should always return true", () => {
-      const session = createSession("user-123");
-      const property = createProperty();
-      const policy = new CustomizationsPolicy(session, property);
+  test("canUpdate and canDelete need the customized entity to exist", async () => {
+    const { user, ruleset } = await createTestUserAndRuleset();
+    const [feat] = await Feats.create(db, { rulesetId: ruleset.id, name: "Test Feat" });
+    const session = makeSession(user.id);
 
-      expect(policy.canRead()).toBe(true);
-    });
-  });
-
-  describe("sourceExists - static method", () => {
-    test("should validate feat exists", async () => {
-      const { ruleset } = await createTestUserAndRuleset();
-
-      // Create aptitude (required for feat)
-      await Aptitudes.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Aptitude",
-        description: "Test",
-      });
-
-      // Create feat
-      const feats = await Feats.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Feat",
-        description: "Test feat",
-      });
-      const feat = feats[0];
-
-      const result = await CustomizationsPolicy.sourceExists(feat.id, "feats");
-      expect(result).toBe("Test Feat");
-    });
-
-    test("should validate item exists", async () => {
-      const { ruleset } = await createTestUserAndRuleset();
-
-      const items = await Items.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Item",
-        description: "Test item",
-      });
-      const item = items[0];
-
-      const result = await CustomizationsPolicy.sourceExists(item.id, "items");
-      expect(result).toBe("Test Item");
-    });
-
-    test("should validate power exists", async () => {
-      const { ruleset } = await createTestUserAndRuleset();
-
-      const powers = await Powers.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Power",
-        description: "Test power",
-      });
-      const power = powers[0];
-
-      const result = await CustomizationsPolicy.sourceExists(power.id, "powers");
-      expect(result).toBe("Test Power");
-    });
-
-    test("should validate race exists", async () => {
-      const { ruleset } = await createTestUserAndRuleset();
-
-      const races = await Races.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Race",
-        description: "Test race",
-        size: "Medium",
-        baseSpeed: 30,
-      });
-      const race = races[0];
-
-      const result = await CustomizationsPolicy.sourceExists(race.id, "races");
-      expect(result).toBe("Test Race");
-    });
-
-    test("should validate klass_levels exists", async () => {
-      const { ruleset } = await createTestUserAndRuleset();
-
-      const klasses = await Klasses.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Class",
-        description: "Test class",
-        hd: 10,
-      });
-      const klass = klasses[0];
-
-      const klassLevels = await KlassLevels.create(db, {
-        klassId: klass.id,
-        level: 1,
-      });
-      const klassLevel = klassLevels[0];
-
-      await Properties.createMany(db, [
-        { entityId: klassLevel.id, entityType: "klass_levels", type: KLASS_LEVEL_BAB, value: "1" },
-        { entityId: klassLevel.id, entityType: "klass_levels", type: KLASS_LEVEL_SKILL_POINTS, value: "4" },
-      ]);
-
-      const result = await CustomizationsPolicy.sourceExists(klassLevel.id, "klass_levels");
-      expect(result).toBe("Level 1");
-    });
-
-    test("should validate a modifier as a requirement owner", async () => {
-      const { ruleset } = await createTestUserAndRuleset();
-
-      // Create aptitude and feat first
-      await Aptitudes.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Aptitude",
-        description: "Test",
-      });
-
-      const feats = await Feats.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Feat",
-        description: "Test feat",
-      });
-      const feat = feats[0];
-
-      // Create a modifier
-      const modifiers = await Modifiers.create(db, {
-        sourceId: feat.id,
-        sourceType: "feats",
-        target: "combat.bab",
-        value: "1",
-        valueType: "number",
-        operator: "add",
-      });
-      const modifier = modifiers[0];
-
-      const result = await CustomizationsPolicy.sourceExists(modifier.id, "modifiers");
-      expect(result).toBe("combat.bab add 1");
-    });
-
-    test("should throw NotFoundError for non-existent feat", async () => {
-      const fakeId = "00000000-0000-0000-0000-000000000000";
-
-      await expect(
-        CustomizationsPolicy.sourceExists(fakeId, "feats")
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    test("should throw NotFoundError for non-existent item", async () => {
-      const fakeId = "00000000-0000-0000-0000-000000000000";
-
-      await expect(
-        CustomizationsPolicy.sourceExists(fakeId, "items")
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    test("should throw NotFoundError for unsupported source type", async () => {
-      await expect(
-        CustomizationsPolicy.sourceExists("some-id", "invalid_type")
-      ).rejects.toThrow(NotFoundError);
-
-      await expect(
-        CustomizationsPolicy.sourceExists("some-id", "invalid_type")
-      ).rejects.toThrow("invalid_type not supported");
-    });
-  });
-
-  describe("canUpdate", () => {
-    test("should validate source exists for Modifier", async () => {
-      const { user, ruleset } = await createTestUserAndRuleset();
-
-      // Create feat
-      await Aptitudes.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Aptitude",
-        description: "Test",
-      });
-
-      const feats = await Feats.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Feat",
-        description: "Test feat",
-      });
-      const feat = feats[0];
-
-      // Create modifier
-      const modifiers = await Modifiers.create(db, {
-        sourceId: feat.id,
-        sourceType: "feats",
-        target: "combat.bab",
-        value: "1",
-        valueType: "number",
-        operator: "add",
-      });
-      const modifier = modifiers[0];
-
-      const policy = new CustomizationsPolicy(createSession(user.id), modifier);
-
-      const result = await policy.canUpdate();
-      expect(result).toBe(true);
-    });
-
-    test("should validate entity exists for Property", async () => {
-      const { user, ruleset } = await createTestUserAndRuleset();
-
-      const feats = await Feats.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Feat",
-        description: "Test feat",
-      });
-      const feat = feats[0];
-
-      // Create a fake property object (not in DB, just for testing policy logic)
-      const property: Property = {
-        id: "prop-123",
-        entityId: feat.id,
-        entityType: "feats",
-        type: "WEAPON_PROFICIENCY",
-        value: "Longsword",
-        description: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        deletedAt: null,
-      };
-
-      const policy = new CustomizationsPolicy(createSession(user.id), property);
-
-      const result = await policy.canUpdate();
-      expect(result).toBe(true);
-    });
-
-    test("should throw NotFoundError when source does not exist", async () => {
-      const { user } = await createTestUserAndRuleset();
-
-      const modifier = createModifier({
-        sourceId: "00000000-0000-0000-0000-000000000000",
-        sourceType: "feats",
-      });
-
-      const policy = new CustomizationsPolicy(createSession(user.id), modifier);
-
+    for (const customization of [modifierOn(feat.id, "feats"), propertyOn(feat.id, "feats")]) {
+      const policy = new CustomizationsPolicy(session, customization);
+      expect(await policy.canUpdate()).toBe(true);
+      expect(await policy.canDelete()).toBe(true);
+    }
+    for (const customization of [modifierOn(NIL_UUID, "items"), propertyOn(NIL_UUID, "races")]) {
+      const policy = new CustomizationsPolicy(session, customization);
       await expect(policy.canUpdate()).rejects.toThrow(NotFoundError);
-    });
-  });
-
-  describe("canDelete", () => {
-    test("should validate source exists for Modifier", async () => {
-      const { user, ruleset } = await createTestUserAndRuleset();
-
-      await Aptitudes.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Aptitude",
-        description: "Test",
-      });
-
-      const feats = await Feats.create(db, {
-        rulesetId: ruleset.id,
-        name: "Test Feat",
-        description: "Test feat",
-      });
-      const feat = feats[0];
-
-      const modifiers = await Modifiers.create(db, {
-        sourceId: feat.id,
-        sourceType: "feats",
-        target: "combat.bab",
-        value: "1",
-        valueType: "number",
-        operator: "add",
-      });
-      const modifier = modifiers[0];
-
-      const policy = new CustomizationsPolicy(createSession(user.id), modifier);
-
-      const result = await policy.canDelete();
-      expect(result).toBe(true);
-    });
-
-    test("should throw NotFoundError when source does not exist", async () => {
-      const { user } = await createTestUserAndRuleset();
-
-      const modifier = createModifier({
-        sourceId: "00000000-0000-0000-0000-000000000000",
-        sourceType: "items",
-      });
-
-      const policy = new CustomizationsPolicy(createSession(user.id), modifier);
-
       await expect(policy.canDelete()).rejects.toThrow(NotFoundError);
-    });
-  });
-
-  describe("all source types", () => {
-    test("should handle all supported sourceTypes for Modifiers", async () => {
-      const { user } = await createTestUserAndRuleset();
-
-      const sourceTypes = ["feats", "items", "powers", "klass_levels", "races", "modifiers"];
-
-      for (const sourceType of sourceTypes) {
-        const modifier = createModifier({
-          sourceId: "00000000-0000-0000-0000-000000000000",
-          sourceType,
-        });
-
-        const policy = new CustomizationsPolicy(createSession(user.id), modifier);
-
-        // Should throw because the entity doesn't exist
-        await expect(policy.canUpdate()).rejects.toThrow(NotFoundError);
-      }
-    });
-
-    test("should handle all supported entityTypes for Properties", async () => {
-      const { user } = await createTestUserAndRuleset();
-
-      const entityTypes = ["feats", "items", "powers", "klass_levels", "races"];
-
-      for (const entityType of entityTypes) {
-        const property = createProperty({
-          entityId: "00000000-0000-0000-0000-000000000000",
-          entityType,
-        });
-
-        const policy = new CustomizationsPolicy(createSession(user.id), property);
-
-        // Should throw because the entity doesn't exist
-        await expect(policy.canUpdate()).rejects.toThrow(NotFoundError);
-      }
-    });
+    }
   });
 });

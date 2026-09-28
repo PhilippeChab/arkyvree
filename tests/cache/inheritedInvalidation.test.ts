@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Rulesets, Sessions } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Feats, Rulesets } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 import { getOrBuildCowData, getOrFetchRulesetData, getOrFetchRulesetRawData, getOrFetchTargetPathsAndLabels, invalidateAll, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
@@ -10,7 +10,7 @@ afterEach(() => { invalidateAll(); setCacheEnabled(true); });
 
 test("extension COW invalidates the warm subscriber mapping", async () => {
   invalidateAll();
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const extension = await createSeededTestRuleset(session.userId);
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: extension.id });
   const host = await createSeededTestRuleset(session.userId);
@@ -32,7 +32,7 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
 
 test("worker cache mode reads changes between builds without web invalidation", async () => {
   setCacheEnabled(false);
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const [feat] = await Feats.create(db, { name: "Worker freshness", description: "Before", rulesetId: fork.id });
   const first = await getOrFetchRulesetData(fork.id, await getOrBuildCowData(fork));
@@ -45,14 +45,14 @@ test("worker cache mode reads changes between builds without web invalidation", 
 
 test("disabled caches do not coalesce raw reads across worker jobs", async () => {
   setCacheEnabled(false);
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const [first, second] = await Promise.all([getOrFetchRulesetRawData(fork.id), getOrFetchRulesetRawData(fork.id)]);
   expect(first).not.toBe(second);
 });
 
 test("a nested base scope clears the fork mapping and restores it afterward", async () => {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
   const copy = await cowEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds, []);
@@ -68,7 +68,7 @@ test("a nested base scope clears the fork mapping and restores it afterward", as
 
 for (const invalidation of ["ruleset", "all"] as const) {
   test(`${invalidation} invalidation prevents a late target-path read from replacing fresh data`, async () => {
-    const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+    const session = makeSession();
     const fork = await createSeededTestRuleset(session.userId);
     const [feat] = await Feats.create(db, { name: "Path race", description: "Before", rulesetId: fork.id });
     const read = async () => ({ paths: [], segmentLabels: { feat: (await Feats.findOne(db, { id: feat.id }))!.description! } });

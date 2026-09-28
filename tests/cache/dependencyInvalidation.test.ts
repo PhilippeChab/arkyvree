@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Rulesets, Sessions } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Feats, Rulesets } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 import { timingStorage } from "@/server/timing.ts";
 import { getOrBuildCowData, getOrFetchRulesetRawData, getOrFetchTargetPathsAndLabels, invalidateAll, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import DependentCache from "@/server/cache/DependentCache.ts";
@@ -10,7 +10,7 @@ import { TargetPathsMethods } from "@/server/services/rulesets/customization/Tar
 afterEach(invalidateAll);
 
 async function setup() {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   return { edited: await createSeededTestRuleset(session.userId), unrelated: await createSeededTestRuleset(session.userId) };
 }
 
@@ -41,7 +41,7 @@ for (const phase of ["pending", "cached"] as const) {
 
 test("target-path service invalidates extension subscribers but retains an unrelated fork", async () => {
   const { edited, unrelated } = await setup();
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: edited.id });
   await Rulesets.update(db, { extensionRulesetIds: [edited.id] }, { id: host.id });

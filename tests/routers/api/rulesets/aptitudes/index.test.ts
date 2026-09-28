@@ -1,180 +1,46 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
+
+const aptitudes = api.api.rulesets[":id"].aptitudes;
+const aptitude = aptitudes[":aptitudeId"];
 
 describe("rulesets aptitudes", () => {
-  const api = testClient<Application>(application);
+  test("creates, reads, lists, updates and deletes an aptitude", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-  // Helper to create test ruleset
-  async function createTestRuleset(): Promise<string> {
-    const ruleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456");
-    return ruleset.id;
-  }
+    const created = await expectOk(aptitudes.$post({ param: { id }, json: { name: "Test Aptitude", description: "A test aptitude" } }));
+    expect(created).toMatchObject({ name: "Test Aptitude", description: "A test aptitude" });
+    const param = { id, aptitudeId: created.id };
 
-  test("should handle full aptitude CRUD lifecycle", async () => {
-    const testRulesetId = await createTestRuleset();
+    expect(await expectOk(aptitude.$get({ param }))).toMatchObject({ id: created.id, name: "Test Aptitude" });
+    const list = await expectOk(aptitudes.$get({ param: { id }, query: { search: "Test Aptitude" } }));
+    expect(list.items.map((a) => a.id)).toContain(created.id);
 
-    // Get initial list (should be empty or have base aptitudes)
-    const listResponse = await api.api.rulesets[":id"].aptitudes.$get(
-      {
-        param: { id: testRulesetId },
-        query: { limit: "10", page: "1" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
+    const updated = await expectOk(aptitude.$put({ param, json: { name: "Renamed Aptitude", description: "Updated" } }));
+    expect(updated).toMatchObject({ name: "Renamed Aptitude", description: "Updated" });
 
-    if (!listResponse.ok) {
-      const error = await listResponse.json();
-      throw new Error(`Failed to get aptitudes: ${error.message}`);
-    }
-
-    const initialAptitudes = await listResponse.json();
-    expect(initialAptitudes).toBeDefined();
-    expect(Array.isArray(initialAptitudes.items)).toBe(true);
-
-    // Create a new aptitude
-    const newAptitude = {
-      name: "Test Aptitude",
-      description: "A test aptitude for testing",
-    };
-
-    const createResponse = await api.api.rulesets[":id"].aptitudes.$post(
-      {
-        param: { id: testRulesetId },
-        json: newAptitude,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!createResponse.ok) {
-      const error = await createResponse.json();
-      throw new Error(`Failed to create aptitude: ${error.message}`);
-    }
-
-    const createdAptitude = await createResponse.json();
-    expect(createdAptitude).toBeDefined();
-    expect(createdAptitude.name).toBe(newAptitude.name);
-    expect(createdAptitude.description).toBe(newAptitude.description);
-
-    // Update the aptitude
-    const updateData = {
-      name: "Updated Test Aptitude",
-      description: "Updated description",
-    };
-
-    const updateResponse = await api.api.rulesets[":id"].aptitudes[":aptitudeId"].$put(
-      {
-        param: { id: testRulesetId, aptitudeId: createdAptitude.id },
-        json: updateData,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!updateResponse.ok) {
-      const error = await updateResponse.json();
-      throw new Error(`Failed to update aptitude: ${error.message}`);
-    }
-
-    const updatedAptitude = await updateResponse.json();
-    expect(updatedAptitude.name).toBe(updateData.name);
-    expect(updatedAptitude.description).toBe(updateData.description);
-
-    // Delete the aptitude
-    const deleteResponse = await api.api.rulesets[":id"].aptitudes[":aptitudeId"].$delete(
-      {
-        param: { id: testRulesetId, aptitudeId: createdAptitude.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!deleteResponse.ok) {
-      const error = await deleteResponse.json();
-      throw new Error(`Failed to delete aptitude: ${error.message}`);
-    }
-
-    const deletedAptitude = await deleteResponse.json();
-    expect(deletedAptitude).toBeDefined();
+    await expectOk(aptitude.$delete({ param }));
+    expect((await aptitude.$get({ param })).status).toBe(404);
   });
 
-  test("should handle authentication and validation", async () => {
-    const testRulesetId = await createTestRuleset();
-
-    // Test unauthenticated request
-    const unauthResponse = await api.api.rulesets[":id"].aptitudes.$get({
-      param: { id: testRulesetId },
-      query: { limit: "10", page: "1" },
-    });
-    expect(unauthResponse.status).toBe(401);
-
-    // Test validation - missing required fields
-    const invalidAptitude = {
-      description: "Missing name field",
-    };
-
-    const validationResponse = await api.api.rulesets[":id"].aptitudes.$post(
-      {
-        param: { id: testRulesetId },
-        json: invalidAptitude as never,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(validationResponse.status).toBe(400);
+  test("requires a session", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    expect((await guestApi.api.rulesets[":id"].aptitudes.$get({ param: { id }, query: {} })).status).toBe(401);
   });
 
-  test("should handle non-existent resources", async () => {
-    const testRulesetId = await createTestRuleset();
+  test("rejects an aptitude without a name", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const response = await aptitudes.$post({ param: { id }, json: { description: "No name" } as never });
+    expect(response.status).toBe(400);
+  });
 
-    // Test non-existent ruleset
-    const nonExistentRulesetResponse = await api.api.rulesets[":id"].aptitudes.$get(
-      {
-        param: { id: "00000000-0000-0000-0000-000000000000" },
-        query: { limit: "10", page: "1" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(nonExistentRulesetResponse.status).toBe(404);
-
-    // Test non-existent aptitude
-    const updateResponse = await api.api.rulesets[":id"].aptitudes[":aptitudeId"].$put(
-      {
-        param: { id: testRulesetId, aptitudeId: "00000000-0000-0000-0000-000000000000" },
-        json: { name: "Test", description: "Test" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(updateResponse.status >= 400).toBe(true);
+  test("returns 404 for a missing ruleset or aptitude", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    expect((await aptitudes.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    const param = { id, aptitudeId: NIL_UUID };
+    expect((await aptitude.$put({ param, json: { name: "Missing" } })).status).toBe(404);
+    expect((await aptitude.$delete({ param })).status).toBe(404);
   });
 });

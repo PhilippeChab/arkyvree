@@ -1,31 +1,22 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { getSeedCtx } from "@/tests/helpers.ts";
 
 describe("dashboard", () => {
-  const api = testClient<Application>(application);
+  test("counts the user's characters and campaigns, and the rulesets available to them", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const { api } = await createSignedInUser("dashboard");
+    // A new user already has the published base rulesets.
+    const before = await expectOk(api.api.dashboard.stats.$get());
+    expect(before).toMatchObject({ totalCharacters: 0, totalCampaigns: 0 });
+    expect(before.totalRulesets).toBeGreaterThan(0);
 
-  test("should get stats for authenticated user", async () => {
-    // Test dashboard stats endpoint with Bjorn's session
-    const statsResponse = await api.api.dashboard.stats.$get({
-      header: {
-        cookie: "session-id=00000000-0000-4000-8000-000000000123",
-      },
-    });
-
-    if (!statsResponse.ok) {
-      const error = await statsResponse.json();
-      throw new Error(error.message);
-    }
-
-    const stats = await statsResponse.json();
-    expect(stats).toBeDefined();
-    // Add more specific assertions based on your stats structure
+    await expectOk(api.api.rulesets[":id"].fork.$post({ param: { id: rulesetId }, json: { name: "Dashboard Fork", description: "", private: true } }));
+    await expectOk(api.api.campaigns.$post({ json: { name: "Dashboard Campaign", rulesetId } }));
+    expect(await expectOk(api.api.dashboard.stats.$get())).toEqual({ totalRulesets: before.totalRulesets + 1, totalCharacters: 0, totalCampaigns: 1 });
   });
 
-  test("should reject unauthenticated requests", async () => {
-    const statsResponse = await api.api.dashboard.stats.$get();
-    expect(statsResponse.status).toBe(401);
+  test("requires a session", async () => {
+    expect((await guestApi.api.dashboard.stats.$get()).status).toBe(401);
   });
 });

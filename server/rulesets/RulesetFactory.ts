@@ -1,5 +1,6 @@
 import { baseRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { RulesetModule } from "./types.ts";
 
@@ -25,7 +26,7 @@ export class RulesetFactory {
     const ruleset = await Rulesets.findOne(db, { id: rulesetId });
 
     if (!ruleset) {
-      throw new Error(`Ruleset not found: ${rulesetId}`);
+      throw new NotFoundError("Ruleset not found");
     }
 
     return this.fromBaseRules(ruleset.baseRules);

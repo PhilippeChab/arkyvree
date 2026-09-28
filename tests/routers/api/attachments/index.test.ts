@@ -1,132 +1,44 @@
-import { application } from "@/server/routers/application.ts";
-import { setStorageForTest, type StorageBackend } from "@/server/storage/s3.ts";
-import { testClient } from "hono/testing";
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { createTestUser, NIL_UUID } from "@/tests/helpers.ts";
 
-describe("attachments router", () => {
-  const api = testClient(application);
-  const sessionCookie = "session-id=00000000-0000-4000-8000-000000000123";
-  const seedUserId = "00000000-0000-4000-8000-000000000456";
+const attachments = api.api.attachments;
+const avatar = { recordType: "User", recordId: SEED_USER_ID, name: "avatar" };
+const upload = { ...avatar, filename: "me.png", contentType: "image/png", byteSize: 1024 };
 
-  beforeEach(() => {
-    const fake: StorageBackend = {
-      presignPut: () => "https://fake.example.com/key?sig=fake",
-      publicUrl: (k) => `https://fake.example.com/${k}`,
-      async deleteObject() {},
-      async objectExists() {
-        return true;
-      },
-      async objectStats() {
-        return { size: 1024, etag: "fake" };
-      },
-    };
-    setStorageForTest(fake);
+describe("attachments", () => {
+  test("presigns an upload, attaches it, reads it and deletes it", async () => {
+    expect(await expectOk(attachments.$get({ query: avatar }))).toBeNull();
+
+    const presigned = await expectOk(attachments["direct-uploads"].$post({ json: upload }));
+    expect(presigned.signedId).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+    expect(presigned.presignedUrl).toContain("https://fake.example.com");
+    expect(presigned.headers["Content-Type"]).toBe("image/png");
+
+    const attached = await expectOk(attachments[":signedId"].attach.$post({ param: { signedId: presigned.signedId } }));
+    expect(attached).toMatchObject({ attachment: { name: "avatar" }, blob: { filename: "me.png" } });
+    expect(await expectOk(attachments.$get({ query: avatar }))).toMatchObject({ id: attached.attachment.id, url: expect.stringContaining("me.png") });
+
+    await expectOk(attachments[":id"].$delete({ param: { id: attached.attachment.id } }));
+    expect(await expectOk(attachments.$get({ query: avatar }))).toBeNull();
   });
 
-  afterEach(() => setStorageForTest(null));
-
-  test("rejects unauthenticated requests", async () => {
-    const response = await api.api.attachments.$get({
-      query: { recordType: "User", recordId: seedUserId, name: "avatar" },
-    });
-    expect(response.status).toBe(401);
-  });
-
-  test("GET returns null when no attachment exists", async () => {
-    const response = await api.api.attachments.$get(
-      { query: { recordType: "User", recordId: seedUserId, name: "avatar" } },
-      { headers: { cookie: sessionCookie } },
-    );
-    expect(response.ok).toBe(true);
-    const result = await response.json();
-    expect(result).toBeNull();
-  });
-
-  test("GET rejects malformed UUID with 400", async () => {
-    const response = await api.api.attachments.$get(
-      { query: { recordType: "User", recordId: "not-a-uuid", name: "avatar" } },
-      { headers: { cookie: sessionCookie } },
-    );
-    expect(response.status).toBe(400);
-  });
-
-  test("POST direct-uploads returns signedId + presignedUrl for the owner", async () => {
-    const response = await api.api.attachments["direct-uploads"].$post(
-      {
-        json: {
-          recordType: "User",
-          recordId: seedUserId,
-          name: "avatar",
-          filename: "me.png",
-          contentType: "image/png",
-          byteSize: 1024,
-        },
-      },
-      { headers: { cookie: sessionCookie } },
-    );
-    expect(response.ok).toBe(true);
-    const result = await response.json() as {
-      signedId: string;
-      presignedUrl: string;
-      headers: Record<string, string>;
-    };
-    expect(result.signedId).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
-    expect(result.presignedUrl).toContain("https://fake.example.com");
-    expect(result.headers["Content-Type"]).toBe("image/png");
-  });
-
-  test("POST direct-uploads is forbidden for non-owners", async () => {
-    const otherUserId = "10000000-0000-4000-8000-000000000789";
-    const response = await api.api.attachments["direct-uploads"].$post(
-      {
-        json: {
-          recordType: "User",
-          recordId: otherUserId,
-          name: "avatar",
-          filename: "me.png",
-          contentType: "image/png",
-          byteSize: 1024,
-        },
-      },
-      { headers: { cookie: sessionCookie } },
-    );
+  test("refuses to attach to another user's record", async () => {
+    const { user } = await createTestUser();
+    const response = await attachments["direct-uploads"].$post({ json: { ...upload, recordId: user.id } });
     expect(response.status).toBe(403);
   });
 
-  test("POST attach round-trip: presign → attach yields the same blob", async () => {
-    const presign = await api.api.attachments["direct-uploads"].$post(
-      {
-        json: {
-          recordType: "User",
-          recordId: seedUserId,
-          name: "avatar",
-          filename: "me.png",
-          contentType: "image/png",
-          byteSize: 1024,
-        },
-      },
-      { headers: { cookie: sessionCookie } },
-    );
-    const { signedId } = await presign.json() as { signedId: string };
-
-    const attached = await api.api.attachments[":signedId"].attach.$post(
-      { param: { signedId } },
-      { headers: { cookie: sessionCookie } },
-    );
-    expect(attached.ok).toBe(true);
-    const result = await attached.json() as {
-      attachment: { id: string; name: string };
-      blob: { filename: string };
-    };
-    expect(result.attachment.name).toBe("avatar");
-    expect(result.blob.filename).toBe("me.png");
+  test("requires a session", async () => {
+    expect((await guestApi.api.attachments.$get({ query: avatar })).status).toBe(401);
   });
 
-  test("DELETE returns 404 for unknown attachment id", async () => {
-    const response = await api.api.attachments[":id"].$delete(
-      { param: { id: "00000000-0000-4000-8000-000000000999" } },
-      { headers: { cookie: sessionCookie } },
-    );
-    expect(response.status).toBe(404);
+  test("rejects a record id that isn't a UUID", async () => {
+    expect((await attachments.$get({ query: { ...avatar, recordId: "not-a-uuid" } })).status).toBe(400);
+  });
+
+  test("returns 404 for a missing attachment", async () => {
+    expect((await attachments[":id"].$delete({ param: { id: NIL_UUID } })).status).toBe(404);
   });
 });

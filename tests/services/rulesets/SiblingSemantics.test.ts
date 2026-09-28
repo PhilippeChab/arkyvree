@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets, Sessions } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
@@ -15,7 +15,7 @@ import type { Requirement } from "@/shared/relations.ts";
 afterEach(invalidateAll);
 
 async function setup(configure: (extensionId: string, baseId: string, index: number) => Promise<void>, reverseOrder = false) {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
   const extensionIds: string[] = [];
   for (let i = 0; i < 2; i++) {

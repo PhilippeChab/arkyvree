@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getSeedContext } from "@/database/seeds/helpers.ts";
+
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Items, Sessions, Users } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
@@ -7,14 +7,14 @@ import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharac
 import { CharactersMethods } from "@/server/services/CharactersService.ts";
 import { CharacterInventoryMethods } from "@/server/services/characters/CharacterInventoryService.ts";
 import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 
 async function setup() {
   const user = await Users.findOne(db, { emailAddress: "testuser1@example.com" });
   if (!user) throw new Error("Seed user not found");
   const [session] = await Sessions.create(db, { userId: user.id });
   const ruleset = await createSeededTestRuleset(user.id);
-  const seed = await getSeedContext(db);
+  const seed = await getSeedCtx();
   const item = await Items.findOne(db, { rulesetId: seed.rulesetId, name: "Heavy Mace" });
   if (!item) throw new Error("Seed item not found");
 

@@ -1,570 +1,83 @@
-import type { Application } from "@/server/routers/application.ts";
+import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { application } from "@/server/routers/application.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { api, expectOk, guestApi, SEED_SESSION_ID } from "@/tests/api.ts";
+import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { createEntity, CUSTOMIZABLE_ENTITY_TYPES } from "@/tests/routers/api/rulesets/customization/entities.ts";
+
+const modifiers = api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers;
+const modifier = modifiers[":modifierId"];
+
+async function setup() {
+  const { id } = await createSeededTestRuleset(SEED_USER_ID);
+  return { id, entityId: await createEntity(id, "feats") };
+}
 
 describe("rulesets customization modifiers", () => {
-  const api = testClient<Application>(application);
+  test("creates, reads, lists, updates, duplicates and deletes a feat modifier", async () => {
+    const { id, entityId } = await setup();
+    const param = { id, entityType: "feats" as const, entityId };
+    expect(await expectOk(modifiers.$get({ param }))).toEqual([]);
 
-  test("rejects modifiers as a parent through the HTTP API", async () => {
-    const rulesetId = await createTestRuleset();
-    const featId = await createTestFeat(rulesetId);
+    const created = await expectOk(modifiers.$post({ param, json: { target: "abilities.strength.misc", value: "2", operator: "add" } }));
+    expect(created).toMatchObject({ target: "abilities.strength.misc", value: "2", operator: "add", valueType: "number", sourceType: "feats", sourceId: entityId });
+    const modifierParam = { ...param, modifierId: created.id };
+
+    expect(await expectOk(modifier.$get({ param: modifierParam }))).toMatchObject({ id: created.id, target: "abilities.strength.misc" });
+    expect((await expectOk(modifiers.$get({ param }))).map((m) => m.id)).toEqual([created.id]);
+
+    const updated = await expectOk(modifier.$put({ param: modifierParam, json: { target: "abilities.constitution.misc", value: "3", operator: "add" } }));
+    expect(updated).toMatchObject({ target: "abilities.constitution.misc", value: "3" });
+
+    const copy = await expectOk(modifier.duplicate.$post({ param: modifierParam, json: { target: "abilities.dexterity.misc", value: "1", operator: "add" } }));
+    expect(copy).toMatchObject({ target: "abilities.dexterity.misc", sourceId: entityId });
+    expect((await expectOk(modifiers.$get({ param }))).map((m) => m.id).sort()).toEqual([created.id, copy.id].sort());
+
+    await expectOk(modifier.$delete({ param: modifierParam }));
+    expect((await modifier.$get({ param: modifierParam })).status).toBe(404);
+  });
+
+  test.each(CUSTOMIZABLE_ENTITY_TYPES)("adds a modifier to %s", async (entityType) => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const entityId = await createEntity(id, entityType);
+    const created = await expectOk(modifiers.$post({ param: { id, entityType, entityId }, json: { target: "combat.hp.misc", value: "5", operator: "add" } }));
+    expect(created).toMatchObject({ sourceType: entityType, sourceId: entityId });
+  });
+
+  test("refuses modifiers as the entity being customized", async () => {
+    const { id, entityId } = await setup();
     const body = { target: "abilities.strength.misc", value: "2", operator: "add" };
-    const created = await api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$post({
-      param: { id: rulesetId, entityType: "feats", entityId: featId }, json: body,
-    }, { headers: { cookie: "session-id=00000000-0000-4000-8000-000000000123" } });
-    expect(created.status).toBe(201);
-    const modifier = await created.json();
-    if (!("id" in modifier)) throw new Error("Modifier creation failed");
-    for (const suffix of ["", `/${modifier.id}/duplicate`]) {
-      const response = await application.request(`/api/rulesets/${rulesetId}/customization/modifiers/${modifier.id}/modifiers${suffix}`, {
+    const created = await expectOk(modifiers.$post({ param: { id, entityType: "feats", entityId }, json: body }));
+    // Only GET accepts `modifiers` as the entity type; the typed client can't build these writes.
+    for (const suffix of ["", `/${created.id}/duplicate`]) {
+      const response = await application.request(`/api/rulesets/${id}/customization/modifiers/${created.id}/modifiers${suffix}`, {
         method: "POST",
-        headers: { "content-type": "application/json", cookie: "session-id=00000000-0000-4000-8000-000000000123" },
+        headers: { "content-type": "application/json", cookie: `session-id=${SEED_SESSION_ID}` },
         body: JSON.stringify(body),
       });
       expect(response.status).toBe(400);
     }
   });
 
-  // Helper to create test ruleset
-  async function createTestRuleset(): Promise<string> {
-    const ruleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456");
-    return ruleset.id;
-  }
-
-  // Helper to create test feat
-  async function createTestFeat(rulesetId: string): Promise<string> {
-    // Create aptitude first (required for feats)
-    const newAptitude = {
-      name: `Test Aptitude ${Math.random().toString(36).substr(2, 9)}`,
-      description: "A test aptitude for modifiers testing",
-    };
-
-    const aptitudeResponse = await api.api.rulesets[":id"].aptitudes.$post(
-      {
-        param: { id: rulesetId },
-        json: newAptitude,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!aptitudeResponse.ok) {
-      const errorText = await aptitudeResponse.text();
-      throw new Error(`Failed to create test aptitude: ${errorText}`);
-    }
-
-    const createdAptitude = await aptitudeResponse.json();
-
-    // Create feat
-    const newFeat = {
-      name: `Test Feat ${Math.random().toString(36).substr(2, 9)}`,
-      description: "A test feat for modifiers testing",
-      aptitudeIds: [createdAptitude.id],
-    };
-
-    const featResponse = await api.api.rulesets[":id"].feats.$post(
-      {
-        param: { id: rulesetId },
-        json: newFeat,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!featResponse.ok) {
-      const errorText = await featResponse.text();
-      throw new Error(`Failed to create test feat: ${errorText}`);
-    }
-
-    const createdFeat = await featResponse.json();
-    return createdFeat.id;
-  }
-
-  // Helper to create test item
-  async function createTestItem(rulesetId: string): Promise<string> {
-    const newItem = {
-      name: `Test Item ${Math.random().toString(36).substr(2, 9)}`,
-      description: "A test item for modifiers testing",
-      weight: 1.0,
-      costGp: 50,
-    };
-
-    const response = await api.api.rulesets[":id"].items.$post(
-      {
-        param: { id: rulesetId },
-        json: newItem,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to create test item: ${error.message}`);
-    }
-
-    const createdItem = await response.json();
-    return createdItem.id;
-  }
-
-  // Helper to create test power
-  async function createTestPower(rulesetId: string): Promise<string> {
-    // Create aptitude first (required for powers)
-    const newAptitude = {
-      name: `Test Aptitude ${Math.random().toString(36).substr(2, 9)}`,
-      description: "A test aptitude for power creation",
-    };
-
-    const aptitudeResponse = await api.api.rulesets[":id"].aptitudes.$post(
-      {
-        param: { id: rulesetId },
-        json: newAptitude,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!aptitudeResponse.ok) {
-      const errorText = await aptitudeResponse.text();
-      throw new Error(`Failed to create test aptitude: ${errorText}`);
-    }
-
-    const createdAptitude = await aptitudeResponse.json();
-
-    // Create power
-    const newPower = {
-      name: `Test Power ${Math.random().toString(36).substr(2, 9)}`,
-      description: "A test power for modifiers testing",
-      aptitudes: [{ id: createdAptitude.id }],
-    };
-
-    const powerResponse = await api.api.rulesets[":id"].powers.$post(
-      {
-        param: { id: rulesetId },
-        json: newPower,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!powerResponse.ok) {
-      const errorText = await powerResponse.text();
-      throw new Error(`Failed to create test power: ${errorText}`);
-    }
-
-    const createdPower = await powerResponse.json();
-    return createdPower.id;
-  }
-
-  // Helper to create test class level
-  async function createTestClassLevel(rulesetId: string): Promise<string> {
-    // Create class first
-    const newClass = {
-      name: `Test Class ${Math.random().toString(36).substr(2, 9)}`,
-      description: "A test class for modifiers testing",
-      hitDie: 8,
-    };
-
-    const classResponse = await api.api.rulesets[":id"].classes.$post(
-      {
-        param: { id: rulesetId },
-        json: newClass,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!classResponse.ok) {
-      const error = await classResponse.json();
-      throw new Error(`Failed to create test class: ${error.message}`);
-    }
-
-    const createdClass = await classResponse.json();
-
-    // Create class level
-    const newLevel = {
-      level: 1,
-      bab: 1,
-      skills: 4,
-    };
-
-    const levelResponse = await api.api.rulesets[":id"].classes[":classId"].levels.$post(
-      {
-        param: { id: rulesetId, classId: createdClass.id },
-        json: newLevel,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!levelResponse.ok) {
-      const error = await levelResponse.json();
-      throw new Error(`Failed to create test class level: ${error.message}`);
-    }
-
-    const createdLevel = await levelResponse.json();
-    return createdLevel.id;
-  }
-
-  test("should handle full feat modifier CRUD lifecycle", async () => {
-    const testRulesetId = await createTestRuleset();
-    const testFeatId = await createTestFeat(testRulesetId);
-
-    // Get initial list (should be empty)
-    const listResponse = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$get(
-        {
-          param: { id: testRulesetId, entityType: "feats", entityId: testFeatId },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    if (!listResponse.ok) {
-      const errorText = await listResponse.text();
-      throw new Error(`Failed to get feat modifiers: ${errorText}`);
-    }
-
-    const modifiers = await listResponse.json();
-    expect(modifiers).toBeDefined();
-    expect(Array.isArray(modifiers)).toBe(true);
-    expect(modifiers.length).toBe(0);
-
-    // Create a new modifier
-    const newModifier = {
-      target: "abilities.strength.misc",
-      value: "2",
-      valueType: "number",
-      operator: "add",
-    };
-
-    const createResponse = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$post(
-        {
-          param: { id: testRulesetId, entityType: "feats", entityId: testFeatId },
-          json: newModifier,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      throw new Error(`Failed to create feat modifier: ${errorText}`);
-    }
-
-    const createdModifier = await createResponse.json();
-    expect(createdModifier).toBeDefined();
-    expect(createdModifier.target).toBe(newModifier.target);
-    expect(createdModifier.value).toBe(newModifier.value);
-    expect(createdModifier.valueType).toBe(newModifier.valueType);
-    expect(createdModifier.operator).toBe(newModifier.operator);
-    expect(createdModifier.sourceType).toBe("feats");
-    expect(createdModifier.sourceId).toBe(testFeatId);
-
-    // Update the modifier
-    const updateData = {
-      target: "abilities.constitution.misc",
-      value: "3",
-      valueType: "number",
-      operator: "add",
-    };
-
-    const updateResponse = await api.api.rulesets[":id"]
-      .customization[":entityType"][":entityId"].modifiers[":modifierId"].$put(
-        {
-          param: {
-            id: testRulesetId,
-            entityType: "feats",
-            entityId: testFeatId,
-            modifierId: createdModifier.id,
-          },
-          json: updateData,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    if (!updateResponse.ok) {
-      const error = await updateResponse.json();
-      throw new Error(`Failed to update modifier: ${error.message}`);
-    }
-
-    const updatedModifier = await updateResponse.json();
-    expect(updatedModifier.target).toBe(updateData.target);
-    expect(updatedModifier.value).toBe(updateData.value);
-    expect(updatedModifier.valueType).toBe(updateData.valueType);
-    expect(updatedModifier.operator).toBe(updateData.operator);
-
-    // Delete the modifier
-    const deleteResponse = await api.api.rulesets[":id"]
-      .customization[":entityType"][":entityId"].modifiers[":modifierId"].$delete(
-        {
-          param: {
-            id: testRulesetId,
-            entityType: "feats",
-            entityId: testFeatId,
-            modifierId: createdModifier.id,
-          },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    if (!deleteResponse.ok) {
-      const error = await deleteResponse.json();
-      throw new Error(`Failed to delete modifier: ${error.message}`);
-    }
-
-    const deletedModifier = await deleteResponse.json();
-    expect(deletedModifier).toBeDefined();
+  test("requires a session", async () => {
+    const { id, entityId } = await setup();
+    const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$get({ param: { id, entityType: "feats", entityId } });
+    expect(response.status).toBe(401);
   });
 
-  test("should create and manage item modifiers", async () => {
-    const testRulesetId = await createTestRuleset();
-    const testItemId = await createTestItem(testRulesetId);
-
-    const newModifier = {
-      target: "combat.ac.armor",
-      value: "2",
-      valueType: "number",
-      operator: "add",
-    };
-
-    const response = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$post(
-        {
-          param: { id: testRulesetId, entityType: "items", entityId: testItemId },
-          json: newModifier,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to create item modifier: ${error.message}`);
-    }
-
-    const createdModifier = await response.json();
-    expect(createdModifier.sourceType).toBe("items");
-    expect(createdModifier.sourceId).toBe(testItemId);
+  test("rejects a modifier without a target", async () => {
+    const { id, entityId } = await setup();
+    const response = await modifiers.$post({ param: { id, entityType: "feats", entityId }, json: { value: "2", operator: "add" } as never });
+    expect(response.status).toBe(400);
   });
 
-  test("should create and manage power modifiers", async () => {
-    const testRulesetId = await createTestRuleset();
-    const testPowerId = await createTestPower(testRulesetId);
-
-    const newModifier = {
-      target: "abilities.intelligence.misc",
-      value: "1",
-      valueType: "number",
-      operator: "add",
-    };
-
-    const response = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$post(
-        {
-          param: { id: testRulesetId, entityType: "powers", entityId: testPowerId },
-          json: newModifier,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to create power modifier: ${error.message}`);
-    }
-
-    const createdModifier = await response.json();
-    expect(createdModifier.sourceType).toBe("powers");
-    expect(createdModifier.sourceId).toBe(testPowerId);
-  });
-
-  test("should create and manage klass_levels modifiers", async () => {
-    const testRulesetId = await createTestRuleset();
-    const testClassLevelId = await createTestClassLevel(testRulesetId);
-
-    const newModifier = {
-      target: "combat.hp.misc",
-      value: "5",
-      valueType: "number",
-      operator: "add",
-    };
-
-    const response = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$post(
-        {
-          param: { id: testRulesetId, entityType: "klass_levels", entityId: testClassLevelId },
-          json: newModifier,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to create klass_levels modifier: ${error.message}`);
-    }
-
-    const createdModifier = await response.json();
-    expect(createdModifier.sourceType).toBe("klass_levels");
-    expect(createdModifier.sourceId).toBe(testClassLevelId);
-  });
-
-  test("should handle authentication and validation", async () => {
-    const testRulesetId = await createTestRuleset();
-    const testFeatId = await createTestFeat(testRulesetId);
-
-    // Test unauthenticated request
-    const unauthResponse = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$get({
-        param: { id: testRulesetId, entityType: "feats", entityId: testFeatId },
-      });
-    expect(unauthResponse.status).toBe(401);
-
-    // Test validation - missing required fields
-    const invalidModifier = {
-      value: "2",
-      valueType: "enhancement",
-      operator: "add",
-      // missing target
-    };
-
-    const validationResponse = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$post(
-        {
-          param: { id: testRulesetId, entityType: "feats", entityId: testFeatId },
-          json: invalidModifier as unknown as {
-            target: string;
-            value: string;
-            valueType: string;
-            operator: string;
-          },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    expect(validationResponse.status).toBe(400);
-  });
-
-  test("should handle non-existent resources", async () => {
-    const testRulesetId = await createTestRuleset();
-    const testFeatId = await createTestFeat(testRulesetId);
-
-    // Test non-existent ruleset
-    const nonExistentRulesetResponse = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$get(
-        {
-          param: {
-            id: "00000000-0000-0000-0000-000000000000",
-            entityType: "feats",
-            entityId: testFeatId,
-          },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    expect(nonExistentRulesetResponse.status).toBe(404);
-
-    // Test non-existent entity
-    const nonExistentEntityResponse = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers.$get(
-        {
-          param: {
-            id: testRulesetId,
-            entityType: "feats",
-            entityId: "00000000-0000-0000-0000-000000000000",
-          },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    expect(nonExistentEntityResponse.status).toBe(404);
-
-    // Test non-existent modifier for update
-    const updateData = {
-      target: "abilities.wisdom.misc",
-      value: "1",
-      valueType: "number",
-      operator: "add",
-    };
-
-    const updateResponse = await api.api.rulesets[":id"].customization[":entityType"][":entityId"]
-      .modifiers[":modifierId"].$put(
-        {
-          param: {
-            id: testRulesetId,
-            entityType: "feats",
-            entityId: testFeatId,
-            modifierId: "00000000-0000-0000-0000-000000000000",
-          },
-          json: updateData,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-    expect(updateResponse.status >= 400).toBe(true);
+  test("returns 404 for a missing ruleset, entity or modifier", async () => {
+    const { id, entityId } = await setup();
+    expect((await modifiers.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } })).status).toBe(404);
+    expect((await modifiers.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } })).status).toBe(404);
+    const param = { id, entityType: "feats" as const, entityId, modifierId: NIL_UUID };
+    expect((await modifier.$get({ param })).status).toBe(404);
+    expect((await modifier.$put({ param, json: { target: "abilities.wisdom.misc", value: "1", operator: "add" } })).status).toBe(404);
+    expect((await modifier.$delete({ param })).status).toBe(404);
   });
 });

@@ -1,598 +1,211 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { db } from "@/server/database/index.ts";
-import { EmailVerifications, PasswordResets, Sessions, Users } from "@/server/repositories/index.ts";
 import { describe, expect, test } from "bun:test";
-import { testClient } from "hono/testing";
+import { db } from "@/server/database/index.ts";
+import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
+import { EmailVerifications, OauthAccounts, PasswordResets, Sessions, Users } from "@/server/repositories/index.ts";
+import { apiAs, expectOk, guestApi, sessionIdFrom, signedInApi } from "@/tests/api.ts";
+import { uniqueId } from "@/tests/helpers.ts";
+
+const auth = guestApi.auth;
+const password = "password1234";
+
+const newEmail = (label: string) => `test+${label}+${uniqueId()}@example.com`;
+
+async function signUp(email: string) {
+  await expectOk(auth["sign-up"].$post({ json: { emailAddress: email, password, passwordConfirmation: password } }));
+  return (await Users.findOne(db, { emailAddress: email }))!;
+}
+
+async function latestVerificationCode(userId: string) {
+  return (await EmailVerifications.findOne(db, { userId }))!.code;
+}
+
+/** Signs up and verifies a new user, returning their session and a client signed in with it. */
+async function signUpAndVerify(label: string) {
+  const email = newEmail(label);
+  const user = await signUp(email);
+  const verified = await auth["verify-email"].$post({ json: { emailAddress: email, code: await latestVerificationCode(user.id) } });
+  await expectOk(verified);
+  const sessionId = sessionIdFrom(verified);
+  return { email, user, sessionId, api: apiAs(sessionId) };
+}
 
 describe("authentication", () => {
-  const api = testClient<Application>(application);
-  const timestamp = Date.now();
-
-  function getSessionCookie(setCookieHeader: string | null): string {
-    if (!setCookieHeader) throw new Error("No set-cookie header found");
-    const match = setCookieHeader.match(/session-id=([^;]+)/);
-    if (!match) throw new Error("No session cookie found");
-    return match[1];
-  }
-
-  // Helper: sign up + verify email, return session cookie
-  async function signUpAndGetSession(email: string, password = "password1234") {
-    const signUpResponse = await api.auth["sign-up"].$post({
-      json: {
-        emailAddress: email,
-        password,
-        passwordConfirmation: password,
-      },
+  describe("sign-up and verification", () => {
+    test("signs up without signing in", async () => {
+      const response = await auth["sign-up"].$post({ json: { emailAddress: newEmail("signup"), password, passwordConfirmation: password } });
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject({ message: "Verification email sent" });
+      expect(response.headers.get("set-cookie") ?? "").not.toContain(SESSION_COOKIE_NAME);
     });
 
-    if (!signUpResponse.ok) {
-      const error = await signUpResponse.json();
-      throw new Error(error.message);
-    }
-
-    // Find the user and verification code
-    const user = await Users.findOne(db, { emailAddress: email });
-    const verification = await EmailVerifications.findOne(db, { userId: user!.id });
-
-    const verifyResponse = await api.auth["verify-email"].$post({
-      json: {
-        emailAddress: email,
-        code: verification!.code,
-      },
+    test("verifies the email with the code sent, signing the user in", async () => {
+      const email = newEmail("verify");
+      const user = await signUp(email);
+      const response = await auth["verify-email"].$post({ json: { emailAddress: email, code: await latestVerificationCode(user.id) } });
+      expect(response.status).toBe(200);
+      const body = await expectOk(response);
+      expect(body).toMatchObject({ id: user.id, emailAddress: email });
+      expect(body).not.toHaveProperty("passwordDigest");
+      expect(sessionIdFrom(response)).toEqual(expect.any(String));
     });
 
-    if (!verifyResponse.ok) {
-      const error = await verifyResponse.json();
-      throw new Error(error.message);
-    }
-
-    const setCookieHeader = verifyResponse.headers.get("set-cookie");
-    return getSessionCookie(setCookieHeader);
-  }
-
-  test("should handle sign-up flow (returns 201, no session cookie)", async () => {
-    const signUpResponse = await api.auth["sign-up"].$post({
-      json: {
-        emailAddress: `test+0+${timestamp}@example.com`,
-        password: "password1234",
-        passwordConfirmation: "password1234",
-      },
+    test("refuses a wrong code", async () => {
+      const email = newEmail("badcode");
+      await signUp(email);
+      expect((await auth["verify-email"].$post({ json: { emailAddress: email, code: "000000" } })).status).toBe(401);
     });
 
-    expect(signUpResponse.status).toBe(201);
-    const body = await signUpResponse.json();
-    expect((body as { message: string }).message).toBe("Verification email sent");
-
-    // No session cookie
-    const setCookieHeader = signUpResponse.headers.get("set-cookie");
-    expect(setCookieHeader === null || !setCookieHeader.includes("session-id")).toBe(true);
+    test("resends the verification code", async () => {
+      const email = newEmail("resend");
+      await signUp(email);
+      expect(await expectOk(auth["resend-verification"].$post({ json: { emailAddress: email } }))).toEqual({ success: true });
+    });
   });
 
-  test("POST /verify-email with valid code should return 200 + session cookie + user", async () => {
-    const email = `test+verify+${timestamp}@example.com`;
+  describe("sessions", () => {
+    test("signs in, reads the user and signs out", async () => {
+      const { email, user } = await signUpAndVerify("signin");
+      const response = await auth["sign-in"].$post({ json: { emailAddress: email, password } });
+      const signedIn = await expectOk(response);
+      expect(signedIn).toMatchObject({ id: user.id, emailAddress: email, hasPassword: true });
+      expect(signedIn).not.toHaveProperty("passwordDigest");
 
-    await api.auth["sign-up"].$post({
-      json: {
-        emailAddress: email,
-        password: "password1234",
-        passwordConfirmation: "password1234",
-      },
+      const client = apiAs(sessionIdFrom(response));
+      const me = await expectOk(client.auth.me.$get());
+      expect(me).toMatchObject({ id: user.id, emailAddress: email });
+      expect(me).not.toHaveProperty("passwordDigest");
+
+      await expectOk(client.auth["sign-out"].$post());
+      expect((await client.auth.me.$get()).status).toBe(401);
     });
 
-    const user = await Users.findOne(db, { emailAddress: email });
-    const verification = await EmailVerifications.findOne(db, { userId: user!.id });
-
-    const verifyResponse = await api.auth["verify-email"].$post({
-      json: {
-        emailAddress: email,
-        code: verification!.code,
-      },
+    test("refuses to sign in before the email is verified", async () => {
+      const email = newEmail("unverified");
+      await signUp(email);
+      const response = await auth["sign-in"].$post({ json: { emailAddress: email, password } });
+      expect(response.status).toBe(401);
+      expect(await response.json()).toMatchObject({ message: expect.stringContaining("Email not verified") });
     });
 
-    expect(verifyResponse.status).toBe(200);
-    const body = await verifyResponse.json() as { id: string; emailAddress: string };
-    expect(body.id).toBeDefined();
-    expect(body.emailAddress).toBe(email);
-    expect(body).not.toHaveProperty("passwordDigest");
+    test("refuses an expired session", async () => {
+      const { sessionId, api } = await signUpAndVerify("expired");
+      await Sessions.update(db, { expiresAt: new Date(Date.now() - 1000).toISOString() }, { id: sessionId });
+      expect((await api.auth.me.$get()).status).toBe(401);
+    });
 
-    const setCookieHeader = verifyResponse.headers.get("set-cookie");
-    expect(setCookieHeader).toBeTruthy();
-    expect(setCookieHeader!.includes("session-id")).toBe(true);
+    test("requires a session for /me", async () => {
+      expect((await auth.me.$get()).status).toBe(401);
+    });
   });
 
-  test("POST /verify-email with invalid code should return error", async () => {
-    const email = `test+badcode+${timestamp}@example.com`;
+  describe("profile and email change", () => {
+    test("renames the user and holds a new email until it's verified", async () => {
+      const { email, user, api } = await signUpAndVerify("profile");
+      const changed = newEmail("profile-new");
 
-    await api.auth["sign-up"].$post({
-      json: {
-        emailAddress: email,
-        password: "password1234",
-        passwordConfirmation: "password1234",
-      },
+      const updated = await expectOk(api.auth.profile.$put({ json: { username: "testusername", emailAddress: changed } }));
+      expect(updated).toMatchObject({ username: "testusername", emailAddress: email, pendingEmailAddress: changed });
+      expect(updated).not.toHaveProperty("passwordDigest");
+
+      expect((await api.auth["verify-email-change"].$post({ json: { code: "000000" } })).status).toBe(401);
+      const verified = await expectOk(api.auth["verify-email-change"].$post({ json: { code: await latestVerificationCode(user.id) } }));
+      expect(verified).toMatchObject({ emailAddress: changed, pendingEmailAddress: null });
+      expect(verified).not.toHaveProperty("passwordDigest");
     });
 
-    const verifyResponse = await api.auth["verify-email"].$post({
-      json: {
-        emailAddress: email,
-        code: "000000",
-      },
+    test("refuses an email another account uses", async () => {
+      const first = await signUpAndVerify("taken");
+      const { api } = await signUpAndVerify("taker");
+      const response = await api.auth.profile.$put({ json: { emailAddress: first.email } });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ message: expect.stringContaining("Email address already in use") });
     });
 
-    expect(verifyResponse.status).toBe(401);
-  });
+    test("resends and cancels a pending email change", async () => {
+      const { user, api } = await signUpAndVerify("pending");
+      await expectOk(api.auth.profile.$put({ json: { emailAddress: newEmail("pending-new") } }));
 
-  test("POST /resend-verification should return 200", async () => {
-    const email = `test+resend+${timestamp}@example.com`;
+      // Past the resend cooldown.
+      const verification = await EmailVerifications.findOne(db, { userId: user.id });
+      await EmailVerifications.update(db, { createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() }, { id: verification!.id });
+      expect(await expectOk(api.auth["resend-email-change"].$post())).toEqual({ success: true });
 
-    await api.auth["sign-up"].$post({
-      json: {
-        emailAddress: email,
-        password: "password1234",
-        passwordConfirmation: "password1234",
-      },
+      expect(await expectOk(api.auth["cancel-email-change"].$post())).toEqual({ success: true });
+      expect(await expectOk(api.auth.me.$get())).toMatchObject({ pendingEmailAddress: null });
     });
 
-    const resendResponse = await api.auth["resend-verification"].$post({
-      json: { emailAddress: email },
+    test("records that onboarding is done", async () => {
+      const { api } = await signUpAndVerify("onboarding");
+      await expectOk(api.auth["complete-onboarding"].$post());
+      expect((await expectOk(api.auth.me.$get())).onboardingCompletedAt).toEqual(expect.any(String));
+    });
+  });
+
+  describe("passwords", () => {
+    test("changes the password", async () => {
+      const { email, api } = await signUpAndVerify("password");
+      const json = { currentPassword: password, newPassword: "newpassword456", newPasswordConfirmation: "newpassword456" };
+      expect(await expectOk(api.auth.password.$put({ json }))).toEqual({ success: true });
+      await expectOk(auth["sign-in"].$post({ json: { emailAddress: email, password: "newpassword456" } }));
     });
 
-    expect(resendResponse.status).toBe(200);
-    const body = await resendResponse.json();
-    expect((body as { success: boolean }).success).toBe(true);
-  });
-
-  test("should handle sign-in flow", async () => {
-    const email = `test+1+${timestamp}@example.com`;
-    await signUpAndGetSession(email);
-
-    // Then sign in
-    const signInResponse = await api.auth["sign-in"].$post({
-      json: {
-        emailAddress: email,
-        password: "password1234",
-      },
+    test("refuses a wrong current password", async () => {
+      const { api } = await signUpAndVerify("wrongpassword");
+      const response = await api.auth.password.$put({ json: { currentPassword: "wrongpassword", newPassword: "newpassword456", newPasswordConfirmation: "newpassword456" } });
+      expect(response.status).toBe(401);
+      expect(await response.json()).toMatchObject({ message: expect.stringContaining("Current password is incorrect") });
     });
 
-    if (!signInResponse.ok) {
-      const error = await signInResponse.json();
-      throw new Error(error.message);
-    }
+    test("resets a forgotten password with the code sent", async () => {
+      const { email, user } = await signUpAndVerify("forgot");
+      expect(await expectOk(auth["forgot-password"].$post({ json: { emailAddress: email } }))).toEqual({ success: true });
+      const reset = { emailAddress: email, newPassword: "resetpassword1234", newPasswordConfirmation: "resetpassword1234" };
 
-    const user = await signInResponse.json();
-    expect(user.id).toBeDefined();
-    expect(user.emailAddress).toBe(email);
-    expect(user).not.toHaveProperty("passwordDigest");
-    expect(user.hasPassword).toBe(true);
-  });
-
-  test("POST /sign-in with unverified email should return 401", async () => {
-    const email = `test+unverified+${timestamp}@example.com`;
-
-    await api.auth["sign-up"].$post({
-      json: {
-        emailAddress: email,
-        password: "password1234",
-        passwordConfirmation: "password1234",
-      },
+      expect((await auth["reset-password"].$post({ json: { ...reset, code: "000000" } })).status).toBe(401);
+      const { code } = (await PasswordResets.findOne(db, { userId: user.id }))!;
+      expect(await expectOk(auth["reset-password"].$post({ json: { ...reset, code } }))).toEqual({ success: true });
+      await expectOk(auth["sign-in"].$post({ json: { emailAddress: email, password: "resetpassword1234" } }));
     });
 
-    const signInResponse = await api.auth["sign-in"].$post({
-      json: {
-        emailAddress: email,
-        password: "password1234",
-      },
+    test("sets a first password for an account without one", async () => {
+      const email = newEmail("oauth");
+      const [user] = await Users.create(db, { username: `oauth-${uniqueId()}`, emailAddress: email, emailVerifiedAt: new Date().toISOString() });
+      const api = await signedInApi(user.id);
+      const json = { newPassword: "firstpassword1", newPasswordConfirmation: "firstpassword1" };
+
+      expect(await expectOk(api.auth["set-password"].$post({ json }))).toEqual({ success: true });
+      await expectOk(auth["sign-in"].$post({ json: { emailAddress: email, password: "firstpassword1" } }));
+      expect((await api.auth["set-password"].$post({ json })).status).toBe(400);
+    });
+  });
+
+  describe("linked accounts", () => {
+    test("lists and unlinks a linked Google account", async () => {
+      const { user, api } = await signUpAndVerify("linked");
+      await OauthAccounts.create(db, { userId: user.id, provider: "google", providerAccountId: `google-${uniqueId()}` });
+
+      expect(await expectOk(api.auth["linked-accounts"].$get())).toMatchObject([{ provider: "google" }]);
+      expect(await expectOk(api.auth["unlink-oauth"].$post({ json: { provider: "google" } }))).toEqual({ success: true });
+      expect(await expectOk(api.auth["linked-accounts"].$get())).toEqual([]);
     });
 
-    expect(signInResponse.status).toBe(401);
-    const error = await signInResponse.json();
-    expect((error as { message: string }).message).toContain("Email not verified");
-  });
-
-  test("should handle me endpoint", async () => {
-    const email = `test+2+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    const meResponse = await api.auth.me.$get({
-      header: {
-        cookie: `session-id=${sessionId}`,
-      },
+    test("keeps the only way to sign in: no unlinking without a password", async () => {
+      const [user] = await Users.create(db, { username: `oauth-${uniqueId()}`, emailAddress: newEmail("oauthonly"), emailVerifiedAt: new Date().toISOString() });
+      await OauthAccounts.create(db, { userId: user.id, provider: "google", providerAccountId: `google-${uniqueId()}` });
+      const api = await signedInApi(user.id);
+      expect((await api.auth["unlink-oauth"].$post({ json: { provider: "google" } })).status).toBe(400);
     });
-
-    if (!meResponse.ok) {
-      const error = await meResponse.json();
-      throw new Error(error.message);
-    }
-
-    const user = await meResponse.json();
-    expect(user.id).toBeDefined();
-    expect(user.emailAddress).toBe(email);
-    expect(user).not.toHaveProperty("passwordDigest");
   });
 
-  test("should handle sign-out", async () => {
-    const email = `test+3+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
+  describe("account deletion", () => {
+    test("deletes the account with its password and ends the session", async () => {
+      const { api } = await signUpAndVerify("delete");
+      expect((await api.auth["delete-account"].$post({ json: { password: "wrongpassword" } })).status).toBe(401);
 
-    // Sign out
-    const signOutResponse = await api.auth["sign-out"].$post({
-      header: {
-        cookie: `session-id=${sessionId}`,
-      },
+      const response = await api.auth["delete-account"].$post({ json: { password } });
+      expect(await expectOk(response)).toEqual({ success: true });
+      expect(response.headers.get("set-cookie")).toContain(`${SESSION_COOKIE_NAME}=`);
+      expect((await api.auth.me.$get()).status).toBe(401);
     });
-
-    expect(signOutResponse.ok).toBe(true);
-
-    // Try to access me endpoint with old session
-    const meResponse = await api.auth.me.$get({
-      header: {
-        cookie: `session-id=${sessionId}`,
-      },
-    });
-
-    expect(meResponse.status).toBe(401);
-  });
-
-  test("should reject expired session on GET /me", async () => {
-    const email = `test+expired+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    // Manually expire the session in the database
-    const session = await Sessions.findOne(db, { id: sessionId });
-    await Sessions.update(db, { expiresAt: new Date(Date.now() - 1000).toISOString() }, { id: session!.id });
-
-    const meResponse = await api.auth.me.$get({
-      header: {
-        cookie: `session-id=${sessionId}`,
-      },
-    });
-
-    expect(meResponse.status).toBe(401);
-  });
-
-  test("should handle profile update with email change (sets pendingEmailAddress)", async () => {
-    const email = `test+4+${timestamp}@example.com`;
-    const newEmail = `test+4+updated+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    const profileResponse = await api.auth.profile.$put(
-      {
-        json: {
-          username: "testusername",
-          emailAddress: newEmail,
-        },
-      },
-      {
-        headers: {
-          cookie: `session-id=${sessionId}`,
-        },
-      }
-    );
-
-    if (!profileResponse.ok) {
-      const error = await profileResponse.json();
-      throw new Error(error.message);
-    }
-
-    const updatedUser = await profileResponse.json();
-    expect(updatedUser.username).toBe("testusername");
-    expect(updatedUser.emailAddress).toBe(email);
-    expect((updatedUser as { pendingEmailAddress: string }).pendingEmailAddress).toBe(newEmail);
-    expect(updatedUser).not.toHaveProperty("passwordDigest");
-  });
-
-  test("should reject profile update with duplicate email", async () => {
-    const emailA = `test+5a+${timestamp}@example.com`;
-    const emailB = `test+5b+${timestamp}@example.com`;
-
-    await signUpAndGetSession(emailA);
-    const sessionId = await signUpAndGetSession(emailB);
-
-    // Try to update second user's email to first user's email
-    const profileResponse = await api.auth.profile.$put(
-      {
-        json: {
-          emailAddress: emailA,
-        },
-      },
-      {
-        headers: {
-          cookie: `session-id=${sessionId}`,
-        },
-      }
-    );
-
-    expect(profileResponse.status).toBe(400);
-    const error = await profileResponse.json();
-    expect((error as { message: string }).message).toContain("Email address already in use");
-  });
-
-  test("should handle password update with valid data", async () => {
-    const email = `test+6+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    // Update password
-    const passwordResponse = await api.auth.password.$put(
-      {
-        json: {
-          currentPassword: "password1234",
-          newPassword: "newpassword456",
-          newPasswordConfirmation: "newpassword456",
-        },
-      },
-      {
-        headers: {
-          cookie: `session-id=${sessionId}`,
-        },
-      }
-    );
-
-    if (!passwordResponse.ok) {
-      const error = await passwordResponse.json();
-      throw new Error(error.message);
-    }
-
-    const result = await passwordResponse.json();
-    expect(result.success).toBe(true);
-
-    // Verify new password works
-    const signInResponse = await api.auth["sign-in"].$post({
-      json: {
-        emailAddress: email,
-        password: "newpassword456",
-      },
-    });
-
-    expect(signInResponse.ok).toBe(true);
-  });
-
-  test("should reject password update with incorrect current password", async () => {
-    const email = `test+7+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    // Try to update password with wrong current password
-    const passwordResponse = await api.auth.password.$put(
-      {
-        json: {
-          currentPassword: "wrongpassword",
-          newPassword: "newpassword456",
-          newPasswordConfirmation: "newpassword456",
-        },
-      },
-      {
-        headers: {
-          cookie: `session-id=${sessionId}`,
-        },
-      }
-    );
-
-    expect(passwordResponse.status).toBe(401);
-    const error = await passwordResponse.json();
-    expect((error as { message: string }).message).toContain("Current password is incorrect");
-  });
-
-  test("POST /forgot-password should return 200", async () => {
-    const email = `test+forgot+${timestamp}@example.com`;
-    await signUpAndGetSession(email);
-
-    const response = await api.auth["forgot-password"].$post({
-      json: { emailAddress: email },
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect((body as { success: boolean }).success).toBe(true);
-  });
-
-  test("POST /reset-password with valid code should return 200", async () => {
-    const email = `test+reset+${timestamp}@example.com`;
-    await signUpAndGetSession(email);
-
-    await api.auth["forgot-password"].$post({
-      json: { emailAddress: email },
-    });
-
-    const user = await Users.findOne(db, { emailAddress: email });
-    const reset = await PasswordResets.findOne(db, { userId: user!.id });
-
-    const response = await api.auth["reset-password"].$post({
-      json: {
-        emailAddress: email,
-        code: reset!.code,
-        newPassword: "newpassword789",
-        newPasswordConfirmation: "newpassword789",
-      },
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect((body as { success: boolean }).success).toBe(true);
-  });
-
-  test("POST /reset-password with invalid code should return 401", async () => {
-    const email = `test+resetbad+${timestamp}@example.com`;
-    await signUpAndGetSession(email);
-
-    await api.auth["forgot-password"].$post({
-      json: { emailAddress: email },
-    });
-
-    const response = await api.auth["reset-password"].$post({
-      json: {
-        emailAddress: email,
-        code: "000000",
-        newPassword: "newpassword789",
-        newPasswordConfirmation: "newpassword789",
-      },
-    });
-
-    expect(response.status).toBe(401);
-  });
-
-  test("should sign in with new password after reset", async () => {
-    const email = `test+resetlogin+${timestamp}@example.com`;
-    await signUpAndGetSession(email);
-
-    await api.auth["forgot-password"].$post({
-      json: { emailAddress: email },
-    });
-
-    const user = await Users.findOne(db, { emailAddress: email });
-    const reset = await PasswordResets.findOne(db, { userId: user!.id });
-
-    await api.auth["reset-password"].$post({
-      json: {
-        emailAddress: email,
-        code: reset!.code,
-        newPassword: "resetpassword1234",
-        newPasswordConfirmation: "resetpassword1234",
-      },
-    });
-
-    const signInResponse = await api.auth["sign-in"].$post({
-      json: {
-        emailAddress: email,
-        password: "resetpassword1234",
-      },
-    });
-
-    expect(signInResponse.status).toBe(200);
-  });
-
-  test("POST /verify-email-change with valid code should return user with new email", async () => {
-    const email = `test+emailchange+${timestamp}@example.com`;
-    const newEmail = `test+emailchange+new+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    // Trigger email change
-    await api.auth.profile.$put(
-      { json: { emailAddress: newEmail } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    // Get verification code
-    const user = await Users.findOne(db, { emailAddress: email });
-    const verification = await EmailVerifications.findOne(db, { userId: user!.id });
-
-    const response = await api.auth["verify-email-change"].$post(
-      { json: { code: verification!.code } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    expect(response.status).toBe(200);
-    const body = await response.json() as { emailAddress: string; pendingEmailAddress: string | null };
-    expect(body.emailAddress).toBe(newEmail);
-    expect(body.pendingEmailAddress).toBeNull();
-    expect(body).not.toHaveProperty("passwordDigest");
-  });
-
-  test("POST /verify-email-change with invalid code should return 401", async () => {
-    const email = `test+emailchangebad+${timestamp}@example.com`;
-    const newEmail = `test+emailchangebad+new+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    await api.auth.profile.$put(
-      { json: { emailAddress: newEmail } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    const response = await api.auth["verify-email-change"].$post(
-      { json: { code: "000000" } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    expect(response.status).toBe(401);
-  });
-
-  test("POST /cancel-email-change should return 200", async () => {
-    const email = `test+cancelchange+${timestamp}@example.com`;
-    const newEmail = `test+cancelchange+new+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    await api.auth.profile.$put(
-      { json: { emailAddress: newEmail } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    const response = await api.auth["cancel-email-change"].$post(
-      {},
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect((body as { success: boolean }).success).toBe(true);
-  });
-
-  test("POST /delete-account with correct password should return 200 and clear session cookie", async () => {
-    const email = `test+delete+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    const response = await api.auth["delete-account"].$post(
-      { json: { password: "password1234" } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect((body as { success: boolean }).success).toBe(true);
-
-    // Session cookie should be cleared
-    const setCookieHeader = response.headers.get("set-cookie");
-    expect(setCookieHeader).toBeTruthy();
-    expect(setCookieHeader!.includes("session-id=")).toBe(true);
-  });
-
-  test("POST /delete-account with wrong password should return 401", async () => {
-    const email = `test+deletebad+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    const response = await api.auth["delete-account"].$post(
-      { json: { password: "wrongpassword" } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    expect(response.status).toBe(401);
-  });
-
-  test("GET /me after account deletion should return 401", async () => {
-    const email = `test+deleteme+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    await api.auth["delete-account"].$post(
-      { json: { password: "password1234" } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    const meResponse = await api.auth.me.$get({
-      header: { cookie: `session-id=${sessionId}` },
-    });
-
-    expect(meResponse.status).toBe(401);
-  });
-
-  test("POST /resend-email-change should return 200", async () => {
-    const email = `test+resendchange+${timestamp}@example.com`;
-    const newEmail = `test+resendchange+new+${timestamp}@example.com`;
-    const sessionId = await signUpAndGetSession(email);
-
-    await api.auth.profile.$put(
-      { json: { emailAddress: newEmail } },
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    // Age the verification past cooldown
-    const user = await Users.findOne(db, { emailAddress: email });
-    const verification = await EmailVerifications.findOne(db, { userId: user!.id });
-    await EmailVerifications.update(db, { createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() }, { id: verification!.id });
-
-    const response = await api.auth["resend-email-change"].$post(
-      {},
-      { headers: { cookie: `session-id=${sessionId}` } },
-    );
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect((body as { success: boolean }).success).toBe(true);
   });
 });

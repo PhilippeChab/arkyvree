@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Aptitudes, EntitySnapshots, Feats, FeatsAptitudes, Modifiers, Powers, PowersAptitudes, Properties, Requirements, Rulesets, Sessions } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Aptitudes, EntitySnapshots, Feats, FeatsAptitudes, Modifiers, Powers, PowersAptitudes, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
@@ -17,7 +17,7 @@ type EntityType = "feats" | "powers";
 type Pairing = "snapshot" | "name";
 
 async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
   const repo = entityType === "feats" ? Feats : Powers;
   const base = (await repo.findOne(db, { rulesetId: host.ancestorRulesetIds[0], name: entityType === "feats" ? "Toughness" : "Magic Missile" }))!;

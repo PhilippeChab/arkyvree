@@ -1,296 +1,65 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
+
+const paths = api.api.rulesets[":id"].customization.target.paths;
+const root = { partialPath: "", position: 0, kind: "modifier" as const };
 
 describe("rulesets customization target paths", () => {
-  const api = testClient<Application>(application);
-
-  async function createTestRuleset(): Promise<string> {
-    const ruleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456");
-    return ruleset.id;
-  }
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/completions should get completions",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.completions.$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              partialPath: "",
-              position: 0,
-              kind: "modifier",
-            },
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(`Failed to get completions: ${error.message}`);
-        }
-
-        const result = await response.json();
-        expect(result).toBeDefined();
-        expect(result.items).toBeDefined();
-        expect(Array.isArray(result.items)).toBe(true);
-        expect(result.segmentLabels).toBeDefined();
-
-        if (result.items.length > 0) {
-          const completion = result.items[0];
-          expect(completion.label).toBeDefined();
-          expect(completion.detail).toBeDefined();
-          expect(completion.insertText).toBeDefined();
-          expect(completion.kind).toBe("category");
-        }
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/completions should return leaf path info",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.completions.$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              partialPath: "abilities.strength.",
-              position: "abilities.strength.".length,
-              kind: "modifier",
-            },
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(`Failed to get leaf completions: ${error.message}`);
-        }
-
-        const result = await response.json();
-        expect(result.items.length).toBeGreaterThan(0);
-
-        const leafItem = result.items.find((item: { kind: string }) => item.kind === "property");
-        if (leafItem) {
-          expect(leafItem.path).toBeDefined();
-          expect(leafItem.valueType).toBeDefined();
-          expect(leafItem.operators).toBeDefined();
-          expect(Array.isArray(leafItem.operators)).toBe(true);
-        }
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/completions should paginate",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.completions.$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              partialPath: "",
-              position: 0,
-              kind: "modifier",
-              limit: 2,
-              page: 1,
-            },
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(`Failed to get paginated completions: ${error.message}`);
-        }
-
-        const result = await response.json();
-        expect(result.items.length).toBeLessThanOrEqual(2);
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/completions should require authentication",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.completions.$post({
-          param: { id: await createTestRuleset() },
-          json: {
-            partialPath: "",
-            position: 0,
-            kind: "modifier",
-          },
-        });
-
-        expect(response.status).toBe(401);
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/validate should validate valid path",
-      async () => {
-        const testRulesetId = await createTestRuleset();
-
-        // Get a valid path from completions
-        const completionsResponse = await api.api.rulesets[":id"].customization.target.paths.completions.$post(
-          {
-            param: { id: testRulesetId },
-            json: {
-              partialPath: "abilities.strength.",
-              position: "abilities.strength.".length,
-              kind: "modifier",
-            },
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        if (!completionsResponse.ok) {
-          throw new Error("Failed to get completions for validation testing");
-        }
-
-        const completions = await completionsResponse.json();
-        const leafItem = completions.items.find((item: { path?: string }) => item.path);
-
-        if (leafItem && leafItem.path) {
-          const response = await api.api.rulesets[":id"].customization.target.paths.validate.$post(
-            {
-              param: { id: testRulesetId },
-              json: {
-                path: leafItem.path,
-                kind: "modifier",
-              },
-            },
-            {
-              headers: {
-                cookie: "session-id=00000000-0000-4000-8000-000000000123",
-              },
-            });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`Failed to validate path: ${error.message}`);
-          }
-
-          const validation = await response.json();
-          expect(validation.isValid).toBe(true);
-        }
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/validate should reject invalid path",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.validate.$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              path: "invalid.nonexistent.path",
-              kind: "modifier",
-            },
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(`Failed to validate invalid path: ${error.message}`);
-        }
-
-        const validation = await response.json();
-        expect(validation.isValid).toBe(false);
-        expect(validation.errors.length > 0).toBe(true);
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/completions should reject invalid kind",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.completions.$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              partialPath: "",
-              position: 0,
-              kind: "invalid" as never,
-            },
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        expect(response.status).toBe(400);
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/completions should reject missing fields",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.completions.$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              partialPath: "test",
-            } as never,
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        expect(response.status).toBe(400);
-      });
-
-  test(
-      "POST /api/rulesets/:id/customization/target/paths/validate should reject empty path as invalid category",
-      async () => {
-        const response = await api.api.rulesets[":id"].customization.target.paths.validate.$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              path: "",
-              kind: "modifier",
-            },
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(`Failed to validate empty path: ${error.message}`);
-        }
-
-        const validation = await response.json();
-        expect(validation.isValid).toBe(false);
-        expect(validation.errors[0].code).toBe("INVALID_CATEGORY");
-      });
-
-  test("should validate request body schemas", async () => {
-      const validateResponse = await api.api.rulesets[":id"].customization.target.paths.validate
-        .$post(
-          {
-            param: { id: await createTestRuleset() },
-            json: {
-              // Missing required fields
-            } as never,
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-      expect(validateResponse.status).toBe(400);
-    });
+  test("completes the top-level categories, with their labels", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const result = await expectOk(paths.completions.$post({ param: { id }, json: root }));
+    expect(result.items).toContainEqual(expect.objectContaining({ label: "abilities", insertText: "abilities", kind: "category" }));
+    expect(result.segmentLabels).toMatchObject({ abilities: "Abilities", skills: "Skills" });
   });
+
+  test("completes a leaf with its path, value type and operators", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const partialPath = "abilities.strength.";
+    const result = await expectOk(paths.completions.$post({ param: { id }, json: { partialPath, position: partialPath.length, kind: "modifier" } }));
+    expect(result.items).toContainEqual(expect.objectContaining({
+      kind: "property",
+      path: "abilities.strength.misc",
+      valueType: "number",
+      operators: expect.arrayContaining(["add", "set"]),
+    }));
+  });
+
+  test("pages completions", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const result = await expectOk(paths.completions.$post({ param: { id }, json: { ...root, limit: 2, page: 1 } }));
+    expect(result.items).toHaveLength(2);
+  });
+
+  test("validates a path", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const validate = (path: string) => expectOk(paths.validate.$post({ param: { id }, json: { path, kind: "modifier" } }));
+
+    expect(await validate("abilities.strength.misc")).toMatchObject({ isValid: true, errors: [] });
+    const invalid = await validate("invalid.nonexistent.path");
+    expect(invalid.isValid).toBe(false);
+    expect(invalid.errors.length).toBeGreaterThan(0);
+    const empty = await validate("");
+    expect(empty.isValid).toBe(false);
+    expect(empty.errors[0].code).toBe("INVALID_CATEGORY");
+  });
+
+  test("requires a session", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const response = await guestApi.api.rulesets[":id"].customization.target.paths.completions.$post({ param: { id }, json: root });
+    expect(response.status).toBe(401);
+  });
+
+  test("rejects an unknown kind or missing fields", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    expect((await paths.completions.$post({ param: { id }, json: { ...root, kind: "invalid" } as never })).status).toBe(400);
+    expect((await paths.completions.$post({ param: { id }, json: { partialPath: "test" } as never })).status).toBe(400);
+    expect((await paths.validate.$post({ param: { id }, json: {} as never })).status).toBe(400);
+  });
+
+  test("returns 404 for a missing ruleset", async () => {
+    const response = await paths.validate.$post({ param: { id: NIL_UUID }, json: { path: "abilities.strength.misc", kind: "modifier" } });
+    expect(response.status).toBe(404);
+  });
+});

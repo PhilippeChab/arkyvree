@@ -1,597 +1,216 @@
-import { sql } from "drizzle-orm";
-import { Characters, Players, Users, PlayerCharacters, Sessions } from "@/server/repositories/index.ts";
-import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
+import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
+import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { getSeedCtx, NIL_UUID, queuedPdfJobs, silentJobHelpers, uniqueId } from "@/tests/helpers.ts";
+
+const characters = api.api.campaigns[":id"].characters;
+const character = characters[":characterId"];
+
+/** A character of the seeded user's, built on the seeded ruleset unless `rulesetId` says otherwise. */
+async function createCharacter(name = `Test Character ${uniqueId()}`, rulesetId?: string) {
+  const ctx = await getSeedCtx();
+  const abilities = Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10]));
+  const created = await expectOk(api.api.characters.$post({
+    json: {
+      rulesetId: rulesetId ?? ctx.rulesetId, raceId: ctx.raceMap.pc["Human"], name, xp: 0, alignment: "True Neutral",
+      abilities, age: 25, gender: "Male", height: "180", weight: "80",
+    },
+  }));
+  return created.id;
+}
+
+/** A campaign of the seeded user's and a character of theirs, not linked yet. */
+async function setup() {
+  const { rulesetId } = await getSeedCtx();
+  const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Characters Campaign", rulesetId } }));
+  return { campaignId: campaign.id, characterId: await createCharacter() };
+}
+
+/** Adds a new user to the campaign with `role`, and returns a client signed in as them. */
+async function join(campaignId: string, role: "Game Master" | "Player Character") {
+  const member = await createSignedInUser("member");
+  const [player] = await Players.create(db, { campaignId, userId: member.user.id, role });
+  return { ...member, player };
+}
 
 describe("campaigns characters", () => {
-  const api = testClient<Application>(application);
-  const headers = { cookie: "session-id=00000000-0000-4000-8000-000000000123" };
+  test("links a character, lists it and finds it by name", async () => {
+    const { campaignId, characterId } = await setup();
+    expect((await expectOk(characters.$get({ param: { id: campaignId }, query: {} }))).items).toEqual([]);
 
-  let seedCtx: SeedContext;
-  async function getCtx() {
-    if (!seedCtx) seedCtx = await getSeedContext(db);
-    return seedCtx;
-  }
+    const linked = await characters.$post({ param: { id: campaignId }, json: { characterId } });
+    expect(linked.status).toBe(201);
+    expect(await expectOk(linked)).toMatchObject({ characterId, visibility: "Private" });
 
-  // Helper to create a campaign, a character, and return all necessary IDs
-  async function createTestData() {
-    const ctx = await getCtx();
-    const rulesetId = ctx.rulesetId;
-    const raceId = ctx.raceMap.pc["Human"];
+    const list = async (search?: string) => (await expectOk(characters.$get({ param: { id: campaignId }, query: { search } }))).items.map((c) => c.id);
+    expect(await list()).toEqual([characterId]);
+    expect(await list("Test Character")).toEqual([characterId]);
+    expect(await list("no-character-matches-this")).toEqual([]);
+  });
 
-    // Build abilities from seed context
-    const abilities: Record<string, number> = {};
-    for (const id of Object.values(ctx.abilityMap)) {
-      abilities[id] = 10;
+  test("pages the linked characters", async () => {
+    const { campaignId } = await setup();
+    for (let i = 0; i < 3; i++) {
+      await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId: await createCharacter() } }));
     }
+    const page1 = await expectOk(characters.$get({ param: { id: campaignId }, query: { limit: "2", page: "1" } }));
+    expect(page1.items).toHaveLength(2);
+    expect(page1.nextPage).toBe(2);
+    const page2 = await expectOk(characters.$get({ param: { id: campaignId }, query: { limit: "2", page: "2" } }));
+    expect(page2.items).toHaveLength(1);
+  });
 
-    // Create campaign (creator is automatically added as a player)
-    const campaignResponse = await api.api.campaigns.$post(
-      {
-        json: {
-          name: `Test Campaign ${Math.random().toString(36).substr(2, 9)}`,
-          description: "A test campaign for characters testing",
-          rulesetId,
-        },
-      },
-      { headers },
-    );
+  test("links a character with a visibility and changes it", async () => {
+    const { campaignId, characterId } = await setup();
+    expect(await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId, visibility: "Public" } }))).toMatchObject({ visibility: "Public" });
+    const updated = await expectOk(character.$put({ param: { id: campaignId, characterId }, json: { visibility: "Partial" } }));
+    expect(updated).toMatchObject({ characterId, visibility: "Partial" });
+  });
 
-    if (!campaignResponse.ok) {
-      const error = await campaignResponse.json();
-      throw new Error(`Failed to create test campaign: ${error.message}`);
-    }
+  test("refuses a character built on another ruleset", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const { campaignId } = await setup();
+    const fork = await expectOk(api.api.rulesets[":id"].fork.$post({ param: { id: rulesetId }, json: { name: "Link Test Fork", description: "", private: true } }));
+    const characterId = await createCharacter("Fork Character", fork.id);
 
-    const { campaign } = await campaignResponse.json();
+    const response = await characters.$post({ param: { id: campaignId }, json: { characterId } });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ message: "Only characters built on the campaign's ruleset can be linked" });
+  });
 
-    // Create a character
-    const characterResponse = await api.api.characters.$post(
-      {
-        json: {
-          rulesetId,
-          raceId,
-          name: `Test Character ${Math.random().toString(36).substr(2, 9)}`,
-          xp: 0,
-          alignment: "True Neutral" as const,
-          abilities,
-          age: 25,
-          gender: "Male" as const,
-          height: "180",
-          weight: "80",
-        },
-      },
-      { headers },
-    );
-
-    if (!characterResponse.ok) {
-      const error = await characterResponse.json();
-      throw new Error(`Failed to create test character: ${error.message}`);
-    }
-
-    const character = await characterResponse.json();
-
-    return {
-      campaignId: campaign.id,
-      characterId: character.id,
-      rulesetId,
-      raceId,
-      abilities,
-    };
-  }
+  test("refuses to link the same character twice", async () => {
+    const { campaignId, characterId } = await setup();
+    await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId } }));
+    expect((await characters.$post({ param: { id: campaignId }, json: { characterId } })).status).toBe(409);
+  });
 
   for (const visibility of ["Partial", "Public"] as const) {
     test(`${visibility} hides private notes and share tokens from other players`, async () => {
-      const { campaignId, characterId } = await createTestData();
-      const owner = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
-      const player = (await Players.findOne(db, { campaignId, userId: owner.userId }))!;
-      const viewer = (await Users.findOne(db, { emailAddress: "testuser2@example.com" }))!;
-      const [viewerSession] = await Sessions.create(db, { userId: viewer.id });
-      await Players.create(db, { campaignId, userId: viewer.id, role: "Player Character" });
-      await PlayerCharacters.create(db, { playerId: player.id, characterId, visibility });
+      const { campaignId, characterId } = await setup();
       const shareToken = crypto.randomUUID();
       await Characters.update(db, { privateNotes: "Secret GM notes", shareToken }, { id: characterId });
-      const response = await api.api.campaigns[":id"].characters[":characterId"].$get(
-        { param: { id: campaignId, characterId } },
-        { headers: { cookie: `session-id=${viewerSession.id}` } },
-      );
-      expect(response.status).toBe(200);
-      if (!response.ok) throw new Error("Campaign character request failed");
-      const body = await response.json();
+      await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId, visibility } }));
+      const viewer = await join(campaignId, "Player Character");
+
+      const body = await expectOk(viewer.api.api.campaigns[":id"].characters[":characterId"].$get({ param: { id: campaignId, characterId } }));
       expect(body.shareToken).toBeNull();
       expect(body.identity.background.privateNotes).toBe("");
       expect(JSON.stringify(body)).not.toContain("Secret GM notes");
       expect(JSON.stringify(body)).not.toContain(shareToken);
       if (visibility === "Partial") {
-        expect(body.equipment).toEqual([]);
-        expect(body.virtualFeats).toEqual([]);
-        expect(body.virtualPowers).toEqual([]);
-        expect(body.skillBudget).toEqual({ available: 0, spent: 0, total: 0 });
-        expect(body.spellTags).toEqual({});
-        expect(body.validation).toEqual({ valid: true, issues: [] });
-        expect(body.bonded).toEqual({});
+        expect(body).toMatchObject({
+          equipment: [], virtualFeats: [], virtualPowers: [], spellTags: {}, bonded: {},
+          skillBudget: { available: 0, spent: 0, total: 0 },
+          validation: { valid: true, issues: [] },
+        });
       }
-      const ownResponse = await api.api.campaigns[":id"].characters[":characterId"].$get(
-        { param: { id: campaignId, characterId } }, { headers },
-      );
-      if (!ownResponse.ok) throw new Error("Owner request failed");
-      const ownBody = await ownResponse.json();
-      expect(ownBody.identity.background.privateNotes).toBe("Secret GM notes");
-      expect(ownBody.shareToken).toBe(shareToken);
+
+      const own = await expectOk(character.$get({ param: { id: campaignId, characterId } }));
+      expect(own.identity.background.privateNotes).toBe("Secret GM notes");
+      expect(own.shareToken).toBe(shareToken);
     });
   }
 
-  describe("POST /:id/characters/:characterId/pdf", () => {
-    // Links the creator's character as a regular player's, and adds testuser2
-    // to the campaign with `role`, returning a session for them.
-    async function joinAs(role: "Game Master" | "Player Character") {
-      const { campaignId, characterId } = await createTestData();
-      const owner = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
-      const ownerPlayer = (await Players.findOne(db, { campaignId, userId: owner.userId }))!;
-      await Players.update(db, { role: "Player Character" }, { id: ownerPlayer.id });
-      await PlayerCharacters.create(db, { playerId: ownerPlayer.id, characterId, visibility: "Private" });
-      const member = (await Users.findOne(db, { emailAddress: "testuser2@example.com" }))!;
-      const [memberSession] = await Sessions.create(db, { userId: member.id });
-      const [memberPlayer] = await Players.create(db, { campaignId, userId: member.id, role });
-      return { campaignId, characterId, member, memberPlayer, memberHeaders: { cookie: `session-id=${memberSession.id}` } };
-    }
-
-    async function requestPdf(campaignId: string, characterId: string, requestHeaders: { cookie: string }) {
-      return api.api.campaigns[":id"].characters[":characterId"].pdf.$post(
-        { param: { id: campaignId, characterId } },
-        { headers: requestHeaders },
-      );
-    }
-
-    async function getDetail(campaignId: string, characterId: string, requestHeaders: { cookie: string }) {
-      const response = await api.api.campaigns[":id"].characters[":characterId"].$get(
-        { param: { id: campaignId, characterId } },
-        { headers: requestHeaders },
-      );
-      if (!response.ok) throw new Error("Campaign character request failed");
-      return response.json();
+  describe("PDF export", () => {
+    /** The seeded user's character linked as a Private player character, and a new member with `role`. */
+    async function setupExport(role: "Game Master" | "Player Character") {
+      const { campaignId, characterId } = await setup();
+      const owner = (await Players.findOne(db, { campaignId, userId: SEED_USER_ID }))!;
+      await Players.update(db, { role: "Player Character" }, { id: owner.id });
+      await PlayerCharacters.create(db, { playerId: owner.id, characterId, visibility: "Private" });
+      return { campaignId, characterId, member: await join(campaignId, role) };
     }
 
     async function queuedPdfPayload(characterId: string) {
-      const jobs = await db.execute(
-        sql`SELECT payload FROM graphile_worker._private_jobs WHERE payload->>'characterId' = ${characterId}`,
-      );
-      expect(jobs.rows.length).toBe(1);
-      return jobs.rows[0].payload as Record<string, unknown>;
+      const jobs = await queuedPdfJobs(characterId);
+      expect(jobs).toHaveLength(1);
+      return jobs[0].payload;
     }
 
-    const workerHelpers = {
-      logger: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
-    } as unknown as Parameters<typeof generatePdfTask>[1];
-
     test("lets the Game Master export a player's character", async () => {
-      const { campaignId, characterId, member, memberHeaders } = await joinAs("Game Master");
+      const { campaignId, characterId, member } = await setupExport("Game Master");
+      const theirs = member.api.api.campaigns[":id"].characters[":characterId"];
+      const param = { id: campaignId, characterId };
 
-      const detail = await getDetail(campaignId, characterId, memberHeaders);
-      expect(detail.canEdit).toBe(false);
-      expect(detail.canDownloadPdf).toBe(true);
-
-      const response = await requestPdf(campaignId, characterId, memberHeaders);
-      expect(response.status).toBe(202);
-      expect(await queuedPdfPayload(characterId)).toMatchObject({ userId: member.id, characterId, campaignId });
+      expect(await expectOk(theirs.$get({ param }))).toMatchObject({ canEdit: false, canDownloadPdf: true });
+      expect((await theirs.pdf.$post({ param })).status).toBe(202);
+      expect(await queuedPdfPayload(characterId)).toMatchObject({ userId: member.user.id, characterId, campaignId });
     });
 
     test("lets the character's owner export it from the campaign", async () => {
-      const { campaignId, characterId } = await joinAs("Game Master");
-
-      const detail = await getDetail(campaignId, characterId, headers);
-      expect(detail.canDownloadPdf).toBe(true);
-
-      const response = await requestPdf(campaignId, characterId, headers);
-      expect(response.status).toBe(202);
+      const { campaignId, characterId } = await setupExport("Game Master");
+      const param = { id: campaignId, characterId };
+      expect(await expectOk(character.$get({ param }))).toMatchObject({ canDownloadPdf: true });
+      expect((await character.pdf.$post({ param })).status).toBe(202);
     });
 
     test("links the export's activity to the campaign character page", async () => {
-      const { campaignId, characterId, member, memberHeaders } = await joinAs("Game Master");
-
-      const response = await requestPdf(campaignId, characterId, memberHeaders);
-      expect(response.status).toBe(202);
+      const { campaignId, characterId, member } = await setupExport("Game Master");
+      expect((await member.api.api.campaigns[":id"].characters[":characterId"].pdf.$post({ param: { id: campaignId, characterId } })).status).toBe(202);
 
       const activity = await db.query.activitiesInAccount.findFirst({
-        where: (t, { and, eq }) => and(eq(t.userId, member.id), eq(t.targetId, characterId), eq(t.type, "generatePdf")),
+        where: (t, { and, eq }) => and(eq(t.userId, member.user.id), eq(t.targetId, characterId), eq(t.type, "generatePdf")),
       });
-      const resolved = await api.api.activities.resolve[":targetTable"][":targetId"].$get(
-        { param: { targetTable: activity!.targetTable, targetId: characterId } },
-        { headers: memberHeaders },
-      );
-      if (!resolved.ok) throw new Error("Activity resolve request failed");
-      expect((await resolved.json()).url).toBe(`/campaigns/${campaignId}/characters/${characterId}`);
+      const resolved = await expectOk(member.api.api.activities.resolve[":targetTable"][":targetId"].$get({
+        param: { targetTable: activity!.targetTable, targetId: characterId },
+      }));
+      expect(resolved.url).toBe(`/campaigns/${campaignId}/characters/${characterId}`);
     });
 
     test("the worker skips the export when the Game Master left the campaign before it ran", async () => {
-      const { campaignId, characterId, member, memberPlayer, memberHeaders } = await joinAs("Game Master");
+      const { campaignId, characterId, member } = await setupExport("Game Master");
+      expect((await member.api.api.campaigns[":id"].characters[":characterId"].pdf.$post({ param: { id: campaignId, characterId } })).status).toBe(202);
+      await Players.delete(db, { id: member.player.id });
 
-      const response = await requestPdf(campaignId, characterId, memberHeaders);
-      expect(response.status).toBe(202);
-      await Players.delete(db, { id: memberPlayer.id });
-
-      await generatePdfTask(await queuedPdfPayload(characterId), workerHelpers);
+      await generatePdfTask(await queuedPdfPayload(characterId), silentJobHelpers);
 
       const notification = await db.query.notificationsInAccount.findFirst({
-        where: (t, { and, eq }) => and(eq(t.recipientId, member.id), eq(t.targetId, characterId)),
+        where: (t, { and, eq }) => and(eq(t.recipientId, member.user.id), eq(t.targetId, characterId)),
       });
       expect(notification).toMatchObject({ type: "pdfFailed", targetTable: "player_characters" });
-      const exported = await db.query.exportsInAccount.findFirst({ where: (t, { eq }) => eq(t.userId, member.id) });
-      expect(exported).toBeUndefined();
+      expect(await db.query.exportsInAccount.findFirst({ where: (t, { eq }) => eq(t.userId, member.user.id) })).toBeUndefined();
     });
 
-    test("refuses other players", async () => {
-      const { campaignId, characterId, memberHeaders } = await joinAs("Player Character");
-
-      const response = await requestPdf(campaignId, characterId, memberHeaders);
-      expect(response.status).toBe(404);
-    });
-
-    test("refuses non-members", async () => {
-      const { campaignId, characterId } = await joinAs("Game Master");
-      const outsider = (await Users.findOne(db, { emailAddress: "testuser3@example.com" }))!;
-      const [outsiderSession] = await Sessions.create(db, { userId: outsider.id });
-
-      const response = await requestPdf(campaignId, characterId, { cookie: `session-id=${outsiderSession.id}` });
-      expect(response.status).toBe(404);
+    test("refuses other players and non-members", async () => {
+      const { campaignId, characterId, member } = await setupExport("Player Character");
+      const { api: outsider } = await createSignedInUser("outsider");
+      for (const client of [member.api, outsider]) {
+        const response = await client.api.campaigns[":id"].characters[":characterId"].pdf.$post({ param: { id: campaignId, characterId } });
+        expect(response.status).toBe(404);
+      }
     });
 
     // Archiving makes a campaign read-only; its character pages stay viewable.
     test("still lets the Game Master export from an archived campaign", async () => {
-      const { campaignId, characterId, memberHeaders } = await joinAs("Game Master");
-      const archived = await api.api.campaigns[":id"].$delete({ param: { id: campaignId } }, { headers: memberHeaders });
-      expect(archived.status).toBe(200);
-
-      const response = await requestPdf(campaignId, characterId, memberHeaders);
-      expect(response.status).toBe(202);
+      const { campaignId, characterId, member } = await setupExport("Game Master");
+      await expectOk(member.api.api.campaigns[":id"].$delete({ param: { id: campaignId } }));
+      expect((await member.api.api.campaigns[":id"].characters[":characterId"].pdf.$post({ param: { id: campaignId, characterId } })).status).toBe(202);
     });
 
     test("returns 404 for a character not linked to the campaign", async () => {
-      const { campaignId, characterId } = await createTestData();
-
-      const response = await requestPdf(campaignId, characterId, headers);
-      expect(response.status).toBe(404);
+      const { campaignId, characterId } = await setup();
+      expect((await character.pdf.$post({ param: { id: campaignId, characterId } })).status).toBe(404);
     });
   });
 
-  test("should link a character to a campaign and list it", async () => {
-    const { campaignId, characterId } = await createTestData();
-
-    // Link the character to the campaign
-    const linkResponse = await api.api.campaigns[":id"].characters.$post(
-      {
-        param: { id: campaignId },
-        json: { characterId },
-      },
-      { headers },
-    );
-
-    if (!linkResponse.ok) {
-      const error = await linkResponse.json();
-      throw new Error(`Failed to link character: ${error.message}`);
-    }
-
-    expect(linkResponse.status).toBe(201);
-
-    const linkedCharacter = await linkResponse.json();
-    expect(linkedCharacter).toBeDefined();
-    expect(linkedCharacter.characterId).toBe(characterId);
-
-    // List characters in the campaign and verify it appears
-    const listResponse = await api.api.campaigns[":id"].characters.$get(
-      {
-        param: { id: campaignId },
-        query: { limit: "10", page: "1" },
-      },
-      { headers },
-    );
-
-    if (!listResponse.ok) {
-      const error = await listResponse.json();
-      throw new Error(`Failed to list campaign characters: ${error.message}`);
-    }
-
-    const result = await listResponse.json();
-    expect(result).toBeDefined();
-    expect(Array.isArray(result.items)).toBe(true);
-    expect(result.page).toBe(1);
-    expect(result.items.length).toBeGreaterThanOrEqual(1);
-
-    const found = result.items.find(
-      (item: { id: string }) => item.id === characterId,
-    );
-    expect(found).toBeDefined();
+  test("requires a session", async () => {
+    const { campaignId, characterId } = await setup();
+    const guest = guestApi.api.campaigns[":id"].characters;
+    expect((await guest.$get({ param: { id: campaignId }, query: {} })).status).toBe(401);
+    expect((await guest.$post({ param: { id: campaignId }, json: { characterId } })).status).toBe(401);
   });
 
-  test("filters the campaign's characters by name", async () => {
-    const { campaignId, characterId } = await createTestData();
-    const link = await api.api.campaigns[":id"].characters.$post(
-      { param: { id: campaignId }, json: { characterId } },
-      { headers },
-    );
-    expect(link.status).toBe(201);
-
-    const list = async (search: string) => {
-      const response = await api.api.campaigns[":id"].characters.$get(
-        { param: { id: campaignId }, query: { limit: "10", page: "1", search } },
-        { headers },
-      );
-      if (!response.ok) throw new Error(`Search failed with ${response.status}`);
-      return (await response.json()).items;
-    };
-
-    expect((await list("Test Character")).map((item) => item.id)).toContain(characterId);
-    expect(await list("no-character-matches-this")).toHaveLength(0);
+  test("rejects a link without a valid character id", async () => {
+    const { campaignId } = await setup();
+    expect((await characters.$post({ param: { id: campaignId }, json: {} as never })).status).toBe(400);
+    expect((await characters.$post({ param: { id: campaignId }, json: { characterId: "not-a-uuid" } })).status).toBe(400);
   });
 
-  test("should link a character with explicit visibility", async () => {
-    const { campaignId, characterId } = await createTestData();
-
-    const linkResponse = await api.api.campaigns[":id"].characters.$post(
-      {
-        param: { id: campaignId },
-        json: { characterId, visibility: "Public" as const },
-      },
-      { headers },
-    );
-
-    if (!linkResponse.ok) {
-      const error = await linkResponse.json();
-      throw new Error(`Failed to link character with visibility: ${error.message}`);
-    }
-
-    expect(linkResponse.status).toBe(201);
-
-    const linkedCharacter = await linkResponse.json();
-    expect(linkedCharacter).toBeDefined();
-    expect(linkedCharacter.characterId).toBe(characterId);
-    expect(linkedCharacter.visibility).toBe("Public");
-  });
-
-  test("should refuse a character built on another ruleset", async () => {
-    const { campaignId, rulesetId, raceId, abilities } = await createTestData();
-
-    const forkResponse = await api.api.rulesets[":id"].fork.$post(
-      { param: { id: rulesetId }, json: { name: "Link Test Fork", description: "", private: true } },
-      { headers },
-    );
-    if (!forkResponse.ok) throw new Error("Failed to fork the ruleset");
-    const fork = await forkResponse.json();
-
-    const characterResponse = await api.api.characters.$post(
-      {
-        json: {
-          rulesetId: fork.id,
-          raceId,
-          name: "Fork Character",
-          xp: 0,
-          alignment: "True Neutral" as const,
-          abilities,
-          age: 25,
-          gender: "Male" as const,
-          height: "180",
-          weight: "80",
-        },
-      },
-      { headers },
-    );
-    if (!characterResponse.ok) throw new Error("Failed to create the fork's character");
-    const character = await characterResponse.json();
-
-    const linkResponse = await api.api.campaigns[":id"].characters.$post(
-      { param: { id: campaignId }, json: { characterId: character.id, visibility: "Public" as const } },
-      { headers },
-    );
-
-    expect(linkResponse.status).toBe(400);
-    const error = await linkResponse.json();
-    expect((error as { message: string }).message).toBe("Only characters built on the campaign's ruleset can be linked");
-  });
-
-  test("should reject unauthenticated GET request", async () => {
-    const { campaignId } = await createTestData();
-
-    const response = await api.api.campaigns[":id"].characters.$get({
-      param: { id: campaignId },
-      query: { limit: "10", page: "1" },
-    });
-
-    expect(response.status).toBe(401);
-  });
-
-  test("should reject unauthenticated POST request", async () => {
-    const { campaignId, characterId } = await createTestData();
-
-    const response = await api.api.campaigns[":id"].characters.$post({
-      param: { id: campaignId },
-      json: { characterId },
-    });
-
-    expect(response.status).toBe(401);
-  });
-
-  test("should reject POST with missing characterId", async () => {
-    const { campaignId } = await createTestData();
-
-    const response = await api.api.campaigns[":id"].characters.$post(
-      {
-        param: { id: campaignId },
-        json: {} as never,
-      },
-      { headers },
-    );
-
-    expect(response.status).toBe(400);
-  });
-
-  test("should reject POST with invalid characterId", async () => {
-    const { campaignId } = await createTestData();
-
-    const response = await api.api.campaigns[":id"].characters.$post(
-      {
-        param: { id: campaignId },
-        json: { characterId: "not-a-uuid" },
-      },
-      { headers },
-    );
-
-    expect(response.status).toBe(400);
-  });
-
-  test("should handle non-existent campaign for POST", async () => {
-    const { characterId } = await createTestData();
-
-    const response = await api.api.campaigns[":id"].characters.$post(
-      {
-        param: { id: "00000000-0000-0000-0000-000000000000" },
-        json: { characterId },
-      },
-      { headers },
-    );
-
-    expect(response.status >= 400).toBe(true);
-  });
-
-  test("should prevent linking the same character twice", async () => {
-    const { campaignId, characterId } = await createTestData();
-
-    // Link the character the first time
-    const firstLink = await api.api.campaigns[":id"].characters.$post(
-      {
-        param: { id: campaignId },
-        json: { characterId },
-      },
-      { headers },
-    );
-
-    if (!firstLink.ok) {
-      const error = await firstLink.json();
-      throw new Error(`Failed to link character: ${error.message}`);
-    }
-
-    expect(firstLink.status).toBe(201);
-
-    // Try to link the same character again
-    const secondLink = await api.api.campaigns[":id"].characters.$post(
-      {
-        param: { id: campaignId },
-        json: { characterId },
-      },
-      { headers },
-    );
-
-    expect(secondLink.status >= 400).toBe(true);
-  });
-
-  test("should handle pagination", async () => {
-    const { campaignId, rulesetId, raceId, abilities } = await createTestData();
-
-    // Create and link multiple characters
-    for (let i = 0; i < 3; i++) {
-      const charResponse = await api.api.characters.$post(
-        {
-          json: {
-            rulesetId,
-            raceId,
-            name: `Paginated Char ${i} ${Math.random().toString(36).substr(2, 9)}`,
-            xp: 0,
-            alignment: "True Neutral" as const,
-            abilities,
-            age: 20 + i,
-            gender: "Male" as const,
-            height: "180",
-            weight: "80",
-          },
-        },
-        { headers },
-      );
-
-      if (!charResponse.ok) {
-        const error = await charResponse.json();
-        throw new Error(`Failed to create character ${i}: ${error.message}`);
-      }
-
-      const character = await charResponse.json();
-
-      const linkResponse = await api.api.campaigns[":id"].characters.$post(
-        {
-          param: { id: campaignId },
-          json: { characterId: character.id },
-        },
-        { headers },
-      );
-
-      if (!linkResponse.ok) {
-        const error = await linkResponse.json();
-        throw new Error(`Failed to link character ${i}: ${error.message}`);
-      }
-    }
-
-    // Request with small page size
-    const page1Response = await api.api.campaigns[":id"].characters.$get(
-      {
-        param: { id: campaignId },
-        query: { limit: "2", page: "1" },
-      },
-      { headers },
-    );
-
-    if (!page1Response.ok) {
-      const error = await page1Response.json();
-      throw new Error(`Failed to get page 1: ${error.message}`);
-    }
-
-    const page1 = await page1Response.json();
-    expect(page1).toBeDefined();
-    expect(page1.items.length).toBeLessThanOrEqual(2);
-    expect(page1.page).toBe(1);
-
-    // If there are more items, nextPage should be defined
-    if (page1.items.length === 2 && page1.nextPage) {
-      const page2Response = await api.api.campaigns[":id"].characters.$get(
-        {
-          param: { id: campaignId },
-          query: { limit: "2", page: "2" },
-        },
-        { headers },
-      );
-
-      if (!page2Response.ok) {
-        const error = await page2Response.json();
-        throw new Error(`Failed to get page 2: ${error.message}`);
-      }
-
-      const page2 = await page2Response.json();
-      expect(page2).toBeDefined();
-      expect(page2.page).toBe(2);
-      expect(page2.items.length).toBeGreaterThanOrEqual(1);
-    }
-  });
-
-  test("should return empty list for campaign with no linked characters", async () => {
-    const { campaignId } = await createTestData();
-
-    const response = await api.api.campaigns[":id"].characters.$get(
-      {
-        param: { id: campaignId },
-        query: { limit: "10", page: "1" },
-      },
-      { headers },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get campaign characters: ${error.message}`);
-    }
-
-    const result = await response.json();
-    expect(result).toBeDefined();
-    expect(Array.isArray(result.items)).toBe(true);
-    expect(result.items.length).toBe(0);
-    expect(result.page).toBe(1);
+  test("returns 404 for a missing campaign", async () => {
+    const { characterId } = await setup();
+    expect((await characters.$post({ param: { id: NIL_UUID }, json: { characterId } })).status).toBe(404);
   });
 });

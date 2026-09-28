@@ -2,9 +2,9 @@ import { afterEach, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
-import { Feats, Rulesets, Sessions } from "@/server/repositories/index.ts";
-import { getSeedContext } from "@/database/seeds/helpers.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Feats, Rulesets } from "@/server/repositories/index.ts";
+
+import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
@@ -35,7 +35,7 @@ async function overlap(read: () => Promise<unknown>, mutate: () => Promise<unkno
 
 for (const action of ["subscribe", "unsubscribe"] as const) {
   test(`old request metadata cannot undo ${action} in shared COW data or paths`, async () => {
-    const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+    const session = makeSession();
     const host = await createSeededTestRuleset(session.userId);
     const extension = await createSeededTestRuleset(session.userId);
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
@@ -60,9 +60,9 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
 
 for (const scenario of ["entity", "cow", "paths"] as const) {
   test(`an old request cannot refill shared ${scenario} data from stale deduplicated reads`, async () => {
-    const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+    const session = makeSession();
     const fork = await createSeededTestRuleset(session.userId);
-    const seed = await getSeedContext(db);
+    const seed = await getSeedCtx();
     const [local] = await Feats.create(db, { rulesetId: fork.id, name: "Before Marker", description: "before" });
     invalidateAll();
     const read = () => scenario === "paths"

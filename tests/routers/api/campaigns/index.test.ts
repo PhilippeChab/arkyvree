@@ -1,416 +1,63 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+
+const campaigns = api.api.campaigns;
+const campaign = campaigns[":id"];
+
+async function createCampaign(name = "Test Campaign") {
+  const { rulesetId } = await getSeedCtx();
+  const created = await expectOk(campaigns.$post({ json: { name, description: "A test campaign", rulesetId } }));
+  return created.campaign;
+}
 
 describe("campaigns", () => {
-  const api = testClient<Application>(application);
+  test("creates, reads, lists and updates a campaign", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const created = await createCampaign("Router Campaign");
+    expect(created).toMatchObject({ name: "Router Campaign", description: "A test campaign", rulesetId });
 
-  test("should get list of campaigns for authenticated user", async () => {
-    const response = await api.api.campaigns.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123", // Bjorn's session
-        },
-      },
-    );
+    expect(await expectOk(campaign.$get({ param: { id: created.id } }))).toMatchObject({ id: created.id, name: "Router Campaign" });
+    const list = await expectOk(campaigns.$get({ query: { search: "Router Campaign" } }));
+    expect(list.items.map((c) => c.id)).toEqual([created.id]);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get campaigns: ${error.message}`);
-    }
-
-    const result = await response.json();
-    expect(result).toBeDefined();
-    expect(Array.isArray(result.items)).toBe(true);
+    const updated = await expectOk(campaign.$put({ param: { id: created.id }, json: { name: "Renamed Campaign", description: "Updated" } }));
+    expect(updated).toMatchObject({ name: "Renamed Campaign", description: "Updated" });
   });
 
-  test("should get specific campaign details", async () => {
-    // First get the list to get a campaign ID
-    const listResponse = await api.api.campaigns.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
+  test("archives, unarchives and permanently deletes a campaign", async () => {
+    const { id } = await createCampaign();
+    const listed = async (visibility: "active" | "archived") =>
+      (await expectOk(campaigns.$get({ query: { visibility } }))).items.map((c) => c.id);
 
-    if (!listResponse.ok) {
-      const error = await listResponse.json();
-      throw new Error(`Failed to get campaigns: ${error.message}`);
-    }
+    await expectOk(campaign.$delete({ param: { id } }));
+    expect(await listed("active")).not.toContain(id);
+    expect(await listed("archived")).toContain(id);
 
-    const result = await listResponse.json();
+    await expectOk(campaign.unarchive.$post({ param: { id } }));
+    expect(await listed("active")).toContain(id);
 
-    if (result.items.length === 0) {
-      // Create a campaign first if none exist
-      const rulesetsResponse = await api.api.rulesets.$get(
-        {
-          query: {},
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-      if (!rulesetsResponse.ok) {
-        const error = await rulesetsResponse.json();
-        throw new Error(`Failed to get rulesets: ${error.message}`);
-      }
-
-      const rulesets = await rulesetsResponse.json();
-      const rulesetId = rulesets.items[0].id;
-
-      const newCampaign = {
-        name: "Test Campaign for Details",
-        description: "A test campaign for details testing",
-        rulesetId: rulesetId,
-      };
-
-      const createResponse = await api.api.campaigns.$post(
-        {
-          json: newCampaign,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-      if (!createResponse.ok) {
-        const error = await createResponse.json();
-        throw new Error(`Failed to create campaign: ${error.message}`);
-      }
-
-      const creationResult = await createResponse.json();
-
-      // Now get the specific campaign
-      const response = await api.api.campaigns[":id"].$get(
-        {
-          param: { id: creationResult.campaign.id },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const error = await response.json() as { message?: string; error?: string };
-        throw new Error(`Failed to get campaign: ${error.message || error.error}`);
-      }
-
-      const campaign = await response.json();
-      expect(campaign).toBeDefined();
-      expect(campaign.id).toBe(creationResult.campaign.id);
-      expect(campaign.name).toBeDefined();
-    } else {
-      const campaignId = result.items[0].id;
-
-      // Then get the specific campaign
-      const response = await api.api.campaigns[":id"].$get(
-        {
-          param: { id: campaignId },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get campaign: ${error.message}`);
-      }
-
-      const campaign = await response.json();
-      expect(campaign).toBeDefined();
-      expect(campaign.id).toBe(campaignId);
-      expect(campaign.name).toBeDefined();
-    }
+    await expectOk(campaign.$delete({ param: { id } }));
+    await expectOk(campaign.permanent.$delete({ param: { id } }));
+    expect((await campaign.$get({ param: { id } })).status).toBe(404);
   });
 
-  test("should create a new campaign", async () => {
-    // First get a ruleset ID to use for the campaign
-    const rulesetsResponse = await api.api.rulesets.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!rulesetsResponse.ok) {
-      const error = await rulesetsResponse.json();
-      throw new Error(`Failed to get rulesets: ${error.message}`);
-    }
-
-    const rulesets = await rulesetsResponse.json();
-    const rulesetId = rulesets.items[0].id;
-
-    const newCampaign = {
-      name: "Test Campaign",
-      description: "A test campaign for automated testing",
-      rulesetId: rulesetId,
-    };
-
-    const response = await api.api.campaigns.$post(
-      {
-        json: newCampaign,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to create campaign: ${error.message}`);
-    }
-
-    const creationResult = await response.json();
-    expect(creationResult).toBeDefined();
-    expect(creationResult.campaign.name).toBe(newCampaign.name);
-    expect(creationResult.campaign.description).toBe(newCampaign.description);
-    expect(creationResult.campaign.rulesetId).toBe(newCampaign.rulesetId);
+  test("only deletes an archived campaign permanently", async () => {
+    const { id } = await createCampaign();
+    expect((await campaign.permanent.$delete({ param: { id } })).status).toBe(404);
   });
 
-  test("should update a campaign", async () => {
-    // First get a ruleset ID to use for the campaign
-    const rulesetsResponse = await api.api.rulesets.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!rulesetsResponse.ok) {
-      const error = await rulesetsResponse.json();
-      throw new Error(`Failed to get rulesets: ${error.message}`);
-    }
-
-    const rulesets = await rulesetsResponse.json();
-    const rulesetId = rulesets.items[0].id;
-
-    // First create a campaign to update
-    const newCampaign = {
-      name: "Test Campaign for Update",
-      description: "A test campaign for update testing",
-      rulesetId: rulesetId,
-    };
-
-    const createResponse = await api.api.campaigns.$post(
-      {
-        json: newCampaign,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!createResponse.ok) {
-      const error = await createResponse.json();
-      throw new Error(`Failed to create campaign: ${error.message}`);
-    }
-
-    const creationResult = await createResponse.json();
-
-    // Now update it
-    const updateData = {
-      name: "Updated Test Campaign",
-      description: "Updated description",
-    };
-
-    const updateResponse = await api.api.campaigns[":id"].$put(
-      {
-        param: { id: creationResult.campaign.id },
-        json: updateData,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!updateResponse.ok) {
-      const error = await updateResponse.json();
-      throw new Error(`Failed to update campaign: ${error.message}`);
-    }
-
-    const updatedCampaign = await updateResponse.json();
-    expect(updatedCampaign).toBeDefined();
-    expect(updatedCampaign.name).toBe(updateData.name);
-    expect(updatedCampaign.description).toBe(updateData.description);
+  test("requires a session", async () => {
+    expect((await guestApi.api.campaigns.$get({ query: {} })).status).toBe(401);
   });
 
-  test("should archive a campaign", async () => {
-    // First get a ruleset ID to use for the campaign
-    const rulesetsResponse = await api.api.rulesets.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!rulesetsResponse.ok) {
-      const error = await rulesetsResponse.json();
-      throw new Error(`Failed to get rulesets: ${error.message}`);
-    }
-
-    const rulesets = await rulesetsResponse.json();
-    const rulesetId = rulesets.items[0].id;
-
-    // First create a campaign to archive
-    const newCampaign = {
-      name: "Test Campaign for Archive",
-      description: "A test campaign for archive testing",
-      rulesetId: rulesetId,
-    };
-
-    const createResponse = await api.api.campaigns.$post(
-      {
-        json: newCampaign,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!createResponse.ok) {
-      const error = await createResponse.json();
-      throw new Error(`Failed to create campaign: ${error.message}`);
-    }
-
-    const creationResult = await createResponse.json();
-
-    // Now archive it
-    const archiveResponse = await api.api.campaigns[":id"].$delete(
-      {
-        param: { id: creationResult.campaign.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!archiveResponse.ok) {
-      const error = await archiveResponse.json();
-      throw new Error(`Failed to archive campaign: ${error.message}`);
-    }
-
-    const result = await archiveResponse.json();
-    expect(result.message).toBe("Campaign archived successfully");
-
-    // Verify the campaign is no longer in the active list
-    const listResponse = await api.api.campaigns.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!listResponse.ok) {
-      const error = await listResponse.json();
-      throw new Error(`Failed to get campaigns: ${error.message}`);
-    }
-
-    const listResult = await listResponse.json();
-    const archivedCampaign = listResult.items.find((c) => c.id === creationResult.campaign.id);
-    expect(archivedCampaign).toBe(undefined);
+  test("rejects a campaign without a name or with a ruleset id that isn't a UUID", async () => {
+    const { rulesetId } = await getSeedCtx();
+    expect((await campaigns.$post({ json: { description: "No name", rulesetId } as never })).status).toBe(400);
+    expect((await campaigns.$post({ json: { name: "Campaign", rulesetId: "invalid-uuid" } })).status).toBe(400);
   });
 
-  test("should reject unauthenticated requests", async () => {
-    const response = await api.api.campaigns.$get({ query: {} });
-    expect(response.status).toBe(401);
-  });
-
-  test("should handle non-existent campaign", async () => {
-    const response = await api.api.campaigns[":id"].$get(
-      {
-        param: { id: "00000000-0000-0000-0000-000000000000" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(response.status).toBe(404);
-  });
-
-  test("should validate campaign creation with missing fields", async () => {
-    const invalidCampaign = {
-      description: "Missing name field",
-    };
-
-    const response = await api.api.campaigns.$post(
-      {
-        json: invalidCampaign as never,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(response.status).toBe(400);
-  });
-
-  test("should validate campaign creation with invalid ruleset ID", async () => {
-    const invalidCampaign = {
-      name: "Test Campaign",
-      description: "Test description",
-      rulesetId: "invalid-uuid",
-    };
-
-    const response = await api.api.campaigns.$post(
-      {
-        json: invalidCampaign,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(response.status).toBe(400);
+  test("returns 404 for a missing campaign", async () => {
+    expect((await campaign.$get({ param: { id: NIL_UUID } })).status).toBe(404);
   });
 });

@@ -1,185 +1,62 @@
-import { db } from "@/server/database/index.ts";
-import { Rulesets, Users } from "@/server/repositories/index.ts";
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { testClient } from "hono/testing";
 import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { createTestRuleset } from "@/tests/helpers.ts";
+
+/** A ruleset owned by the seeded user, and another user invited to contribute to it. */
+async function setup() {
+  const ruleset = await createTestRuleset(SEED_USER_ID);
+  const other = await createSignedInUser("contributor");
+  const invite = await expectOk(api.api.rulesets[":id"].contributors.$post({
+    param: { id: ruleset.id },
+    json: { email: other.user.emailAddress, role: "Editor" },
+  }));
+  return { id: ruleset.id, other, invite };
+}
 
 describe("rulesets contributors", () => {
-  const api = testClient<Application>(application);
+  test("invites, lists, accepts, changes the role of and revokes a contributor", async () => {
+    const { id, other, invite } = await setup();
+    expect(invite).toMatchObject({ role: "Editor", status: "Pending" });
 
-  // Session IDs from test seed data (database/seeds/users.ts)
-  const ownerSessionId = "00000000-0000-4000-8000-000000000123";
-  const ownerUserId = "00000000-0000-4000-8000-000000000456";
-  const otherSessionId = "10000000-0000-4000-8000-000000000789";
-  const otherUserId = "10000000-0000-4000-8000-000000000789";
+    const list = await expectOk(api.api.rulesets[":id"].contributors.$get({ param: { id }, query: {} }));
+    expect(list.items.map((c) => c.id)).toEqual([invite.id]);
 
-  async function createTestRuleset(userId: string = ownerUserId) {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-    const rulesets = await Rulesets.create(db, {
-      name: `Contrib Test ${uniqueId}`,
-      description: "Test ruleset for contributor tests",
-      private: true,
-      baseRules: "Dungeons & Dragons: 3.5",
-      userId,
-      status: "Draft",
-    });
-    return rulesets[0];
-  }
+    const invites = other.api.api.rulesets.contributors.invites;
+    expect((await expectOk(invites.me.$get())).map((i) => i.rulesetId)).toEqual([id]);
+    expect(await expectOk(invites[":id"].$get({ param: { id: invite.id } }))).toMatchObject({ id: invite.id, rulesetId: id });
+    expect(await expectOk(invites[":id"].accept.$post({ param: { id: invite.id } }))).toMatchObject({ status: "Active" });
 
-  function ownerHeaders() {
-    return { headers: { cookie: `session-id=${ownerSessionId}` } };
-  }
-
-  function otherHeaders() {
-    return { headers: { cookie: `session-id=${otherSessionId}` } };
-  }
-
-  async function getOtherUserEmail(): Promise<string> {
-    const user = await Users.findOne(db, { id: otherUserId });
-    return user!.emailAddress;
-  }
-
-  test("should invite, list, accept, update role, and revoke a contributor", async () => {
-    const ruleset = await createTestRuleset();
-    const otherEmail = await getOtherUserEmail();
-
-    // Invite
-    const inviteResponse = await api.api.rulesets[":id"].contributors.$post(
-      { param: { id: ruleset.id }, json: { email: otherEmail, role: "Editor" } },
-      ownerHeaders(),
-    );
-    expect(inviteResponse.status).toBe(201);
-    const invite = await inviteResponse.json() as { id: string; role: string; status: string };
-    expect(invite.role).toBe("Editor");
-    expect(invite.status).toBe("Pending");
-
-    // List contributors
-    const listResponse = await api.api.rulesets[":id"].contributors.$get(
-      { param: { id: ruleset.id }, query: { limit: "10", page: "1" } },
-      ownerHeaders(),
-    );
-    expect(listResponse.ok).toBe(true);
-    const list = await listResponse.json() as { items: Array<{ id: string }> };
-    expect(list.items.length).toBe(1);
-
-    // Accept invite
-    const acceptResponse = await api.api.rulesets.contributors.invites[":id"].accept.$post(
-      { param: { id: invite.id } },
-      otherHeaders(),
-    );
-    expect(acceptResponse.ok).toBe(true);
-    const accepted = await acceptResponse.json() as { status: string };
-    expect(accepted.status).toBe("Active");
-
-    // Update role
-    const updateResponse = await api.api.rulesets[":id"].contributors[":contributorId"].$put(
-      { param: { id: ruleset.id, contributorId: invite.id }, json: { role: "Viewer" } },
-      ownerHeaders(),
-    );
-    expect(updateResponse.ok).toBe(true);
-    const updated = await updateResponse.json() as { role: string };
-    expect(updated.role).toBe("Viewer");
-
-    // Revoke
-    const revokeResponse = await api.api.rulesets[":id"].contributors[":contributorId"].$delete(
-      { param: { id: ruleset.id, contributorId: invite.id } },
-      ownerHeaders(),
-    );
-    expect(revokeResponse.ok).toBe(true);
-    const revoked = await revokeResponse.json() as { status: string };
-    expect(revoked.status).toBe("Revoked");
+    const contributor = api.api.rulesets[":id"].contributors[":contributorId"];
+    const param = { id, contributorId: invite.id };
+    expect(await expectOk(contributor.$put({ param, json: { role: "Viewer" } }))).toMatchObject({ role: "Viewer" });
+    expect(await expectOk(contributor.$delete({ param }))).toMatchObject({ status: "Revoked" });
   });
 
-  test("should reject an invite", async () => {
-    const ruleset = await createTestRuleset();
-    const otherEmail = await getOtherUserEmail();
-
-    const inviteResponse = await api.api.rulesets[":id"].contributors.$post(
-      { param: { id: ruleset.id }, json: { email: otherEmail, role: "Editor" } },
-      ownerHeaders(),
-    );
-    const invite = await inviteResponse.json() as { id: string };
-
-    const rejectResponse = await api.api.rulesets.contributors.invites[":id"].reject.$post(
-      { param: { id: invite.id } },
-      otherHeaders(),
-    );
-    expect(rejectResponse.ok).toBe(true);
-    const rejected = await rejectResponse.json() as { status: string };
+  test("rejects an invite", async () => {
+    const { other, invite } = await setup();
+    const rejected = await expectOk(other.api.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id: invite.id } }));
     expect(rejected.status).toBe("Rejected");
   });
 
-  test("should return 403 when non-owner invites", async () => {
-    const ruleset = await createTestRuleset();
-
-    const response = await api.api.rulesets[":id"].contributors.$post(
-      { param: { id: ruleset.id }, json: { email: "someone@example.com", role: "Editor" } },
-      otherHeaders(),
-    );
-    expect(response.status).toBe(403);
+  test("lets a contributor leave", async () => {
+    const { id, other, invite } = await setup();
+    await expectOk(other.api.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id: invite.id } }));
+    await expectOk(other.api.api.rulesets[":id"].contributors.leave.$post({ param: { id } }));
+    const list = await expectOk(api.api.rulesets[":id"].contributors.$get({ param: { id }, query: {} }));
+    expect(list.items.filter((c) => c.status === "Active")).toEqual([]);
   });
 
-  test("should return 403 when non-owner/contributor lists", async () => {
-    const ruleset = await createTestRuleset();
-
-    const response = await api.api.rulesets[":id"].contributors.$get(
-      { param: { id: ruleset.id }, query: { limit: "10", page: "1" } },
-      otherHeaders(),
-    );
-    expect(response.status).toBe(403);
+  test("refuses invites and the contributor list to someone who isn't a contributor", async () => {
+    const { id } = await setup();
+    const { api: outsider } = await createSignedInUser("outsider");
+    const contributors = outsider.api.rulesets[":id"].contributors;
+    expect((await contributors.$post({ param: { id }, json: { email: "someone@example.com", role: "Editor" } })).status).toBe(403);
+    expect((await contributors.$get({ param: { id }, query: {} })).status).toBe(403);
   });
 
-  test("should allow contributor to leave", async () => {
-    const ruleset = await createTestRuleset();
-    const otherEmail = await getOtherUserEmail();
-
-    // Invite and accept
-    const inviteResponse = await api.api.rulesets[":id"].contributors.$post(
-      { param: { id: ruleset.id }, json: { email: otherEmail, role: "Editor" } },
-      ownerHeaders(),
-    );
-    const invite = await inviteResponse.json() as { id: string };
-    await api.api.rulesets.contributors.invites[":id"].accept.$post(
-      { param: { id: invite.id } },
-      otherHeaders(),
-    );
-
-    // Leave
-    const leaveResponse = await api.api.rulesets[":id"].contributors.leave.$post(
-      { param: { id: ruleset.id } },
-      otherHeaders(),
-    );
-    expect(leaveResponse.ok).toBe(true);
-  });
-
-  test("should return user's pending contributor invites", async () => {
-    const ruleset = await createTestRuleset();
-    const otherEmail = await getOtherUserEmail();
-
-    await api.api.rulesets[":id"].contributors.$post(
-      { param: { id: ruleset.id }, json: { email: otherEmail, role: "Editor" } },
-      ownerHeaders(),
-    );
-
-    const invitesResponse = await api.api.rulesets.contributors.invites.me.$get(
-      {},
-      otherHeaders(),
-    );
-    expect(invitesResponse.ok).toBe(true);
-    const invites = await invitesResponse.json() as Array<{ rulesetId: string }>;
-    expect(invites.length).toBeGreaterThanOrEqual(1);
-    const found = invites.find((i) => i.rulesetId === ruleset.id);
-    expect(found).toBeDefined();
-  });
-
-  test("should return 401 for unauthenticated requests", async () => {
-    const ruleset = await createTestRuleset();
-
-    const response = await api.api.rulesets[":id"].contributors.$get(
-      { param: { id: ruleset.id }, query: { limit: "10", page: "1" } },
-      { headers: {} },
-    );
-    expect(response.status).toBe(401);
+  test("requires a session", async () => {
+    const { id } = await setup();
+    expect((await guestApi.api.rulesets[":id"].contributors.$get({ param: { id }, query: {} })).status).toBe(401);
   });
 });

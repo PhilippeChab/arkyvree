@@ -1,4 +1,5 @@
 import { zValidator } from "@/server/middlewares/index.ts";
+import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/index.ts";
@@ -25,7 +26,7 @@ export default new Hono<SessionContext>()
     zValidator("json", z.object({
       target: z.string().min(1),
       value: z.string().min(1),
-      operator: z.string().min(1),
+      operator: modifierOperator,
     })),
     async (c) => {
       const { characterId } = c.req.valid("param");
@@ -44,7 +45,7 @@ export default new Hono<SessionContext>()
     zValidator("json", z.object({
       target: z.string().min(1),
       value: z.string().min(1),
-      operator: z.string().min(1),
+      operator: modifierOperator,
       updatedAt: z.string().optional(),
     })),
     async (c) => {

@@ -153,14 +153,16 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 - Never skip failing tests or use mocks
 - Use seed data from test database
-- Run with `bun run test`
+- Run with `bun run test`, or `bun run test:changed` for the files changed from the parent branch
 - E2E (`bun run test:e2e`) runs on a quarter of the CPU cores locally so the machine stays usable; pass `--workers N` to change it for one run
 
 **Test Structure:**
 
-- Unit/integration tests: `/tests/routers`, `/tests/services`
+- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeded content), `/tests/jobs`
 - E2E tests: `/tests/e2e`
-- Each test runs in isolated transaction (auto-rollback)
+- Each test runs in its own transaction, rolled back afterwards (`tests/setup.ts`). It has a single connection: run service calls that write one at a time, never in a `Promise.all`, since each opens a savepoint on it
+- The ruleset cache outlives the rollback. Write a test's rows into a fork (`createSeededTestRuleset`), not a seeded ruleset; a test that has to write into a seeded one calls `invalidateSeededRuleset(rulesetId)` afterwards, and the setup drops those rules again once the rollback undoes the rows
+- CRUD, ownership and copy-on-write of every ruleset entity are tested once, for all of them, in `tests/services/rulesets/EntityServices.test.ts`: an entity's own service test covers only what's particular to it
 
 **E2E directory → Playwright project mapping:**
 
@@ -184,9 +186,14 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 - Filter and sort options live inside popup `<Menu>` components; click the "Filter"/"Sort" tooltip IconButton first, then the `MenuItem`.
 - Default submit-button labels diverge per dialog wrapper: `CreateDialog` → "Create", `EditDialog` → "Update", `DeleteDialog` → "Delete", custom dialogs (Fork Ruleset / Archive Campaign / Save Changes) override these. Check the actual component before writing the assertion.
 
-**Shared helpers:**
+**Shared helpers** — reuse them instead of inlining:
 
-`tests/e2e/helpers.ts` exports `signIn`, `selectOption`, `createCharacter`, and `TEST_USERS` — reuse them across batches instead of inlining. The helpers scope dialog interactions to `[role="dialog"][aria-modal="true"]`.
+- `tests/helpers.ts`: users, sessions, rulesets (seeded forks), campaigns, characters, levels and contributors written straight to the database; `getSeedCtx()` for the seeded ids; `invalidateSeededRuleset`
+- `tests/api.ts`: the typed API client as the seed user (`api`), a guest (`guestApi`) or a new user (`createSignedInUser`), and `expectOk`
+- `tests/levelFixtures.ts`: seeded character builds, level plans and level-ups, and masters with their bonded creature
+- `tests/seeds/seededRows.ts`: a seeded ruleset's own rows, for the seed tests; `tests/storage.ts`: the fake storage backend
+- `tests/e2e/helpers.ts`: signing in (`signIn`, `signedInPage`), `createCharacter`, `createCampaign`, `forkCoreRuleset`, invites (`invitePlayer`, `inviteContributor`, `answerInvite`), `openActionsMenu`, `filterList`, `apiResponse` waits. They scope dialog interactions to `[role="dialog"][aria-modal="true"]`. `tests/e2e/levelUpHelpers.ts` walks the Add Level wizard; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`
+- [docs/e2e-coverage.md](./docs/e2e-coverage.md) indexes what each e2e file covers: update it with the suite
 
 ## Application Logic
 

@@ -1,326 +1,98 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+
+const rulesets = api.api.rulesets;
+const ruleset = rulesets[":id"];
+
+/** A public seeded fork published as an extension, so others can star or subscribe to it. */
+async function createPublishedExtension(name: string) {
+  const { id } = await createSeededTestRuleset(SEED_USER_ID, { name, private: false });
+  await expectOk(ruleset.publish.$post({ param: { id }, json: { kind: "extension" } }));
+  return id;
+}
 
 describe("rulesets", () => {
-  const api = testClient<Application>(application);
+  test("lists rulesets by scope and search, and reads one", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const base = await expectOk(rulesets.$get({ query: { scope: "base", search: "Core SRD" } }));
+    expect(base.items.map((r) => r.id)).toContain(rulesetId);
 
-  test("should get list of rulesets for authenticated user", async () => {
-    const response = await api.api.rulesets.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123", // Bjorn's session
-        },
-      },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get rulesets: ${error.message}`);
-    }
-
-    const rulesets = await response.json();
-    expect(rulesets).toBeDefined();
-    expect(rulesets.items).toBeDefined();
-    expect(Array.isArray(rulesets.items)).toBe(true);
+    const detail = await expectOk(ruleset.$get({ param: { id: rulesetId } }));
+    expect(detail).toMatchObject({ id: rulesetId, name: "Core SRD 3.5" });
   });
 
-  test("should get specific ruleset details", async () => {
-    // First get the list to get a ruleset ID
-    const listResponse = await api.api.rulesets.$get(
-      {
-        query: {},
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!listResponse.ok) {
-      const error = await listResponse.json();
-      throw new Error(`Failed to get rulesets: ${error.message}`);
-    }
-
-    const rulesets = await listResponse.json();
-
-    expect(rulesets.items.length).toBeGreaterThan(0);
-
-    const rulesetId = rulesets.items[0].id;
-
-    // Then get the specific ruleset
-    const response = await api.api.rulesets[":id"].$get(
-      {
-        param: { id: rulesetId },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get ruleset: ${error.message}`);
-    }
-
-    const ruleset = await response.json();
-    expect(ruleset).toBeDefined();
-    expect(ruleset.id).toBe(rulesetId);
-    expect(ruleset.name).toBeDefined();
+  test("forks a ruleset", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const fork = await expectOk(ruleset.fork.$post({ param: { id: rulesetId }, json: { name: "Router Fork", description: "", private: true } }));
+    expect(fork).toMatchObject({ name: "Router Fork", rulesetId, private: true });
   });
 
-  test("should update a ruleset", async () => {
-    const createdRuleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456");
-
-    // Now update it
-    const updateData = {
-      name: "Updated Test Ruleset",
-      description: "Updated description",
-      private: false,
-    };
-
-    const updateResponse = await api.api.rulesets[":id"].$put(
-      {
-        param: { id: createdRuleset.id },
-        json: updateData,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!updateResponse.ok) {
-      const error = await updateResponse.json();
-      throw new Error(`Failed to update ruleset: ${error.message}`);
-    }
-
-    const updatedRuleset = await updateResponse.json();
-    expect(updatedRuleset.name).toBe(updateData.name);
-    expect(updatedRuleset.description).toBe(updateData.description);
-    expect(updatedRuleset.private).toBe(updateData.private);
+  test("updates a ruleset", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const json = { name: "Updated Test Ruleset", description: "Updated description", private: false };
+    expect(await expectOk(ruleset.$put({ param: { id }, json }))).toMatchObject(json);
   });
 
-  test("should reject unauthenticated list requests", async () => {
-    const response = await api.api.rulesets.$get({ query: {} });
-    expect(response.status).toBe(401);
+  test("archives and unarchives a ruleset", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    expect(await expectOk(ruleset.archive.$post({ param: { id } }))).toMatchObject({ status: "Archived" });
+    await expectOk(ruleset.unarchive.$post({ param: { id } }));
+    expect(await expectOk(ruleset.$get({ param: { id } }))).toMatchObject({ status: "Draft" });
   });
 
-  test("should reject unauthenticated detail requests", async () => {
-    const response = await api.api.rulesets[":id"].$get({
-      param: { id: "00000000-0000-0000-0000-000000000000" },
-    });
-    expect(response.status).toBe(401);
+  test("stars and unstars a published ruleset, and lists it under the starred scope", async () => {
+    const id = await createPublishedExtension("Ruleset To Star");
+
+    expect((await ruleset.star.$post({ param: { id } })).status).toBe(201);
+    expect(await expectOk(ruleset.$get({ param: { id } }))).toMatchObject({ isStarred: true });
+    const starred = await expectOk(rulesets.$get({ query: { scope: "starred" } }));
+    expect(starred.items.map((r) => r.id)).toContain(id);
+
+    await expectOk(ruleset.star.$delete({ param: { id } }));
+    expect(await expectOk(ruleset.$get({ param: { id } }))).toMatchObject({ isStarred: false });
   });
 
-  test("should handle non-existent ruleset", async () => {
-    const response = await api.api.rulesets[":id"].$get(
-      {
-        param: { id: "00000000-0000-0000-0000-000000000000" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(response.status).toBe(404);
+  test("refuses to star a draft", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID, { private: false });
+    expect((await ruleset.star.$post({ param: { id } })).status).toBe(403);
   });
 
-  test("should star a ruleset", async () => {
-    const createdRuleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456", {
-      name: "Ruleset To Star",
-      private: false,
-    });
+  test("subscribes a fork to an extension, lists it and unsubscribes", async () => {
+    const extensionId = await createPublishedExtension("Router Extension");
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    // Publish as an extension so it's eligible for starring (fork inherits
-    // minimum content from parent).
-    await api.api.rulesets[":id"].publish.$post(
-      { param: { id: createdRuleset.id }, json: { kind: "extension" } },
-      { headers: { cookie: "session-id=00000000-0000-4000-8000-000000000123" } },
-    );
+    await expectOk(ruleset.subscribe.$post({ param: { id }, json: { extensionIds: [extensionId] } }));
+    expect((await expectOk(ruleset.extensions.$get({ param: { id } }))).map((e) => e.extensionId)).toEqual([extensionId]);
 
-    // Star the ruleset
-    const starResponse = await api.api.rulesets[":id"].star.$post(
-      {
-        param: { id: createdRuleset.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(starResponse.status).toBe(201);
-
-    // Verify it shows as starred in detail
-    const detailResponse = await api.api.rulesets[":id"].$get(
-      {
-        param: { id: createdRuleset.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!detailResponse.ok) {
-      const error = await detailResponse.json();
-      throw new Error(`Failed to get ruleset: ${error.message}`);
-    }
-
-    const ruleset = await detailResponse.json();
-    expect(ruleset.isStarred).toBe(true);
+    await expectOk(ruleset.unsubscribe.$post({ param: { id }, json: { extensionId } }));
+    expect(await expectOk(ruleset.extensions.$get({ param: { id } }))).toEqual([]);
   });
 
-  test("should unstar a ruleset", async () => {
-    const createdRuleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456", {
-      name: "Ruleset To Unstar",
-      private: false,
-    });
+  test("lists a fork's changes and restores an overridden entity", async () => {
+    const { langMap } = await getSeedCtx();
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const entityId = langMap["Draconic"];
+    await expectOk(ruleset.languages[":languageId"].$put({ param: { id, languageId: entityId }, json: { name: "Draconic", description: "Edited", type: "Exotic" } }));
 
-    await api.api.rulesets[":id"].publish.$post(
-      { param: { id: createdRuleset.id }, json: { kind: "extension" } },
-      { headers: { cookie: "session-id=00000000-0000-4000-8000-000000000123" } },
-    );
+    const changes = await expectOk(ruleset.changes.$get({ param: { id } }));
+    expect(changes).toContainEqual(expect.objectContaining({ entityType: "languages", status: "modified", sourceEntityId: entityId }));
 
-    await api.api.rulesets[":id"].star.$post(
-      {
-        param: { id: createdRuleset.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    // Unstar the ruleset
-    const unstarResponse = await api.api.rulesets[":id"].star.$delete(
-      {
-        param: { id: createdRuleset.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(unstarResponse.status).toBe(200);
-
-    // Verify it shows as not starred
-    const detailResponse = await api.api.rulesets[":id"].$get(
-      {
-        param: { id: createdRuleset.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!detailResponse.ok) {
-      const error = await detailResponse.json();
-      throw new Error(`Failed to get ruleset: ${error.message}`);
-    }
-
-    const ruleset = await detailResponse.json();
-    expect(ruleset.isStarred).toBe(false);
+    await expectOk(ruleset.entities[":entityType"][":entityId"].restore.$post({ param: { id, entityType: "languages", entityId } }));
+    expect(await expectOk(ruleset.changes.$get({ param: { id } }))).toEqual([]);
   });
 
-  test("should return 404 when starring non-existent ruleset", async () => {
-    const response = await api.api.rulesets[":id"].star.$post(
-      {
-        param: { id: "00000000-0000-0000-0000-000000000000" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(response.status).toBe(404);
+  test("requires a session", async () => {
+    expect((await guestApi.api.rulesets.$get({ query: {} })).status).toBe(401);
+    expect((await guestApi.api.rulesets[":id"].$get({ param: { id: NIL_UUID } })).status).toBe(401);
   });
 
-  test("should return 403 when starring a draft ruleset", async () => {
-    const createdRuleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456", {
-      name: "Draft Ruleset Star Test",
-      private: false,
-    });
-
-    const response = await api.api.rulesets[":id"].star.$post(
-      {
-        param: { id: createdRuleset.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(response.status).toBe(403);
+  test("returns 404 for a missing ruleset", async () => {
+    const param = { id: NIL_UUID };
+    expect((await ruleset.$get({ param })).status).toBe(404);
+    expect((await ruleset.star.$post({ param })).status).toBe(404);
+    expect((await ruleset.archive.$post({ param })).status).toBe(404);
+    expect((await ruleset.changes.$get({ param })).status).toBe(404);
   });
-
-  test("should filter by starred scope", async () => {
-    const createdRuleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456", {
-      name: "Starred Scope Test",
-      private: false,
-    });
-
-    await api.api.rulesets[":id"].publish.$post(
-      { param: { id: createdRuleset.id }, json: { kind: "extension" } },
-      { headers: { cookie: "session-id=00000000-0000-4000-8000-000000000123" } },
-    );
-
-    await api.api.rulesets[":id"].star.$post(
-      {
-        param: { id: createdRuleset.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    // Get starred rulesets
-    const listResponse = await api.api.rulesets.$get(
-      {
-        query: { scope: "starred" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!listResponse.ok) {
-      const error = await listResponse.json();
-      throw new Error(`Failed to get rulesets: ${error.message}`);
-    }
-
-    const rulesets = await listResponse.json();
-    expect(rulesets.items.length).toBeGreaterThanOrEqual(1);
-
-    const found = rulesets.items.find((r: { id: string }) => r.id === createdRuleset.id);
-    expect(found).toBeDefined();
-  });
-
 });

@@ -6,7 +6,7 @@
  */
 
 import { db } from "@/server/database/index.ts";
-import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
+import { type SeedContext } from "@/database/seeds/helpers.ts";
 import {
   KlassLevelFeats,
   KlassLevelPowers,
@@ -20,13 +20,14 @@ import {
   type CachedRulesetData,
 } from "@/server/cache/rulesetCache.ts";
 import { beforeAll, describe, expect, test } from "bun:test";
+import { getSeedCtx } from "@/tests/helpers.ts";
 
 describe("cache join-maps — parity with repository queries", () => {
   let ctx: SeedContext;
   let rulesetData: CachedRulesetData;
 
   beforeAll(async () => {
-    ctx = await getSeedContext(db);
+    ctx = await getSeedCtx();
     const ruleset = await Rulesets.findOne(db, { id: ctx.rulesetId });
     if (!ruleset) throw new Error("seed ruleset missing");
     const cowData = await getOrBuildCowData(ruleset);

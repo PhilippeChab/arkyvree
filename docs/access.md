@@ -42,6 +42,8 @@ Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor ro
 
 | `scope` query param | Returns |
 |---|---|
+| `base` | System base rulesets: no owner, not a fork |
+| `forked` | The user's own forks |
 | `myDrafts` | Draft rulesets where the user is owner OR active contributor |
 | `published` | Rulesets the user can play with: public ones must be `status = 'Published'`; owned and contributed-to ones bypass the status gate (Draft is fine — `Published` only governs outward discoverability for *public* rulesets). `kind = 'ruleset'`. Powers the character-creation and campaign-creation pickers — extensions are filtered out so they're never offered as a playable target |
 | `community` | Public Published user forks with `kind = 'ruleset'` (`userId IS NOT NULL`, `private = false`). Extensions (system or user) are filtered out — they live under the `extensions` scope |
@@ -51,14 +53,15 @@ Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor ro
 | `systems` | System-owned rulesets (`userId IS NULL`) — bases plus published system extensions. Used for sitemap/SEO |
 | `starred` | Anything the user starred |
 | `contributedTo` | Rulesets where the user is an active contributor |
-| `createdByMe` / `createdByMePrivate` | Owned rulesets, with privacy filter |
+| `createdByMe` | Rulesets the user owns or actively contributes to |
+| `createdByMePrivate` | The private rulesets the user owns |
 | (no scope) | Default: everything the user can see (owned, system, campaign-accessible, contributed-to) |
 
 **Where each ruleset type surfaces by scope:**
 
 | Type / Scope | `published` | `community` | `extensions` | `systems` |
 |---|---|---|---|---|
-| Base (system) | – | – | – | ✓ |
+| Base (system) | ✓ | – | – | ✓ |
 | System extension (`kind='extension'`, `userId IS NULL`) | – | – | ✓ | ✓ |
 | User fork as ruleset (`kind='ruleset'`) | ✓ | ✓ (if public) | – | – |
 | User fork as extension (`kind='extension'`) | – | – | ✓ (if public) | – |

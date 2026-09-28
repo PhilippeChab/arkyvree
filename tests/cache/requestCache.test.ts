@@ -10,7 +10,7 @@
  */
 
 import { db, withTransaction } from "@/server/database/index.ts";
-import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
+import { type SeedContext } from "@/database/seeds/helpers.ts";
 import { Characters, Feats, Rulesets } from "@/server/repositories/index.ts";
 import {
   clearRequestCache,
@@ -18,12 +18,13 @@ import {
   runWithRequestCache,
 } from "@/server/database/requestCache.ts";
 import { beforeAll, describe, expect, test } from "bun:test";
+import { NIL_UUID, getSeedCtx } from "@/tests/helpers.ts";
 
 describe("requestCache — repository Proxy memoization", () => {
   let ctx: SeedContext;
 
   beforeAll(async () => {
-    ctx = await getSeedContext(db);
+    ctx = await getSeedCtx();
   });
 
   test("identical findOne calls in the same request return the same promise", async () => {
@@ -41,7 +42,7 @@ describe("requestCache — repository Proxy memoization", () => {
     await runWithRequestCache(async () => {
       const p1 = Rulesets.findOne(db, { id: ctx.rulesetId });
       const p2 = Rulesets.findOne(db, {
-        id: "00000000-0000-0000-0000-000000000000",
+        id: NIL_UUID,
       });
       expect(p1).not.toBe(p2);
       const [r1, r2] = await Promise.all([p1, p2]);
@@ -126,7 +127,7 @@ describe("requestCache — repository Proxy memoization", () => {
       const sameArgsA = Rulesets.findOne(db, { id: ctx.rulesetId });
       const sameArgsB = Rulesets.findOne(db, { id: ctx.rulesetId });
       const differentArgs = Characters.findOne(db, {
-        id: "00000000-0000-0000-0000-000000000000",
+        id: NIL_UUID,
       });
 
       expect(sameArgsA).toBe(sameArgsB);

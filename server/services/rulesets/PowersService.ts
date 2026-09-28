@@ -219,7 +219,7 @@ export const PowersMethods = {
           });
           const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
 
-          await Properties.deleteMany(tx, { entityIds: [targetId], entityType: "powers" });
+          await Properties.deleteMany(tx, { entityIds: [targetId], entityType: "powers", types: hooks.powers.generatedPropertyTypes });
 
           const newGroupingValue = hooks.powers.extractGroupingValue(body);
           if (newGroupingValue) {

@@ -1,633 +1,158 @@
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { db } from "@/server/database/index.ts";
-import { Rulesets, Users } from "@/server/repositories/index.ts";
-import { TargetPathsMethods } from "@/server/services/rulesets/customization/TargetPathsService.ts";
-import type { Session } from "@/shared/relations.ts";
 import { describe, expect, test } from "bun:test";
+import { NotFoundError } from "@/server/errors/index.ts";
+import { TargetPathsMethods } from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import { createTestRuleset, createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
-function createTestSession(userId: string): Session {
-  return {
-    id: `session-${Math.random().toString(36).substr(2, 9)}`,
-    userId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: null,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  };
+type Kind = "modifier" | "requirement";
+type EntityType = Parameters<typeof TargetPathsMethods.getTargetPathsWithLabels>[2];
+
+/** The seeded D&D 3.5 ruleset's target paths and segment labels. */
+async function seedPaths(kind: Kind, entityType?: EntityType) {
+  const { rulesetId } = await getSeedCtx();
+  return await TargetPathsMethods.getTargetPathsWithLabels(rulesetId, kind, entityType);
 }
 
+const isAptitudeGrant = (p: { category: string; path: string }) => p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
+
+// Completing and validating a path through the API are covered in the customization target router test.
 describe("TargetPathsService", () => {
-  // Helper to create test user
-  async function createTestUser() {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
+  test("lists paths in every category, with a readable label for each segment", async () => {
+    const { paths, segmentLabels } = await seedPaths("modifier");
+    expect([...new Set(paths.map((p) => p.category))]).toEqual(expect.arrayContaining(["abilities", "skills", "saves", "combat", "identity", "aptitudes"]));
+    expect(paths[0]).toEqual(expect.objectContaining({ path: expect.any(String), description: expect.any(String), valueType: expect.any(String), operators: expect.any(Array) }));
 
-    const users = await Users.create(db, {
-      username: `testuser-${uniqueId}`,
-      emailAddress: `test-${uniqueId}@example.com`,
-      password: "password1234",
+    const unlabelled = paths.flatMap((p) => p.path.split(".")).filter((segment) => segment !== "*" && !/^\d+$/.test(segment) && !(segment in segmentLabels));
+    expect([...new Set(unlabelled)]).toEqual([]);
+    expect(segmentLabels).toMatchObject({
+      abilities: "Abilities", saves: "Saving Throws", powers: "Spells", classes: "Classes",
+      ac: "Armor Class", hp: "Hit Points", bab: "Base Attack Bonus", xp: "Experience Points",
+      checkpenalty: "Check Penalty", spellfailure: "Spell Failure", maxdex: "Maximum Dexterity",
+      strength: "Strength", "*": "All",
+      // A class's spells read as the class.
+      wizard: "Wizard",
     });
-    const user = users[0];
+    // A numeric property value (an armor's -1 check penalty) doesn't take over a spell level's label.
+    expect(Object.entries(segmentLabels).filter(([key, label]) => /^\d+$/.test(key) && /^-\d/.test(label))).toEqual([]);
+  });
 
-    return { user };
-  }
+  test("writes descriptions for people: capitalized, without property type codes", async () => {
+    const { paths } = await seedPaths("modifier");
+    expect(paths.filter((p) => p.category === "combat" && p.description[0] !== p.description[0].toUpperCase())).toEqual([]);
+    const propertyPaths = paths.filter((p) => p.path.includes(".properties."));
+    expect(propertyPaths.length).toBeGreaterThan(0);
+    expect(propertyPaths.filter((p) => /[A-Z]{2,}_[A-Z]/.test(p.description))).toEqual([]);
+  });
 
-  // Helper to get or create DnD 3.5 ruleset
-  async function getDnd35Ruleset() {
-    // Try to get existing DnD 3.5 ruleset from seed data
-    const existingRuleset = await Rulesets.findOne(db, {
-      name: DND35_RULESET_NAME,
-    });
+  test("describes a wildcard as all of a kind when modifying, and any when requiring", async () => {
+    const modifierWildcards = (await seedPaths("modifier")).paths.filter((p) => p.path.includes(".*"));
+    expect(modifierWildcards.length).toBeGreaterThan(0);
+    expect(modifierWildcards.filter((p) => /\bany\b/i.test(p.description))).toEqual([]);
 
-    if (existingRuleset) {
-      return existingRuleset;
+    const featWildcards = (await seedPaths("requirement")).paths.filter((p) => p.category === "feats" && p.path.includes(".*"));
+    expect(featWildcards.length).toBeGreaterThan(0);
+    expect(featWildcards.filter((p) => !p.description.startsWith("Any "))).toEqual([]);
+  });
+
+  test("leaves totals to requirements", async () => {
+    expect((await seedPaths("modifier")).paths.filter((p) => p.path.endsWith(".total"))).toEqual([]);
+    const totals = (await seedPaths("requirement")).paths.filter((p) => p.path.endsWith(".total")).map((p) => p.path);
+    for (const prefix of ["combat.ac", "combat.hp", "skills.", "saves.", "abilities."]) {
+      expect(totals.some((path) => path.startsWith(prefix))).toBe(true);
     }
-
-    // If not found, create a test ruleset
-    const { user } = await createTestUser();
-    const rulesets = await Rulesets.create(db, {
-      name: "Test DnD 3.5 Ruleset",
-      description: "Test ruleset for target paths testing",
-      private: true,
-      baseRules: "Dungeons & Dragons: 3.5",
-      userId: user.id,
-    });
-
-    return rulesets[0];
-  }
-
-  describe("getTargetPaths", () => {
-    test("should return target paths for a valid ruleset with modifier kind", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "modifier",)).paths;
-
-      expect(paths).toBeDefined();
-      expect(Array.isArray(paths)).toBe(true);
-      expect(paths.length).toBeGreaterThan(0);
-
-      // Verify path structure
-      const firstPath = paths[0];
-      expect(firstPath).toHaveProperty("path");
-      expect(firstPath).toHaveProperty("category");
-      expect(firstPath).toHaveProperty("description");
-      expect(firstPath).toHaveProperty("valueType");
-      expect(firstPath).toHaveProperty("operators");
-      expect(Array.isArray(firstPath.operators)).toBe(true);
-    });
-
-    test("should return target paths for a valid ruleset with requirement kind", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "requirement",)).paths;
-
-      expect(paths).toBeDefined();
-      expect(Array.isArray(paths)).toBe(true);
-      expect(paths.length).toBeGreaterThan(0);
-    });
-
-    test("should include leveled aptitude paths for spell aptitudes", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "modifier",)).paths;
-
-      // Spell aptitudes (e.g., Wizard Spells) should have per-level paths like aptitudes.wizardspells.0.uses
-      const leveledAptitudePaths = paths.filter(
-        (p) => p.category === "aptitudes" && /aptitudes\.\w+\.\d+\./.test(p.path),
-      );
-
-      expect(leveledAptitudePaths.length).toBeGreaterThan(0);
-
-      // Verify the structure includes wizard spell paths
-      const wizardPaths = leveledAptitudePaths.filter((p) => p.path.startsWith("aptitudes.wizardspells."));
-      expect(wizardPaths.length).toBeGreaterThan(0);
-
-      // Should have paths for at least level 0 (cantrips)
-      const level0Paths = wizardPaths.filter((p) => p.path.includes(".0."));
-      expect(level0Paths.length).toBeGreaterThan(0);
-    });
-
-    test("should include leveled aptitude paths in forked ruleset", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const { user } = await createTestUser();
-      const session = createTestSession(user.id);
-
-      // Fork the ruleset
-      const { RulesetsMethods } = await import("@/server/services/RulesetsService.ts");
-      const forked = await RulesetsMethods.forkRuleset(session, ruleset.id, {
-        name: `Fork-${Math.random().toString(36).substr(2, 6)}`,
-        private: false,
-      });
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(forked.id,
-        "modifier",)).paths;
-
-      // Forked ruleset should also have leveled aptitude paths
-      const leveledAptitudePaths = paths.filter(
-        (p) => p.category === "aptitudes" && /aptitudes\.\w+\.\d+\./.test(p.path),
-      );
-
-      expect(leveledAptitudePaths.length).toBeGreaterThan(0);
-
-      // Verify wizard spell paths exist in fork
-      const wizardPaths = leveledAptitudePaths.filter((p) => p.path.startsWith("aptitudes.wizardspells."));
-      expect(wizardPaths.length).toBeGreaterThan(0);
-    });
-
-    test("should throw error for non-existent ruleset", async () => {
-      const fakeRulesetId = "00000000-0000-0000-0000-000000000000";
-
-      await expect(
-        TargetPathsMethods.getTargetPathsWithLabels(fakeRulesetId, "modifier"),
-      ).rejects.toThrow();
-    });
-
-    test("should include paths from expected categories", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "modifier",)).paths;
-
-      const categories = [...new Set(paths.map((p) => p.category))];
-
-      // DnD 3.5 should have some of these core categories
-      // (Not all may be present in test data depending on what's seeded)
-      const coreCategories = ["abilities", "skills", "saves", "combat", "identity"];
-
-      for (const expectedCategory of coreCategories) {
-        expect(categories).toContain(expectedCategory);
-      }
-
-      // At minimum, should have multiple categories
-      expect(categories.length).toBeGreaterThan(3);
-    });
   });
 
-  describe("validatePath", () => {
-    test("should validate a correct path", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      // Get a valid path first
-      const allPaths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "modifier",)).paths;
-      expect(allPaths.length).toBeGreaterThan(0);
-
-      const validPath = allPaths[0].path;
-
-      const result = await TargetPathsMethods.validatePath(
-        ruleset.id,
-        validPath,
-        "modifier",
-      );
-
-      expect(result).toBeDefined();
-      expect(result.isValid).toBe(true);
-      expect(result.errors.length).toBe(0);
-      expect(result.suggestions.length).toBe(0);
-    });
-
-    test("should return error for empty path", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const result = await TargetPathsMethods.validatePath(
-        ruleset.id,
-        "",
-        "modifier",
-      );
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-      // Empty string splits to [""] which is treated as invalid category
-      expect(result.errors[0].code).toBe("INVALID_CATEGORY");
-      expect(result.errors[0].severity).toBe("error");
-    });
-
-    test("should return error for invalid category", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const result = await TargetPathsMethods.validatePath(
-        ruleset.id,
-        "invalidcategory.something",
-        "modifier",
-      );
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors[0].code).toBe("INVALID_CATEGORY");
-      expect(result.errors[0].severity).toBe("error");
-      expect(result.errors[0].message).toContain("Unknown category");
-    });
-
-    test("should suggest similar categories for invalid category", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const result = await TargetPathsMethods.validatePath(
-        ruleset.id,
-        "abil.something",
-        "modifier",
-      );
-
-      expect(result.isValid).toBe(false);
-      expect(result.suggestions.length).toBeGreaterThan(0);
-      expect(result.suggestions).toContain("abilities");
-    });
-
-    test("should return warning for incomplete path", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      // Get a valid path and use only part of it
-      const allPaths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "modifier",)).paths;
-      const fullPath = allPaths.find((p) => p.path.split(".").length > 1);
-
-      if (fullPath) {
-        const segments = fullPath.path.split(".");
-        const partialPath = segments.slice(0, -1).join(".");
-
-        const result = await TargetPathsMethods.validatePath(
-          ruleset.id,
-          partialPath,
-          "modifier",
-        );
-
-        expect(result.isValid).toBe(false);
-        expect(result.errors.length).toBeGreaterThan(0);
-        expect(result.errors[0].code).toBe("INCOMPLETE_PATH");
-        expect(result.errors[0].severity).toBe("warning");
-        expect(result.suggestions.length).toBeGreaterThan(0);
-      }
-    });
-
-    test("should return error for completely invalid path", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const result = await TargetPathsMethods.validatePath(
-        ruleset.id,
-        "abilities.nonexistent.path",
-        "modifier",
-      );
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-      const hasInvalidPathError = result.errors.some(
-        (e) => e.code === "INVALID_PATH" || e.code === "INCOMPLETE_PATH",
-      );
-      expect(hasInvalidPathError).toBe(true);
-    });
-
-    test("should default to modifier kind when not specified", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const result = await TargetPathsMethods.validatePath(
-        ruleset.id,
-        "abilities.strength.score",
-      );
-
-      expect(result).toBeDefined();
-      expect(result.isValid).toBeDefined();
-    });
-  });
-
-
-  describe("getSegmentLabels", () => {
-    test("should return labels for all categories", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).segmentLabels;
-
-      expect(labels).toBeDefined();
-      expect(labels.abilities).toBe("Abilities");
-      expect(labels.skills).toBe("Skills");
-      expect(labels.saves).toBe("Saving Throws");
-      expect(labels.combat).toBe("Combat");
-      expect(labels.classes).toBe("Classes");
-      expect(labels.feats).toBe("Feats");
-      expect(labels.powers).toBe("Spells");
-      expect(labels.identity).toBe("Identity");
-      expect(labels.aptitudes).toBe("Aptitudes");
-    });
-
-    test("should return correct labels for abbreviation segments", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).segmentLabels;
-
-      expect(labels.ac).toBe("Armor Class");
-      expect(labels.hp).toBe("Hit Points");
-      expect(labels.bab).toBe("Base Attack Bonus");
-      expect(labels.xp).toBe("Experience Points");
-    });
-
-    test("should return correct labels for concatenated segments", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).segmentLabels;
-
-      expect(labels.checkpenalty).toBe("Check Penalty");
-      expect(labels.spellfailure).toBe("Spell Failure");
-      expect(labels.maxdex).toBe("Maximum Dexterity");
-    });
-
-    test("should return entity names as labels", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).segmentLabels;
-
-      // Seed data should have at least some abilities
-      expect(labels.strength).toBeDefined();
-      expect(labels.dexterity).toBeDefined();
-    });
-
-    test("should not have numeric keys colliding with spell levels in segment labels", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).segmentLabels;
-
-      // Numeric property values (e.g., ARMOR_CHECK_PENALTY "-1" → key "1")
-      // should not clobber spell level segment labels
-      for (const [key, value] of Object.entries(labels)) {
-        if (/^\d+$/.test(key)) {
-          expect(value).not.toMatch(/^-\d/);
-        }
-      }
-    });
-
-    test("should have a label for every segment in every generated path", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const { paths, segmentLabels: labels } = await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier");
-
-      const missingLabels = new Set<string>();
-
-      for (const path of paths) {
-        for (const segment of path.path.split(".")) {
-          // Skip wildcard segments and numeric segments (spell levels)
-          if (segment === "*" || /^\d+$/.test(segment)) continue;
-          if (!(segment in labels)) {
-            missingLabels.add(segment);
-          }
-        }
-      }
-
-      expect(
-        missingLabels.size,
-        `Missing labels for segments: ${[...missingLabels].join(", ")}`,
-      ).toBe(0);
-    });
-
-    test("should capitalize grouping names in combat path descriptions", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "modifier",)).paths;
-
-      const combatPaths = paths.filter((p) => p.category === "combat");
-
-      for (const path of combatPaths) {
-        // Description should start with a capital letter
-        expect(path.description[0]).toBe(path.description[0].toUpperCase());
-      }
-    });
-
-    test("should format property types in power descriptions", async () => {
-      const ruleset = await getDnd35Ruleset();
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id,
-        "modifier",)).paths;
-
-      // Power property paths like powers.magicmissile.properties.SPELL_SCHOOL
-      const propertyPaths = paths.filter((p) => p.path.includes(".properties."));
-
-      expect(propertyPaths.length).toBeGreaterThan(0);
-
-      for (const path of propertyPaths) {
-        // Description should not contain UPPER_SNAKE_CASE property types
-        expect(path.description).not.toMatch(/[A-Z]{2,}_[A-Z]/);
-      }
-    });
-  });
-
-  describe("requirementOnly filtering", () => {
-    test("total fields should not appear in modifier paths", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).paths;
-
-      const totalPaths = paths.filter((p) => p.path.endsWith(".total"));
-      expect(totalPaths.length).toBe(0);
-    });
-
-    test("total fields should appear in requirement paths", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "requirement")).paths;
-
-      const totalPaths = paths.filter((p) => p.path.endsWith(".total"));
-      expect(totalPaths.length).toBeGreaterThan(0);
-
-      // Should have totals for combat, skills, saves, abilities
-      expect(totalPaths.some((p) => p.path.startsWith("combat.ac"))).toBe(true);
-      expect(totalPaths.some((p) => p.path.startsWith("combat.hp"))).toBe(true);
-      expect(totalPaths.some((p) => p.path.startsWith("skills."))).toBe(true);
-      expect(totalPaths.some((p) => p.path.startsWith("saves."))).toBe(true);
-      expect(totalPaths.some((p) => p.path.startsWith("abilities."))).toBe(true);
-    });
-  });
-
-  describe("entityType filtering", () => {
-    test("aptitude uses/allowed paths should appear for klass_levels", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier", "klass_levels")).paths;
-
-      const aptUsesAllowed = paths.filter((p) =>
-        p.category === "aptitudes" && (p.path.endsWith(".uses") || p.path.endsWith(".allowed")),
-      );
-      expect(aptUsesAllowed.length).toBeGreaterThan(0);
-    });
-
-    test("aptitude uses/allowed paths should appear for feats", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier", "feats")).paths;
-
-      const aptUsesAllowed = paths.filter((p) =>
-        p.category === "aptitudes" && (p.path.endsWith(".uses") || p.path.endsWith(".allowed")),
-      );
-      expect(aptUsesAllowed.length).toBeGreaterThan(0);
-    });
-
-    test("aptitude uses/allowed paths should appear for races", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier", "races")).paths;
-
-      const aptUsesAllowed = paths.filter((p) =>
-        p.category === "aptitudes" && (p.path.endsWith(".uses") || p.path.endsWith(".allowed")),
-      );
-      expect(aptUsesAllowed.length).toBeGreaterThan(0);
-    });
-
-    test("aptitude uses/allowed paths should NOT appear for items", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier", "items")).paths;
-
-      const aptUsesAllowed = paths.filter((p) =>
-        p.category === "aptitudes" && (p.path.endsWith(".uses") || p.path.endsWith(".allowed")),
-      );
-      expect(aptUsesAllowed.length).toBe(0);
-    });
-
-    test("aptitude uses/allowed paths should NOT appear for powers", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier", "powers")).paths;
-
-      const aptUsesAllowed = paths.filter((p) =>
-        p.category === "aptitudes" && (p.path.endsWith(".uses") || p.path.endsWith(".allowed")),
-      );
-      expect(aptUsesAllowed.length).toBe(0);
-    });
-
-    test("non-aptitude paths should appear regardless of entityType", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier", "items")).paths;
-
-      // Combat, abilities, skills etc. should still be available
+  test("offers aptitude uses and picks only to the entities that grant them", async () => {
+    for (const entityType of ["klass_levels", "feats", "races", undefined] as const) {
+      expect((await seedPaths("modifier", entityType)).paths.some(isAptitudeGrant)).toBe(true);
+    }
+    for (const entityType of ["items", "powers"] as const) {
+      const { paths } = await seedPaths("modifier", entityType);
+      expect(paths.filter(isAptitudeGrant)).toEqual([]);
       expect(paths.some((p) => p.category === "combat")).toBe(true);
-      expect(paths.some((p) => p.category === "abilities")).toBe(true);
-      expect(paths.some((p) => p.category === "skills")).toBe(true);
+    }
+  });
+
+  test("lists spell slots per level, and spells known by class, never by domain or specialty", async () => {
+    const { paths } = await seedPaths("requirement");
+    expect(paths.some((p) => p.path.startsWith("aptitudes.wizardspells.0."))).toBe(true);
+
+    const known = paths.filter((p) => p.category === "powers" && p.path.endsWith(".known")).map((p) => p.path);
+    expect(known.some((path) => path.includes(".wizard."))).toBe(true);
+    expect(known.filter((path) => /spells\.known|domain|specialist/.test(path))).toEqual([]);
+  });
+
+  test("lists a fork's inherited paths", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const { user } = await createTestUser();
+    const fork = await createTestRuleset(user.id, { rulesetId, ancestorRulesetIds: [rulesetId] });
+    const { paths, segmentLabels } = await TargetPathsMethods.getTargetPathsWithLabels(fork.id, "modifier");
+    expect(paths.some((p) => p.path.startsWith("aptitudes.wizardspells.0."))).toBe(true);
+    expect(segmentLabels.strength).toBe("Strength");
+  });
+
+  test("throws NotFoundError for a missing ruleset", async () => {
+    await expect(TargetPathsMethods.getTargetPathsWithLabels(NIL_UUID, "modifier")).rejects.toThrow(NotFoundError);
+  });
+
+  describe("completing a path", () => {
+    const complete = async (partialPath: string, kind: Kind, { search, limit = 50, page = 1, flat = false }: { search?: string; limit?: number; page?: number; flat?: boolean } = {}) => {
+      const { rulesetId } = await getSeedCtx();
+      return await TargetPathsMethods.getCompletions(rulesetId, partialPath, partialPath.length, kind, undefined, search, limit, page, flat);
+    };
+    const pathsOf = (result: Awaited<ReturnType<typeof complete>>) => result.items.map((item) => item.path);
+
+    // The path browser's search box: any leaf, whatever the drilled prefix.
+    test("finds leaves anywhere by their path or a segment's label, in order, a page at a time", async () => {
+      // "Knowledge (Arcana)" is only the label of the knowledgearcana segment.
+      const byLabel = pathsOf(await complete("", "modifier", { search: "knowledge (arcana)", flat: true }));
+      expect(byLabel).toContain("skills.knowledgearcana.misc");
+      expect(byLabel).toEqual([...byLabel].sort());
+
+      const [first, second] = [await complete("", "modifier", { search: "strength", flat: true, limit: 3 }), await complete("", "modifier", { search: "strength", flat: true, limit: 3, page: 2 })];
+      expect([first.nextPage, second.nextPage]).toEqual([2, 3]);
+      expect([...pathsOf(first), ...pathsOf(second)].every((path) => path?.includes("strength"))).toBe(true);
+      expect(pathsOf(second).filter((path) => pathsOf(first).includes(path))).toEqual([]);
     });
 
-    test("no entityType returns all paths including aptitude uses/allowed", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).paths;
+    test("describe a wildcard as all of a kind when modifying, and any when requiring", async () => {
+      const wildcard = async (kind: Kind) => (await complete("abilities.", kind)).items.find((item) => item.label === "*")?.detail;
+      expect([await wildcard("modifier"), await wildcard("requirement")]).toEqual(["All abilities", "Any ability"]);
+    });
 
-      const aptUsesAllowed = paths.filter((p) =>
-        p.category === "aptitudes" && (p.path.endsWith(".uses") || p.path.endsWith(".allowed")),
-      );
-      expect(aptUsesAllowed.length).toBeGreaterThan(0);
+    test("offer a leaf's siblings when the path goes a dot past it", async () => {
+      expect((await complete("abilities.strength.misc.", "modifier")).items.map((item) => item.insertText)).toEqual(["misc"]);
+    });
+
+    test("describe each weapon by its name", async () => {
+      expect((await complete("items.weapons.", "modifier", { limit: 1 })).items).toMatchObject([{ label: "bastardsword", detail: "Bastard Sword weapon stats" }]);
     });
   });
 
-  describe("spell known paths", () => {
-    test("spell known paths should use short class slugs", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "requirement")).paths;
+  describe("validating a path", () => {
+    const validate = async (path: string, kind: Kind = "modifier") => TargetPathsMethods.validatePath((await getSeedCtx()).rulesetId, path, kind);
 
-      const knownPaths = paths.filter((p) => p.path.endsWith(".known") && p.category === "powers");
-      expect(knownPaths.length).toBeGreaterThan(0);
-
-      // Should have short slugs like "wizard" not "wizardspells"
-      const wizardKnown = knownPaths.filter((p) => p.path.includes(".wizard."));
-      expect(wizardKnown.length).toBeGreaterThan(0);
-
-      // Should NOT have old-style "wizardspells" slugs
-      const oldStylePaths = knownPaths.filter((p) => p.path.includes("spells.known"));
-      expect(oldStylePaths.length).toBe(0);
+    test("accepts a full path", async () => {
+      expect(await validate("abilities.strength.misc")).toMatchObject({ isValid: true, errors: [], suggestions: [] });
+      expect(await validate("abilities.strength.total", "requirement")).toMatchObject({ isValid: true });
     });
 
-    test("domain/specialist aptitudes should not generate known paths", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "requirement")).paths;
-
-      const knownPaths = paths.filter((p) => p.path.endsWith(".known") && p.category === "powers");
-
-      // No domain or specialist slugs in known paths
-      const domainKnown = knownPaths.filter((p) => p.path.includes("domain"));
-      expect(domainKnown.length).toBe(0);
-
-      const specialistKnown = knownPaths.filter((p) => p.path.includes("specialist"));
-      expect(specialistKnown.length).toBe(0);
-    });
-  });
-
-  describe("wildcard labels and descriptions", () => {
-    test("wildcard segment should have 'All' label", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).segmentLabels;
-
-      expect(labels["*"]).toBe("All");
+    test("refuses an unknown category, suggesting close ones", async () => {
+      expect((await validate("")).errors[0]).toMatchObject({ code: "INVALID_CATEGORY", severity: "error" });
+      const result = await validate("abil.something");
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0]).toMatchObject({ code: "INVALID_CATEGORY", message: expect.stringContaining("Unknown category 'abil'") });
+      expect(result.suggestions).toEqual(["abilities"]);
     });
 
-    test("wildcard modifier paths should use 'All' in descriptions", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).paths;
-
-      const wildcardPaths = paths.filter((p) => p.path.includes(".*"));
-      expect(wildcardPaths.length).toBeGreaterThan(0);
-
-      // Modifier wildcard descriptions should say "All" not "Any"
-      for (const p of wildcardPaths) {
-        if (p.description.includes("Any") || p.description.includes("any")) {
-          throw new Error(`Modifier wildcard path "${p.path}" has "Any" in description: "${p.description}"`);
-        }
-      }
+    test("warns about a path that stops short, suggesting how it goes on", async () => {
+      const result = await validate("abilities.strength");
+      expect(result).toMatchObject({ isValid: false, errors: [{ code: "INCOMPLETE_PATH", severity: "warning" }] });
+      expect(result.suggestions).toContain("abilities.strength.misc");
     });
 
-    test("wildcard requirement paths should use 'Any' in descriptions", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "requirement")).paths;
-
-      // Feat family wildcards should use "Any"
-      const featWildcards = paths.filter((p) => p.category === "feats" && p.path.includes(".*"));
-      expect(featWildcards.length).toBeGreaterThan(0);
-
-      for (const p of featWildcards) {
-        expect(p.description).toMatch(/^Any /);
-      }
-    });
-
-    test("spell possession slug labels should strip 'Spells' suffix", async () => {
-      const ruleset = await getDnd35Ruleset();
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(ruleset.id, "modifier")).segmentLabels;
-
-      // "wizard" should map to "Wizard" (not "Wizard Spells")
-      expect(labels.wizard).toBe("Wizard");
-    });
-  });
-
-  describe("COW fork", () => {
-    test("should return target paths for a forked ruleset that inherits parent entities", async () => {
-      const parentRuleset = await getDnd35Ruleset();
-
-      const { user } = await createTestUser();
-      const childRulesets = await Rulesets.create(db, {
-        name: `Fork ${Math.random().toString(36).substr(2, 9)}`,
-        description: "COW fork for target paths",
-        private: true,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: user.id,
-        rulesetId: parentRuleset.id,
-        ancestorRulesetIds: [parentRuleset.id],
-      });
-      const childRuleset = childRulesets[0];
-
-      const paths = (await TargetPathsMethods.getTargetPathsWithLabels(childRuleset.id, "modifier")).paths;
-
-      expect(paths).toBeDefined();
-      expect(paths.length).toBeGreaterThan(0);
-
-      // Should include inherited entity paths (abilities, skills, etc.)
-      const abilityPaths = paths.filter((p) => p.path.startsWith("abilities."));
-      expect(abilityPaths.length).toBeGreaterThan(0);
-    });
-
-    test("should return segment labels for a forked ruleset", async () => {
-      const parentRuleset = await getDnd35Ruleset();
-
-      const { user } = await createTestUser();
-      const childRulesets = await Rulesets.create(db, {
-        name: `Fork ${Math.random().toString(36).substr(2, 9)}`,
-        description: "COW fork for segment labels",
-        private: true,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: user.id,
-        rulesetId: parentRuleset.id,
-        ancestorRulesetIds: [parentRuleset.id],
-      });
-      const childRuleset = childRulesets[0];
-
-      const labels = (await TargetPathsMethods.getTargetPathsWithLabels(childRuleset.id, "modifier")).segmentLabels;
-
-      expect(labels).toBeDefined();
-      expect(Object.keys(labels).length).toBeGreaterThan(0);
+    test("refuses a path that leaves the tree, and a total when modifying", async () => {
+      expect((await validate("abilities.nonexistent.path")).isValid).toBe(false);
+      expect((await validate("abilities.strength.total")).isValid).toBe(false);
     });
   });
 });

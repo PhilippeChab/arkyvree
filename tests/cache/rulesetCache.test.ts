@@ -1,33 +1,28 @@
 import { db } from "@/server/database/index.ts";
-import { getSeedContext, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { Feats, Items, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { getOrBuildCowData, getOrFetchRulesetData, getOrFetchRulesetRawData, invalidateRuleset, invalidateAll, isRulesetRawDataPinned } from "@/server/cache/rulesetCache.ts";
 import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
-import type { Session } from "@/shared/relations.ts";
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { makeSession, getSeedCtx, createTestRuleset, uniqueId } from "@/tests/helpers.ts";
 
 describe("rulesetCache", () => {
-  let seedCtx: SeedContext;
-
-  async function getCtx() {
-    if (!seedCtx) seedCtx = await getSeedContext(db);
-    return seedCtx;
-  }
-
   async function getRuleset() {
-    const c = await getCtx();
+    const c = await getSeedCtx();
     const ruleset = await Rulesets.findOne(db, { id: c.rulesetId });
     if (!ruleset) throw new Error("Seed ruleset not found");
     return ruleset;
   }
 
-  // Clean cache before each test to avoid cross-test pollution
-  // (the module-level caches persist across tests since they're in-memory singletons)
+  // The caches are module-level singletons: start every test from an empty one, and leave none
+  // behind holding rows written into the seeded ruleset, which the rollback undoes.
+  beforeEach(invalidateAll);
+  afterEach(invalidateAll);
+
   test("getOrBuildCowData returns correct structure for base ruleset", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const cowData = await getOrBuildCowData(ruleset);
 
@@ -41,7 +36,6 @@ describe("rulesetCache", () => {
 
   test("getOrBuildCowData returns same result on second call (cached)", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const first = await getOrBuildCowData(ruleset);
     const second = await getOrBuildCowData(ruleset);
@@ -52,7 +46,6 @@ describe("rulesetCache", () => {
 
   test("invalidateCowData clears COW cache for a specific ruleset", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const first = await getOrBuildCowData(ruleset);
     invalidateCowData(ruleset.id);
@@ -66,7 +59,6 @@ describe("rulesetCache", () => {
 
   test("getOrFetchRulesetData returns all entity types", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const cowData = await getOrBuildCowData(ruleset);
     const rulesetData = await getOrFetchRulesetData(ruleset.id, cowData);
@@ -93,7 +85,6 @@ describe("rulesetCache", () => {
 
   test("getOrFetchRulesetRawData returns same reference on cache hit", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const first = await getOrFetchRulesetRawData(ruleset.id);
     const second = await getOrFetchRulesetRawData(ruleset.id);
@@ -104,7 +95,6 @@ describe("rulesetCache", () => {
 
   test("getOrFetchRulesetData produces structurally stable composed output", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const cowData = await getOrBuildCowData(ruleset);
     const first = await getOrFetchRulesetData(ruleset.id, cowData);
@@ -131,15 +121,7 @@ describe("rulesetCache", () => {
 
     // A user-owned fork should NOT be pinned — forks come and go and pinning
     // them would starve the LRU budget intended for bases + extensions.
-    const [userFork] = await Rulesets.create(db, {
-      name: `Pin Check Fork ${Math.random().toString(36).slice(2, 9)}`,
-      description: "User-owned",
-      private: true,
-      baseRules: "Dungeons & Dragons: 3.5",
-      userId: SEED_USER_ID,
-      rulesetId: ruleset.id,
-      ancestorRulesetIds: [ruleset.id],
-    });
+    const userFork = await createTestRuleset(SEED_USER_ID, { rulesetId: ruleset.id, ancestorRulesetIds: [ruleset.id] });
     await getOrFetchRulesetRawData(userFork.id);
     expect(isRulesetRawDataPinned(userFork.id)).toBe(false);
 
@@ -153,7 +135,6 @@ describe("rulesetCache", () => {
 
   test("invalidateRuleset clears COW and raw entity caches", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const cowData = await getOrBuildCowData(ruleset);
     const rawData = await getOrFetchRulesetRawData(ruleset.id);
@@ -180,7 +161,6 @@ describe("rulesetCache", () => {
 
   test("invalidateAll clears all cached data including pinned entries", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const cowData = await getOrBuildCowData(ruleset);
     const rawData = await getOrFetchRulesetRawData(ruleset.id);
@@ -196,7 +176,7 @@ describe("rulesetCache", () => {
   });
 
   test("cached ruleset data matches DetailedCharacter expectations", async () => {
-    const c = await getCtx();
+    const c = await getSeedCtx();
     const ruleset = await getRuleset();
     invalidateAll();
 
@@ -229,7 +209,6 @@ describe("rulesetCache", () => {
 
   test("campaign-scoped raw cache is independent from base raw cache", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const fakeCampaignId = crypto.randomUUID();
 
@@ -244,7 +223,6 @@ describe("rulesetCache", () => {
 
   test("invalidateRuleset clears campaign-scoped raw entries too", async () => {
     const ruleset = await getRuleset();
-    invalidateAll();
 
     const fakeCampaignId = crypto.randomUUID();
     const campaignRaw = await getOrFetchRulesetRawData(ruleset.id, fakeCampaignId);
@@ -262,29 +240,7 @@ describe("rulesetCache", () => {
   // ──────────────────────────────────────────────────────────────
 
   describe("fork lifecycle", () => {
-    function createSession(userId: string): Session {
-      return {
-        id: `session-${Math.random().toString(36).slice(2, 11)}`,
-        userId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        deletedAt: null,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-    }
-
-    async function createFork(seedId: string) {
-      const rows = await Rulesets.create(db, {
-        name: `Cache Fork ${Math.random().toString(36).slice(2, 9)}`,
-        description: "Cache test fork",
-        private: true,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: SEED_USER_ID,
-        rulesetId: seedId,
-        ancestorRulesetIds: [seedId],
-      });
-      return rows[0];
-    }
+    const createFork = (seedId: string) => createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
 
     async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
       const cowData = await getOrBuildCowData(fork);
@@ -292,7 +248,6 @@ describe("rulesetCache", () => {
     }
 
     test("fork compose inherits all ancestor entities", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
@@ -318,7 +273,6 @@ describe("rulesetCache", () => {
     });
 
     test("items cache includes templates AND non-template catalog items (no isTemplate filter)", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const seedData = await getOrFetchRulesetData(seed.id, await getOrBuildCowData(seed));
 
@@ -331,7 +285,6 @@ describe("rulesetCache", () => {
     });
 
     test("race modifiers are included in the composed modifiers array", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const seedData = await getOrFetchRulesetData(seed.id, await getOrBuildCowData(seed));
 
@@ -346,7 +299,6 @@ describe("rulesetCache", () => {
     });
 
     test("klass sub-tables compose only rows for visible klasses/klass-levels", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const seedData = await getOrFetchRulesetData(seed.id, await getOrBuildCowData(seed));
 
@@ -362,7 +314,6 @@ describe("rulesetCache", () => {
     });
 
     test("base tier-1 is reused across multiple forks — same reference", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const seedRaw = await getOrFetchRulesetRawData(seed.id);
 
@@ -377,14 +328,13 @@ describe("rulesetCache", () => {
     });
 
     test("creating a feat in the fork appears in compose; ancestor tier-1 untouched", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
       const seedRawBefore = await getOrFetchRulesetRawData(seed.id);
       const forkBefore = await composeFork(fork);
 
       await Feats.createMany(db, [{
-        name: `Fork-only Feat ${Math.random().toString(36).slice(2, 7)}`,
+        name: `Fork-only Feat ${uniqueId()}`,
         description: "Created directly in the fork",
         rulesetId: fork.id,
       }]);
@@ -400,12 +350,11 @@ describe("rulesetCache", () => {
     });
 
     test("COW'ing a feat cascades to its modifiers, properties, and requirements in compose", async () => {
-      invalidateAll();
       const seed = await getRuleset();
 
       // Create a fresh base feat with a modifier, property, and modifier-level requirement.
       const [baseFeat] = await Feats.createMany(db, [{
-        name: `Cascade Feat ${Math.random().toString(36).slice(2, 7)}`,
+        name: `Cascade Feat ${uniqueId()}`,
         description: "For cascade test",
         rulesetId: seed.id,
       }]);
@@ -437,7 +386,7 @@ describe("rulesetCache", () => {
 
       // Fork the seed and COW the feat through the service.
       const fork = await createFork(seed.id);
-      const forkSession = createSession(SEED_USER_ID);
+      const forkSession = makeSession(SEED_USER_ID);
       await FeatsMethods.updateRulesetFeat(forkSession, fork.id, baseFeat.id, {
         name: baseFeat.name,
         description: "COW'd",
@@ -467,7 +416,6 @@ describe("rulesetCache", () => {
     });
 
     test("editing an inherited feat COWs it into the fork and replaces the ancestor entry in compose", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
@@ -477,7 +425,7 @@ describe("rulesetCache", () => {
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
 
-      const forkSession = createSession(SEED_USER_ID);
+      const forkSession = makeSession(SEED_USER_ID);
       await FeatsMethods.updateRulesetFeat(forkSession, fork.id, sampleFeat.id, {
         name: sampleFeat.name,
         description: "Edited by fork (COW)",
@@ -498,7 +446,6 @@ describe("rulesetCache", () => {
     });
 
     test("deleting an inherited feat in the fork hides it; ancestor still shows it", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
@@ -507,7 +454,7 @@ describe("rulesetCache", () => {
       );
       const sampleFeat = sampleFeats[0];
 
-      const forkSession = createSession(SEED_USER_ID);
+      const forkSession = makeSession(SEED_USER_ID);
       await FeatsMethods.deleteRulesetFeat(forkSession, fork.id, sampleFeat.id);
 
       const forkData = await composeFork(fork);
@@ -521,7 +468,6 @@ describe("rulesetCache", () => {
     });
 
     test("invalidating the base tier-1 causes forks to see fresh data on next compose", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
@@ -530,7 +476,7 @@ describe("rulesetCache", () => {
 
       // Add a new feat directly to the seed (simulating external mutation).
       await Feats.createMany(db, [{
-        name: `Seed-added Feat ${Math.random().toString(36).slice(2, 7)}`,
+        name: `Seed-added Feat ${uniqueId()}`,
         description: "Added to seed after fork composed",
         rulesetId: seed.id,
       }]);
@@ -542,7 +488,6 @@ describe("rulesetCache", () => {
     });
 
     test("service-level modifier mutation invalidates the cache and compose sees the new row", async () => {
-      invalidateAll();
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
@@ -554,7 +499,7 @@ describe("rulesetCache", () => {
 
       // Create a modifier on the inherited feat through the service (COWs the
       // feat + invalidates the fork's cache).
-      const forkSession = createSession(SEED_USER_ID);
+      const forkSession = makeSession(SEED_USER_ID);
       await ModifiersMethods.createEntityModifier(
         forkSession, fork.id, "feats", sampleFeat.id,
         { target: "abilities.strength.misc", value: "2", operator: "add" },
@@ -569,51 +514,23 @@ describe("rulesetCache", () => {
     });
 
     test("multi-extension COW: compose keeps the winner and excludes the sibling loser", async () => {
-      invalidateAll();
       const seed = await getRuleset();
 
       // Create a throwaway base feat + two system-owned extensions that each COW it.
       const [baseFeat] = await Feats.createMany(db, [{
-        name: `Sibling Base Feat ${Math.random().toString(36).slice(2, 7)}`,
+        name: `Sibling Base Feat ${uniqueId()}`,
         description: "To be COW'd by two extensions",
         rulesetId: seed.id,
       }]);
 
-      const [extA] = await Rulesets.create(db, {
-        name: `Sibling Ext A ${Math.random().toString(36).slice(2, 7)}`,
-        description: "Extension A",
-        private: false,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: null,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
-      const [extB] = await Rulesets.create(db, {
-        name: `Sibling Ext B ${Math.random().toString(36).slice(2, 7)}`,
-        description: "Extension B",
-        private: false,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: null,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
+      const extA = await createTestRuleset(null, { private: false, status: "Published", rulesetId: seed.id, ancestorRulesetIds: [seed.id] });
+      const extB = await createTestRuleset(null, { private: false, status: "Published", rulesetId: seed.id, ancestorRulesetIds: [seed.id] });
 
       const cowA = await cowEntity(db, "feats", baseFeat.id, extA.id, [seed.id], []);
       const cowB = await cowEntity(db, "feats", baseFeat.id, extB.id, [seed.id], []);
 
       // Child fork subscribed to both extensions.
-      const [child] = await Rulesets.create(db, {
-        name: `Sibling Child ${Math.random().toString(36).slice(2, 7)}`,
-        description: "Subscribes to both extensions",
-        private: true,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: SEED_USER_ID,
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [extA.id, extB.id],
-      });
+      const child = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id, ancestorRulesetIds: [seed.id], extensionRulesetIds: [extA.id, extB.id] });
       invalidateAll();
 
       const cowData = await getOrBuildCowData(child);
@@ -633,54 +550,26 @@ describe("rulesetCache", () => {
     });
 
     test("multi-extension COW on a non-feat entity (item) compose excludes the loser", async () => {
-      invalidateAll();
       const seed = await getRuleset();
 
       // Same sibling scenario as above, but on an item to prove compose's
       // exclusion logic works uniformly across entity types (races, items,
       // languages, klasses — all go through the same isExcluded filter).
       const [baseItem] = await Items.createMany(db, [{
-        name: `Sibling Base Item ${Math.random().toString(36).slice(2, 7)}`,
+        name: `Sibling Base Item ${uniqueId()}`,
         description: "To be COW'd by two extensions",
         rulesetId: seed.id,
         weight: "1",
         costGp: "1",
       }]);
 
-      const [extA] = await Rulesets.create(db, {
-        name: `Sibling Item Ext A ${Math.random().toString(36).slice(2, 7)}`,
-        description: "Extension A",
-        private: false,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: null,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
-      const [extB] = await Rulesets.create(db, {
-        name: `Sibling Item Ext B ${Math.random().toString(36).slice(2, 7)}`,
-        description: "Extension B",
-        private: false,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: null,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
+      const extA = await createTestRuleset(null, { private: false, status: "Published", rulesetId: seed.id, ancestorRulesetIds: [seed.id] });
+      const extB = await createTestRuleset(null, { private: false, status: "Published", rulesetId: seed.id, ancestorRulesetIds: [seed.id] });
 
       const cowA = await cowEntity(db, "items", baseItem.id, extA.id, [seed.id], []);
       const cowB = await cowEntity(db, "items", baseItem.id, extB.id, [seed.id], []);
 
-      const [child] = await Rulesets.create(db, {
-        name: `Sibling Item Child ${Math.random().toString(36).slice(2, 7)}`,
-        description: "Subscribes to both extensions",
-        private: true,
-        baseRules: "Dungeons & Dragons: 3.5",
-        userId: SEED_USER_ID,
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [extA.id, extB.id],
-      });
+      const child = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id, ancestorRulesetIds: [seed.id], extensionRulesetIds: [extA.id, extB.id] });
       invalidateAll();
 
       const cowData = await getOrBuildCowData(child);

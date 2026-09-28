@@ -51,7 +51,8 @@ class PropertiesRepository
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteMany(db: Db, where: { ids: string[] } | { entityIds: string[]; entityType: string }) {
+  /** `types` limits the delete to those property types, e.g. the ones a save regenerates. */
+  async deleteMany(db: Db, where: { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] }) {
     return await db
       .delete(this.table)
       .where(
@@ -59,6 +60,7 @@ class PropertiesRepository
           "ids" in where && inArray(this.table.id, where.ids),
           "entityIds" in where && inArray(this.table.entityId, where.entityIds),
           "entityType" in where && eq(this.table.entityType, where.entityType),
+          "types" in where && where.types !== undefined && inArray(this.table.type, where.types),
         ]),
       )
       .returning();

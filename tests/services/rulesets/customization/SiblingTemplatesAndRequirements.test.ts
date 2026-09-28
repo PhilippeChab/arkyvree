@@ -1,21 +1,20 @@
 import { afterEach, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Items, Properties, Requirements, Rulesets, Sessions } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { application } from "@/server/routers/application.ts";
-import { testClient } from "hono/testing";
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { api } from "@/tests/api.ts";
 
 afterEach(invalidateAll);
 
 async function setup(entityType: "items" | "feats", configure?: (copyId: string, index: number) => Promise<void>, extensionCount = 2) {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
   const source = entityType === "items"
     ? (await Items.create(db, { rulesetId: host.ancestorRulesetIds[0], name: "Audit Template", isTemplate: true }))[0]
@@ -95,16 +94,13 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
     const original = originals.find(r => r.id === target.id)!;
     expect(original.level).toBe(action === "update chain" ? "1" : "1.2.1");
     expect(target.updatedAt).toBe(original.updatedAt);
-
-    const api = testClient(application);
     const route = api.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirement_id"];
     const param = { id: host.id, entityType: "feats" as const, entityId: copies[0], requirement_id: target.id };
-    const options = { headers: { cookie: "session-id=00000000-0000-4000-8000-000000000123" } };
     const response = action === "delete leaf"
-      ? await route.$delete({ param }, options)
+      ? await route.$delete({ param })
       : await route.$put({ param, json: action === "update chain"
-        ? { level: target.level, chainingOperator: "and" }
-        : { level: target.level, target: target.target!, operator: "greater_than_or_equal", value: "17" } }, options);
+      ? { level: target.level, chainingOperator: "and" }
+      : { level: target.level, target: target.target!, operator: "greater_than_or_equal", value: "17" } });
     expect(response.status).toBe(200);
 
     const shape = (rows: typeof visible) => rows.map(r => ({ level: r.level, target: r.target, value: r.value, chainingOperator: r.chainingOperator })).sort((a, b) => a.level.localeCompare(b.level));
@@ -117,7 +113,7 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
       expect(after.some(r => originals.some(source => source.id === r.id))).toBe(false);
     }
     expect(await Requirements.findManyByEntity(db, { entityIds: copies, entityType: "feats" })).toEqual(originals);
-    expect((await route.$delete({ param }, options)).status).toBe(404);
+    expect((await route.$delete({ param })).status).toBe(404);
   });
 }
 

@@ -1,22 +1,21 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
-import { getSeedContext } from "@/database/seeds/helpers.ts";
+
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
-import { Feats, Modifiers, Properties, Requirements, Sessions } from "@/server/repositories/index.ts";
+import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { lockEntityForMutation, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 
 const pool = createTestPool();
 afterAll(() => pool.end());
 afterEach(invalidateAll);
-
 test("owner mutation waits for a competing transaction and acquires the row after rollback", async () => {
-  const seed = await getSeedContext(db);
+  const seed = await getSeedCtx();
   const writer = await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);
   const blocker = await pool.connect();
   let locking: Promise<void> | undefined;
@@ -42,7 +41,7 @@ test("owner mutation waits for a competing transaction and acquires the row afte
 });
 
 test("owner locks leave other entities independent and shared copy reads compatible", async () => {
-  const seed = await getSeedContext(db);
+  const seed = await getSeedCtx();
   const otherId = Object.values(seed.featMap).find(id => id !== seed.featMap.Toughness)!;
   await lockEntityForMutation(db, "feats", seed.featMap.Toughness);
   expect(await Feats.lockById(db, otherId, "share")).toBe(true);
@@ -63,7 +62,7 @@ test("a missing owner is rejected before customization writes", async () => {
 // (for example one that committed while this request waited on the owner lock).
 // Every customization kind re-reads its row after the lock and reports it missing.
 async function setupRemovedCustomizations() {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
   const [feat] = await Feats.createMany(db, [{ name: "Removed Customizations", rulesetId: ruleset.id }]);
   const owner = { entityId: feat.id, entityType: "feats" };
