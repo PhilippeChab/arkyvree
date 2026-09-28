@@ -2,64 +2,61 @@ import { eq } from "drizzle-orm";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { registry } from "@/database/packages/registry.ts";
+import type { ContentPackage } from "@/database/packages/types.ts";
 
+/** A package's updates in version order, checked to follow its seeds without a gap. */
+function updatesOf(pkg: ContentPackage) {
+  const versions = Object.keys(pkg.updates ?? {}).map(Number).sort((a, b) => a - b);
+  for (const [i, version] of versions.entries()) {
+    if (version !== pkg.seedsVersion + i + 1) {
+      throw new Error(`${pkg.name}: update v${version} doesn't follow v${pkg.seedsVersion + i}`);
+    }
+  }
+  return versions.map((version) => ({ version, update: pkg.updates![version] }));
+}
+
+/** The version a package's code brings a database to: its last update's, or its seeds'. */
+export const packageVersion = (pkg: ContentPackage) => updatesOf(pkg).at(-1)?.version ?? pkg.seedsVersion;
+
+/** Installs every registered package missing from the database, and brings the others up to date. */
 export async function applyPackages(db: Db) {
-  const applied = await db
-    .select({ name: contentPackagesInRules.name, version: contentPackagesInRules.version })
-    .from(contentPackagesInRules);
-
-  const appliedMap = new Map(applied.map((row) => [row.name, row.version]));
+  const applied = new Map(
+    (await db.select({ name: contentPackagesInRules.name, version: contentPackagesInRules.version }).from(contentPackagesInRules))
+      .map((row) => [row.name, row.version]),
+  );
 
   for (const pkg of registry) {
-    const appliedVersion = appliedMap.get(pkg.name);
+    const updates = updatesOf(pkg);
+    const version = packageVersion(pkg);
+    const from = applied.get(pkg.name);
 
-    if (appliedVersion === undefined) {
-      console.log(`  Installing ${pkg.name} v${pkg.version}...`);
+    if (from !== undefined && from >= version) {
+      console.log(`  ✓ ${pkg.name} v${from} already up to date`);
+      continue;
+    }
+    if (from !== undefined && from < pkg.seedsVersion) {
+      throw new Error(`${pkg.name} is at v${from}, but its changes up to v${pkg.seedsVersion} are now part of its seeds: reset this database`);
+    }
 
-      await db.transaction(async (tx) => {
-        for (const seed of pkg.seeds) {
-          await seed(tx);
-        }
+    console.log(from === undefined ? `  Installing ${pkg.name} v${version}...` : `  Updating ${pkg.name} v${from} → v${version}...`);
+    await db.transaction(async (tx) => {
+      if (from === undefined) {
+        for (const seed of pkg.seeds) await seed(tx);
+      }
+      for (const { update } of updates.filter((u) => u.version > (from ?? pkg.seedsVersion))) await update(tx);
 
-        // Seeds establish v1; apply incremental updates for v2+
-        for (let v = 2; v <= pkg.version; v++) {
-          const updateFn = pkg.updates?.[v];
-          if (!updateFn) {
-            throw new Error(`${pkg.name}: missing update function for version ${v}`);
-          }
-          await updateFn(tx);
-        }
+      if (from === undefined) {
+        await tx.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
+      } else {
+        await tx.update(contentPackagesInRules).set({ version, appliedAt: new Date() }).where(eq(contentPackagesInRules.name, pkg.name));
+      }
+    });
 
-        await tx.insert(contentPackagesInRules).values({
-          name: pkg.name,
-          type: pkg.type,
-          version: pkg.version,
-        });
-      });
-
-      console.log(`  ✓ ${pkg.name} v${pkg.version} installed`);
-    } else if (appliedVersion < pkg.version) {
-      console.log(`  Updating ${pkg.name} v${appliedVersion} → v${pkg.version}...`);
-
-      await db.transaction(async (tx) => {
-        for (let v = appliedVersion + 1; v <= pkg.version; v++) {
-          const updateFn = pkg.updates?.[v];
-          if (!updateFn) {
-            throw new Error(`${pkg.name}: missing update function for version ${v}`);
-          }
-          await updateFn(tx);
-        }
-
-        await tx
-          .update(contentPackagesInRules)
-          .set({ version: pkg.version, appliedAt: new Date() })
-          .where(eq(contentPackagesInRules.name, pkg.name));
-      });
-
-      console.log(`  ✓ ${pkg.name} updated to v${pkg.version}`);
-      console.log(`    ⚠ Restart any running server: in-memory ruleset cache is stale until reboot.`);
+    if (from === undefined) {
+      console.log(`  ✓ ${pkg.name} v${version} installed`);
     } else {
-      console.log(`  ✓ ${pkg.name} v${appliedVersion} already up to date`);
+      console.log(`  ✓ ${pkg.name} updated to v${version}`);
+      console.log(`    ⚠ Restart any running server: in-memory ruleset cache is stale until reboot.`);
     }
   }
 }

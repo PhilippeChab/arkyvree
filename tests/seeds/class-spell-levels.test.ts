@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { buildClassSpellLevels } from "@/database/packages/dnd35/seed-utils.ts";
+import { buildClassSpellLevels } from "@/database/packages/dnd35/seed/classes.ts";
 import { ALL_CLASSES as DMG_CLASSES } from "@/database/packages/dnd35-from-parser/generated/dmg/classes/index.ts";
 import { ALL_CLASSES as SRD_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
 

@@ -1,7 +1,7 @@
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { and, eq, feat, gte, or } from "@/database/packages/dnd35/seed-utils.ts";
-import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/v1/feats/weapons.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
@@ -1028,7 +1028,7 @@ export const weaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 // Wizard School feats (system-generated)
 // ---------------------------------------------------------------------------
 
-import { WIZARD_SCHOOLS, WIZARD_PROHIBITED_SCHOOL } from "@/database/packages/dnd35/v1/wizard-schools/data.ts";
+import { WIZARD_SCHOOLS, WIZARD_PROHIBITED_SCHOOL } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 
 const SPEC = "Wizard Specialization";
 const PROHIB = "Prohibited School";

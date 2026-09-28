@@ -5,29 +5,22 @@
  * This is the single source of truth for "reference JSON → seed object" conversion.
  */
 
-import type { ClassSeed } from "@/database/packages/dnd35/seed-utils/types.ts";
-import type { FeatSeed, RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import type { PowerSeed } from "@/database/packages/dnd35/v1/spells/types.ts";
-import type { DomainDefinition } from "@/database/packages/dnd35/v1/domains/types.ts";
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/v1/wizard-schools/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/v1/races/types.ts";
-import type { ItemDef } from "@/database/packages/dnd35/v1/items/types.ts";
+import type { DomainDefinition, FeatSeed, ItemDef, ModifierSeed, PowerSeed, RaceDefinition, RequirementEntry, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
 import type { ClassReference, DomainReference, FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/v1/feats/weapons.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import {
-  FAVORED_ENEMY_APTITUDE,
-  FAVORED_ENEMY_FAMILY,
   favoredEnemy as FAVORED_ENEMY_VARIANTS,
   favoredEnemySpecializationVariants as FAVORED_ENEMY_SPECIALIZATION_VARIANTS,
-} from "@/database/packages/dnd35/v1/feats/creatureTypes.ts";
+} from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
-import { WIZARD_SCHOOLS } from "@/database/packages/dnd35/v1/wizard-schools/data.ts";
+import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { stripSeparators, stripClassSuffix, mergedFeatures, normalizeDescription, expandTemplateDescription, extractGrantedFeatNames, SIMPLE_SET, MARTIAL_SET, MAX_DESC, matchesWithPluralVariants, pluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { stripSeparators, stripClassSuffix, mergedFeatures, normalizeDescription, expandTemplateDescription, SIMPLE_SET, MARTIAL_SET, matchesWithPluralVariants, pluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
 // ---------------------------------------------------------------------------
 // Existing feat lookup — set of known feat names
@@ -51,7 +44,7 @@ export function loadExistingFeats(book?: string): Set<string> {
   for (const b of books) {
     const featsPath = join(refDir, b, "feats.json");
     if (!existsSync(featsPath)) continue;
-    const ref: FeatReference = JSON.parse(readFileSync(featsPath, "utf-8"));
+    const ref = loadReference(featsPath, "feat");
     for (const feat of ref.raw) {
       const mapped = ref.mapping[feat.name];
       if (mapped?.template) continue;
@@ -157,32 +150,6 @@ export function insertOrdinalInName(name: string, ordinal: string): string {
 // Class reference → ClassSeed + FeatSeed[]
 // ---------------------------------------------------------------------------
 
-export function buildClassSeeds(ref: ClassReference): { class: ClassSeed; feats: FeatSeed[] } {
-  return {
-    class: buildClassSeed(ref),
-    feats: buildClassFeats(ref),
-  };
-}
-
-export { stripClassSuffix, mergedFeatures, normalizeDescription };
-
-/** Build a set of pool parent keys (lowercase) so the generator can skip them
- *  (pool parents are container entries, not actual feats). */
-export function buildPoolParentKeys(mf: ClassReference["mapping"]["features"], className: string, classFeatureAptitude: string): Set<string> {
-  const keys = new Set<string>();
-  const seen = new Set<string>();
-  for (const feat of Object.values(mf)) {
-    if (!feat.aptitude || feat.aptitude === classFeatureAptitude) continue;
-    if (seen.has(feat.aptitude)) continue;
-    seen.add(feat.aptitude);
-    const suffix = feat.aptitude.replace(new RegExp(`^${className}\\s+`, "i"), "");
-    const s = suffix.toLowerCase();
-    const parentEntry = Object.entries(mf).find(([key]) => matchesWithPluralVariants(key, s));
-    if (parentEntry) keys.add(parentEntry[0].toLowerCase());
-  }
-  return keys;
-}
-
 /** Build a map from pool parent variant names (lowercase) → mapping seedName.
  *  Used to resolve occurrences like "Special Ability" to "Special Abilities (Rogue)". */
 export function buildPoolParentNameMap(mf: ClassReference["mapping"]["features"], className: string, classFeatureAptitude: string): Map<string, string> {
@@ -207,185 +174,32 @@ export function buildPoolParentNameMap(mf: ClassReference["mapping"]["features"]
   return nameMap;
 }
 
-function buildClassSeed(ref: ClassReference): ClassSeed {
-  const d = ref.detected;
-  const m = ref.mapping;
-  const o = m.overrides ?? {};
-
-  const reqs = o.requirements ?? d.requirements;
-
-  const seed: ClassSeed = {
-    name: ref.raw.name,
-    description: normalizeDescription(o.description ?? ref.raw.description, MAX_DESC),
-    hd: d.hd,
-    levels: d.levels,
-    skillPoints: d.skillPoints,
-    bab: o.bab ?? d.bab,
-    saves: o.saves ?? d.saves,
-    classSkills: o.classSkills ?? ref.raw.classSkills,
-    ...(reqs.length > 0 ? { requirements: reqs } : {}),
-    ...(d.casterLevelAdvancement ? { casterLevelAdvancement: d.casterLevelAdvancement } : {}),
-    ...(m.classFeatureAptitude ? { classFeatureAptitude: m.classFeatureAptitude } : {}),
-    ...(o.proficiencies?.length ? { proficiencies: o.proficiencies } : {}),
-    ...(o.freeFeats?.length ? { freeFeats: o.freeFeats } : {}),
-    ...((o.bonusSpellAbility ?? m.bonusSpellAbility) ? { bonusSpellAbility: o.bonusSpellAbility ?? m.bonusSpellAbility } : {}),
-    ...((o.casterType ?? d.casterType) ? { casterType: o.casterType ?? d.casterType } : {}),
-    ...(m.spells ? { spells: o.spells ? { ...m.spells, ...(o.spells.known ? { known: o.spells.known, knowAll: undefined } : {}), ...(o.spells.knowAll === false ? { knowAll: undefined } : o.spells.knowAll ? { knowAll: o.spells.knowAll } : {}) } : m.spells } : {}),
-    ...(o.modifiers?.length ? { modifiers: o.modifiers } : {}),
-    ...(() => {
-      const preMerged = mergeAptitudePicks(d.aptitudePicks, o.aptitudePicks);
-      const merged = expandPerLevelAptitudePicks(preMerged, o.bonusFeatLists ?? d.bonusFeatLists, ref.raw.name) ?? [];
-      // Auto-generate aptitude picks from casterLevelAdvancement
-      const cla = d.casterLevelAdvancement;
-      if (cla) {
-        if (cla.type === "dual") {
-          merged.push({ levels: cla.levels, target: "aptitudes.bonusarcanecasterlevel.allowed" });
-          merged.push({ levels: cla.levels, target: "aptitudes.bonusdivinecasterlevel.allowed" });
-        } else if (cla.type === "arcane") {
-          merged.push({ levels: cla.levels, target: "aptitudes.bonusarcanecasterlevel.allowed" });
-        } else if (cla.type === "divine") {
-          merged.push({ levels: cla.levels, target: "aptitudes.bonusdivinecasterlevel.allowed" });
-        } else {
-          merged.push({ levels: cla.levels, target: "aptitudes.bonuscasterlevel.allowed" });
-        }
-      }
-      const { remap, perLevel } = buildAptitudeExpansionMaps(preMerged, merged);
-      // Strip aptitude picks that are already handled by feat modifiers on class features.
-      // The feat owns the modifier (class level grants feat → feat adds the pick).
-      const mf_ = mergedFeatures(ref);
-      const featModTargets = new Set<string>();
-      for (const feat of Object.values(mf_)) {
-        if (feat.modifiers) {
-          for (const mod of feat.modifiers) {
-            if (mod.operator === "add" && mod.target.startsWith("aptitudes.") && mod.target.endsWith(".allowed")) {
-              const remapped = remap.get(mod.target);
-              if (remapped) {
-                featModTargets.add(remapped);
-              } else {
-                const expansions = perLevel.get(mod.target);
-                if (expansions) {
-                  for (const exp of expansions) featModTargets.add(exp.newTarget);
-                } else {
-                  featModTargets.add(mod.target);
-                }
-              }
-            }
-          }
-        }
-      }
-      const filtered = merged.filter((p) => !featModTargets.has(p.target));
-      return filtered.length ? { aptitudePicks: filtered } : {};
-    })(),
-  };
-
-  // Build class features from detected + mapping (with overrides applied)
-  // Split into classFeatures vs freeFeats based on existing feat lookup
-  const mf = mergedFeatures(ref);
-  const poolParentNames = buildPoolParentNameMap(mf, ref.raw.name, m.classFeatureAptitude);
-  const existingFeats = loadExistingFeats(ref._meta.book);
-  const features: [number, string][] = [];
-  const autoFreeFeats: [number, string, string][] = [];
-
-  // Build per-level feat name map for multi-occurrence aptitude expansions
-  // e.g. "Bonus Feat" at levels [1,2,6] → level 1 → "Bonus Feat 1st (Monk)", etc.
-  const preMergedForNames = mergeAptitudePicks(d.aptitudePicks, o.aptitudePicks);
-  const expandedForNames = expandPerLevelAptitudePicks(preMergedForNames, o.bonusFeatLists ?? d.bonusFeatLists, ref.raw.name);
-  const { perLevel: perLevelForNames } = buildAptitudeExpansionMaps(preMergedForNames, expandedForNames);
-  const perLevelFeatNames = new Map<string, Map<number, string>>();
-  for (const [key, feat] of Object.entries(mf)) {
-    if (!feat.modifiers) continue;
-    for (const mod of feat.modifiers) {
-      if (perLevelForNames.has(mod.target)) {
-        const baseName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
-        const levelMap = new Map<number, string>();
-        for (const exp of perLevelForNames.get(mod.target)!) {
-          const name = insertOrdinalInName(baseName, exp.ordinal);
-          for (const level of exp.levels) levelMap.set(level, name);
-        }
-        perLevelFeatNames.set(key.toLowerCase(), levelMap);
-      }
-    }
-  }
-
-  for (const occ of d.featureOccurrences) {
-    // Use occurrenceMap for variant→parent resolution, fall back to case-insensitive match
-    const mappingKey = m.occurrenceMap?.[occ.name];
-    const mapped = mappingKey && mf[mappingKey] ? [mappingKey, mf[mappingKey]] as const
-      : Object.entries(mf).find(([key]) => key.toLowerCase() === occ.name.toLowerCase()) as [string, typeof mf[string]] | undefined;
-    if (mapped && "skip" in mapped[1] && mapped[1].skip) continue;
-    if (occ.name.startsWith("Table:")) continue;
-    const name = (mapped ? mapped[1].seedName : undefined) ?? poolParentNames.get(occ.name.toLowerCase()) ?? occ.name;
-
-    // Check if this is an existing feat (with or without class suffix)
-    const baseName = stripClassSuffix(name, ref.raw.name);
-    let freeFeatName = baseName && existingFeats.has(baseName) ? baseName
-      : existingFeats.has(name) ? name
-      : undefined;
-    // Fallback: parse description for "gains X as a bonus feat" patterns
-    if (!freeFeatName && mapped?.[1]?.description) {
-      const granted = extractGrantedFeatNames(mapped[1].description);
-      freeFeatName = granted.find((n) => existingFeats.has(n));
-    }
-    if (freeFeatName && m.classFeatureAptitude) {
-      for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, m.classFeatureAptitude]);
-    } else {
-      // Check for per-level split names
-      const resolvedKey = mapped ? mapped[0].toLowerCase() : occ.name.toLowerCase();
-      const levelMap = perLevelFeatNames.get(resolvedKey);
-      for (const level of occ.levels) {
-        features.push([level, levelMap?.get(level) ?? name]);
-      }
-    }
-  }
-
-  // Add mapping features that have a level but no matching occurrence
-  // (e.g. "Weapon and Armor Proficiency" — not in progression table, only in class features text)
-  const coveredKeys = new Set<string>();
-  for (const occ of d.featureOccurrences) {
-    const key = m.occurrenceMap?.[occ.name] ?? occ.name;
-    coveredKeys.add(key.toLowerCase());
-  }
-  for (const [key, feat] of Object.entries(mf)) {
-    if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
-    // Skip pool sub-options (they're selectable picks, not auto-granted)
-    if (feat.aptitude && feat.aptitude !== m.classFeatureAptitude) continue;
-    const name = feat.seedName ?? key;
-    const baseName = stripClassSuffix(name, ref.raw.name);
-    let freeFeatName = baseName && existingFeats.has(baseName) ? baseName
-      : existingFeats.has(name) ? name
-      : undefined;
-    if (!freeFeatName && feat.description) {
-      const granted = extractGrantedFeatNames(feat.description);
-      freeFeatName = granted.find((n) => existingFeats.has(n));
-    }
-    if (freeFeatName && m.classFeatureAptitude) {
-      autoFreeFeats.push([feat.level, freeFeatName, m.classFeatureAptitude]);
-    } else {
-      features.push([feat.level, name]);
-    }
-  }
-
-  features.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
-  autoFreeFeats.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
-  if (features.length > 0) seed.classFeatures = features;
-
-  // Merge auto-detected freeFeats with any from mapping
-  const allFreeFeats = [...(o.freeFeats ?? []), ...autoFreeFeats];
-  if (allFreeFeats.length > 0) seed.freeFeats = allFreeFeats;
-
-  return seed;
-}
-
 const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
   { pattern: /^(?:Turn or Rebuke Undead|Turn Undead|Rebuke Undead)\b/i, family: "Turn or Rebuke Undead" },
   { pattern: /^Wild Shape\b/i, family: "Wild Shape" },
 ];
 
-function detectClassFeatFamily(name: string): string | undefined {
+export function detectClassFeatFamily(name: string): string | undefined {
   for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
     if (pattern.test(name)) return family;
   }
   return undefined;
+}
+
+/**
+ * A class's aptitude picks: detected, with the overrides' (`mergedPicks`), then split per level where a bonus feat
+ * list has one per level (`aptitudePicks`), and the first level each aptitude gets a pick (by slug).
+ */
+export function classAptitudePicks(ref: ClassReference) {
+  const overrides = ref.mapping.overrides;
+  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
+  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists, ref.raw.name);
+  const aptitudeMinLevel = new Map<string, number>();
+  for (const pick of aptitudePicks ?? []) {
+    const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
+    if (slug) aptitudeMinLevel.set(slug, Math.min(...pick.levels));
+  }
+  return { mergedPicks, aptitudePicks, aptitudeMinLevel };
 }
 
 function buildClassFeats(ref: ClassReference): FeatSeed[] {
@@ -394,18 +208,7 @@ function buildClassFeats(ref: ClassReference): FeatSeed[] {
   const classSlug = stripSeparators(ref.raw.name);
   const existingFeats = loadExistingFeats(ref._meta.book);
 
-  // Build map from aptitude slug → minimum pick level
-  const aptitudeMinLevel = new Map<string, number>();
-  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, ref.mapping.overrides?.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, ref.mapping.overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists, ref.raw.name);
-  if (aptitudePicks) {
-    for (const pick of aptitudePicks) {
-      const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
-      if (slugMatch) {
-        aptitudeMinLevel.set(slugMatch[1], Math.min(...pick.levels));
-      }
-    }
-  }
+  const { mergedPicks, aptitudePicks, aptitudeMinLevel } = classAptitudePicks(ref);
 
   // Build expansion maps for aptitude target remapping
   const { remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = buildAptitudeExpansionMaps(mergedPicks, aptitudePicks);
@@ -535,20 +338,7 @@ function buildClassFeats(ref: ClassReference): FeatSeed[] {
 // Domain reference → DomainDefinition[]
 // ---------------------------------------------------------------------------
 
-/**
- * Build a slug→name lookup from the spells reference.
- * Domain spell links use href anchors (e.g. "#obscuring-mist") that match
- * the spell page's <a id="obscuring-mist"> — so we can resolve canonical names.
- */
-export function buildSpellSlugMap(spellRef: SpellReference): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const spell of spellRef.raw) {
-    map.set(spell.slug, spell.name);
-  }
-  return map;
-}
-
-export function buildDomainSeeds(ref: DomainReference, spellSlugMap?: Map<string, string>): DomainDefinition[] {
+export function buildDomainSeeds(ref: DomainReference): DomainDefinition[] {
   return ref.raw.map((entry) => {
     const mapping = ref.mapping?.[entry.name];
     const override = ref.mapping?.overrides?.[entry.name];
@@ -558,12 +348,8 @@ export function buildDomainSeeds(ref: DomainReference, spellSlugMap?: Map<string
       name: override?.name ?? entry.name,
       description: mapping?.description ?? entry.description,
       ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
-      spells: spellSource.map((s) => {
-        // Resolve canonical name from slug if available
-        const slug = "slug" in s ? (s as { slug?: string }).slug : undefined;
-        const resolved = slug && spellSlugMap ? spellSlugMap.get(slug) : undefined;
-        return { name: resolved ?? s.name, level: s.level };
-      }).sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
+      spells: spellSource.map((s) => ({ name: s.name, level: s.level }))
+        .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
     };
   });
 }
@@ -624,8 +410,6 @@ export function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   return results;
 }
 
-export { FAVORED_ENEMY_APTITUDE, FAVORED_ENEMY_FAMILY };
-
 export function buildFavoredEnemyFeats(): FeatSeed[] {
   return [...FAVORED_ENEMY_VARIANTS, ...FAVORED_ENEMY_SPECIALIZATION_VARIANTS];
 }
@@ -680,7 +464,7 @@ export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
   }
 
   for (const file of readdirSync(classDir).filter((f) => f.endsWith(".json"))) {
-    const ref = JSON.parse(readFileSync(join(classDir, file), "utf-8")) as ClassReference;
+    const ref = loadReference(join(classDir, file), "class");
 
     // Bonus feat lists → aptitudes
     const lists = ref.detected?.bonusFeatLists;
@@ -714,7 +498,7 @@ export function loadBonusFeatClassLevels(book: string): Map<string, { classSlug:
   if (!existsSync(classDir)) return map;
 
   for (const file of readdirSync(classDir).filter((f) => f.endsWith(".json"))) {
-    const ref = JSON.parse(readFileSync(join(classDir, file), "utf-8")) as ClassReference;
+    const ref = loadReference(join(classDir, file), "class");
     const lists = ref.detected?.bonusFeatLists;
     if (!lists) continue;
     const classSlug = file.replace(".json", "");
@@ -767,10 +551,6 @@ export function buildFeatSeeds(ref: FeatReference, book?: string): FeatSeed[] {
   if (book === "srd") {
     results.push(...buildWizardSchoolFeatSeeds());
     results.push(...buildWeaponProficiencyFeatSeeds());
-  }
-  // Append class feature feats from class seed JSONs
-  if (book) {
-    results.push(...loadClassFeatureSeeds(book));
   }
 
   return results;
@@ -827,30 +607,6 @@ function buildWeaponProficiencyFeatSeeds(): FeatSeed[] {
   ];
 }
 
-function loadClassFeatureSeeds(book: string): FeatSeed[] {
-  const classDir = join(import.meta.dirname!, "../generated", book, "classes");
-  if (!existsSync(classDir)) return [];
-
-  const results: FeatSeed[] = [];
-  for (const file of readdirSync(classDir)) {
-    if (!file.endsWith(".seed.json")) continue;
-    const data = JSON.parse(readFileSync(join(classDir, file), "utf-8"));
-    for (const feat of data.feats ?? []) {
-      results.push({
-        name: feat.name,
-        description: normalizeDescription(feat.description ?? ""),
-        aptitudes: feat.aptitudes ?? [],
-        ...(feat.requirements?.length ? { requirements: feat.requirements } : {}),
-        ...(feat.modifiers?.length ? { modifiers: feat.modifiers } : {}),
-        ...(feat.properties?.length ? { properties: feat.properties } : {}),
-        ...(feat.stackable ? { stackable: true } : {}),
-        ...(feat.selectable === false ? { selectable: false } : {}),
-      });
-    }
-  }
-  return results;
-}
-
 // ---------------------------------------------------------------------------
 // Aptitude collection
 // ---------------------------------------------------------------------------
@@ -864,26 +620,10 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
   const classRefDir = join(refBase, book, "classes");
   if (existsSync(classRefDir)) {
     for (const file of readdirSync(classRefDir).filter((f) => f.endsWith(".json"))) {
-      const ref: ClassReference = JSON.parse(readFileSync(join(classRefDir, file), "utf-8"));
-      const seeds = buildClassSeeds(ref);
-      if (seeds.feats) allFeats.push(...seeds.feats);
-
-      const cls = seeds.class;
-      if (cls?.classFeatureAptitude) names.add(cls.classFeatureAptitude);
-      for (const pick of cls?.aptitudePicks ?? []) {
-        const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
-        if (slug) {
-          const match = [...names].find((n) => stripSeparators(n) === slug);
-          if (!match) {
-            for (const feat of allFeats) {
-              for (const apt of feat.aptitudes) {
-                if (stripSeparators(apt) === slug) { names.add(apt); break; }
-              }
-            }
-          }
-        }
-      }
-      if (cls?.spells) names.add(`${cls.name} Spells`);
+      const ref = loadReference(join(classRefDir, file), "class");
+      allFeats.push(...buildClassFeats(ref));
+      if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
+      if (ref.mapping.spells) names.add(`${ref.raw.name} Spells`);
 
       // From detected bonusFeatLists
       if (ref.detected?.bonusFeatLists) {
@@ -923,7 +663,7 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
     if (existsSync(domainFeatsPath)) {
       const masterDomainPath = join(refBase, "domains.json");
       if (existsSync(masterDomainPath)) {
-        const domainRef: DomainReference = JSON.parse(readFileSync(masterDomainPath, "utf-8"));
+        const domainRef = loadReference(masterDomainPath, "domain");
         // Read generated domain names to filter
         const generatedContent = readFileSync(generatedDomainPath, "utf-8");
         for (const entry of domainRef.raw) {
@@ -939,7 +679,7 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
   // Wizard school aptitudes
   const wsRefPath = join(refBase, book, "wizardSchools.json");
   if (existsSync(wsRefPath)) {
-    const wsRef = JSON.parse(readFileSync(wsRefPath, "utf-8"));
+    const wsRef = loadReference(wsRefPath, "wizardSchool");
     for (const school of buildWizardSchoolSeeds(wsRef)) {
       names.add(`${school.name} Specialist Spells`);
     }
@@ -951,7 +691,7 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
   if (book !== "srd") {
     const spellRefPath = join(refBase, book, "spells.json");
     if (existsSync(spellRefPath)) {
-      const spellRef = JSON.parse(readFileSync(spellRefPath, "utf-8"));
+      const spellRef = loadReference(spellRefPath, "spell");
       const { spells } = buildSpellSeeds(spellRef, book);
       for (const spell of spells) {
         for (const apt of spell.aptitudes) spellAptitudes.add(apt);
@@ -967,10 +707,9 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
     const otherClassDir = join(refBase, other.name, "classes");
     if (!existsSync(otherClassDir)) continue;
     for (const f of readdirSync(otherClassDir).filter((f) => f.endsWith(".json"))) {
-      const ref: ClassReference = JSON.parse(readFileSync(join(otherClassDir, f), "utf-8"));
-      const seeds = buildClassSeeds(ref);
-      if (seeds.class?.classFeatureAptitude) names.delete(seeds.class.classFeatureAptitude);
-      const spellApt = seeds.class?.spells ? `${seeds.class.name} Spells` : null;
+      const ref = loadReference(join(otherClassDir, f), "class");
+      if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
+      const spellApt = ref.mapping.spells ? `${ref.raw.name} Spells` : null;
       if (spellApt) {
         if (isSibling && spellAptitudes.has(spellApt)) {
           names.add(spellApt);
@@ -1173,7 +912,7 @@ function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Rec
         for (const file of readdirSync(classDir)) {
           if (!file.endsWith(".json")) continue;
           try {
-            const ref = JSON.parse(readFileSync(join(classDir, file), "utf-8")) as ClassReference;
+            const ref = loadReference(join(classDir, file), "class");
             if (ref.mapping?.spells && ref.raw?.name) {
               const aptName = `${ref.raw.name} Spells`;
               classMap[ref.raw.name] = aptName;

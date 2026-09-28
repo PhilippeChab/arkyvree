@@ -1,6 +1,6 @@
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { RequirementEntry } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { loadExistingFeats, mergeAptitudePicks, expandPerLevelAptitudePicks, buildPoolParentNameMap, buildAptitudeExpansionMaps, insertOrdinalInName } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { buildAptitudeExpansionMaps, buildPoolParentNameMap, classAptitudePicks, detectClassFeatFamily, expandPerLevelAptitudePicks, insertOrdinalInName, loadExistingFeats, mergeAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, mergedFeatures, collectImportsFromReq, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   toConstName,
@@ -35,10 +35,10 @@ export function generateClassSeed(ref: ClassReference): string {
 
   const lines: string[] = [];
 
-  lines.push(`import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";`);
+  lines.push(`import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`);
   if (imports.size > 0) {
     const importList = Array.from(imports).sort().join(", ");
-    lines.push(`import { ${importList} } from "@/database/packages/dnd35/v1/feats/types.ts";`);
+    lines.push(`import { ${importList} } from "@/database/packages/dnd35/content/requirements.ts";`);
   }
   lines.push("");
   lines.push(`export const ${constName}: ClassSeed = {`);
@@ -218,18 +218,7 @@ export function generateFeatSeeds(ref: ClassReference): string {
   const overrides = mapping.overrides ?? {};
   const classSlug = stripSeparators(ref.raw.name);
 
-  // Build map from aptitude slug → minimum pick level
-  const aptitudeMinLevel = new Map<string, number>();
-  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides.bonusFeatLists ?? ref.detected.bonusFeatLists, ref.raw.name);
-  if (aptitudePicks) {
-    for (const pick of aptitudePicks) {
-      const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
-      if (slugMatch) {
-        aptitudeMinLevel.set(slugMatch[1], Math.min(...pick.levels));
-      }
-    }
-  }
+  const { mergedPicks, aptitudePicks, aptitudeMinLevel } = classAptitudePicks(ref);
 
   // Build expansion maps for aptitude target remapping
   const { remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = buildAptitudeExpansionMaps(mergedPicks, aptitudePicks);
@@ -250,7 +239,7 @@ export function generateFeatSeeds(ref: ClassReference): string {
       }
     }
   }
-  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";`);
+  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`);
   const allImports = new Set([...modImports]);
   const IMPORT_PLACEHOLDER = `__SEED_UTILS_IMPORT__`;
   lines.push(IMPORT_PLACEHOLDER);
@@ -389,7 +378,7 @@ export function generateFeatSeeds(ref: ClassReference): string {
   const idx = lines.indexOf(IMPORT_PLACEHOLDER);
   if (idx !== -1) {
     if (allImports.size > 0) {
-      lines[idx] = `import { ${Array.from(allImports).sort().join(", ")} } from "@/database/packages/dnd35/seed-utils.ts";`;
+      lines[idx] = `import { ${Array.from(allImports).sort().join(", ")} } from "@/database/packages/dnd35/content/requirements.ts";`;
     } else {
       lines.splice(idx, 1);
     }
@@ -509,22 +498,6 @@ function findMappedName(
     if (key.toLowerCase() === lower) return val.seedName;
   }
 
-  return undefined;
-}
-
-// ---------------------------------------------------------------------------
-// FEAT_FAMILY detection for class features
-// ---------------------------------------------------------------------------
-
-const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
-  { pattern: /^(?:Turn or Rebuke Undead|Turn Undead|Rebuke Undead)\b/i, family: "Turn or Rebuke Undead" },
-  { pattern: /^Wild Shape\b/i, family: "Wild Shape" },
-];
-
-function detectClassFeatFamily(name: string): string | undefined {
-  for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
-    if (pattern.test(name)) return family;
-  }
   return undefined;
 }
 

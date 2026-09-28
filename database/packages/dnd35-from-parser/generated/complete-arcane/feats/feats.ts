@@ -1,5 +1,5 @@
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { eq, feat, gte, or } from "@/database/packages/dnd35/seed-utils.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 
 export const GENERAL_FEATS: FeatSeed[] = [

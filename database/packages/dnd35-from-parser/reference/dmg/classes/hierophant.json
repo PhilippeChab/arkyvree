@@ -5,189 +5,44 @@
     "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/hierophant/",
     "type": "class"
   },
-  "detected": {
-    "aptitudePicks": [
-      {
-        "levels": [
-          1,
-          2,
-          3,
-          4,
-          5
-        ],
-        "target": "aptitudes.hierophantspecialability.allowed"
-      }
-    ],
-    "bab": "poor",
-    "featNameMap": {},
-    "featureOccurrences": [
-      {
-        "levels": [
-          1,
-          2,
-          3,
-          4,
-          5
-        ],
-        "name": "Special Ability"
-      }
-    ],
-    "hd": 8,
-    "levels": 5,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.knowledgereligion.rank",
-        "value": "15",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.metamagic.*.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "spellcasting.divine",
-        "value": "7",
-        "valueType": "number"
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "good"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Hierophant Class Feature",
+  "overrides": {
+    "description": "A divine caster who has attained great standing with their deity unlocks extraordinary magical powers and capabilities far beyond those available to ordinary followers.",
     "features": {
       "Blast Infidel": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "The hierophant can maximize the effects of negative energy spells when targeting creatures whose alignment directly opposes the hierophant's own. Any spell that inflicts or channels negative energy (such as inflict spells, mass inflict light wounds, or harm) used against an opposed-alignment creature functions as though affected by the Maximize Spell feat, without requiring a higher-level spell slot. Undead subjected to this effect recover the maximized amount of hit points.",
-        "level": 1,
-        "selectable": true
+        "description": "The hierophant can maximize the effects of negative energy spells when targeting creatures whose alignment directly opposes the hierophant's own. Any spell that inflicts or channels negative energy (such as inflict spells, mass inflict light wounds, or harm) used against an opposed-alignment creature functions as though affected by the Maximize Spell feat, without requiring a higher-level spell slot. Undead subjected to this effect recover the maximized amount of hit points."
       },
       "Divine Reach": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "Touch spells cast by the hierophant can affect targets within 30 feet. A ranged touch attack replaces the normal melee touch attack for such spells. This ability may be chosen a second time, extending the range to 60 feet.",
-        "level": 1,
-        "selectable": true,
-        "stackable": true
+        "description": "Touch spells cast by the hierophant can affect targets within 30 feet. A ranged touch attack replaces the normal melee touch attack for such spells. This ability may be chosen a second time, extending the range to 60 feet."
       },
       "Faith Healing": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "The hierophant can maximize the effects of healing spells cast on creatures that share the hierophant's alignment, including the hierophant. Any spell bearing the healing descriptor cast on an alignment-matched creature functions as if enhanced by the Maximize Spell feat, at no increase in spell slot level.",
-        "level": 1,
-        "selectable": true
+        "description": "The hierophant can maximize the effects of healing spells cast on creatures that share the hierophant's alignment, including the hierophant. Any spell bearing the healing descriptor cast on an alignment-matched creature functions as if enhanced by the Maximize Spell feat, at no increase in spell slot level."
       },
       "Gift of the Divine": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "Restricted to hierophants who possess cleric levels, this ability lets the hierophant grant one or more of his turn undead uses to a willing recipient. Hierophants who rebuke undead transfer rebuke undead uses instead. The duration of the transfer is between 24 hours and one week, set at the time of transfer. While active, the hierophant's daily turning attempts are reduced by the number given away. The recipient turns undead using the hierophant's cleric level but applies her own Charisma modifier.",
-        "level": 1,
-        "selectable": true
+        "description": "Restricted to hierophants who possess cleric levels, this ability lets the hierophant grant one or more of his turn undead uses to a willing recipient. Hierophants who rebuke undead transfer rebuke undead uses instead. The duration of the transfer is between 24 hours and one week, set at the time of transfer. While active, the hierophant's daily turning attempts are reduced by the number given away. The recipient turns undead using the hierophant's cleric level but applies her own Charisma modifier."
       },
       "Mastery of Energy": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "Restricted to hierophants who possess cleric levels, this ability greatly enhances the hierophant's capacity to channel positive or negative energy against undead. The hierophant receives a +4 bonus to turning checks and turning damage rolls. This benefit applies only to undead, even if the hierophant has the ability to turn other creature types through a domain granted power or similar source.",
-        "level": 1,
-        "selectable": true
+        "description": "Restricted to hierophants who possess cleric levels, this ability greatly enhances the hierophant's capacity to channel positive or negative energy against undead. The hierophant receives a +4 bonus to turning checks and turning damage rolls. This benefit applies only to undead, even if the hierophant has the ability to turn other creature types through a domain granted power or similar source."
       },
       "Metamagic Feat": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "Instead of selecting one of the listed special abilities, the hierophant may choose any metamagic feat.",
-        "level": 1,
-        "selectable": true
+        "description": "Instead of selecting one of the listed special abilities, the hierophant may choose any metamagic feat."
       },
       "Power of Nature": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "Restricted to hierophants who possess druid levels, this ability allows the hierophant to temporarily bestow one or more druid class features upon a willing creature. The transfer persists for between 24 hours and one week, determined when the transfer occurs. During this time, the hierophant loses access to the granted abilities. Any druid power may be transferred except spellcasting and the animal companion. The wild shape ability can be divided between the hierophant and the recipient - for instance, the hierophant might grant one daily use of wild shape while keeping remaining uses. If the hierophant can assume Tiny or Huge animal forms, the recipient gains that capability as well. The hierophant remains accountable to his deity for how the recipient employs any transferred abilities.",
-        "level": 1,
-        "selectable": true
+        "description": "Restricted to hierophants who possess druid levels, this ability allows the hierophant to temporarily bestow one or more druid class features upon a willing creature. The transfer persists for between 24 hours and one week, determined when the transfer occurs. During this time, the hierophant loses access to the granted abilities. Any druid power may be transferred except spellcasting and the animal companion. The wild shape ability can be divided between the hierophant and the recipient - for instance, the hierophant might grant one daily use of wild shape while keeping remaining uses. If the hierophant can assume Tiny or Huge animal forms, the recipient gains that capability as well. The hierophant remains accountable to his deity for how the recipient employs any transferred abilities."
       },
       "Special Ability": {
-        "description": "At each hierophant level, the character selects one special ability from the following options. Blast Infidel (Su): The hierophant can maximize the effects of negative energy spells when targeting creatures whose alignment directly opposes the hierophant's own. Any spell that inflicts or channels negative energy (such as inflict spells, mass inflict light wounds, or harm) used against an opposed-alignment creature functions as though affected by the Maximize Spell feat, without requiring a higher-level spell slot. Undead subjected to this effect recover the maximized amount of hit points. Divine Reach (Su): Touch spells cast by the hierophant can affect targets within 30 feet. A ranged touch attack replaces the normal melee touch attack for such spells. This ability may be chosen a second time, extending the range to 60 feet. Faith Healing (Su): The hierophant can maximize the effects of healing spells cast on creatures that share the hierophant's alignment, including the hierophant. Any spell bearing the healing descriptor cast on an alignment-matched creature functions as if enhanced by the Maximize Spell feat, at no increase in spell slot level. Gift of the Divine (Su): Restricted to hierophants who possess cleric levels, this ability lets the hierophant grant one or more of his turn undead uses to a willing recipient. Hierophants who rebuke undead transfer rebuke undead uses instead. The duration of the transfer is between 24 hours and one week, set at the time of transfer. While active, the hierophant's daily turning attempts are reduced by the number given away. The recipient turns undead using the hierophant's cleric level but applies her own Charisma modifier. Mastery of Energy (Su): Restricted to hierophants who possess cleric levels, this ability greatly enhances the hierophant's capacity to channel positive or negative energy against undead. The hierophant receives a +4 bonus to turning checks and turning damage rolls. This benefit applies only to undead, even if the hierophant has the ability to turn other creature types through a domain granted power or similar source. Metamagic Feat: Instead of selecting one of the listed special abilities, the hierophant may choose any metamagic feat. Power of Nature (Su): Restricted to hierophants who possess druid levels, this ability allows the hierophant to temporarily bestow one or more druid class features upon a willing creature. The transfer persists for between 24 hours and one week, determined when the transfer occurs. During this time, the hierophant loses access to the granted abilities. Any druid power may be transferred except spellcasting and the animal companion. The wild shape ability can be divided between the hierophant and the recipient - for instance, the hierophant might grant one daily use of wild shape while keeping remaining uses. If the hierophant can assume Tiny or Huge animal forms, the recipient gains that capability as well. The hierophant remains accountable to his deity for how the recipient employs any transferred abilities. Spell Power: The hierophant's effective caster level rises by 1 for the purpose of calculating level-dependent spell variables (such as damage dice or range) and for caster level checks. This ability is stackable, and its caster level increases are cumulative. Spell-Like Ability: The hierophant permanently dedicates one of his divine spell slots to convert a divine spell he knows into a spell-like ability usable twice per day. No components are needed to cast the spell in this form, though any XP cost still applies, and a spell with an expensive material component instead costs 10 times that value in XP. The dedicated slot must be of the spell's level or higher (the hierophant may permanently attach a metamagic feat to the chosen spell, requiring a correspondingly higher slot). A higher-level slot can increase daily uses: a slot three levels above the spell's level grants four uses per day, and a slot six levels above grants six uses per day. When chosen multiple times, this ability can either increase the daily uses of an existing spell-like ability or convert a different spell.",
-        "level": 1,
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "aptitudes.hierophantspecialability.allowed",
-            "value": "1",
-            "valueType": "number"
-          }
-        ],
-        "seedName": "Special Ability (Hierophant)",
-        "stackable": true
+        "description": "At each hierophant level, the character selects one special ability from the following options. Blast Infidel (Su): The hierophant can maximize the effects of negative energy spells when targeting creatures whose alignment directly opposes the hierophant's own. Any spell that inflicts or channels negative energy (such as inflict spells, mass inflict light wounds, or harm) used against an opposed-alignment creature functions as though affected by the Maximize Spell feat, without requiring a higher-level spell slot. Undead subjected to this effect recover the maximized amount of hit points. Divine Reach (Su): Touch spells cast by the hierophant can affect targets within 30 feet. A ranged touch attack replaces the normal melee touch attack for such spells. This ability may be chosen a second time, extending the range to 60 feet. Faith Healing (Su): The hierophant can maximize the effects of healing spells cast on creatures that share the hierophant's alignment, including the hierophant. Any spell bearing the healing descriptor cast on an alignment-matched creature functions as if enhanced by the Maximize Spell feat, at no increase in spell slot level. Gift of the Divine (Su): Restricted to hierophants who possess cleric levels, this ability lets the hierophant grant one or more of his turn undead uses to a willing recipient. Hierophants who rebuke undead transfer rebuke undead uses instead. The duration of the transfer is between 24 hours and one week, set at the time of transfer. While active, the hierophant's daily turning attempts are reduced by the number given away. The recipient turns undead using the hierophant's cleric level but applies her own Charisma modifier. Mastery of Energy (Su): Restricted to hierophants who possess cleric levels, this ability greatly enhances the hierophant's capacity to channel positive or negative energy against undead. The hierophant receives a +4 bonus to turning checks and turning damage rolls. This benefit applies only to undead, even if the hierophant has the ability to turn other creature types through a domain granted power or similar source. Metamagic Feat: Instead of selecting one of the listed special abilities, the hierophant may choose any metamagic feat. Power of Nature (Su): Restricted to hierophants who possess druid levels, this ability allows the hierophant to temporarily bestow one or more druid class features upon a willing creature. The transfer persists for between 24 hours and one week, determined when the transfer occurs. During this time, the hierophant loses access to the granted abilities. Any druid power may be transferred except spellcasting and the animal companion. The wild shape ability can be divided between the hierophant and the recipient - for instance, the hierophant might grant one daily use of wild shape while keeping remaining uses. If the hierophant can assume Tiny or Huge animal forms, the recipient gains that capability as well. The hierophant remains accountable to his deity for how the recipient employs any transferred abilities. Spell Power: The hierophant's effective caster level rises by 1 for the purpose of calculating level-dependent spell variables (such as damage dice or range) and for caster level checks. This ability is stackable, and its caster level increases are cumulative. Spell-Like Ability: The hierophant permanently dedicates one of his divine spell slots to convert a divine spell he knows into a spell-like ability usable twice per day. No components are needed to cast the spell in this form, though any XP cost still applies, and a spell with an expensive material component instead costs 10 times that value in XP. The dedicated slot must be of the spell's level or higher (the hierophant may permanently attach a metamagic feat to the chosen spell, requiring a correspondingly higher slot). A higher-level slot can increase daily uses: a slot three levels above the spell's level grants four uses per day, and a slot six levels above grants six uses per day. When chosen multiple times, this ability can either increase the daily uses of an existing spell-like ability or convert a different spell."
       },
       "Spell Power": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "The hierophant's effective caster level rises by 1 for the purpose of calculating level-dependent spell variables (such as damage dice or range) and for caster level checks. This ability is stackable, and its caster level increases are cumulative.",
-        "level": 1,
-        "selectable": true,
-        "stackable": true
+        "description": "The hierophant's effective caster level rises by 1 for the purpose of calculating level-dependent spell variables (such as damage dice or range) and for caster level checks. This ability is stackable, and its caster level increases are cumulative."
       },
       "Spell-Like Ability": {
-        "aptitude": "Hierophant Special Ability",
-        "description": "The hierophant permanently dedicates one of his divine spell slots to convert a divine spell he knows into a spell-like ability usable twice per day. No components are needed to cast the spell in this form, though any XP cost still applies, and a spell with an expensive material component instead costs 10 times that value in XP. The dedicated slot must be of the spell's level or higher (the hierophant may permanently attach a metamagic feat to the chosen spell, requiring a correspondingly higher slot). A higher-level slot can increase daily uses: a slot three levels above the spell's level grants four uses per day, and a slot six levels above grants six uses per day. When chosen multiple times, this ability can either increase the daily uses of an existing spell-like ability or convert a different spell.",
-        "level": 1,
-        "selectable": true,
-        "stackable": true
+        "description": "The hierophant permanently dedicates one of his divine spell slots to convert a divine spell he knows into a spell-like ability usable twice per day. No components are needed to cast the spell in this form, though any XP cost still applies, and a spell with an expensive material component instead costs 10 times that value in XP. The dedicated slot must be of the spell's level or higher (the hierophant may permanently attach a metamagic feat to the chosen spell, requiring a correspondingly higher slot). A higher-level slot can increase daily uses: a slot three levels above the spell's level grants four uses per day, and a slot six levels above grants six uses per day. When chosen multiple times, this ability can either increase the daily uses of an existing spell-like ability or convert a different spell."
       },
       "Spells and Caster Level": {
-        "description": "Although hierophant levels do not grant advancement in a base class's spell progression, they still count toward the character's overall caster level when combined with levels from a base spellcasting class.",
-        "level": 1,
-        "seedName": "Spells and Caster Level (Hierophant)"
+        "description": "Although hierophant levels do not grant advancement in a base class's spell progression, they still count toward the character's overall caster level when combined with levels from a base spellcasting class."
       },
       "Weapon and Armor Proficiency": {
-        "description": "Hierophants do not gain proficiency with any additional weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Hierophant)"
-      }
-    },
-    "occurrenceMap": {
-      "Special Ability": "Special Ability"
-    },
-    "overrides": {
-      "description": "A divine caster who has attained great standing with their deity unlocks extraordinary magical powers and capabilities far beyond those available to ordinary followers.",
-      "features": {
-        "Blast Infidel": {
-          "description": "The hierophant can maximize the effects of negative energy spells when targeting creatures whose alignment directly opposes the hierophant's own. Any spell that inflicts or channels negative energy (such as inflict spells, mass inflict light wounds, or harm) used against an opposed-alignment creature functions as though affected by the Maximize Spell feat, without requiring a higher-level spell slot. Undead subjected to this effect recover the maximized amount of hit points."
-        },
-        "Divine Reach": {
-          "description": "Touch spells cast by the hierophant can affect targets within 30 feet. A ranged touch attack replaces the normal melee touch attack for such spells. This ability may be chosen a second time, extending the range to 60 feet."
-        },
-        "Faith Healing": {
-          "description": "The hierophant can maximize the effects of healing spells cast on creatures that share the hierophant's alignment, including the hierophant. Any spell bearing the healing descriptor cast on an alignment-matched creature functions as if enhanced by the Maximize Spell feat, at no increase in spell slot level."
-        },
-        "Gift of the Divine": {
-          "description": "Restricted to hierophants who possess cleric levels, this ability lets the hierophant grant one or more of his turn undead uses to a willing recipient. Hierophants who rebuke undead transfer rebuke undead uses instead. The duration of the transfer is between 24 hours and one week, set at the time of transfer. While active, the hierophant's daily turning attempts are reduced by the number given away. The recipient turns undead using the hierophant's cleric level but applies her own Charisma modifier."
-        },
-        "Mastery of Energy": {
-          "description": "Restricted to hierophants who possess cleric levels, this ability greatly enhances the hierophant's capacity to channel positive or negative energy against undead. The hierophant receives a +4 bonus to turning checks and turning damage rolls. This benefit applies only to undead, even if the hierophant has the ability to turn other creature types through a domain granted power or similar source."
-        },
-        "Metamagic Feat": {
-          "description": "Instead of selecting one of the listed special abilities, the hierophant may choose any metamagic feat."
-        },
-        "Power of Nature": {
-          "description": "Restricted to hierophants who possess druid levels, this ability allows the hierophant to temporarily bestow one or more druid class features upon a willing creature. The transfer persists for between 24 hours and one week, determined when the transfer occurs. During this time, the hierophant loses access to the granted abilities. Any druid power may be transferred except spellcasting and the animal companion. The wild shape ability can be divided between the hierophant and the recipient - for instance, the hierophant might grant one daily use of wild shape while keeping remaining uses. If the hierophant can assume Tiny or Huge animal forms, the recipient gains that capability as well. The hierophant remains accountable to his deity for how the recipient employs any transferred abilities."
-        },
-        "Special Ability": {
-          "description": "At each hierophant level, the character selects one special ability from the following options. Blast Infidel (Su): The hierophant can maximize the effects of negative energy spells when targeting creatures whose alignment directly opposes the hierophant's own. Any spell that inflicts or channels negative energy (such as inflict spells, mass inflict light wounds, or harm) used against an opposed-alignment creature functions as though affected by the Maximize Spell feat, without requiring a higher-level spell slot. Undead subjected to this effect recover the maximized amount of hit points. Divine Reach (Su): Touch spells cast by the hierophant can affect targets within 30 feet. A ranged touch attack replaces the normal melee touch attack for such spells. This ability may be chosen a second time, extending the range to 60 feet. Faith Healing (Su): The hierophant can maximize the effects of healing spells cast on creatures that share the hierophant's alignment, including the hierophant. Any spell bearing the healing descriptor cast on an alignment-matched creature functions as if enhanced by the Maximize Spell feat, at no increase in spell slot level. Gift of the Divine (Su): Restricted to hierophants who possess cleric levels, this ability lets the hierophant grant one or more of his turn undead uses to a willing recipient. Hierophants who rebuke undead transfer rebuke undead uses instead. The duration of the transfer is between 24 hours and one week, set at the time of transfer. While active, the hierophant's daily turning attempts are reduced by the number given away. The recipient turns undead using the hierophant's cleric level but applies her own Charisma modifier. Mastery of Energy (Su): Restricted to hierophants who possess cleric levels, this ability greatly enhances the hierophant's capacity to channel positive or negative energy against undead. The hierophant receives a +4 bonus to turning checks and turning damage rolls. This benefit applies only to undead, even if the hierophant has the ability to turn other creature types through a domain granted power or similar source. Metamagic Feat: Instead of selecting one of the listed special abilities, the hierophant may choose any metamagic feat. Power of Nature (Su): Restricted to hierophants who possess druid levels, this ability allows the hierophant to temporarily bestow one or more druid class features upon a willing creature. The transfer persists for between 24 hours and one week, determined when the transfer occurs. During this time, the hierophant loses access to the granted abilities. Any druid power may be transferred except spellcasting and the animal companion. The wild shape ability can be divided between the hierophant and the recipient - for instance, the hierophant might grant one daily use of wild shape while keeping remaining uses. If the hierophant can assume Tiny or Huge animal forms, the recipient gains that capability as well. The hierophant remains accountable to his deity for how the recipient employs any transferred abilities. Spell Power: The hierophant's effective caster level rises by 1 for the purpose of calculating level-dependent spell variables (such as damage dice or range) and for caster level checks. This ability is stackable, and its caster level increases are cumulative. Spell-Like Ability: The hierophant permanently dedicates one of his divine spell slots to convert a divine spell he knows into a spell-like ability usable twice per day. No components are needed to cast the spell in this form, though any XP cost still applies, and a spell with an expensive material component instead costs 10 times that value in XP. The dedicated slot must be of the spell's level or higher (the hierophant may permanently attach a metamagic feat to the chosen spell, requiring a correspondingly higher slot). A higher-level slot can increase daily uses: a slot three levels above the spell's level grants four uses per day, and a slot six levels above grants six uses per day. When chosen multiple times, this ability can either increase the daily uses of an existing spell-like ability or convert a different spell."
-        },
-        "Spell Power": {
-          "description": "The hierophant's effective caster level rises by 1 for the purpose of calculating level-dependent spell variables (such as damage dice or range) and for caster level checks. This ability is stackable, and its caster level increases are cumulative."
-        },
-        "Spell-Like Ability": {
-          "description": "The hierophant permanently dedicates one of his divine spell slots to convert a divine spell he knows into a spell-like ability usable twice per day. No components are needed to cast the spell in this form, though any XP cost still applies, and a spell with an expensive material component instead costs 10 times that value in XP. The dedicated slot must be of the spell's level or higher (the hierophant may permanently attach a metamagic feat to the chosen spell, requiring a correspondingly higher slot). A higher-level slot can increase daily uses: a slot three levels above the spell's level grants four uses per day, and a slot six levels above grants six uses per day. When chosen multiple times, this ability can either increase the daily uses of an existing spell-like ability or convert a different spell."
-        },
-        "Spells and Caster Level": {
-          "description": "Although hierophant levels do not grant advancement in a base class's spell progression, they still count toward the character's overall caster level when combined with levels from a base spellcasting class."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "Hierophants do not gain proficiency with any additional weapons or armor."
-        }
+        "description": "Hierophants do not gain proficiency with any additional weapons or armor."
       }
     }
   },

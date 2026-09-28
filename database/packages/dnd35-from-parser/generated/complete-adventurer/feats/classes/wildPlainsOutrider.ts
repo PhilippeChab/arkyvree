@@ -1,4 +1,4 @@
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
 const APT = "Wild Plains Outrider Class Feature";
 

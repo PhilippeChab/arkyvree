@@ -1,11 +1,11 @@
 import { stripSeparators } from "@/shared/utils.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { feat, eq, gte, or, and, eqStr } from "@/database/packages/dnd35/seed-utils/helpers.ts";
+import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import { feat, eq, gte, or, and, eqStr } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { isValidModifierPath, findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { loadBonusFeatAptitudes, loadBonusFeatClassLevels } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { BOOK_ABBREV_PATTERN, SKILL_MAP, SAVE_MAP, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 
 // ---------------------------------------------------------------------------
 // Feat type → aptitudes

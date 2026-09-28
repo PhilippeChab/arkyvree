@@ -5,204 +5,35 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/hulking-hurler/",
     "type": "class"
   },
-  "detected": {
-    "aptitudePicks": [
-      {
-        "levels": [
-          2,
-          3
-        ],
-        "target": "aptitudes.hulkinghurlertwohandedhurltrick.allowed"
-      }
-    ],
-    "bab": "good",
-    "featNameMap": {
-      "pointblankshot": "Point Blank Shot",
-      "powerattack": "Power Attack"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Catch Weapon"
-      },
-      {
-        "levels": [
-          1
-        ],
-        "name": "Really Throw Anything"
-      },
-      {
-        "levels": [
-          2,
-          3
-        ],
-        "name": "Two-Handed Hurl Trick"
-      }
-    ],
-    "hd": 10,
-    "levels": 3,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.pointblankshot.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.powerattack.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.weaponfocus.*.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "equal",
-            "target": "identity.physiology.race.size",
-            "value": "Large",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.physiology.race.size",
-            "value": "Huge",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.physiology.race.size",
-            "value": "Gargantuan",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.physiology.race.size",
-            "value": "Colossal",
-            "valueType": "string"
-          }
-        ]
-      }
-    ],
-    "saves": {
-      "fortitude": "poor",
-      "reflex": "good",
-      "will": "poor"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Hulking Hurler Class Feature",
+  "overrides": {
+    "description": "Members of this prestige class are massive creatures who revel in uprooting enormous objects - boulders, trees, even structures - and launching them at enemies with devastating force.",
     "features": {
       "Area Attack": {
-        "aptitude": "Hulking Hurler Two-Handed Hurl Trick",
-        "description": "Instead of targeting a creature directly, the character rolls an attack against the square the target occupies (AC 10). Every creature in that square must make a Reflex save (DC 10 + the hulking hurler's ranged attack bonus) or suffer full damage. This technique can only be used with weapons of Huge size or larger.",
-        "level": 2,
-        "selectable": true
+        "description": "Instead of targeting a creature directly, the character rolls an attack against the square the target occupies (AC 10). Every creature in that square must make a Reflex save (DC 10 + the hulking hurler's ranged attack bonus) or suffer full damage. This technique can only be used with weapons of Huge size or larger."
       },
       "Catch Weapon": {
-        "description": "A hulking hurler receives the Snatch Arrows feat as a bonus, regardless of whether he meets its normal prerequisites. He can catch thrown weapons of his own size category or smaller, and may immediately hurl a caught weapon back at the attacker if he wishes.",
-        "level": 1,
-        "seedName": "Catch Weapon (Hulking Hurler)"
+        "description": "A hulking hurler receives the Snatch Arrows feat as a bonus, regardless of whether he meets its normal prerequisites. He can catch thrown weapons of his own size category or smaller, and may immediately hurl a caught weapon back at the attacker if he wishes."
       },
       "Knockdown Blow": {
-        "aptitude": "Hulking Hurler Two-Handed Hurl Trick",
-        "description": "When the hulking hurler lands a damaging hit against a Medium or smaller creature, the target is knocked prone.",
-        "level": 2,
-        "selectable": true
+        "description": "When the hulking hurler lands a damaging hit against a Medium or smaller creature, the target is knocked prone."
       },
       "Meteor Strike": {
-        "aptitude": "Hulking Hurler Two-Handed Hurl Trick",
-        "description": "By spending a full-round action, the hulking hurler adds double his Strength bonus to the damage of a successful thrown weapon attack.",
-        "level": 2,
-        "selectable": true
+        "description": "By spending a full-round action, the hulking hurler adds double his Strength bonus to the damage of a successful thrown weapon attack."
       },
       "Overburdened Heave": {
-        "aptitude": "Hulking Hurler Two-Handed Hurl Trick",
-        "description": "The hulking hurler can hurl a weapon up to two size categories larger than himself, or throw any object weighing up to his medium load capacity (for example, a Large hulking hurler with 25 Strength could launch a Gargantuan javelin or a rock weighing up to 533 pounds).",
-        "level": 2,
-        "selectable": true
+        "description": "The hulking hurler can hurl a weapon up to two size categories larger than himself, or throw any object weighing up to his medium load capacity (for example, a Large hulking hurler with 25 Strength could launch a Gargantuan javelin or a rock weighing up to 533 pounds)."
       },
       "Ranged Power Attack": {
-        "aptitude": "Hulking Hurler Two-Handed Hurl Trick",
-        "description": "When the target is within 30 feet, the hulking hurler may apply the Power Attack feat to attacks made with thrown weapons.",
-        "level": 2,
-        "selectable": true
+        "description": "When the target is within 30 feet, the hulking hurler may apply the Power Attack feat to attacks made with thrown weapons."
       },
       "Really Throw Anything": {
-        "description": "A hulking hurler receives the Throw Anything feat as a bonus. Because this class relies on sheer physical might rather than finesse, the character can hurl any object he is capable of lifting as a light load - not just weapons. When throwing an improvised weapon, he suffers only a -2 penalty on the attack roll rather than the standard -4. The range increment for any thrown weapon or improvised weapon used by a hulking hurler is 10 feet, plus an additional 5 feet for each size category he exceeds Large.",
-        "level": 1,
-        "seedName": "Really Throw Anything (Hulking Hurler)"
+        "description": "A hulking hurler receives the Throw Anything feat as a bonus. Because this class relies on sheer physical might rather than finesse, the character can hurl any object he is capable of lifting as a light load - not just weapons. When throwing an improvised weapon, he suffers only a -2 penalty on the attack roll rather than the standard -4. The range increment for any thrown weapon or improvised weapon used by a hulking hurler is 10 feet, plus an additional 5 feet for each size category he exceeds Large."
       },
       "Two-handed Hurl Trick": {
-        "description": "At 2nd level and once more at 3rd level, the hulking hurler selects one of the following special techniques. To employ any of these tricks, the character must grasp the weapon or improvised weapon with both hands and throw it as a full-round action.",
-        "level": 2,
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "aptitudes.hulkinghurlertwohandedhurltrick.allowed",
-            "value": "1",
-            "valueType": "number"
-          }
-        ],
-        "seedName": "Two-handed Hurl Trick (Hulking Hurler)",
-        "stackable": true
+        "description": "At 2nd level and once more at 3rd level, the hulking hurler selects one of the following special techniques. To employ any of these tricks, the character must grasp the weapon or improvised weapon with both hands and throw it as a full-round action."
       },
       "Weapon and Armor Proficiency": {
-        "description": "This prestige class does not grant proficiency with any weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Hulking Hurler)"
-      }
-    },
-    "occurrenceMap": {
-      "Catch Weapon": "Catch Weapon",
-      "Really Throw Anything": "Really Throw Anything",
-      "Two-Handed Hurl Trick": "Two-handed Hurl Trick"
-    },
-    "overrides": {
-      "description": "Members of this prestige class are massive creatures who revel in uprooting enormous objects - boulders, trees, even structures - and launching them at enemies with devastating force.",
-      "features": {
-        "Area Attack": {
-          "description": "Instead of targeting a creature directly, the character rolls an attack against the square the target occupies (AC 10). Every creature in that square must make a Reflex save (DC 10 + the hulking hurler's ranged attack bonus) or suffer full damage. This technique can only be used with weapons of Huge size or larger."
-        },
-        "Catch Weapon": {
-          "description": "A hulking hurler receives the Snatch Arrows feat as a bonus, regardless of whether he meets its normal prerequisites. He can catch thrown weapons of his own size category or smaller, and may immediately hurl a caught weapon back at the attacker if he wishes."
-        },
-        "Knockdown Blow": {
-          "description": "When the hulking hurler lands a damaging hit against a Medium or smaller creature, the target is knocked prone."
-        },
-        "Meteor Strike": {
-          "description": "By spending a full-round action, the hulking hurler adds double his Strength bonus to the damage of a successful thrown weapon attack."
-        },
-        "Overburdened Heave": {
-          "description": "The hulking hurler can hurl a weapon up to two size categories larger than himself, or throw any object weighing up to his medium load capacity (for example, a Large hulking hurler with 25 Strength could launch a Gargantuan javelin or a rock weighing up to 533 pounds)."
-        },
-        "Ranged Power Attack": {
-          "description": "When the target is within 30 feet, the hulking hurler may apply the Power Attack feat to attacks made with thrown weapons."
-        },
-        "Really Throw Anything": {
-          "description": "A hulking hurler receives the Throw Anything feat as a bonus. Because this class relies on sheer physical might rather than finesse, the character can hurl any object he is capable of lifting as a light load - not just weapons. When throwing an improvised weapon, he suffers only a -2 penalty on the attack roll rather than the standard -4. The range increment for any thrown weapon or improvised weapon used by a hulking hurler is 10 feet, plus an additional 5 feet for each size category he exceeds Large."
-        },
-        "Two-handed Hurl Trick": {
-          "description": "At 2nd level and once more at 3rd level, the hulking hurler selects one of the following special techniques. To employ any of these tricks, the character must grasp the weapon or improvised weapon with both hands and throw it as a full-round action."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "This prestige class does not grant proficiency with any weapons or armor."
-        }
+        "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     }
   },

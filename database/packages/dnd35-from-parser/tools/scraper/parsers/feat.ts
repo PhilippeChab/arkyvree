@@ -123,115 +123,12 @@ export function parseFeatDetailHtml(
   };
 }
 
-/**
- * Legacy: parse a single-page all-feats HTML (old srd.dndtools.org format).
- * Kept for backward compatibility during migration.
- */
-export function parseFeatsHtml(
-  html: string,
-  sourceUrl: string,
-  book: string,
-): { _meta: FeatReference["_meta"]; raw: FeatReference["raw"] } {
-  const $ = cheerio.load(html);
-  const raw: FeatReference["raw"] = [];
-
-  const h5s = $("h5");
-
-  h5s.each((_, h5) => {
-    const headerText = $(h5).text().replace(/\s+/g, " ").trim();
-    if (!headerText || headerText.length < 3) return;
-
-    const match = headerText.match(/^(.+?)\s*\[([^\]]+)\]\s*$/);
-    if (!match) return;
-
-    const rawName = match[1].trim();
-    const featType = match[2].trim().toLowerCase();
-    const name = titleCase(rawName);
-
-    const sections: Record<string, string> = {};
-    let currentLabel = "";
-    let currentText: string[] = [];
-
-    let el = $(h5).next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      if (tag === "h5" || tag === "h3" || tag === "h2" || tag === "h6") break;
-
-      if (tag === "p") {
-        const bold = el.find("b, strong").first();
-        const boldText = bold.length > 0 ? bold.text().trim().replace(/:$/, "") : "";
-        const fullText = normalizeWs(el.text());
-
-        let detectedLabel = "";
-        let afterLabel = "";
-        if (boldText && isKnownLabel(boldText)) {
-          detectedLabel = boldText.toLowerCase();
-          afterLabel = fullText.substring(fullText.indexOf(boldText) + boldText.length)
-            .replace(/^[:\s]+/, "").trim();
-        } else if (!boldText) {
-          const labelMatch = fullText.match(/^(Prerequisites?|Benefits?|Normal|Special)[:\s]/i);
-          if (labelMatch) {
-            detectedLabel = labelMatch[1].toLowerCase();
-            afterLabel = fullText.substring(labelMatch[0].length).trim();
-          }
-        }
-
-        if (detectedLabel && isKnownLabel(detectedLabel)) {
-          if (currentLabel) {
-            sections[currentLabel] = normalizeWs(currentText.join(" "));
-          }
-          currentLabel = detectedLabel;
-          currentText = afterLabel ? [afterLabel] : [];
-        } else if (currentLabel) {
-          if (fullText) currentText.push(fullText);
-        }
-      }
-
-      el = el.next();
-    }
-
-    if (currentLabel) {
-      sections[currentLabel] = normalizeWs(currentText.join(" "));
-    }
-
-    const benefit = sections["benefit"] ?? sections["benefits"] ?? "";
-    if (!benefit) return;
-
-    raw.push({
-      name,
-      featType,
-      prerequisiteText: sections["prerequisite"] ?? sections["prerequisites"] ?? "",
-      benefit,
-      ...(sections["normal"] ? { normal: sections["normal"] } : {}),
-      ...(sections["special"] ? { special: sections["special"] } : {}),
-    });
-  });
-
-  return {
-    _meta: {
-      type: "feat",
-      sourceUrl,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function normalizeWs(s: string): string {
   return s.replace(/\s+/g, " ").trim();
-}
-
-function titleCase(s: string): string {
-  return s
-    .toLowerCase()
-    .split(/\s+/)
-    .map((w) => w.replace(/(^|-|\()([a-z])/g, (_, pre, c) => pre + c.toUpperCase()))
-    .join(" ");
 }
 
 const KNOWN_LABELS = new Set([

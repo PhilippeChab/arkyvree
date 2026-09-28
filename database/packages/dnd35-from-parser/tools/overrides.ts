@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
 import { join, basename } from "node:path";
-import type { FeatReference, DomainReference, ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { readStoredReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 /**
@@ -26,10 +25,9 @@ type OverrideEntry = {
   prereqText?: string;
 };
 
-function collectFeatOverrides(data: FeatReference, book: string): OverrideEntry[] {
+function collectFeatOverrides(data: StoredReference<"feat">, book: string): OverrideEntry[] {
   const entries: OverrideEntry[] = [];
-  const { overrides } = data.mapping;
-  const { reviewed: _reviewed, ...rest } = overrides;
+  const { reviewed: _reviewed, ...rest } = data.overrides ?? {};
 
   for (const [name, ovr] of Object.entries(rest)) {
     const keys = Object.keys(ovr).filter(k => k !== "description");
@@ -48,10 +46,9 @@ function collectFeatOverrides(data: FeatReference, book: string): OverrideEntry[
   return entries;
 }
 
-function collectDomainOverrides(data: DomainReference, book: string): OverrideEntry[] {
+function collectDomainOverrides(data: StoredReference<"domain">, book: string): OverrideEntry[] {
   const entries: OverrideEntry[] = [];
-  const { overrides } = data.mapping;
-  const { reviewed: _reviewed, ...rest } = overrides;
+  const { reviewed: _reviewed, ...rest } = data.overrides ?? {};
 
   for (const [name, ovr] of Object.entries(rest)) {
     const keys = Object.keys(ovr).filter(k => k !== "description");
@@ -68,9 +65,9 @@ function collectDomainOverrides(data: DomainReference, book: string): OverrideEn
   return entries;
 }
 
-function collectClassOverrides(data: ClassReference, book: string, fileName: string): OverrideEntry[] {
+function collectClassOverrides(data: StoredReference<"class">, book: string, fileName: string): OverrideEntry[] {
   const entries: OverrideEntry[] = [];
-  const overrides = data.mapping.overrides;
+  const overrides = data.overrides;
   if (!overrides) return entries;
 
   const keys = Object.keys(overrides).filter(k => {
@@ -106,14 +103,12 @@ function main() {
   const allEntries: OverrideEntry[] = [];
 
   for (const ref of refs) {
-    const data = JSON.parse(readFileSync(ref.path, "utf-8"));
-
     if (ref.type === "feat") {
-      allEntries.push(...collectFeatOverrides(data as FeatReference, ref.book));
+      allEntries.push(...collectFeatOverrides(readStoredReference(ref.path, "feat"), ref.book));
     } else if (ref.type === "domain") {
-      allEntries.push(...collectDomainOverrides(data as DomainReference, ref.book));
+      allEntries.push(...collectDomainOverrides(readStoredReference(ref.path, "domain"), ref.book));
     } else if (ref.type === "class") {
-      allEntries.push(...collectClassOverrides(data as ClassReference, ref.book, basename(ref.path)));
+      allEntries.push(...collectClassOverrides(readStoredReference(ref.path, "class"), ref.book, basename(ref.path)));
     }
   }
 

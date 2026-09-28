@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { DND35_COMPLETE_DIVINE_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_DMG_NAME, DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { seedClass } from "@/database/packages/dnd35/seed-utils.ts";
+import { seedClass } from "@/database/packages/dnd35/seed/classes.ts";
 import { addClassLevels, addFeats, addPowers, addSkills, createCharacter, SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { characterAbilitiesInCharacter, charactersInCharacter, inventoryInCharacter, type location, savesInRules } from "@/drizzle/schema.ts";
+import { characterAbilitiesInCharacter, charactersInCharacter, inventoryInCharacter, type location } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -523,12 +523,11 @@ describe("DetailedCharacter", () => {
       test.each([1, 2])("rise with %i bonus caster level(s) from a prestige class", async (bonus) => {
         const ctx = await getSeedCtx();
         const theron = await seeded("Theron Lightbringer");
-        const saves = await db.select({ id: savesInRules.id, name: savesInRules.name }).from(savesInRules).where(eq(savesInRules.rulesetId, ctx.rulesetId));
-        const { levelIds } = await seedClass(db, ctx.rulesetId, {
+        const { levelIds } = await seedClass(db, ctx, {
           name: "Test Theurge", description: "Advances divine casting", hd: 6, levels: 10, skillPoints: 2, bab: "medium",
           saves: { fortitude: "good", reflex: "poor", will: "good" }, classSkills: ["Concentration"],
           casterLevelAdvancement: { type: "divine", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-        }, { rulesetId: ctx.rulesetId, saveMap: Object.fromEntries(saves.map((s) => [s.name, s.id])), skillMap: ctx.skillMap, featMap: ctx.featMap, aptMap: ctx.aptMap, abilityMap: {} });
+        });
         invalidateSeededRuleset(ctx.rulesetId);
         // The class's aptitude and feat exist once it's seeded.
         const { featMap, aptMap } = await getSeedCtx();

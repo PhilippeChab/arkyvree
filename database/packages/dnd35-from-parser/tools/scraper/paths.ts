@@ -1,5 +1,5 @@
-import type { RequirementEntry } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
@@ -46,7 +46,7 @@ export function isValidModifierPath(path: string): boolean {
 }
 
 /** Validate requirement path. Dynamic patterns (feats, classes, spellcasting) are always structurally valid. */
-export function isValidRequirementPath(path: string): boolean {
+function isValidRequirementPath(path: string): boolean {
   if (VALID_REQUIREMENT_PATHS.has(path)) return true;
   if (/^feats\.[a-z]+(?:\.\*)?\.(?:possessed|count)$/.test(path)) return true;
   if (/^classes\.[a-z]+\.level$/.test(path)) return true;

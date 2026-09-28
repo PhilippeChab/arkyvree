@@ -3,13 +3,14 @@
  */
 
 import { stripSeparators } from "@/shared/utils.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
-import { SIMPLE_WEAPONS, MARTIAL_WEAPONS } from "@/database/packages/dnd35/v1/feats/weapons.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import { SIMPLE_WEAPONS, MARTIAL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
 // Re-export stripSeparators — used as the slug function throughout the tools
 export { stripSeparators } from "@/shared/utils.ts";
@@ -44,7 +45,7 @@ const NUMBER_WORDS: Record<string, number> = {
  * pattern matches. Detection lets us avoid maintaining a hardcoded
  * per-feat override list — the SRD prose IS the spec.
  */
-export function detectBondedLevelFormula(description: string, classSlug: string): string {
+function detectBondedLevelFormula(description: string, classSlug: string): string {
   const base = `[classes.${classSlug}.level]`;
 
   // "half ... level" (Ranger)
@@ -112,26 +113,6 @@ export function autoCompanionGrantModifiers(featName: string, description: strin
   return modifiers;
 }
 
-/**
- * Same as `autoCompanionGrantModifiers` but returns only the bonded-level
- * formula entry — used by the runtime backfill to add the contribution
- * modifier on existing grant feats.
- */
-export function bondedLevelFormulaFor(
-  featName: string,
-  description: string = "",
-): { bondedKind: string; value: string } | null {
-  for (const { pattern, bondedKind } of COMPANION_GRANT_PATTERNS) {
-    const match = featName.match(pattern);
-    if (!match) continue;
-    const className = match[1];
-    const classSlug = className.toLowerCase().replace(/\s+/g, "");
-    const formula = detectBondedLevelFormula(description, classSlug);
-    return { bondedKind, value: `{{ ${formula} }}` };
-  }
-  return null;
-}
-
 // ---------------------------------------------------------------------------
 // toCamelCase — used by scraper, generator
 // ---------------------------------------------------------------------------
@@ -182,61 +163,18 @@ export function mergedFeatures(ref: ClassReference): ClassReference["mapping"]["
 // discoverRefs — used by sync, overrides
 // ---------------------------------------------------------------------------
 
-type RefMeta = { _meta: { type: string; sourceUrl?: string; book: string; filter?: string } };
+type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string; filter?: string } };
 
-export function discoverRefs(refDir: string): { path: string; type: string; url?: string; book: string; filter?: string }[] {
-  const refs: { path: string; type: string; url?: string; book: string; filter?: string }[] = [];
-
-  for (const book of readdirSync(refDir, { withFileTypes: true })) {
-    if (!book.isDirectory()) continue;
-    const bookDir = join(refDir, book.name);
-
-    for (const entry of readdirSync(bookDir, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        const catDir = join(bookDir, entry.name);
-        for (const file of readdirSync(catDir)) {
-          if (!file.endsWith(".json")) continue;
-          const filePath = join(catDir, file);
-          const data: RefMeta = JSON.parse(readFileSync(filePath, "utf-8"));
-          refs.push({
-            path: filePath,
-            type: data._meta.type,
-            url: data._meta.sourceUrl,
-            book: data._meta.book,
-            filter: data._meta.filter,
-          });
-        }
-      } else if (entry.name.endsWith(".json")) {
-        const filePath = join(bookDir, entry.name);
-        const data: RefMeta = JSON.parse(readFileSync(filePath, "utf-8"));
-        refs.push({
-          path: filePath,
-          type: data._meta.type,
-          url: data._meta.sourceUrl,
-          book: data._meta.book,
-          filter: data._meta.filter,
-        });
-      }
-    }
-  }
-
-  return refs;
-}
-
-// ---------------------------------------------------------------------------
-// sortKeysDeep — used by cleanupOverrides, diff
-// ---------------------------------------------------------------------------
-
-export function sortKeysDeep(obj: unknown): unknown {
-  if (Array.isArray(obj)) return obj.map(sortKeysDeep);
-  if (obj !== null && typeof obj === "object") {
-    const sorted: Record<string, unknown> = {};
-    for (const key of Object.keys(obj as Record<string, unknown>).sort()) {
-      sorted[key] = sortKeysDeep((obj as Record<string, unknown>)[key]);
-    }
-    return sorted;
-  }
-  return obj;
+/** The reference files under `refDir`: each book's, and the ones every book shares (domains.json). */
+export function discoverRefs(refDir: string): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
+  const files = readdirSync(refDir, { withFileTypes: true, recursive: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+    .map((entry) => join(entry.parentPath, entry.name))
+    .sort();
+  return files.map((path) => {
+    const { _meta }: RefMeta = JSON.parse(readFileSync(path, "utf-8"));
+    return { path, type: _meta.type, url: _meta.sourceUrl, book: _meta.book, filter: _meta.filter };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -384,9 +322,6 @@ for (const name of SAVE_NAMES) {
 // ---------------------------------------------------------------------------
 // Ordinal suffix — used by scraper/parsers, detectFeat, detectClass
 // ---------------------------------------------------------------------------
-
-/** Matches ordinal suffixes (1st, 2nd, 3rd, 4th, etc.) */
-export const ORDINAL_SUFFIX = `(?:st|nd|rd|th)`;
 
 // ---------------------------------------------------------------------------
 // Template description expansion — used by buildSeeds, generator/feat

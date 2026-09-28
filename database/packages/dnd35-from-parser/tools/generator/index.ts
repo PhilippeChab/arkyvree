@@ -1,27 +1,25 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type { ClassReference, DomainReference, FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { toCamelCase, discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
 import { generateClassSeed, generateFeatSeeds as generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/generators/class.ts";
 import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
 import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/generators/spell.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { buildDomainSeeds, buildDomainFeatPoolSeeds, buildFavoredEnemyFeats, buildFeatSeeds, buildItemSeeds, buildMagicItemSeeds, buildRaceSeeds, buildSpellSeeds, buildWizardSchoolSeeds, collectAptitudes } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
+import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
 // ---------------------------------------------------------------------------
-// CLI: bun database/packages/dnd35-from-parser/tools/generator/index.ts <json-path>
+// CLI: bun database/packages/dnd35-from-parser/tools/generator/index.ts [<json-path> [--book <book>] | [book [name]] [--type <type>]]
 // ---------------------------------------------------------------------------
 
 const BASE_DIR = join(import.meta.dirname!, "../../");
 let quiet = false;
 
 function generateRef(jsonPath: string, bookOverride?: string) {
-  const raw = readFileSync(jsonPath, "utf-8");
-  const ref = JSON.parse(raw);
-
-  const meta = ref._meta;
+  const meta = JSON.parse(readFileSync(jsonPath, "utf-8"))._meta;
   if (!meta) {
     console.error(`Invalid reference file: missing _meta in ${jsonPath}`);
     return;
@@ -31,55 +29,100 @@ function generateRef(jsonPath: string, bookOverride?: string) {
 
   switch (meta.type) {
     case "class":
-      generateClass(ref as ClassReference, book);
+      generateClass(loadReference(jsonPath, "class"), book);
       break;
     case "feat":
-      generateFeat(ref as FeatReference, book);
+      generateFeat(loadReference(jsonPath, "feat"), book);
       break;
     case "spell":
-      generateSpell(ref as SpellReference, book);
+      generateSpell(loadReference(jsonPath, "spell"), book);
       break;
     case "wizardSchool":
-      generateWizardSchool(ref as WizardSchoolReference, book);
+      generateWizardSchool(loadReference(jsonPath, "wizardSchool"), book);
       break;
     case "domain":
-      generateDomain(ref as DomainReference, book);
+      generateDomain(loadReference(jsonPath, "domain"), book);
       break;
     case "race":
-      generateRace(ref as RaceReference, book);
+      generateRace(loadReference(jsonPath, "race"), book);
       break;
     case "item":
-      generateItem(ref as ItemReference, book);
+      generateItem(loadReference(jsonPath, "item"), book);
       break;
     case "magicItem":
-      generateMagicItem(ref as MagicItemReference, book);
+      generateMagicItem(loadReference(jsonPath, "magicItem"), book);
       break;
     default:
       console.error(`Unknown type: ${meta.type}. Supported: class, feat, spell, wizardSchool, domain, race, item, magicItem`);
+      return;
+  }
+  if (book !== "srd") regenerateBookIndex(book);
+}
+
+/** Regenerate index.ts for an extension's book: its content, as the extension seeds it. */
+function regenerateBookIndex(book: string) {
+  const dir = join(BASE_DIR, "generated", book);
+  const parts: { key: string; file: string; name: string }[] = [
+    { key: "aptitudes", file: "aptitudes.ts", name: "ALL_APTITUDES" },
+    { key: "standaloneFeats", file: "feats/index.ts", name: "ALL_STANDALONE_FEATS" },
+    { key: "classFeats", file: "feats/index.ts", name: "ALL_CLASS_FEATS" },
+    { key: "cowFeats", file: "cowFeats.ts", name: "COW_FEATS" },
+    { key: "spells", file: "spells/index.ts", name: "ALL_SPELLS" },
+    { key: "cowSpells", file: "cowSpells.ts", name: "COW_SPELLS" },
+    { key: "domains", file: "domains/data.ts", name: "ALL_DOMAINS" },
+    { key: "classes", file: "classes/index.ts", name: "ALL_CLASSES" },
+  ];
+  const present = parts.filter((part) => existsSync(join(dir, part.file)));
+  const files = [...new Set(present.map((part) => part.file))].sort();
+
+  const lines: string[] = [];
+  lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
+  lines.push(`import type { BookContent } from "@/database/packages/dnd35/content/types.ts";`);
+  for (const file of files) {
+    const names = present.filter((part) => part.file === file).map((part) => part.name).sort();
+    lines.push(`import { ${names.join(", ")} } from "./${file}";`);
+  }
+  lines.push(``);
+  lines.push(`export const BOOK: BookContent = {`);
+  for (const part of parts) {
+    lines.push(`  ${part.key}: ${present.includes(part) ? part.name : "[]"},`);
+  }
+  lines.push(`};`);
+  lines.push(``);
+
+  writeGenerated(join(dir, "index.ts"), lines.join("\n"));
+}
+
+/** Writes a generated file, creating its folder. */
+function writeGenerated(path: string, code: string) {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, code);
+  if (!quiet) console.log(`Generated: ${path}`);
+}
+
+/** Regenerates every reference (of a book, type or name, when given), then each book's domains. */
+function generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>) {
+  const refDir = join(BASE_DIR, "reference");
+  const refs = discoverRefs(refDir).filter((r) =>
+    (!bookFilter || r.book === bookFilter) && (!typeFilter || r.type === typeFilter) && (!nameFilter || basename(r.path, ".json").toLowerCase() === nameFilter));
+
+  quiet = true;
+  // The domains reference lists every domain: each book with spells gets the domains they complete.
+  for (const ref of refs.filter((r) => r.type !== "domain")) generateRef(ref.path);
+  if (typeFilter && typeFilter !== "domain") return;
+  for (const book of readdirSync(refDir, { withFileTypes: true })) {
+    if (!book.isDirectory() || !existsSync(join(refDir, book.name, "spells.json")) || (bookFilter && book.name !== bookFilter)) continue;
+    generateRef(join(refDir, "domains.json"), book.name);
   }
 }
 
 function main() {
   const args = process.argv.slice(2);
-
-  if (args.length >= 1 && !args[0].startsWith("--")) {
-    // Single file mode
-    const jsonPath = args[0];
+  if (args[0]?.endsWith(".json")) {
     const bookIdx = args.indexOf("--book");
-    const bookOverride = bookIdx >= 0 ? args[bookIdx + 1] : undefined;
-    generateRef(jsonPath, bookOverride);
+    generateRef(args[0], bookIdx >= 0 ? args[bookIdx + 1] : undefined);
   } else {
-    // Generate all: discover every reference and regenerate
-    const { bookFilter, typeFilter } = parseCliArgs();
-    const refDir = join(BASE_DIR, "reference");
-    let refs = discoverRefs(refDir);
-    if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
-    if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
-
-    quiet = true;
-    for (const ref of refs) {
-      generateRef(ref.path);
-    }
+    generateAll(parseCliArgs());
   }
 }
 
@@ -89,16 +132,12 @@ function generateClass(ref: ClassReference, book: string) {
   // Generate class seed .ts
   const classCode = generateClassSeed(ref);
   const classPath = join(BASE_DIR, "generated", book, "classes", `${slug}.ts`);
-  mkdirSync(dirname(classPath), { recursive: true });
-  writeFileSync(classPath, classCode);
-  if (!quiet) console.log(`Generated class seed: ${classPath}`);
+  writeGenerated(classPath, classCode);
 
   // Generate class feature seeds .ts
   const featCode = generateClassFeatSeeds(ref);
   const featPath = join(BASE_DIR, "generated", book, "feats", "classes", `${slug}.ts`);
-  mkdirSync(dirname(featPath), { recursive: true });
-  writeFileSync(featPath, featCode);
-  if (!quiet) console.log(`Generated feat seeds: ${featPath}`);
+  writeGenerated(featPath, featCode);
 
   regenerateFavoredEnemyFeats(book);
 
@@ -122,9 +161,7 @@ function generateClass(ref: ClassReference, book: string) {
 function generateFeat(ref: FeatReference, book: string) {
   const featCode = generateFeatSeeds(ref);
   const featPath = join(BASE_DIR, "generated", book, "feats", "feats.ts");
-  mkdirSync(dirname(featPath), { recursive: true });
-  writeFileSync(featPath, featCode);
-  if (!quiet) console.log(`Generated feat seeds: ${featPath}`);
+  writeGenerated(featPath, featCode);
 
   regenerateFavoredEnemyFeats(book);
   regenerateAptitudes(book);
@@ -138,9 +175,8 @@ function generateSpell(ref: SpellReference, book: string) {
   if (!quiet) console.log(`Built ${spells.length} spell seeds`);
 
   // Generate .ts files per level
-  const files = generateSpellFiles(spells, book);
+  const files = generateSpellFiles(spells);
   const spellDir = join(BASE_DIR, "generated", book, "spells");
-  mkdirSync(spellDir, { recursive: true });
 
   // Remove stale level files that won't be regenerated (e.g. cantrips.ts when no level-0 spells)
   const LEVEL_FILES = ["cantrips.ts", ...Array.from({ length: 9 }, (_, i) => `level${i + 1}.ts`)];
@@ -152,8 +188,7 @@ function generateSpell(ref: SpellReference, book: string) {
 
   for (const [filename, code] of files) {
     const filePath = join(spellDir, filename);
-    writeFileSync(filePath, code);
-    if (!quiet) console.log(`Generated: ${filePath}`);
+    writeGenerated(filePath, code);
   }
 
   regenerateSpellIndex(book);
@@ -170,7 +205,7 @@ function generateWizardSchool(ref: WizardSchoolReference, book: string) {
 
   // Generate data.ts
   const lines: string[] = [];
-  lines.push(`import type { WizardSchoolDefinition } from "@/database/packages/dnd35/v1/wizard-schools/types.ts";`);
+  lines.push(`import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
   lines.push(`export const WIZARD_PROHIBITED_SCHOOL = "WIZARD_PROHIBITED_SCHOOL";`);
   lines.push(``);
@@ -185,12 +220,7 @@ function generateWizardSchool(ref: WizardSchoolReference, book: string) {
   lines.push(`];`);
   lines.push(``);
 
-  const outDir = join(BASE_DIR, "generated", book, "wizard-schools");
-  mkdirSync(outDir, { recursive: true });
-
-  const dataPath = join(outDir, "data.ts");
-  writeFileSync(dataPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${dataPath}`);
+  writeGenerated(join(BASE_DIR, "generated", book, "wizard-schools", "data.ts"), lines.join("\n"));
 
   if (!quiet) console.log(`\nDone!`);
 }
@@ -203,7 +233,7 @@ function generateDomain(_ref: DomainReference, book: string) {
     console.error(`Run: bun run parser:scrape -- domain`);
     process.exit(1);
   }
-  const masterRef: DomainReference = JSON.parse(readFileSync(masterPath, "utf-8"));
+  const masterRef = loadReference(masterPath, "domain");
 
   // Collect all available spell names from this book + SRD (ancestor)
   // Also build canonical name map (lowercase → exact name from spell reference)
@@ -213,7 +243,7 @@ function generateDomain(_ref: DomainReference, book: string) {
   for (const b of booksToCheck) {
     const spellsPath = join(BASE_DIR, "reference", b, "spells.json");
     if (!existsSync(spellsPath)) continue;
-    const spellRef: SpellReference = JSON.parse(readFileSync(spellsPath, "utf-8"));
+    const spellRef = loadReference(spellsPath, "spell");
     for (const spell of spellRef.raw) {
       availableSpells.add(spell.name.toLowerCase());
       canonicalSpellName.set(spell.name.toLowerCase(), spell.name);
@@ -226,7 +256,7 @@ function generateDomain(_ref: DomainReference, book: string) {
   if (book !== "srd") {
     const srdSpellsPath = join(BASE_DIR, "reference", "srd", "spells.json");
     if (existsSync(srdSpellsPath)) {
-      const srdRef: SpellReference = JSON.parse(readFileSync(srdSpellsPath, "utf-8"));
+      const srdRef = loadReference(srdSpellsPath, "spell");
       for (const spell of srdRef.raw) {
         srdOnlySpells.add(spell.name.toLowerCase());
       }
@@ -262,15 +292,13 @@ function generateDomain(_ref: DomainReference, book: string) {
 
   if (seeds.length === 0) {
     // No domains for this book — generate empty array
-    mkdirSync(outDir, { recursive: true });
-    writeFileSync(dataPath, [
+    writeGenerated(dataPath, [
       `// Auto-generated by the SRD pipeline — do not edit manually`,
-      `import type { DomainDefinition } from "@/database/packages/dnd35/v1/domains/types.ts";`,
+      `import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";`,
       ``,
       `export const ALL_DOMAINS: DomainDefinition[] = [];`,
       ``,
     ].join("\n"));
-    if (!quiet) console.log(`Generated empty: ${dataPath}`);
     const domainFeatsPath = join(BASE_DIR, "generated", book, "feats", "domainFeats.ts");
     if (existsSync(domainFeatsPath)) {
       unlinkSync(domainFeatsPath);
@@ -284,7 +312,7 @@ function generateDomain(_ref: DomainReference, book: string) {
 
   // Generate data.ts
   const lines: string[] = [];
-  lines.push(`import type { DomainDefinition } from "@/database/packages/dnd35/v1/domains/types.ts";`);
+  lines.push(`import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
   lines.push(`export const ALL_DOMAINS: DomainDefinition[] = [`);
   for (const d of seeds) {
@@ -308,9 +336,7 @@ function generateDomain(_ref: DomainReference, book: string) {
   lines.push(`];`);
   lines.push(``);
 
-  mkdirSync(outDir, { recursive: true });
-  writeFileSync(dataPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${dataPath}`);
+  writeGenerated(dataPath, lines.join("\n"));
 
   // Generate feat pool feats (e.g. War Domain Weapon) — only for domains in this book
   const seedNames = new Set(seeds.map((d) => d.name));
@@ -334,23 +360,21 @@ function generateDomain(_ref: DomainReference, book: string) {
 function regenerateFavoredEnemyFeats(book: string) {
   if (book !== "srd") return;
 
-  const outDir = join(BASE_DIR, "generated", book, "feats");
-  mkdirSync(outDir, { recursive: true });
-  const outPath = join(outDir, "favoredEnemy.ts");
+  const outPath = join(BASE_DIR, "generated", book, "feats", "favoredEnemy.ts");
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";`);
+  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(`import {`);
   lines.push(`  favoredEnemy as variants,`);
+  lines.push(`  favoredEnemySpecializationUmbrella as specUmbrella,`);
   lines.push(`  favoredEnemySpecializationVariants as specVariants,`);
-  lines.push(`} from "@/database/packages/dnd35/v1/feats/creatureTypes.ts";`);
+  lines.push(`} from "@/database/packages/dnd35/content/creatureTypes.ts";`);
   lines.push(``);
-  lines.push(`export const favoredEnemy: FeatSeed[] = [...variants, ...specVariants];`);
+  lines.push(`export const favoredEnemy: FeatSeed[] = [...variants, ...specVariants, specUmbrella];`);
   lines.push(``);
 
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated favored-enemy variants: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 function generateDomainFeatPool(feats: FeatSeed[], book: string) {
@@ -364,7 +388,7 @@ function generateDomainFeatPool(feats: FeatSeed[], book: string) {
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";`);
+  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
 
   for (const [_apt, poolFeats] of byAptitude) {
@@ -394,11 +418,7 @@ function generateDomainFeatPool(feats: FeatSeed[], book: string) {
     lines.push(``);
   }
 
-  const outDir = join(BASE_DIR, "generated", book, "feats");
-  mkdirSync(outDir, { recursive: true });
-  const outPath = join(outDir, "domainFeats.ts");
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated domain feat pool: ${outPath}`);
+  writeGenerated(join(BASE_DIR, "generated", book, "feats", "domainFeats.ts"), lines.join("\n"));
 }
 
 function generateRace(ref: RaceReference, book: string) {
@@ -407,7 +427,7 @@ function generateRace(ref: RaceReference, book: string) {
 
   // Generate data.ts
   const lines: string[] = [];
-  lines.push(`import type { RaceDefinition } from "@/database/packages/dnd35/v1/races/types.ts";`);
+  lines.push(`import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
   lines.push(`export const ALL_RACES: RaceDefinition[] = [`);
   for (const r of seeds) {
@@ -428,12 +448,7 @@ function generateRace(ref: RaceReference, book: string) {
   lines.push(`];`);
   lines.push(``);
 
-  const outDir = join(BASE_DIR, "generated", book, "races");
-  mkdirSync(outDir, { recursive: true });
-
-  const dataPath = join(outDir, "data.ts");
-  writeFileSync(dataPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${dataPath}`);
+  writeGenerated(join(BASE_DIR, "generated", book, "races", "data.ts"), lines.join("\n"));
 
   if (!quiet) console.log(`\nDone!`);
 }
@@ -441,7 +456,6 @@ function generateRace(ref: RaceReference, book: string) {
 function generateItem(ref: ItemReference, book: string) {
   const seeds = buildItemSeeds(ref);
   const outDir = join(BASE_DIR, "generated", book, "items");
-  mkdirSync(outDir, { recursive: true });
 
   // --- weapons.ts ---
   generateWeaponFile(join(outDir, "weapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons, "simple");
@@ -468,58 +482,45 @@ function escStr(s: string): string {
   return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
+/**
+ * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives. `imports`
+ * are the builders it takes from content/items.ts.
+ */
+function writeItemFile<T extends { name: string; description: string }>(path: string, constName: string, imports: string[], items: T[], fields: (item: T) => string[]) {
+  const lines = [
+    `// Auto-generated by the SRD pipeline — do not edit manually`,
+    `import type { ItemDef } from "@/database/packages/dnd35/content/types.ts";`,
+    ...imports.length > 0 ? [`import { ${imports.join(", ")} } from "@/database/packages/dnd35/content/items.ts";`] : [],
+    ``,
+    `export const ${constName}: ItemDef[] = [`,
+    ...items.flatMap((item) => [
+      `  {`,
+      `    name: "${escStr(item.name)}",`,
+      `    description: "${escStr(item.description)}",`,
+      ...fields(item).map((line) => `    ${line}`),
+      `  },`,
+    ]),
+    `];`,
+    ``,
+  ];
+  writeGenerated(path, lines.join("\n"));
+}
+
 function generateWeaponFile(path: string, constName: string, weapons: ReturnType<typeof buildItemSeeds>["simpleWeapons"], profFn: string) {
-  const lines: string[] = [];
-  lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { ItemDef } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  lines.push(`import { ${profFn}, weaponProperties } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  lines.push(``);
-  lines.push(`export const ${constName}: ItemDef[] = [`);
-  for (const w of weapons) {
-    lines.push(`  {`);
-    lines.push(`    name: "${escStr(w.name)}",`);
-    lines.push(`    description: "${escStr(w.description)}",`);
-    lines.push(`    weight: "${w.weight}", costGp: "${w.costGp}", type: "Weapon",`);
-    lines.push(`    requirements: ${profFn}("${escStr(w.name)}"),`);
-    lines.push(`    properties: weaponProperties("${escStr(w.name)}"),`);
-    lines.push(`  },`);
-  }
-  lines.push(`];`);
-  lines.push(``);
-  writeFileSync(path, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${path}`);
+  writeItemFile(path, constName, [profFn, "weaponProperties"], weapons, (w) => [
+    `weight: "${w.weight}", costGp: "${w.costGp}", type: "Weapon",`,
+    `requirements: ${profFn}("${escStr(w.name)}"),`,
+    `properties: weaponProperties("${escStr(w.name)}"),`,
+  ]);
 }
 
 function generateArmorFile(path: string, constName: string, items: ReturnType<typeof buildItemSeeds>["armor"]) {
-  // Collect which proficiency constants are actually used
-  const usedProfs = new Set<string>();
-  for (const a of items) {
-    // Look up the raw data to find the category
-    const prof = getArmorProf(a.name);
-    if (prof) usedProfs.add(prof);
-  }
-
-  const lines: string[] = [];
-  lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { ItemDef } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  const imports = [...usedProfs].sort();
-  lines.push(`import { armorProperties, ${imports.join(", ")} } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  lines.push(``);
-  lines.push(`export const ${constName}: ItemDef[] = [`);
-  for (const a of items) {
-    const prof = getArmorProf(a.name);
-    lines.push(`  {`);
-    lines.push(`    name: "${escStr(a.name)}",`);
-    lines.push(`    description: "${escStr(a.description)}",`);
-    lines.push(`    weight: "${a.weight}", costGp: "${a.costGp}", type: "Armor", slot: "Torso",`);
-    lines.push(`    requirements: ${prof},`);
-    lines.push(`    properties: armorProperties("${escStr(a.name)}"),`);
-    lines.push(`  },`);
-  }
-  lines.push(`];`);
-  lines.push(``);
-  writeFileSync(path, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${path}`);
+  const profs = [...new Set(items.map((a) => getArmorProf(a.name)))].sort();
+  writeItemFile(path, constName, ["armorProperties", ...profs], items, (a) => [
+    `weight: "${a.weight}", costGp: "${a.costGp}", type: "Armor", slot: "Torso",`,
+    `requirements: ${getArmorProf(a.name)},`,
+    `properties: armorProperties("${escStr(a.name)}"),`,
+  ]);
 }
 
 function getArmorProf(generatorName: string): string {
@@ -533,34 +534,12 @@ function getArmorProf(generatorName: string): string {
 }
 
 function generateShieldFile(path: string, constName: string, items: ReturnType<typeof buildItemSeeds>["shields"]) {
-  // Collect which proficiency constants are actually used
-  const usedProfs = new Set<string>();
-  for (const s of items) {
-    const prof = getShieldProf(s.name);
-    usedProfs.add(prof);
-  }
-
-  const lines: string[] = [];
-  lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { ItemDef } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  const imports = [...usedProfs].sort();
-  lines.push(`import { shieldProperties, ${imports.join(", ")} } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  lines.push(``);
-  lines.push(`export const ${constName}: ItemDef[] = [`);
-  for (const s of items) {
-    const prof = getShieldProf(s.name);
-    lines.push(`  {`);
-    lines.push(`    name: "${escStr(s.name)}",`);
-    lines.push(`    description: "${escStr(s.description)}",`);
-    lines.push(`    weight: "${s.weight}", costGp: "${s.costGp}", type: "Shield", slot: "Off Hand",`);
-    lines.push(`    requirements: ${prof},`);
-    lines.push(`    properties: shieldProperties("${escStr(s.name)}"),`);
-    lines.push(`  },`);
-  }
-  lines.push(`];`);
-  lines.push(``);
-  writeFileSync(path, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${path}`);
+  const profs = [...new Set(items.map((s) => getShieldProf(s.name)))].sort();
+  writeItemFile(path, constName, ["shieldProperties", ...profs], items, (s) => [
+    `weight: "${s.weight}", costGp: "${s.costGp}", type: "Shield", slot: "Off Hand",`,
+    `requirements: ${getShieldProf(s.name)},`,
+    `properties: shieldProperties("${escStr(s.name)}"),`,
+  ]);
 }
 
 function getShieldProf(generatorName: string): string {
@@ -570,23 +549,10 @@ function getShieldProf(generatorName: string): string {
 }
 
 function generateGoodsFile(path: string, constName: string, items: ReturnType<typeof buildItemSeeds>["goods"]) {
-  const lines: string[] = [];
-  lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { ItemDef } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  lines.push(``);
-  lines.push(`export const ${constName}: ItemDef[] = [`);
-  for (const g of items) {
-    lines.push(`  {`);
-    lines.push(`    name: "${escStr(g.name)}",`);
-    lines.push(`    description: "${escStr(g.description)}",`);
-    lines.push(`    weight: "${g.weight}", costGp: "${g.costGp}", type: "Other", slot: "Other",`);
-    lines.push(`    properties: [],`);
-    lines.push(`  },`);
-  }
-  lines.push(`];`);
-  lines.push(``);
-  writeFileSync(path, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${path}`);
+  writeItemFile(path, constName, [], items, (g) => [
+    `weight: "${g.weight}", costGp: "${g.costGp}", type: "Other", slot: "Other",`,
+    `properties: [],`,
+  ]);
 }
 
 function generateItemIndex(outDir: string) {
@@ -600,14 +566,12 @@ function generateItemIndex(outDir: string) {
   lines.push(`export { GOODS } from "./goods.ts";`);
   lines.push(``);
   const outPath = join(outDir, "index.ts");
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 function generateMagicItem(ref: MagicItemReference, book: string) {
   const seeds = buildMagicItemSeeds(ref);
   const outDir = join(BASE_DIR, "generated", book, "items");
-  mkdirSync(outDir, { recursive: true });
 
   const files: [string, string, ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>]][] = [
     ["magic-armor.ts", "MAGIC_ARMOR", seeds.magicArmor],
@@ -631,41 +595,16 @@ function generateMagicItem(ref: MagicItemReference, book: string) {
 }
 
 function generateMagicItemFile(path: string, constName: string, items: ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>]) {
-  const lines: string[] = [];
-  lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { ItemDef } from "@/database/packages/dnd35/v1/items/types.ts";`);
-  lines.push(``);
-  lines.push(`export const ${constName}: ItemDef[] = [`);
-  for (const item of items) {
-    lines.push(`  {`);
-    lines.push(`    name: "${escStr(item.name)}",`);
-    lines.push(`    description: "${escStr(item.description)}",`);
-    lines.push(`    weight: "${item.weight}", costGp: "${item.costGp}", type: "${item.type}",${item.slot ? ` slot: "${item.slot}",` : ""}`);
-    if (item.sourceItem) {
-      lines.push(`    sourceItem: "${escStr(item.sourceItem)}",`);
-    }
-    if (item.properties.length > 0) {
-      lines.push(`    properties: [`);
-      for (const p of item.properties) {
-        lines.push(`      { type: "${p.type}", value: "${escStr(p.value)}" },`);
-      }
-      lines.push(`    ],`);
-    } else {
-      lines.push(`    properties: [],`);
-    }
-    if (item.modifiers && item.modifiers.length > 0) {
-      lines.push(`    modifiers: [`);
-      for (const m of item.modifiers) {
-        lines.push(`      { target: "${m.target}", operator: "${m.operator}", value: "${m.value}", valueType: "${m.valueType}" },`);
-      }
-      lines.push(`    ],`);
-    }
-    lines.push(`  },`);
-  }
-  lines.push(`];`);
-  lines.push(``);
-  writeFileSync(path, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${path}`);
+  writeItemFile(path, constName, [], items, (item) => [
+    `weight: "${item.weight}", costGp: "${item.costGp}", type: "${item.type}",${item.slot ? ` slot: "${item.slot}",` : ""}`,
+    ...item.sourceItem ? [`sourceItem: "${escStr(item.sourceItem)}",`] : [],
+    ...item.properties.length > 0
+      ? [`properties: [`, ...item.properties.map((p) => `  { type: "${p.type}", value: "${escStr(p.value)}" },`), `],`]
+      : [`properties: [],`],
+    ...item.modifiers?.length
+      ? [`modifiers: [`, ...item.modifiers.map((m) => `  { target: "${m.target}", operator: "${m.operator}", value: "${m.value}", valueType: "${m.valueType}" },`), `],`]
+      : [],
+  ]);
 }
 
 function generateItemIndexWithMagic(outDir: string) {
@@ -688,17 +627,16 @@ function generateItemIndexWithMagic(outDir: string) {
   if (existsSync(join(outDir, "staffs.ts"))) lines.push(`export { STAFFS } from "./staffs.ts";`);
   lines.push(``);
   const outPath = join(outDir, "index.ts");
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 /** Regenerate aptitudes.ts for a book from reference JSONs. */
 function regenerateAptitudes(book: string) {
   const featRefPath = join(BASE_DIR, "reference", book, "feats.json");
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  let feats: import("@/database/packages/dnd35/v1/feats/types.ts").FeatSeed[] = [];
+  let feats: import("@/database/packages/dnd35/content/types.ts").FeatSeed[] = [];
   try {
-    const ref: FeatReference = JSON.parse(readFileSync(featRefPath, "utf-8"));
+    const ref = loadReference(featRefPath, "feat");
     feats = buildFeatSeeds(ref, book);
   } catch { /* no standalone feats for this book */ }
 
@@ -715,10 +653,7 @@ function regenerateAptitudes(book: string) {
   }
   aptLines.push(`];`);
   aptLines.push(``);
-  const aptPath = join(BASE_DIR, "generated", book, "aptitudes.ts");
-  mkdirSync(dirname(aptPath), { recursive: true });
-  writeFileSync(aptPath, aptLines.join("\n"));
-  if (!quiet) console.log(`Generated aptitudes: ${aptPath}`);
+  writeGenerated(join(BASE_DIR, "generated", book, "aptitudes.ts"), aptLines.join("\n"));
 }
 
 /** Regenerate cowFeats.ts for a book from bonusFeatLists in class reference JSONs.
@@ -726,6 +661,7 @@ function regenerateAptitudes(book: string) {
  *  (i.e. cross-book references that actually need COW). Same-book feats already get
  *  their aptitudes added directly by the feat generator. */
 function regenerateCowFeats(book: string) {
+  if (book === "srd") return; // the core rules are what extensions copy from
   const classDir = join(BASE_DIR, "reference", book, "classes");
   let classFiles: string[];
   try {
@@ -738,14 +674,14 @@ function regenerateCowFeats(book: string) {
   const bookFeats = new Set<string>();
   const bookFeatsPath = join(BASE_DIR, "reference", book, "feats.json");
   if (existsSync(bookFeatsPath)) {
-    const ref: FeatReference = JSON.parse(readFileSync(bookFeatsPath, "utf-8"));
+    const ref = loadReference(bookFeatsPath, "feat");
     for (const feat of ref.raw) bookFeats.add(feat.name);
   }
 
   // Also collect class feature seed names — these are generated as feats by the class feat generator
   const classFeatureNames = new Set<string>();
   for (const file of classFiles) {
-    const ref: ClassReference = JSON.parse(readFileSync(join(classDir, file), "utf-8"));
+    const ref = loadReference(join(classDir, file), "class");
     const features = ref.mapping?.overrides?.features ?? {};
     for (const [, feat] of Object.entries(features)) {
       if (feat.seedName) classFeatureNames.add(feat.seedName);
@@ -759,7 +695,7 @@ function regenerateCowFeats(book: string) {
   const entries: CowEntry[] = [];
 
   for (const file of classFiles) {
-    const ref: ClassReference = JSON.parse(readFileSync(join(classDir, file), "utf-8"));
+    const ref = loadReference(join(classDir, file), "class");
     const bonusFeatLists = ref.mapping?.overrides?.bonusFeatLists ?? ref.detected?.bonusFeatLists;
     if (!bonusFeatLists?.length) continue;
 
@@ -790,7 +726,7 @@ function regenerateCowFeats(book: string) {
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { CowFeatEntry } from "@/database/packages/dnd35/seed-utils.ts";`);
+  lines.push(`import type { CowFeatEntry } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
   lines.push(`export const COW_FEATS: CowFeatEntry[] = [`);
   for (const entry of deduped.values()) {
@@ -800,9 +736,7 @@ function regenerateCowFeats(book: string) {
   lines.push(`];`);
   lines.push(``);
 
-  mkdirSync(dirname(outPath), { recursive: true });
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated COW feats: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 /** Regenerate cowSpells.ts for ALL books that have casting classes. Called after spell generation
@@ -825,6 +759,7 @@ function regenerateCowSpellsAllBooks() {
  *  have levelEntries matching this book's casting classes. Produces per-class-level entries
  *  so the seed uses the correct level for each class (not the global minimum). */
 function regenerateCowSpells(book: string) {
+  if (book === "srd") return; // the core rules are what extensions copy from
   const classDir = join(BASE_DIR, "reference", book, "classes");
   let classFiles: string[];
   try {
@@ -838,7 +773,7 @@ function regenerateCowSpells(book: string) {
   // Build map: parentClassName → [{ aptitude, className }] for classes that inherit another class's spell list
   const inheritedApts = new Map<string, { aptitude: string }[]>();
   for (const file of classFiles) {
-    const ref: ClassReference = JSON.parse(readFileSync(join(classDir, file), "utf-8"));
+    const ref = loadReference(join(classDir, file), "class");
     const spells = ref.mapping?.overrides?.spells ?? ref.mapping?.spells;
     if (spells && ref.raw?.name) {
       classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
@@ -855,7 +790,7 @@ function regenerateCowSpells(book: string) {
   const bookSpellNames = new Set<string>();
   const bookSpellPath = join(BASE_DIR, "reference", book, "spells.json");
   if (existsSync(bookSpellPath)) {
-    const ref: SpellReference = JSON.parse(readFileSync(bookSpellPath, "utf-8"));
+    const ref = loadReference(bookSpellPath, "spell");
     for (const spell of ref.raw) bookSpellNames.add(spell.name);
   }
 
@@ -871,7 +806,7 @@ function regenerateCowSpells(book: string) {
   for (const b of readdirSync(refBase)) {
     try {
       for (const f of readdirSync(join(refBase, b, "classes")).filter((f) => f.endsWith(".json"))) {
-        const r: ClassReference = JSON.parse(readFileSync(join(refBase, b, "classes", f), "utf-8"));
+        const r = loadReference(join(refBase, b, "classes", f), "class");
         if (r.raw?.name === "Wizard") { baseBook = b; break; }
       }
     } catch { /* no classes dir */ }
@@ -883,7 +818,7 @@ function regenerateCowSpells(book: string) {
     const spellPath = join(refBase, otherBook, "spells.json");
     if (!existsSync(spellPath)) continue;
 
-    const ref: SpellReference = JSON.parse(readFileSync(spellPath, "utf-8"));
+    const ref = loadReference(spellPath, "spell");
     for (const spell of ref.raw) {
       const isSameBook = bookSpellNames.has(spell.name);
       const isFromBase = otherBook === baseBook;
@@ -928,7 +863,7 @@ function regenerateCowSpells(book: string) {
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { CowSpellEntry } from "@/database/packages/dnd35/seed-utils.ts";`);
+  lines.push(`import type { CowSpellEntry } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
   lines.push(`export const COW_SPELLS: CowSpellEntry[] = [`);
   for (const entry of entries.values()) {
@@ -938,9 +873,7 @@ function regenerateCowSpells(book: string) {
   lines.push(`];`);
   lines.push(``);
 
-  mkdirSync(dirname(outPath), { recursive: true });
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated COW spells: ${outPath} (${entries.size} entries)`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 /** Regenerate classes/index.ts for a book from class reference JSONs. */
@@ -959,7 +892,7 @@ function regenerateClassIndex(book: string) {
   const entries: ClassEntry[] = [];
 
   for (const file of refFiles) {
-    const ref: ClassReference = JSON.parse(readFileSync(join(refDir, file), "utf-8"));
+    const ref = loadReference(join(refDir, file), "class");
     if (!ref.raw?.name) continue;
     const slug = toCamelCase(ref.raw.name);
     const levels = ref.detected?.levels ?? 0;
@@ -972,7 +905,7 @@ function regenerateClassIndex(book: string) {
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";`);
+  lines.push(`import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
 
   for (const e of entries) {
@@ -1010,8 +943,7 @@ function regenerateClassIndex(book: string) {
 
   const genClassDir = join(BASE_DIR, "generated", book, "classes");
   const outPath = join(genClassDir, "index.ts");
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated class index: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 /** Regenerate feats/classes/index.ts for a book from all generated class feat .ts files. */
@@ -1042,7 +974,7 @@ function regenerateClassFeatIndex(book: string) {
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";`);
+  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
 
   for (const e of entries) {
@@ -1071,8 +1003,7 @@ function regenerateClassFeatIndex(book: string) {
   lines.push(``);
 
   const outPath = join(classFeatDir, "index.ts");
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated class feat index: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 /** Regenerate feats/index.ts for a book from all .ts files in feats/ and classes/index.ts. */
@@ -1104,7 +1035,7 @@ function regenerateFeatIndex(book: string) {
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";`);
+  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
 
   // Re-exports from each feat file
@@ -1160,8 +1091,7 @@ function regenerateFeatIndex(book: string) {
   }
 
   const outPath = join(featDir, "index.ts");
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated feat index: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 /** Regenerate spells/index.ts for a book from existing level .ts files. */
@@ -1191,7 +1121,7 @@ function regenerateSpellIndex(book: string) {
 
   const lines: string[] = [];
   lines.push(`// Auto-generated by the SRD pipeline — do not edit manually`);
-  lines.push(`import type { PowerSeed } from "@/database/packages/dnd35/v1/spells/types.ts";`);
+  lines.push(`import type { SpellSeed } from "@/database/packages/dnd35/content/types.ts";`);
   lines.push(``);
 
   for (const lf of levelFiles) {
@@ -1199,18 +1129,7 @@ function regenerateSpellIndex(book: string) {
   }
   lines.push(``);
 
-  // Re-export individual level arrays
-  lines.push(`export {`);
-  for (const lf of levelFiles) {
-    lines.push(`  ${lf.constName},`);
-  }
-  lines.push(`};`);
-  lines.push(``);
-
-  lines.push(`export type PowerSeedWithLevel = PowerSeed & { level: number };`);
-  lines.push(``);
-
-  lines.push(`export const ALL_SPELLS: PowerSeedWithLevel[] = [`);
+  lines.push(`export const ALL_SPELLS: SpellSeed[] = [`);
   for (const lf of levelFiles) {
     lines.push(`  ...${lf.constName}.map((p) => ({ ...p, level: ${lf.level} })),`);
   }
@@ -1218,8 +1137,7 @@ function regenerateSpellIndex(book: string) {
   lines.push(``);
 
   const outPath = join(spellDir, "index.ts");
-  writeFileSync(outPath, lines.join("\n"));
-  if (!quiet) console.log(`Generated spell index: ${outPath}`);
+  writeGenerated(outPath, lines.join("\n"));
 }
 
 main();

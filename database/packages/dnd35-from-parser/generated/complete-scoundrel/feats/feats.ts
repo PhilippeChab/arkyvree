@@ -1,7 +1,7 @@
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { eq, eqStr, gte, or } from "@/database/packages/dnd35/seed-utils.ts";
-import { ALL_WEAPONS } from "@/database/packages/dnd35/v1/feats/weapons.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 

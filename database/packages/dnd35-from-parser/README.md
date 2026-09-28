@@ -17,15 +17,18 @@ bun run parser:scrape -- magicItem --book dmg
 # Scrape a single entity by URL
 bun run parser:scrape -- class --url https://dndtools.net/classes/.../barbarian/ --book srd
 
-# Generate TypeScript from a reference JSON
-bun run parser:generate -- <path-to-json>
+# Regenerate TypeScript from the references
+bun run parser:generate                      # everything, domains included
+bun run parser:generate srd                  # one book
+bun run parser:generate srd --type class     # one book's classes
+bun run parser:generate -- <path-to-json>    # one reference
 
 # Re-scrape and regenerate all existing references
 bun run parser:sync
 bun run parser:sync srd                     # filter by book
 bun run parser:sync srd --type class         # filter by book + type
 
-# Validate reference files for unresolved issues
+# Validate reference files: unresolved detections, and class overrides that change nothing
 bun run parser:validate
 bun run parser:validate --type class
 bun run parser:validate complete-warrior
@@ -34,9 +37,6 @@ bun run parser:validate complete-warrior
 bun run parser:overrides
 bun run parser:overrides --type feat
 bun run parser:overrides complete-warrior
-
-# Remove redundant mapping.overrides entries from class references
-bun database/packages/dnd35-from-parser/tools/cleanupOverrides.ts
 ```
 
 ### Global scraper options
@@ -47,16 +47,18 @@ bun database/packages/dnd35-from-parser/tools/cleanupOverrides.ts
 ## Architecture
 
 ```
-HTML page → Scraper → JSON reference file → Generator → TypeScript seed files
-                            ↑
-                      Human annotates
-                      mapping section
+HTML page → Scraper → JSON reference file (raw + overrides) → Generator → generated/ TypeScript
+                                          ↑
+                                 Human corrections
 ```
 
-Each reference JSON has three sections:
-- **`raw`** — Scraped data, never manually edited. Regenerated on re-scrape.
-- **`detected`** — Auto-computed values (BAB, saves, requirements, modifiers). Regenerated.
-- **`mapping`** — Human-annotated section. Overrides, feature mappings, modifiers. Preserved on re-scrape.
+Each reference JSON stores:
+- **`raw`** — Scraped data, never manually edited. Replaced on re-scrape.
+- **`overrides`** — Corrections made by hand. Kept on re-scrape.
+
+Loading a reference (`tools/references.ts`) derives the rest: **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`) and **`mapping`** (the entities to generate, with the overrides applied). A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
+
+`generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/content/`.
 
 ## Supported entity types
 
@@ -78,10 +80,11 @@ Scrapes class pages into `ClassReference` JSON with full progression tables.
 - `knowAll: true` inferred when spells per day exists but no spells known table
 - Free feat auto-detection by cross-referencing features against known feat names
 
-**Needs manual annotation in `mapping`:**
+**Needs manual annotation in `overrides`:**
 - `modifiers` — Structured stat modifiers from prose descriptions (e.g. Dragon Disciple ability boosts)
 - `aptitudePicks` — Links "choose an ability" features to aptitude pool slugs
-- `overrides` — Any corrections to auto-detected values
+- `features` — Per-feature corrections (name, level, aptitude, modifiers…); a `null` field removes the detected one
+- Any other detected value to correct (`bab`, `saves`, `requirements`, `classSkills`, `spells`…)
 
 ### Feats
 
@@ -94,7 +97,7 @@ Scrapes feat listing and detail pages into `FeatReference` JSON.
 - Stackable feat detection
 - Modifier detection from benefit text
 
-**Needs manual annotation in `mapping.overrides`:**
+**Needs manual annotation in `overrides`:**
 - Requirement corrections when auto-parsing fails
 - Modifier definitions for complex mechanical effects
 - `stackable` / `template` overrides
@@ -117,7 +120,7 @@ Scrapes domain pages into `DomainReference` JSON.
 - Spell list with levels
 - Modifier detection from granted power text
 
-**Needs manual annotation in `mapping.overrides`:**
+**Needs manual annotation in `overrides`:**
 - Description corrections (many dndtools.net pages lack granted power text)
 - Modifier definitions for complex granted powers
 
@@ -151,11 +154,11 @@ Scrapes magic item pages into `MagicItemReference` JSON. Covers wondrous items, 
 - Slot assignment (head, neck, hands, etc.)
 - Modifier detection from item descriptions (save bonuses, skill bonuses, ability bonuses)
 
-## What needs manual annotation in `mapping`
+## What needs manual annotation in `overrides`
 
 - **`modifiers`** — Structured stat modifiers from prose descriptions (e.g. Dragon Disciple ability boosts, natural armor)
 - **`aptitudePicks`** — Links "choose an ability" features to app-specific aptitude pool slugs
 - **`freeFeats` vs `classFeatures`** — Distinguishing existing feats granted for free (e.g. Augment Summoning) from class-specific features (auto-detected by cross-referencing against scraped feat names)
-- **`overrides`** — Any corrections to auto-detected values
+- **`features`** and any other field — Corrections to what's detected
 
-> Customizations MUST go in `mapping`, not `detected` — `detected` is rebuilt from scratch on every re-scrape, `mapping` is preserved.
+> Corrections go in `overrides`: it's the only part of a reference file besides the scraped `raw`.

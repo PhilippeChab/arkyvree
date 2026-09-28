@@ -10,7 +10,7 @@ const THE_BOOK = `(?:the )?${BOOK}(?:\\s+(?:book|handbook|sourcebook))?`;
  * Fix encoding artifacts only — safe to run on any string (names, descriptions, etc.).
  * Does NOT strip book references or rewrite content.
  */
-export function fixEncoding(text: string): string {
+function fixEncoding(text: string): string {
   return text
     // HTML entities for smart quotes
     .replace(/&#8216;|&#8217;|&#8218;|&lsquo;|&rsquo;|&sbquo;/g, "'")
@@ -158,12 +158,12 @@ export function sanitizeJsonValues<T>(obj: T, parentKey?: string): T {
 }
 
 /** Recursively sort all object keys for deterministic JSON output */
-function sortKeys(val: unknown): unknown {
-  if (Array.isArray(val)) return val.map(sortKeys);
+export function sortKeysDeep(val: unknown): unknown {
+  if (Array.isArray(val)) return val.map(sortKeysDeep);
   if (val !== null && typeof val === "object") {
     const sorted: Record<string, unknown> = {};
     for (const key of Object.keys(val as Record<string, unknown>).sort()) {
-      sorted[key] = sortKeys((val as Record<string, unknown>)[key]);
+      sorted[key] = sortKeysDeep((val as Record<string, unknown>)[key]);
     }
     return sorted;
   }
@@ -172,5 +172,5 @@ function sortKeys(val: unknown): unknown {
 
 /** JSON.stringify with sorted keys for deterministic output */
 export function stableStringify(val: unknown): string {
-  return JSON.stringify(sortKeys(val), null, 2) + "\n";
+  return JSON.stringify(sortKeysDeep(val), null, 2) + "\n";
 }

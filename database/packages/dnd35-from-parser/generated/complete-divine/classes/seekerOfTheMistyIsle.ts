@@ -1,5 +1,5 @@
-import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
-import { eqStr, gte } from "@/database/packages/dnd35/v1/feats/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
 
 export const SEEKER_OF_THE_MISTY_ISLE: ClassSeed = {
   name: "Seeker of the Misty Isle",

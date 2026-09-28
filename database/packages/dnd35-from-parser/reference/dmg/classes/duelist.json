@@ -5,123 +5,14 @@
     "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/duelist/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {
-      "dodge": "Dodge",
-      "mobility": "Mobility",
-      "weaponfinesse": "Weapon Finesse"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Canny Defense"
-      },
-      {
-        "levels": [
-          2,
-          8
-        ],
-        "name": "Improved Reaction"
-      },
-      {
-        "levels": [
-          3
-        ],
-        "name": "Enhanced Mobility"
-      },
-      {
-        "levels": [
-          4
-        ],
-        "name": "Grace"
-      },
-      {
-        "levels": [
-          5,
-          10
-        ],
-        "name": "Precise Strike"
-      },
-      {
-        "levels": [
-          6
-        ],
-        "name": "Acrobatic Charge"
-      },
-      {
-        "levels": [
-          7
-        ],
-        "name": "Elaborate Parry"
-      },
-      {
-        "levels": [
-          9
-        ],
-        "name": "Deflect Arrows"
-      }
-    ],
-    "hd": 10,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "6",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.perform.rank",
-        "value": "3",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.tumble.rank",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.dodge.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.mobility.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.weaponfinesse.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      }
-    ],
-    "saves": {
-      "fortitude": "poor",
-      "reflex": "good",
-      "will": "poor"
-    },
-    "skillPoints": 4
-  },
-  "mapping": {
-    "classFeatureAptitude": "Duelist Class Feature",
+  "overrides": {
+    "description": "A duelist is an agile and cunning combatant who specializes in delivering accurate strikes using light weaponry.",
     "features": {
       "Acrobatic Charge": {
-        "description": "At 6th level, a duelist can charge through circumstances that would normally prevent it. She is able to charge across difficult terrain that would ordinarily impede movement, allowing her to rush down steep staircases, vault from balconies, or scramble over furniture to reach her target. She may still need to succeed on appropriate skill checks (particularly Jump or Tumble) depending on the situation.",
-        "level": 6,
-        "seedName": "Acrobatic Charge (Duelist)"
+        "description": "At 6th level, a duelist can charge through circumstances that would normally prevent it. She is able to charge across difficult terrain that would ordinarily impede movement, allowing her to rush down steep staircases, vault from balconies, or scramble over furniture to reach her target. She may still need to succeed on appropriate skill checks (particularly Jump or Tumble) depending on the situation."
       },
       "Canny Defense": {
         "description": "While unarmored and not carrying a shield, a duelist who wields a melee weapon may add a portion of her Intelligence bonus (if positive) to her AC as a modifier to her Dexterity-based AC adjustment. She adds 1 point of her Intelligence bonus per duelist class level. As an example, a 2nd-level duelist with 16 Intelligence (+3 modifier) would receive a +2 bonus to AC. This benefit is lost whenever the duelist is flat-footed or otherwise unable to apply her Dexterity bonus to AC.",
-        "level": 1,
         "modifiers": [
           {
             "operator": "add",
@@ -143,27 +34,19 @@
             "value": "{{ [abilities.intelligence.modifier] }}",
             "valueType": "number"
           }
-        ],
-        "seedName": "Canny Defense (Duelist)"
+        ]
       },
       "Deflect Arrows": {
-        "description": "At 9th level, a duelist gains the effect of the Deflect Arrows feat while wielding a light or one-handed piercing weapon.",
-        "level": 9,
-        "seedName": "Deflect Arrows (Duelist)"
+        "description": "At 9th level, a duelist gains the effect of the Deflect Arrows feat while wielding a light or one-handed piercing weapon."
       },
       "Elaborate Parry": {
-        "description": "From 7th level onward, whenever a duelist fights defensively or uses total defense in melee, she gains an extra +1 dodge bonus to AC per duelist class level she possesses.",
-        "level": 7,
-        "seedName": "Elaborate Parry (Duelist)"
+        "description": "From 7th level onward, whenever a duelist fights defensively or uses total defense in melee, she gains an extra +1 dodge bonus to AC per duelist class level she possesses."
       },
       "Enhanced Mobility": {
-        "description": "While wearing no armor and not using a shield, a duelist receives an extra +4 bonus to AC against attacks of opportunity provoked by moving out of a threatened square.",
-        "level": 3,
-        "seedName": "Enhanced Mobility (Duelist)"
+        "description": "While wearing no armor and not using a shield, a duelist receives an extra +4 bonus to AC against attacks of opportunity provoked by moving out of a threatened square."
       },
       "Grace": {
         "description": "Beginning at 4th level, a duelist receives an additional +2 competence bonus to all Reflex saving throws. This benefit only applies when the duelist wears no armor and carries no shield.",
-        "level": 4,
         "modifiers": [
           {
             "operator": "add",
@@ -185,133 +68,16 @@
             "value": "2",
             "valueType": "number"
           }
-        ],
-        "seedName": "Grace (Duelist)"
+        ]
       },
       "Improved Reaction": {
-        "description": "Starting at 2nd level, a duelist receives a +2 bonus to initiative rolls. This bonus rises to +4 at 8th level. It stacks with the bonus granted by the Improved Initiative feat.",
-        "level": 2,
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "combat.initiative.misc",
-            "value": "2",
-            "valueType": "number"
-          }
-        ],
-        "seedName": "Improved Reaction (Duelist)",
-        "stackable": true
+        "description": "Starting at 2nd level, a duelist receives a +2 bonus to initiative rolls. This bonus rises to +4 at 8th level. It stacks with the bonus granted by the Improved Initiative feat."
       },
       "Precise Strike": {
-        "description": "At 5th level, a duelist learns to land pinpoint attacks using a light or one-handed piercing weapon, dealing an extra 1d6 damage on each hit. She cannot wield a weapon in her off hand or use a shield while making a precise strike. This ability is effective only against living targets with discernible anatomies. Creatures immune to critical hits (such as undead, constructs, oozes, plants, and incorporeal creatures) are unaffected, and any item or ability that provides protection from critical hits (for example, armor with the fortification property) likewise negates the extra damage. At 10th level, the additional damage increases to +2d6.",
-        "level": 5,
-        "seedName": "Precise Strike (Duelist)",
-        "stackable": true
+        "description": "At 5th level, a duelist learns to land pinpoint attacks using a light or one-handed piercing weapon, dealing an extra 1d6 damage on each hit. She cannot wield a weapon in her off hand or use a shield while making a precise strike. This ability is effective only against living targets with discernible anatomies. Creatures immune to critical hits (such as undead, constructs, oozes, plants, and incorporeal creatures) are unaffected, and any item or ability that provides protection from critical hits (for example, armor with the fortification property) likewise negates the extra damage. At 10th level, the additional damage increases to +2d6."
       },
       "Weapon and Armor Proficiency": {
-        "description": "A duelist has proficiency with all simple and martial weapons but lacks proficiency with any armor or shields.",
-        "level": 1,
-        "modifiers": [
-          {
-            "operator": "set",
-            "target": "feats.simpleweaponproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.martialweaponproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          }
-        ],
-        "seedName": "Weapon and Armor Proficiency (Duelist)"
-      }
-    },
-    "occurrenceMap": {
-      "Acrobatic Charge": "Acrobatic Charge",
-      "Canny Defense": "Canny Defense",
-      "Deflect Arrows": "Deflect Arrows",
-      "Elaborate Parry": "Elaborate Parry",
-      "Enhanced Mobility": "Enhanced Mobility",
-      "Grace": "Grace",
-      "Improved Reaction": "Improved Reaction",
-      "Precise Strike": "Precise Strike"
-    },
-    "overrides": {
-      "description": "A duelist is an agile and cunning combatant who specializes in delivering accurate strikes using light weaponry.",
-      "features": {
-        "Acrobatic Charge": {
-          "description": "At 6th level, a duelist can charge through circumstances that would normally prevent it. She is able to charge across difficult terrain that would ordinarily impede movement, allowing her to rush down steep staircases, vault from balconies, or scramble over furniture to reach her target. She may still need to succeed on appropriate skill checks (particularly Jump or Tumble) depending on the situation."
-        },
-        "Canny Defense": {
-          "description": "While unarmored and not carrying a shield, a duelist who wields a melee weapon may add a portion of her Intelligence bonus (if positive) to her AC as a modifier to her Dexterity-based AC adjustment. She adds 1 point of her Intelligence bonus per duelist class level. As an example, a 2nd-level duelist with 16 Intelligence (+3 modifier) would receive a +2 bonus to AC. This benefit is lost whenever the duelist is flat-footed or otherwise unable to apply her Dexterity bonus to AC.",
-          "modifiers": [
-            {
-              "operator": "add",
-              "requirements": [
-                {
-                  "operator": "equal",
-                  "target": "combat.ac.armor",
-                  "value": "0",
-                  "valueType": "number"
-                },
-                {
-                  "operator": "equal",
-                  "target": "combat.ac.shield",
-                  "value": "0",
-                  "valueType": "number"
-                }
-              ],
-              "target": "combat.ac.misc",
-              "value": "{{ [abilities.intelligence.modifier] }}",
-              "valueType": "number"
-            }
-          ]
-        },
-        "Deflect Arrows": {
-          "description": "At 9th level, a duelist gains the effect of the Deflect Arrows feat while wielding a light or one-handed piercing weapon."
-        },
-        "Elaborate Parry": {
-          "description": "From 7th level onward, whenever a duelist fights defensively or uses total defense in melee, she gains an extra +1 dodge bonus to AC per duelist class level she possesses."
-        },
-        "Enhanced Mobility": {
-          "description": "While wearing no armor and not using a shield, a duelist receives an extra +4 bonus to AC against attacks of opportunity provoked by moving out of a threatened square."
-        },
-        "Grace": {
-          "description": "Beginning at 4th level, a duelist receives an additional +2 competence bonus to all Reflex saving throws. This benefit only applies when the duelist wears no armor and carries no shield.",
-          "modifiers": [
-            {
-              "operator": "add",
-              "requirements": [
-                {
-                  "operator": "equal",
-                  "target": "combat.ac.armor",
-                  "value": "0",
-                  "valueType": "number"
-                },
-                {
-                  "operator": "equal",
-                  "target": "combat.ac.shield",
-                  "value": "0",
-                  "valueType": "number"
-                }
-              ],
-              "target": "saves.reflex.misc",
-              "value": "2",
-              "valueType": "number"
-            }
-          ]
-        },
-        "Improved Reaction": {
-          "description": "Starting at 2nd level, a duelist receives a +2 bonus to initiative rolls. This bonus rises to +4 at 8th level. It stacks with the bonus granted by the Improved Initiative feat."
-        },
-        "Precise Strike": {
-          "description": "At 5th level, a duelist learns to land pinpoint attacks using a light or one-handed piercing weapon, dealing an extra 1d6 damage on each hit. She cannot wield a weapon in her off hand or use a shield while making a precise strike. This ability is effective only against living targets with discernible anatomies. Creatures immune to critical hits (such as undead, constructs, oozes, plants, and incorporeal creatures) are unaffected, and any item or ability that provides protection from critical hits (for example, armor with the fortification property) likewise negates the extra damage. At 10th level, the additional damage increases to +2d6."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "A duelist has proficiency with all simple and martial weapons but lacks proficiency with any armor or shields."
-        }
+        "description": "A duelist has proficiency with all simple and martial weapons but lacks proficiency with any armor or shields."
       }
     }
   },

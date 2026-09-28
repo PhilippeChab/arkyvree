@@ -5,191 +5,20 @@
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/master-of-shrouds/",
     "type": "class"
   },
-  "detected": {
-    "bab": "medium",
-    "casterLevelAdvancement": {
-      "levels": [
-        2,
-        4,
-        6,
-        8,
-        10
-      ],
-      "type": "divine"
-    },
-    "featNameMap": {},
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Summon Undead (Allip/Shadow)"
-      },
-      {
-        "levels": [
-          2
-        ],
-        "name": "Extra Turning"
-      },
-      {
-        "levels": [
-          3
-        ],
-        "name": "Summon Undead (Allips/Shadows)"
-      },
-      {
-        "levels": [
-          5
-        ],
-        "name": "Summon Undead (Wraiths)"
-      },
-      {
-        "levels": [
-          7
-        ],
-        "name": "Summon Undead (Spectres)"
-      },
-      {
-        "levels": [
-          9
-        ],
-        "name": "Summon Undead (Greater Shadows)"
-      }
-    ],
-    "hd": 8,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.concentration.rank",
-        "value": "10",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.spellcraft.rank",
-        "value": "10",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "spellcasting.divine",
-        "value": "1",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "saves.will.base",
-        "value": "5",
-        "valueType": "number"
-      }
-    ],
-    "saves": {
-      "fortitude": "poor",
-      "reflex": "poor",
-      "will": "good"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Master of Shrouds Class Feature",
+  "overrides": {
+    "description": "A master of shrouds is an evil divine caster who specializes in compelling incorporeal undead into service. She wrenches creatures like wraiths and shadows from their haunted lairs, calling them forth and forcing them to carry out her commands. Enraged by their involuntary bondage, these undead leave devastation and terror wherever they go. Most who pursue this path have cleric training. Paladins never follow this route, though fallen paladins may, especially those who have strayed far enough from lawful good ideals to become blackguards. Multiclassed clerics are also commonly drawn to this prestige class, including cleric/fighters and cleric/rogues. A handful of cleric/necromancer/mystic theurges adopt this role at their highest levels.",
     "features": {
       "Extra Turning": {
-        "description": "The master of shrouds receives Extra Turning as a bonus feat. In addition, his master of shrouds levels stack with levels in any other class that grants the ability to rebuke or command undead (such as cleric) when calculating the effectiveness of his rebuke or command ability.",
-        "level": 2,
-        "seedName": "Extra Turning (Master of Shrouds)"
+        "description": "The master of shrouds receives Extra Turning as a bonus feat. In addition, his master of shrouds levels stack with levels in any other class that grants the ability to rebuke or command undead (such as cleric) when calculating the effectiveness of his rebuke or command ability."
       },
       "Spells per Day/Spells Known": {
-        "description": "Each time the master of shrouds reaches an even-numbered class level, he gains additional spells per day (and spells known, if applicable) as though he had also advanced a level in a divine spellcasting class he belonged to prior to entering this prestige class. He does not, however, receive any other benefits that class would normally provide (such as improved turning or rebuking undead, or similar abilities). His master of shrouds level is added to the level of his existing divine spellcasting class to determine spells per day, spells known, and caster level. If the character belonged to more than one divine spellcasting class before becoming a master of shrouds, he must choose which class receives the benefit of each master of shrouds level for purposes of determining spells per day and spells known.",
-        "level": 1,
-        "seedName": "Spells per Day/Spells Known (Master of Shrouds)"
+        "description": "Each time the master of shrouds reaches an even-numbered class level, he gains additional spells per day (and spells known, if applicable) as though he had also advanced a level in a divine spellcasting class he belonged to prior to entering this prestige class. He does not, however, receive any other benefits that class would normally provide (such as improved turning or rebuking undead, or similar abilities). His master of shrouds level is added to the level of his existing divine spellcasting class to determine spells per day, spells known, and caster level. If the character belonged to more than one divine spellcasting class before becoming a master of shrouds, he must choose which class receives the benefit of each master of shrouds level for purposes of determining spells per day and spells known."
       },
       "Summon Undead (Allip/shadow)": {
-        "description": "Beginning at 1st level, the master of shrouds can call forth a shadow or allip to battle on his behalf. This ability operates similarly to summon monster I, with the following differences: the master of shrouds cannot voluntarily dismiss the summoned creature, and if it persists after all enemies have been defeated or destroyed, it turns on the master of shrouds unless he successfully rebukes or commands it. The master of shrouds receives a +4 bonus on turning checks and turning damage against undead he has summoned through this ability. As he advances in this prestige class, he can use this ability more often and gains access to increasingly powerful incorporeal undead. At 3rd level he can summon two allips or two shadows, at 5th level two wraiths, at 7th level two spectres, and at 9th level two greater shadows. He may always opt to summon lower-CR undead in place of any higher-CR option available to him, but the total number summoned remains unchanged.",
-        "level": 1,
-        "seedName": "Summon Undead (Allip/shadow) (Master of Shrouds)"
-      },
-      "Summon Undead (Allips/shadows)": {
-        "description": "",
-        "level": 3,
-        "seedName": "Summon Undead (Allips/shadows) (Master of Shrouds)"
-      },
-      "Summon Undead (Greater Shadows)": {
-        "description": "",
-        "level": 9,
-        "seedName": "Summon Undead (Greater Shadows) (Master of Shrouds)"
-      },
-      "Summon Undead (Spectres)": {
-        "description": "",
-        "level": 7,
-        "seedName": "Summon Undead (Spectres) (Master of Shrouds)"
-      },
-      "Summon Undead (Wraiths)": {
-        "description": "",
-        "level": 5,
-        "seedName": "Summon Undead (Wraiths) (Master of Shrouds)"
+        "description": "Beginning at 1st level, the master of shrouds can call forth a shadow or allip to battle on his behalf. This ability operates similarly to summon monster I, with the following differences: the master of shrouds cannot voluntarily dismiss the summoned creature, and if it persists after all enemies have been defeated or destroyed, it turns on the master of shrouds unless he successfully rebukes or commands it. The master of shrouds receives a +4 bonus on turning checks and turning damage against undead he has summoned through this ability. As he advances in this prestige class, he can use this ability more often and gains access to increasingly powerful incorporeal undead. At 3rd level he can summon two allips or two shadows, at 5th level two wraiths, at 7th level two spectres, and at 9th level two greater shadows. He may always opt to summon lower-CR undead in place of any higher-CR option available to him, but the total number summoned remains unchanged."
       },
       "Weapon and Armor Proficiency": {
-        "description": "A master of shrouds is proficient with all simple weapons, all armor types, and shields.",
-        "level": 1,
-        "modifiers": [
-          {
-            "operator": "set",
-            "target": "feats.simpleweaponproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencylight.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencymedium.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencyheavy.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.shieldproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          }
-        ],
-        "seedName": "Weapon and Armor Proficiency (Master of Shrouds)"
-      }
-    },
-    "occurrenceMap": {
-      "Extra Turning": "Extra Turning",
-      "Summon Undead (Allip/Shadow)": "Summon Undead (Allip/shadow)",
-      "Summon Undead (Allips/Shadows)": "Summon Undead (Allips/shadows)",
-      "Summon Undead (Greater Shadows)": "Summon Undead (Greater Shadows)",
-      "Summon Undead (Spectres)": "Summon Undead (Spectres)",
-      "Summon Undead (Wraiths)": "Summon Undead (Wraiths)"
-    },
-    "overrides": {
-      "description": "A master of shrouds is an evil divine caster who specializes in compelling incorporeal undead into service. She wrenches creatures like wraiths and shadows from their haunted lairs, calling them forth and forcing them to carry out her commands. Enraged by their involuntary bondage, these undead leave devastation and terror wherever they go. Most who pursue this path have cleric training. Paladins never follow this route, though fallen paladins may, especially those who have strayed far enough from lawful good ideals to become blackguards. Multiclassed clerics are also commonly drawn to this prestige class, including cleric/fighters and cleric/rogues. A handful of cleric/necromancer/mystic theurges adopt this role at their highest levels.",
-      "features": {
-        "Extra Turning": {
-          "description": "The master of shrouds receives Extra Turning as a bonus feat. In addition, his master of shrouds levels stack with levels in any other class that grants the ability to rebuke or command undead (such as cleric) when calculating the effectiveness of his rebuke or command ability."
-        },
-        "Spells per Day/Spells Known": {
-          "description": "Each time the master of shrouds reaches an even-numbered class level, he gains additional spells per day (and spells known, if applicable) as though he had also advanced a level in a divine spellcasting class he belonged to prior to entering this prestige class. He does not, however, receive any other benefits that class would normally provide (such as improved turning or rebuking undead, or similar abilities). His master of shrouds level is added to the level of his existing divine spellcasting class to determine spells per day, spells known, and caster level. If the character belonged to more than one divine spellcasting class before becoming a master of shrouds, he must choose which class receives the benefit of each master of shrouds level for purposes of determining spells per day and spells known."
-        },
-        "Summon Undead (Allip/shadow)": {
-          "description": "Beginning at 1st level, the master of shrouds can call forth a shadow or allip to battle on his behalf. This ability operates similarly to summon monster I, with the following differences: the master of shrouds cannot voluntarily dismiss the summoned creature, and if it persists after all enemies have been defeated or destroyed, it turns on the master of shrouds unless he successfully rebukes or commands it. The master of shrouds receives a +4 bonus on turning checks and turning damage against undead he has summoned through this ability. As he advances in this prestige class, he can use this ability more often and gains access to increasingly powerful incorporeal undead. At 3rd level he can summon two allips or two shadows, at 5th level two wraiths, at 7th level two spectres, and at 9th level two greater shadows. He may always opt to summon lower-CR undead in place of any higher-CR option available to him, but the total number summoned remains unchanged."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "A master of shrouds is proficient with all simple weapons, all armor types, and shields."
-        }
+        "description": "A master of shrouds is proficient with all simple weapons, all armor types, and shields."
       }
     }
   },

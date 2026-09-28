@@ -5,272 +5,45 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/samurai/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {},
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Daisho Proficiency"
-      },
-      {
-        "levels": [
-          2
-        ],
-        "name": "Two Swords As One"
-      },
-      {
-        "levels": [
-          3,
-          7,
-          12,
-          17
-        ],
-        "name": "Kiai Smite"
-      },
-      {
-        "levels": [
-          5
-        ],
-        "name": "Iaijutsu Master"
-      },
-      {
-        "levels": [
-          6
-        ],
-        "name": "Staredown"
-      },
-      {
-        "levels": [
-          8
-        ],
-        "name": "Improved Initiative"
-      },
-      {
-        "levels": [
-          10
-        ],
-        "name": "Mass Staredown"
-      },
-      {
-        "levels": [
-          11
-        ],
-        "name": "Improved Two Swords As One"
-      },
-      {
-        "levels": [
-          14
-        ],
-        "name": "Improved Staredown"
-      },
-      {
-        "levels": [
-          16
-        ],
-        "name": "Greater Two Swords As One"
-      },
-      {
-        "levels": [
-          20
-        ],
-        "name": "Frightful Presence"
-      }
-    ],
-    "hd": 10,
-    "levels": 20,
-    "requirements": [
-      {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Neutral",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Evil",
-            "valueType": "string"
-          }
-        ]
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "poor"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Samurai Class Feature",
+  "overrides": {
+    "alignment": "Any lawful",
+    "description": "Trained to fight with their paired katana and wakizashi at the same time, samurai rival fighters in close combat effectiveness but possess a narrower range of martial techniques.",
     "features": {
       "Daisho Proficiency": {
-        "description": "A samurai's preferred melee weapons are the katana (a masterwork bastard sword) and the wakizashi (a masterwork short sword). This matched pair of blades is called a daisho, and many samurai inherit such a set from their family line. Thanks to their specialized weapon training, samurai receive Exotic Weapon Proficiency (bastard sword) as a bonus feat.",
-        "level": 1,
-        "seedName": "Daisho Proficiency (Samurai)"
+        "description": "A samurai's preferred melee weapons are the katana (a masterwork bastard sword) and the wakizashi (a masterwork short sword). This matched pair of blades is called a daisho, and many samurai inherit such a set from their family line. Thanks to their specialized weapon training, samurai receive Exotic Weapon Proficiency (bastard sword) as a bonus feat."
       },
       "Frightful Presence": {
-        "description": "At 20th level, a samurai's renown for courage, honor, and martial mastery has reached legendary proportions. Whenever he draws his weapon, all opponents within 30 feet must make a Will save (DC 20 + the samurai's Charisma modifier) or suffer the consequences: those with 4 or fewer Hit Dice become panicked for 4d6 rounds, while those with 5 to 19 Hit Dice become shaken for 4d6 rounds. Creatures possessing 20 or more Hit Dice are unaffected. An opponent who successfully saves against this ability is immune to that particular samurai's frightful presence for the next 24 hours.",
-        "level": 20,
-        "seedName": "Frightful Presence (Samurai)"
+        "description": "At 20th level, a samurai's renown for courage, honor, and martial mastery has reached legendary proportions. Whenever he draws his weapon, all opponents within 30 feet must make a Will save (DC 20 + the samurai's Charisma modifier) or suffer the consequences: those with 4 or fewer Hit Dice become panicked for 4d6 rounds, while those with 5 to 19 Hit Dice become shaken for 4d6 rounds. Creatures possessing 20 or more Hit Dice are unaffected. An opponent who successfully saves against this ability is immune to that particular samurai's frightful presence for the next 24 hours."
       },
       "Greater Two Swords as One": {
-        "description": "By 16th level, dual-wielding a katana and wakizashi has become instinctive for a samurai. He is treated as possessing the Greater Two-Weapon Fighting feat whenever he wields a katana and wakizashi together, even without meeting the normal prerequisites.",
-        "level": 16,
-        "seedName": "Greater Two Swords as One (Samurai)"
+        "description": "By 16th level, dual-wielding a katana and wakizashi has become instinctive for a samurai. He is treated as possessing the Greater Two-Weapon Fighting feat whenever he wields a katana and wakizashi together, even without meeting the normal prerequisites."
       },
       "Iaijutsu Master": {
-        "description": "At 5th level, a samurai has mastered the art of iaijutsu, a combat discipline focused on seamlessly drawing a blade and delivering a strike in a single smooth motion. He functions as though he has the Quick Draw feat, though this benefit applies only when drawing his katana or wakizashi.",
-        "level": 5,
-        "seedName": "Iaijutsu Master (Samurai)"
+        "description": "At 5th level, a samurai has mastered the art of iaijutsu, a combat discipline focused on seamlessly drawing a blade and delivering a strike in a single smooth motion. He functions as though he has the Quick Draw feat, though this benefit applies only when drawing his katana or wakizashi."
       },
       "Improved Initiative": {
-        "description": "At 8th level, through extensive practice with iaijutsu dueling techniques traditionally used in formal combat between samurai, the character develops the ability to read and react to any opponent's aggression before it unfolds. He gains the Improved Initiative feat.",
-        "level": 8,
-        "seedName": "Improved Initiative (Samurai)"
+        "description": "At 8th level, through extensive practice with iaijutsu dueling techniques traditionally used in formal combat between samurai, the character develops the ability to read and react to any opponent's aggression before it unfolds. He gains the Improved Initiative feat."
       },
       "Improved Staredown": {
-        "description": "At 14th level, a samurai's steely gaze alone is sufficient to rattle opponents. He can now demoralize foes within 30 feet as a move action rather than a standard action.",
-        "level": 14,
-        "seedName": "Improved Staredown (Samurai)"
+        "description": "At 14th level, a samurai's steely gaze alone is sufficient to rattle opponents. He can now demoralize foes within 30 feet as a move action rather than a standard action."
       },
       "Improved Two Swords as One": {
-        "description": "At 11th level, a samurai's skill with the paired katana and wakizashi grows further. While wielding both weapons, he is treated as having the Improved Two-Weapon Fighting feat, even if he does not satisfy the prerequisites for that feat.",
-        "level": 11,
-        "seedName": "Improved Two Swords as One (Samurai)"
+        "description": "At 11th level, a samurai's skill with the paired katana and wakizashi grows further. While wielding both weapons, he is treated as having the Improved Two-Weapon Fighting feat, even if he does not satisfy the prerequisites for that feat."
       },
       "Kiai Smite": {
-        "description": "Beginning at 3rd level, a samurai can unleash a powerful battle shout once per day as a free action during combat, channeling his focus into a single devastating strike. His next attack receives a bonus to both the attack roll and damage roll equal to his Charisma modifier (with a minimum bonus of +1). The number of daily uses increases as the samurai advances in level.",
-        "level": 3,
-        "seedName": "Kiai Smite (Samurai)",
-        "stackable": true
+        "description": "Beginning at 3rd level, a samurai can unleash a powerful battle shout once per day as a free action during combat, channeling his focus into a single devastating strike. His next attack receives a bonus to both the attack roll and damage roll equal to his Charisma modifier (with a minimum bonus of +1). The number of daily uses increases as the samurai advances in level."
       },
       "Mass Staredown": {
-        "description": "At 10th level, a samurai's commanding presence allows him to intimidate several enemies at once. With a single Intimidate check as a standard action, he can demoralize all foes within a 30-foot radius.",
-        "level": 10,
-        "seedName": "Mass Staredown (Samurai)"
+        "description": "At 10th level, a samurai's commanding presence allows him to intimidate several enemies at once. With a single Intimidate check as a standard action, he can demoralize all foes within a 30-foot radius."
       },
       "Staredown": {
-        "description": "Upon reaching 6th level, a samurai's sheer force of personality is enough to unnerve his enemies. He receives a +4 bonus on Intimidate checks and gains the ability to demoralize an opponent.",
-        "level": 6,
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "skills.intimidate.misc",
-            "value": "4",
-            "valueType": "number"
-          }
-        ],
-        "seedName": "Staredown (Samurai)"
+        "description": "Upon reaching 6th level, a samurai's sheer force of personality is enough to unnerve his enemies. He receives a +4 bonus on Intimidate checks and gains the ability to demoralize an opponent."
       },
       "Two Swords as One": {
-        "description": "Starting at 2nd level, a samurai has trained to fight with a katana and wakizashi in tandem. When wielding both weapons simultaneously, he is treated as if he possessed the Two-Weapon Fighting feat, regardless of whether he meets that feat's normal prerequisites.",
-        "level": 2,
-        "seedName": "Two Swords as One (Samurai)"
+        "description": "Starting at 2nd level, a samurai has trained to fight with a katana and wakizashi in tandem. When wielding both weapons simultaneously, he is treated as if he possessed the Two-Weapon Fighting feat, regardless of whether he meets that feat's normal prerequisites."
       },
       "Weapon and Armor Proficiency": {
-        "description": "Samurai are trained in the use of all simple and martial weapons and are proficient with every type of armor. However, they do not gain proficiency with shields.",
-        "level": 1,
-        "modifiers": [
-          {
-            "operator": "set",
-            "target": "feats.simpleweaponproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.martialweaponproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencylight.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencymedium.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencyheavy.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          }
-        ],
-        "seedName": "Weapon and Armor Proficiency (Samurai)"
-      }
-    },
-    "occurrenceMap": {
-      "Daisho Proficiency": "Daisho Proficiency",
-      "Frightful Presence": "Frightful Presence",
-      "Greater Two Swords As One": "Greater Two Swords as One",
-      "Iaijutsu Master": "Iaijutsu Master",
-      "Improved Initiative": "Improved Initiative",
-      "Improved Staredown": "Improved Staredown",
-      "Improved Two Swords As One": "Improved Two Swords as One",
-      "Kiai Smite": "Kiai Smite",
-      "Mass Staredown": "Mass Staredown",
-      "Staredown": "Staredown",
-      "Two Swords As One": "Two Swords as One"
-    },
-    "overrides": {
-      "alignment": "Any lawful",
-      "description": "Trained to fight with their paired katana and wakizashi at the same time, samurai rival fighters in close combat effectiveness but possess a narrower range of martial techniques.",
-      "features": {
-        "Daisho Proficiency": {
-          "description": "A samurai's preferred melee weapons are the katana (a masterwork bastard sword) and the wakizashi (a masterwork short sword). This matched pair of blades is called a daisho, and many samurai inherit such a set from their family line. Thanks to their specialized weapon training, samurai receive Exotic Weapon Proficiency (bastard sword) as a bonus feat."
-        },
-        "Frightful Presence": {
-          "description": "At 20th level, a samurai's renown for courage, honor, and martial mastery has reached legendary proportions. Whenever he draws his weapon, all opponents within 30 feet must make a Will save (DC 20 + the samurai's Charisma modifier) or suffer the consequences: those with 4 or fewer Hit Dice become panicked for 4d6 rounds, while those with 5 to 19 Hit Dice become shaken for 4d6 rounds. Creatures possessing 20 or more Hit Dice are unaffected. An opponent who successfully saves against this ability is immune to that particular samurai's frightful presence for the next 24 hours."
-        },
-        "Greater Two Swords as One": {
-          "description": "By 16th level, dual-wielding a katana and wakizashi has become instinctive for a samurai. He is treated as possessing the Greater Two-Weapon Fighting feat whenever he wields a katana and wakizashi together, even without meeting the normal prerequisites."
-        },
-        "Iaijutsu Master": {
-          "description": "At 5th level, a samurai has mastered the art of iaijutsu, a combat discipline focused on seamlessly drawing a blade and delivering a strike in a single smooth motion. He functions as though he has the Quick Draw feat, though this benefit applies only when drawing his katana or wakizashi."
-        },
-        "Improved Initiative": {
-          "description": "At 8th level, through extensive practice with iaijutsu dueling techniques traditionally used in formal combat between samurai, the character develops the ability to read and react to any opponent's aggression before it unfolds. He gains the Improved Initiative feat."
-        },
-        "Improved Staredown": {
-          "description": "At 14th level, a samurai's steely gaze alone is sufficient to rattle opponents. He can now demoralize foes within 30 feet as a move action rather than a standard action."
-        },
-        "Improved Two Swords as One": {
-          "description": "At 11th level, a samurai's skill with the paired katana and wakizashi grows further. While wielding both weapons, he is treated as having the Improved Two-Weapon Fighting feat, even if he does not satisfy the prerequisites for that feat."
-        },
-        "Kiai Smite": {
-          "description": "Beginning at 3rd level, a samurai can unleash a powerful battle shout once per day as a free action during combat, channeling his focus into a single devastating strike. His next attack receives a bonus to both the attack roll and damage roll equal to his Charisma modifier (with a minimum bonus of +1). The number of daily uses increases as the samurai advances in level."
-        },
-        "Mass Staredown": {
-          "description": "At 10th level, a samurai's commanding presence allows him to intimidate several enemies at once. With a single Intimidate check as a standard action, he can demoralize all foes within a 30-foot radius."
-        },
-        "Staredown": {
-          "description": "Upon reaching 6th level, a samurai's sheer force of personality is enough to unnerve his enemies. He receives a +4 bonus on Intimidate checks and gains the ability to demoralize an opponent."
-        },
-        "Two Swords as One": {
-          "description": "Starting at 2nd level, a samurai has trained to fight with a katana and wakizashi in tandem. When wielding both weapons simultaneously, he is treated as if he possessed the Two-Weapon Fighting feat, regardless of whether he meets that feat's normal prerequisites."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "Samurai are trained in the use of all simple and martial weapons and are proficient with every type of armor. However, they do not gain proficiency with shields."
-        }
+        "description": "Samurai are trained in the use of all simple and martial weapons and are proficient with every type of armor. However, they do not gain proficiency with shields."
       }
     }
   },
@@ -349,9 +122,7 @@
     "hitDie": "d10",
     "name": "Samurai",
     "prerequisites": {
-      "parsed": {
-        "alignment": "Any lawful"
-      },
+      "parsed": {},
       "text": ""
     },
     "progression": [

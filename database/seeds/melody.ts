@@ -1,28 +1,21 @@
-import type { Db } from "@/server/database/index.ts";
-import { addClassLevels, addFeats, addInventory, addPowers, addSkills, createCharacter, getSeedContext } from "@/database/seeds/helpers.ts";
+import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
 // Half-Elf Bard 3 — Skills: (6+2)*4 + (6+2)*2 = 48
-export default async function seed(db: Db) {
-  const ctx = await getSeedContext(db);
-
-  const characterId = await createCharacter(db, ctx, {
-    raceName: "Half-Elf",
-    name: "Melody Silverveil",
-    xp: 3000,
-    alignment: "Chaotic Good",
-    age: 28,
-    gender: "Female",
-    height: "168",
-    weight: "58",
-    description: "A half-elven bard whose honeyed voice can charm a dragon or rally an army. Melody travels from court to tavern, collecting stories and songs — and occasionally picking up secrets she shouldn't know.",
-    abilities: { Strength: 10, Dexterity: 14, Constitution: 12, Intelligence: 14, Wisdom: 10, Charisma: 16 },
-    languages: ["Common", "Elven", "Sylvan"],
-  });
-
-  const levelIds = await addClassLevels(db, ctx, characterId, "Bard", [1, 2, 3], [5, 4, 6]);
-
+export default {
+  raceName: "Half-Elf",
+  name: "Melody Silverveil",
+  xp: 3000,
+  alignment: "Chaotic Good",
+  age: 28,
+  gender: "Female",
+  height: "168",
+  weight: "58",
+  description: "A half-elven bard whose honeyed voice can charm a dragon or rally an army. Melody travels from court to tavern, collecting stories and songs — and occasionally picking up secrets she shouldn't know.",
+  abilities: { Strength: 10, Dexterity: 14, Constitution: 12, Intelligence: 14, Wisdom: 10, Charisma: 16 },
+  languages: ["Common", "Elven", "Sylvan"],
+  classes: [{ klass: "Bard", hp: [5, 4, 6] }],
   // Total skills: 48
-  await addSkills(db, ctx, levelIds, [
+  skills: [
     // L1 (32 points)
     { levelIndex: 0, skillName: "Perform", rank: 4 },
     { levelIndex: 0, skillName: "Diplomacy", rank: 4 },
@@ -50,16 +43,14 @@ export default async function seed(db: Db) {
     { levelIndex: 2, skillName: "Sense Motive", rank: 1 },
     { levelIndex: 2, skillName: "Hide", rank: 1 },
     { levelIndex: 2, skillName: "Move Silently", rank: 1 },
-  ]);
-
+  ],
   // General feats: floor(3/3)+1 = 2
-  await addFeats(db, ctx, levelIds, [
+  feats: [
     { levelIndex: 0, featName: "Dodge", aptitude: "General" },
     { levelIndex: 2, featName: "Combat Casting", aptitude: "General" },
-  ]);
-
+  ],
   // Bard spells known per level: L1=4 cantrips, L2=+1 cantrip +2 L1, L3=+1 cantrip +1 L1
-  await addPowers(db, ctx, levelIds, [
+  powers: [
     // L1: 4 cantrips
     { levelIndex: 0, powerName: "Detect Magic", aptitude: "Bard Spells" },
     { levelIndex: 0, powerName: "Light", aptitude: "Bard Spells" },
@@ -72,10 +63,9 @@ export default async function seed(db: Db) {
     // L3: +1 cantrip, +1 L1 spell
     { levelIndex: 2, powerName: "Mage Hand", aptitude: "Bard Spells" },
     { levelIndex: 2, powerName: "Sleep", aptitude: "Bard Spells" },
-  ]);
-
-  await addInventory(db, ctx, characterId, [
+  ],
+  inventory: [
     { name: "Rapier", quantity: 1, equipped: true, location: "Main Hand", weaponSet: 0 },
     { name: "Studded Leather", quantity: 1, equipped: true, location: "Torso" },
-  ]);
-}
+  ],
+} satisfies CharacterSeed;

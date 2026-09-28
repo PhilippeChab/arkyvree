@@ -1,9 +1,9 @@
 /**
- * Validates all reference JSON files for unresolved issues that would
- * produce incomplete seed data.
+ * Validates all reference files for unresolved issues that would produce incomplete seed data, and for
+ * overrides that change nothing.
  *
- * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks
- * (excluding entries listed in mapping.overrides.reviewed)
+ * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks (except those listed in
+ * `overrides.reviewed`), and class overrides equal to what's derived without them.
  *
  * Usage:
  *   bun run parser:validate                              # all issues
@@ -12,8 +12,8 @@
  */
 
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
-import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { loadReference, readStoredReference, resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { deepEqual, discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 const REF_DIR = join(import.meta.dirname!, "../reference");
 
@@ -24,21 +24,34 @@ type DetectedEntry = {
   unresolvedAptitudePicks?: string[];
 };
 
-type RefFile = {
-  _meta: { type: string; book: string };
-  raw?: Record<string, unknown> | Record<string, unknown>[];
-  detected: Record<string, DetectedEntry> | DetectedEntry;
-  mapping?: { overrides?: { reviewed?: string[]; [key: string]: unknown } };
-};
-
 type Issue = {
   book: string;
   file: string;
   label: string;
-  kind: "error" | "modifier" | "prereq" | "aptitude pick";
+  kind: "error" | "modifier" | "prereq" | "aptitude pick" | "redundant override";
   text: string;
   entityName?: string;
 };
+
+/** A class's overrides that change nothing: each equals what's derived without the overrides. */
+function redundantClassOverrides(stored: StoredReference<"class">): string[] {
+  const { overrides } = stored;
+  if (!overrides) return [];
+  const { detected, mapping } = resolveReference("class", { _meta: stored._meta, raw: stored.raw });
+  const same = (override: unknown, derived: unknown) => override !== undefined && derived !== undefined && deepEqual(override, derived);
+  return [
+    ...same(overrides.spells, mapping.spells) ? ["spells"] : [],
+    ...overrides.modifiers?.length === 0 ? ["modifiers"] : [],
+    ...same(overrides.bonusSpellAbility, mapping.bonusSpellAbility) ? ["bonusSpellAbility"] : [],
+    // Kept while prerequisites are unresolved: it stands for the reviewed requirements.
+    ...same(overrides.requirements, detected.requirements) && !detected.unresolvedPrereqs?.length ? ["requirements"] : [],
+    ...(["bab", "saves", "aptitudePicks", "casterType"] as const).filter((key) => same(overrides[key], detected[key])),
+    ...Object.entries(overrides.features ?? {}).flatMap(([name, fields]) => {
+      const derived: Record<string, unknown> | undefined = mapping.features[name];
+      return derived ? Object.entries(fields).filter(([key, value]) => deepEqual(value, derived[key])).map(([key]) => `features.${name}.${key}`) : [];
+    }),
+  ];
+}
 
 function main() {
   const { bookFilter, typeFilter } = parseCliArgs();
@@ -48,34 +61,28 @@ function main() {
   if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
 
   const issues: Issue[] = [];
+  const entityIssues = (ref: { path: string; book: string }, detected: Record<string, DetectedEntry>, reviewed: Set<string>, skip = new Set<string>()) => {
+    for (const [name, d] of Object.entries(detected)) {
+      if (!reviewed.has(name) && !skip.has(name)) collectIssues(d, name, reviewed, ref.book, ref.path, issues, name);
+    }
+  };
 
   for (const ref of refs) {
-    const data: RefFile = JSON.parse(readFileSync(ref.path, "utf-8"));
-    const reviewed = new Set(data.mapping?.overrides?.reviewed ?? []);
-    const detected = data.detected;
-    if (!detected || typeof detected !== "object") continue;
-
     if (ref.type === "class") {
-      const d = detected as DetectedEntry;
-      const className = !Array.isArray(data.raw) ? (data.raw as { name?: string })?.name : undefined;
-      collectIssues(d, "class", reviewed, ref.book, ref.path, issues, className);
-    } else {
-      // Build set of epic feat names to skip (generator skips them unless overridden)
-      const epicFeats = new Set<string>();
-      if (ref.type === "feat" && Array.isArray(data.raw)) {
-        const overrides = data.mapping?.overrides ?? {};
-        for (const entry of data.raw as { name: string; featType?: string }[]) {
-          if (entry.featType === "epic" && (overrides[entry.name as keyof typeof overrides] as { skip?: boolean } | undefined)?.skip !== false) {
-            epicFeats.add(entry.name);
-          }
-        }
+      const data = loadReference(ref.path, "class");
+      collectIssues(data.detected, "class", new Set(data.mapping.overrides?.reviewed), ref.book, ref.path, issues, data.raw.name);
+      for (const text of redundantClassOverrides(readStoredReference(ref.path, "class"))) {
+        issues.push({ book: ref.book, file: ref.path, label: "class", kind: "redundant override", text, entityName: data.raw.name });
       }
-
-      for (const [name, d] of Object.entries(detected as Record<string, DetectedEntry>)) {
-        if (reviewed.has(name)) continue;
-        if (epicFeats.has(name)) continue;
-        collectIssues(d, name, reviewed, ref.book, ref.path, issues, name);
-      }
+    } else if (ref.type === "feat") {
+      // The generator skips epic feats unless an override keeps them.
+      const data = loadReference(ref.path, "feat");
+      const overrides = data.mapping.overrides;
+      const epic = new Set(data.raw.filter((f) => f.featType === "epic" && overrides[f.name]?.skip !== false).map((f) => f.name));
+      entityIssues(ref, data.detected, new Set(overrides.reviewed), epic);
+    } else if (ref.type === "domain" || ref.type === "race") {
+      const data = loadReference(ref.path, ref.type);
+      entityIssues(ref, data.detected, new Set(data.mapping.overrides.reviewed));
     }
   }
 

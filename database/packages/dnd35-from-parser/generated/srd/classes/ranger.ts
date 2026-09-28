@@ -1,4 +1,4 @@
-import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const RANGER: ClassSeed = {
   name: "Ranger",
@@ -49,6 +49,10 @@ export const RANGER: ClassSeed = {
     [20, "Favored Enemy (Ranger)"],
   ],
   freeFeats: [
+    [5, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"],
+    [10, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"],
+    [15, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"],
+    [20, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"],
     [1, "Track", "Ranger Class Feature"],
     [3, "Endurance", "Ranger Class Feature"],
   ],

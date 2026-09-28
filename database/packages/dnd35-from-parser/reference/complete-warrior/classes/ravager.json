@@ -5,147 +5,23 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/ravager/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {
-      "improvedsunder": "Improved Sunder",
-      "powerattack": "Power Attack"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1,
-          4,
-          7
-        ],
-        "name": "Pain Touch"
-      },
-      {
-        "levels": [
-          2,
-          5,
-          8
-        ],
-        "name": "Aura Of Fear"
-      },
-      {
-        "levels": [
-          3,
-          6,
-          9
-        ],
-        "name": "Cruelest Cut"
-      },
-      {
-        "levels": [
-          10
-        ],
-        "name": "Visage Of Terror"
-      }
-    ],
-    "hd": 10,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.intimidate.rank",
-        "value": "3",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.knowledgereligion.rank",
-        "value": "3",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.survival.rank",
-        "value": "3",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.improvedsunder.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.powerattack.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "poor"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Ravager Class Feature",
+  "overrides": {
+    "description": "A ravager is a devoted servant of a god of slaughter, dedicated wholly to spreading carnage and destruction in that deity's name.",
     "features": {
       "Aura of Fear": {
-        "description": "Starting at 2nd level, all enemies within 10 feet of the ravager suffer a -2 morale penalty on saving throws while they remain in range. This ability can be activated a limited number of times per day as indicated by the ravager's level. Each activation persists for a number of rounds equal to 3 + the ravager's Charisma modifier. At 5th level the radius extends to 20 feet, and at 8th level it reaches 30 feet.",
-        "level": 2,
-        "seedName": "Aura of Fear (Ravager)",
-        "stackable": true
+        "description": "Starting at 2nd level, all enemies within 10 feet of the ravager suffer a -2 morale penalty on saving throws while they remain in range. This ability can be activated a limited number of times per day as indicated by the ravager's level. Each activation persists for a number of rounds equal to 3 + the ravager's Charisma modifier. At 5th level the radius extends to 20 feet, and at 8th level it reaches 30 feet."
       },
       "Cruelest Cut": {
-        "description": "At 3rd level, the ravager's intimate knowledge of suffering grants deadly accuracy with melee strikes. Before making a melee attack, the ravager must declare the use of this ability; a missed attack wastes the attempt. On a successful hit, the target takes 1d4 points of Constitution damage in addition to normal weapon damage. The ravager gains one daily use of this ability for every three class levels attained, but can only attempt one cruelest cut per round.",
-        "level": 3,
-        "seedName": "Cruelest Cut (Ravager)",
-        "stackable": true
+        "description": "At 3rd level, the ravager's intimate knowledge of suffering grants deadly accuracy with melee strikes. Before making a melee attack, the ravager must declare the use of this ability; a missed attack wastes the attempt. On a successful hit, the target takes 1d4 points of Constitution damage in addition to normal weapon damage. The ravager gains one daily use of this ability for every three class levels attained, but can only attempt one cruelest cut per round."
       },
       "Pain Touch": {
-        "description": "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st.",
-        "level": 1,
-        "seedName": "Pain Touch (Ravager)",
-        "stackable": true
+        "description": "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st."
       },
       "Visage of Terror": {
-        "description": "At 10th level, once per day as a standard action, the ravager can activate a spell-like ability that functions like phantasmal killer (save DC equals 10 + ravager class level + Charisma modifier). The targeted enemy perceives the ravager as an embodiment of its deepest fear.",
-        "level": 10,
-        "seedName": "Visage of Terror (Ravager)"
+        "description": "At 10th level, once per day as a standard action, the ravager can activate a spell-like ability that functions like phantasmal killer (save DC equals 10 + ravager class level + Charisma modifier). The targeted enemy perceives the ravager as an embodiment of its deepest fear."
       },
       "Weapon and Armor Proficiency": {
-        "description": "This prestige class does not grant proficiency with any weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Ravager)"
-      }
-    },
-    "occurrenceMap": {
-      "Aura Of Fear": "Aura of Fear",
-      "Cruelest Cut": "Cruelest Cut",
-      "Pain Touch": "Pain Touch",
-      "Visage Of Terror": "Visage of Terror"
-    },
-    "overrides": {
-      "description": "A ravager is a devoted servant of a god of slaughter, dedicated wholly to spreading carnage and destruction in that deity's name.",
-      "features": {
-        "Aura of Fear": {
-          "description": "Starting at 2nd level, all enemies within 10 feet of the ravager suffer a -2 morale penalty on saving throws while they remain in range. This ability can be activated a limited number of times per day as indicated by the ravager's level. Each activation persists for a number of rounds equal to 3 + the ravager's Charisma modifier. At 5th level the radius extends to 20 feet, and at 8th level it reaches 30 feet."
-        },
-        "Cruelest Cut": {
-          "description": "At 3rd level, the ravager's intimate knowledge of suffering grants deadly accuracy with melee strikes. Before making a melee attack, the ravager must declare the use of this ability; a missed attack wastes the attempt. On a successful hit, the target takes 1d4 points of Constitution damage in addition to normal weapon damage. The ravager gains one daily use of this ability for every three class levels attained, but can only attempt one cruelest cut per round."
-        },
-        "Pain Touch": {
-          "description": "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st."
-        },
-        "Visage of Terror": {
-          "description": "At 10th level, once per day as a standard action, the ravager can activate a spell-like ability that functions like phantasmal killer (save DC equals 10 + ravager class level + Charisma modifier). The targeted enemy perceives the ravager as an embodiment of its deepest fear."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "This prestige class does not grant proficiency with any weapons or armor."
-        }
+        "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     }
   },

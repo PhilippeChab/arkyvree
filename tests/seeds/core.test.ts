@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { ALL_DOMAINS } from "@/database/packages/dnd35/v1/domains/data.ts";
-import { CREATURE_TYPES } from "@/database/packages/dnd35/v1/feats/creatureTypes.ts";
-import { seedFavoredEnemies } from "@/database/packages/dnd35/v48/seed.ts";
-import { db } from "@/server/database/index.ts";
+import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains/data.ts";
+import { CREATURE_TYPES } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-import { invalidateSeededRuleset } from "@/tests/helpers.ts";
 import { describeRequirement, seededRows } from "@/tests/seeds/seededRows.ts";
 
 const proficiency = (kind: string, weapon: string) => ["1 or", `1.1 feats.${kind}weaponproficiency.possessed equal true`, `1.2 feats.${kind}weaponproficiency${weapon}.possessed equal true`];
@@ -109,17 +106,6 @@ describe("The seeded core rules", () => {
 
     test("get a slot from the ranger's umbrella feat", async () => {
       expect(umbrellaSlots(await seededRows())).toMatchObject([{ operator: "add", value: "1" }]);
-    });
-
-    test("seeded again, stay as they were", async () => {
-      const { rulesetId } = await seededRows();
-      await seedFavoredEnemies(db);
-      invalidateSeededRuleset(rulesetId);
-
-      const rows = await seededRows();
-      expect(rows.aptitudes.filter((a) => a.name === "Favored Enemy")).toHaveLength(1);
-      expect(rows.feats.filter((f) => variants.includes(f.name))).toHaveLength(variants.length);
-      expect(umbrellaSlots(rows)).toHaveLength(1);
     });
   });
 });

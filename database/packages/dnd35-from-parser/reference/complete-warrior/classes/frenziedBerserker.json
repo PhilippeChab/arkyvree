@@ -5,258 +5,38 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/frenzied-berserker/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {
-      "cleave": "Cleave",
-      "destructiverage": "Destructive Rage",
-      "intimidatingrage": "Intimidating Rage",
-      "powerattack": "Power Attack"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1,
-          3,
-          5,
-          7,
-          9
-        ],
-        "name": "Frenzy"
-      },
-      {
-        "levels": [
-          1
-        ],
-        "name": "Diehard"
-      },
-      {
-        "levels": [
-          2
-        ],
-        "name": "Supreme Cleave"
-      },
-      {
-        "levels": [
-          4
-        ],
-        "name": "Deathless Frenzy"
-      },
-      {
-        "levels": [
-          5
-        ],
-        "name": "Improved Power Attack"
-      },
-      {
-        "levels": [
-          6,
-          8,
-          10
-        ],
-        "name": "Inspire Frenzy"
-      },
-      {
-        "levels": [
-          8
-        ],
-        "name": "Greater Frenzy"
-      },
-      {
-        "levels": [
-          10
-        ],
-        "name": "Tireless Frenzy"
-      },
-      {
-        "levels": [
-          10
-        ],
-        "name": "Supreme Power Attack"
-      }
-    ],
-    "hd": 12,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "6",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.cleave.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.destructiverage.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.intimidatingrage.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.powerattack.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Neutral Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "True Neutral",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Neutral Evil",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Chaotic Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Chaotic Neutral",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Chaotic Evil",
-            "valueType": "string"
-          }
-        ]
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "poor"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Frenzied Berserker Class Feature",
+  "overrides": {
+    "description": "Driven by an unquenchable thirst for violence, the frenzied berserker seeks ever-greater conflicts to satiate her relentless appetite for warfare.",
     "features": {
       "Deathless Frenzy": {
-        "description": "Starting at 4th level, a frenzied berserker can shrug off death and unconsciousness for as long as her frenzy continues. While frenzied, she does not count as disabled when at 0 hit points, nor as dying when at -1 to -9 hit points. She keeps fighting normally even if brought to -10 hit points or below, until the frenzy concludes. Once the frenzy ends, any unhealed wound effects take hold as normal. This ability offers no protection against death from massive damage or lethal spell effects such as slay living or disintegrate.",
-        "level": 4,
-        "seedName": "Deathless Frenzy (Frenzied Berserker)"
+        "description": "Starting at 4th level, a frenzied berserker can shrug off death and unconsciousness for as long as her frenzy continues. While frenzied, she does not count as disabled when at 0 hit points, nor as dying when at -1 to -9 hit points. She keeps fighting normally even if brought to -10 hit points or below, until the frenzy concludes. Once the frenzy ends, any unhealed wound effects take hold as normal. This ability offers no protection against death from massive damage or lethal spell effects such as slay living or disintegrate."
       },
       "Diehard": {
-        "description": "At 1st level, the frenzied berserker receives Diehard as a bonus feat, regardless of whether she satisfies its normal prerequisites.",
-        "level": 1,
-        "seedName": "Diehard (Frenzied Berserker)"
+        "description": "At 1st level, the frenzied berserker receives Diehard as a bonus feat, regardless of whether she satisfies its normal prerequisites."
       },
       "Frenzy": {
-        "description": "A frenzied berserker may fly into a frenzy while in combat. During this state, she receives a +6 bonus to Strength and gains one additional attack per round at her highest attack bonus when taking a full attack action. (This extra attack does not stack with haste or similar effects that provide bonus attacks.) In exchange, she suffers a -4 penalty to Armor Class and sustains 2 points of nonlethal damage each round. The frenzy persists for a number of rounds equal to 3 + her Constitution modifier. The character can try to end the frenzy early by making a DC 20 Will save as a free action once per round. A successful save immediately terminates the frenzy; a failed save means it persists. Frenzy benefits and penalties stack with those of any rage ability the character possesses. At 1st level, frenzy can be used once per day. For every two additional frenzied berserker levels gained, the character receives one more daily use of this ability (though it remains limited to one use per encounter). Entering a frenzy is a free action that can only be performed on the character's own turn, not as a reaction to someone else's action. Furthermore, whenever the character suffers damage from any source - whether an attack, spell, trap, or other effect - she automatically enters a frenzy at the beginning of her next action, provided she has at least one daily use remaining. To resist this involuntary frenzy, the character must succeed on a Will save (DC 10 + damage received since her last action) at the start of her following turn. While in a frenzy, the character is unable to use skills based on Charisma, Dexterity, or Intelligence (Intimidate being the sole exception), the Concentration skill, or any capability demanding patience or focus. She cannot cast spells, consume potions, use magic items, or read scrolls. All feats remain available to her except Combat Expertise, item creation feats, and metamagic feats. Her inspire frenzy ability functions normally. A frenzied character must direct her attacks against perceived enemies as effectively as possible. If no enemies remain before the frenzy expires, her violent rampage persists. She must then assault the nearest creature (chosen randomly if multiple creatures are equidistant), attacking without consideration for alliance, innocence, or anyone's well-being. Once the frenzy concludes, the frenzied berserker becomes fatigued (-2 penalty to Strength and Dexterity, unable to charge or run) for the remainder of the encounter. If a rage ability is still active when the frenzy ends, the fatigue is postponed until the rage also concludes - at which point the character becomes exhausted rather than merely fatigued.",
-        "level": 1,
-        "seedName": "Frenzy (Frenzied Berserker)",
-        "stackable": true
+        "description": "A frenzied berserker may fly into a frenzy while in combat. During this state, she receives a +6 bonus to Strength and gains one additional attack per round at her highest attack bonus when taking a full attack action. (This extra attack does not stack with haste or similar effects that provide bonus attacks.) In exchange, she suffers a -4 penalty to Armor Class and sustains 2 points of nonlethal damage each round. The frenzy persists for a number of rounds equal to 3 + her Constitution modifier. The character can try to end the frenzy early by making a DC 20 Will save as a free action once per round. A successful save immediately terminates the frenzy; a failed save means it persists. Frenzy benefits and penalties stack with those of any rage ability the character possesses. At 1st level, frenzy can be used once per day. For every two additional frenzied berserker levels gained, the character receives one more daily use of this ability (though it remains limited to one use per encounter). Entering a frenzy is a free action that can only be performed on the character's own turn, not as a reaction to someone else's action. Furthermore, whenever the character suffers damage from any source - whether an attack, spell, trap, or other effect - she automatically enters a frenzy at the beginning of her next action, provided she has at least one daily use remaining. To resist this involuntary frenzy, the character must succeed on a Will save (DC 10 + damage received since her last action) at the start of her following turn. While in a frenzy, the character is unable to use skills based on Charisma, Dexterity, or Intelligence (Intimidate being the sole exception), the Concentration skill, or any capability demanding patience or focus. She cannot cast spells, consume potions, use magic items, or read scrolls. All feats remain available to her except Combat Expertise, item creation feats, and metamagic feats. Her inspire frenzy ability functions normally. A frenzied character must direct her attacks against perceived enemies as effectively as possible. If no enemies remain before the frenzy expires, her violent rampage persists. She must then assault the nearest creature (chosen randomly if multiple creatures are equidistant), attacking without consideration for alliance, innocence, or anyone's well-being. Once the frenzy concludes, the frenzied berserker becomes fatigued (-2 penalty to Strength and Dexterity, unable to charge or run) for the remainder of the encounter. If a rage ability is still active when the frenzy ends, the fatigue is postponed until the rage also concludes - at which point the character becomes exhausted rather than merely fatigued."
       },
       "Greater Frenzy": {
-        "description": "Upon reaching 8th level, the Strength bonus granted by frenzy increases to +10, replacing the normal +6 bonus.",
-        "level": 8,
-        "seedName": "Greater Frenzy (Frenzied Berserker)"
+        "description": "Upon reaching 8th level, the Strength bonus granted by frenzy increases to +10, replacing the normal +6 bonus."
       },
       "Improved Power Attack": {
-        "description": "From 5th level on, when the frenzied berserker uses the Power Attack feat, she deals +3 to melee damage for every -2 penalty applied to her melee attack rolls (or +3 per -1 penalty when wielding a two-handed weapon that is not a double weapon). This replaces rather than stacks with the standard Power Attack damage trade.",
-        "level": 5,
-        "seedName": "Improved Power Attack (Frenzied Berserker)"
+        "description": "From 5th level on, when the frenzied berserker uses the Power Attack feat, she deals +3 to melee damage for every -2 penalty applied to her melee attack rolls (or +3 per -1 penalty when wielding a two-handed weapon that is not a double weapon). This replaces rather than stacks with the standard Power Attack damage trade."
       },
       "Inspire Frenzy": {
-        "description": "At 6th level, while in a frenzy herself, a frenzied berserker can spread that frenzy to nearby allies. All willing allies within 10 feet receive the full benefits and drawbacks of frenzy as though they possessed the ability. The inspired frenzy in affected allies lasts for a number of rounds equal to 3 + the frenzied berserker's Constitution modifier, irrespective of whether they stay within the 10-foot radius. The character gains an additional daily use of this ability for every two frenzied berserker levels beyond 6th, but it can still only be activated once per encounter.",
-        "level": 6,
-        "seedName": "Inspire Frenzy (Frenzied Berserker)",
-        "stackable": true
+        "description": "At 6th level, while in a frenzy herself, a frenzied berserker can spread that frenzy to nearby allies. All willing allies within 10 feet receive the full benefits and drawbacks of frenzy as though they possessed the ability. The inspired frenzy in affected allies lasts for a number of rounds equal to 3 + the frenzied berserker's Constitution modifier, irrespective of whether they stay within the 10-foot radius. The character gains an additional daily use of this ability for every two frenzied berserker levels beyond 6th, but it can still only be activated once per encounter."
       },
       "Supreme Cleave": {
-        "description": "From 2nd level onward, a frenzied berserker may take a 5-foot step between individual attacks while using Cleave or Great Cleave. This movement is still restricted to one 5-foot adjustment per round, so it cannot be used in a round where she has already taken a 5-foot step.",
-        "level": 2,
-        "seedName": "Supreme Cleave (Frenzied Berserker)"
+        "description": "From 2nd level onward, a frenzied berserker may take a 5-foot step between individual attacks while using Cleave or Great Cleave. This movement is still restricted to one 5-foot adjustment per round, so it cannot be used in a round where she has already taken a 5-foot step."
       },
       "Supreme Power Attack": {
-        "description": "At 10th level, when employing Power Attack, the frenzied berserker gains +2 to melee damage for every -1 penalty she accepts on melee attack rolls (or +4 per -1 penalty when using a two-handed weapon other than a double weapon). This benefit replaces and does not stack with Power Attack or Improved Power Attack.",
-        "level": 10,
-        "seedName": "Supreme Power Attack (Frenzied Berserker)"
+        "description": "At 10th level, when employing Power Attack, the frenzied berserker gains +2 to melee damage for every -1 penalty she accepts on melee attack rolls (or +4 per -1 penalty when using a two-handed weapon other than a double weapon). This benefit replaces and does not stack with Power Attack or Improved Power Attack."
       },
       "Tireless Frenzy": {
-        "description": "At 10th level, the frenzied berserker is no longer subject to fatigue when a frenzy ends. She continues to suffer the 2 points of nonlethal damage per round for the frenzy's duration as normal.",
-        "level": 10,
-        "seedName": "Tireless Frenzy (Frenzied Berserker)"
+        "description": "At 10th level, the frenzied berserker is no longer subject to fatigue when a frenzy ends. She continues to suffer the 2 points of nonlethal damage per round for the frenzy's duration as normal."
       },
       "Weapon and Armor Proficiency": {
-        "description": "This prestige class does not grant proficiency with any weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Frenzied Berserker)"
-      }
-    },
-    "occurrenceMap": {
-      "Deathless Frenzy": "Deathless Frenzy",
-      "Diehard": "Diehard",
-      "Frenzy": "Frenzy",
-      "Greater Frenzy": "Greater Frenzy",
-      "Improved Power Attack": "Improved Power Attack",
-      "Inspire Frenzy": "Inspire Frenzy",
-      "Supreme Cleave": "Supreme Cleave",
-      "Supreme Power Attack": "Supreme Power Attack",
-      "Tireless Frenzy": "Tireless Frenzy"
-    },
-    "overrides": {
-      "description": "Driven by an unquenchable thirst for violence, the frenzied berserker seeks ever-greater conflicts to satiate her relentless appetite for warfare.",
-      "features": {
-        "Deathless Frenzy": {
-          "description": "Starting at 4th level, a frenzied berserker can shrug off death and unconsciousness for as long as her frenzy continues. While frenzied, she does not count as disabled when at 0 hit points, nor as dying when at -1 to -9 hit points. She keeps fighting normally even if brought to -10 hit points or below, until the frenzy concludes. Once the frenzy ends, any unhealed wound effects take hold as normal. This ability offers no protection against death from massive damage or lethal spell effects such as slay living or disintegrate."
-        },
-        "Diehard": {
-          "description": "At 1st level, the frenzied berserker receives Diehard as a bonus feat, regardless of whether she satisfies its normal prerequisites."
-        },
-        "Frenzy": {
-          "description": "A frenzied berserker may fly into a frenzy while in combat. During this state, she receives a +6 bonus to Strength and gains one additional attack per round at her highest attack bonus when taking a full attack action. (This extra attack does not stack with haste or similar effects that provide bonus attacks.) In exchange, she suffers a -4 penalty to Armor Class and sustains 2 points of nonlethal damage each round. The frenzy persists for a number of rounds equal to 3 + her Constitution modifier. The character can try to end the frenzy early by making a DC 20 Will save as a free action once per round. A successful save immediately terminates the frenzy; a failed save means it persists. Frenzy benefits and penalties stack with those of any rage ability the character possesses. At 1st level, frenzy can be used once per day. For every two additional frenzied berserker levels gained, the character receives one more daily use of this ability (though it remains limited to one use per encounter). Entering a frenzy is a free action that can only be performed on the character's own turn, not as a reaction to someone else's action. Furthermore, whenever the character suffers damage from any source - whether an attack, spell, trap, or other effect - she automatically enters a frenzy at the beginning of her next action, provided she has at least one daily use remaining. To resist this involuntary frenzy, the character must succeed on a Will save (DC 10 + damage received since her last action) at the start of her following turn. While in a frenzy, the character is unable to use skills based on Charisma, Dexterity, or Intelligence (Intimidate being the sole exception), the Concentration skill, or any capability demanding patience or focus. She cannot cast spells, consume potions, use magic items, or read scrolls. All feats remain available to her except Combat Expertise, item creation feats, and metamagic feats. Her inspire frenzy ability functions normally. A frenzied character must direct her attacks against perceived enemies as effectively as possible. If no enemies remain before the frenzy expires, her violent rampage persists. She must then assault the nearest creature (chosen randomly if multiple creatures are equidistant), attacking without consideration for alliance, innocence, or anyone's well-being. Once the frenzy concludes, the frenzied berserker becomes fatigued (-2 penalty to Strength and Dexterity, unable to charge or run) for the remainder of the encounter. If a rage ability is still active when the frenzy ends, the fatigue is postponed until the rage also concludes - at which point the character becomes exhausted rather than merely fatigued."
-        },
-        "Greater Frenzy": {
-          "description": "Upon reaching 8th level, the Strength bonus granted by frenzy increases to +10, replacing the normal +6 bonus."
-        },
-        "Improved Power Attack": {
-          "description": "From 5th level on, when the frenzied berserker uses the Power Attack feat, she deals +3 to melee damage for every -2 penalty applied to her melee attack rolls (or +3 per -1 penalty when wielding a two-handed weapon that is not a double weapon). This replaces rather than stacks with the standard Power Attack damage trade."
-        },
-        "Inspire Frenzy": {
-          "description": "At 6th level, while in a frenzy herself, a frenzied berserker can spread that frenzy to nearby allies. All willing allies within 10 feet receive the full benefits and drawbacks of frenzy as though they possessed the ability. The inspired frenzy in affected allies lasts for a number of rounds equal to 3 + the frenzied berserker's Constitution modifier, irrespective of whether they stay within the 10-foot radius. The character gains an additional daily use of this ability for every two frenzied berserker levels beyond 6th, but it can still only be activated once per encounter."
-        },
-        "Supreme Cleave": {
-          "description": "From 2nd level onward, a frenzied berserker may take a 5-foot step between individual attacks while using Cleave or Great Cleave. This movement is still restricted to one 5-foot adjustment per round, so it cannot be used in a round where she has already taken a 5-foot step."
-        },
-        "Supreme Power Attack": {
-          "description": "At 10th level, when employing Power Attack, the frenzied berserker gains +2 to melee damage for every -1 penalty she accepts on melee attack rolls (or +4 per -1 penalty when using a two-handed weapon other than a double weapon). This benefit replaces and does not stack with Power Attack or Improved Power Attack."
-        },
-        "Tireless Frenzy": {
-          "description": "At 10th level, the frenzied berserker is no longer subject to fatigue when a frenzy ends. She continues to suffer the 2 points of nonlethal damage per round for the frenzy's duration as normal."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "This prestige class does not grant proficiency with any weapons or armor."
-        }
+        "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     }
   },

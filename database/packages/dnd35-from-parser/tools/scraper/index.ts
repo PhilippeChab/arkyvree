@@ -7,15 +7,10 @@ import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/sc
 import { parseRaceListingHtml, parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseWeaponsHtml, parseArmorHtml, parseGoodsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
 import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, parseWondrousItemsHtml, parseRingsHtml, parseRodsHtml, parseStaffsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
-import { buildDetected, buildInitialMapping, buildOccurrenceMap } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass.ts";
-import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { buildDomainDetected, buildDomainMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectDomain.ts";
-import { buildRaceDetected, buildRaceMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
-import { buildItemDetected, buildItemMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
-import { buildMagicItemDetected, buildMagicItemMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
-import type { ClassReference, DomainReference, FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { toCamelCase, sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import type { FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { sanitizeJsonValues, sortKeysDeep, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { fetchHtml, fetchAllPages, configureHttp } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { buildListingUrl, buildRaceListingUrl, getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
@@ -23,7 +18,7 @@ import { buildListingUrl, buildRaceListingUrl, getBookSlug, BASE_URL } from "@/d
 // Write helper — only updates scrapedAt when content actually changed
 // ---------------------------------------------------------------------------
 
-function writeIfChanged(outPath: string, data: Record<string, unknown>): void {
+function writeIfChanged(outPath: string, data: StoredReference): void {
   const newJson = stableStringify(data);
   if (existsSync(outPath)) {
     const oldData = sortKeysDeep(JSON.parse(readFileSync(outPath, "utf-8")));
@@ -208,51 +203,18 @@ async function scrapeClass(url: string, book: string) {
   const slug = toCamelCase(raw.name);
   const outPath = join(BASE_DIR, "reference", book, "classes", `${slug}.json`);
 
-  let existingOverrides: ClassReference["mapping"]["overrides"] | undefined;
+  const overrides = storedOverrides(outPath, "class");
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  const stored: StoredReference<"class"> = sanitizeJsonValues({ _meta, raw, ...overrides ? { overrides } : {} });
 
-  if (existsSync(outPath)) {
-    const existing: ClassReference = sanitizeJsonValues(JSON.parse(readFileSync(outPath, "utf-8")));
-    existingOverrides = existing.mapping.overrides;
-    console.log(`  Preserving existing overrides from ${outPath}`);
-  }
-
-  if (existingOverrides?.alignment && !raw.prerequisites.parsed.alignment) {
-    raw.prerequisites.parsed.alignment = existingOverrides.alignment;
-  }
-
-  const detected = buildDetected(raw);
+  const { detected } = resolveReference("class", stored);
   console.log(`  BAB: ${detected.bab}`);
   console.log(`  Saves: fort=${detected.saves.fortitude} ref=${detected.saves.reflex} will=${detected.saves.will}`);
   if (detected.casterLevelAdvancement) {
     console.log(`  Caster advancement: ${detected.casterLevelAdvancement.type} at levels ${detected.casterLevelAdvancement.levels.join(", ")}`);
   }
 
-  const mapping = buildInitialMapping(raw, detected);
-  if (existingOverrides) mapping.overrides = existingOverrides;
-
-  if (mapping.overrides?.noSpells) {
-    delete mapping.spells;
-    delete mapping.bonusSpellAbility;
-  }
-
-  if (mapping.overrides?.features) {
-    for (const [name, overrideFields] of Object.entries(mapping.overrides.features)) {
-      if (name in mapping.features) {
-        Object.assign(mapping.features[name], overrideFields);
-        for (const [k, v] of Object.entries(mapping.features[name])) {
-          if (v === null) delete (mapping.features[name] as Record<string, unknown>)[k];
-        }
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        mapping.features[name] = overrideFields as any;
-      }
-    }
-  }
-
-  mapping.occurrenceMap = buildOccurrenceMap(mapping.features, detected.featureOccurrences);
-
-  const reference: ClassReference = sanitizeJsonValues({ _meta, raw, detected, mapping });
-  writeIfChanged(outPath, reference as unknown as Record<string, unknown>);
+  writeIfChanged(outPath, stored);
 
   console.log(`Written: ${outPath}`);
 }
@@ -296,17 +258,9 @@ async function scrapeAllFeats(book: string) {
 
   const outPath = join(BASE_DIR, "reference", book, "feats.json");
 
-  let overrides: FeatReference["mapping"]["overrides"] = {};
-  if (existsSync(outPath)) {
-    const existing: FeatReference = sanitizeJsonValues(JSON.parse(readFileSync(outPath, "utf-8")));
-    overrides = existing.mapping?.overrides ?? {};
-    console.log(`  Preserving existing overrides from ${outPath}`);
-  }
-
-  const sanitizedRaw = sanitizeJsonValues(raw) as FeatReference["raw"];
-  const detected = buildFeatDetected(sanitizedRaw);
-  const mapping = buildFeatMapping(sanitizedRaw, detected, overrides, book);
-  const reference: FeatReference = sanitizeJsonValues({
+  const overrides = storedOverrides(outPath, "feat");
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  const reference: StoredReference<"feat"> = sanitizeJsonValues({
     _meta: {
       type: "feat",
       sourceUrl: listingUrl,
@@ -314,11 +268,10 @@ async function scrapeAllFeats(book: string) {
       scrapedAt: new Date().toISOString(),
     },
     raw,
-    detected,
-    mapping,
+    ...overrides ? { overrides } : {},
   });
 
-  writeIfChanged(outPath, reference as unknown as Record<string, unknown>);
+  writeIfChanged(outPath, reference);
   console.log(`Written: ${outPath}`);
 }
 
@@ -382,14 +335,9 @@ async function scrapeAllSpells(book: string) {
 
   const outPath = join(BASE_DIR, "reference", book, "spells.json");
 
-  let spellOverrides: SpellReference["mapping"] | undefined;
-  if (existsSync(outPath)) {
-    const existing: SpellReference = sanitizeJsonValues(JSON.parse(readFileSync(outPath, "utf-8")));
-    spellOverrides = existing.mapping;
-    if (spellOverrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  }
-
-  const reference: SpellReference = sanitizeJsonValues({
+  const overrides = storedOverrides(outPath, "spell");
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  const reference: StoredReference<"spell"> = sanitizeJsonValues({
     _meta: {
       type: "spell",
       sourceUrl: listingUrl,
@@ -397,10 +345,10 @@ async function scrapeAllSpells(book: string) {
       scrapedAt: new Date().toISOString(),
     },
     raw,
-    ...(spellOverrides ? { mapping: spellOverrides } : {}),
+    ...overrides ? { overrides } : {},
   });
 
-  writeIfChanged(outPath, reference as unknown as Record<string, unknown>);
+  writeIfChanged(outPath, reference);
   console.log(`Written: ${outPath}`);
 }
 
@@ -441,16 +389,8 @@ async function scrapeAllDomains() {
 
   const outPath = join(BASE_DIR, "reference", "domains.json");
 
-  // Load existing overrides
-  let overrides: DomainReference["mapping"]["overrides"] = {};
-  if (existsSync(outPath)) {
-    const existing: DomainReference = sanitizeJsonValues(JSON.parse(readFileSync(outPath, "utf-8")));
-    overrides = existing.mapping?.overrides ?? {};
-  }
-
-  const detected = buildDomainDetected(result.raw);
-  const mapping = buildDomainMapping(result.raw, detected, overrides);
-  const reference: DomainReference = sanitizeJsonValues({
+  const overrides = storedOverrides(outPath, "domain");
+  const reference: StoredReference<"domain"> = sanitizeJsonValues({
     _meta: {
       type: "domain",
       sourceUrl: DOMAIN_SOURCE_URL,
@@ -459,11 +399,10 @@ async function scrapeAllDomains() {
       scrapedAt: new Date().toISOString(),
     },
     raw: result.raw,
-    detected,
-    mapping,
+    ...overrides ? { overrides } : {},
   });
 
-  writeIfChanged(outPath, reference as unknown as Record<string, unknown>);
+  writeIfChanged(outPath, reference);
   console.log(`Written: ${outPath}`);
 }
 
@@ -511,17 +450,9 @@ async function scrapeAllRaces(book: string) {
 
   const outPath = join(BASE_DIR, "reference", book, "races.json");
 
-  let overrides: RaceReference["mapping"]["overrides"] = {};
-  if (existsSync(outPath)) {
-    const existing: RaceReference = sanitizeJsonValues(JSON.parse(readFileSync(outPath, "utf-8")));
-    overrides = existing.mapping?.overrides ?? {};
-    console.log(`  Preserving existing overrides from ${outPath}`);
-  }
-
-  const sanitizedRaw = sanitizeJsonValues(raw) as RaceReference["raw"];
-  const detected = buildRaceDetected(sanitizedRaw);
-  const mapping = buildRaceMapping(sanitizedRaw, detected, overrides);
-  const reference: RaceReference = sanitizeJsonValues({
+  const overrides = storedOverrides(outPath, "race");
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  const reference: StoredReference<"race"> = sanitizeJsonValues({
     _meta: {
       type: "race",
       sourceUrl: listingUrl,
@@ -529,11 +460,10 @@ async function scrapeAllRaces(book: string) {
       scrapedAt: new Date().toISOString(),
     },
     raw,
-    detected,
-    mapping,
+    ...overrides ? { overrides } : {},
   });
 
-  writeIfChanged(outPath, reference as unknown as Record<string, unknown>);
+  writeIfChanged(outPath, reference);
   console.log(`Written: ${outPath}`);
 }
 
@@ -591,17 +521,20 @@ async function scrapeAllItems(book: string) {
 
   const outPath = join(BASE_DIR, "reference", book, "items.json");
 
-  // Preserve existing overrides
-  let overrides: ItemReference["mapping"]["overrides"] | undefined;
-  if (existsSync(outPath)) {
-    const existing: ItemReference = sanitizeJsonValues(JSON.parse(readFileSync(outPath, "utf-8")));
-    overrides = existing.mapping?.overrides;
-    console.log(`  Preserving existing overrides from ${outPath}`);
-  }
+  const overrides = storedOverrides(outPath, "item");
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  const reference: StoredReference<"item"> = sanitizeJsonValues({
+    _meta: {
+      type: "item",
+      sourceUrls: D20SRD_URLS,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+    ...overrides ? { overrides } : {},
+  });
 
-  const nameMap = overrides?.nameMap;
-  const detected = buildItemDetected(raw, nameMap);
-
+  const { detected } = resolveReference("item", reference);
   console.log(`\nDetection results:`);
   const matchedWeapons = Object.values(detected.weapons).filter((w) => w.generatorName).length;
   const matchedArmor = Object.values(detected.armor).filter((a) => a.generatorName).length;
@@ -613,20 +546,7 @@ async function scrapeAllItems(book: string) {
     for (const u of detected.unresolved) console.log(`    ${u}`);
   }
 
-  const mapping = buildItemMapping(detected, overrides);
-  const reference: ItemReference = sanitizeJsonValues({
-    _meta: {
-      type: "item",
-      sourceUrls: D20SRD_URLS,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-    detected,
-    mapping,
-  });
-
-  writeIfChanged(outPath, reference as unknown as Record<string, unknown>);
+  writeIfChanged(outPath, reference);
   console.log(`\nWritten: ${outPath}`);
 }
 
@@ -697,16 +617,8 @@ async function scrapeAllMagicItems(book: string) {
 
   const outPath = join(BASE_DIR, "reference", book, "magicItems.json");
 
-  // Preserve existing overrides
-  let overrides: MagicItemReference["mapping"]["overrides"] | undefined;
-  if (existsSync(outPath)) {
-    const existing: MagicItemReference = sanitizeJsonValues(JSON.parse(readFileSync(outPath, "utf-8")));
-    overrides = existing.mapping?.overrides;
-    console.log(`  Preserving existing overrides from ${outPath}`);
-  }
-
-  const detected = buildMagicItemDetected(raw);
-  const mapping = buildMagicItemMapping(detected, overrides);
+  const overrides = storedOverrides(outPath, "magicItem");
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
 
   const categoryCounts: Record<string, number> = {};
   for (const entry of raw) {
@@ -717,7 +629,7 @@ async function scrapeAllMagicItems(book: string) {
     console.log(`  ${cat}: ${count}`);
   }
 
-  const reference: MagicItemReference = sanitizeJsonValues({
+  const reference: StoredReference<"magicItem"> = sanitizeJsonValues({
     _meta: {
       type: "magicItem",
       sourceUrls: D20SRD_MAGIC_URLS,
@@ -725,11 +637,10 @@ async function scrapeAllMagicItems(book: string) {
       scrapedAt: new Date().toISOString(),
     },
     raw,
-    detected,
-    mapping,
+    ...overrides ? { overrides } : {},
   });
 
-  writeIfChanged(outPath, reference as unknown as Record<string, unknown>);
+  writeIfChanged(outPath, reference);
   console.log(`\nWritten: ${outPath}`);
 }
 

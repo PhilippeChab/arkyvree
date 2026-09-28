@@ -5,180 +5,26 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/order-of-the-bow-initiate/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {
-      "orcompositeversionofeither": "or composite version of either)",
-      "pointblankshot": "Point Blank Shot",
-      "preciseshot": "Precise Shot",
-      "rapidshot": "Rapid Shot",
-      "shortbow": "shortbow",
-      "weaponfocuslongbow": "Weapon Focus (longbow"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1,
-          3,
-          5,
-          7,
-          9
-        ],
-        "name": "Ranged Precision"
-      },
-      {
-        "levels": [
-          2
-        ],
-        "name": "Close Combat Shot"
-      },
-      {
-        "levels": [
-          4
-        ],
-        "name": "Greater Weapon Focus"
-      },
-      {
-        "levels": [
-          6
-        ],
-        "name": "Sharp-Shooting"
-      },
-      {
-        "levels": [
-          10
-        ],
-        "name": "Extended Precision"
-      }
-    ],
-    "hd": 8,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.craft.rank",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.knowledgereligion.rank",
-        "value": "2",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.pointblankshot.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.preciseshot.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.rapidshot.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.weaponfocuslongbow.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.shortbow.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.orcompositeversionofeither.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      }
-    ],
-    "saves": {
-      "fortitude": "poor",
-      "reflex": "good",
-      "will": "good"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Order of the Bow Initiate Class Feature",
+  "overrides": {
+    "description": "Through the contemplative discipline known as the Way of the Bow, an archer hones his accuracy, mental focus, and inner awareness.",
     "features": {
       "Close Combat Shot": {
-        "description": "Beginning at 2nd level, an initiate may fire a ranged weapon while standing in a threatened area without provoking attacks of opportunity.",
-        "level": 2,
-        "seedName": "Close Combat Shot (Order of the Bow Initiate)"
+        "description": "Beginning at 2nd level, an initiate may fire a ranged weapon while standing in a threatened area without provoking attacks of opportunity."
       },
       "Extended Precision": {
-        "description": "At 10th level, the initiate's perceptive abilities and instinct for the perfect shot become so refined that he can apply ranged precision damage (and sneak attack damage, if applicable) out to a maximum distance of 60 feet.",
-        "level": 10,
-        "seedName": "Extended Precision (Order of the Bow Initiate)"
+        "description": "At 10th level, the initiate's perceptive abilities and instinct for the perfect shot become so refined that he can apply ranged precision damage (and sneak attack damage, if applicable) out to a maximum distance of 60 feet."
       },
       "Greater Weapon Focus": {
-        "description": "Upon reaching 4th level, an initiate receives the Greater Weapon Focus feat for one ranged weapon with which he already has Weapon Focus, even if he has not reached 8th fighter level.",
-        "level": 4,
-        "seedName": "Greater Weapon Focus (Order of the Bow Initiate)"
+        "description": "Upon reaching 4th level, an initiate receives the Greater Weapon Focus feat for one ranged weapon with which he already has Weapon Focus, even if he has not reached 8th fighter level."
       },
       "Ranged Precision": {
-        "description": "By spending a standard action, the initiate can deliver a single carefully aimed ranged attack that deals an additional 1d8 points of damage on a hit. The target must be within 30 feet. This ability functions only against living creatures that have identifiable vital areas. Creatures immune to critical hits (such as undead, constructs, oozes, plants, and incorporeal beings) are unaffected, and any effect that grants protection from critical hits (for example, fortification armor) also negates the extra damage. Unlike a rogue's sneak attack, the target need not be flat-footed or denied its Dexterity bonus to AC; however, if it is, the additional precision damage stacks with sneak attack damage. In all other respects, treat ranged precision as a sneak attack. The bonus damage increases by 1d8 for every two class levels gained. The initiate may only use this ability with a ranged weapon for which he possesses the Weapon Focus feat.",
-        "level": 1,
-        "seedName": "Ranged Precision (Order of the Bow Initiate)",
-        "stackable": true
+        "description": "By spending a standard action, the initiate can deliver a single carefully aimed ranged attack that deals an additional 1d8 points of damage on a hit. The target must be within 30 feet. This ability functions only against living creatures that have identifiable vital areas. Creatures immune to critical hits (such as undead, constructs, oozes, plants, and incorporeal beings) are unaffected, and any effect that grants protection from critical hits (for example, fortification armor) also negates the extra damage. Unlike a rogue's sneak attack, the target need not be flat-footed or denied its Dexterity bonus to AC; however, if it is, the additional precision damage stacks with sneak attack damage. In all other respects, treat ranged precision as a sneak attack. The bonus damage increases by 1d8 for every two class levels gained. The initiate may only use this ability with a ranged weapon for which he possesses the Weapon Focus feat."
       },
       "Sharp-shooting": {
-        "description": "At 6th level, the initiate gains the Sharp-Shooting feat, regardless of whether he meets its normal prerequisites.",
-        "level": 6,
-        "seedName": "Sharp-shooting (Order of the Bow Initiate)"
+        "description": "At 6th level, the initiate gains the Sharp-Shooting feat, regardless of whether he meets its normal prerequisites."
       },
       "Weapon and Armor Proficiency": {
-        "description": "Initiates of this prestige class do not gain proficiency with any additional weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Order of the Bow Initiate)"
-      }
-    },
-    "occurrenceMap": {
-      "Close Combat Shot": "Close Combat Shot",
-      "Extended Precision": "Extended Precision",
-      "Greater Weapon Focus": "Greater Weapon Focus",
-      "Ranged Precision": "Ranged Precision",
-      "Sharp-Shooting": "Sharp-shooting"
-    },
-    "overrides": {
-      "description": "Through the contemplative discipline known as the Way of the Bow, an archer hones his accuracy, mental focus, and inner awareness.",
-      "features": {
-        "Close Combat Shot": {
-          "description": "Beginning at 2nd level, an initiate may fire a ranged weapon while standing in a threatened area without provoking attacks of opportunity."
-        },
-        "Extended Precision": {
-          "description": "At 10th level, the initiate's perceptive abilities and instinct for the perfect shot become so refined that he can apply ranged precision damage (and sneak attack damage, if applicable) out to a maximum distance of 60 feet."
-        },
-        "Greater Weapon Focus": {
-          "description": "Upon reaching 4th level, an initiate receives the Greater Weapon Focus feat for one ranged weapon with which he already has Weapon Focus, even if he has not reached 8th fighter level."
-        },
-        "Ranged Precision": {
-          "description": "By spending a standard action, the initiate can deliver a single carefully aimed ranged attack that deals an additional 1d8 points of damage on a hit. The target must be within 30 feet. This ability functions only against living creatures that have identifiable vital areas. Creatures immune to critical hits (such as undead, constructs, oozes, plants, and incorporeal beings) are unaffected, and any effect that grants protection from critical hits (for example, fortification armor) also negates the extra damage. Unlike a rogue's sneak attack, the target need not be flat-footed or denied its Dexterity bonus to AC; however, if it is, the additional precision damage stacks with sneak attack damage. In all other respects, treat ranged precision as a sneak attack. The bonus damage increases by 1d8 for every two class levels gained. The initiate may only use this ability with a ranged weapon for which he possesses the Weapon Focus feat."
-        },
-        "Sharp-shooting": {
-          "description": "At 6th level, the initiate gains the Sharp-Shooting feat, regardless of whether he meets its normal prerequisites."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "Initiates of this prestige class do not gain proficiency with any additional weapons or armor."
-        }
+        "description": "Initiates of this prestige class do not gain proficiency with any additional weapons or armor."
       }
     }
   },

@@ -1,19 +1,19 @@
 import { stripSeparators } from "@/shared/utils.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { feat, eq, gte, or, eqStr } from "@/database/packages/dnd35/seed-utils/helpers.ts";
+import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import { feat, eq, gte, or, eqStr } from "@/database/packages/dnd35/content/requirements.ts";
 import type { BabType, SaveType, ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/v1/feats/weapons.ts";
-import { findCreatureType } from "@/database/packages/dnd35/v1/feats/creatureTypes.ts";
+import { SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { findCreatureType } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import { BOOK_ABBREV_PATTERN, SKILL_MAP, lookupWithPluralVariants, matchesWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 
 // ---------------------------------------------------------------------------
 // BAB detection
 // ---------------------------------------------------------------------------
 
-export function detectBab(progression: ClassReference["raw"]["progression"]): BabType {
+function detectBab(progression: ClassReference["raw"]["progression"]): BabType {
   for (const row of progression) {
     const { level, bab } = row;
     if (bab === level) continue;
@@ -35,14 +35,14 @@ function goodSave(level: number): number {
   return Math.floor(level / 2) + 2;
 }
 
-export function detectSave(progression: ClassReference["raw"]["progression"], key: "fortSave" | "refSave" | "willSave"): SaveType {
+function detectSave(progression: ClassReference["raw"]["progression"], key: "fortSave" | "refSave" | "willSave"): SaveType {
   const last = progression[progression.length - 1];
   const level = last.level;
   if (last[key] === goodSave(level)) return "good";
   return "poor";
 }
 
-export function detectSaves(progression: ClassReference["raw"]["progression"]): { fortitude: SaveType; reflex: SaveType; will: SaveType } {
+function detectSaves(progression: ClassReference["raw"]["progression"]): { fortitude: SaveType; reflex: SaveType; will: SaveType } {
   return {
     fortitude: detectSave(progression, "fortSave"),
     reflex: detectSave(progression, "refSave"),
@@ -54,12 +54,12 @@ export function detectSaves(progression: ClassReference["raw"]["progression"]): 
 // HD / Skill Points parsing
 // ---------------------------------------------------------------------------
 
-export function parseHd(hitDie: string): number {
+function parseHd(hitDie: string): number {
   const match = hitDie.match(/d(\d+)/);
   return match ? parseInt(match[1], 10) : 8;
 }
 
-export function parseSkillPoints(text: string): number {
+function parseSkillPoints(text: string): number {
   const match = text.match(/(\d+)/);
   return match ? parseInt(match[1], 10) : 2;
 }
@@ -124,7 +124,7 @@ function expandSkillRequirement(name: string, ranks: number): RequirementEntry |
   return null;
 }
 
-export function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parsed"]): { requirements: RequirementEntry[]; featNameMap: Record<string, string>; errors: string[]; unresolvedPrereqs: string[] } {
+function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parsed"]): { requirements: RequirementEntry[]; featNameMap: Record<string, string>; errors: string[]; unresolvedPrereqs: string[] } {
   const reqs: RequirementEntry[] = [];
   const featNameMap: Record<string, string> = {};
   const errors: string[] = [];
@@ -627,7 +627,7 @@ function parseSpellSlotString(s: string): number[] {
   }).filter((n) => n >= 0);
 }
 
-export function detectSpellsPerDay(progression: ClassReference["raw"]["progression"]): number[][] | undefined {
+function detectSpellsPerDay(progression: ClassReference["raw"]["progression"]): number[][] | undefined {
   const result: number[][] = [];
   let hasAny = false;
   for (const row of progression) {
@@ -643,7 +643,7 @@ export function detectSpellsPerDay(progression: ClassReference["raw"]["progressi
   return hasAny ? result : undefined;
 }
 
-export function detectSpellsKnown(raw: ClassReference["raw"]): number[][] | undefined {
+function detectSpellsKnown(raw: ClassReference["raw"]): number[][] | undefined {
   if (!raw.spellsKnown || raw.spellsKnown.length === 0) return undefined;
   const result: number[][] = [];
   let hasAny = false;
@@ -689,7 +689,7 @@ function normalizeFeatureName(name: string): string {
     .replace(/(?<!['''])\b\w/g, c => c.toUpperCase());
 }
 
-export function detectFeatureOccurrences(
+function detectFeatureOccurrences(
   progression: ClassReference["raw"]["progression"],
 ): { name: string; levels: number[] }[] {
   const map = new Map<string, number[]>();
@@ -720,7 +720,7 @@ export function detectFeatureOccurrences(
 // Caster level advancement detection
 // ---------------------------------------------------------------------------
 
-export function detectCasterAdvancement(
+function detectCasterAdvancement(
   progression: ClassReference["raw"]["progression"],
 ): ClassReference["detected"]["casterLevelAdvancement"] | undefined {
   const levels: number[] = [];
@@ -1272,7 +1272,7 @@ function detectSpecificWeapons(desc: string): string[] {
   return slugs;
 }
 
-export function detectWAPModifiers(desc: string): ModifierSeed[] {
+function detectWAPModifiers(desc: string): ModifierSeed[] {
   const mods: ModifierSeed[] = [];
   const d = desc.toLowerCase();
 

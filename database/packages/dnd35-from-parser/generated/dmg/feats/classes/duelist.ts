@@ -1,5 +1,5 @@
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { eqNum } from "@/database/packages/dnd35/seed-utils.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eqNum } from "@/database/packages/dnd35/content/requirements.ts";
 
 const APT = "Duelist Class Feature";
 

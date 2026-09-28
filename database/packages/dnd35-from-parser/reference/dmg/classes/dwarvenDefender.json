@@ -5,241 +5,32 @@
     "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/dwarven-defender/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {
-      "dodge": "Dodge",
-      "endurance": "Endurance",
-      "toughness": "Toughness"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1,
-          3,
-          5,
-          7,
-          9
-        ],
-        "name": "Defensive Stance"
-      },
-      {
-        "levels": [
-          2
-        ],
-        "name": "Uncanny Dodge"
-      },
-      {
-        "levels": [
-          4,
-          8
-        ],
-        "name": "Trap Sense"
-      },
-      {
-        "levels": [
-          6,
-          10
-        ],
-        "name": "Damage Reduction"
-      },
-      {
-        "levels": [
-          6
-        ],
-        "name": "Improved Uncanny Dodge"
-      },
-      {
-        "levels": [
-          8
-        ],
-        "name": "Mobile Defense"
-      }
-    ],
-    "hd": 12,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "7",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.dodge.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.endurance.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.toughness.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Neutral",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Evil",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "operator": "equal",
-        "target": "identity.physiology.race.name",
-        "value": "Dwarf",
-        "valueType": "string"
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "good"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Dwarven Defender Class Feature",
+  "overrides": {
+    "description": "A dwarven defender serves as a chosen protector of dwarven interests and strongholds.",
     "features": {
       "AC Bonus": {
-        "description": "A dwarven defender gains a dodge bonus to AC beginning at +1, which increases as he advances in level, reaching +4 at 10th level.",
-        "level": 1,
-        "seedName": "AC Bonus (Dwarven Defender)"
+        "description": "A dwarven defender gains a dodge bonus to AC beginning at +1, which increases as he advances in level, reaching +4 at 10th level."
       },
       "Damage Reduction": {
-        "description": "Starting at 6th level, a dwarven defender can absorb part of the impact from each attack. He ignores 3 points of damage from every hit he takes. At 10th level, this increases to 6/-. This reduction can bring damage down to 0 but never below 0; the defender does not gain hit points from absorbed damage.",
-        "level": 6,
-        "seedName": "Damage Reduction (Dwarven Defender)",
-        "stackable": true
+        "description": "Starting at 6th level, a dwarven defender can absorb part of the impact from each attack. He ignores 3 points of damage from every hit he takes. At 10th level, this increases to 6/-. This reduction can bring damage down to 0 but never below 0; the defender does not gain hit points from absorbed damage."
       },
       "Defensive Stance": {
-        "description": "A dwarven defender can plant himself in place and become an immovable bulwark. While holding this stance, he gains extraordinary resilience and power but is unable to leave the position he occupies. He receives +2 to Strength, +4 to Constitution, a +2 resistance bonus to all saving throws, and a +4 dodge bonus to AC. The Constitution increase grants additional hit points equal to 2 per level, though these are lost when the stance ends and Constitution returns to normal. Unlike temporary hit points, these bonus hit points are not depleted before regular hit points. During a defensive stance, the defender cannot employ any skill or ability that requires changing position, including Move Silently and Jump. The stance persists for a number of rounds equal to 3 + the character's enhanced Constitution modifier. The defender may choose to end the stance early. Once the stance concludes, the defender becomes fatigued and suffers a -2 penalty to Strength for the remainder of the encounter. The number of times per day the defender may enter this stance is determined by his class level. Activating the stance requires no time, but can only be done on the defender's own turn. For instance, a defender struck by an arrow outside his turn cannot activate the stance to benefit from the extra Constitution-based hit points.",
-        "level": 1,
-        "seedName": "Defensive Stance (Dwarven Defender)",
-        "stackable": true
+        "description": "A dwarven defender can plant himself in place and become an immovable bulwark. While holding this stance, he gains extraordinary resilience and power but is unable to leave the position he occupies. He receives +2 to Strength, +4 to Constitution, a +2 resistance bonus to all saving throws, and a +4 dodge bonus to AC. The Constitution increase grants additional hit points equal to 2 per level, though these are lost when the stance ends and Constitution returns to normal. Unlike temporary hit points, these bonus hit points are not depleted before regular hit points. During a defensive stance, the defender cannot employ any skill or ability that requires changing position, including Move Silently and Jump. The stance persists for a number of rounds equal to 3 + the character's enhanced Constitution modifier. The defender may choose to end the stance early. Once the stance concludes, the defender becomes fatigued and suffers a -2 penalty to Strength for the remainder of the encounter. The number of times per day the defender may enter this stance is determined by his class level. Activating the stance requires no time, but can only be done on the defender's own turn. For instance, a defender struck by an arrow outside his turn cannot activate the stance to benefit from the extra Constitution-based hit points."
       },
       "Improved Uncanny Dodge": {
-        "description": "At 6th level, a dwarven defender becomes immune to flanking, as he can respond to attackers on all sides with equal effectiveness. This prevents rogues from using flanking to deliver sneak attacks against him. However, a rogue whose level exceeds the defender's by four or more can still flank him and apply sneak attack damage. If a character gains uncanny dodge from a second class such as rogue, he automatically obtains improved uncanny dodge, and the levels from those classes combine when determining the minimum rogue level needed to flank him.",
-        "level": 6,
-        "seedName": "Improved Uncanny Dodge (Dwarven Defender)"
+        "description": "At 6th level, a dwarven defender becomes immune to flanking, as he can respond to attackers on all sides with equal effectiveness. This prevents rogues from using flanking to deliver sneak attacks against him. However, a rogue whose level exceeds the defender's by four or more can still flank him and apply sneak attack damage. If a character gains uncanny dodge from a second class such as rogue, he automatically obtains improved uncanny dodge, and the levels from those classes combine when determining the minimum rogue level needed to flank him."
       },
       "Mobile Defense": {
-        "description": "At 8th level, a dwarven defender gains the ability to reposition slightly during a defensive stance. He may take a single 5-foot step per round while in the stance without forfeiting its benefits.",
-        "level": 8,
-        "seedName": "Mobile Defense (Dwarven Defender)"
+        "description": "At 8th level, a dwarven defender gains the ability to reposition slightly during a defensive stance. He may take a single 5-foot step per round while in the stance without forfeiting its benefits."
       },
       "Trap Sense": {
-        "description": "At 4th level, a dwarven defender develops a heightened awareness of traps, granting a +1 bonus on Reflex saves against traps and a +1 dodge bonus to AC versus trap attacks. These bonuses increase to +2 at 8th level. They stack with any trap sense bonuses from other classes.",
-        "level": 4,
-        "seedName": "Trap Sense (Dwarven Defender)",
-        "stackable": true
+        "description": "At 4th level, a dwarven defender develops a heightened awareness of traps, granting a +1 bonus on Reflex saves against traps and a +1 dodge bonus to AC versus trap attacks. These bonuses increase to +2 at 8th level. They stack with any trap sense bonuses from other classes."
       },
       "Uncanny Dodge": {
-        "description": "From 2nd level onward, a dwarven defender possesses an extraordinary capacity to sense threats before consciously perceiving them. He keeps his Dexterity bonus to AC (if any) even when flat-footed or targeted by an unseen attacker. He still forfeits this bonus if rendered immobile. If the character also obtains uncanny dodge from another class such as rogue, he automatically receives improved uncanny dodge instead.",
-        "level": 2,
-        "seedName": "Uncanny Dodge (Dwarven Defender)"
+        "description": "From 2nd level onward, a dwarven defender possesses an extraordinary capacity to sense threats before consciously perceiving them. He keeps his Dexterity bonus to AC (if any) even when flat-footed or targeted by an unseen attacker. He still forfeits this bonus if rendered immobile. If the character also obtains uncanny dodge from another class such as rogue, he automatically receives improved uncanny dodge instead."
       },
       "Weapon and Armor Proficiency": {
-        "description": "A dwarven defender has proficiency with all simple weapons, all martial weapons, every category of armor, and shields.",
-        "level": 1,
-        "modifiers": [
-          {
-            "operator": "set",
-            "target": "feats.simpleweaponproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.martialweaponproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencylight.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencymedium.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.armorproficiencyheavy.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "target": "feats.shieldproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          }
-        ],
-        "seedName": "Weapon and Armor Proficiency (Dwarven Defender)"
-      }
-    },
-    "occurrenceMap": {
-      "Damage Reduction": "Damage Reduction",
-      "Defensive Stance": "Defensive Stance",
-      "Improved Uncanny Dodge": "Improved Uncanny Dodge",
-      "Mobile Defense": "Mobile Defense",
-      "Trap Sense": "Trap Sense",
-      "Uncanny Dodge": "Uncanny Dodge"
-    },
-    "overrides": {
-      "description": "A dwarven defender serves as a chosen protector of dwarven interests and strongholds.",
-      "features": {
-        "AC Bonus": {
-          "description": "A dwarven defender gains a dodge bonus to AC beginning at +1, which increases as he advances in level, reaching +4 at 10th level."
-        },
-        "Damage Reduction": {
-          "description": "Starting at 6th level, a dwarven defender can absorb part of the impact from each attack. He ignores 3 points of damage from every hit he takes. At 10th level, this increases to 6/-. This reduction can bring damage down to 0 but never below 0; the defender does not gain hit points from absorbed damage."
-        },
-        "Defensive Stance": {
-          "description": "A dwarven defender can plant himself in place and become an immovable bulwark. While holding this stance, he gains extraordinary resilience and power but is unable to leave the position he occupies. He receives +2 to Strength, +4 to Constitution, a +2 resistance bonus to all saving throws, and a +4 dodge bonus to AC. The Constitution increase grants additional hit points equal to 2 per level, though these are lost when the stance ends and Constitution returns to normal. Unlike temporary hit points, these bonus hit points are not depleted before regular hit points. During a defensive stance, the defender cannot employ any skill or ability that requires changing position, including Move Silently and Jump. The stance persists for a number of rounds equal to 3 + the character's enhanced Constitution modifier. The defender may choose to end the stance early. Once the stance concludes, the defender becomes fatigued and suffers a -2 penalty to Strength for the remainder of the encounter. The number of times per day the defender may enter this stance is determined by his class level. Activating the stance requires no time, but can only be done on the defender's own turn. For instance, a defender struck by an arrow outside his turn cannot activate the stance to benefit from the extra Constitution-based hit points."
-        },
-        "Improved Uncanny Dodge": {
-          "description": "At 6th level, a dwarven defender becomes immune to flanking, as he can respond to attackers on all sides with equal effectiveness. This prevents rogues from using flanking to deliver sneak attacks against him. However, a rogue whose level exceeds the defender's by four or more can still flank him and apply sneak attack damage. If a character gains uncanny dodge from a second class such as rogue, he automatically obtains improved uncanny dodge, and the levels from those classes combine when determining the minimum rogue level needed to flank him."
-        },
-        "Mobile Defense": {
-          "description": "At 8th level, a dwarven defender gains the ability to reposition slightly during a defensive stance. He may take a single 5-foot step per round while in the stance without forfeiting its benefits."
-        },
-        "Trap Sense": {
-          "description": "At 4th level, a dwarven defender develops a heightened awareness of traps, granting a +1 bonus on Reflex saves against traps and a +1 dodge bonus to AC versus trap attacks. These bonuses increase to +2 at 8th level. They stack with any trap sense bonuses from other classes."
-        },
-        "Uncanny Dodge": {
-          "description": "From 2nd level onward, a dwarven defender possesses an extraordinary capacity to sense threats before consciously perceiving them. He keeps his Dexterity bonus to AC (if any) even when flat-footed or targeted by an unseen attacker. He still forfeits this bonus if rendered immobile. If the character also obtains uncanny dodge from another class such as rogue, he automatically receives improved uncanny dodge instead."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "A dwarven defender has proficiency with all simple weapons, all martial weapons, every category of armor, and shields."
-        }
+        "description": "A dwarven defender has proficiency with all simple weapons, all martial weapons, every category of armor, and shields."
       }
     }
   },
