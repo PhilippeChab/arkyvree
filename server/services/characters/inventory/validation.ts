@@ -75,10 +75,12 @@ export async function validateEquipmentSlot(
       if (hasTwoHanded) {
         throw new BadRequestError("Cannot equip in hand slot while holding a two-handed item in the same weapon set");
       }
-      const hasSameSlot = sameSetItems.some((entry) => entry.location === location);
-      if (hasSameSlot) {
-        throw new BadRequestError(`"${location}" is already occupied in this weapon set`);
-      }
+    }
+
+    // Each hand slot, Two Handed included, holds one item per weapon set.
+    const hasSameSlot = sameSetItems.some((entry) => entry.location === location);
+    if (hasSameSlot) {
+      throw new BadRequestError(`"${location}" is already occupied in this weapon set`);
     }
   }
 
