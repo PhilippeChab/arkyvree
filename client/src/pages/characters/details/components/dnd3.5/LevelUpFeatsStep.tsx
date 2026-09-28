@@ -6,7 +6,7 @@ import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { CLICKABLE_SX, clickableProps, DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 import {
   Alert,
   Box,
@@ -101,7 +101,12 @@ export function LevelUpFeatsStep({
                       label={`${pool.name} ${currentPoolFeats.length}/${pool.available}${pool.shared ? " (optional)" : ""}`}
                       variant={isSelected ? "filled" : "outlined"}
                       color={isSelected ? "primary" : "default"}
-                      onClick={() => setSelectedAptitude(pool.id)}
+                      onClick={() => {
+                        if (isSelected) return;
+                        // A search typed for the last pool would filter this one.
+                        setSelectedAptitude(pool.id);
+                        setFeatSearch("");
+                      }}
                     />
                   );
                 })}
@@ -169,6 +174,8 @@ export function LevelUpFeatsStep({
                   {isLoadingAvailableFeats &&
                   groupedFeats.length === 0 ? (
                     <DiceSpinner />
+                  ) : groupedFeats.length === 0 && featSearch ? (
+                    <NoMatchesState search={featSearch} />
                   ) : (
                     <List
                       dense
@@ -283,8 +290,9 @@ function AutoGrantedFeats({ feats, defaultCollapsed }: { feats: FeatsData["autoG
   return (
     <Box sx={{ mb: 1 }}>
       <Box
-        sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-        onClick={() => setOpen(!open)}
+        {...clickableProps(() => setOpen(!open))}
+        aria-expanded={open}
+        sx={{ display: "flex", alignItems: "center", ...CLICKABLE_SX }}
       >
         <Typography variant="subtitle1" sx={{ flex: 1 }}>
           Auto-Granted Feats ({feats.length})

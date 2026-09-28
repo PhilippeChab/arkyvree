@@ -29,6 +29,16 @@ interface AuthState {
   updateUser: (patch: Partial<AuthUser>) => void;
 }
 
+/** The fields the store keeps (and persists) from a user response, whatever else it carries. */
+const toAuthUser = ({ id, emailAddress, username, pendingEmailAddress, onboardingCompletedAt, expiresAt }: AuthUser): AuthUser => ({
+  id,
+  emailAddress,
+  username,
+  pendingEmailAddress,
+  onboardingCompletedAt,
+  expiresAt,
+});
+
 const signedOut = {
   user: null,
   isAuthenticated: false,
@@ -51,7 +61,7 @@ export const useAuthStore = create<AuthState>()(
       };
 
       const signedIn = (user: AuthUser) =>
-        set({ user, isAuthenticated: true, pendingVerificationEmail: null });
+        set({ user: toAuthUser(user), isAuthenticated: true, pendingVerificationEmail: null });
 
       return {
         ...signedOut,
@@ -127,6 +137,10 @@ export const useAuthStore = create<AuthState>()(
     },
     {
       name: "auth-storage",
+      // Version 0 stored the whole sign-in response, password digest included:
+      // drop it, and checkAuth reloads the user from /auth/me.
+      version: 1,
+      migrate: () => ({ user: null, isAuthenticated: false }),
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,

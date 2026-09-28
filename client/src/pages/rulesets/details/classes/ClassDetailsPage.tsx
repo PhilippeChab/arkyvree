@@ -192,7 +192,7 @@ export default function ClassDetailsPage() {
   }
 
   const Section = SECTION_COMPONENTS[currentTab];
-  const bonusSpellAbilityName = abilities?.find((a) => a.id === classData?.bonusSpellAbilityId)?.name;
+  const bonusSpellAbility = abilities?.find((a) => a.id === classData?.bonusSpellAbilityId);
 
   return (
     <>
@@ -213,8 +213,8 @@ export default function ClassDetailsPage() {
               chips={(
                 <>
                   <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
-                  {bonusSpellAbilityName && (
-                    <Chip label={`Bonus Spells: ${bonusSpellAbilityName}`} color="info" variant="outlined" />
+                  {bonusSpellAbility && (
+                    <Chip label={`Bonus Spells: ${bonusSpellAbility.name}`} color="info" variant="outlined" />
                   )}
                   {classData.casterTypeValue && (
                     <Chip label={`Caster Type: ${classData.casterTypeValue}`} color="info" variant="outlined" />
@@ -229,9 +229,10 @@ export default function ClassDetailsPage() {
                       label="Spellcasting Ability"
                       fullWidth
                       select
-                      value={classData.bonusSpellAbilityId ?? ""}
+                      // Empty until the abilities load: a value with no option is out of range.
+                      value={bonusSpellAbility?.id ?? ""}
                       onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
-                      disabled={bonusSpellMutation.isPending || isClassFetching}
+                      disabled={!abilities || bonusSpellMutation.isPending || isClassFetching}
                     >
                       <MenuItem value="">None</MenuItem>
                       {abilities?.map((a) => (

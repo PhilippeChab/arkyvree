@@ -1,6 +1,8 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   BlankState,
+  CLICKABLE_SX,
+  clickableProps,
   LoadMoreButton,
   PageHeader,
   PageTransition,
@@ -114,10 +116,10 @@ export default function ActivitiesPage() {
                     return (
                       <TableRow
                         key={activity.id}
-                        onClick={isNavigable ? () => openTarget(activity.targetTable, activity.targetId) : undefined}
+                        {...(isNavigable && clickableProps(() => openTarget(activity.targetTable, activity.targetId)))}
                         sx={{
                           "&:hover": { bgcolor: "action.hover" },
-                          cursor: isNavigable ? "pointer" : "default",
+                          ...(isNavigable && CLICKABLE_SX),
                         }}
                       >
                         <TableCell>

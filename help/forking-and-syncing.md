@@ -4,7 +4,7 @@
 
 ## What is forking?
 
-**Forking** makes your own editable copy of a published ruleset.
+**Forking** makes your own editable copy of a base ruleset.
 
 A fork starts empty — it shares all entities with the parent. When you edit a feat, item, or class, that one entity is copied into your fork at the moment of the edit. Everything you haven't touched stays shared.
 

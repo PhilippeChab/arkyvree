@@ -103,6 +103,18 @@ describe("InventoryService", () => {
       expect(result[0].item.name).toBe(item.name);
     });
 
+    test("should return an archived character's inventory", async () => {
+      const { session, character, item } = await setupTestData();
+
+      await CharacterInventoryMethods.addItem(session, character.id, item.id, 2, false, null, null, null, null);
+      await CharactersMethods.archiveCharacter(session, character.id);
+
+      const result = await CharacterInventoryMethods.getInventory(session, character.id);
+
+      expect(result.length).toBe(1);
+      expect(result[0].quantity).toBe(2);
+    });
+
     test("should throw NotFoundError for non-existent character", async () => {
       const { session } = await createTestUser();
 

@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { and, desc, eq, ilike, inArray, isNull, not, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ilike, inArray, isNull, not, or } from "drizzle-orm";
 
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -148,8 +148,13 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
       )!
       : false;
 
+    // The invitee's public fields only: a whole users row carries its password digest.
     const rows = await db
-      .select()
+      .select({
+        invites: getTableColumns(this.table),
+        players: getTableColumns(playersInCampaign),
+        users: { id: usersInAccount.id, username: usersInAccount.username, emailAddress: usersInAccount.emailAddress },
+      })
       .from(this.table)
       .innerJoin(playersInCampaign, eq(this.table.playerId, playersInCampaign.id))
       .leftJoin(usersInAccount, eq(this.table.userId, usersInAccount.id))

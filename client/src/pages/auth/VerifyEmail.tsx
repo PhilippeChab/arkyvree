@@ -9,7 +9,6 @@ import {
   Typography,
   Link as MuiLink,
 } from "@mui/material";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
@@ -26,13 +25,12 @@ export default function VerifyEmail() {
   const location = useLocation();
   const fromSignIn = location.state?.from === "sign-in";
   const redirect = safeRedirectPath(location.state?.redirect);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const form = useForm<VerifyEmailFormData>({ defaultValues: { digits: EMPTY_VERIFICATION_CODE } });
   const digits = form.watch("digits");
 
-  const { handleResend, notice } = useResendCode(() => resendVerification(pendingVerificationEmail ?? ""), setError);
+  const { error, setError, handleResend, notice } = useResendCode(() => resendVerification(pendingVerificationEmail ?? ""));
 
   if (!pendingVerificationEmail) {
     return <Navigate to={fromSignIn ? "/sign-in" : "/sign-up"} replace />;

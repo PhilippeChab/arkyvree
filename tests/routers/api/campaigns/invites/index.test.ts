@@ -102,6 +102,11 @@ describe("campaigns invites", () => {
     expect(result.items).toBeDefined();
     expect(Array.isArray(result.items)).toBe(true);
     expect(result.page).toBe(1);
+
+    // The invitee shows its public fields only, never its password digest.
+    const invitee = result.items[0]?.users;
+    expect(invitee?.emailAddress).toBe("testuser1@example.com");
+    expect(invitee).not.toHaveProperty("passwordDigest");
   });
 
   test("should get user invites", async () => {

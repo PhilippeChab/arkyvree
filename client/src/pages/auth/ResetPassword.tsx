@@ -10,7 +10,6 @@ import {
   Typography,
   Link as MuiLink,
 } from "@mui/material";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
@@ -26,7 +25,6 @@ export default function ResetPassword() {
   const forgotPassword = useAuthStore((s) => s.forgotPassword);
   const pendingPasswordResetEmail = useAuthStore((s) => s.pendingPasswordResetEmail);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const form = useForm<ResetPasswordFormData>({
@@ -35,7 +33,7 @@ export default function ResetPassword() {
   const { errors } = form.formState;
   const digits = form.watch("digits");
 
-  const { handleResend, notice } = useResendCode(() => forgotPassword(pendingPasswordResetEmail ?? ""), setError);
+  const { error, setError, handleResend, notice } = useResendCode(() => forgotPassword(pendingPasswordResetEmail ?? ""));
 
   if (!pendingPasswordResetEmail) {
     return <Navigate to="/forgot-password" replace />;

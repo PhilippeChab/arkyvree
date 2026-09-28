@@ -7,6 +7,7 @@ import {
   Characters,
   Items,
 } from "@/server/repositories/index.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -17,10 +18,11 @@ type InventoryLocation = (typeof location.enumValues)[number];
 
 export const CharacterInventoryMethods = {
   async getInventory(session: Session, characterId: string) {
+    // Visibility.All: an archived character's sheet still lists its items, read-only.
     const characterRecord = await Characters.findOneEditable(db, {
       id: characterId,
       userId: session.userId,
-    });
+    }, Visibility.All);
     if (!characterRecord) {
       throw new NotFoundError("Character not found");
     }

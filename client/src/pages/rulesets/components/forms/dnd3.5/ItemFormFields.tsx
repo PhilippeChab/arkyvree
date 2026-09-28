@@ -22,8 +22,8 @@ function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorP
   });
 
   const rawValue = form.watch("sourceItemId") || "";
-  // A template this ruleset no longer has shows as "None".
-  const value = !templates ? rawValue : rawValue && templates.some((t) => t.id === rawValue) ? rawValue : "";
+  // Empty until the templates load (a value with no option is out of range); one this ruleset no longer has shows as "None".
+  const value = templates?.some((t) => t.id === rawValue) ? rawValue : "";
 
   return (
     <TextField

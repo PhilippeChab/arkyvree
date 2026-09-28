@@ -33,7 +33,6 @@ import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   AccessibilityNew as ClassesIcon,
   FitnessCenter as AbilitiesIcon,
@@ -122,7 +121,6 @@ function getStatusChip(status: RulesetDetail["status"]) {
 export default function RulesetDetailsPage() {
   const { id = "", section } = useParams<{ id: string; section?: string }>();
   const navigate = useNavigate();
-  const currentUserId = useAuthStore((state) => state.user?.id);
 
   // No placeholder data: opening another ruleset (a fork or extension chip) must not show,
   // or act on, the previous one while it loads.
@@ -369,7 +367,7 @@ export default function RulesetDetailsPage() {
             <Typography variant="body2">
               <strong>This ruleset is archived and read-only.</strong>{" "}
               You can view all content but cannot make changes.
-              {currentUserId && " Fork it to create an editable copy."}
+              {isOwner && " Unarchive it to edit it again."}
             </Typography>
           </Alert>
         )}

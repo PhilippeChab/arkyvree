@@ -1,6 +1,7 @@
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails, formatNotificationMessage, formatRelativeTime } from "@/client/src/lib/activityFormatters.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
@@ -83,7 +84,7 @@ export function NotificationBell() {
         size="large"
         color="inherit"
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        aria-label={`${unreadCount} unread notifications`}
+        aria-label={formatCount(unreadCount, "unread notification")}
         sx={shake ? { animation: `${bellShake} 0.6s ease-in-out` } : undefined}
         onAnimationEnd={() => setShake(false)}
       >

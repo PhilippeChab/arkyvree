@@ -47,8 +47,8 @@ test.describe('Notification Bell Flow', () => {
     const inviteePage = await inviteeContext.newPage();
     await signIn(inviteePage, inviteeUser.email, inviteeUser.password);
 
-    // The bell's aria-label encodes the unread count (e.g. "1 unread notifications")
-    const bell = inviteePage.locator('button[aria-label$="unread notifications"]');
+    // The bell's aria-label encodes the unread count (e.g. "1 unread notification")
+    const bell = inviteePage.locator('button[aria-label*=" unread notification"]');
     await expect(bell).toBeVisible({ timeout: 10000 });
 
     // Capture the baseline unread count — the invitee user is shared
@@ -56,7 +56,7 @@ test.describe('Notification Bell Flow', () => {
     // earlier journeys. We assert *delta*, not absolute zero.
     const readUnread = async (locator: typeof bell) => {
       const label = await locator.getAttribute('aria-label');
-      const match = label?.match(/^(\d+) unread notifications$/);
+      const match = label?.match(/^(\d+) unread notifications?$/);
       return match ? Number(match[1]) : -1;
     };
 
@@ -96,7 +96,7 @@ test.describe('Notification Bell Flow', () => {
     // shared across the worker pool and concurrent tests can push new
     // unreads between baseline capture and re-check.
     await inviteePage.goto('/dashboard');
-    const bellAfter = inviteePage.locator('button[aria-label$="unread notifications"]');
+    const bellAfter = inviteePage.locator('button[aria-label*=" unread notification"]');
     await expect(bellAfter).toBeVisible();
     await bellAfter.click();
     const menuAfter = inviteePage.locator('[role="menu"]').first();

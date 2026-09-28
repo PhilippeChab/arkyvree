@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon, LibraryAdd as LibraryAddIcon } from "@mui/icons-material";
-import { BlankState, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
+import { BlankState, CLICKABLE_SX, clickableProps, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { type ElementType, type ReactNode, useMemo, useRef } from "react";
@@ -132,15 +132,16 @@ export function RulesetSectionTable<T extends { id: string }>({
             <TableRow
               key={item.id}
               hover
-              onClick={onRowClick ? () => onRowClick(item) : undefined}
+              {...(onRowClick && clickableProps(() => onRowClick(item)))}
               onMouseEnter={onRowMouseEnter ? () => {
                 clearTimeout(hoverTimer.current);
                 hoverTimer.current = setTimeout(() => onRowMouseEnter(item), 150);
               } : undefined}
               onMouseLeave={onRowMouseEnter ? () => clearTimeout(hoverTimer.current) : undefined}
+              onFocus={onRowMouseEnter ? () => onRowMouseEnter(item) : undefined}
               sx={{
                 position: "relative",
-                cursor: onRowClick ? "pointer" : "default",
+                ...(onRowClick && CLICKABLE_SX),
                 ...ROW_ACTIONS_HOVER_SX,
                 ...fadeInUpSx(index),
               }}

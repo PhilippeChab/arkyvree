@@ -9,7 +9,7 @@ Character creation is a guided flow. Pick a ruleset, fill in the basics, and the
 Steps:
 
 1. **Pick a ruleset.** **Core SRD 3.5** is available to everyone; any forks you own or have access to via campaigns are also listed.
-2. **Identity.** Name, gender, age, height, weight, alignment, deity, notes.
+2. **Identity.** Name, gender, age, height, weight, alignment, deity, description, notes.
 3. **Race.** Picking a race seeds size, base speed, and racial modifiers automatically.
 4. **Ability scores.** Roll them (4d6 drop lowest or 3d6 straight), use the standard array, or point-buy. What you enter is the *base* score — racial modifiers stack on top.
 5. **First level.** The [level-up wizard](#what-is-the-level-up-wizard) takes over: pick a class, roll HP, allocate skill points within the rank cap, pick feats from the available pools, pick spells if your class has them, review and confirm.
