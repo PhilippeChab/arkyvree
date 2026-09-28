@@ -117,7 +117,7 @@ export default function CustomizationPage() {
   // Load the editors' pickers alongside the entity.
   const { canEditEntities } = useRulesetPermissions(ruleset);
   useRulesetSaves(rulesetId, validType === "powers" || validType === "klass_levels");
-  useRulesetFeats(rulesetId, validType === "klass_levels" && canEditEntities);
+  useRulesetFeats(rulesetId, "", validType === "klass_levels" && canEditEntities);
 
   const tabs = validType ? tabsFor(validType) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;
