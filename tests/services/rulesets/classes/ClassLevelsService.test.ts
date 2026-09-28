@@ -2,14 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, Aptitudes, EntitySnapshots, Feats, KlassLevelFeats, KlassLevelPowers, KlassLevels, Modifiers, Powers, Properties, Requirements, Saves } from "@/server/repositories/index.ts";
 import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {
@@ -127,6 +127,41 @@ describe("ClassLevelsService", () => {
     ]);
 
     expect((await ClassLevelsMethods.getClassLevelSpells(ruleset.id, klass.id)).map((l) => l.spellsPerDay)).toEqual([{ 0: 3, 1: 1 }, { 0: 4, 1: 2 }]);
+  });
+
+  test("refuses changes from anyone but the owner", async () => {
+    const { session, ruleset, klass } = await setup();
+    const level = await createLevel(session, ruleset.id, klass.id, 1);
+    const { session: other } = await createTestUserAndRuleset();
+    for (const change of [
+      () => createLevel(other, ruleset.id, klass.id, 2),
+      () => ClassLevelsMethods.updateClassLevel(other, ruleset.id, klass.id, level.id, { bab: 3 }),
+      () => ClassLevelsMethods.deleteClassLevel(other, ruleset.id, klass.id, level.id),
+    ]) await expect(change()).rejects.toThrow(ForbiddenError);
+  });
+
+  test("doesn't find a missing ruleset, class or level, nor a level through another ruleset", async () => {
+    const { session, ruleset, klass } = await setup();
+    const level = await createLevel(session, ruleset.id, klass.id, 1);
+    const other = await setup();
+    const cases: [string, () => Promise<unknown>][] = [
+      ["create in a missing ruleset", () => createLevel(session, NIL_UUID, klass.id, 2)],
+      ["create for a missing class", () => createLevel(session, ruleset.id, NIL_UUID, 2)],
+      ["update in a missing ruleset", () => ClassLevelsMethods.updateClassLevel(session, NIL_UUID, klass.id, level.id, { bab: 2 })],
+      ["update for a missing class", () => ClassLevelsMethods.updateClassLevel(session, ruleset.id, NIL_UUID, level.id, { bab: 2 })],
+      ["delete in a missing ruleset", () => ClassLevelsMethods.deleteClassLevel(session, NIL_UUID, klass.id, level.id)],
+      ["delete for a missing class", () => ClassLevelsMethods.deleteClassLevel(session, ruleset.id, NIL_UUID, level.id)],
+      ["read for a missing class", () => ClassLevelsMethods.getClassLevel(ruleset.id, NIL_UUID, level.id)],
+      ["read a missing level", () => ClassLevelsMethods.getClassLevel(ruleset.id, klass.id, NIL_UUID)],
+      ["read by id through another ruleset", () => ClassLevelsMethods.getClassLevelById(other.ruleset.id, level.id)],
+      ["feat pools of a missing ruleset", () => ClassLevelsMethods.getClassLevelFeatPools(NIL_UUID, klass.id)],
+      ["feat pools of a missing class", () => ClassLevelsMethods.getClassLevelFeatPools(ruleset.id, NIL_UUID)],
+      ["spells of a missing ruleset", () => ClassLevelsMethods.getClassLevelSpells(NIL_UUID, klass.id)],
+    ];
+    // One at a time: each write opens a savepoint on the test's single connection.
+    for (const [what, call] of cases) {
+      expect({ what, error: await call().then(() => null, (error: Error) => error.constructor) }).toEqual({ what, error: NotFoundError });
+    }
   });
 
   describe("deleting a level", () => {

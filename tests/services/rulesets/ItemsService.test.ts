@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
 import { createTestCharacter, createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
@@ -133,6 +133,13 @@ describe("ItemsService", () => {
 
       const variants = await ItemsMethods.bulkCreateVariants(session, fork.id, source.id, [{ name: "Forked Scroll" }]);
       expect(variants).toMatchObject([{ name: "Forked Scroll", rulesetId: fork.id, weight: "0.10" }]);
+    });
+
+    test("are refused to anyone but the owner", async () => {
+      const { session, ruleset } = await createTestUserAndRuleset();
+      const source = await ItemsMethods.createRulesetItem(session, ruleset.id, { name: "Scroll" });
+      const { session: other } = await createTestUserAndRuleset();
+      await expect(ItemsMethods.bulkCreateVariants(other, ruleset.id, source.id, [{ name: "Stolen Scroll" }])).rejects.toThrow(ForbiddenError);
     });
 
     test("are refused all together when there are none, more than 50, a repeated name or a taken one", async () => {
