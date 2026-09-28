@@ -161,10 +161,12 @@ export function getSlotConflictWarning(
       if (twoHanded) {
         return `Cannot equip: ${twoHanded.item.name} is two-handed in Set ${weaponSet}`;
       }
-      const sameSlot = sameSet.find((e) => e.location === location);
-      if (sameSlot) {
-        return `${location} is occupied by ${sameSlot.item.name} (Set ${weaponSet})`;
-      }
+    }
+
+    // Each hand slot, Two Handed included, holds one item per weapon set.
+    const sameSlot = sameSet.find((e) => e.location === location);
+    if (sameSlot) {
+      return `${location} is occupied by ${sameSlot.item.name} (Set ${weaponSet})`;
     }
   }
 

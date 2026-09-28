@@ -416,6 +416,37 @@ describe("InventoryService", () => {
       ).rejects.toThrow(BadRequestError);
     });
 
+    test("should throw BadRequestError when equipping two-handed with two-handed occupied", async () => {
+      const { session, character, item } = await setupTestData();
+      const item2 = await createTestItem();
+
+      await CharacterInventoryMethods.addItem(session, character.id, item.id, 1, true, "Two Handed", null, null, 0);
+
+      await expect(
+        CharacterInventoryMethods.addItem(session, character.id, item2.id, 1, true, "Two Handed", null, null, 0),
+      ).rejects.toThrow("\"Two Handed\" is already occupied in this weapon set");
+    });
+
+    test("should allow two-handed items in different weapon sets", async () => {
+      const { session, character, item } = await setupTestData();
+      const item2 = await createTestItem();
+
+      await CharacterInventoryMethods.addItem(session, character.id, item.id, 1, true, "Two Handed", null, null, 0);
+      const result = await CharacterInventoryMethods.addItem(session, character.id, item2.id, 1, true, "Two Handed", null, null, 1);
+
+      expect(result.location).toBe("Two Handed");
+      expect(result.weaponSet).toBe(1);
+    });
+
+    test("should let a two-handed item be updated in its own slot", async () => {
+      const { session, character, item } = await setupTestData();
+
+      await CharacterInventoryMethods.addItem(session, character.id, item.id, 1, true, "Two Handed", null, null, 0);
+      const result = await CharacterInventoryMethods.updateItem(session, character.id, item.id, 2, true, "Two Handed", null, null, 0);
+
+      expect(result.quantity).toBe(2);
+    });
+
     test("should allow up to 2 finger items", async () => {
       const { session, character, item } = await setupTestData();
       const item2 = await createTestItem();
