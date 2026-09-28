@@ -203,8 +203,6 @@ export function EquipmentSection({
         queryKey: queryKeys.characters.detail(characterId),
       });
       setAddDialogOpen(false);
-      addForm.reset();
-      setItemSearch("");
       setValidationErrors([]);
     },
     onError: handleSaveError,
@@ -231,8 +229,6 @@ export function EquipmentSection({
         queryKey: queryKeys.characters.detail(characterId),
       });
       setEditDialogOpen(false);
-      setEditingEntry(null);
-      editForm.reset();
       setValidationErrors([]);
     },
     onError: handleSaveError,
@@ -256,6 +252,13 @@ export function EquipmentSection({
       snackbar.error(error);
     },
   });
+
+  // The dialogs keep their values while they fade out, and start afresh when opened.
+  const handleAddItem = () => {
+    addForm.reset();
+    setItemSearch("");
+    setAddDialogOpen(true);
+  };
 
   const handleEditItem = (entry: InventoryEntry) => {
     setEditingEntry(entry);
@@ -323,7 +326,7 @@ export function EquipmentSection({
             <Button
               variant="contained"
               size="small"
-              onClick={() => setAddDialogOpen(true)}
+              onClick={handleAddItem}
             >
               Add Item
             </Button>
@@ -361,7 +364,7 @@ export function EquipmentSection({
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => setAddDialogOpen(true)}
+                onClick={handleAddItem}
               >
                 Add Item
               </Button>
@@ -374,8 +377,6 @@ export function EquipmentSection({
         open={addDialogOpen}
         onClose={() => {
           setAddDialogOpen(false);
-          addForm.reset();
-          setItemSearch("");
           setValidationErrors([]);
         }}
         title="Add Item to Inventory"
@@ -471,8 +472,6 @@ export function EquipmentSection({
         open={editDialogOpen}
         onClose={() => {
           setEditDialogOpen(false);
-          setEditingEntry(null);
-          editForm.reset();
           setValidationErrors([]);
         }}
         title="Edit Inventory Item"

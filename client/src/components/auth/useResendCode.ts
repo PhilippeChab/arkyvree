@@ -2,11 +2,17 @@ import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { useState } from "react";
 
 /**
- * Resending a verification code: the page's error is cleared first and set on
- * failure; `notice` confirms a code went out.
+ * A verification-code page's error, and resending its code: `notice` confirms a
+ * code went out until a later request fails.
  */
-export function useResendCode(send: () => Promise<void>, setError: (error: string | null) => void) {
+export function useResendCode(send: () => Promise<void>) {
+  const [error, setPageError] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
+
+  const setError = (next: string | null) => {
+    setPageError(next);
+    if (next) setResent(false);
+  };
 
   const handleResend = async () => {
     try {
@@ -19,5 +25,5 @@ export function useResendCode(send: () => Promise<void>, setError: (error: strin
     }
   };
 
-  return { handleResend, notice: resent ? "A new code has been sent to your email." : null };
+  return { error, setError, handleResend, notice: resent ? "A new code has been sent to your email." : null };
 }

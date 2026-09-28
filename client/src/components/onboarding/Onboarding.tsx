@@ -55,9 +55,9 @@ const steps: OnboardingStep[] = [
     icon: RulesetIcon,
     title: "Rulesets",
     description:
-      "The foundation — browse community rulesets, fork them to create your own, and customize rules to fit your table.",
+      "The foundation — browse base and community rulesets, fork a base ruleset to create your own, and customize rules to fit your table.",
     tooltip:
-      "Forking creates your own editable copy of a published ruleset — it inherits all entities and only copies what you change. Extensions let you subscribe to sourcebook content packages that add new feats, items, classes, and more.",
+      "Forking creates your own editable copy of a base ruleset — it inherits all entities and only copies what you change. Extensions let you subscribe to sourcebook content packages that add new feats, items, classes, and more.",
     mode: "popper",
   },
   {
@@ -233,6 +233,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         </Box>
 
         <Typography
+          id="onboarding-step-title"
           variant={effectiveMode === "dialog" ? "h5" : "h6"}
           sx={{ fontWeight: 700, mb: 2, letterSpacing: "0.02em" }}
         >
@@ -336,7 +337,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
 
   if (effectiveMode === "dialog") {
     return (
-      <Modal open onClose={onClose}>
+      <Modal open onClose={onClose} aria-labelledby="onboarding-step-title">
         {gradientBar}
         <DialogContent sx={{ p: 0 }}>
           {stepContent}

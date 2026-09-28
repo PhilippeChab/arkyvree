@@ -1,6 +1,6 @@
 import { ArrowBack, MoreVert as MoreVertIcon } from "@mui/icons-material";
-import { Box, IconButton, Tab, Tabs, Typography } from "@mui/material";
-import type { ElementType, MouseEvent, ReactNode } from "react";
+import { Box, IconButton, Tab, Tabs, Typography, useTheme } from "@mui/material";
+import { type ElementType, type MouseEvent, type ReactNode, useEffect, useRef } from "react";
 
 interface DetailPageHeaderProps {
   title: string;
@@ -90,9 +90,39 @@ export function SectionTabs<K extends string>({
   onTabHover,
   "aria-label": ariaLabel,
 }: SectionTabsProps<K>) {
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const settleDelay = useTheme().transitions.duration.standard;
+
+  // Tabs scrolls the selected tab into view before its scroll buttons appear and narrow the strip,
+  // which can leave the tab half hidden: bring it back whenever the strip's width changes. Only once
+  // Tabs' own scroll animation (the standard duration) is over, or it would undo the correction.
+  useEffect(() => {
+    const scroller = tabsRef.current?.querySelector<HTMLElement>(".MuiTabs-scroller");
+    if (!scroller) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const showSelectedTab = () => {
+      const tab = scroller.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
+      if (!tab) return;
+      const strip = scroller.getBoundingClientRect();
+      const { left, right } = tab.getBoundingClientRect();
+      if (left < strip.left) scroller.scrollLeft += left - strip.left;
+      else if (right > strip.right) scroller.scrollLeft += right - strip.right;
+    };
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(showSelectedTab, settleDelay);
+    });
+    observer.observe(scroller);
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer);
+    };
+  }, [settleDelay]);
+
   return (
     <Box sx={{ borderRadius: 2, bgcolor: "action.hover", p: 1, mb: 4 }}>
       <Tabs
+        ref={tabsRef}
         value={value}
         onChange={(_, key: K) => onChange(key)}
         aria-label={ariaLabel}

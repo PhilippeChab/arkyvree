@@ -1,6 +1,8 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   BlankState,
+  CLICKABLE_SX,
+  clickableProps,
   LoadMoreButton,
   PageHeader,
   PageTransition,
@@ -141,10 +143,10 @@ export default function NotificationsPage() {
                     return (
                       <TableRow
                         key={notification.id}
-                        onClick={openable ? () => actions.open(notification) : undefined}
+                        {...(openable && clickableProps(() => actions.open(notification)))}
                         sx={{
                           "&:hover": openable ? { bgcolor: "action.hover" } : undefined,
-                          cursor: openable ? "pointer" : "default",
+                          ...(openable && CLICKABLE_SX),
                           ...(isUnread && { bgcolor: "action.selected" }),
                         }}
                       >

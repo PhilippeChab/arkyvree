@@ -1,7 +1,7 @@
 import { Dashboard as DashboardIcon, PersonAdd as SignUpIcon } from "@mui/icons-material";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { AppBar, Button, Toolbar, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { AppBrand, AppMain } from "./AppShell.tsx";
 
 export function PublicLayout() {
@@ -21,9 +21,9 @@ export function PublicLayout() {
           <Typography
             variant="h6"
             noWrap
-            component="div"
-            sx={{ fontWeight: 700, cursor: "pointer" }}
-            onClick={() => navigate("/")}
+            component={RouterLink}
+            to="/"
+            sx={{ fontWeight: 700, color: "inherit", textDecoration: "none" }}
           >
             <AppBrand />
           </Typography>

@@ -260,7 +260,7 @@ export function PublishRulesetDialog({
       onConfirm={() => onConfirm(kind)}
       isLoading={isLoading}
       title="Publish Ruleset"
-      message="Are you sure you want to publish this ruleset? Once published it becomes forkable by other users and shows up in public listings."
+      message="Are you sure you want to publish this ruleset? Once published, other users can find it and use it, unless it's private."
       confirmLabel="Publish Ruleset"
       confirmColor="success"
       confirmIcon={<PublishIcon />}

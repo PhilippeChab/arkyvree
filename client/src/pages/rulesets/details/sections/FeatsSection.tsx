@@ -7,6 +7,8 @@ import {
 import { FeatFormFields, type FeatFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   BlankState,
+  CLICKABLE_SX,
+  clickableProps,
   NoMatchesState,
   CreateDialog,
   SearchBar,
@@ -339,8 +341,9 @@ function GroupedRow({
       <>
         <TableRow
           hover
-          onClick={() => onToggleFamily(family)}
-          sx={{ cursor: "pointer", ...fadeInUpSx(rowIndex) }}
+          {...clickableProps(() => onToggleFamily(family))}
+          aria-expanded={isExpanded}
+          sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
         >
           <TableCell>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -367,9 +370,10 @@ function GroupedRow({
             <TableRow
               key={feat.id}
               hover
-              onClick={() => onVariantClick(feat)}
+              {...clickableProps(() => onVariantClick(feat))}
               onMouseEnter={() => onVariantMouseEnter(feat)}
-              sx={{ cursor: "pointer", ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}
+              onFocus={() => onVariantMouseEnter(feat)}
+              sx={{ ...CLICKABLE_SX, ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}
             >
               <TableCell sx={{ pl: 6 }}>
                 <Typography variant="body2">{feat.name}</Typography>
@@ -401,9 +405,10 @@ function GroupedRow({
   return (
     <TableRow
       hover
-      onClick={() => onRowClick({ id: row.representativeId })}
+      {...clickableProps(() => onRowClick({ id: row.representativeId }))}
       onMouseEnter={() => onRowMouseEnter({ id: row.representativeId })}
-      sx={{ cursor: "pointer", ...fadeInUpSx(rowIndex) }}
+      onFocus={() => onRowMouseEnter({ id: row.representativeId })}
+      sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
     >
       <TableCell>
         <Typography variant="body2">{row.displayName}</Typography>

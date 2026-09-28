@@ -1,5 +1,5 @@
-/** A table row whose `row-actions` buttons appear on hover: spread into the row's `sx`. */
-export const ROW_ACTIONS_HOVER_SX = { "&:hover .row-actions": { opacity: 1 } };
+/** A table row whose `row-actions` buttons appear on hover or keyboard focus: spread into the row's `sx`. */
+export const ROW_ACTIONS_HOVER_SX = { "&:hover .row-actions, &:focus-visible .row-actions": { opacity: 1 } };
 
 /**
  * A row's action buttons (`className="row-actions"`): revealed on row hover where there is a

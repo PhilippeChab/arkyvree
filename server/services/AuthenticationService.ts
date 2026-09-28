@@ -1,4 +1,4 @@
-import type { InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { getTableName } from "drizzle-orm";
 import { timingSafeEqual } from "node:crypto";
 
@@ -34,6 +34,12 @@ const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization")
 const DEMO_TTL_MS = 60 * 60 * 1000;
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+
+/** The user as a response carries it: whether a password is set, never its digest. */
+function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
+  const { passwordDigest, ...safeUser } = user;
+  return { ...safeUser, hasPassword: !!passwordDigest };
+}
 
 interface GoogleTokenPayload {
   sub: string;
@@ -181,7 +187,7 @@ export const AuthenticationMethods = {
         CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
       ]);
 
-      return { session, user };
+      return { session, user: toSafeUser(user) };
     });
   },
 
@@ -264,7 +270,7 @@ export const AuthenticationMethods = {
         CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
       ]);
 
-      return { session, user };
+      return { session, user: toSafeUser(user) };
     });
   },
 
@@ -296,9 +302,7 @@ export const AuthenticationMethods = {
     const user = await Users.findOne(db, { id: session.userId });
     if (!user) throw new InternalError("User not found");
 
-    // Return user without sensitive information
-    const { passwordDigest, ...safeUser } = user;
-    return { ...safeUser, hasPassword: !!passwordDigest };
+    return toSafeUser(user);
   },
 
   // Returns an existing valid demo session if `existingSessionId` is one;
@@ -313,8 +317,7 @@ export const AuthenticationMethods = {
           throw new BadRequestError("Already signed in");
         }
         if (user?.expiresAt && new Date(user.expiresAt) >= new Date()) {
-          const { passwordDigest, ...safeUser } = user;
-          return { session, user: { ...safeUser, hasPassword: !!passwordDigest }, reused: true as const };
+          return { session, user: toSafeUser(user), reused: true as const };
         }
       }
     }
@@ -332,8 +335,7 @@ export const AuthenticationMethods = {
       const session = sessionRows[0];
       if (!session) throw new InternalError("Could not create demo session");
 
-      const { passwordDigest: _passwordDigest, ...safeUser } = user;
-      return { session, user: { ...safeUser, hasPassword: false }, reused: false as const };
+      return { session, user: toSafeUser(user), reused: false as const };
     });
   },
 
@@ -392,9 +394,7 @@ export const AuthenticationMethods = {
         type: "updateProfile",
       });
 
-      // Return user without sensitive information
-      const { passwordDigest: _passwordDigest, ...safeUser } = updatedUser;
-      return { safeUser, emailChangeCode };
+      return { safeUser: toSafeUser(updatedUser), emailChangeCode };
     });
 
     if (emailChangeCode) {
@@ -520,8 +520,7 @@ export const AuthenticationMethods = {
         type: "verifyEmailChange",
       });
 
-      const { passwordDigest: _passwordDigest, ...safeUser } = updatedUser;
-      return safeUser;
+      return toSafeUser(updatedUser);
     });
 
     return safeUser;
@@ -702,7 +701,7 @@ export const AuthenticationMethods = {
           data: { provider: "google" },
         });
 
-        return { session, user };
+        return { session, user: toSafeUser(user) };
       }
 
       // Case 2: Link existing account (same email). Visibility.All so the
@@ -744,7 +743,7 @@ export const AuthenticationMethods = {
           CharacterContributors.backfillUserId(tx, existingUser.emailAddress, existingUser.id),
         ]);
 
-        return { session, user: existingUser };
+        return { session, user: toSafeUser(existingUser) };
       }
 
       // Case 3: New user
@@ -778,7 +777,7 @@ export const AuthenticationMethods = {
         CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
       ]);
 
-      return { session, user };
+      return { session, user: toSafeUser(user) };
     });
   },
 

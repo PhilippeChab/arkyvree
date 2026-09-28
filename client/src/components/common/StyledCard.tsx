@@ -1,6 +1,7 @@
 import { Card, type CardProps } from "@mui/material";
 import { type ReactNode } from "react";
 import { fadeInUpSx, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 
 interface StyledCardProps extends Omit<CardProps, "children"> {
   children: ReactNode;
@@ -26,7 +27,7 @@ export function StyledCard({
   return (
     <Card
       elevation={0}
-      onClick={onClick}
+      {...(onClick && clickableProps(onClick))}
       sx={{
         height: "100%",
         display: "flex",
@@ -37,7 +38,8 @@ export function StyledCard({
         overflow: "hidden",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         position: "relative",
-        cursor: onClick ? "pointer" : "default",
+        cursor: "default",
+        ...(onClick && CLICKABLE_SX),
         bgcolor: "background.paper",
         opacity: isArchived ? 0.9 : 1,
         "&:hover": onClick

@@ -94,6 +94,7 @@ describe("authentication", () => {
     const body = await verifyResponse.json() as { id: string; emailAddress: string };
     expect(body.id).toBeDefined();
     expect(body.emailAddress).toBe(email);
+    expect(body).not.toHaveProperty("passwordDigest");
 
     const setCookieHeader = verifyResponse.headers.get("set-cookie");
     expect(setCookieHeader).toBeTruthy();
@@ -161,6 +162,8 @@ describe("authentication", () => {
     const user = await signInResponse.json();
     expect(user.id).toBeDefined();
     expect(user.emailAddress).toBe(email);
+    expect(user).not.toHaveProperty("passwordDigest");
+    expect(user.hasPassword).toBe(true);
   });
 
   test("POST /sign-in with unverified email should return 401", async () => {
@@ -204,6 +207,7 @@ describe("authentication", () => {
     const user = await meResponse.json();
     expect(user.id).toBeDefined();
     expect(user.emailAddress).toBe(email);
+    expect(user).not.toHaveProperty("passwordDigest");
   });
 
   test("should handle sign-out", async () => {
@@ -274,6 +278,7 @@ describe("authentication", () => {
     expect(updatedUser.username).toBe("testusername");
     expect(updatedUser.emailAddress).toBe(email);
     expect((updatedUser as { pendingEmailAddress: string }).pendingEmailAddress).toBe(newEmail);
+    expect(updatedUser).not.toHaveProperty("passwordDigest");
   });
 
   test("should reject profile update with duplicate email", async () => {
@@ -478,6 +483,7 @@ describe("authentication", () => {
     const body = await response.json() as { emailAddress: string; pendingEmailAddress: string | null };
     expect(body.emailAddress).toBe(newEmail);
     expect(body.pendingEmailAddress).toBeNull();
+    expect(body).not.toHaveProperty("passwordDigest");
   });
 
   test("POST /verify-email-change with invalid code should return 401", async () => {

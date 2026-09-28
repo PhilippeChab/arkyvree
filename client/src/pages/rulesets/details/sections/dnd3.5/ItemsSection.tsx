@@ -213,10 +213,8 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       />
       <CreateDialog
         open={createDialogOpen}
-        onClose={() => {
-          setCreateDialogOpen(false);
-          setDuplicateSourceId(null);
-        }}
+        // Add and Duplicate set the source when they open it: clearing it here would unlock the type while it fades out.
+        onClose={() => setCreateDialogOpen(false)}
         title="Create New Item"
         form={createForm}
         onSubmit={(data) => {

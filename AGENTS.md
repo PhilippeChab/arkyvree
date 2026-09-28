@@ -30,6 +30,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 - Repositories accept `db` via dependency injection
 - Schema is defined in `/drizzle/schema.ts`
 - Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference.
+- A response never carries a user's `passwordDigest`. Auth responses return the user through `toSafeUser` (`AuthenticationService`), and a query that joins users selects their public columns (`id`, `username`, `emailAddress`), never the whole row.
 - `deletedAt IS NOT NULL` means **archived**. The codebase has two row-removal primitives — `repo.archive()` (soft) and `repo.delete()` (hard). Which one to use depends on the table. See [docs/persistence.md](./docs/persistence.md) for the full policy and decision rule. Quick rule: first-class user-facing entities archive by default; junctions, character-state, and customization rows always hard-delete.
 
 **Service Conventions:**
@@ -76,7 +77,8 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 **Components:**
 
 - Functional components with explicit prop interfaces
-- Every control has an accessible name. An icon-only `IconButton` takes an `aria-label` (a `Tooltip` around it names it, but not when the tooltip wraps a `<span>` for a disabled button). A `Tooltip` on an element that already has text (a chip, a list option, a labelled button) takes `describeChild`, otherwise its title replaces the element's name
+- Every control has an accessible name. An icon-only `IconButton` takes an `aria-label` (a `Tooltip` around it names it, but not when the tooltip wraps a `<span>` for a disabled button). A `Tooltip` on an element that already has text (a chip, a list option, a labelled button) takes `describeChild`, otherwise its title replaces the element's name. A switch or checkbox is the `control` of a `FormControlLabel`, and a dialog without a `DialogTitle` points `aria-labelledby` at its heading
+- Everything a click opens is reachable from the keyboard. A row or card that opens or expands on click spreads `clickableProps(onActivate)` and puts `CLICKABLE_SX` in its `sx` (`components/common`): focusable, activated with Enter or Space, with a focus ring. A control inside it stops its click from reaching the row
 - Group related components in folders with `index.ts` exports. Code outside a folder imports it through its `index.ts`, never a file inside it; files within the folder (its subfolders included) import each other directly, and a subfolder with its own `index.ts` is imported through that
 - An `index.ts` exports what code outside its folder uses. An entry, or a whole `index.ts`, that nothing imports is dead code: delete it. Page folders have none: routes import each page file directly (most lazily, so each gets its own chunk)
 
@@ -96,7 +98,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Hooks & Patterns:**
 
-- `useDebouncedValue(value, delay?)` — shared hook for debouncing search inputs (default 300ms)
+- `useDebouncedValue(value, delay?)` — shared hook for debouncing search inputs (default 300ms); a cleared value applies at once, so resetting a search never filters by the old text
 - `useRulesetSection` — generic CRUD hook for ruleset detail sections (queries, mutations, dialogs, forms); spread its `createDialogProps` into the section's `CreateDialog`
 - `useRulesetPermissions(ruleset)` — the single source of ruleset edit / manage / publish rights on the client
 - `useFormSync(form, values, { key, updatedAt })` — keeps an inline edit form in step with server data without wiping unsaved edits on refetch; use it instead of an effect that calls `form.reset()` whenever the query data changes. `key` is the record from the URL (include the ruleset id for ruleset entities: inherited ones keep their id in every fork), so opening another record resets the form. A page that follows a copy-on-write to the copy passes the source's key as `adoptKey`: a form still holding the source takes the new key over and keeps its unsaved edits. Submit through `sync.handleSubmit`, send `sync.updatedAt()` as the save's stale-edit token, and on success call `sync.saved(values, response.updatedAt)` instead of `form.reset()`

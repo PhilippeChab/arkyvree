@@ -93,7 +93,6 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
     onSuccess: () => {
       snackbar.success("Modifier created");
       setCreateOpen(false);
-      createForm.reset();
       invalidate();
     },
     onError: (error) => snackbar.error(error),
@@ -136,12 +135,18 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
     setEditOpen(true);
   };
 
+  // The create dialog keeps its values while it fades out, and starts afresh when opened.
+  const handleAdd = () => {
+    createForm.reset();
+    setCreateOpen(true);
+  };
+
   const handleDuplicate = (modifier: Modifier) => {
     createForm.reset({
       target: modifier.target,
       value: modifier.value,
       operator: modifier.operator,
-    });
+    }, { keepDefaultValues: true });
     setCreateOpen(true);
   };
 
@@ -155,6 +160,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       <Modal
         open={open}
         onClose={onClose}
+        aria-labelledby="character-modifiers-title"
         maxWidth="md"
         slotProps={{
           paper: { sx: { minHeight: { sm: "50vh" } } }
@@ -162,7 +168,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       >
         <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            <Typography id="character-modifiers-title" variant="h6" sx={{ fontWeight: 600 }}>
               Manage Modifiers
             </Typography>
             <FaqHelpIcon text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc." size={18} />
@@ -172,7 +178,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
               variant="contained"
               size="small"
               startIcon={<AddIcon />}
-              onClick={() => setCreateOpen(true)}
+              onClick={handleAdd}
             >
               Add
             </Button>
@@ -263,7 +269,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       </Modal>
       <CreateDialog
         open={createOpen}
-        onClose={() => { setCreateOpen(false); createForm.reset(); }}
+        onClose={() => setCreateOpen(false)}
         title="Add Modifier"
         form={createForm}
         onSubmit={(data) => createMutation.mutate(data)}

@@ -258,8 +258,7 @@ export function RequirementsSection(
     return treeNodes;
   }, [requirements]);
 
-  // Get all parent node IDs for default expansion
-  const defaultExpandedItems = useMemo(() => {
+  const parentIds = useMemo(() => {
     const expandedIds: string[] = [];
 
     const collectParentIds = (nodes: RequirementTreeNode[]) => {
@@ -274,6 +273,10 @@ export function RequirementsSection(
     collectParentIds(requirementsTree);
     return expandedIds;
   }, [requirementsTree]);
+
+  // Parents are expanded, new ones included, except those the user collapsed.
+  const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<string>>(new Set());
+  const expandedItems = useMemo(() => parentIds.filter((id) => !collapsedIds.has(id)), [parentIds, collapsedIds]);
 
   const handleEditChaining = (requirement: Requirement) => {
     setEditRequirementType("chaining");
@@ -460,7 +463,8 @@ export function RequirementsSection(
                   expandIcon: ChevronRightIcon,
                 }}
                 sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
-                defaultExpandedItems={defaultExpandedItems}
+                expandedItems={expandedItems}
+                onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
               >
                 {requirementsTree.map(renderRequirementNode)}
               </SimpleTreeView>

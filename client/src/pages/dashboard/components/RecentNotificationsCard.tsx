@@ -1,5 +1,5 @@
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
-import { BlankState, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { BlankState, CLICKABLE_SX, clickableProps, DiceSpinner } from "@/client/src/components/common/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import {
   Box,
@@ -63,7 +63,7 @@ export function RecentNotificationsCard() {
             return (
               <Box
                 key={notification.id}
-                onClick={openable ? () => actions.open(notification) : undefined}
+                {...(openable && clickableProps(() => actions.open(notification)))}
                 sx={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -72,7 +72,7 @@ export function RecentNotificationsCard() {
                   p: 2,
                   borderRadius: 2,
                   bgcolor: notification.readAt ? "transparent" : "action.hover",
-                  cursor: openable ? "pointer" : "default",
+                  ...(openable && CLICKABLE_SX),
                   "&:hover": openable ? { bgcolor: "action.selected" } : undefined,
                   ...fadeInUpSx(index),
                 }}

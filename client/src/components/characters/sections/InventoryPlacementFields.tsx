@@ -10,7 +10,6 @@ interface InventoryPlacementFieldsProps {
   profile: PlacementProfile | null;
 }
 
-
 /** How many of the item, where it's worn, its weapon set, and its charges: the add and edit dialogs' fields. */
 export function InventoryPlacementFields({ form, profile }: InventoryPlacementFieldsProps) {
   const location = form.watch("location");

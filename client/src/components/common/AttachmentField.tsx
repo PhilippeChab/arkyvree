@@ -248,12 +248,14 @@ export function AttachmentField({
           )}
         </Box>
 
-        {/* Always-visible camera button at bottom-right (touch-friendly) */}
+        {/* Always-visible camera button at bottom-right (touch-friendly). The tile above is the same
+            control for keyboards and screen readers, so this one stays out of their way. */}
         {interactive && (
           <Tooltip title={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}>
             <IconButton
               onClick={pick}
-              aria-label={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}
+              tabIndex={-1}
+              aria-hidden
               sx={{
                 position: "absolute",
                 bottom: 0,

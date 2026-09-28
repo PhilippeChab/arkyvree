@@ -2,6 +2,7 @@ export { ActionMenuItem } from "./ActionMenuItem.tsx";
 export { AnimatedAlert } from "./AnimatedAlert.tsx";
 export { AttachmentField } from "./AttachmentField.tsx";
 export { BlankState, NoMatchesState } from "./BlankState.tsx";
+export { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 export { Crossfade } from "./Crossfade.tsx";
 export { DetailPageHeader, SectionContent, SectionTabs, type SectionTab } from "./DetailPage.tsx";
 export { DiceSpinner } from "./DiceSpinner.tsx";

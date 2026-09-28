@@ -62,12 +62,12 @@ test.describe('Notifications Mark-Read Flow', () => {
 
     // The bell aria-label encodes the unread count — same approach the
     // existing notifications.e2e.ts test uses.
-    const bell = inviteePage.locator('button[aria-label$="unread notifications"]');
+    const bell = inviteePage.locator('button[aria-label*=" unread notification"]');
     await expect(bell).toBeVisible({ timeout: 10000 });
 
     const readUnread = async (locator: typeof bell) => {
       const label = await locator.getAttribute('aria-label');
-      const match = label?.match(/^(\d+) unread notifications$/);
+      const match = label?.match(/^(\d+) unread notifications?$/);
       return match ? Number(match[1]) : -1;
     };
 
@@ -119,7 +119,7 @@ test.describe('Notifications Mark-Read Flow', () => {
     await expect(rowB.getByRole('button', { name: 'Reject' })).toBeVisible();
 
     // Bell unread count dropped by exactly 1 (one notification flipped read).
-    const bellAfterFirst = inviteePage.locator('button[aria-label$="unread notifications"]');
+    const bellAfterFirst = inviteePage.locator('button[aria-label*=" unread notification"]');
     await expect.poll(() => readUnread(bellAfterFirst), {
       timeout: 15_000,
       message: 'expected unread badge to decrease by 1 after per-row mark-read',
@@ -204,11 +204,11 @@ test.describe('Notifications Mark-Read Flow', () => {
     // notifications are unread, then Mark All Read flips them.
     const readUnread = async (locator: ReturnType<typeof gmPage.locator>) => {
       const label = await locator.getAttribute('aria-label');
-      const match = label?.match(/^(\d+) unread notifications$/);
+      const match = label?.match(/^(\d+) unread notifications?$/);
       return match ? Number(match[1]) : -1;
     };
 
-    const gmBell = gmPage.locator('button[aria-label$="unread notifications"]');
+    const gmBell = gmPage.locator('button[aria-label*=" unread notification"]');
     await gmPage.goto('/notifications');
 
     // The GM's notification rows render "<actor> declined your campaign

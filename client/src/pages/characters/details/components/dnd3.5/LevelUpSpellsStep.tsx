@@ -1,6 +1,6 @@
 import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
 import type { PowerAptitudePool } from "./levelUp/index.ts";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 import {
   Alert,
   Box,
@@ -44,6 +44,14 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   };
 
   const getLevelPoolAvailable = (pool: PowerAptitudePool, level: string) => pool.levels?.[level]?.available ?? 0;
+
+  const openPool = (aptitudeId: string, level: number | null) => {
+    if (aptitudeId === selectedPowerAptitude && level === selectedPowerLevel) return;
+    setSelectedPowerAptitude(aptitudeId);
+    setSelectedPowerLevel(level);
+    // A search typed for the last pool would filter this one.
+    setPowerSearch("");
+  };
 
   const powerAptitudePools: PowerAptitudePool[] = powerData.aptitudePools
     ? Object.values(powerData.aptitudePools)
@@ -123,10 +131,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                           label={`${pool.name} - ${levelLabel} ${powersInLevel}/${levelAvailable}`}
                           variant={isSelected ? "filled" : "outlined"}
                           color={isSelected ? "primary" : "default"}
-                          onClick={() => {
-                            setSelectedPowerAptitude(pool.id);
-                            setSelectedPowerLevel(Number(level));
-                          }}
+                          onClick={() => openPool(pool.id, Number(level))}
                         />
                       );
                     });
@@ -144,10 +149,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                     label={`${pool.name} ${currentPoolPowers.length}/${poolAvailable}`}
                     variant={isSelected ? "filled" : "outlined"}
                     color={isSelected ? "primary" : "default"}
-                    onClick={() => {
-                      setSelectedPowerAptitude(pool.id);
-                      setSelectedPowerLevel(null);
-                    }}
+                    onClick={() => openPool(pool.id, null)}
                   />
                 )];
               })}
@@ -165,6 +167,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
         const isLeveled = (currentPool).leveled;
         const currentPoolPowers = selectedPowers[selectedPowerAptitude] || [];
         const allSelectedPowerIds = Object.values(selectedPowers).flat().map((p) => p.id);
+        const pickablePowers = availablePowers.filter((opt) => !allSelectedPowerIds.includes(opt.id));
 
         // For leveled pools, scope to selected power level
         const levelPowers = isLeveled && selectedPowerLevel != null
@@ -216,39 +219,38 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                 />
                 {isLoadingAvailablePowers && availablePowers.length === 0
                   ? <DiceSpinner />
+                  : pickablePowers.length === 0 && powerSearch
+                  ? <NoMatchesState search={powerSearch} />
                   : <List
                       dense
                       sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
                       onScroll={handlePowersScroll}
                     >
-                      {availablePowers
-                        .filter((opt) => !allSelectedPowerIds.includes(opt.id))
-                        .map((power) => (
-                          <Tooltip describeChild key={power.id} title={power.description ?? ""} placement="right" enterDelay={300} arrow>
-                            <span>
-                              <ListItemButton
-                                disabled={!power.eligible}
-                                onClick={() => {
-                                  setValue("selectedPowers", {
-                                    ...selectedPowers,
-                                    [selectedPowerAptitude]: [
-                                      ...(selectedPowers[selectedPowerAptitude] || []),
-                                      {
-                                        id: power.id,
-                                        name: power.name,
-                                        ...(power.description && { description: power.description }),
-                                        ...(selectedPowerLevel != null && { powerLevel: selectedPowerLevel }),
-                                      },
-                                    ],
-                                  });
-                                }}
-                              >
-                                <ListItemText primary={power.name} />
-                              </ListItemButton>
-                            </span>
-                          </Tooltip>
-                        ))
-                      }
+                      {pickablePowers.map((power) => (
+                        <Tooltip describeChild key={power.id} title={power.description ?? ""} placement="right" enterDelay={300} arrow>
+                          <span>
+                            <ListItemButton
+                              disabled={!power.eligible}
+                              onClick={() => {
+                                setValue("selectedPowers", {
+                                  ...selectedPowers,
+                                  [selectedPowerAptitude]: [
+                                    ...(selectedPowers[selectedPowerAptitude] || []),
+                                    {
+                                      id: power.id,
+                                      name: power.name,
+                                      ...(power.description && { description: power.description }),
+                                      ...(selectedPowerLevel != null && { powerLevel: selectedPowerLevel }),
+                                    },
+                                  ],
+                                });
+                              }}
+                            >
+                              <ListItemText primary={power.name} />
+                            </ListItemButton>
+                          </span>
+                        </Tooltip>
+                      ))}
                       {isFetchingNextPowersPage && (
                         <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
                           <DiceSpinner size="small" />

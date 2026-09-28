@@ -58,13 +58,13 @@ After the policy loosening (`inUse` + COW tombstones now do the protection that 
 |---|---|---|
 | Edit/delete entities | ✓ | ✓ |
 | Subscribe / unsubscribe extensions | ✓ | ✓ |
-| **Be forked by other users** | ✗ | ✓ |
+| **Be used by other users** (characters, campaigns, subscriptions) | ✗ | ✓ |
 | **Appear in public lists** (when `private = false`) | ✗ | ✓ |
 | Publish transition | ✓ (Draft → Published) | ✗ |
 
-Published is purely an **outward-facing stability marker** — "others can fork from this baseline" and "this shows up in public discovery." It doesn't restrict what you can do to your own ruleset.
+Published is purely an **outward-facing stability marker** — "others can build on this baseline" and "this shows up in public discovery." Only base rulesets can be forked, so publishing a user ruleset never makes it forkable. It doesn't restrict what you can do to your own ruleset.
 
-For a `private` ruleset the distinction is functionally a no-op: nobody else can see or fork it regardless of status, and edit behavior is identical. The publish action is only meaningful when paired with `private = false`.
+For a `private` ruleset the distinction is functionally a no-op: only its owner, contributors and campaign members can see it, whatever its status, and edit behavior is identical. The publish action is only meaningful when paired with `private = false`.
 
 The author's responsibility post-publish is purely social — "don't break what subscribers depend on" — enforced through `inUse` (your own characters) plus tombstone snapshots (subscribers' picks survive even if you delete the source entity).
 
