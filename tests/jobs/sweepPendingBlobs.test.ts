@@ -1,155 +1,66 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { sweepPendingBlobs } from "@/server/jobs/sweepPendingBlobs.ts";
-import { Attachments, Blobs, Users } from "@/server/repositories/index.ts";
-import { setStorageForTest, type StorageBackend } from "@/server/storage/s3.ts";
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { Attachments, Blobs } from "@/server/repositories/index.ts";
+import { setStorageForTest } from "@/server/storage/s3.ts";
+import { createTestUser } from "@/tests/helpers.ts";
+import { fakeStorage } from "@/tests/storage.ts";
+
+const DAY = 24 * 60 * 60 * 1000;
 
 describe("sweepPendingBlobs", () => {
   let deleted: string[];
 
   beforeEach(() => {
     deleted = [];
-    const fake: StorageBackend = {
-      presignPut: () => "https://fake/url",
-      publicUrl: (k) => `https://fake/${k}`,
-      async deleteObject(key) {
-        deleted.push(key);
-      },
-      async objectExists() {
-        return false;
-      },
-      async objectStats() {
-        return null;
-      },
-    };
-    setStorageForTest(fake);
+    setStorageForTest(fakeStorage({ async deleteObject(key) { deleted.push(key); } }));
   });
 
-  afterEach(() => {
-    setStorageForTest(null);
-  });
-
-  async function createUser() {
-    const uniqueId = Math.random().toString(36).slice(2, 9);
-    const users = await Users.create(db, {
-      username: `sweepuser-${uniqueId}`,
-      emailAddress: `sweep-${uniqueId}@example.com`,
-      password: "password1234",
-    });
-    return users[0];
-  }
-
-  async function createPendingBlob(filename: string) {
-    const rows = await Blobs.create(db, {
-      key: `blobs/${crypto.randomUUID()}/${filename}`,
-      filename,
-      contentType: "image/png",
-      byteSize: 100,
-    });
-    return rows[0];
-  }
-
-  async function createAttachedBlob(filename: string, recordId: string) {
-    const blob = await createPendingBlob(filename);
-    await Blobs.update(db, { attachedAt: new Date().toISOString() }, { id: blob.id });
-    await Attachments.create(db, {
-      recordType: "User",
-      recordId,
-      name: "avatar",
-      blobId: blob.id,
-    });
+  /** A blob no attachment references, uploaded `ageMs` ago. */
+  async function createPendingBlob(filename: string, ageMs = 0) {
+    const [blob] = await Blobs.create(db, { key: `blobs/${crypto.randomUUID()}/${filename}`, filename, contentType: "image/png", byteSize: 100 });
+    if (ageMs) await Blobs.update(db, { createdAt: new Date(Date.now() - ageMs).toISOString() }, { id: blob.id });
     return blob;
   }
 
-  test("deletes pending blobs (S3 + DB row) older than the TTL", async () => {
-    const oldBlob = await createPendingBlob("old.png");
-    await Blobs.update(
-      db,
-      { createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-      { id: oldBlob.id },
-    );
+  const rowOf = (id: string) => db.query.blobsInStorage.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+
+  test("deletes pending blobs (S3 object and row) older than the TTL", async () => {
+    const oldBlob = await createPendingBlob("old.png", 2 * DAY);
     const recentBlob = await createPendingBlob("recent.png");
 
-    const result = await sweepPendingBlobs({ ttlMs: 24 * 60 * 60 * 1000 });
-
-    expect(result.swept).toBe(1);
-    expect(result.failed).toBe(0);
+    expect(await sweepPendingBlobs({ ttlMs: DAY })).toMatchObject({ swept: 1, failed: 0 });
     expect(deleted).toEqual([oldBlob.key]);
-
-    // Old blob row hard-deleted; recent one still there.
-    const oldRow = await db.query.blobsInStorage.findFirst({
-      where: (t, { eq }) => eq(t.id, oldBlob.id),
-    });
-    const recentRow = await db.query.blobsInStorage.findFirst({
-      where: (t, { eq }) => eq(t.id, recentBlob.id),
-    });
-    expect(oldRow).toBeUndefined();
-    expect(recentRow).toBeDefined();
+    expect(await rowOf(oldBlob.id)).toBeUndefined();
+    expect(await rowOf(recentBlob.id)).toBeDefined();
   });
 
-  test("skips attached blobs even when older than the TTL", async () => {
-    const user = await createUser();
-    const attached = await createAttachedBlob("kept.png", user.id);
-    await Blobs.update(
-      db,
-      { createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-      { id: attached.id },
-    );
+  test("keeps attached blobs, however old", async () => {
+    const { user } = await createTestUser();
+    const blob = await createPendingBlob("kept.png", 2 * DAY);
+    await Blobs.update(db, { attachedAt: new Date().toISOString() }, { id: blob.id });
+    await Attachments.create(db, { recordType: "User", recordId: user.id, name: "avatar", blobId: blob.id });
 
-    const result = await sweepPendingBlobs({ ttlMs: 24 * 60 * 60 * 1000 });
-
-    expect(result.swept).toBe(0);
+    expect(await sweepPendingBlobs({ ttlMs: DAY })).toMatchObject({ swept: 0 });
     expect(deleted).toEqual([]);
-    const stillLive = await Blobs.findOne(db, { id: attached.id });
-    expect(stillLive).toBeDefined();
+    expect(await Blobs.findOne(db, { id: blob.id })).toBeDefined();
   });
 
-  test("cleans up orphans (attached_at set but no live attachment refs)", async () => {
+  test("cleans up orphans: attached once, but no attachment references them any more", async () => {
+    // The state a detach leaves behind when its inline S3 cleanup failed.
     const blob = await createPendingBlob("orphaned.png");
-    // Simulates the state left by a detach whose inline S3 cleanup failed:
-    // attached_at is set but no attachment row references the blob.
     await Blobs.update(db, { attachedAt: new Date().toISOString() }, { id: blob.id });
 
-    const result = await sweepPendingBlobs({ ttlMs: 24 * 60 * 60 * 1000 });
-
-    expect(result.swept).toBe(1);
+    expect(await sweepPendingBlobs({ ttlMs: DAY })).toMatchObject({ swept: 1 });
     expect(deleted).toContain(blob.key);
-    const row = await db.query.blobsInStorage.findFirst({
-      where: (t, { eq }) => eq(t.id, blob.id),
-    });
-    expect(row).toBeUndefined();
+    expect(await rowOf(blob.id)).toBeUndefined();
   });
 
-  test("leaves the row alone when S3 delete throws — sweep retries next pass", async () => {
-    setStorageForTest({
-      presignPut: () => "https://fake/url",
-      publicUrl: (k) => `https://fake/${k}`,
-      async deleteObject() {
-        throw new Error("simulated S3 failure");
-      },
-      async objectExists() {
-        return false;
-      },
-      async objectStats() {
-        return null;
-      },
-    });
+  test("keeps the row when the S3 delete fails, so the next sweep retries", async () => {
+    setStorageForTest(fakeStorage({ async deleteObject() { throw new Error("simulated S3 failure"); } }));
+    const blob = await createPendingBlob("doomed.png", 2 * DAY);
 
-    const blob = await createPendingBlob("doomed.png");
-    await Blobs.update(
-      db,
-      { createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-      { id: blob.id },
-    );
-
-    const result = await sweepPendingBlobs({ ttlMs: 24 * 60 * 60 * 1000 });
-    expect(result.swept).toBe(0);
-    expect(result.failed).toBe(1);
-
-    // Row still physically there so next sweep can retry.
-    const row = await db.query.blobsInStorage.findFirst({
-      where: (t, { eq }) => eq(t.id, blob.id),
-    });
-    expect(row).toBeDefined();
+    expect(await sweepPendingBlobs({ ttlMs: DAY })).toMatchObject({ swept: 0, failed: 1 });
+    expect(await rowOf(blob.id)).toBeDefined();
   });
 });

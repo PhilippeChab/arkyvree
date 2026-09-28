@@ -239,6 +239,8 @@ Three granularities:
 | `invalidateRuleset(id)` | Raw entities for this ruleset + dependent COW data and target paths | Entities added/removed/renamed (target paths change) |
 | `invalidateAll()` | Every ruleset's everything | Test teardown, rare |
 
+In tests, the cache reads through the test's transaction and outlives its rollback: rows a test writes straight into a seeded ruleset stay cached once a read rebuilds that ruleset. Tests write into forks instead, or call `invalidateSeededRuleset` (`tests/helpers.ts`), which `tests/setup.ts` repeats after the rollback.
+
 ### Lookup indices (accessor maps)
 
 Services used to query the DB for single rows even after the cache was warm. The composed view now exposes pre-built Maps over the arrays so consumers do O(1) lookups without round-tripping Postgres:

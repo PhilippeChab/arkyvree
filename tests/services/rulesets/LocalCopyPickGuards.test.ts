@@ -3,13 +3,13 @@ import { and, eq, isNull } from "drizzle-orm";
 import { itemsInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterInventory, CharacterLanguages, Characters, Sessions } from "@/server/repositories/index.ts";
+import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
 import { LanguagesMethods } from "@/server/services/rulesets/LanguagesService.ts";
 import { RacesMethods } from "@/server/services/rulesets/RacesService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
 
@@ -17,7 +17,7 @@ afterEach(invalidateAll);
 // the fork's later local copy leaves a tombstone that hides the source, which
 // would orphan that pick — so the delete must count it as in use.
 async function setup() {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const baseId = fork.ancestorRulesetIds[0];
   const human = (await db.query.racesInRules.findFirst({ where: and(eq(racesInRules.rulesetId, baseId), eq(racesInRules.name, "Human")) }))!;

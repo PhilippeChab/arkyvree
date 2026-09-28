@@ -1,238 +1,58 @@
-import CampaignsPolicy from "@/server/services/policies/CampaignsPolicy.ts";
+import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
-import { Users, Campaigns, Players } from "@/server/repositories/index.ts";
-import type { Session } from "@/shared/relations.ts";
-import { describe, test, expect } from "bun:test";
+import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { Campaigns, Players } from "@/server/repositories/index.ts";
+import CampaignsPolicy from "@/server/services/policies/CampaignsPolicy.ts";
+import { createTestUser, getSeedCtx } from "@/tests/helpers.ts";
+
+/** A campaign, and the policy of a new user holding `role` in it (or no seat at all). */
+async function policyFor(role: "Game Master" | "Player Character" | null) {
+  const { rulesetId } = await getSeedCtx();
+  const [campaign] = await Campaigns.create(db, { name: "Policy Campaign", rulesetId });
+  const { user, session } = await createTestUser();
+  if (role) await Players.create(db, { userId: user.id, campaignId: campaign.id, role });
+  return { campaign, session, policy: new CampaignsPolicy(session, campaign) };
+}
 
 describe("CampaignsPolicy", () => {
-  let seedCtx: SeedContext;
-  async function getCtx() {
-    if (!seedCtx) seedCtx = await getSeedContext(db);
-    return seedCtx;
-  }
+  test("lets any Game Master of the campaign edit and archive it", async () => {
+    const { campaign, policy } = await policyFor("Game Master");
+    const { user, session } = await createTestUser();
+    await Players.create(db, { userId: user.id, campaignId: campaign.id, role: "Game Master" });
 
-  const createSession = (userId: string): Session => ({
-    id: `session-${Math.random().toString(36).substr(2, 9)}`,
-    userId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: null,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    for (const gm of [policy, new CampaignsPolicy(session, campaign)]) {
+      expect(await gm.canUpdate()).toBe(true);
+      expect(await gm.canDelete()).toBe(true);
+    }
   });
 
-  // Helper to create test user
-  async function createTestUser() {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-
-    const users = await Users.create(db, {
-      username: `testuser-${uniqueId}`,
-      emailAddress: `test-${uniqueId}@example.com`,
-      password: "password1234",
-    });
-
-    return users[0];
-  }
-
-  // Helper to create test campaign
-  async function createTestCampaign(rulesetId: string) {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-
-    const campaigns = await Campaigns.create(db, {
-      name: `Test Campaign ${uniqueId}`,
-      description: "Test campaign",
-      rulesetId,
-    });
-
-    return campaigns[0];
-  }
-
-  describe("canCreate", () => {
-    test("should always return true", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      const policy = new CampaignsPolicy(session, campaign);
-
-      expect(policy.canCreate()).toBe(true);
-    });
-  });
-
-  describe("canRead", () => {
-    test("should always return true", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      const policy = new CampaignsPolicy(session, campaign);
-
-      expect(policy.canRead()).toBe(true);
-    });
-  });
-
-  describe("canUpdate", () => {
-    test("should return true for Game Master", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      // Add user as Game Master
-      await Players.create(db, {
-        userId: user.id,
-        campaignId: campaign.id,
-        role: "Game Master",
-      });
-
-      const policy = new CampaignsPolicy(session, campaign);
-
-      const result = await policy.canUpdate();
-      expect(result).toBe(true);
-    });
-
-    test("should throw ForbiddenError for Player Character", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      // Add user as Player Character
-      await Players.create(db, {
-        userId: user.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const policy = new CampaignsPolicy(session, campaign);
-
+  test("refuses players and outsiders", async () => {
+    for (const role of ["Player Character", null] as const) {
+      const { policy } = await policyFor(role);
       await expect(policy.canUpdate()).rejects.toThrow(ForbiddenError);
-    });
-
-    test("should throw ForbiddenError when user is not a player in campaign", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      // Don't add user as player
-
-      const policy = new CampaignsPolicy(session, campaign);
-
-      await expect(policy.canUpdate()).rejects.toThrow(ForbiddenError);
-    });
-
-    test("should throw ForbiddenError when user is in different campaign", async () => {
-      const user1 = await createTestUser();
-      const user2 = await createTestUser();
-      const session = createSession(user2.id);
-      const ctx = await getCtx();
-      const campaign1 = await createTestCampaign(ctx.rulesetId);
-      const campaign2 = await createTestCampaign(ctx.rulesetId);
-
-      // Add user1 as GM to campaign1
-      await Players.create(db, {
-        userId: user1.id,
-        campaignId: campaign1.id,
-        role: "Game Master",
-      });
-
-      // Add user2 as GM to campaign2
-      await Players.create(db, {
-        userId: user2.id,
-        campaignId: campaign2.id,
-        role: "Game Master",
-      });
-
-      // Check if user2 can update campaign1 (should throw)
-      const policy = new CampaignsPolicy(session, campaign1);
-
-      await expect(policy.canUpdate()).rejects.toThrow(ForbiddenError);
-    });
-  });
-
-  describe("canDelete", () => {
-    test("should return true for Game Master", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      // Add user as Game Master
-      await Players.create(db, {
-        userId: user.id,
-        campaignId: campaign.id,
-        role: "Game Master",
-      });
-
-      const policy = new CampaignsPolicy(session, campaign);
-
-      const result = await policy.canDelete();
-      expect(result).toBe(true);
-    });
-
-    test("should throw ForbiddenError for Player Character", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      // Add user as Player Character
-      await Players.create(db, {
-        userId: user.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const policy = new CampaignsPolicy(session, campaign);
-
       await expect(policy.canDelete()).rejects.toThrow(ForbiddenError);
-    });
-
-    test("should throw ForbiddenError when user is not a player in campaign", async () => {
-      const user = await createTestUser();
-      const session = createSession(user.id);
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
-
-      const policy = new CampaignsPolicy(session, campaign);
-
-      await expect(policy.canDelete()).rejects.toThrow(ForbiddenError);
-    });
+      await expect(policy.canHardDelete()).rejects.toThrow(ForbiddenError);
+    }
   });
 
-  describe("multiple Game Masters", () => {
-    test("should allow all Game Masters to update", async () => {
-      const user1 = await createTestUser();
-      const user2 = await createTestUser();
-      const ctx = await getCtx();
-      const campaign = await createTestCampaign(ctx.rulesetId);
+  test("refuses the Game Master of another campaign", async () => {
+    const { campaign } = await policyFor(null);
+    const { session: otherGameMaster } = await policyFor("Game Master");
+    await expect(new CampaignsPolicy(otherGameMaster, campaign).canUpdate()).rejects.toThrow(ForbiddenError);
+  });
 
-      // Add both users as Game Masters
-      await Players.create(db, {
-        userId: user1.id,
-        campaignId: campaign.id,
-        role: "Game Master",
-      });
+  test("still recognizes the Game Master once the campaign is archived", async () => {
+    const { campaign, policy } = await policyFor("Game Master");
+    await Campaigns.archive(db, { id: campaign.id });
+    await Players.archive(db, { campaignId: campaign.id });
+    expect(await policy.canDelete()).toBe(true);
+  });
 
-      await Players.create(db, {
-        userId: user2.id,
-        campaignId: campaign.id,
-        role: "Game Master",
-      });
+  test("only deletes an archived campaign permanently", async () => {
+    const { campaign, session, policy } = await policyFor("Game Master");
+    await expect(policy.canHardDelete()).rejects.toThrow(UnprocessableEntityError);
 
-      // Check user1
-      const policy1 = new CampaignsPolicy(createSession(user1.id), campaign);
-      expect(await policy1.canUpdate()).toBe(true);
-      expect(await policy1.canDelete()).toBe(true);
-
-      // Check user2
-      const policy2 = new CampaignsPolicy(createSession(user2.id), campaign);
-      expect(await policy2.canUpdate()).toBe(true);
-      expect(await policy2.canDelete()).toBe(true);
-    });
+    const [archived] = await Campaigns.archive(db, { id: campaign.id });
+    expect(await new CampaignsPolicy(session, archived).canHardDelete()).toBe(true);
   });
 });

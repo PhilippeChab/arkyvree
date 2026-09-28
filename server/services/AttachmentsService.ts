@@ -224,7 +224,7 @@ async function purgeOrphan(orphan: { id: string; key: string } | null): Promise<
   }
 }
 
-const AttachmentsMethods = {
+export const AttachmentsMethods = {
   async createDirectUpload(
     session: Session,
     params: {

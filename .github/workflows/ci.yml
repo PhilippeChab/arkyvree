@@ -61,7 +61,7 @@ jobs:
           S3_SECRET_ACCESS_KEY: ci-secret-key
           S3_PUBLIC_URL: https://fake.example.com/ci-bucket
       - name: Run API Tests (shard ${{ matrix.shard }}/3)
-        run: bun --env-file=.env.test test --shard=${{ matrix.shard }}/3 tests/routers tests/services tests/characters tests/seeds tests/cache tests/jobs
+        run: bun --env-file=.env.test test --shard=${{ matrix.shard }}/3 tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5433/arkyvree_test
           SIGNING_SECRET: ci-signing-secret
@@ -108,7 +108,7 @@ jobs:
           S3_SECRET_ACCESS_KEY: ci-secret-key
           S3_PUBLIC_URL: https://fake.example.com/ci-bucket
       - name: Run API Tests (changed vs ${{ github.base_ref }})
-        run: bun --env-file=.env.test test --changed=origin/${{ github.base_ref }} tests/routers tests/services tests/characters tests/seeds tests/cache tests/jobs
+        run: bun --env-file=.env.test test --changed=origin/${{ github.base_ref }} tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5433/arkyvree_test
           SIGNING_SECRET: ci-signing-secret

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets, Sessions } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import { RacesMethods } from "@/server/services/rulesets/RacesService.ts";
@@ -14,12 +14,13 @@ import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 type EntityType = "races" | "klasses" | "items";
 
 async function setup(entityType: EntityType, omitLastLevel = false) {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
   const baseId = host.ancestorRulesetIds[0];
   const source = entityType === "races" ? (await Races.findOne(db, { rulesetId: baseId, name: "Human" }))!
     : entityType === "klasses" ? (await Klasses.findOne(db, { rulesetId: baseId, name: "Fighter" }))!
     : (await Items.create(db, { rulesetId: baseId, name: "Sibling item fixture" }))[0];
+  if (entityType === "items") invalidateSeededRuleset(baseId);
   const extensions: string[] = [];
   const sourceIds: string[] = [];
   for (let i = 0; i < 2; i++) {

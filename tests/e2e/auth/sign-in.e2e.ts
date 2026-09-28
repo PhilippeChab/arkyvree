@@ -19,22 +19,20 @@ test.describe('Sign In', () => {
     await expect(page).toHaveURL('/dashboard');
   });
 
-  test('should show error with invalid credentials', async ({ page }) => {
-    await page.goto('/sign-in');
-
-    // Fill in the sign-in form with invalid credentials
-    await page.fill('input[name="emailAddress"]', 'invalid@example.com');
-    await page.fill('input[name="password"]', 'wrongpassword');
-
-    // Submit the form
-    await page.click('button[type="submit"]');
-
-    // Should stay on sign-in page
-    await expect(page).toHaveURL('/sign-in');
-
-    // Should show error message
-    await expect(page.locator('text=/invalid email or password/i')).toBeVisible();
-  });
+  // The same error for both: signing in doesn't tell which emails have an account.
+  for (const [what, email, password] of [
+    ['an unknown email', 'invalid@example.com', 'wrongpassword'],
+    ['a wrong password', TEST_USERS.user1.email, 'WrongPassword123!'],
+  ]) {
+    test(`should show the same error for ${what}`, async ({ page }) => {
+      await page.goto('/sign-in');
+      await page.fill('input[name="emailAddress"]', email);
+      await page.fill('input[name="password"]', password);
+      await page.click('button[type="submit"]');
+      await expect(page.locator('text=/invalid email or password/i')).toBeVisible();
+      await expect(page).toHaveURL('/sign-in');
+    });
+  }
 
   test('should show validation error for invalid email format', async ({ page }) => {
     await page.goto('/sign-in');

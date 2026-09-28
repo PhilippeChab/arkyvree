@@ -4,15 +4,7 @@ import { db } from "@/server/database/index.ts";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { Users } from "@/server/repositories/index.ts";
 import { AuthenticationMethods } from "@/server/services/AuthenticationService.ts";
-
-const helpers = {
-  logger: {
-    info: () => {},
-    warn: () => {},
-    error: () => {},
-    debug: () => {},
-  },
-} as unknown as Parameters<typeof runCleanupTask>[1];
+import { silentJobHelpers } from "@/tests/helpers.ts";
 
 describe("runCleanup", () => {
   test("hard-deletes demo users whose expires_at has passed", async () => {
@@ -25,7 +17,7 @@ describe("runCleanup", () => {
 
     const fresh = await AuthenticationMethods.startDemo();
 
-    await runCleanupTask({}, helpers);
+    await runCleanupTask({}, silentJobHelpers);
 
     expect(await Users.findOne(db, { id: expired.user.id })).toBeUndefined();
     expect((await Users.findOne(db, { id: fresh.user.id }))?.id).toBe(fresh.user.id);
@@ -33,7 +25,7 @@ describe("runCleanup", () => {
 
   test("leaves real users alone (expires_at IS NULL)", async () => {
     const real = await Users.create(db, { emailAddress: `real-${crypto.randomUUID()}@example.com` });
-    await runCleanupTask({}, helpers);
+    await runCleanupTask({}, silentJobHelpers);
     expect((await Users.findOne(db, { id: real[0].id }))?.id).toBe(real[0].id);
   });
 

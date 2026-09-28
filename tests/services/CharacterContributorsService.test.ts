@@ -1,381 +1,151 @@
-import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
+import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterContributors, Users } from "@/server/repositories/index.ts";
-import { CharactersMethods } from "@/server/services/CharactersService.ts";
 import { CharacterContributorsMethods } from "@/server/services/CharacterContributorsService.ts";
+import { CharactersMethods } from "@/server/services/CharactersService.ts";
 import type { Session } from "@/shared/relations.ts";
-import { describe, expect, test } from "bun:test";
+import { createTestUser, getSeedCtx, uniqueId } from "@/tests/helpers.ts";
+
+async function createCharacter(session: Session) {
+  const ctx = await getSeedCtx();
+  return await CharactersMethods.createCharacter(session, {
+    rulesetId: ctx.rulesetId, raceId: ctx.raceMap.pc["Human"], name: `Test Character ${uniqueId()}`, xp: 0,
+    alignment: "True Neutral", abilities: {}, age: 25, gender: "Other", height: "5'10\"", weight: "160 lbs",
+  });
+}
+
+/** A new user's character and another user invited to contribute to it; accepted unless `pending`. */
+async function setup(pending = false) {
+  const { user: owner, session: ownerSession } = await createTestUser("owner");
+  const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
+  const character = await createCharacter(ownerSession);
+  const invite = await CharacterContributorsMethods.inviteContributor(ownerSession, character.id, invitee.emailAddress);
+  if (!pending) await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id);
+  return { owner, ownerSession, invitee, inviteeSession, character, invite };
+}
 
 describe("CharacterContributorsService", () => {
-  let seedCtx: SeedContext;
-
-  async function getCtx() {
-    if (!seedCtx) seedCtx = await getSeedContext(db);
-    return seedCtx;
-  }
-
-  function createTestSession(userId: string): Session {
-    return {
-      id: `session-${Math.random().toString(36).substr(2, 9)}`,
-      userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deletedAt: null,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    };
-  }
-
-  async function createTestUser(prefix = "user") {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-    const users = await Users.create(db, {
-      username: `${prefix}-${uniqueId}`,
-      emailAddress: `${prefix}-${uniqueId}@example.com`,
-      password: "password1234",
-    });
-    const user = users[0];
-    return { user, session: createTestSession(user.id) };
-  }
-
-  async function createTestCharacter(session: Session) {
-    const ctx = await getCtx();
-    return await CharactersMethods.createCharacter(session, {
-      rulesetId: ctx.rulesetId,
-      raceId: ctx.raceMap.pc["Human"],
-      name: `Test Character ${Math.random().toString(36).substr(2, 9)}`,
-      xp: 0,
-      alignment: "True Neutral",
-      abilities: {},
-      age: 25,
-      gender: "Other",
-      height: "5'10\"",
-      weight: "160 lbs",
-    });
-  }
-
   describe("inviteContributor", () => {
-    test("invites by email when invitee already has an account", async () => {
-      const { user: owner, session: ownerSession } = await createTestUser("owner");
-      const { user: invitee } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
+    test("invites a user by email, or an email without an account, as an Editor", async () => {
+      const { owner, ownerSession, invitee, character, invite } = await setup(true);
+      expect(invite).toMatchObject({ characterId: character.id, email: invitee.emailAddress, userId: invitee.id, role: "Editor", status: "Pending", invitedBy: owner.id });
 
-      const contributor = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-
-      expect(contributor.characterId).toBe(character.id);
-      expect(contributor.email).toBe(invitee.emailAddress);
-      expect(contributor.role).toBe("Editor");
-      expect(contributor.status).toBe("Pending");
-      expect(contributor.invitedBy).toBe(owner.id);
-      expect(contributor.userId).toBe(invitee.id);
+      const unregistered = await CharacterContributorsMethods.inviteContributor(ownerSession, character.id, "stranger@example.com");
+      expect(unregistered).toMatchObject({ email: "stranger@example.com", userId: null, status: "Pending" });
     });
 
-    test("invites by email for an unregistered email", async () => {
+    test("refuses strangers, the owner's own email, a second invite and an archived character", async () => {
+      const { owner, ownerSession, invitee, character } = await setup(true);
+      const { session: stranger } = await createTestUser("stranger");
+      await expect(CharacterContributorsMethods.inviteContributor(stranger, character.id, "x@example.com")).rejects.toThrow(ForbiddenError);
+      await expect(CharacterContributorsMethods.inviteContributor(ownerSession, character.id, owner.emailAddress)).rejects.toThrow(ConflictError);
+      await expect(CharacterContributorsMethods.inviteContributor(ownerSession, character.id, invitee.emailAddress)).rejects.toThrow(ConflictError);
+
+      await CharactersMethods.archiveCharacter(ownerSession, character.id);
+      await expect(CharacterContributorsMethods.inviteContributor(ownerSession, character.id, "late@example.com")).rejects.toThrow(ConflictError);
+    });
+
+    test("hands an email-only invite to the account that signs up with that email", async () => {
       const { session: ownerSession } = await createTestUser("owner");
-      const character = await createTestCharacter(ownerSession);
+      const character = await createCharacter(ownerSession);
+      const email = `future-${uniqueId()}@example.com`;
+      const invite = await CharacterContributorsMethods.inviteContributor(ownerSession, character.id, email);
 
-      const contributor = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, "stranger@example.com",
-      );
-
-      expect(contributor.email).toBe("stranger@example.com");
-      expect(contributor.userId).toBeNull();
-      expect(contributor.status).toBe("Pending");
+      const [user] = await Users.create(db, { username: `future-${uniqueId()}`, emailAddress: email, password: "password1234" });
+      await CharacterContributors.backfillUserId(db, email, user.id);
+      expect((await CharacterContributors.findOne(db, { id: invite.id }))?.userId).toBe(user.id);
     });
-
-    test("rejects non-owner invites with ForbiddenError", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { session: otherSession } = await createTestUser("other");
-      const character = await createTestCharacter(ownerSession);
-
-      await expect(
-        CharacterContributorsMethods.inviteContributor(otherSession, character.id, "x@example.com"),
-      ).rejects.toThrow(ForbiddenError);
-    });
-
-    test("rejects inviting the owner", async () => {
-      const { user: owner, session: ownerSession } = await createTestUser("owner");
-      const character = await createTestCharacter(ownerSession);
-
-      await expect(
-        CharacterContributorsMethods.inviteContributor(ownerSession, character.id, owner.emailAddress),
-      ).rejects.toThrow(ConflictError);
-    });
-
-    test("rejects duplicate pending invite", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
-
-      await CharacterContributorsMethods.inviteContributor(ownerSession, character.id, invitee.emailAddress);
-
-      await expect(
-        CharacterContributorsMethods.inviteContributor(ownerSession, character.id, invitee.emailAddress),
-      ).rejects.toThrow(ConflictError);
-    });
-
   });
 
-  describe("accept / reject", () => {
-    test("invitee can accept and gains edit access", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-
-      const accepted = await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id);
-      expect(accepted.status).toBe("Active");
-
-      // Contributor can now load and edit the character
-      const result = await CharactersMethods.updateCharacter(inviteeSession, character.id, { notes: "edited by contributor" });
-      expect(result.notes).toBe("edited by contributor");
+  describe("answering an invite", () => {
+    test("accepting gives the invitee edit access", async () => {
+      const { inviteeSession, character, invite } = await setup(true);
+      expect(await CharacterContributorsMethods.getUserContributorInvites(inviteeSession.userId)).toMatchObject([{ id: invite.id }]);
+      expect((await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id)).status).toBe("Active");
+      expect(await CharacterContributorsMethods.getUserContributorInvites(inviteeSession.userId)).toEqual([]);
+      expect((await CharactersMethods.updateCharacter(inviteeSession, character.id, { notes: "edited by contributor" })).notes).toBe("edited by contributor");
     });
 
-    test("invitee can reject", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-
-      const rejected = await CharacterContributorsMethods.rejectContributorInvite(inviteeSession, invite.id);
-      expect(rejected.status).toBe("Rejected");
+    test("rejects an invite", async () => {
+      const { inviteeSession, invite } = await setup(true);
+      expect((await CharacterContributorsMethods.rejectContributorInvite(inviteeSession, invite.id)).status).toBe("Rejected");
+      await expect(CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
     });
 
-    test("rejects accept when character was archived after invite", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
+    test("refuses another user's invite, and an invite to a character archived since", async () => {
+      const { ownerSession, inviteeSession, character, invite } = await setup(true);
+      const { session: stranger } = await createTestUser("stranger");
+      await expect(CharacterContributorsMethods.acceptContributorInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
 
       await CharactersMethods.archiveCharacter(ownerSession, character.id);
-
-      await expect(
-        CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id),
-      ).rejects.toThrow(ConflictError);
-    });
-
-
-    test("rejects invite to an archived character", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
-
-      await CharactersMethods.archiveCharacter(ownerSession, character.id);
-
-      await expect(
-        CharacterContributorsMethods.inviteContributor(ownerSession, character.id, invitee.emailAddress),
-      ).rejects.toThrow(ConflictError);
-    });
-
-    test("non-invitee cannot accept", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee } = await createTestUser("invitee");
-      const { session: otherSession } = await createTestUser("other");
-      const character = await createTestCharacter(ownerSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-
-      await expect(
-        CharacterContributorsMethods.acceptContributorInvite(otherSession, invite.id),
-      ).rejects.toThrow(NotFoundError);
+      await expect(CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
     });
   });
 
   describe("getContributorInvite", () => {
-    test("returns invite for any status (Active / Rejected) so stale links render correctly", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-      await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id);
-
-      const fetchedActive = await CharacterContributorsMethods.getContributorInvite(inviteeSession, invite.id);
-      expect(fetchedActive.status).toBe("Active");
-      expect(fetchedActive.charactersInCharacter?.name).toBe(character.name);
-    });
-
-    test("surfaces archived character via deletedAt", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
+    test("shows the invitee their invite whatever became of it, the character's archival included", async () => {
+      const { ownerSession, inviteeSession, character, invite } = await setup();
+      expect(await CharacterContributorsMethods.getContributorInvite(inviteeSession, invite.id)).toMatchObject({ status: "Active", charactersInCharacter: { name: character.name } });
       await CharactersMethods.archiveCharacter(ownerSession, character.id);
-
-      const fetched = await CharacterContributorsMethods.getContributorInvite(inviteeSession, invite.id);
-      expect(fetched.charactersInCharacter?.deletedAt).not.toBeNull();
+      expect((await CharacterContributorsMethods.getContributorInvite(inviteeSession, invite.id)).charactersInCharacter?.deletedAt).not.toBeNull();
     });
 
-    test("rejects probing another user's invite id", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee } = await createTestUser("invitee");
-      const { session: strangerSession } = await createTestUser("stranger");
-      const character = await createTestCharacter(ownerSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-
-      await expect(
-        CharacterContributorsMethods.getContributorInvite(strangerSession, invite.id),
-      ).rejects.toThrow(NotFoundError);
+    test("hides the invite from anyone else", async () => {
+      const { invite } = await setup(true);
+      const { session: stranger } = await createTestUser("stranger");
+      await expect(CharacterContributorsMethods.getContributorInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
     });
   });
 
-  describe("authorization", () => {
-    test("contributor can edit, print PDF, but cannot archive, share, or invite others", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
+  describe("contributors", () => {
+    test("lists them to the owner and to contributors, not to strangers", async () => {
+      const { ownerSession, inviteeSession, invitee, character } = await setup();
+      const list = (session: Session) => CharacterContributorsMethods.getContributors(session, character.id, {}, { limit: 10, page: 1 });
+      expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([invitee.emailAddress]);
+      expect((await list(inviteeSession)).items).toHaveLength(1);
+      const { session: stranger } = await createTestUser("stranger");
+      await expect(list(stranger)).rejects.toThrow(ForbiddenError);
+    });
 
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-      await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id);
+    test("lose edit access when revoked or when they leave", async () => {
+      const revoked = await setup();
+      await CharacterContributorsMethods.revokeContributor(revoked.ownerSession, revoked.invite.id);
+      await expect(CharactersMethods.updateCharacter(revoked.inviteeSession, revoked.character.id, { notes: "after revoke" })).rejects.toThrow(NotFoundError);
 
-      // Edit: allowed
+      const left = await setup();
+      await CharacterContributorsMethods.leaveCharacter(left.inviteeSession, left.character.id);
+      await expect(CharactersMethods.updateCharacter(left.inviteeSession, left.character.id, { notes: "after leaving" })).rejects.toThrow(NotFoundError);
+    });
+
+    test("can edit and print, but can't archive, share or invite", async () => {
+      const { inviteeSession, character } = await setup();
       await CharactersMethods.updateCharacter(inviteeSession, character.id, { notes: "ok" });
+      await CharactersMethods.enqueuePdf(inviteeSession, character.id);
 
-      // Archive: owner-only
-      await expect(
-        CharactersMethods.archiveCharacter(inviteeSession, character.id),
-      ).rejects.toThrow(NotFoundError);
-
-      // Share token generate/revoke: owner-only
-      await expect(
-        CharactersMethods.generateShareToken(inviteeSession, character.id),
-      ).rejects.toThrow(NotFoundError);
-      await expect(
-        CharactersMethods.revokeShareToken(inviteeSession, character.id),
-      ).rejects.toThrow(NotFoundError);
-
-      // Invite another: owner-only
-      await expect(
-        CharacterContributorsMethods.inviteContributor(inviteeSession, character.id, "x@example.com"),
-      ).rejects.toThrow(ForbiddenError);
+      await expect(CharactersMethods.archiveCharacter(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      await expect(CharactersMethods.generateShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      await expect(CharactersMethods.revokeShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      await expect(CharacterContributorsMethods.inviteContributor(inviteeSession, character.id, "x@example.com")).rejects.toThrow(ForbiddenError);
     });
 
-    test("non-contributor cannot edit", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { session: otherSession } = await createTestUser("other");
-      const character = await createTestCharacter(ownerSession);
-
-      await expect(
-        CharactersMethods.updateCharacter(otherSession, character.id, { notes: "nope" }),
-      ).rejects.toThrow(NotFoundError);
+    test("are the only ones besides the owner who can edit", async () => {
+      const { character } = await setup();
+      const { session: stranger } = await createTestUser("stranger");
+      await expect(CharactersMethods.updateCharacter(stranger, character.id, { notes: "nope" })).rejects.toThrow(NotFoundError);
     });
 
-    test("revoked contributor loses access", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const character = await createTestCharacter(ownerSession);
+    test("see the characters shared with them among their own, and can filter by access", async () => {
+      const { inviteeSession, character: shared } = await setup();
+      const own = await createCharacter(inviteeSession);
+      const list = async (accessRole?: "owner" | "contributor") =>
+        (await CharactersMethods.getMyCharacters(inviteeSession, { accessRole }, { limit: 50, page: 1 })).items;
 
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, invitee.emailAddress,
-      );
-      await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id);
-
-      await CharacterContributorsMethods.revokeContributor(ownerSession, invite.id);
-
-      await expect(
-        CharactersMethods.updateCharacter(inviteeSession, character.id, { notes: "after revoke" }),
-      ).rejects.toThrow(NotFoundError);
-    });
-  });
-
-  describe("getMyCharacters", () => {
-    test("includes shared characters with accessRole field", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const sharedChar = await createTestCharacter(ownerSession);
-      const ownChar = await createTestCharacter(inviteeSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, sharedChar.id, invitee.emailAddress,
-      );
-      await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id);
-
-      const list = await CharactersMethods.getMyCharacters(inviteeSession, {}, { limit: 50, page: 1 });
-      const ids = list.items.map((c) => c.id);
-      expect(ids).toContain(sharedChar.id);
-      expect(ids).toContain(ownChar.id);
-
-      const sharedRow = list.items.find((c) => c.id === sharedChar.id);
-      const ownRow = list.items.find((c) => c.id === ownChar.id);
-      expect(sharedRow?.accessRole).toBe("contributor");
-      expect(ownRow?.accessRole).toBe("owner");
-    });
-
-    test("accessRole filter narrows results to owner or contributor", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-      const sharedChar = await createTestCharacter(ownerSession);
-      const ownChar = await createTestCharacter(inviteeSession);
-
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, sharedChar.id, invitee.emailAddress,
-      );
-      await CharacterContributorsMethods.acceptContributorInvite(inviteeSession, invite.id);
-
-      const ownedOnly = await CharactersMethods.getMyCharacters(
-        inviteeSession,
-        { accessRole: "owner" },
-        { limit: 50, page: 1 },
-      );
-      const ownedIds = ownedOnly.items.map((c) => c.id);
-      expect(ownedIds).toContain(ownChar.id);
-      expect(ownedIds).not.toContain(sharedChar.id);
-
-      const sharedOnly = await CharactersMethods.getMyCharacters(
-        inviteeSession,
-        { accessRole: "contributor" },
-        { limit: 50, page: 1 },
-      );
-      const sharedIds = sharedOnly.items.map((c) => c.id);
-      expect(sharedIds).toContain(sharedChar.id);
-      expect(sharedIds).not.toContain(ownChar.id);
-    });
-  });
-
-  describe("backfillUserId", () => {
-    test("claims pending invite when invited email signs up", async () => {
-      const { session: ownerSession } = await createTestUser("owner");
-      const character = await createTestCharacter(ownerSession);
-
-      const futureEmail = `future-${Math.random().toString(36).substr(2, 9)}@example.com`;
-      const invite = await CharacterContributorsMethods.inviteContributor(
-        ownerSession, character.id, futureEmail,
-      );
-      expect(invite.userId).toBeNull();
-
-      // Simulate signup creating a user with the same email and the auth flow
-      // calling backfillUserId
-      const users = await Users.create(db, {
-        username: `future-${Math.random().toString(36).substr(2, 9)}`,
-        emailAddress: futureEmail,
-        password: "password1234",
-      });
-      await CharacterContributors.backfillUserId(db, futureEmail, users[0].id);
-
-      const updated = await CharacterContributors.findOne(db, { id: invite.id });
-      expect(updated?.userId).toBe(users[0].id);
+      const all = await list();
+      expect(all.find((c) => c.id === shared.id)?.accessRole).toBe("contributor");
+      expect(all.find((c) => c.id === own.id)?.accessRole).toBe("owner");
+      expect((await list("owner")).map((c) => c.id)).toEqual([own.id]);
+      expect((await list("contributor")).map((c) => c.id)).toEqual([shared.id]);
     });
   });
 });

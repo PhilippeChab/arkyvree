@@ -1,55 +1,36 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { aptitudesInRules, featsAptitudesInRules, featsInRules, powersInRules, rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import { aptitudesInRules, featsAptitudesInRules, featsInRules, powersInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { Rulesets, Users } from "@/server/repositories/index.ts";
-import { getOrBuildCowData, getOrFetchRulesetData, invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
 import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
 import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { DND35_COMPLETE_DIVINE_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { describe, expect, test, beforeAll } from "bun:test";
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import type { CowData } from "@/server/services/rulesets/cow.ts";
-import type { Ruleset } from "@/shared/relations.ts";
+import { describe, expect, test } from "bun:test";
+
+/**
+ * A seeded fork that uses every extension of its base, so the COW layer sees
+ * sibling extensions, with its composed COW and ruleset data.
+ */
+async function setup() {
+  const ruleset = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
+  const cowData = await getOrBuildCowData(ruleset);
+  const rulesetData = await getOrFetchRulesetData(ruleset.id, cowData);
+  return { ruleset, cowData, rulesetData };
+}
 
 describe("aptitude deduplication across sibling extensions", () => {
-  let ruleset: Ruleset;
-  let cowData: CowData;
-  let rulesetData: CachedRulesetData;
-
-  beforeAll(async () => {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-    const [user] = await Users.create(db, {
-      username: `testuser-aptdedup-${uniqueId}`,
-      emailAddress: `test-aptdedup-${uniqueId}@example.com`,
-      password: "password1234",
-    });
-    const fork = await createSeededTestRuleset(user.id);
-
-    // Copy parent's extensions so the COW system sees siblings
-    const extLinks = await db.select({ id: rulesetExtensionsInRules.extensionId })
-      .from(rulesetExtensionsInRules)
-      .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
-    if (extLinks.length > 0) {
-      await db.update(rulesetsInRules)
-        .set({ extensionRulesetIds: extLinks.map((e) => e.id) })
-        .where(eq(rulesetsInRules.id, fork.id));
-    }
-
-    ruleset = (await Rulesets.findOne(db, { id: fork.id }))!;
-    invalidateAll();
-    cowData = await getOrBuildCowData(ruleset);
-    rulesetData = await getOrFetchRulesetData(ruleset.id, cowData);
-  });
-
-  test("cached aptitudes have no duplicate names", () => {
+  test("cached aptitudes have no duplicate names", async () => {
+    const { rulesetData } = await setup();
     const names = rulesetData.aptitudes.map((a) => a.name);
     const uniqueNames = new Set(names);
     expect(names.length).toBe(uniqueNames.size);
   });
 
-  test("base-inherited aptitude in composed view is owned by base", () => {
+  test("base-inherited aptitude in composed view is owned by base", async () => {
+    const { ruleset, rulesetData } = await setup();
     // Extensions don't create their own "General" copy (Option 2); the
     // composed view surfaces base's sole copy, and ancestry resolution
     // lands on it.
@@ -60,6 +41,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   });
 
   test("CD spell is linked to Blackguard Spells via the winner aptitude id", async () => {
+    const { rulesetData } = await setup();
     // Get the winning Blackguard Spells aptitude from the deduped cache
     const winningApt = rulesetData.aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
@@ -79,7 +61,8 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(blackguardLink!.level).toBe(4);
   });
 
-  test("all sibling spell aptitudes that exist in multiple extensions are deduped", () => {
+  test("all sibling spell aptitudes that exist in multiple extensions are deduped", async () => {
+    const { rulesetData } = await setup();
     // These aptitudes are created by multiple extensions — verify each appears exactly once
     const siblingAptitudes = ["Assassin Spells", "Hexblade Spells", "Blackguard Spells"];
     for (const name of siblingAptitudes) {
@@ -89,25 +72,26 @@ describe("aptitude deduplication across sibling extensions", () => {
   });
 
   test("loser aptitude IDs are in idResolveMap pointing to winner", async () => {
+    const { ruleset, cowData, rulesetData } = await setup();
     // Fetch all raw "Assassin Spells" aptitudes across extensions
     const extIds = ruleset.extensionRulesetIds;
     const allAssassinApts = await db.select({ id: aptitudesInRules.id, rulesetId: aptitudesInRules.rulesetId })
       .from(aptitudesInRules)
       .where(and(eq(aptitudesInRules.name, "Assassin Spells"), inArray(aptitudesInRules.rulesetId, extIds)));
 
-    if (allAssassinApts.length > 1) {
-      const winnerApt = rulesetData.aptitudes.find((a) => a.name === "Assassin Spells");
-      expect(winnerApt).toBeDefined();
+    expect(allAssassinApts.length).toBeGreaterThan(1);
+    const winnerApt = rulesetData.aptitudes.find((a) => a.name === "Assassin Spells");
+    expect(winnerApt).toBeDefined();
 
-      // All non-winner IDs should map to the winner in the override map
-      for (const apt of allAssassinApts) {
-        if (apt.id === winnerApt!.id) continue;
-        expect(cowData.idResolveMap.get(apt.id)).toBe(winnerApt!.id);
-      }
+    // All non-winner IDs should map to the winner in the override map
+    for (const apt of allAssassinApts) {
+      if (apt.id === winnerApt!.id) continue;
+      expect(cowData.idResolveMap.get(apt.id)).toBe(winnerApt!.id);
     }
   });
 
   test("PowersService returns no duplicate aptitude names on CD spell with Blackguard Spells", async () => {
+    const { ruleset } = await setup();
     // "Visage of the Deity, Lesser" is a CD spell with "Blackguard Spells" aptitude
     // Both DMG and CD create this aptitude — service should dedup
     const { items } = await PowersMethods.getRulesetPowers(
@@ -125,6 +109,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   });
 
   test("PowersService detail returns no duplicate aptitude names", async () => {
+    const { ruleset } = await setup();
     const [cdRuleset] = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules)
       .where(eq(rulesetsInRules.name, DND35_COMPLETE_DIVINE_NAME));
     const [spell] = await db.select({ id: powersInRules.id }).from(powersInRules)
@@ -137,6 +122,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   });
 
   test("AptitudesService returns no duplicate aptitude names in list", async () => {
+    const { ruleset } = await setup();
     const { items } = await AptitudesMethods.getRulesetAptitudes(
       ruleset.id,
       { scope: "spells" },
@@ -151,6 +137,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   });
 
   test("FeatsService returns no duplicate aptitude names on feats with sibling aptitudes", async () => {
+    const { ruleset, rulesetData } = await setup();
     // Find a feat that has an aptitude created by multiple extensions (e.g. "Blackguard Spells")
     const winningApt = rulesetData.aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();

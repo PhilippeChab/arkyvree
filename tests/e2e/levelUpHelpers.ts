@@ -1,133 +1,93 @@
 import { type Locator, type Page, expect } from '@playwright/test';
+import { openActionsMenu } from '@/tests/e2e/helpers.ts';
 
-/**
- * Wizard helpers for the dnd3.5 Add Level dialog. Used by the level-up
- * happy-path test (Fighter) and the multiclass-caster test (Sorcerer).
- */
+/** The d&d 3.5 Add Level wizard: opening it, planning its levels and walking its steps. */
 
-export async function queueClassLevels(
-  wizard: Locator,
-  page: Page,
-  klassName: string,
-  count: number,
-) {
-  for (let i = 0; i < count; i++) {
-    await wizard.getByRole('button', { name: 'Add Level' }).first().click();
-    const combobox = wizard.getByRole('combobox').last();
-    await combobox.click();
-    await combobox.fill(klassName);
-    await page.getByRole('option', { name: new RegExp(`^${klassName}`) }).first().click();
-  }
+/** Opens the Add Level wizard of the character on the page. */
+export async function openAddLevelWizard(page: Page) {
+  await openActionsMenu(page, /^Add Level/);
+  const wizard = page.getByRole('dialog', { name: 'Add Level' });
+  await expect(wizard).toBeVisible({ timeout: 10_000 });
+  return wizard;
 }
 
-/**
- * Fill every required aptitude pool at the Feats step. Skips pools
- * marked "(optional)". Picks the first eligible non-family list item.
- */
-export async function fillEveryAptitudePool(wizard: Locator) {
-  await wizard
-    .getByRole('heading', { name: /Select Feats by Aptitude/i })
-    .waitFor({ state: 'visible', timeout: 15_000 });
-
-  for (let safety = 0; safety < 20; safety++) {
-    const chips = wizard.locator('.MuiChip-root').filter({ hasText: /\b\d+\/\d+/ });
-    const count = await chips.count();
-    let nextIdx: number | null = null;
+/** Queues `count` levels of each class, in order, then moves on from the class plan. */
+export async function planLevels(wizard: Locator, page: Page, plan: [klass: string, count: number][]) {
+  for (const [klass, count] of plan) {
     for (let i = 0; i < count; i++) {
-      const text = (await chips.nth(i).textContent()) ?? '';
-      const m = text.match(/(\d+)\/(\d+)/);
-      if (!m) continue;
-      const picked = parseInt(m[1], 10);
-      const total = parseInt(m[2], 10);
-      if (picked < total && !text.includes('optional')) {
-        nextIdx = i;
-        break;
-      }
+      await wizard.getByRole('button', { name: 'Add Level' }).first().click();
+      const combobox = wizard.getByRole('combobox').last();
+      await combobox.click();
+      await combobox.fill(klass);
+      await page.getByRole('option', { name: new RegExp(`^${klass}`) }).first().click();
     }
-    if (nextIdx === null) return;
-    await chips.nth(nextIdx).click();
-    const feat = wizard
-      .locator('.MuiListItemButton-root:not(.Mui-disabled)')
-      .filter({ hasNotText: /variants/ })
-      .first();
-    await feat.waitFor({ state: 'visible', timeout: 10_000 });
-    await feat.click();
   }
-  throw new Error('fillEveryAptitudePool exceeded safety bound — chips not converging');
+  await wizard.getByRole('button', { name: /^Next$/ }).click();
 }
 
 /**
- * Fill every required spell aptitude pool at the Spells step. Same
- * shape as the feat step — chips with `${name} ${picked}/${total}`,
- * click chip then click the first eligible list item to add a spell.
- *
- * Returns the names of every spell picked (in pick order). Empty array
- * if there were no chips with remaining slots (e.g. non-caster class).
- * Callers that only care about advancing the step can ignore the return.
+ * Picks, for each pool chip still short of its total (`name picked/total`), the first item it lists, until every
+ * pool is full. Returns what it picked.
  */
-export async function fillEverySpellPool(wizard: Locator): Promise<string[]> {
-  // Wait for the spells step header OR the "no spells" alert. Both
-  // settle the loading state.
-  await Promise.race([
-    wizard.getByRole('heading', { name: /Select Spells by Aptitude/i })
-      .waitFor({ state: 'visible', timeout: 15_000 }),
-    wizard.getByText('No spells to select at this level')
-      .waitFor({ state: 'visible', timeout: 15_000 }),
-  ]).catch(() => {/* timeout — continue, the chip loop will exit on count 0 */});
-
+async function fillPools(wizard: Locator, { skipOptional }: { skipOptional: boolean }) {
   const picked: string[] = [];
   for (let safety = 0; safety < 30; safety++) {
     const chips = wizard.locator('.MuiChip-root').filter({ hasText: /\b\d+\/\d+/ });
-    const count = await chips.count();
-    let nextIdx: number | null = null;
-    for (let i = 0; i < count; i++) {
+    let next: Locator | undefined;
+    for (let i = 0; i < await chips.count(); i++) {
       const text = (await chips.nth(i).textContent()) ?? '';
-      const m = text.match(/(\d+)\/(\d+)/);
-      if (!m) continue;
-      if (parseInt(m[1], 10) < parseInt(m[2], 10)) {
-        nextIdx = i;
+      const [, count, total] = text.match(/(\d+)\/(\d+)/) ?? [];
+      if (Number(count) < Number(total) && !(skipOptional && text.includes('optional'))) {
+        next = chips.nth(i);
         break;
       }
     }
-    if (nextIdx === null) return picked;
-    await chips.nth(nextIdx).click();
-    const spell = wizard
-      .locator('.MuiListItemButton-root:not(.Mui-disabled)')
-      .first();
-    await spell.waitFor({ state: 'visible', timeout: 10_000 });
-    const spellName = ((await spell.textContent()) ?? '').trim();
-    if (spellName) picked.push(spellName);
-    await spell.click();
+    if (!next) return picked;
+    await next.click();
+    // A family row lists its variants: pick a plain item.
+    const item = wizard.locator('.MuiListItemButton-root:not(.Mui-disabled)').filter({ hasNotText: /variants/ }).first();
+    await item.waitFor({ state: 'visible', timeout: 10_000 });
+    picked.push(((await item.textContent()) ?? '').trim());
+    await item.click();
   }
-  throw new Error('fillEverySpellPool exceeded safety bound — chips not converging');
+  throw new Error('The pools never filled up');
 }
 
-/**
- * Walk the wizard's intermediate steps (HP → Attributes → Skills →
- * Feats → Spells) starting after class plan, then submit on Review.
- *
- * Returns `{ pickedSpells }` — names of spells picked at the Spells
- * step, in pick order. Non-caster classes return an empty array.
- */
-export async function walkAddLevelWizard(wizard: Locator): Promise<{ pickedSpells: string[] }> {
-  // HP — Max All
+/** Walks from hit points to the Feats step: maximum hit points, `ability` for an increase, random skills. */
+export async function walkToFeats(wizard: Locator, ability?: string) {
   await wizard.getByRole('button', { name: /^Max All$/ }).click();
   await wizard.getByRole('button', { name: /^Next$/ }).click();
-  // Attributes — only level 4/8/12/16/20 grant increases; Next at low levels
+  // Every fourth level asks for an ability; the step waits for one.
+  if (ability) await wizard.getByLabel(new RegExp(`^${ability}:`)).check();
   await wizard.getByRole('button', { name: /^Next$/ }).click();
-  // Skills — randomize
   await wizard.getByRole('button', { name: /^Auto$/ }).click();
   await wizard.getByRole('button', { name: /^Next$/ }).click();
-  // Feats
-  await fillEveryAptitudePool(wizard);
+  await expect(wizard.getByRole('heading', { name: /Select Feats by Aptitude/i })).toBeVisible({ timeout: 15_000 });
+}
+
+/** Clicks `button` to finish the wizard, which must take the levels without warnings. */
+export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {
+  await wizard.getByRole('button', { name: button }).click();
+  await expect(wizard.getByRole('button', { name: /^Proceed Anyway$/ })).toBeHidden({ timeout: 1_500 });
+  await expect(wizard).toBeHidden({ timeout: 15_000 });
+}
+
+/** Walks from the Feats step to the end, filling every required feat pool and every spell pool. Returns the spells picked. */
+export async function walkFromFeats(wizard: Locator) {
+  await fillPools(wizard, { skipOptional: true });
   await wizard.getByRole('button', { name: /^Next$/ }).click();
-  // Spells
-  const pickedSpells = await fillEverySpellPool(wizard);
+  const spellStep = wizard.getByRole('heading', { name: /Select Spells by Aptitude/i }).or(wizard.getByText('No spells to select at this level'));
+  await expect(spellStep).toBeVisible({ timeout: 15_000 });
+  const spells = await fillPools(wizard, { skipOptional: false });
   await wizard.getByRole('button', { name: /^Next$/ }).click();
-  // Review
-  await wizard.getByRole('button', { name: /^Finish All$/ }).click();
-  await expect(
-    wizard.getByRole('button', { name: /^Proceed Anyway$/ }),
-  ).toBeHidden({ timeout: 1_500 });
-  return { pickedSpells };
+  await finishWithoutWarnings(wizard);
+  return spells;
+}
+
+/** Plans `plan`'s levels and walks the whole wizard. Returns the spells picked. */
+export async function addLevels(page: Page, plan: [klass: string, count: number][], ability?: string) {
+  const wizard = await openAddLevelWizard(page);
+  await planLevels(wizard, page, plan);
+  await walkToFeats(wizard, ability);
+  return await walkFromFeats(wizard);
 }

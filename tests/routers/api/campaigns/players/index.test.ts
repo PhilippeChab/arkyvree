@@ -1,389 +1,77 @@
-import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
-import { db } from "@/server/database/index.ts";
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+
+const players = api.api.campaigns[":id"].players;
+const player = players[":playerId"];
+
+async function createCampaign() {
+  const { rulesetId } = await getSeedCtx();
+  const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Players Campaign", rulesetId } }));
+  return campaign.id;
+}
 
 describe("campaigns players", () => {
-  const api = testClient<Application>(application);
-
-  let seedCtx: SeedContext;
-  async function getCtx() {
-    if (!seedCtx) seedCtx = await getSeedContext(db);
-    return seedCtx;
-  }
-
-  // Helper to create test campaign
-  async function createTestCampaign() {
-    const ctx = await getCtx();
-
-    // Create campaign
-    const campaignResponse = await api.api.campaigns.$post(
-      {
-        json: {
-          name: `Test Campaign ${Math.random().toString(36).substr(2, 9)}`,
-          description: "A test campaign for players testing",
-          rulesetId: ctx.rulesetId,
-        },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      }
-    );
-
-    if (!campaignResponse.ok) {
-      const error = await campaignResponse.json();
-      throw new Error(`Failed to create test campaign: ${error.message}`);
-    }
-
-    const { campaign } = await campaignResponse.json();
-    return campaign.id;
-  }
-
-  test("should get list of campaign players", async () => {
-      const campaignId = await createTestCampaign();
-
-      const response = await api.api.campaigns[":id"].players.$get(
-        {
-          param: { id: campaignId },
-          query: { limit: "10", page: "1" },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get campaign players: ${error.message}`);
-      }
-
-      const result = await response.json();
-      expect(result).toBeDefined();
-      expect(result.items).toBeDefined();
-      expect(Array.isArray(result.items)).toBe(true);
-      expect(result.page).toBe(1);
-    });
-
-  test("should add a different player to a campaign", async () => {
-      const campaignId = await createTestCampaign();
-
-      // Use a different user ID since the campaign creator is already a player
-      const playerData = {
-        email: "testuser1@example.com", // Use TestUser1
-        role: "Player Character" as const,
-      };
-
-      const response = await api.api.campaigns[":id"].players.$post(
-        {
-          param: { id: campaignId },
-          json: playerData,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to add player to campaign: ${error.message}`);
-      }
-
-      const result = await response.json();
-      expect(result).toBeDefined();
-      // Handle new response structure - service returns { player } or { player, invite }
-      if ("player" in result) {
-        // Check if an invite was created
-        if ("invite" in result) {
-          expect(result.invite, "Should create invite when email is provided").toBeDefined();
-        }
-      } else {
-        // This should not happen with the new structure
-        throw new Error("Unexpected response structure");
-      }
-    });
-
-  test("should verify player was added to campaign", async () => {
-      const campaignId = await createTestCampaign();
-
-      // First add a player
-      const playerData = {
-        email: "testuser1@example.com",
-        role: "Player Character" as const,
-      };
-
-      const addResponse = await api.api.campaigns[":id"].players.$post(
-        {
-          param: { id: campaignId },
-          json: playerData,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      if (!addResponse.ok) {
-        const error = await addResponse.json();
-        throw new Error(`Failed to add player: ${error.message}`);
-      }
-
-      const addResult = await addResponse.json();
-      const playerId = addResult.player.id;
-
-      // Now get the players list
-      const response = await api.api.campaigns[":id"].players.$get(
-        {
-          param: { id: campaignId },
-          query: { limit: "10", page: "1" },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to get campaign players: ${error.message}`);
-      }
-
-      const result = await response.json();
-      expect(result).toBeDefined();
-      expect(result.items).toBeDefined();
-
-      // Check if our test player slot was created (should be unlinked since we sent an invite)
-      const hasTestPlayerSlot = result.items.some(
-        (player: { id: string }) => player.id === playerId,
-      );
-      expect(hasTestPlayerSlot).toBe(true);
-    });
-
-  test("should remove a player from a campaign", async () => {
-      const campaignId = await createTestCampaign();
-
-      // First add a player
-      const playerData = {
-        email: "testuser1@example.com",
-        role: "Player Character" as const,
-      };
-
-      const addResponse = await api.api.campaigns[":id"].players.$post(
-        {
-          param: { id: campaignId },
-          json: playerData,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      if (!addResponse.ok) {
-        const error = await addResponse.json();
-        throw new Error(`Failed to add player: ${error.message}`);
-      }
-
-      const addResult = await addResponse.json();
-      const playerId = addResult.player.id;
-
-      // Now remove the player
-      const response = await api.api.campaigns[":id"].players[
-        ":playerId"
-      ].$delete(
-        {
-          param: { id: campaignId, playerId },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(
-          `Failed to remove player from campaign: ${error.message}`,
-        );
-      }
-
-      const result = await response.json();
-      expect(result).toBeDefined();
-    });
-
-  test("should reject unauthenticated requests", async () => {
-      const campaignId = await createTestCampaign();
-
-      const response = await api.api.campaigns[":id"].players.$get({
-        param: { id: campaignId },
-        query: { limit: "10", page: "1" },
-      });
-      expect(response.status).toBe(401);
-    });
-
-  test("should handle non-existent campaign", async () => {
-      const response = await api.api.campaigns[":id"].players.$get(
-        {
-          param: { id: "00000000-0000-0000-0000-000000000000" },
-          query: { limit: "10", page: "1" },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      expect(response.status).toBe(404);
-    });
-
-  test(
-      "should validate player addition with missing email",
-      async () => {
-        const campaignId = await createTestCampaign();
-
-        const validData = {
-          role: "Player Character" as const,
-          // email is now optional - this should create an empty player slot
-        };
-
-        const response = await api.api.campaigns[":id"].players.$post(
-          {
-            param: { id: campaignId },
-            json: validData,
-          },
-          {
-            headers: {
-              cookie: "session-id=00000000-0000-4000-8000-000000000123",
-            },
-          });
-
-        // Should succeed and create an empty player slot
-        expect(response.status).toBe(200);
-
-        const result = await response.json();
-        expect(result).toBeDefined();
-        // Should return { player } without invite
-        if ("player" in result) {
-          expect(result.player).toBeDefined();
-          // When no email provided, invite should be null
-          expect(result.invite).toBe(null);
-        }
-      });
-
-  test("should create email-only invite for non-existent user email", async () => {
-      const campaignId = await createTestCampaign();
-
-      const data = {
-        email: "nonexistent@example.com",
-        role: "Player Character" as const,
-      };
-
-      const response = await api.api.campaigns[":id"].players.$post(
-        {
-          param: { id: campaignId },
-          json: data,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      // Should succeed and create an email-only invite
-      expect(response.status).toBe(200);
-
-      const result = await response.json();
-      expect(result).toBeDefined();
-      if ("invite" in result) {
-        expect(result.invite).toBeDefined();
-        expect(result.invite!.email).toBe("nonexistent@example.com");
-        expect(result.invite!.userId).toBeNull();
-      }
-    });
-
-  test("should handle non-existent player removal", async () => {
-      const campaignId = await createTestCampaign();
-
-      const response = await api.api.campaigns[":id"].players[
-        ":playerId"
-      ].$delete(
-        {
-          param: {
-            id: campaignId,
-            playerId: "00000000-0000-0000-0000-000000000000",
-          },
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      expect(response.status >= 400).toBe(true);
-    });
-
-  test("should prevent duplicate player addition", async () => {
-      const campaignId = await createTestCampaign();
-
-      // First, add a user to create a pending invite
-      const playerData = {
-        email: "testuser2@example.com", // Use a different user email
-        role: "Player Character" as const,
-      };
-
-      const firstResponse = await api.api.campaigns[":id"].players.$post(
-        {
-          param: { id: campaignId },
-          json: playerData,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      // First addition should succeed
-      expect(firstResponse.status).toBe(200);
-
-      // Now try to add the same user again - this should fail
-      const secondResponse = await api.api.campaigns[":id"].players.$post(
-        {
-          param: { id: campaignId },
-          json: playerData,
-        },
-        {
-          headers: {
-            cookie: "session-id=00000000-0000-4000-8000-000000000123",
-          },
-        });
-
-      // Should fail since this user already has a pending invite
-      expect(secondResponse.status >= 400).toBe(true);
-    });
-  
-  test("filters the players by username or email", async () => {
-    const campaignId = await createTestCampaign();
-    const headers = { cookie: "session-id=00000000-0000-4000-8000-000000000123" };
-    const list = async (search?: string) => {
-      const response = await api.api.campaigns[":id"].players.$get(
-        { param: { id: campaignId }, query: { limit: "10", page: "1", ...(search && { search }) } },
-        { headers },
-      );
-      if (!response.ok) throw new Error(`Search failed with ${response.status}`);
-      return (await response.json()).items;
-    };
+  test("lists the creator as Game Master and finds players by username or email", async () => {
+    const id = await createCampaign();
+    const list = async (search?: string) => (await expectOk(players.$get({ param: { id }, query: { search } }))).items;
 
     const [gameMaster] = await list();
-    const email = gameMaster.usersInAccount?.emailAddress;
-    expect(email).toBeDefined();
+    expect(gameMaster.role).toBe("Game Master");
+    const email = gameMaster.usersInAccount!.emailAddress;
+    expect((await list(email.slice(0, 6))).map((p) => p.id)).toContain(gameMaster.id);
+    expect(await list("no-player-matches-this")).toEqual([]);
+  });
 
-    const matches = await list(email?.slice(0, 6));
-    expect(matches.map((player) => player.id)).toContain(gameMaster.id);
-    expect(await list("no-player-matches-this")).toHaveLength(0);
+  test("invites a user by email into a new player slot", async () => {
+    const id = await createCampaign();
+    const { user } = await createTestUser();
+    const added = await expectOk(players.$post({ param: { id }, json: { email: user.emailAddress, role: "Player Character" } }));
+    expect(added.invite).toMatchObject({ userId: user.id });
+    expect((await expectOk(players.$get({ param: { id }, query: {} }))).items.map((p) => p.id)).toContain(added.player.id);
+  });
+
+  test("invites an email with no account yet", async () => {
+    const id = await createCampaign();
+    const added = await expectOk(players.$post({ param: { id }, json: { email: "nonexistent@example.com", role: "Player Character" } }));
+    expect(added.invite).toMatchObject({ email: "nonexistent@example.com", userId: null });
+  });
+
+  test("adds an empty slot when no email is given", async () => {
+    const id = await createCampaign();
+    const added = await expectOk(players.$post({ param: { id }, json: { role: "Player Character" } }));
+    expect(added.invite).toBeNull();
+  });
+
+  test("refuses a second invite to the same user", async () => {
+    const id = await createCampaign();
+    const { user } = await createTestUser();
+    const json = { email: user.emailAddress, role: "Player Character" as const };
+    await expectOk(players.$post({ param: { id }, json }));
+    expect((await players.$post({ param: { id }, json })).status).toBe(409);
+  });
+
+  test("updates a player's role and removes the player", async () => {
+    const id = await createCampaign();
+    const added = await expectOk(players.$post({ param: { id }, json: { role: "Player Character" } }));
+    const param = { id, playerId: added.player.id };
+
+    const updated = await expectOk(player.$put({ param, json: { role: "Game Master" } }));
+    expect(updated.player.role).toBe("Game Master");
+
+    await expectOk(player.$delete({ param }));
+    expect((await expectOk(players.$get({ param: { id }, query: {} }))).items.map((p) => p.id)).not.toContain(added.player.id);
+  });
+
+  test("requires a session", async () => {
+    const id = await createCampaign();
+    expect((await guestApi.api.campaigns[":id"].players.$get({ param: { id }, query: {} })).status).toBe(401);
+  });
+
+  test("returns 404 for a missing campaign or player", async () => {
+    const id = await createCampaign();
+    expect((await players.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    expect((await player.$put({ param: { id, playerId: NIL_UUID }, json: { role: "Player Character" } })).status).toBe(404);
+    expect((await player.$delete({ param: { id, playerId: NIL_UUID } })).status).toBe(404);
   });
 });

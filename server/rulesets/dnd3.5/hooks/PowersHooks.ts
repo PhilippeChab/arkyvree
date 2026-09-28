@@ -9,11 +9,13 @@ import { SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import {
   generateSpellFocusFeats,
   generateSpellProperties,
+  SPELL_FIELD_PROPERTY_TYPES,
   type SpellFields,
 } from "./generators/spellGenerator.ts";
 
 export class Dnd35PowersHooks implements PowersHooks {
   readonly primaryGroupingType = SPELL_SCHOOL;
+  readonly generatedPropertyTypes = SPELL_FIELD_PROPERTY_TYPES;
 
   extractGroupingValue(body: PowerBody): string | null {
     return typeof body.school === "string" && body.school.length > 0 ? body.school : null;

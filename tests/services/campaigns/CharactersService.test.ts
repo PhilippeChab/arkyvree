@@ -1,778 +1,204 @@
-import { getSeedContext, type SeedContext } from "@/database/seeds/helpers.ts";
+import { describe, expect, test } from "bun:test";
+import { and, eq, inArray } from "drizzle-orm";
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import {
-  Campaigns,
-  CharacterContributors,
-  CharacterLevels,
-  Characters,
-  PlayerCharacters,
-  Players,
-  Users,
-} from "@/server/repositories/index.ts";
+import { Campaigns, CharacterLevels, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import { PlayerCharactersMethods } from "@/server/services/campaigns/CharactersService.ts";
-import type { Session } from "@/shared/relations.ts";
-import { and, eq, inArray } from "drizzle-orm";
-import { describe, expect, test } from "bun:test";
+import {
+  addCharacterContributor, createTestCampaign, createTestCharacter, createTestUser, getSeedCtx, makeSession,
+} from "@/tests/helpers.ts";
+
+type Visibility = "Private" | "Public" | "Partial";
+
+/** A new user playing in the campaign, with a character of theirs linked with `visibility`. */
+async function joinWithCharacter(campaignId: string, visibility: Visibility) {
+  const { user } = await createTestUser("player");
+  await Players.create(db, { userId: user.id, campaignId, role: "Player Character" });
+  const character = await createTestCharacter(user.id);
+  await link(user.id, campaignId, character.id, visibility);
+  return { user, character };
+}
+
+const link = (userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") =>
+  PlayerCharactersMethods.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
+
+const list = (userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) =>
+  PlayerCharactersMethods.getCampaignCharacters(makeSession(userId), campaignId, {}, pagination);
+
+/** Gives the character the seeded class levels, as `[class, level]` pairs. */
+async function addLevels(characterId: string, levels: [string, number][]) {
+  const ctx = await getSeedCtx();
+  for (const [klass, level] of levels) {
+    const [klassLevel] = await db.select({ id: klassLevelsInRules.id }).from(klassLevelsInRules)
+      .where(and(eq(klassLevelsInRules.klassId, ctx.klassMap.pc[klass]), inArray(klassLevelsInRules.level, [level])));
+    await CharacterLevels.create(db, { characterId, klassLevelId: klassLevel.id, hp: 8 });
+  }
+}
 
 describe("PlayerCharactersService", () => {
-  let seedCtx: SeedContext;
-  async function getCtx() {
-    if (!seedCtx) seedCtx = await getSeedContext(db);
-    return seedCtx;
-  }
-
-  // Helper to create test session
-  function createTestSession(userId: string): Session {
-    return {
-      id: `session-${Math.random().toString(36).substr(2, 9)}`,
-      userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deletedAt: null,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    };
-  }
-
-  // Helper to create test user
-  async function createTestUser() {
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-
-    const users = await Users.create(db, {
-      username: `testuser-${uniqueId}`,
-      emailAddress: `test-${uniqueId}@example.com`,
-      password: "password1234",
-    });
-    const user = users[0];
-
-    return { user, session: createTestSession(user.id) };
-  }
-
-  // Helper to create test campaign
-  async function createTestCampaign(userId: string) {
-    const ctx = await getCtx();
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-
-    const campaigns = await Campaigns.create(db, {
-      name: `Test Campaign ${uniqueId}`,
-      description: "Test campaign for character testing",
-      rulesetId: ctx.rulesetId,
-    });
-    const campaign = campaigns[0];
-
-    // Add user as a player (Game Master)
-    const players = await Players.create(db, {
-      userId,
-      campaignId: campaign.id,
-      role: "Game Master",
-    });
-
-    return { campaign, player: players[0] };
-  }
-
-  // Helper to create test character
-  async function createTestCharacter(userId: string) {
-    const ctx = await getCtx();
-    const uniqueId = Math.random().toString(36).substr(2, 9);
-
-    const characters = await Characters.create(db, {
-      userId,
-      name: `Test Character ${uniqueId}`,
-      rulesetId: ctx.rulesetId,
-      raceId: ctx.raceMap.pc["Human"],
-      gender: "Male",
-      age: 25,
-      height: "180",
-      weight: "75",
-      alignment: "Neutral Good",
-      deity: "None",
-      xp: 0,
-    });
-
-    return characters[0];
-  }
-
   describe("linkCharacter", () => {
-    test("should link a character to a campaign", async () => {
+    test.each(["Public", "Private", "Partial"] as const)("links the player's character with %s visibility", async (visibility) => {
       const { user } = await createTestUser();
       const { campaign, player } = await createTestCampaign(user.id);
       const character = await createTestCharacter(user.id);
-
-      const result = await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-
-      expect(result).toBeDefined();
-      expect(result.characterId).toBe(character.id);
-      expect(result.playerId).toBe(player.id);
-      expect(result.visibility).toBe("Public");
+      expect(await link(user.id, campaign.id, character.id, visibility)).toMatchObject({ characterId: character.id, playerId: player.id, visibility });
     });
 
-    test("should link a character with Private visibility", async () => {
+    test("refuses a non-member", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      const result = await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Private");
-
-      expect(result).toBeDefined();
-      expect(result.visibility).toBe("Private");
+      const { user: other } = await createTestUser();
+      const character = await createTestCharacter(other.id);
+      await expect(link(other.id, campaign.id, character.id)).rejects.toThrow(NotFoundError);
     });
 
-    test("should link a character with Partial visibility", async () => {
+    test("links a character to one campaign, once", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
+      const { campaign: other } = await createTestCampaign(user.id);
       const character = await createTestCharacter(user.id);
+      await link(user.id, campaign.id, character.id);
 
-      const result = await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Partial");
-
-      expect(result).toBeDefined();
-      expect(result.visibility).toBe("Partial");
+      await expect(link(user.id, campaign.id, character.id)).rejects.toThrow("Character already linked to this campaign");
+      await expect(link(user.id, other.id, character.id)).rejects.toThrow("Character is already linked to a campaign");
     });
 
-    test("should throw NotFoundError when player not found in campaign", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      // Create a different user who is not in the campaign
-      const { user: otherUser } = await createTestUser();
-
-      await expect(
-        PlayerCharactersMethods.linkCharacter(createTestSession(otherUser.id), campaign.id, character.id, "Public")
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    test("should throw error when character is already linked to another campaign", async () => {
-      const { user } = await createTestUser();
-      const { campaign: campaign1 } = await createTestCampaign(user.id);
-      const { campaign: campaign2 } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      // Link character to first campaign
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign1.id, character.id, "Public");
-
-      // Try to link to second campaign
-      await expect(
-        PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign2.id, character.id, "Public")
-      ).rejects.toThrow("Character is already linked to a campaign");
-    });
-
-    test("should throw error when character already linked to campaign", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      // Link character first time
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-
-      // Try to link again
-      await expect(
-        PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public")
-      ).rejects.toThrow("Character already linked to this campaign");
-    });
-
-    test("rejects a bonded character (404 via repo kind filter)", async () => {
+    test("refuses a bonded character", async () => {
+      const ctx = await getSeedCtx();
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
       const master = await createTestCharacter(user.id);
-      const ctx = await getCtx();
-
-      const bonded = (await Characters.create(db, {
-        userId: user.id,
-        name: "Test Cat Familiar",
-        rulesetId: ctx.rulesetId,
-        raceId: ctx.raceMap.familiar["Cat"],
-        kind: "familiar",
-        parentCharacterId: master.id,
-        gender: "Other",
-        alignment: "True Neutral",
-        xp: 0,
-      }))[0];
-
-      await expect(
-        PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, bonded.id, "Public"),
-      ).rejects.toThrow(NotFoundError);
+      const familiar = await createTestCharacter(user.id, { name: "Cat Familiar", raceId: ctx.raceMap.familiar["Cat"], kind: "familiar", parentCharacterId: master.id });
+      await expect(link(user.id, campaign.id, familiar.id)).rejects.toThrow(NotFoundError);
     });
   });
 
   describe("getCampaignCharacters", () => {
-    test("should throw ForbiddenError for non-member", async () => {
-      const { user } = await createTestUser();
-      const ctx = await getCtx();
-      const campaigns = await Campaigns.create(db, {
-        name: "Empty Campaign",
-        description: "No players",
-        rulesetId: ctx.rulesetId,
-      });
-      const campaign = campaigns[0];
-
-      await expect(
-        PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 })
-      ).rejects.toThrow(ForbiddenError);
-    });
-
-    test("should return empty array when no characters linked", async () => {
+    test("summarizes each character's classes at their highest level", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
+      expect((await list(user.id, campaign.id)).items).toEqual([]);
 
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
+      const newcomer = await createTestCharacter(user.id);
+      const fighter = await createTestCharacter(user.id);
+      const multiclass = await createTestCharacter(user.id);
+      await addLevels(fighter.id, [["Fighter", 1], ["Fighter", 2], ["Fighter", 3]]);
+      await addLevels(multiclass.id, [["Fighter", 1], ["Fighter", 2], ["Ranger", 1]]);
+      for (const { id } of [newcomer, fighter, multiclass]) await link(user.id, campaign.id, id);
 
-      expect(result).toBeDefined();
-      expect(result.items.length).toBe(0);
+      const byId = new Map((await list(user.id, campaign.id)).items.map((c) => [c.id, c]));
+      expect(byId.get(newcomer.id)).toMatchObject({ name: newcomer.name, description: newcomer.description, race: "Human", levels: [], totalLevel: 0 });
+      expect(byId.get(fighter.id)).toMatchObject({ levels: [{ klass: "Fighter", level: 3 }], totalLevel: 3 });
+      expect(byId.get(multiclass.id)?.totalLevel).toBe(3);
+      expect(byId.get(multiclass.id)?.levels.map((l) => [l.klass, l.level]).sort()).toEqual([["Fighter", 2], ["Ranger", 1]]);
     });
 
-    test("should return character with basic info when linked", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(1);
-      expect(characters[0].id).toBe(character.id);
-      expect(characters[0].name).toBe(character.name);
-      expect(characters[0].description).toBe(character.description);
-      expect(characters[0].race).toBe("Human");
-      expect(characters[0].levels).toBeDefined();
-      expect(Array.isArray(characters[0].levels)).toBe(true);
-      expect(characters[0].totalLevel).toBe(0);
-    });
-
-    test("should return character with single class level", async () => {
-      const { user } = await createTestUser();
-      const ctx = await getCtx();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      // Query seed Fighter level 1
-      const [klassLevel] = await db.select({ id: klassLevelsInRules.id }).from(klassLevelsInRules)
-        .where(and(eq(klassLevelsInRules.klassId, ctx.klassMap.pc["Fighter"]), eq(klassLevelsInRules.level, 1)));
-
-      // Add level to character
-      await CharacterLevels.create(db, {
-        characterId: character.id,
-        klassLevelId: klassLevel.id,
-        hp: 8,
-      });
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(1);
-      expect(characters[0].levels.length).toBe(1);
-      expect(characters[0].levels[0].klass).toBe("Fighter");
-      expect(characters[0].levels[0].level).toBe(1);
-      expect(characters[0].totalLevel).toBe(1);
-    });
-
-    test("should return character with multiple levels in same class", async () => {
-      const { user } = await createTestUser();
-      const ctx = await getCtx();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      // Query seed Fighter levels 1-3
-      const fighterLevels = await db.select({ id: klassLevelsInRules.id }).from(klassLevelsInRules)
-        .where(and(
-          eq(klassLevelsInRules.klassId, ctx.klassMap.pc["Fighter"]),
-          inArray(klassLevelsInRules.level, [1, 2, 3]),
-        ));
-
-      // Add multiple levels to character
-      for (const kl of fighterLevels) {
-        await CharacterLevels.create(db, {
-          characterId: character.id,
-          klassLevelId: kl.id,
-          hp: 8,
-        });
-      }
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(1);
-      expect(characters[0].levels.length).toBe(1);
-      expect(characters[0].levels[0].klass).toBe("Fighter");
-      expect(characters[0].levels[0].level).toBe(3); // Should be highest level
-      expect(characters[0].totalLevel).toBe(3);
-    });
-
-    test("should return character with multiclass levels", async () => {
-      const { user } = await createTestUser();
-      const ctx = await getCtx();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      // Query seed Fighter levels 1-2 and Ranger level 1
-      const [fighterLv1] = await db.select({ id: klassLevelsInRules.id }).from(klassLevelsInRules)
-        .where(and(eq(klassLevelsInRules.klassId, ctx.klassMap.pc["Fighter"]), eq(klassLevelsInRules.level, 1)));
-      const [fighterLv2] = await db.select({ id: klassLevelsInRules.id }).from(klassLevelsInRules)
-        .where(and(eq(klassLevelsInRules.klassId, ctx.klassMap.pc["Fighter"]), eq(klassLevelsInRules.level, 2)));
-      const [rangerLv1] = await db.select({ id: klassLevelsInRules.id }).from(klassLevelsInRules)
-        .where(and(eq(klassLevelsInRules.klassId, ctx.klassMap.pc["Ranger"]), eq(klassLevelsInRules.level, 1)));
-
-      // Add multiclass levels
-      await CharacterLevels.create(db, {
-        characterId: character.id,
-        klassLevelId: fighterLv1.id,
-        hp: 8,
-      });
-      await CharacterLevels.create(db, {
-        characterId: character.id,
-        klassLevelId: fighterLv2.id,
-        hp: 8,
-      });
-      await CharacterLevels.create(db, {
-        characterId: character.id,
-        klassLevelId: rangerLv1.id,
-        hp: 8,
-      });
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(1);
-      expect(characters[0].levels.length).toBe(2);
-      expect(characters[0].totalLevel).toBe(3);
-
-      // Check both classes are present
-      const classNames = characters[0].levels.map((l) => l.klass).sort();
-      expect(classNames).toContain("Fighter");
-      expect(classNames).toContain("Ranger");
-
-      // Check levels for each class
-      const class1Level = characters[0].levels.find((l) => l.klass === "Fighter");
-      const class2Level = characters[0].levels.find((l) => l.klass === "Ranger");
-      expect(class1Level?.level).toBe(2);
-      expect(class2Level?.level).toBe(1);
-    });
-
-    test("should return multiple characters in campaign", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-      const character1 = await createTestCharacter(user.id);
-      const character2 = await createTestCharacter(user.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character1.id, "Public");
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character2.id, "Private");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(2);
-      const charIds = characters.map((c) => c.id).sort();
-      expect(charIds).toContain(character1.id);
-      expect(charIds).toContain(character2.id);
-    });
-
-    test("should return characters from multiple players in campaign", async () => {
-      const { user: user1 } = await createTestUser();
-      const { user: user2 } = await createTestUser();
-      const { campaign } = await createTestCampaign(user1.id);
-
-      // Add second player to campaign
-      await Players.create(db, {
-        userId: user2.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const character1 = await createTestCharacter(user1.id);
-      const character2 = await createTestCharacter(user2.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user1.id), campaign.id, character1.id, "Public");
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user2.id), campaign.id, character2.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user1.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(2);
-      const charIds = characters.map((c) => c.id).sort();
-      expect(charIds).toContain(character1.id);
-      expect(charIds).toContain(character2.id);
-    });
-
-    test("should not return archived characters", async () => {
+    test("leaves out unlinked and archived characters", async () => {
       const { user } = await createTestUser();
       const { campaign, player } = await createTestCampaign(user.id);
-      const character1 = await createTestCharacter(user.id);
-      const character2 = await createTestCharacter(user.id);
+      const [kept, unlinked, archived] = [await createTestCharacter(user.id), await createTestCharacter(user.id), await createTestCharacter(user.id)];
+      for (const { id } of [kept, unlinked, archived]) await link(user.id, campaign.id, id);
+      await PlayerCharacters.archive(db, { playerId: player.id, characterId: unlinked.id });
+      await Characters.archive(db, { id: archived.id });
 
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character1.id, "Public");
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character2.id, "Public");
-
-      // Archive one player character link
-      await PlayerCharacters.archive(db, {
-        playerId: player.id,
-        characterId: character1.id,
-      });
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(1);
-      expect(characters[0].id).toBe(character2.id);
+      expect((await list(user.id, campaign.id)).items.map((c) => c.id)).toEqual([kept.id]);
     });
 
-    test("should not return deleted characters", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-      const character1 = await createTestCharacter(user.id);
-      const character2 = await createTestCharacter(user.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character1.id, "Public");
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character2.id, "Public");
-
-      // Archive (soft delete) one character
-      await Characters.archive(db, { id: character1.id });
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(1);
-      expect(characters[0].id).toBe(character2.id);
-    });
-
-    test("should hide other players' Private characters from non-GM players", async () => {
-      const { user: gm } = await createTestUser();
-      const { user: player1 } = await createTestUser();
-      const { user: player2 } = await createTestUser();
+    test("shows each player what the visibility allows, and the Game Master everything", async () => {
+      const { user: gm } = await createTestUser("gm");
       const { campaign } = await createTestCampaign(gm.id);
+      const viewer = await joinWithCharacter(campaign.id, "Private");
+      const publicOne = await joinWithCharacter(campaign.id, "Public");
+      const partialOne = await joinWithCharacter(campaign.id, "Partial");
+      const privateOne = await joinWithCharacter(campaign.id, "Private");
 
-      // Add two players to campaign
-      await Players.create(db, {
-        userId: player1.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-      await Players.create(db, {
-        userId: player2.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
+      const seen = new Map((await list(viewer.user.id, campaign.id)).items.map((c) => [c.id, c]));
+      expect([...seen.keys()].sort()).toEqual([viewer.character.id, publicOne.character.id, partialOne.character.id].sort());
+      // Their own Private character, and others' Public ones, in full.
+      expect(seen.get(viewer.character.id)).toMatchObject({ visibility: "Private", description: viewer.character.description });
+      expect(seen.get(publicOne.character.id)).toMatchObject({ visibility: "Public", description: publicOne.character.description });
+      // Others' Partial ones: name only.
+      expect(seen.get(partialOne.character.id)).toMatchObject({ visibility: "Partial", name: partialOne.character.name, description: null, levels: [] });
+      expect(seen.has(privateOne.character.id)).toBe(false);
 
-      const character1 = await createTestCharacter(player1.id);
-      const character2 = await createTestCharacter(player2.id);
+      // Their own Partial character in full.
+      expect((await list(partialOne.user.id, campaign.id)).items.find((c) => c.id === partialOne.character.id))
+        .toMatchObject({ visibility: "Partial", description: partialOne.character.description });
 
-      await PlayerCharactersMethods.linkCharacter(createTestSession(player1.id), campaign.id, character1.id, "Public");
-      await PlayerCharactersMethods.linkCharacter(createTestSession(player2.id), campaign.id, character2.id, "Private");
-
-      // player1 should only see their own character (player2's is Private)
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(player1.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      expect(result.items.length).toBe(1);
-      expect(result.items[0].id).toBe(character1.id);
-
-      // GM should see all characters regardless of visibility
-      const gmResult = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(gm.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      expect(gmResult.items.length).toBe(2);
+      expect((await list(gm.id, campaign.id)).items).toHaveLength(4);
     });
 
-    test("should show own Private characters", async () => {
+    test("pages the characters", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
+      for (let i = 0; i < 5; i++) await link(user.id, campaign.id, (await createTestCharacter(user.id)).id);
 
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Private");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      expect(result.items.length).toBe(1);
-      expect(result.items[0].id).toBe(character.id);
+      const pages = [];
+      for (const page of [1, 2, 3]) pages.push(await list(user.id, campaign.id, { limit: 2, page }));
+      expect(pages.map((p) => [p.items.length, p.nextPage])).toEqual([[2, 2], [2, 3], [1, undefined]]);
     });
 
-    test("should show other players' Public characters with full data", async () => {
-      const { user: user1 } = await createTestUser();
-      const { user: user2 } = await createTestUser();
-      const { campaign } = await createTestCampaign(user1.id);
-
-      await Players.create(db, {
-        userId: user2.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const character = await createTestCharacter(user2.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user2.id), campaign.id, character.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user1.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      expect(result.items.length).toBe(1);
-      expect(result.items[0].id).toBe(character.id);
-      expect(result.items[0].description).toBe(character.description);
-      expect(result.items[0].visibility).toBe("Public");
-    });
-
-    test("should show other players' Partial characters with limited data", async () => {
-      const { user: user1 } = await createTestUser();
-      const { user: user2 } = await createTestUser();
-      const { campaign } = await createTestCampaign(user1.id);
-
-      await Players.create(db, {
-        userId: user2.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const character = await createTestCharacter(user2.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user2.id), campaign.id, character.id, "Partial");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user1.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      expect(result.items.length).toBe(1);
-      expect(result.items[0].id).toBe(character.id);
-      expect(result.items[0].name).toBe(character.name);
-      expect(result.items[0].description).toBeNull();
-      expect(result.items[0].levels).toEqual([]);
-      expect(result.items[0].visibility).toBe("Partial");
-    });
-
-    test("should handle characters with no levels", async () => {
+    test("refuses a non-member", async () => {
+      const { rulesetId } = await getSeedCtx();
       const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      const characters = result.items;
-      expect(characters.length).toBe(1);
-      expect(characters[0].id).toBe(character.id);
-      expect(characters[0].levels).toBeDefined();
-      expect(Array.isArray(characters[0].levels)).toBe(true);
-      expect(characters[0].levels.length).toBe(0);
-      expect(characters[0].totalLevel).toBe(0);
-    });
-
-    test("should show own Partial characters with full data", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Partial");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 10, page: 1 });
-
-      expect(result.items.length).toBe(1);
-      expect(result.items[0].id).toBe(character.id);
-      expect(result.items[0].description).toBe(character.description);
-      expect(result.items[0].visibility).toBe("Partial");
-    });
-
-    test("should paginate results correctly", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-
-      // Create 5 characters
-      for (let i = 0; i < 5; i++) {
-        const character = await createTestCharacter(user.id);
-        await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, "Public");
-      }
-
-      // First page
-      const page1 = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 2, page: 1 });
-
-      expect(page1.items.length).toBe(2);
-      expect(page1.page).toBe(1);
-      expect(page1.nextPage).toBe(2);
-
-      // Second page
-      const page2 = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 2, page: 2 });
-
-      expect(page2.items.length).toBe(2);
-      expect(page2.page).toBe(2);
-      expect(page2.nextPage).toBe(3);
-
-      // Third page (last page)
-      const page3 = await PlayerCharactersMethods.getCampaignCharacters(createTestSession(user.id), campaign.id, {}, { limit: 2, page: 3 });
-
-      expect(page3.items.length).toBe(1);
-      expect(page3.page).toBe(3);
-      expect(page3.nextPage).toBeUndefined();
+      const [campaign] = await Campaigns.create(db, { name: "Empty Campaign", rulesetId });
+      await expect(list(user.id, campaign.id)).rejects.toThrow(ForbiddenError);
     });
   });
 
   describe("getCampaignCharacter", () => {
-    test("should throw ForbiddenError for non-member", async () => {
-      const { user: owner } = await createTestUser();
-      const { user: nonMember } = await createTestUser();
-      const { campaign } = await createTestCampaign(owner.id);
-      const character = await createTestCharacter(owner.id);
-
-      await PlayerCharactersMethods.linkCharacter(createTestSession(owner.id), campaign.id, character.id, "Public");
-
-      await expect(
-        PlayerCharactersMethods.getCampaignCharacter(createTestSession(nonMember.id), campaign.id, character.id),
-      ).rejects.toThrow(ForbiddenError);
-    });
-
-    test("should throw NotFoundError for character not in campaign", async () => {
+    test("gives the owner the full sheet whatever the visibility, and lets them edit", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-
-      // Character exists but is not linked to the campaign
-      await expect(
-        PlayerCharactersMethods.getCampaignCharacter(createTestSession(user.id), campaign.id, character.id),
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    test("should return full data for owner regardless of visibility", async () => {
-      const { user } = await createTestUser();
-      const { campaign } = await createTestCampaign(user.id);
-
       for (const visibility of ["Private", "Public", "Partial"] as const) {
         const character = await createTestCharacter(user.id);
-        await PlayerCharactersMethods.linkCharacter(createTestSession(user.id), campaign.id, character.id, visibility);
-
-        const result = await PlayerCharactersMethods.getCampaignCharacter(createTestSession(user.id), campaign.id, character.id);
-
-        expect(result.visibility).toBe(visibility);
-        expect("character" in result).toBe(true);
-        expect("detailedCharacter" in result).toBe(true);
+        await link(user.id, campaign.id, character.id, visibility);
+        const result = await PlayerCharactersMethods.getCampaignCharacter(makeSession(user.id), campaign.id, character.id);
+        expect(result).toMatchObject({ visibility, canEdit: true, isPartial: false });
+        expect(result.detailedCharacter).toBeDefined();
       }
     });
 
-    test("should return full data for Public character viewed by another member", async () => {
-      const { user: owner } = await createTestUser();
-      const { user: viewer } = await createTestUser();
-      const { campaign } = await createTestCampaign(owner.id);
+    test("gives other members the full sheet of a Public character, identity only for a Partial one, nothing for a Private one", async () => {
+      const { user: gm } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const viewer = await joinWithCharacter(campaign.id, "Private");
+      const get = (characterId: string) => PlayerCharactersMethods.getCampaignCharacter(makeSession(viewer.user.id), campaign.id, characterId);
 
-      await Players.create(db, {
-        userId: viewer.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
+      const publicOne = await joinWithCharacter(campaign.id, "Public");
+      expect(await get(publicOne.character.id)).toMatchObject({ visibility: "Public", canEdit: false });
 
-      const character = await createTestCharacter(owner.id);
-      await PlayerCharactersMethods.linkCharacter(createTestSession(owner.id), campaign.id, character.id, "Public");
+      const { character } = await joinWithCharacter(campaign.id, "Partial");
+      const partial = await get(character.id);
+      expect(partial).toMatchObject({ visibility: "Partial", isOwner: false, canEdit: false, isPartial: true });
+      expect(partial.character).toMatchObject({ name: character.name, gender: character.gender, age: character.age, height: character.height, weight: character.weight });
 
-      const result = await PlayerCharactersMethods.getCampaignCharacter(createTestSession(viewer.id), campaign.id, character.id);
-
-      expect(result.visibility).toBe("Public");
-      expect("character" in result).toBe(true);
-      expect("detailedCharacter" in result).toBe(true);
+      const privateOne = await joinWithCharacter(campaign.id, "Private");
+      await expect(get(privateOne.character.id)).rejects.toThrow(NotFoundError);
     });
 
-    test("should return partial data for Partial character viewed by another member", async () => {
-      const { user: owner } = await createTestUser();
-      const { user: viewer } = await createTestUser();
-      const { campaign } = await createTestCampaign(owner.id);
+    test("gives an active character contributor the full, editable sheet", async () => {
+      const { user: gm } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const { user: owner, character } = await joinWithCharacter(campaign.id, "Partial");
+      const contributor = await joinWithCharacter(campaign.id, "Private");
+      await addCharacterContributor(character.id, contributor.user, owner.id);
 
-      await Players.create(db, {
-        userId: viewer.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const character = await createTestCharacter(owner.id);
-      await PlayerCharactersMethods.linkCharacter(createTestSession(owner.id), campaign.id, character.id, "Partial");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacter(createTestSession(viewer.id), campaign.id, character.id);
-
-      expect(result.visibility).toBe("Partial");
-      expect(result.isOwner).toBe(false);
-      expect(result.character).toBeDefined();
-      expect(result.detailedCharacter).toBeDefined();
-      expect(result.character.name).toBe(character.name);
-      expect(result.character.gender).toBe(character.gender);
-      expect(result.character.age).toBe(character.age);
-      expect(result.character.height).toBe(character.height);
-      expect(result.character.weight).toBe(character.weight);
+      const result = await PlayerCharactersMethods.getCampaignCharacter(makeSession(contributor.user.id), campaign.id, character.id);
+      expect(result).toMatchObject({ canEdit: true, isOwner: false, isPartial: false });
     });
 
-    test("should throw NotFoundError for Private character viewed by another member", async () => {
-      const { user: owner } = await createTestUser();
-      const { user: viewer } = await createTestUser();
-      const { campaign } = await createTestCampaign(owner.id);
+    test("refuses a non-member, and throws NotFoundError for a character outside the campaign", async () => {
+      const { user } = await createTestUser();
+      const { campaign } = await createTestCampaign(user.id);
+      const linked = await createTestCharacter(user.id);
+      await link(user.id, campaign.id, linked.id);
+      const { user: stranger } = await createTestUser();
 
-      await Players.create(db, {
-        userId: viewer.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const character = await createTestCharacter(owner.id);
-      await PlayerCharactersMethods.linkCharacter(createTestSession(owner.id), campaign.id, character.id, "Private");
-
-      await expect(
-        PlayerCharactersMethods.getCampaignCharacter(createTestSession(viewer.id), campaign.id, character.id),
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    test("canEdit is true for the character owner regardless of campaign-link ownership", async () => {
-      const { user: owner } = await createTestUser();
-      const { campaign } = await createTestCampaign(owner.id);
-      const character = await createTestCharacter(owner.id);
-      await PlayerCharactersMethods.linkCharacter(createTestSession(owner.id), campaign.id, character.id, "Public");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacter(createTestSession(owner.id), campaign.id, character.id);
-
-      expect(result.canEdit).toBe(true);
-      expect(result.isPartial).toBe(false);
-    });
-
-    test("canEdit is true for an active character contributor and full sheet is returned", async () => {
-      const { user: owner } = await createTestUser();
-      const { user: contributor } = await createTestUser();
-      const { campaign } = await createTestCampaign(owner.id);
-
-      await Players.create(db, {
-        userId: contributor.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const character = await createTestCharacter(owner.id);
-      await PlayerCharactersMethods.linkCharacter(createTestSession(owner.id), campaign.id, character.id, "Partial");
-      const [createdContributor] = await CharacterContributors.create(db, {
-        characterId: character.id,
-        userId: contributor.id,
-        email: contributor.emailAddress,
-        role: "Editor",
-        invitedBy: owner.id,
-      });
-      await CharacterContributors.update(db, { status: "Active" }, { id: createdContributor.id });
-
-      const result = await PlayerCharactersMethods.getCampaignCharacter(createTestSession(contributor.id), campaign.id, character.id);
-
-      // Contributor sees the full sheet — they're not an incidental viewer.
-      expect(result.canEdit).toBe(true);
-      expect(result.isOwner).toBe(false);
-      expect(result.isPartial).toBe(false);
-    });
-
-    test("canEdit is false for a campaign-only viewer; partial mask still applies", async () => {
-      const { user: owner } = await createTestUser();
-      const { user: viewer } = await createTestUser();
-      const { campaign } = await createTestCampaign(owner.id);
-
-      await Players.create(db, {
-        userId: viewer.id,
-        campaignId: campaign.id,
-        role: "Player Character",
-      });
-
-      const character = await createTestCharacter(owner.id);
-      await PlayerCharactersMethods.linkCharacter(createTestSession(owner.id), campaign.id, character.id, "Partial");
-
-      const result = await PlayerCharactersMethods.getCampaignCharacter(createTestSession(viewer.id), campaign.id, character.id);
-
-      expect(result.canEdit).toBe(false);
-      expect(result.isPartial).toBe(true);
+      await expect(PlayerCharactersMethods.getCampaignCharacter(makeSession(stranger.id), campaign.id, linked.id)).rejects.toThrow(ForbiddenError);
+      const unlinked = await createTestCharacter(user.id);
+      await expect(PlayerCharactersMethods.getCampaignCharacter(makeSession(user.id), campaign.id, unlinked.id)).rejects.toThrow(NotFoundError);
     });
   });
 });

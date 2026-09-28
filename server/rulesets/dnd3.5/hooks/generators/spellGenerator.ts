@@ -35,6 +35,12 @@ export interface SpellFields {
   components?: string[];
 }
 
+/** The property types `generateSpellProperties` writes. */
+export const SPELL_FIELD_PROPERTY_TYPES = [
+  SPELL_SCHOOL, SPELL_SUBSCHOOL, SPELL_CASTING_TIME, SPELL_RANGE_TYPE, SPELL_TARGET,
+  SPELL_AREA_OF_EFFECT, SPELL_DURATION, SPELL_RESISTANCE, SPELL_DESCRIPTOR, SPELL_COMPONENT,
+] as const;
+
 export async function generateSpellProperties(tx: Db, powerId: string, fields: SpellFields) {
   const props: { entityId: string; entityType: string; type: string; value: string }[] = [];
 

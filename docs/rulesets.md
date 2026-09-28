@@ -631,5 +631,5 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/rulesets/dnd3.5/*.ts` | 3.5 implementation (DetailedCharacter, LevelUpProjector, TargetPaths, hooks, properties, buildCharacterResponse) |
 | `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
 | `database/packages/dnd35/seed-utils.ts` | `cowFeatIntoExtension` — reusable helper for COW-ing base feats into extension seeds |
-| `tests/services/ExtensionsService.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
+| `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/RulesetsService.test.ts` | Includes `extension siblingMap` test block — sibling detection, filtering, requirement/modifier/aptitude merging |

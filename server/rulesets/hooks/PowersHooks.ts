@@ -15,6 +15,8 @@ export interface PowerBody {
 
 export interface PowersHooks {
   readonly primaryGroupingType: string;
+  /** The property types `generateProperties` writes: a save replaces these and keeps any others. */
+  readonly generatedPropertyTypes: readonly string[];
 
   extractGroupingValue(body: PowerBody): string | null;
   generateProperties(tx: Db, powerId: string, body: PowerBody): Promise<void>;

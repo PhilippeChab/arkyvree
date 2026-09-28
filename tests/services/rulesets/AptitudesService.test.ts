@@ -1,0 +1,63 @@
+import { describe, expect, test } from "bun:test";
+import { eq } from "drizzle-orm";
+import { featsAptitudesInRules, klassLevelFeatsInRules, klassLevelPowersInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
+import { db } from "@/server/database/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
+import { Feats, Klasses, KlassLevelPowers, Powers } from "@/server/repositories/index.ts";
+import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
+import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
+import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
+import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
+import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestUserAndRuleset } from "@/tests/helpers.ts";
+
+// CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
+describe("AptitudesService", () => {
+  test("stores an aptitude's description", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const created = await AptitudesMethods.createRulesetAptitude(session, ruleset.id, { name: "Arcane Spells", description: "Wizard and sorcerer spells" });
+    expect(created).toMatchObject({ name: "Arcane Spells", description: "Wizard and sorcerer spells" });
+    const updated = await AptitudesMethods.updateRulesetAptitude(session, ruleset.id, created.id, { name: "Arcane Spells", description: "Updated" });
+    expect(updated.description).toBe("Updated");
+  });
+
+  test("deletes the feat, power and class-level links of a deleted aptitude", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const featAptitude = await AptitudesMethods.createRulesetAptitude(session, ruleset.id, { name: "Feat Aptitude" });
+    const powerAptitude = await AptitudesMethods.createRulesetAptitude(session, ruleset.id, { name: "Power Aptitude" });
+    await FeatsMethods.createRulesetFeat(session, ruleset.id, { name: "Linked Feat", aptitudeIds: [featAptitude.id] });
+    await PowersMethods.createRulesetPower(session, ruleset.id, { name: "Linked Power", aptitudes: [{ id: powerAptitude.id }] });
+
+    const [feat] = await Feats.create(db, { name: "Granted Feat", rulesetId: ruleset.id });
+    const [power] = await Powers.create(db, { name: "Granted Power", rulesetId: ruleset.id });
+    const [klass] = await Klasses.create(db, { name: "Granting Class", rulesetId: ruleset.id, hd: 10 });
+    const level = await ClassLevelsMethods.createClassLevel(session, ruleset.id, klass.id, {
+      level: 1, bab: 1, skills: 2, feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
+    });
+    await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: powerAptitude.id });
+
+    await AptitudesMethods.deleteRulesetAptitude(session, ruleset.id, featAptitude.id);
+    await AptitudesMethods.deleteRulesetAptitude(session, ruleset.id, powerAptitude.id);
+
+    expect(await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.aptitudeId, featAptitude.id))).toEqual([]);
+    expect(await db.select().from(powersAptitudesInRules).where(eq(powersAptitudesInRules.aptitudeId, powerAptitude.id))).toEqual([]);
+    expect(await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.aptitudeId, featAptitude.id))).toEqual([]);
+    expect(await db.select().from(klassLevelPowersInRules).where(eq(klassLevelPowersInRules.aptitudeId, powerAptitude.id))).toEqual([]);
+  });
+
+  test("refuses to delete an aptitude a character picked a feat or a power through", async () => {
+    const { user, session, ruleset } = await createTestUserAndRuleset();
+    const featAptitude = await AptitudesMethods.createRulesetAptitude(session, ruleset.id, { name: "Feat Aptitude" });
+    const powerAptitude = await AptitudesMethods.createRulesetAptitude(session, ruleset.id, { name: "Power Aptitude" });
+    const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, { name: "Picked Feat", aptitudeIds: [featAptitude.id] });
+    const power = await PowersMethods.createRulesetPower(session, ruleset.id, { name: "Picked Power", aptitudes: [{ id: powerAptitude.id }] });
+    const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
+    const { klassLevel } = await createTestKlassLevel(ruleset.id);
+    await addCharacterLevel(character.id, klassLevel.id, {
+      feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
+      powers: [{ powerId: power.id, aptitudeId: powerAptitude.id }],
+    });
+
+    await expect(AptitudesMethods.deleteRulesetAptitude(session, ruleset.id, featAptitude.id)).rejects.toThrow(ConflictError);
+    await expect(AptitudesMethods.deleteRulesetAptitude(session, ruleset.id, powerAptitude.id)).rejects.toThrow(ConflictError);
+  });
+});

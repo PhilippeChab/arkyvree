@@ -1,184 +1,47 @@
-import type { Application } from "@/server/routers/application.ts";
-import { application } from "@/server/routers/application.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
-import { testClient } from "hono/testing";
-import { expect, describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
+
+const languages = api.api.rulesets[":id"].languages;
+const language = languages[":languageId"];
 
 describe("rulesets languages", () => {
-  const api = testClient<Application>(application);
+  test("creates, reads, lists, updates and deletes a language", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-  // Helper to create test ruleset
-  async function createTestRuleset(): Promise<string> {
-    const ruleset = await createSeededTestRuleset("00000000-0000-4000-8000-000000000456");
-    return ruleset.id;
-  }
+    const json = { name: "Test Language", description: "A test language", type: "Common" };
+    const created = await expectOk(languages.$post({ param: { id }, json }));
+    expect(created).toMatchObject(json);
+    const param = { id, languageId: created.id };
 
-  test("should handle full language CRUD lifecycle", async () => {
-    const testRulesetId = await createTestRuleset();
+    expect(await expectOk(language.$get({ param }))).toMatchObject({ id: created.id, ...json });
+    const list = await expectOk(languages.$get({ param: { id }, query: { search: "Test Language" } }));
+    expect(list.items.map((l) => l.id)).toContain(created.id);
 
-    // Get initial list (should be empty or have base languages)
-    const listResponse = await api.api.rulesets[":id"].languages.$get(
-      {
-        param: { id: testRulesetId },
-        query: { limit: "10", page: "1" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
+    const update = { name: "Renamed Language", description: "Updated", type: "Exotic" };
+    expect(await expectOk(language.$put({ param, json: update }))).toMatchObject(update);
 
-    if (!listResponse.ok) {
-      const error = await listResponse.json();
-      throw new Error(`Failed to get languages: ${error.message}`);
-    }
-
-    const initialLanguages = await listResponse.json();
-    expect(initialLanguages).toBeDefined();
-    expect(Array.isArray(initialLanguages.items)).toBe(true);
-
-    // Create a new language
-    const newLanguage = {
-      name: "Test Language",
-      description: "A test language for testing",
-      type: "Common",
-    };
-
-    const createResponse = await api.api.rulesets[":id"].languages.$post(
-      {
-        param: { id: testRulesetId },
-        json: newLanguage,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!createResponse.ok) {
-      const error = await createResponse.json();
-      throw new Error(`Failed to create language: ${error.message}`);
-    }
-
-    const createdLanguage = await createResponse.json();
-    expect(createdLanguage).toBeDefined();
-    expect(createdLanguage.name).toBe(newLanguage.name);
-    expect(createdLanguage.description).toBe(newLanguage.description);
-    expect(createdLanguage.type).toBe(newLanguage.type);
-
-    // Update the language
-    const updateData = {
-      name: "Updated Test Language",
-      description: "Updated description",
-      type: "Exotic",
-    };
-
-    const updateResponse = await api.api.rulesets[":id"].languages[":languageId"].$put(
-      {
-        param: { id: testRulesetId, languageId: createdLanguage.id },
-        json: updateData,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!updateResponse.ok) {
-      const error = await updateResponse.json();
-      throw new Error(`Failed to update language: ${error.message}`);
-    }
-
-    const updatedLanguage = await updateResponse.json();
-    expect(updatedLanguage.name).toBe(updateData.name);
-    expect(updatedLanguage.description).toBe(updateData.description);
-    expect(updatedLanguage.type).toBe(updateData.type);
-
-    // Delete the language
-    const deleteResponse = await api.api.rulesets[":id"].languages[":languageId"].$delete(
-      {
-        param: { id: testRulesetId, languageId: createdLanguage.id },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    if (!deleteResponse.ok) {
-      const error = await deleteResponse.json();
-      throw new Error(`Failed to delete language: ${error.message}`);
-    }
-
-    const deletedLanguage = await deleteResponse.json();
-    expect(deletedLanguage).toBeDefined();
+    await expectOk(language.$delete({ param }));
+    expect((await language.$get({ param })).status).toBe(404);
   });
 
-  test("should handle authentication and validation", async () => {
-    const testRulesetId = await createTestRuleset();
-
-    // Test unauthenticated request
-    const unauthResponse = await api.api.rulesets[":id"].languages.$get({
-      param: { id: testRulesetId },
-      query: { limit: "10", page: "1" },
-    });
-    expect(unauthResponse.status).toBe(401);
-
-    // Test validation - missing required fields
-    const invalidLanguage = {
-      description: "Missing name field",
-    };
-
-    const validationResponse = await api.api.rulesets[":id"].languages.$post(
-      {
-        param: { id: testRulesetId },
-        json: invalidLanguage as never,
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(validationResponse.status).toBe(400);
+  test("requires a session", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    expect((await guestApi.api.rulesets[":id"].languages.$get({ param: { id }, query: {} })).status).toBe(401);
   });
 
-  test("should handle non-existent resources", async () => {
-    const testRulesetId = await createTestRuleset();
+  test("rejects a language without a name", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const response = await languages.$post({ param: { id }, json: { type: "Common" } as never });
+    expect(response.status).toBe(400);
+  });
 
-    // Test non-existent ruleset
-    const nonExistentRulesetResponse = await api.api.rulesets[":id"].languages.$get(
-      {
-        param: { id: "00000000-0000-0000-0000-000000000000" },
-        query: { limit: "10", page: "1" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(nonExistentRulesetResponse.status).toBe(404);
-
-    // Test non-existent language
-    const updateResponse = await api.api.rulesets[":id"].languages[":languageId"].$put(
-      {
-        param: { id: testRulesetId, languageId: "00000000-0000-0000-0000-000000000000" },
-        json: { name: "Test", description: "Test", type: "Common" },
-      },
-      {
-        headers: {
-          cookie: "session-id=00000000-0000-4000-8000-000000000123",
-        },
-      },
-    );
-
-    expect(updateResponse.status >= 400).toBe(true);
+  test("returns 404 for a missing ruleset or language", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    expect((await languages.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    const param = { id, languageId: NIL_UUID };
+    expect((await language.$put({ param, json: { name: "Missing", type: "Common" } })).status).toBe(404);
+    expect((await language.$delete({ param })).status).toBe(404);
   });
 });

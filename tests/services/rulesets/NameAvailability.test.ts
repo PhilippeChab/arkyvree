@@ -3,17 +3,17 @@ import { and, eq, isNull } from "drizzle-orm";
 import { aptitudesInRules, featsInRules, itemsInRules } from "@/drizzle/schema.ts";
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import { EntitySnapshots, Rulesets, Sessions } from "@/server/repositories/index.ts";
+import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
 
 async function setup() {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const baseId = fork.ancestorRulesetIds[0];
   const general = (await db.query.aptitudesInRules.findFirst({ where: and(eq(aptitudesInRules.rulesetId, baseId), eq(aptitudesInRules.name, "General")) }))!;

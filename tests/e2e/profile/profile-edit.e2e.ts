@@ -1,106 +1,52 @@
 import { test, expect } from '@/tests/fixtures/auth.fixture';
 import { TEST_USERS } from '@/tests/fixtures/auth.fixture';
-import { signIn, fillOtp, getEmailVerificationCode } from '@/tests/e2e/helpers.ts';
+import { fillOtp, getEmailVerificationCode, signIn } from '@/tests/e2e/helpers.ts';
 
 test.describe('Profile Editing', () => {
-  test('should navigate to profile page from the account menu', async ({ page }) => {
+  test('opens from the account menu, with the user\'s email', async ({ page }) => {
     await page.goto('/dashboard');
-
-    // Open the account menu (top-right avatar)
     await page.locator('[data-testid="AccountCircleIcon"]').first().click();
     await page.getByRole('menuitem', { name: 'Profile' }).click();
-
     await page.waitForURL('/profile');
-    await expect(page).toHaveURL('/profile');
-    await expect(page.locator('text=Basic Information')).toBeVisible();
-  });
-
-  test('should display current user information', async ({ page }) => {
-    await page.goto('/profile');
-    await page.waitForSelector('input[name="emailAddress"]');
     await expect(page.locator('input[name="emailAddress"]')).toHaveValue(TEST_USERS.user1.email);
   });
 
-  test('should update username successfully', async ({ page }) => {
+  test('saves a new username', async ({ page }) => {
     await page.goto('/profile');
-    await page.waitForSelector('input[name="username"]');
-
-    const uniqueUsername = `testuser_${Date.now()}`;
-    await page.fill('input[name="username"]', uniqueUsername);
-
-    const saveButton = page.locator('form').filter({ hasText: 'Username' }).locator('button[type="submit"]');
-    await saveButton.click();
-
+    const username = `testuser_${Date.now()}`;
+    await page.fill('input[name="username"]', username);
+    await page.locator('form').filter({ hasText: 'Username' }).locator('button[type="submit"]').click();
     await expect(page.locator('text=/Profile updated successfully/i')).toBeVisible({ timeout: 5000 });
-
     await page.reload();
-    await page.waitForSelector('input[name="username"]');
-    await expect(page.locator('input[name="username"]')).toHaveValue(uniqueUsername);
+    await expect(page.locator('input[name="username"]')).toHaveValue(username);
   });
 
-  test('should show validation error for invalid email', async ({ page }) => {
-    await page.goto('/profile');
-    await page.waitForSelector('input[name="emailAddress"]');
-    await page.fill('input[name="emailAddress"]', 'not-an-email');
+  for (const [what, email, error] of [
+    ['an invalid email', 'not-an-email', /Please enter a valid email address/i],
+    ['an email already in use', TEST_USERS.user2.email, /Email address already in use/i],
+  ] as const) {
+    test(`refuses ${what}`, async ({ page }) => {
+      await page.goto('/profile');
+      await page.fill('input[name="emailAddress"]', email);
+      await page.locator('form').filter({ hasText: 'Email Address' }).locator('button[type="submit"]').click();
+      await expect(page.getByText(error)).toBeVisible({ timeout: 5000 });
+    });
+  }
 
-    const saveButton = page.locator('form').filter({ hasText: 'Email Address' }).locator('button[type="submit"]');
-    await saveButton.click();
-
-    await expect(page.locator('text=/Please enter a valid email address/i')).toBeVisible();
-  });
-
-  test('should show error for duplicate email', async ({ page }) => {
-    await page.goto('/profile');
-    await page.waitForSelector('input[name="emailAddress"]');
-    await page.fill('input[name="emailAddress"]', TEST_USERS.user2.email);
-
-    const saveButton = page.locator('form').filter({ hasText: 'Email Address' }).locator('button[type="submit"]');
-    await saveButton.click();
-
-    await expect(page.locator('text=/Email address already in use/i')).toBeVisible({ timeout: 5000 });
-  });
-
-  test('should show error for incorrect current password', async ({ page }) => {
-    await page.goto('/profile');
-    await page.waitForSelector('input[name="currentPassword"]');
-
-    await page.fill('input[name="currentPassword"]', 'wrongpassword');
-    await page.fill('input[name="newPassword"]', 'newpassword1234');
-    await page.fill('input[name="newPasswordConfirmation"]', 'newpassword1234');
-
-    const updateButton = page.locator('form').filter({ hasText: 'Current Password' }).locator('button[type="submit"]');
-    await updateButton.click();
-
-    await expect(page.locator('text=/Current password is incorrect/i')).toBeVisible({ timeout: 5000 });
-  });
-
-  test('should show validation error for password mismatch', async ({ page }) => {
-    await page.goto('/profile');
-    await page.waitForSelector('input[name="currentPassword"]');
-
-    await page.fill('input[name="currentPassword"]', TEST_USERS.user1.password);
-    await page.fill('input[name="newPassword"]', 'newpassword1234');
-    await page.fill('input[name="newPasswordConfirmation"]', 'differentpassword');
-
-    const updateButton = page.locator('form').filter({ hasText: 'Current Password' }).locator('button[type="submit"]');
-    await updateButton.click();
-
-    await expect(page.locator('text=/Passwords do not match/i')).toBeVisible();
-  });
-
-  test('should show validation error for short password', async ({ page }) => {
-    await page.goto('/profile');
-    await page.waitForSelector('input[name="currentPassword"]');
-
-    await page.fill('input[name="currentPassword"]', TEST_USERS.user1.password);
-    await page.fill('input[name="newPassword"]', 'short');
-    await page.fill('input[name="newPasswordConfirmation"]', 'short');
-
-    const updateButton = page.locator('form').filter({ hasText: 'Current Password' }).locator('button[type="submit"]');
-    await updateButton.click();
-
-    await expect(page.locator('text=/Password must be at least 12 characters/i')).toBeVisible();
-  });
+  for (const [what, current, password, confirmation, error] of [
+    ['a wrong current password', 'wrongpassword', 'newpassword1234', 'newpassword1234', /Current password is incorrect/i],
+    ['new passwords that differ', TEST_USERS.user1.password, 'newpassword1234', 'differentpassword', /Passwords do not match/i],
+    ['a short new password', TEST_USERS.user1.password, 'short', 'short', /Password must be at least 12 characters/i],
+  ] as const) {
+    test(`refuses ${what}`, async ({ page }) => {
+      await page.goto('/profile');
+      await page.fill('input[name="currentPassword"]', current);
+      await page.fill('input[name="newPassword"]', password);
+      await page.fill('input[name="newPasswordConfirmation"]', confirmation);
+      await page.locator('form').filter({ hasText: 'Current Password' }).locator('button[type="submit"]').click();
+      await expect(page.getByText(error)).toBeVisible({ timeout: 5000 });
+    });
+  }
 });
 
 /**

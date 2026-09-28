@@ -77,7 +77,7 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     skillId: string,
     body: { impactedByWeight: boolean; usableWithoutTraining: boolean },
   ): Promise<void> {
-    await Properties.deleteMany(tx, { entityIds: [skillId], entityType: "skills" });
+    await Properties.deleteMany(tx, { entityIds: [skillId], entityType: "skills", types: [SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING] });
 
     const records = this.buildProperties(skillId, body);
     if (records.length > 0) {

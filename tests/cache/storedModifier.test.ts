@@ -1,15 +1,15 @@
 import { expect, test } from "bun:test";
-import { getSeedContext, SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 import { timingStorage } from "@/server/timing.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 
 test("stored modifier reads preserve ownership without changing ordinary COW reads", async () => {
-  const seed = await getSeedContext(db);
+  const seed = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const sourceId = seed.featMap.Toughness;
   const [modifier] = await Modifiers.findManyBySource(db, { sourceIds: [sourceId], sourceType: "feats" });

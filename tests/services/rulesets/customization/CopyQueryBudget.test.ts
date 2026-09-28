@@ -1,12 +1,12 @@
 import { expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Requirements, Sessions } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 import { copyEntityCustomizations, fetchEntityCustomizations } from "@/server/services/rulesets/cow.ts";
 import { timingStorage } from "@/server/timing.ts";
 
 test("modifier and requirement copies stay batched as modifier count grows", async () => {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
   const counts: number[] = [];
   for (const width of [1, 12]) {

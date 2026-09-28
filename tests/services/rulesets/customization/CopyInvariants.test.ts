@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Requirements, Sessions } from "@/server/repositories/index.ts";
+import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { copyEntityCustomizationsToMany, fetchEntityCustomizations } from "@/server/services/rulesets/cow.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 async function setup() {
-  const session = (await Sessions.findOne(db, { id: "00000000-0000-4000-8000-000000000123" }))!;
+  const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
   const [source, ...targets] = await Feats.createMany(db, ["Source", "Target A", "Target B"].map(name => ({ name: `Copy ${name}`, rulesetId: ruleset.id })));
   const [modifier] = await Modifiers.createMany(db, [{ target: "abilities.strength.misc", value: "1", operator: "add", valueType: "number", sourceId: source.id, sourceType: "feats" }]);

@@ -138,7 +138,7 @@ tests ─┘
   - **Push** to main/develop → `api-tests-full`, sharded 3× via `bun test --shard` (matrix jobs in parallel)
   - **PR** → `api-tests-changed`, single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
 - `deploy` needs successful `build` and all `api-tests-full` shards from the same `main` push. It never substitutes a green result from another branch or revision. E2E tests are run separately; this workflow does not run them.
-- Both API test commands include `tests/jobs` alongside routers, services, characters, seeds, and cache tests. Dependencies are installed from the frozen lockfile.
+- Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
 - Deploy is a matrix over `{fly.web.toml, fly.worker.toml}` — both apps deploy in parallel
 
 `FLY_API_TOKEN` must be at **repository-level** secrets (Settings → Secrets and variables → Actions → Repository secrets). The deploy job doesn't declare an `environment:`, so environment-scoped secrets won't be visible.

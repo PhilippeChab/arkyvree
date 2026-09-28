@@ -1,7 +1,7 @@
 import type { InferResponseType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { test, expect } from "@/tests/e2e/fixtures.ts";
-import { signIn, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
+import { forkCoreRuleset, signIn } from "@/tests/e2e/helpers.ts";
 
 type Templates = InferResponseType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"], 200>;
 type EditedItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$put"], 200>;
@@ -13,17 +13,7 @@ for (const width of [375, 1280]) {
 
     test("templates stay editable without a source selector, while variants retain it", async ({ page, ownerUser }) => {
       await signIn(page, ownerUser.email, ownerUser.password);
-      await visitCoreRulesetList(page);
-      await page.locator('h6:has-text("Core SRD 3.5")').first().click();
-      await page.locator('[data-testid="MoreVertIcon"]').first().click();
-      await page.getByRole("menuitem", { name: /^Fork\b/ }).click();
-      const dialog = page.getByRole("dialog", { name: "Fork Ruleset" });
-      const forkName = `Template source ${width} ${Date.now()}`;
-      await dialog.locator('input[name="name"]').fill(forkName);
-      await dialog.getByRole("button", { name: "Fork Ruleset" }).click();
-      await expect(page.getByRole("heading", { name: forkName })).toBeVisible();
-      const forkId = page.url().match(/\/rulesets\/([a-f0-9-]+)/)?.[1];
-      expect(forkId).toBeTruthy();
+      const forkId = await forkCoreRuleset(page, `Template source ${width} ${Date.now()}`);
 
       const templatesResponse = await page.request.get(`/api/rulesets/${forkId}/templates?type=Weapon`);
       expect(templatesResponse.ok()).toBe(true);
