@@ -58,7 +58,7 @@ export default async function seed(db: Db) {
 
   await addInventory(db, ctx, characterId, [
     { name: "Longsword", quantity: 1, equipped: true, location: "Main Hand", weaponSet: 0 },
-    { name: "Heavy Steel Shield", quantity: 1, equipped: true, location: "Off Hand" },
+    { name: "Heavy Steel Shield", quantity: 1, equipped: true, location: "Off Hand", weaponSet: 0 },
     { name: "Full Plate", quantity: 1, equipped: true, location: "Torso" },
   ]);
 
