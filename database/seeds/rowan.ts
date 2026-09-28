@@ -57,7 +57,7 @@ export default async function seed(db: Db) {
   await addInventory(db, ctx, characterId, [
     { name: "Scimitar", quantity: 1, equipped: true, location: "Main Hand", weaponSet: 0 },
     { name: "Hide Armor", quantity: 1, equipped: true, location: "Torso" },
-    { name: "Light Wooden Shield", quantity: 1, equipped: true, location: "Off Hand" },
+    { name: "Light Wooden Shield", quantity: 1, equipped: true, location: "Off Hand", weaponSet: 0 },
   ]);
 
   await reconcileBondedForCharacter(db, characterId);
