@@ -1,6 +1,6 @@
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/seed-utils.ts";
-import { ALL_WEAPONS } from "@/database/packages/dnd35/v1/feats/weapons.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 
 export const STYLE_FEATS: FeatSeed[] = [
   {

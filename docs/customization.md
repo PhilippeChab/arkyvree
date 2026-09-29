@@ -26,10 +26,10 @@ Requirements use a dotted level numbering system for hierarchy:
 
 ### Requirement Builder Helpers
 
-Seed files use nested `or()` / `and()` helpers from `seed-utils/helpers.ts`:
+Seed data is written with nested `or()` / `and()` builders from `database/packages/dnd35/content/requirements.ts`:
 
 ```ts
-import { or, and, eq, gte, feat, classReq } from "../seed-utils/helpers.ts";
+import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 
 // Simple AND (all root-level entries are AND'd together):
 requirements: [
@@ -53,12 +53,12 @@ requirements: [
       gte("abilities.dexterity.total", 13),
       eq(feat("Improved Unarmed Strike")),
     ),
-    classReq("monk", 1),
+    gte("classes.monk.level", 1),
   ),
 ]
 ```
 
-`buildRequirements()` in `seed-utils/helpers.ts` recursively walks the tree and assigns hierarchical levels:
+`requirementRows()` in `database/packages/dnd35/seed/customization.ts` walks the tree and assigns hierarchical levels:
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 
@@ -303,7 +303,7 @@ Item creation feats use `identity.meta.level` (character level) for their caster
 
 ### Caster level advancement:
 
-Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system (seeded in v4/v5). Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `seed-utils/seed-class.ts` for implementation.
+Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd35/seed/classes.ts` for implementation.
 
 ### Seeded classes (for class-level requirements):
 

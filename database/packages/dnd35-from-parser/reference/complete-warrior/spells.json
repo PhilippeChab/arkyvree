@@ -5,32 +5,30 @@
     "sourceUrl": "https://dndtools.net/spells/complete-warrior--61/",
     "type": "spell"
   },
-  "mapping": {
-    "overrides": {
-      "Augment Familiar": {
-        "description": "When cast on your familiar, this spell bestows a +4 enhancement bonus to its Strength, Dexterity, and Constitution scores, grants it damage reduction 5/magic, and gives it a +2 resistance bonus on all saving throws."
-      },
-      "Cloak of Bravery": {
-        "description": "You and every ally within the emanation receive a morale bonus on saving throws against fear effects. This bonus equals your caster level, up to a maximum of +10 at caster level 10th."
-      },
-      "Cloak of Bravery, Greater": {
-        "description": "This enhanced version of cloak of bravery renders you and all allies within the emanation completely immune to fear effects and also grants them a +2 morale bonus on attack rolls. Allies who lack line of sight to you do not benefit from this spell."
-      },
-      "Cursed Blade": {
-        "description": "A melee weapon enchanted by this spell inflicts wounds that resist normal healing. Damage dealt directly by the weapon (excluding bonus damage from special properties like flaming, holy, wounding, and similar effects) cannot be healed by any means until the injured creature receives a remove curse spell or an equivalent curse-removing effect. If a creature is slain by a weapon under this spell's effect, it cannot be brought back to life unless remove curse or a similar effect is first cast on the corpse, or unless true resurrection is used."
-      },
-      "Hound of Doom": {
-        "description": "You draw upon shadow-stuff from the Plane of Shadow to fashion a loyal, dog-like companion that obeys you for the spell's duration. The hound of doom uses dire wolf statistics with these modifications: it gains a deflection bonus to Armor Class equal to your Charisma bonus, its hit point total at creation equals your full normal hit points, and it uses your base attack bonus in place of its own (still applying its +7 Strength bonus and -1 size penalty as usual). You can direct the hound as a move action, as though it were fully trained in all tricks from the Handle Animal skill. The hound is destroyed if reduced to 0 hit points. It counts as a magical beast for the purposes of spells and effects, but it can also be dispelled. Only one hound of doom can exist at a time; casting this spell again while a previous hound still exists immediately dispels the first one."
-      },
-      "Lion's Roar": {
-        "description": "You unleash a thunderous roar that inflicts 1d8 points of sonic damage per two caster levels upon all enemies in the area and stuns them for 1 round. A successful Fortitude save reduces the damage by half and prevents the stunning. Additionally, all allies within the area receive a +1 morale bonus on attack rolls and saving throws against fear effects, along with temporary hit points equal to 1d8 + your caster level (capped at 1d8+20 at 20th caster level)."
-      },
-      "Phantom Threat": {
-        "description": "You implant a false perception in the target's mind that it is beset by more opponents than are actually present. The subject does not see or interact with these illusory foes and does not waste attacks on them, but it is treated as flanked regardless of whether any other creatures actually threaten it. No amount of persuasion from others can overcome this effect - only a successful saving throw at the time of casting can prevent it."
-      },
-      "Valiant Fury": {
-        "description": "The target gains a +4 morale bonus to Strength and Constitution and a +2 morale bonus on Will saves. Furthermore, when making a full attack action, the affected creature can make one extra attack with any weapon it holds, using its full base attack bonus plus all applicable modifiers. This extra attack does not stack with similar effects such as haste, and it does not provide an additional action that could be used for casting a spell or performing other non-attack activities."
-      }
+  "overrides": {
+    "Augment Familiar": {
+      "description": "When cast on your familiar, this spell bestows a +4 enhancement bonus to its Strength, Dexterity, and Constitution scores, grants it damage reduction 5/magic, and gives it a +2 resistance bonus on all saving throws."
+    },
+    "Cloak of Bravery": {
+      "description": "You and every ally within the emanation receive a morale bonus on saving throws against fear effects. This bonus equals your caster level, up to a maximum of +10 at caster level 10th."
+    },
+    "Cloak of Bravery, Greater": {
+      "description": "This enhanced version of cloak of bravery renders you and all allies within the emanation completely immune to fear effects and also grants them a +2 morale bonus on attack rolls. Allies who lack line of sight to you do not benefit from this spell."
+    },
+    "Cursed Blade": {
+      "description": "A melee weapon enchanted by this spell inflicts wounds that resist normal healing. Damage dealt directly by the weapon (excluding bonus damage from special properties like flaming, holy, wounding, and similar effects) cannot be healed by any means until the injured creature receives a remove curse spell or an equivalent curse-removing effect. If a creature is slain by a weapon under this spell's effect, it cannot be brought back to life unless remove curse or a similar effect is first cast on the corpse, or unless true resurrection is used."
+    },
+    "Hound of Doom": {
+      "description": "You draw upon shadow-stuff from the Plane of Shadow to fashion a loyal, dog-like companion that obeys you for the spell's duration. The hound of doom uses dire wolf statistics with these modifications: it gains a deflection bonus to Armor Class equal to your Charisma bonus, its hit point total at creation equals your full normal hit points, and it uses your base attack bonus in place of its own (still applying its +7 Strength bonus and -1 size penalty as usual). You can direct the hound as a move action, as though it were fully trained in all tricks from the Handle Animal skill. The hound is destroyed if reduced to 0 hit points. It counts as a magical beast for the purposes of spells and effects, but it can also be dispelled. Only one hound of doom can exist at a time; casting this spell again while a previous hound still exists immediately dispels the first one."
+    },
+    "Lion's Roar": {
+      "description": "You unleash a thunderous roar that inflicts 1d8 points of sonic damage per two caster levels upon all enemies in the area and stuns them for 1 round. A successful Fortitude save reduces the damage by half and prevents the stunning. Additionally, all allies within the area receive a +1 morale bonus on attack rolls and saving throws against fear effects, along with temporary hit points equal to 1d8 + your caster level (capped at 1d8+20 at 20th caster level)."
+    },
+    "Phantom Threat": {
+      "description": "You implant a false perception in the target's mind that it is beset by more opponents than are actually present. The subject does not see or interact with these illusory foes and does not waste attacks on them, but it is treated as flanked regardless of whether any other creatures actually threaten it. No amount of persuasion from others can overcome this effect - only a successful saving throw at the time of casting can prevent it."
+    },
+    "Valiant Fury": {
+      "description": "The target gains a +4 morale bonus to Strength and Constitution and a +2 morale bonus on Will saves. Furthermore, when making a full attack action, the affected creature can make one extra attack with any weapon it holds, using its full base attack bonus plus all applicable modifiers. This extra attack does not stack with similar effects such as haste, and it does not provide an additional action that could be used for casting a spell or performing other non-attack activities."
     }
   },
   "raw": [

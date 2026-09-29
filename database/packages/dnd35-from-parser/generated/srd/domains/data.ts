@@ -1,4 +1,4 @@
-import type { DomainDefinition } from "@/database/packages/dnd35/v1/domains/types.ts";
+import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";
 
 export const ALL_DOMAINS: DomainDefinition[] = [
   {

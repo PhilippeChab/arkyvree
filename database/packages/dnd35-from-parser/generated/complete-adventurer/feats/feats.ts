@@ -1,6 +1,6 @@
-import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { eq, gte, or } from "@/database/packages/dnd35/seed-utils.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 export const GENERAL_FEATS: FeatSeed[] = [

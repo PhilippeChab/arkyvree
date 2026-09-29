@@ -6,572 +6,18 @@
     "sourceUrl": "https://srd.dndtools.org/srd/magic/spells/classSpellLists/domains.html",
     "type": "domain"
   },
-  "detected": {
-    "Air": {
-      "modifiers": []
-    },
-    "Animal": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.knowledgenature.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Arborea": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.survival.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Artifice": {
-      "modifiers": []
-    },
-    "Baator": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.bluff.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Blackwater": {
-      "modifiers": []
-    },
-    "Celerity": {
-      "modifiers": []
-    },
-    "Celestia": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.sensemotive.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Celestial": {
-      "modifiers": []
-    },
-    "Chaos": {
-      "modifiers": []
-    },
-    "Charm": {
-      "modifiers": []
-    },
-    "City": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.gatherinformation.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgelocal.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Cold": {
-      "modifiers": []
-    },
-    "Community": {
-      "modifiers": []
-    },
-    "Competition": {
-      "modifiers": []
-    },
-    "Corruption": {
-      "modifiers": []
-    },
-    "Courage": {
-      "modifiers": []
-    },
-    "Creation": {
-      "modifiers": []
-    },
-    "Darkness": {
-      "modifiers": []
-    },
-    "Death": {
-      "modifiers": []
-    },
-    "Deathbound": {
-      "modifiers": []
-    },
-    "Demonic": {
-      "modifiers": []
-    },
-    "Destiny": {
-      "modifiers": []
-    },
-    "Destruction": {
-      "modifiers": []
-    },
-    "Diabolic": {
-      "modifiers": []
-    },
-    "Domination": {
-      "modifiers": []
-    },
-    "Dragon": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.bluff.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.intimidate.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Dream": {
-      "modifiers": []
-    },
-    "Earth": {
-      "modifiers": []
-    },
-    "Elysium": {
-      "modifiers": []
-    },
-    "Endurance": {
-      "modifiers": []
-    },
-    "Entropy": {
-      "modifiers": []
-    },
-    "Evil": {
-      "modifiers": []
-    },
-    "Fate": {
-      "modifiers": []
-    },
-    "Fey": {
-      "modifiers": []
-    },
-    "Fire": {
-      "modifiers": []
-    },
-    "Force": {
-      "modifiers": []
-    },
-    "Fury": {
-      "modifiers": []
-    },
-    "Glory": {
-      "modifiers": []
-    },
-    "Glory (BoED)": {
-      "modifiers": []
-    },
-    "Good": {
-      "modifiers": []
-    },
-    "Greed": {
-      "modifiers": []
-    },
-    "Hades": {
-      "modifiers": []
-    },
-    "Hatred": {
-      "modifiers": []
-    },
-    "Healing": {
-      "modifiers": []
-    },
-    "Herald": {
-      "modifiers": []
-    },
-    "Hunger": {
-      "modifiers": []
-    },
-    "Incarnum": {
-      "modifiers": []
-    },
-    "Inquisition": {
-      "modifiers": []
-    },
-    "Joy": {
-      "modifiers": []
-    },
-    "Knowledge": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.knowledgearcana.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgearchitectureandengineering.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgedungeoneering.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgegeography.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgehistory.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgelocal.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgenature.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgenobilityandroyalty.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgepsionics.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgereligion.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgetheplanes.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Law": {
-      "modifiers": []
-    },
-    "Liberation": {
-      "modifiers": []
-    },
-    "Limbo": {
-      "modifiers": []
-    },
-    "Luck": {
-      "modifiers": []
-    },
-    "Madness": {
-      "modifiers": []
-    },
-    "Magic": {
-      "modifiers": []
-    },
-    "Mechanus": {
-      "modifiers": []
-    },
-    "Mind": {
-      "modifiers": []
-    },
-    "Mysticism": {
-      "modifiers": []
-    },
-    "Nobility": {
-      "modifiers": []
-    },
-    "Ocean": {
-      "modifiers": []
-    },
-    "Ooze": {
-      "modifiers": []
-    },
-    "Oracle": {
-      "modifiers": []
-    },
-    "Pact": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.appraise.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.intimidate.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.sensemotive.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Pestilence": {
-      "modifiers": []
-    },
-    "Planning": {
-      "modifiers": []
-    },
-    "Plant": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.knowledgenature.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Pleasure": {
-      "modifiers": []
-    },
-    "Protection": {
-      "modifiers": []
-    },
-    "Purification": {
-      "modifiers": []
-    },
-    "Repose": {
-      "modifiers": []
-    },
-    "Rune": {
-      "modifiers": []
-    },
-    "Seafolk": {
-      "modifiers": []
-    },
-    "Skalykind": {
-      "modifiers": []
-    },
-    "Sky": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.spot.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Spite": {
-      "modifiers": []
-    },
-    "Storm": {
-      "modifiers": []
-    },
-    "Strength": {
-      "modifiers": []
-    },
-    "Summer": {
-      "modifiers": []
-    },
-    "Summoner": {
-      "modifiers": []
-    },
-    "Sun": {
-      "modifiers": []
-    },
-    "Temptation": {
-      "modifiers": []
-    },
-    "The Abyss": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.intimidate.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Thirst": {
-      "modifiers": []
-    },
-    "Travel": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.survival.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Trickery": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.bluff.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.disguise.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.hide.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Tyranny": {
-      "modifiers": []
-    },
-    "Undeath": {
-      "modifiers": []
-    },
-    "Vile Darkness": {
-      "modifiers": []
-    },
-    "War": {
-      "modifiers": []
-    },
-    "Water": {
-      "modifiers": []
-    },
-    "Wealth": {
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.appraise.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Weather": {
-      "modifiers": []
-    },
-    "Winter": {
-      "modifiers": []
-    },
-    "Wrath": {
-      "modifiers": []
-    }
-  },
-  "mapping": {
+  "overrides": {
     "Air": {
       "description": "You can turn or destroy earth creatures in the same manner that a good cleric turns undead. Likewise, you can rebuke, command, or bolster air creatures just as an evil cleric rebukes undead. You may use these abilities a number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
     },
     "Animal": {
-      "description": "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.knowledgenature.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Arborea": {
-      "description": "Requirement: Must be chaotic good. Deities: Corellon Larethian. Once per day as a free action, you can channel the glory of the eladrin to grant yourself a morale bonus on weapon damage rolls and saves against charm and fear effects. This bonus is equal to your Charisma bonus (if any) and lasts for 1 minute. This is a supernatural ability. Add Survival to your list of cleric class skills.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.survival.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Artifice": {
-      "description": ""
-    },
-    "Baator": {
-      "description": "Requirement: Must be lawful evil. Deities: Kurtulmak (kobolds), Sekolah (sahuagin), Tiamat (evil dragons). You have the supernatural ability to see perfectly in darkness of any kind, even that created by a deeper darkness spell. Add Bluff to your list of cleric class skills.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.bluff.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Blackwater": {
-      "description": "You are immune to pressure damage from descending into even the greatest of oceanic depths."
+      "description": "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list."
     },
     "Celerity": {
       "description": "You move faster on foot than others of your race, gaining a +10 foot enhancement to your base land speed. This bonus does not apply while you wear medium or heavy armor or carry a medium or heavy load."
     },
-    "Celestia": {
-      "description": "Requirement: Must be lawful good. Deities: Bahamut (good dragons), Heironeous, Moradin, Yondalla. Once per day, as a free action, you can generate an aura of menace similar to that of the archons. The aura lasts for 1 minute. Any hostile enemy within a 20foot radius of you must succeed on a Will save (DC 10 + 1/2 your cleric level + your Cha modifier) to resist its effects. Those who fail take a -2 penalty on attack rolls, Armor Class, and saves for 24 hours or until they successfully hit you. A creature that has resisted or broken the effect cannot be affected again by your aura for 24 hours. This is a supernatural ability. Add Sense Motive to your list of cleric class skills.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.sensemotive.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Celestial": {
-      "description": "You gain the supernatural ability to smite evil once per day. Add a +4 bonus to your melee attack roll and your cleric level to your damage. You must declare the smite before making the attack, and the attempt is wasted if the target is not evil."
-    },
     "Chaos": {
       "description": "Spells with the chaos descriptor that you cast gain a +1 bonus to caster level."
-    },
-    "Charm": {
-      "description": ""
-    },
-    "City": {
-      "description": "Add Gather Information and Knowledge (local) to your list of cleric class skills.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.gatherinformation.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgelocal.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
     },
     "Cold": {
       "description": "You have the ability to turn or destroy fire creatures in the same manner that a good cleric turns undead. Additionally, you can rebuke or command cold creatures just as an evil cleric rebukes undead. The total number of times you may use these abilities each day equals 3 + your Charisma modifier. This granted power is supernatural in nature."
@@ -582,55 +28,20 @@
     "Competition": {
       "description": "You thrive on challenges and direct confrontation. As an extraordinary ability, you receive a +1 bonus to every opposed check you attempt."
     },
-    "Corruption": {
-      "description": "Once per day, you can attack an object and ignore its hardness."
-    },
     "Courage": {
       "description": "You continuously emit a supernatural aura of bravery that provides you and all allies within 10 feet a +4 morale bonus on saving throws made to resist fear effects. This aura operates whenever you are conscious but ceases to function if you fall unconscious or die."
     },
     "Creation": {
       "description": ""
     },
-    "Darkness": {
-      "description": ""
-    },
     "Death": {
       "description": "Once per day, you can employ a death touch, which is a supernatural ability producing a death effect. To use it, you must make a successful melee touch attack against a living creature, following the standard touch spell rules. Upon a successful touch, roll 1d6 for each cleric level you have. If the result equals or exceeds the target's current hit points, the creature dies with no saving throw allowed."
-    },
-    "Deathbound": {
-      "description": "Your limit for controlling undead animated with spells increases to three times your caster level instead of the normal two times caster level."
-    },
-    "Demonic": {
-      "description": "You gain a +1 profane bonus on attack and damage rolls for unarmed strikes and attacks with natural weapons."
-    },
-    "Destiny": {
-      "description": "Once per day as an immediate action, you can grant a willing creature within 30 feet the ability to reroll an attack, save, ability check, or skill check. You must be able to see the creature to be affected. You cannot use this power on yourself. This is a supernatural ability."
     },
     "Destruction": {
       "description": "You receive the smite ability, a supernatural power allowing you to make one melee attack with a +4 attack roll bonus and a damage bonus equal to your cleric level on a successful hit. The smite must be declared prior to the attack roll. This power can be used once per day."
     },
-    "Diabolic": {
-      "description": "Once per day, as an immediate action, add your class level as a bonus on a single Bluff, Diplomacy, Intimidate, or Sense Motive check."
-    },
     "Domination": {
       "description": "You receive Spell Focus (Enchantment) as a bonus feat."
-    },
-    "Dragon": {
-      "description": "Add Bluff and Intimidate to your list of cleric class skills.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.bluff.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.intimidate.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
     },
     "Dream": {
       "description": "Your extensive exploration of the realm of dreams and nightmares has rendered you completely immune to all fear effects."
@@ -638,23 +49,11 @@
     "Earth": {
       "description": "You can turn or destroy air creatures in the same way a good cleric turns undead. You can also rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. These abilities can be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
     },
-    "Elysium": {
-      "description": "Requirement: Must be neutral good. Deities: Pelor. You gain the supernatural ability to smite evil with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as good-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
-    },
-    "Endurance": {
-      "description": "You can perform a feat of endurance, which is the supernatural ability to gain an enhancement bonus to Constitution equal to one-half your level. Activating the power is a free action, the power lasts 1 minute, and it is usable once per day."
-    },
-    "Entropy": {
-      "description": "Once per day as a standard action, you can channel a bolt of Abyssal entropy as a ranged touch attack, dealing 1d8 points of damage per cleric level you possess. Half the damage is sonic damage, and half is unholy damage that cannot be reduced by sonic resistance or immunity."
-    },
     "Evil": {
       "description": "Spells with the evil descriptor that you cast gain a +1 bonus to caster level."
     },
     "Fate": {
       "description": "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge."
-    },
-    "Fey": {
-      "description": "Gain a +4 bonus on saving throws against the spell-like abilities of feys (such as dryads, nymphs, and sprites)."
     },
     "Fire": {
       "description": "You can turn or destroy water creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
@@ -662,124 +61,26 @@
     "Force": {
       "description": "Through mastery over fundamental forces of motion and energy, once per day you may reroll any single damage roll - whether from a weapon attack, a spell, or a special ability - and keep whichever result is higher. This granted power is a supernatural ability."
     },
-    "Fury": {
-      "description": "Once per day as a free action, you can designate a single creature or object as the target of your fury. You gain a +2 profane bonus on attack rolls against the designated creature or object and deal an extra 2 points of damage with each successful strike upon it. These bonuses persist until you select a new target for your attacks."
-    },
     "Glory": {
       "description": "When you turn undead, you receive a +2 bonus to your turning check and deal an additional +1d6 turning damage."
-    },
-    "Glory (BoED)": {
-      "description": "Turn undead with a +2 bonus on the turning check and +1d6 to the turning damage roll."
     },
     "Good": {
       "description": "Spells with the good descriptor that you cast gain a +1 bonus to caster level."
     },
-    "Greed": {
-      "description": "You gain a +2 competence bonus on Appraise, Open Lock, and Slight of Hand checks."
-    },
-    "Hades": {
-      "description": "Requirement: Must be neutral evil. Deities: None. You gain the supernatural ability to smite good with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as evil-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
-    },
-    "Hatred": {
-      "description": "Choose one opponent. Against that opponent you gain a +2 profane bonus on attack rolls, saving throws, and Armor Class for 1 minute. This supernatural ability is usable once per day as a free action."
-    },
     "Healing": {
       "description": "Spells from the healing subschool that you cast gain a +1 bonus to caster level."
-    },
-    "Herald": {
-      "description": "Intimidate is a class skill. You gain a +4 sacred bonus on Diplomacy and Intimidate checks."
-    },
-    "Hunger": {
-      "description": "You gain a bite attack. If you are Small, your bite attack deals 1d4 points of damage; Medium, 1d6; or Large, 1d8. You are proficient with your bite, and considered armed. If you already have a natural bite attack, use the higher of the two damage values. This is considered a secondary natural attack."
-    },
-    "Incarnum": {
-      "description": "You gain Incarnum Spellshaping as a bonus feat. Special: Neutral clerics - those without an alignment component of chaotic, evil, good, or lawful - may not choose this domain."
     },
     "Inquisition": {
       "description": "You receive a +4 bonus to all dispel checks you make."
     },
-    "Joy": {
-      "description": "You gain a +4 sacred bonus on Diplomacy checks."
-    },
     "Knowledge": {
-      "description": "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.knowledgearcana.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgearchitectureandengineering.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgedungeoneering.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgegeography.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgehistory.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgelocal.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgenature.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgenobilityandroyalty.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgepsionics.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgereligion.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.knowledgetheplanes.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
+      "description": "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level."
     },
     "Law": {
       "description": "Spells with the law descriptor that you cast gain a +1 bonus to caster level."
     },
     "Liberation": {
       "description": ""
-    },
-    "Limbo": {
-      "description": "Requirement: Must be chaotic neutral. Deities: None. You gain the supernatural ability to smite law with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as chaotic-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
     },
     "Luck": {
       "description": "Once per day, you gain the extraordinary ability of good fortune. This lets you reroll a single roll you just made, provided the GM has not yet announced whether the result is a success or failure. You must accept the reroll result, even if it is lower than your original roll."
@@ -790,49 +91,58 @@
     "Magic": {
       "description": "You can activate scrolls, wands, and other spell completion or spell trigger items as though you were a wizard of half your cleric level (minimum 1st level). If you also have actual wizard levels, those levels stack with this effective wizard level for the purpose of activating such magic items."
     },
-    "Mechanus": {
-      "description": "Requirement: Must be lawful neutral. Deities: None. You gain the supernatural ability to smite chaos with a single melee attack once per day. You add your Charisma bonus (if any) to your attack roll and deal an extra 1 point of damage per class level. This smite attack is treated as lawful-aligned for the purpose of overcoming damage reduction. At 5th level, and every five levels thereafter, you can use this smite attack one additional time per day."
-    },
     "Mind": {
       "description": "You receive a +2 bonus to Bluff, Diplomacy, and Sense Motive checks."
     },
     "Mysticism": {
-      "description": "Deities who are Neutral, Lawful Neutral, or Chaotic Neutral never grant this domain. Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round."
+      "description": "Deities who are Neutral, Lawful Neutral, or Chaotic Neutral never grant this domain. Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round.",
+      "spells": [
+        {
+          "level": 3,
+          "name": "Visage of the Deity, Lesser"
+        },
+        {
+          "level": 4,
+          "name": "Weapon of the Deity"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might"
+        },
+        {
+          "level": 6,
+          "name": "Visage of the Deity"
+        },
+        {
+          "level": 7,
+          "name": "Blasphemy"
+        },
+        {
+          "level": 7,
+          "name": "Holy Word"
+        },
+        {
+          "level": 8,
+          "name": "Holy Aura"
+        },
+        {
+          "level": 8,
+          "name": "Unholy Aura"
+        },
+        {
+          "level": 9,
+          "name": "Visage of the Deity, Greater"
+        }
+      ]
     },
     "Nobility": {
       "description": "Once per day as a standard action, you can use a spell-like ability to rally your allies, granting them a +2 morale bonus on saving throws, attack rolls, damage rolls, ability checks, and skill checks. Affected allies must be able to hear you speak for 1 round to receive this benefit. The effect persists for a number of rounds equal to your Charisma bonus."
-    },
-    "Ocean": {
-      "description": "You have the supernatural ability to breathe water as if under the effect of a water breathing spell, for up to 10 rounds per level. This effect occurs automatically as soon as it becomes applicable and lasts until the duration expires or the effect is no longer needed. This duration need not be consecutive; it can be used in increments as small as 1 round."
-    },
-    "Ooze": {
-      "description": "You can rebuke or command oozes as an evil cleric rebukes or commands undead. This ability is usable a number of times per day equal to 3 + your Charisma modifier."
     },
     "Oracle": {
       "description": "Whenever you cast a divination spell, your effective caster level is increased by +2."
     },
     "Pact": {
-      "description": "Appraise, Intimidate, and Sense Motive are added to your cleric class skill list.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.appraise.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.intimidate.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.sensemotive.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
+      "description": "Appraise, Intimidate, and Sense Motive are added to your cleric class skill list."
     },
     "Pestilence": {
       "description": "You are completely immune to the effects of any disease. Despite this immunity, you can still serve as a carrier for infectious diseases."
@@ -841,18 +151,7 @@
       "description": "You receive Extend Spell as a bonus feat."
     },
     "Plant": {
-      "description": "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.knowledgenature.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Pleasure": {
-      "description": "You are immune to any effect that damages or drains your Charisma."
+      "description": "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list."
     },
     "Protection": {
       "description": "As a supernatural ability, you can create a protective ward. By touching a creature as a standard action, you grant it a resistance bonus on its next saving throw equal to your cleric level. This abjuration effect lasts for 1 hour and may be used once per day."
@@ -860,106 +159,23 @@
     "Purification": {
       "description": "Whenever you cast an abjuration spell, your effective caster level is increased by +1."
     },
-    "Repose": {
-      "description": "The character may use a death touch once per day. The death touch is a spell-like ability that is a death effect. The character must succeed at a melee touch attack against a living creature (using the rules for touch spells). When the character touches, roll 1d6 per his or her cleric level. If the total at least equals the creature's current hit points, it dies."
-    },
-    "Rune": {
-      "description": ""
-    },
-    "Seafolk": {
-      "description": "You gain Expert Swimmer or Rapid Swimming (your choice) as a bonus feat."
-    },
     "Skalykind": {
-      "description": ""
-    },
-    "Sky": {
-      "description": "Your fly speed (or glide speed) improves by 5 feet. Add Spot to your list of cleric class skills.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.spot.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Spite": {
-      "description": "Sympathetic strike. You can force opponents to take damage they have dealt you. Once per day, you can make a melee touch attack on the target, and deal damage equal to the damage the target dealt to you in the last round, to a maximum of 5 hp per divine caster level you possess."
-    },
-    "Storm": {
-      "description": "You gain resistance to electricity 5."
+      "name": "Scalykind"
     },
     "Strength": {
       "description": "As a supernatural ability, you can perform a feat of great strength. You receive an enhancement bonus to Strength equal to your cleric level. Activating this power is a free action, it persists for 1 round, and it can be used once per day."
     },
-    "Summer": {
-      "description": "You are considered a native of the waste for purposes of heat resistance (you have 1 level of protection). During the summer season, you gain a +2 bonus on all Wisdom-based skill checks."
-    },
-    "Summoner": {
-      "description": "Add +2 to your caster level for all Conjuration (summoning) or Conjuration (calling) spells."
-    },
     "Sun": {
       "description": "Once per day, you may perform a greater turning against undead instead of a normal turning attempt. A greater turning functions identically to a regular turning, except that any undead that would normally be turned are instead destroyed."
     },
-    "Temptation": {
-      "description": "Select a gender. As long as you wear no armor, you gain a +2 competence bonus on Charisma-based checks opposed by creatures of this gender. Furthermore, each save DC for any mind-affecting spells or abilities you use against this gender increases by 1."
-    },
-    "The Abyss": {
-      "description": "Requirement: Must be chaotic evil. Deities: Blibdoolpoolp (kuo-toa), Diirinka (derro), Great Mother (beholders), Hruggek (bugbears), Lolth (drow), Merrshaulk (yuan-ti). Once per day as a free action, you may channel the furious power of the demons. This power grants you a +4 bonus to Strength but also gives you a -2 penalty to Armor Class. The effect lasts for 5 rounds and cannot be ended prematurely. This is a supernatural ability. Add Intimidate to your list of cleric class skills.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.intimidate.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
-    "Thirst": {
-      "description": "Rebuke or command oozes as an evil cleric rebukes or commands undead. Use this ability a total number of times per day equal to 3 + your Charisma modifier. You also gain a +2 bonus on Constitution checks to resist dehydration."
-    },
     "Travel": {
-      "description": "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.survival.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
+      "description": "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list."
     },
     "Trickery": {
-      "description": "Bluff, Disguise, and Hide are added to your cleric class skill list.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.bluff.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.disguise.innate",
-          "value": "true",
-          "valueType": "boolean"
-        },
-        {
-          "operator": "set",
-          "target": "skills.hide.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
+      "description": "Bluff, Disguise, and Hide are added to your cleric class skill list."
     },
     "Tyranny": {
       "description": "The saving throw DC of any compulsion spell you cast increases by +1."
-    },
-    "Undeath": {
-      "description": "You gain Extra Turning as a bonus feat."
-    },
-    "Vile Darkness": {
-      "description": "You gain the Blind-fight feat."
     },
     "War": {
       "description": "You gain Martial Weapon Proficiency with your deity's favored weapon at no cost (if you do not already have it), as well as Weapon Focus with that same weapon.",
@@ -985,224 +201,8 @@
     "Water": {
       "description": "You can turn or destroy fire creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster water creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
     },
-    "Wealth": {
-      "description": "Add Appraise to your list of cleric class skills. You gain Skill Focus (Appraise) as a bonus feat.",
-      "modifiers": [
-        {
-          "operator": "set",
-          "target": "skills.appraise.innate",
-          "value": "true",
-          "valueType": "boolean"
-        }
-      ]
-    },
     "Weather": {
       "description": "Harsh weather conditions affect you less than normal. Neither rain nor snow imposes penalties on your Spot or Search checks. You traverse snow-covered ground and icy surfaces at your full movement speed. Both natural and magical wind effects treat you as though you were one size category larger than your actual size."
-    },
-    "Winter": {
-      "description": "During the winter season, you gain a +2 sacred bonus on all Wisdom-based skill checks."
-    },
-    "Wrath": {
-      "description": "Once per day, you may make a free attack of opportunity against any opponent that damages you with a melee attack. This ability does not allow you to make more than one attack of opportunity in a round."
-    },
-    "overrides": {
-      "Air": {
-        "description": "You can turn or destroy earth creatures in the same manner that a good cleric turns undead. Likewise, you can rebuke, command, or bolster air creatures just as an evil cleric rebukes undead. You may use these abilities a number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
-      },
-      "Animal": {
-        "description": "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list."
-      },
-      "Celerity": {
-        "description": "You move faster on foot than others of your race, gaining a +10 foot enhancement to your base land speed. This bonus does not apply while you wear medium or heavy armor or carry a medium or heavy load."
-      },
-      "Chaos": {
-        "description": "Spells with the chaos descriptor that you cast gain a +1 bonus to caster level."
-      },
-      "Cold": {
-        "description": "You have the ability to turn or destroy fire creatures in the same manner that a good cleric turns undead. Additionally, you can rebuke or command cold creatures just as an evil cleric rebukes undead. The total number of times you may use these abilities each day equals 3 + your Charisma modifier. This granted power is supernatural in nature."
-      },
-      "Community": {
-        "description": "Once per day, you can use calm emotions as a spell-like ability. You also receive a +2 competence bonus to Diplomacy checks."
-      },
-      "Competition": {
-        "description": "You thrive on challenges and direct confrontation. As an extraordinary ability, you receive a +1 bonus to every opposed check you attempt."
-      },
-      "Courage": {
-        "description": "You continuously emit a supernatural aura of bravery that provides you and all allies within 10 feet a +4 morale bonus on saving throws made to resist fear effects. This aura operates whenever you are conscious but ceases to function if you fall unconscious or die."
-      },
-      "Creation": {
-        "description": ""
-      },
-      "Death": {
-        "description": "Once per day, you can employ a death touch, which is a supernatural ability producing a death effect. To use it, you must make a successful melee touch attack against a living creature, following the standard touch spell rules. Upon a successful touch, roll 1d6 for each cleric level you have. If the result equals or exceeds the target's current hit points, the creature dies with no saving throw allowed."
-      },
-      "Destruction": {
-        "description": "You receive the smite ability, a supernatural power allowing you to make one melee attack with a +4 attack roll bonus and a damage bonus equal to your cleric level on a successful hit. The smite must be declared prior to the attack roll. This power can be used once per day."
-      },
-      "Domination": {
-        "description": "You receive Spell Focus (Enchantment) as a bonus feat."
-      },
-      "Dream": {
-        "description": "Your extensive exploration of the realm of dreams and nightmares has rendered you completely immune to all fear effects."
-      },
-      "Earth": {
-        "description": "You can turn or destroy air creatures in the same way a good cleric turns undead. You can also rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. These abilities can be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
-      },
-      "Evil": {
-        "description": "Spells with the evil descriptor that you cast gain a +1 bonus to caster level."
-      },
-      "Fate": {
-        "description": "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge."
-      },
-      "Fire": {
-        "description": "You can turn or destroy water creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
-      },
-      "Force": {
-        "description": "Through mastery over fundamental forces of motion and energy, once per day you may reroll any single damage roll - whether from a weapon attack, a spell, or a special ability - and keep whichever result is higher. This granted power is a supernatural ability."
-      },
-      "Glory": {
-        "description": "When you turn undead, you receive a +2 bonus to your turning check and deal an additional +1d6 turning damage."
-      },
-      "Good": {
-        "description": "Spells with the good descriptor that you cast gain a +1 bonus to caster level."
-      },
-      "Healing": {
-        "description": "Spells from the healing subschool that you cast gain a +1 bonus to caster level."
-      },
-      "Inquisition": {
-        "description": "You receive a +4 bonus to all dispel checks you make."
-      },
-      "Knowledge": {
-        "description": "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level."
-      },
-      "Law": {
-        "description": "Spells with the law descriptor that you cast gain a +1 bonus to caster level."
-      },
-      "Liberation": {
-        "description": ""
-      },
-      "Luck": {
-        "description": "Once per day, you gain the extraordinary ability of good fortune. This lets you reroll a single roll you just made, provided the GM has not yet announced whether the result is a success or failure. You must accept the reroll result, even if it is lower than your original roll."
-      },
-      "Madness": {
-        "description": "Your fractured mind grants you flashes of brilliance. You take a -1 penalty on all Wisdom-based skill checks and Will saving throws. However, once per day you may tap into the clarity that comes from true madness, adding half your character level to a single Wisdom-based skill check or Will save. You must decide to use this ability before making the roll."
-      },
-      "Magic": {
-        "description": "You can activate scrolls, wands, and other spell completion or spell trigger items as though you were a wizard of half your cleric level (minimum 1st level). If you also have actual wizard levels, those levels stack with this effective wizard level for the purpose of activating such magic items."
-      },
-      "Mind": {
-        "description": "You receive a +2 bonus to Bluff, Diplomacy, and Sense Motive checks."
-      },
-      "Mysticism": {
-        "description": "Deities who are Neutral, Lawful Neutral, or Chaotic Neutral never grant this domain. Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round.",
-        "spells": [
-          {
-            "name": "Visage of the Deity, Lesser",
-            "level": 3
-          },
-          {
-            "name": "Weapon of the Deity",
-            "level": 4
-          },
-          {
-            "name": "Righteous Might",
-            "level": 5
-          },
-          {
-            "name": "Visage of the Deity",
-            "level": 6
-          },
-          {
-            "name": "Blasphemy",
-            "level": 7
-          },
-          {
-            "name": "Holy Word",
-            "level": 7
-          },
-          {
-            "name": "Holy Aura",
-            "level": 8
-          },
-          {
-            "name": "Unholy Aura",
-            "level": 8
-          },
-          {
-            "name": "Visage of the Deity, Greater",
-            "level": 9
-          }
-        ]
-      },
-      "Nobility": {
-        "description": "Once per day as a standard action, you can use a spell-like ability to rally your allies, granting them a +2 morale bonus on saving throws, attack rolls, damage rolls, ability checks, and skill checks. Affected allies must be able to hear you speak for 1 round to receive this benefit. The effect persists for a number of rounds equal to your Charisma bonus."
-      },
-      "Oracle": {
-        "description": "Whenever you cast a divination spell, your effective caster level is increased by +2."
-      },
-      "Pact": {
-        "description": "Appraise, Intimidate, and Sense Motive are added to your cleric class skill list."
-      },
-      "Pestilence": {
-        "description": "You are completely immune to the effects of any disease. Despite this immunity, you can still serve as a carrier for infectious diseases."
-      },
-      "Planning": {
-        "description": "You receive Extend Spell as a bonus feat."
-      },
-      "Plant": {
-        "description": "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list."
-      },
-      "Protection": {
-        "description": "As a supernatural ability, you can create a protective ward. By touching a creature as a standard action, you grant it a resistance bonus on its next saving throw equal to your cleric level. This abjuration effect lasts for 1 hour and may be used once per day."
-      },
-      "Purification": {
-        "description": "Whenever you cast an abjuration spell, your effective caster level is increased by +1."
-      },
-      "Strength": {
-        "description": "As a supernatural ability, you can perform a feat of great strength. You receive an enhancement bonus to Strength equal to your cleric level. Activating this power is a free action, it persists for 1 round, and it can be used once per day."
-      },
-      "Sun": {
-        "description": "Once per day, you may perform a greater turning against undead instead of a normal turning attempt. A greater turning functions identically to a regular turning, except that any undead that would normally be turned are instead destroyed."
-      },
-      "Travel": {
-        "description": "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list."
-      },
-      "Trickery": {
-        "description": "Bluff, Disguise, and Hide are added to your cleric class skill list."
-      },
-      "Tyranny": {
-        "description": "The saving throw DC of any compulsion spell you cast increases by +1."
-      },
-      "War": {
-        "description": "You gain Martial Weapon Proficiency with your deity's favored weapon at no cost (if you do not already have it), as well as Weapon Focus with that same weapon.",
-        "featPool": {
-          "aptitude": "War Domain Weapon",
-          "description": "You gain proficiency with ${w} and Weapon Focus with ${w} as granted by the War domain.",
-          "grants": [
-            "Weapon Focus",
-            "Martial Weapon Proficiency"
-          ],
-          "items": "martial",
-          "namePrefix": "War Domain Weapon"
-        },
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "aptitudes.wardomainweapon.allowed",
-            "value": "1",
-            "valueType": "number"
-          }
-        ]
-      },
-      "Water": {
-        "description": "You can turn or destroy fire creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster water creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
-      },
-      "Weather": {
-        "description": "Harsh weather conditions affect you less than normal. Neither rain nor snow imposes penalties on your Spot or Search checks. You traverse snow-covered ground and icy surfaces at your full movement speed. Both natural and magical wind effects treat you as though you were one size category larger than your actual size."
-      },
-      "Skalykind": {
-        "name": "Scalykind"
-      }
     }
   },
   "raw": [

@@ -158,9 +158,9 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Test Structure:**
 
-- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeded content), `/tests/jobs`
+- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeded content and the package runner), `/tests/parser` (the parser tools), `/tests/jobs`
 - E2E tests: `/tests/e2e`
-- Each test runs in its own transaction, rolled back afterwards (`tests/setup.ts`). It has a single connection: run service calls that write one at a time, never in a `Promise.all`, since each opens a savepoint on it
+- Each test runs in its own transaction, rolled back afterwards (`tests/setup.ts`); a transaction the code opens in it (`withTransaction`, `db.transaction`) is a savepoint on the same connection, rolled back when it throws. In production that transaction is its own, on another connection, so tests don't catch transaction-boundary bugs (what it can see, when it commits). It has a single connection: run service calls that write one at a time, never in a `Promise.all`: concurrent savepoints share a name, so one's failure silently undoes the other's writes
 - The ruleset cache outlives the rollback. Write a test's rows into a fork (`createSeededTestRuleset`), not a seeded ruleset; a test that has to write into a seeded one calls `invalidateSeededRuleset(rulesetId)` afterwards, and the setup drops those rules again once the rollback undoes the rows
 - CRUD, ownership and copy-on-write of every ruleset entity are tested once, for all of them, in `tests/services/rulesets/EntityServices.test.ts`: an entity's own service test covers only what's particular to it
 

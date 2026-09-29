@@ -1,4 +1,4 @@
-import type { RaceDefinition } from "@/database/packages/dnd35/v1/races/types.ts";
+import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
 
 export const ALL_RACES: RaceDefinition[] = [
   {

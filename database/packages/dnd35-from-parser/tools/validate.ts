@@ -1,9 +1,10 @@
 /**
- * Validates all reference JSON files for unresolved issues that would
- * produce incomplete seed data.
+ * Validates all reference files for unresolved issues that would produce incomplete seed data, and for
+ * overrides that change nothing.
  *
- * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks
- * (excluding entries listed in mapping.overrides.reviewed)
+ * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks (except those listed in
+ * `overrides.reviewed`), classes the generator refuses, and class overrides that hold what's derived without them
+ * (and leave its generated files the same) or that the generator ignores.
  *
  * Usage:
  *   bun run parser:validate                              # all issues
@@ -12,7 +13,8 @@
  */
 
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
+import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 const REF_DIR = join(import.meta.dirname!, "../reference");
@@ -24,18 +26,11 @@ type DetectedEntry = {
   unresolvedAptitudePicks?: string[];
 };
 
-type RefFile = {
-  _meta: { type: string; book: string };
-  raw?: Record<string, unknown> | Record<string, unknown>[];
-  detected: Record<string, DetectedEntry> | DetectedEntry;
-  mapping?: { overrides?: { reviewed?: string[]; [key: string]: unknown } };
-};
-
 type Issue = {
   book: string;
   file: string;
   label: string;
-  kind: "error" | "modifier" | "prereq" | "aptitude pick";
+  kind: "error" | "modifier" | "prereq" | "aptitude pick" | "redundant override" | "ignored override" | "generator refuses the class";
   text: string;
   entityName?: string;
 };
@@ -48,34 +43,32 @@ function main() {
   if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
 
   const issues: Issue[] = [];
+  const entityIssues = (ref: { path: string; book: string }, detected: Record<string, DetectedEntry>, reviewed: Set<string>, skip = new Set<string>()) => {
+    for (const [name, d] of Object.entries(detected)) {
+      if (!reviewed.has(name) && !skip.has(name)) collectIssues(d, name, reviewed, ref.book, ref.path, issues, name);
+    }
+  };
 
   for (const ref of refs) {
-    const data: RefFile = JSON.parse(readFileSync(ref.path, "utf-8"));
-    const reviewed = new Set(data.mapping?.overrides?.reviewed ?? []);
-    const detected = data.detected;
-    if (!detected || typeof detected !== "object") continue;
-
     if (ref.type === "class") {
-      const d = detected as DetectedEntry;
-      const className = !Array.isArray(data.raw) ? (data.raw as { name?: string })?.name : undefined;
-      collectIssues(d, "class", reviewed, ref.book, ref.path, issues, className);
-    } else {
-      // Build set of epic feat names to skip (generator skips them unless overridden)
-      const epicFeats = new Set<string>();
-      if (ref.type === "feat" && Array.isArray(data.raw)) {
-        const overrides = data.mapping?.overrides ?? {};
-        for (const entry of data.raw as { name: string; featType?: string }[]) {
-          if (entry.featType === "epic" && (overrides[entry.name as keyof typeof overrides] as { skip?: boolean } | undefined)?.skip !== false) {
-            epicFeats.add(entry.name);
-          }
-        }
-      }
-
-      for (const [name, d] of Object.entries(detected as Record<string, DetectedEntry>)) {
-        if (reviewed.has(name)) continue;
-        if (epicFeats.has(name)) continue;
-        collectIssues(d, name, reviewed, ref.book, ref.path, issues, name);
-      }
+      const data = loadReference(ref.path, "class");
+      collectIssues(data.detected, "class", new Set(data.mapping.overrides?.reviewed), ref.book, ref.path, issues, data.raw.name);
+      const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
+      const classIssues: { kind: Issue["kind"]; text: string }[] = [
+        ...refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : [],
+        ...redundant.map((text) => ({ kind: "redundant override" as const, text })),
+        ...ignored.map((text) => ({ kind: "ignored override" as const, text })),
+      ];
+      for (const { kind, text } of classIssues) issues.push({ book: ref.book, file: ref.path, label: "class", kind, text, entityName: data.raw.name });
+    } else if (ref.type === "feat") {
+      // The generator skips epic feats unless an override keeps them.
+      const data = loadReference(ref.path, "feat");
+      const overrides = data.mapping.overrides;
+      const epic = new Set(data.raw.filter((f) => f.featType === "epic" && overrides[f.name]?.skip !== false).map((f) => f.name));
+      entityIssues(ref, data.detected, new Set(overrides.reviewed), epic);
+    } else if (ref.type === "domain" || ref.type === "race") {
+      const data = loadReference(ref.path, ref.type);
+      entityIssues(ref, data.detected, new Set(data.mapping.overrides.reviewed));
     }
   }
 

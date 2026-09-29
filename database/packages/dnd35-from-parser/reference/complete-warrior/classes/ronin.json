@@ -5,17 +5,7 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/ronin/",
     "type": "class"
   },
-  "detected": {
-    "aptitudePicks": [
-      {
-        "levels": [
-          5,
-          9
-        ],
-        "target": "aptitudes.roninbonusfeat.allowed"
-      }
-    ],
-    "bab": "good",
+  "overrides": {
     "bonusFeatLists": [
       {
         "aptitude": "Ronin Bonus Feat",
@@ -35,185 +25,22 @@
         ]
       }
     ],
-    "featNameMap": {
-      "exoticweaponproficiencybastardsword": "Exotic Weapon Proficiency (bastard sword)"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Infamy"
-      },
-      {
-        "levels": [
-          1,
-          4,
-          7,
-          10
-        ],
-        "name": "Sneak Attack"
-      },
-      {
-        "levels": [
-          2
-        ],
-        "name": "Banzai Charge"
-      },
-      {
-        "levels": [
-          5,
-          9
-        ],
-        "name": "Bonus Feat"
-      }
-    ],
-    "hd": 10,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "6",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.exoticweaponproficiencybastardsword.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Neutral Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "True Neutral",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Neutral Evil",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Chaotic Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Chaotic Neutral",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Chaotic Evil",
-            "valueType": "string"
-          }
-        ]
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "poor"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Ronin Class Feature",
+    "description": "A ronin is a wandering warrior who has lost or abandoned his lord, yet still holds on to fragments of his previous way of life.",
     "features": {
       "Banzai Charge": {
-        "description": "Though the ronin has forsaken the warrior's code and sacrificed some portion of his honor, he retains the fierce courage that once defined him. Starting at 2nd level, whenever a ronin charges an opponent, he may voluntarily take an additional penalty to his Armor Class in order to gain an equal bonus on his damage roll. The standard -2 AC penalty from charging still applies and is included in the total, but the ronin may not choose a penalty less than -2 or greater than his base attack bonus. For instance, a 2nd-level ronin performing a banzai charge could accept a -8 AC penalty to receive a +8 bonus to damage.",
-        "level": 2,
-        "seedName": "Banzai Charge (Ronin)"
+        "description": "Though the ronin has forsaken the warrior's code and sacrificed some portion of his honor, he retains the fierce courage that once defined him. Starting at 2nd level, whenever a ronin charges an opponent, he may voluntarily take an additional penalty to his Armor Class in order to gain an equal bonus on his damage roll. The standard -2 AC penalty from charging still applies and is included in the total, but the ronin may not choose a penalty less than -2 or greater than his base attack bonus. For instance, a 2nd-level ronin performing a banzai charge could accept a -8 AC penalty to receive a +8 bonus to damage."
       },
       "Bonus Feat": {
-        "description": "Through extensive combat experience, the ronin has acquired a broad array of fighting techniques. At 5th level and again at 9th level, the ronin selects one feat from the following options: Far Shot, Improved Precise Shot, Manyshot, Mounted Archery, Mounted Combat, Point Blank Shot, Precise Shot, Rapid Shot, Ride-By Attack, Shot on the Run, Spirited Charge, Trample. All prerequisites for the chosen feat must still be satisfied.",
-        "level": 5,
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "aptitudes.roninbonusfeat.allowed",
-            "value": "1",
-            "valueType": "number"
-          }
-        ],
-        "seedName": "Bonus Feat (Ronin)",
-        "stackable": true
+        "description": "Through extensive combat experience, the ronin has acquired a broad array of fighting techniques. At 5th level and again at 9th level, the ronin selects one feat from the following options: Far Shot, Improved Precise Shot, Manyshot, Mounted Archery, Mounted Combat, Point Blank Shot, Precise Shot, Rapid Shot, Ride-By Attack, Shot on the Run, Spirited Charge, Trample. All prerequisites for the chosen feat must still be satisfied."
       },
       "Infamy": {
-        "description": "Whether or not the ronin truly deserves it, a reputation for dishonor precedes him wherever he goes. When a person of authority learns of the ronin's background (typically via a DC 10 Gather Information or Knowledge (nobility and royalty) check), that individual's initial attitude is one step worse than it would normally be, and the ronin suffers a -4 circumstance penalty on all Charisma-based checks made when dealing with that person. This penalty only takes effect if the authority figure is aware of who the ronin actually is, which leads many ronin to travel under assumed names or disguised identities.",
-        "level": 1,
-        "seedName": "Infamy (Ronin)"
+        "description": "Whether or not the ronin truly deserves it, a reputation for dishonor precedes him wherever he goes. When a person of authority learns of the ronin's background (typically via a DC 10 Gather Information or Knowledge (nobility and royalty) check), that individual's initial attitude is one step worse than it would normally be, and the ronin suffers a -4 circumstance penalty on all Charisma-based checks made when dealing with that person. This penalty only takes effect if the authority figure is aware of who the ronin actually is, which leads many ronin to travel under assumed names or disguised identities."
       },
       "Sneak Attack": {
-        "description": "When a ronin strikes a foe who is unable to properly defend against the attack, he can target a vulnerable area for an additional 1d6 points of damage. This bonus damage increases by 1d6 every three levels thereafter (+2d6 at 4th level, +3d6 at 7th level, and +4d6 at 10th level).",
-        "level": 1,
-        "seedName": "Sneak Attack (Ronin)",
-        "stackable": true
+        "description": "When a ronin strikes a foe who is unable to properly defend against the attack, he can target a vulnerable area for an additional 1d6 points of damage. This bonus damage increases by 1d6 every three levels thereafter (+2d6 at 4th level, +3d6 at 7th level, and +4d6 at 10th level)."
       },
       "Weapon and Armor Proficiency": {
-        "description": "Ronins do not gain proficiency with any additional weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Ronin)"
-      }
-    },
-    "occurrenceMap": {
-      "Banzai Charge": "Banzai Charge",
-      "Bonus Feat": "Bonus Feat",
-      "Infamy": "Infamy",
-      "Sneak Attack": "Sneak Attack"
-    },
-    "overrides": {
-      "bonusFeatLists": [
-        {
-          "aptitude": "Ronin Bonus Feat",
-          "feats": [
-            "Far Shot",
-            "Improved Precise Shot",
-            "Manyshot",
-            "Mounted Archery",
-            "Mounted Combat",
-            "Point Blank Shot",
-            "Precise Shot",
-            "Rapid Shot",
-            "Ride-By Attack",
-            "Shot on the Run",
-            "Spirited Charge",
-            "Trample"
-          ]
-        }
-      ],
-      "description": "A ronin is a wandering warrior who has lost or abandoned his lord, yet still holds on to fragments of his previous way of life.",
-      "features": {
-        "Banzai Charge": {
-          "description": "Though the ronin has forsaken the warrior's code and sacrificed some portion of his honor, he retains the fierce courage that once defined him. Starting at 2nd level, whenever a ronin charges an opponent, he may voluntarily take an additional penalty to his Armor Class in order to gain an equal bonus on his damage roll. The standard -2 AC penalty from charging still applies and is included in the total, but the ronin may not choose a penalty less than -2 or greater than his base attack bonus. For instance, a 2nd-level ronin performing a banzai charge could accept a -8 AC penalty to receive a +8 bonus to damage."
-        },
-        "Bonus Feat": {
-          "description": "Through extensive combat experience, the ronin has acquired a broad array of fighting techniques. At 5th level and again at 9th level, the ronin selects one feat from the following options: Far Shot, Improved Precise Shot, Manyshot, Mounted Archery, Mounted Combat, Point Blank Shot, Precise Shot, Rapid Shot, Ride-By Attack, Shot on the Run, Spirited Charge, Trample. All prerequisites for the chosen feat must still be satisfied."
-        },
-        "Infamy": {
-          "description": "Whether or not the ronin truly deserves it, a reputation for dishonor precedes him wherever he goes. When a person of authority learns of the ronin's background (typically via a DC 10 Gather Information or Knowledge (nobility and royalty) check), that individual's initial attitude is one step worse than it would normally be, and the ronin suffers a -4 circumstance penalty on all Charisma-based checks made when dealing with that person. This penalty only takes effect if the authority figure is aware of who the ronin actually is, which leads many ronin to travel under assumed names or disguised identities."
-        },
-        "Sneak Attack": {
-          "description": "When a ronin strikes a foe who is unable to properly defend against the attack, he can target a vulnerable area for an additional 1d6 points of damage. This bonus damage increases by 1d6 every three levels thereafter (+2d6 at 4th level, +3d6 at 7th level, and +4d6 at 10th level)."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "Ronins do not gain proficiency with any additional weapons or armor."
-        }
+        "description": "Ronins do not gain proficiency with any additional weapons or armor."
       }
     }
   },

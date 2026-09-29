@@ -33,81 +33,9 @@ export type DomainRaw = {
 // Listing page parser
 // ---------------------------------------------------------------------------
 
-/**
- * Parse the domain listing page to extract domain names and URLs.
- */
-export function parseDomainListingHtml(html: string): { name: string; url: string }[] {
-  const $ = cheerio.load(html);
-  const results: { name: string; url: string }[] = [];
-
-  $("a[href*='/spells/domains/']").each((_, el) => {
-    const href = $(el).attr("href") ?? "";
-    const name = $(el).text().trim();
-    // Skip the main listing link itself
-    if (!name || href === "/spells/domains/" || !href.match(/\/spells\/domains\/[^/]+\//)) return;
-    results.push({ name, url: href });
-  });
-
-  return results;
-}
-
 // ---------------------------------------------------------------------------
 // Detail page parser
 // ---------------------------------------------------------------------------
-
-/**
- * Parse a single domain detail page.
- * Returns name, granted power description, and spell names (without levels).
- * Levels must be resolved separately.
- */
-export function parseDomainDetailHtml(html: string): {
-  name: string;
-  description: string;
-  spellNames: string[];
-} | null {
-  const $ = cheerio.load(html);
-
-  const name = findContentH2($);
-  if (!name) return null;
-
-  // Granted power — <h4>Granted power...</h4> or <h3> followed by text
-  const grantedParts: string[] = [];
-  let grantedHeader = $("h4").filter((_, el) =>
-    /^Granted power/i.test($(el).text().trim())
-  ).first();
-  if (grantedHeader.length === 0) {
-    grantedHeader = $("h3").filter((_, el) =>
-      /^Granted power/i.test($(el).text().trim())
-    ).first();
-  }
-
-  if (grantedHeader.length > 0) {
-    let el = grantedHeader.next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      if (tag === "h3" || tag === "h4" || tag === "h2" || tag === "table") break;
-      if (tag === "p" || tag === "div") {
-        const text = el.text().trim();
-        if (text) grantedParts.push(text);
-      }
-      el = el.next();
-    }
-  }
-
-  const description = grantedParts.join(" ").replace(/\s+/g, " ").trim();
-
-  // Spells from table — extract names from first column links
-  const spellNames: string[] = [];
-  $("table tr").each((_, row) => {
-    const firstCell = $(row).find("td").first();
-    if (firstCell.length === 0) return;
-    const link = firstCell.find("a").first();
-    const spellName = link.length > 0 ? link.text().trim() : "";
-    if (spellName) spellNames.push(spellName);
-  });
-
-  return { name, description, spellNames };
-}
 
 // ---------------------------------------------------------------------------
 // Legacy: single-page all-domains parser (old srd.dndtools.org format)
@@ -266,7 +194,7 @@ const NAMED_SPELL_PREFIXES: Record<string, string> = {
   "Floating Disk": "Tenser's Floating Disk",
 };
 
-export function normalizeDomainSpellName(name: string): string {
+function normalizeDomainSpellName(name: string): string {
   // Normalize Unicode quotes to ASCII
   let normalized = name.replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-");
 
@@ -293,14 +221,3 @@ export function normalizeDomainSpellName(name: string): string {
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-/** Find the content h2, skipping the site tagline */
-function findContentH2($: cheerio.CheerioAPI): string {
-  const h2s = $("h2").toArray();
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    if (text.match(/^(Feats|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return text;
-  }
-  return h2s.length > 1 ? $(h2s[1]).text().trim() : "";
-}

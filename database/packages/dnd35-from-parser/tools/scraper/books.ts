@@ -33,24 +33,6 @@ export function buildListingUrl(
   return `${BASE_URL}/${type}/${getBookSlug(book)}/`;
 }
 
-export function buildSourceUrl(
-  type: "class" | "feat" | "spell",
-  book: string,
-  entitySlug?: string,
-): string {
-  const plural = type === "class" ? "classes" : type === "feat" ? "feats" : "spells";
-  const base = `${BASE_URL}/${plural}/${getBookSlug(book)}/`;
-  return entitySlug ? `${base}${entitySlug}/` : base;
-}
-
-export function buildDomainListingUrl(): string {
-  return `${BASE_URL}/spells/domains/`;
-}
-
-export function buildDomainDetailUrl(slug: string): string {
-  return `${BASE_URL}/spells/domains/${slug}/`;
-}
-
 export function buildRaceListingUrl(book: string): string {
   const slug = getBookSlug(book);
   const match = slug.match(/--(\d+)$/);
@@ -58,4 +40,4 @@ export function buildRaceListingUrl(book: string): string {
   return `${BASE_URL}/races/?rulebook=${match[1]}`;
 }
 
-export { BASE_URL, BOOK_SLUGS };
+export { BASE_URL };

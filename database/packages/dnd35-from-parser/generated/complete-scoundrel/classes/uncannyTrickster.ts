@@ -1,4 +1,4 @@
-import type { ClassSeed } from "@/database/packages/dnd35/seed-utils.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const UNCANNY_TRICKSTER: ClassSeed = {
   name: "Uncanny Trickster",

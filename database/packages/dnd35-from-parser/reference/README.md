@@ -1,98 +1,89 @@
 # Reference JSON Schema
 
-Each class reference JSON follows this structure (see `tools/types.ts` for the definitive type):
+A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`tools/references.ts`) derives what the generator reads: `detected`, parsed from `raw`, and `mapping`, the entities to generate with the overrides applied. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
+
+A class reference, as stored (see `tools/types.ts` for the definitive types):
 
 ```
-ClassReference
-├── _meta                           # Bookkeeping (book, url, timestamp)
-│
-├── raw                             # Verbatim scrape from the HTML page
-│   ├── name, description           #   Class name & flavor text
-│   ├── hitDie, skillPointsPerLevel #   Strings as they appear on page
-│   ├── classSkills[]               #   Skill names from page
-│   ├── prerequisites               #   Raw prereq text + parsed struct
-│   │   └── parsed                  #     bab, skills, feats, spells, alignment, special,
-│   │                               #     saves, casterLevel, classLevels
-│   ├── progression[]               #   Level table (BAB, saves, special, spellsPerDay)
-│   ├── classFeatures[]             #   Feature name + type + description blocks
-│   ├── spellsKnown[]              #   Separate "spells known" table if any
-│   ├── hasCantrips?                #   Does spell table start at 0th?
-│   └── bonusSpellAbility?          #   Detected from feature text
-│
-├── detected                        # Auto-parsed from raw — rebuilt every scrape
-│   ├── hd, levels, skillPoints     #   Parsed numbers from raw strings
-│   ├── bab, saves                  #   Derived from progression table
-│   ├── requirements[]              #   Parsed from prerequisites
-│   ├── featNameMap                 #   Slug → display name for prereq feats
-│   ├── featureOccurrences[]        #   Features from progression table (name → levels[])
-│   ├── spellsPerDay[][]            #   Parsed numeric spell table
-│   ├── spellsKnown[][]            #   Parsed numeric spells known
-│   ├── hasOwnSpells?               #   Whether class has own spell list (not advancement)
-│   ├── casterType?                 #   Arcane/Divine from feature text
-│   ├── casterLevelAdvancement?     #   { type, levels[] } — advances existing spellcasting
-│   ├── aptitudePicks[]             #   Choice-granting features (levels + target)
-│   ├── bonusFeatLists[]            #   "Pick from these feats" lists (aptitude + feats)
-│   ├── unresolvedAptitudePicks[]   #   Couldn't map to valid target
-│   ├── unresolvedPrereqs[]         #   Recognized but couldn't map
-│   └── errors[]                    #   Invalid paths
-│
-├── mapping                         # Auto-built by scraper — rebuilt every scrape
-│   ├── classFeatureAptitude        #   Main aptitude name (e.g. "Fighter Class Feature")
-│   ├── features{}                  #   Feature name → seed config
-│   │   └── [name]
-│   │       ├── seedName            #     Output feat name (e.g. "Evasion (Rogue)")
-│   │       ├── description         #     From classFeatures text
-│   │       ├── level               #     Min level (from occurrences)
-│   │       ├── stackable           #     Multiple levels = stackable
-│   │       ├── selectable          #     Player picks vs auto-granted
-│   │       ├── skip                #     Exclude from generation
-│   │       ├── aptitude            #     Custom aptitude (pool sub-options)
-│   │       ├── modifiers[]         #     Auto-detected from description
-│   │       └── aliases[]           #     Alt occurrence names
-│   ├── occurrenceMap{}             #   Occurrence name → features{} key
-│   ├── bonusSpellAbility           #   Ability for bonus spells
-│   ├── spells{}                    #   Spell slot config (slug, perDay, known, knowAll,
-│   │                               #     noCantrips, inheritsFrom)
-│   │
-│   └── overrides{}                 #   MANUAL — preserved across re-scrapes
-│       ├── description             #     Override class description
-│       ├── requirements[]          #     Override detected.requirements
-│       ├── classSkills[]           #     Override raw.classSkills
-│       ├── bab, saves              #     Override detected values
-│       ├── alignment               #     Manual alignment constraint
-│       ├── proficiencies[]         #     Weapon/armor proficiency strings
-│       ├── freeFeats[]             #     [level, featName, aptitude]
-│       ├── modifiers[]             #     Class-level modifiers (passive bonuses)
-│       ├── aptitudePicks[]         #     Override detected.aptitudePicks
-│       ├── bonusFeatLists[]        #     Override detected.bonusFeatLists
-│       ├── casterType              #     Override detected.casterType
-│       ├── bonusSpellAbility       #     Override mapping.bonusSpellAbility
-│       ├── spells{}                #     Override mapping.spells fields
-│       ├── noSpells                #     Suppress spell generation entirely
-│       ├── features{}              #     Per-feature overrides (win over mapping.features)
-│       └── reviewed[]              #     Unresolved items already reviewed
-│
-└── spellList?                      # Separate scrape: class spell list page
-    ├── sourceUrl                   #   URL of the spell list page
-    ├── spells[]                    #   {name, level} referencing SRD spells
-    └── newSpells[]                 #   Spells unique to this class
+_meta                               # Bookkeeping (type, book, url, timestamp)
+
+raw                                 # Verbatim scrape from the HTML page
+├── name, description               #   Class name & flavor text
+├── hitDie, skillPointsPerLevel     #   Strings as they appear on page
+├── classSkills[]                   #   Skill names from page
+├── prerequisites                   #   Raw prereq text + parsed struct
+│   └── parsed                      #     bab, skills, feats, spells, alignment, special,
+│                                   #     saves, casterLevel, classLevels
+├── progression[]                   #   Level table (BAB, saves, special, spellsPerDay)
+├── classFeatures[]                 #   Feature name + type + description blocks
+├── spellsKnown[]                   #   Separate "spells known" table if any
+├── hasCantrips?                    #   Does spell table start at 0th?
+└── bonusSpellAbility?              #   Detected from feature text
+
+overrides                           # MANUAL — the only hand-edited part
+├── description                     #   Override class description
+├── requirements[]                  #   Override detected.requirements
+├── classSkills[]                   #   Override raw.classSkills
+├── bab, saves                      #   Override detected values
+├── alignment                       #   Manual alignment constraint
+├── proficiencies[]                 #   Weapon/armor proficiency strings
+├── freeFeats[]                     #   [level, featName, aptitude]
+├── modifiers[]                     #   Class-level modifiers (passive bonuses)
+├── aptitudePicks[]                 #   Override detected.aptitudePicks
+├── bonusFeatLists[]                #   Override detected.bonusFeatLists
+├── casterType                      #   Override detected.casterType
+├── bonusSpellAbility               #   Override mapping.bonusSpellAbility
+├── spells{}                        #   Override mapping.spells fields
+├── noSpells                        #   Suppress spell generation entirely
+├── features{}                      #   Per-feature overrides (win over mapping.features)
+└── reviewed[]                      #   Unresolved items already reviewed
 ```
 
-## Ownership
+And what loading it derives:
 
-| Section | Written by | Rebuilt on scrape? |
-|---|---|---|
-| `raw` | Scraper | Yes |
-| `detected` | Scraper | Yes |
-| `mapping` (top-level) | Scraper | Yes |
-| `mapping.overrides` | Human | **No** — preserved |
-| `spellList` | Scraper (separate pass) | Yes |
+```
+detected                            # Parsed from raw
+├── hd, levels, skillPoints         #   Parsed numbers from raw strings
+├── bab, saves                      #   Derived from progression table
+├── requirements[]                  #   Parsed from prerequisites
+├── featNameMap                     #   Slug → display name for prereq feats
+├── featureOccurrences[]            #   Features from progression table (name → levels[])
+├── spellsPerDay[][]                #   Parsed numeric spell table
+├── spellsKnown[][]                 #   Parsed numeric spells known
+├── hasOwnSpells?                   #   Whether class has own spell list (not advancement)
+├── casterType?                     #   Arcane/Divine from feature text
+├── casterLevelAdvancement?         #   { type, levels[] } — advances existing spellcasting
+├── aptitudePicks[]                 #   Choice-granting features (levels + target)
+├── bonusFeatLists[]                #   "Pick from these feats" lists (aptitude + feats)
+├── unresolvedAptitudePicks[]       #   Couldn't map to valid target
+├── unresolvedPrereqs[]             #   Recognized but couldn't map
+└── errors[]                        #   Invalid paths
+
+mapping                             # Built from detected, with the overrides applied
+├── classFeatureAptitude            #   Main aptitude name (e.g. "Fighter Class Feature")
+├── features{}                      #   Feature name → seed config
+│   └── [name]
+│       ├── seedName                #     Output feat name (e.g. "Evasion (Rogue)")
+│       ├── description             #     From classFeatures text
+│       ├── level                   #     Min level (from occurrences)
+│       ├── stackable               #     Multiple levels = stackable
+│       ├── selectable              #     Player picks vs auto-granted
+│       ├── skip                    #     Exclude from generation
+│       ├── aptitude                #     Custom aptitude (pool sub-options)
+│       ├── modifiers[]             #     Auto-detected from description
+│       └── aliases[]               #     Alt occurrence names
+├── occurrenceMap{}                 #   Occurrence name → features{} key
+├── bonusSpellAbility               #   Ability for bonus spells
+├── spells{}                        #   Spell slot config (slug, perDay, known, knowAll,
+│                                   #     noCantrips, inheritsFrom)
+└── overrides                       #   The stored overrides
+```
 
 ## How the generator reads it
 
-The generator merges these layers to produce the final seed:
-
 1. Start with `detected` values (bab, saves, requirements, aptitudePicks, etc.)
 2. Layer on `mapping` (features, spells, classFeatureAptitude)
-3. `mapping.overrides` wins over both — any field set in overrides replaces the auto-detected/mapped value
-4. For features specifically: `mapping.overrides.features[name]` fields are merged on top of `mapping.features[name]` (set a field to `null` to delete it)
+3. `overrides` win over both — any field set there replaces the detected or mapped value, except `spells`: its fields go over the detected spells, and a class with none detected ignores them (`parser:validate` reports it)
+4. For features specifically: `overrides.features[name]` fields are merged on top of the detected feature (set a field to `null` to delete it)
+
+`bun run parser:validate` reports a class override that changes nothing, so remove it: it holds what's derived without it, and the class's generated files come out the same without it. An override that differs from what's derived stays, even when nothing uses it today.

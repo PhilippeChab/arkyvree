@@ -1,4 +1,4 @@
-import type { ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SKILL_MAP, SAVE_MAP, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";

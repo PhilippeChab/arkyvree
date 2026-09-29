@@ -1,29 +1,21 @@
-import type { Db } from "@/server/database/index.ts";
-import { addClassLevels, addFeats, addInventory, addPowers, addSkills, createCharacter, getSeedContext } from "@/database/seeds/helpers.ts";
-import { reconcileBondedForCharacter } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
+import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
 // Elf Wizard 3 — Skills: (2+4)*4 + (2+4)*2 = 36
-export default async function seed(db: Db) {
-  const ctx = await getSeedContext(db);
-
-  const characterId = await createCharacter(db, ctx, {
-    raceName: "Elf",
-    name: "Elara Starweaver",
-    xp: 3000,
-    alignment: "Neutral Good",
-    age: 130,
-    gender: "Female",
-    height: "170",
-    weight: "48",
-    description: "A studious elven wizard from the Celestial Academy, Elara weaves arcane formulae with mathematical precision. Her spellbook is filled with meticulous notes and elegant diagrams.",
-    abilities: { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 12, Charisma: 10 },
-    languages: ["Common", "Elven", "Draconic", "Sylvan"],
-  });
-
-  const levelIds = await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3], [4, 3, 3]);
-
+export default {
+  raceName: "Elf",
+  name: "Elara Starweaver",
+  xp: 3000,
+  alignment: "Neutral Good",
+  age: 130,
+  gender: "Female",
+  height: "170",
+  weight: "48",
+  description: "A studious elven wizard from the Celestial Academy, Elara weaves arcane formulae with mathematical precision. Her spellbook is filled with meticulous notes and elegant diagrams.",
+  abilities: { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 12, Charisma: 10 },
+  languages: ["Common", "Elven", "Draconic", "Sylvan"],
+  classes: [{ klass: "Wizard", hp: [4, 3, 3] }],
   // Total skills: 36
-  await addSkills(db, ctx, levelIds, [
+  skills: [
     // L1 (24 points)
     { levelIndex: 0, skillName: "Spellcraft", rank: 4 },
     { levelIndex: 0, skillName: "Concentration", rank: 4 },
@@ -45,10 +37,9 @@ export default async function seed(db: Db) {
     { levelIndex: 2, skillName: "Knowledge (Religion)", rank: 1 },
     { levelIndex: 2, skillName: "Decipher Script", rank: 1 },
     { levelIndex: 2, skillName: "Craft", rank: 1 },
-  ]);
-
+  ],
   // General feats: floor(3/3)+1 = 2
-  await addFeats(db, ctx, levelIds, [
+  feats: [
     { levelIndex: 0, featName: "Combat Casting", aptitude: "General" },
     { levelIndex: 2, featName: "Spell Focus: Evocation", aptitude: "General" },
     // Wizard specialization: Evocation, prohibit Illusion and Necromancy
@@ -56,10 +47,9 @@ export default async function seed(db: Db) {
     { levelIndex: 0, featName: "Prohibit Illusion", aptitude: "Prohibited School" },
     { levelIndex: 0, featName: "Prohibit Necromancy", aptitude: "Prohibited School" },
     { levelIndex: 0, featName: "Owl Familiar", aptitude: "Familiar Bond" },
-  ]);
-
+  ],
   // Wizard 3 spellbook: L0=6, L1=5, L2=2
-  await addPowers(db, ctx, levelIds, [
+  powers: [
     // Cantrips (6)
     { levelIndex: 0, powerName: "Detect Magic", aptitude: "Wizard Spells" },
     { levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" },
@@ -76,11 +66,8 @@ export default async function seed(db: Db) {
     // Level 2 spellbook (2): gained at L3
     { levelIndex: 2, powerName: "Scorching Ray", aptitude: "Wizard Spells" },
     { levelIndex: 2, powerName: "Web", aptitude: "Wizard Spells" },
-  ]);
-
-  await addInventory(db, ctx, characterId, [
+  ],
+  inventory: [
     { name: "Quarterstaff", quantity: 1, equipped: true, location: "Two Handed", weaponSet: 0 },
-  ]);
-
-  await reconcileBondedForCharacter(db, characterId);
-}
+  ],
+} satisfies CharacterSeed;

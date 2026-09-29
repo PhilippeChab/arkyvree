@@ -1,6 +1,6 @@
 import { stripSeparators } from "@/shared/utils.ts";
-import type { ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";
+import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SKILL_MAP as BASE_SKILL_MAP, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";

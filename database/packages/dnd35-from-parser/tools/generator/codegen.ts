@@ -1,4 +1,4 @@
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { normalizeDescription, MAX_DESC } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
@@ -17,7 +17,7 @@ export function toConstName(name: string): string {
 // Indentation
 // ---------------------------------------------------------------------------
 
-export function indent(text: string, level: number): string {
+function indent(text: string, level: number): string {
   const prefix = "  ".repeat(level);
   return text.split("\n").map((line) => line ? prefix + line : line).join("\n");
 }

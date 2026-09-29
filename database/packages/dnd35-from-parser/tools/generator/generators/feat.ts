@@ -1,5 +1,5 @@
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/v1/feats/types.ts";
+import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { autoCompanionGrantModifiers, toCamelCase, collectImportsFromReq, expandTemplateDescription, normalizeName } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   escapeString,
@@ -87,14 +87,14 @@ export function generateFeatSeeds(ref: FeatReference): string {
     const weaponImports = ["ALL_WEAPONS"];
     if (needsProficiencyReqs || needsSimpleWeapons || needsMartialWeapons) weaponImports.push("SIMPLE_WEAPONS", "MARTIAL_WEAPONS");
     if (needsExoticWeapons) weaponImports.push("EXOTIC_WEAPONS");
-    extraImports.push(`import { ${weaponImports.join(", ")} } from "@/database/packages/dnd35/v1/feats/weapons.ts";`);
+    extraImports.push(`import { ${weaponImports.join(", ")} } from "@/database/packages/dnd35/content/weapons.ts";`);
     imports.add("eq");
     if (needsFeatHelper) imports.add("feat");
     if (needsProficiencyReqs) { imports.add("or"); imports.add("gte"); }
     if (needsMartialProfNe) imports.add("ne");
   }
   if (templateTypes.has("skill")) {
-    extraImports.push(`import { SKILL_NAMES } from "@/database/packages/dnd35/v1/feats/skills.ts";`);
+    extraImports.push(`import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";`);
   }
   if (templateTypes.has("school")) {
     extraImports.push(`import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";`);
@@ -110,10 +110,10 @@ export function generateFeatSeeds(ref: FeatReference): string {
   }
 
   // Write imports
-  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/v1/feats/types.ts";`);
+  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`);
   if (imports.size > 0) {
     const importList = Array.from(imports).sort().join(", ");
-    lines.push(`import { ${importList} } from "@/database/packages/dnd35/seed-utils.ts";`);
+    lines.push(`import { ${importList} } from "@/database/packages/dnd35/content/requirements.ts";`);
   }
   for (const imp of extraImports) lines.push(imp);
   lines.push("");
@@ -475,7 +475,7 @@ function emitSchoolTemplate(
 // Helpers
 // ---------------------------------------------------------------------------
 
-export function isSelectedWeaponReq(req: RequirementEntry): boolean {
+function isSelectedWeaponReq(req: RequirementEntry): boolean {
   if ("chainingOperator" in req) return req.children.some(isSelectedWeaponReq);
   return req.target.includes("selectedweapon") || req.target.includes("chosen");
 }
@@ -489,7 +489,7 @@ function emitWizardSchoolFeats(lines: string[]): void {
   lines.push(`// Wizard School feats (system-generated)`);
   lines.push(`// ---------------------------------------------------------------------------`);
   lines.push(``);
-  lines.push(`import { WIZARD_SCHOOLS, WIZARD_PROHIBITED_SCHOOL } from "@/database/packages/dnd35/v1/wizard-schools/data.ts";`);
+  lines.push(`import { WIZARD_SCHOOLS, WIZARD_PROHIBITED_SCHOOL } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";`);
   lines.push(``);
   lines.push(`const SPEC = "Wizard Specialization";`);
   lines.push(`const PROHIB = "Prohibited School";`);

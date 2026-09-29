@@ -1,4 +1,4 @@
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/v1/wizard-schools/types.ts";
+import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
 
 export const WIZARD_PROHIBITED_SCHOOL = "WIZARD_PROHIBITED_SCHOOL";
 

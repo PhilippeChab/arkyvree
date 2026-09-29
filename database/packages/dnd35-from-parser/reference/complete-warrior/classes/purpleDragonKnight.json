@@ -5,224 +5,29 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/purple-dragon-knight/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {
-      "mountedcombat": "Mounted Combat",
-      "negotiator": "Negotiator"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Heroic Shield"
-      },
-      {
-        "levels": [
-          1
-        ],
-        "name": "Rallying Cry"
-      },
-      {
-        "levels": [
-          2,
-          4
-        ],
-        "name": "Inspire Courage"
-      },
-      {
-        "levels": [
-          3
-        ],
-        "name": "Fear"
-      },
-      {
-        "levels": [
-          4
-        ],
-        "name": "Oath Of Wrath"
-      },
-      {
-        "levels": [
-          5
-        ],
-        "name": "Final Stand"
-      }
-    ],
-    "hd": 10,
-    "levels": 5,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "greater_than_or_equal",
-            "target": "skills.diplomacy.rank",
-            "value": "1",
-            "valueType": "number"
-          },
-          {
-            "operator": "greater_than_or_equal",
-            "target": "skills.intimidate.rank",
-            "value": "1",
-            "valueType": "number"
-          }
-        ]
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.listen.rank",
-        "value": "2",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.ride.rank",
-        "value": "2",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.spot.rank",
-        "value": "2",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.mountedcombat.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.negotiator.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Neutral Good",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "Lawful Neutral",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "identity.beliefs.alignment",
-            "value": "True Neutral",
-            "valueType": "string"
-          }
-        ]
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "poor"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Purple Dragon Knight Class Feature",
+  "overrides": {
+    "description": "Purple Dragon knights hone exceptional talents for commanding and coordinating military forces in the field.",
     "features": {
       "Fear": {
-        "description": "Starting at 3rd level, once per day as a standard action, the knight can produce a fear effect identical to the fear spell. The saving throw DC equals 10 + the knight's class level + her Charisma modifier, and her class level serves as the caster level. The knight's allies are unaffected by this ability.",
-        "level": 3,
-        "seedName": "Fear (Purple Dragon Knight)"
+        "description": "Starting at 3rd level, once per day as a standard action, the knight can produce a fear effect identical to the fear spell. The saving throw DC equals 10 + the knight's class level + her Charisma modifier, and her class level serves as the caster level. The knight's allies are unaffected by this ability."
       },
       "Final Stand": {
-        "description": "At 5th level, once per day, the knight can rally nearby allies to feats of extraordinary resilience. All allies within 10 feet receive 2d10 temporary hit points. The number of creatures affected equals the knight's class level plus her Charisma modifier, and the duration in rounds is the same.",
-        "level": 5,
-        "seedName": "Final Stand (Purple Dragon Knight)"
+        "description": "At 5th level, once per day, the knight can rally nearby allies to feats of extraordinary resilience. All allies within 10 feet receive 2d10 temporary hit points. The number of creatures affected equals the knight's class level plus her Charisma modifier, and the duration in rounds is the same."
       },
       "Heroic Shield": {
-        "description": "When using the aid another action to bolster an ally's defense, the knight grants a +4 circumstance bonus to Armor Class rather than the standard +2.",
-        "level": 1,
-        "seedName": "Heroic Shield (Purple Dragon Knight)"
+        "description": "When using the aid another action to bolster an ally's defense, the knight grants a +4 circumstance bonus to Armor Class rather than the standard +2."
       },
       "Inspire Courage": {
-        "description": "Beginning at 2nd level, the knight can deliver a rousing speech that strengthens her allies' resolve against fear and sharpens their fighting prowess, functioning identically to the bard's inspire courage ability. An ally must be able to hear the knight to benefit. The effect persists while the knight speaks and for 5 rounds afterward. During this time, the knight may engage in combat but cannot cast spells, use spell completion items such as scrolls, or use magic word activation items such as wands. Affected allies gain a +2 morale bonus on saving throws against charm and fear effects, and a +1 morale bonus on attack rolls and weapon damage rolls. At 2nd level this ability can be used once per day, increasing to twice per day at 4th level.",
-        "level": 2,
-        "seedName": "Inspire Courage (Purple Dragon Knight)",
-        "stackable": true
+        "description": "Beginning at 2nd level, the knight can deliver a rousing speech that strengthens her allies' resolve against fear and sharpens their fighting prowess, functioning identically to the bard's inspire courage ability. An ally must be able to hear the knight to benefit. The effect persists while the knight speaks and for 5 rounds afterward. During this time, the knight may engage in combat but cannot cast spells, use spell completion items such as scrolls, or use magic word activation items such as wands. Affected allies gain a +2 morale bonus on saving throws against charm and fear effects, and a +1 morale bonus on attack rolls and weapon damage rolls. At 2nd level this ability can be used once per day, increasing to twice per day at 4th level."
       },
       "Oath of Wrath": {
-        "description": "At 4th level, once per day as a free action, the knight can designate a single foe within 60 feet and vow to vanquish that enemy. For the remainder of the encounter, the knight gains a +2 morale bonus on melee attack rolls, weapon damage rolls, saving throws, and skill checks directed at the sworn target. This benefit ends immediately if the knight spends a full-round action moving away from the designated opponent.",
-        "level": 4,
-        "seedName": "Oath of Wrath (Purple Dragon Knight)"
+        "description": "At 4th level, once per day as a free action, the knight can designate a single foe within 60 feet and vow to vanquish that enemy. For the remainder of the encounter, the knight gains a +2 morale bonus on melee attack rolls, weapon damage rolls, saving throws, and skill checks directed at the sworn target. This benefit ends immediately if the knight spends a full-round action moving away from the designated opponent."
       },
       "Rallying Cry": {
-        "description": "As a free action up to three times per day, the knight can let out an empowering battle shout. All allies within 60 feet gain a +1 morale bonus on their next attack roll and have their movement speed increased by 5 feet until the start of the knight's next turn. This is a mind-affecting ability traditionally employed just before a charge.",
-        "level": 1,
-        "seedName": "Rallying Cry (Purple Dragon Knight)"
+        "description": "As a free action up to three times per day, the knight can let out an empowering battle shout. All allies within 60 feet gain a +1 morale bonus on their next attack roll and have their movement speed increased by 5 feet until the start of the knight's next turn. This is a mind-affecting ability traditionally employed just before a charge."
       },
       "Weapon and Armor Proficiency": {
-        "description": "Purple Dragon knights become proficient with tower shields.",
-        "level": 1,
-        "modifiers": [
-          {
-            "operator": "set",
-            "target": "feats.towershieldproficiency.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          }
-        ],
-        "seedName": "Weapon and Armor Proficiency (Purple Dragon Knight)"
-      }
-    },
-    "occurrenceMap": {
-      "Fear": "Fear",
-      "Final Stand": "Final Stand",
-      "Heroic Shield": "Heroic Shield",
-      "Inspire Courage": "Inspire Courage",
-      "Oath Of Wrath": "Oath of Wrath",
-      "Rallying Cry": "Rallying Cry"
-    },
-    "overrides": {
-      "description": "Purple Dragon knights hone exceptional talents for commanding and coordinating military forces in the field.",
-      "features": {
-        "Fear": {
-          "description": "Starting at 3rd level, once per day as a standard action, the knight can produce a fear effect identical to the fear spell. The saving throw DC equals 10 + the knight's class level + her Charisma modifier, and her class level serves as the caster level. The knight's allies are unaffected by this ability."
-        },
-        "Final Stand": {
-          "description": "At 5th level, once per day, the knight can rally nearby allies to feats of extraordinary resilience. All allies within 10 feet receive 2d10 temporary hit points. The number of creatures affected equals the knight's class level plus her Charisma modifier, and the duration in rounds is the same."
-        },
-        "Heroic Shield": {
-          "description": "When using the aid another action to bolster an ally's defense, the knight grants a +4 circumstance bonus to Armor Class rather than the standard +2."
-        },
-        "Inspire Courage": {
-          "description": "Beginning at 2nd level, the knight can deliver a rousing speech that strengthens her allies' resolve against fear and sharpens their fighting prowess, functioning identically to the bard's inspire courage ability. An ally must be able to hear the knight to benefit. The effect persists while the knight speaks and for 5 rounds afterward. During this time, the knight may engage in combat but cannot cast spells, use spell completion items such as scrolls, or use magic word activation items such as wands. Affected allies gain a +2 morale bonus on saving throws against charm and fear effects, and a +1 morale bonus on attack rolls and weapon damage rolls. At 2nd level this ability can be used once per day, increasing to twice per day at 4th level."
-        },
-        "Oath of Wrath": {
-          "description": "At 4th level, once per day as a free action, the knight can designate a single foe within 60 feet and vow to vanquish that enemy. For the remainder of the encounter, the knight gains a +2 morale bonus on melee attack rolls, weapon damage rolls, saving throws, and skill checks directed at the sworn target. This benefit ends immediately if the knight spends a full-round action moving away from the designated opponent."
-        },
-        "Rallying Cry": {
-          "description": "As a free action up to three times per day, the knight can let out an empowering battle shout. All allies within 60 feet gain a +1 morale bonus on their next attack roll and have their movement speed increased by 5 feet until the start of the knight's next turn. This is a mind-affecting ability traditionally employed just before a charge."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "Purple Dragon knights become proficient with tower shields."
-        }
+        "description": "Purple Dragon knights become proficient with tower shields."
       }
     }
   },

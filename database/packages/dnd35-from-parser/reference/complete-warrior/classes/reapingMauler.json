@@ -5,172 +5,29 @@
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/reaping-mauler/",
     "type": "class"
   },
-  "detected": {
-    "bab": "good",
-    "featNameMap": {
-      "cleverwrestling": "Clever Wrestling",
-      "improvedunarmedstrike": "Improved Unarmed Strike"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Improved Grapple"
-      },
-      {
-        "levels": [
-          1
-        ],
-        "name": "Mobility"
-      },
-      {
-        "levels": [
-          2,
-          4
-        ],
-        "name": "Adept Wrestling"
-      },
-      {
-        "levels": [
-          3
-        ],
-        "name": "Counter Grapple"
-      },
-      {
-        "levels": [
-          3
-        ],
-        "name": "Sleeper Lock"
-      },
-      {
-        "levels": [
-          5
-        ],
-        "name": "Devastating Grapple"
-      }
-    ],
-    "hd": 10,
-    "levels": 5,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.escapeartist.rank",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.tumble.rank",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.cleverwrestling.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.improvedunarmedstrike.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "good",
-      "will": "poor"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Reaping Mauler Class Feature",
+  "overrides": {
+    "description": "Reaping maulers specialize in brutal unarmed grappling techniques, excelling at breaking bones, wrenching limbs, and overpowering foes in close-quarters combat.",
     "features": {
       "Adept Wrestling": {
-        "description": "Starting at 2nd level, a reaping mauler wearing light or no armor receives a +1 bonus on grapple checks and opposed Strength or Dexterity checks. At 4th level, this bonus improves to +2.",
-        "level": 2,
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "combat.grapple.misc",
-            "value": "1",
-            "valueType": "number"
-          }
-        ],
-        "seedName": "Adept Wrestling (Reaping Mauler)",
-        "stackable": true
+        "description": "Starting at 2nd level, a reaping mauler wearing light or no armor receives a +1 bonus on grapple checks and opposed Strength or Dexterity checks. At 4th level, this bonus improves to +2."
       },
       "Counter Grapple": {
-        "description": "At 3rd level and beyond, while grappled or pinned and wearing light or no armor, a reaping mauler may attempt a grapple check or an Escape Artist check (opposed by the foe's grapple check) to break free as usual. If the chosen check fails, he may immediately try the other check as a free action.",
-        "level": 3,
-        "seedName": "Counter Grapple (Reaping Mauler)"
+        "description": "At 3rd level and beyond, while grappled or pinned and wearing light or no armor, a reaping mauler may attempt a grapple check or an Escape Artist check (opposed by the foe's grapple check) to break free as usual. If the chosen check fails, he may immediately try the other check as a free action."
       },
       "Devastating Grapple": {
-        "description": "At 5th level, if a reaping mauler pins an opponent while grappling and sustains the pin for 3 consecutive rounds, the pinned creature must succeed on a Fortitude save (DC 10 + the reaping mauler's class level + his Wisdom modifier) at the end of the third round or be slain. Creatures lacking discernible anatomy are immune to this effect.",
-        "level": 5,
-        "seedName": "Devastating Grapple (Reaping Mauler)"
+        "description": "At 5th level, if a reaping mauler pins an opponent while grappling and sustains the pin for 3 consecutive rounds, the pinned creature must succeed on a Fortitude save (DC 10 + the reaping mauler's class level + his Wisdom modifier) at the end of the third round or be slain. Creatures lacking discernible anatomy are immune to this effect."
       },
       "Improved Grapple": {
-        "description": "While wearing light or no armor, a reaping mauler receives the benefits of the Improved Grapple feat, regardless of whether he meets its prerequisites.",
-        "level": 1,
-        "seedName": "Improved Grapple (Reaping Mauler)"
+        "description": "While wearing light or no armor, a reaping mauler receives the benefits of the Improved Grapple feat, regardless of whether he meets its prerequisites."
       },
       "Mobility": {
-        "description": "While wearing light or no armor, a reaping mauler receives the benefits of the Mobility feat, regardless of whether he meets its prerequisites.",
-        "level": 1,
-        "seedName": "Mobility (Reaping Mauler)"
+        "description": "While wearing light or no armor, a reaping mauler receives the benefits of the Mobility feat, regardless of whether he meets its prerequisites."
       },
       "Sleeper Lock": {
-        "description": "At 3rd level, a reaping mauler gains the ability to knock an opponent unconscious through sustained pressure. If he pins a foe while grappling and holds the pin for 1 full round, the pinned creature must succeed on a Fortitude save (DC 10 + the reaping mauler's class level + his Wisdom modifier) at the end of that round or be knocked unconscious for 1d3 rounds. Creatures lacking discernible anatomy are immune to this effect.",
-        "level": 3,
-        "seedName": "Sleeper Lock (Reaping Mauler)"
+        "description": "At 3rd level, a reaping mauler gains the ability to knock an opponent unconscious through sustained pressure. If he pins a foe while grappling and holds the pin for 1 full round, the pinned creature must succeed on a Fortitude save (DC 10 + the reaping mauler's class level + his Wisdom modifier) at the end of that round or be knocked unconscious for 1d3 rounds. Creatures lacking discernible anatomy are immune to this effect."
       },
       "Weapon and Armor Proficiency": {
-        "description": "This prestige class does not grant proficiency with any weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Reaping Mauler)"
-      }
-    },
-    "occurrenceMap": {
-      "Adept Wrestling": "Adept Wrestling",
-      "Counter Grapple": "Counter Grapple",
-      "Devastating Grapple": "Devastating Grapple",
-      "Improved Grapple": "Improved Grapple",
-      "Mobility": "Mobility",
-      "Sleeper Lock": "Sleeper Lock"
-    },
-    "overrides": {
-      "description": "Reaping maulers specialize in brutal unarmed grappling techniques, excelling at breaking bones, wrenching limbs, and overpowering foes in close-quarters combat.",
-      "features": {
-        "Adept Wrestling": {
-          "description": "Starting at 2nd level, a reaping mauler wearing light or no armor receives a +1 bonus on grapple checks and opposed Strength or Dexterity checks. At 4th level, this bonus improves to +2."
-        },
-        "Counter Grapple": {
-          "description": "At 3rd level and beyond, while grappled or pinned and wearing light or no armor, a reaping mauler may attempt a grapple check or an Escape Artist check (opposed by the foe's grapple check) to break free as usual. If the chosen check fails, he may immediately try the other check as a free action."
-        },
-        "Devastating Grapple": {
-          "description": "At 5th level, if a reaping mauler pins an opponent while grappling and sustains the pin for 3 consecutive rounds, the pinned creature must succeed on a Fortitude save (DC 10 + the reaping mauler's class level + his Wisdom modifier) at the end of the third round or be slain. Creatures lacking discernible anatomy are immune to this effect."
-        },
-        "Improved Grapple": {
-          "description": "While wearing light or no armor, a reaping mauler receives the benefits of the Improved Grapple feat, regardless of whether he meets its prerequisites."
-        },
-        "Mobility": {
-          "description": "While wearing light or no armor, a reaping mauler receives the benefits of the Mobility feat, regardless of whether he meets its prerequisites."
-        },
-        "Sleeper Lock": {
-          "description": "At 3rd level, a reaping mauler gains the ability to knock an opponent unconscious through sustained pressure. If he pins a foe while grappling and holds the pin for 1 full round, the pinned creature must succeed on a Fortitude save (DC 10 + the reaping mauler's class level + his Wisdom modifier) at the end of that round or be knocked unconscious for 1d3 rounds. Creatures lacking discernible anatomy are immune to this effect."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "This prestige class does not grant proficiency with any weapons or armor."
-        }
+        "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     }
   },

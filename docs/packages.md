@@ -1,178 +1,137 @@
 # Content Packages
 
-Content packages deliver seed data (base rulesets, extensions) with version tracking. The runner installs new packages and applies incremental updates to existing ones.
+Content packages deliver seed data (base rulesets, extensions) with version tracking. The runner (`database/packages/runner.ts`) installs the packages a database lacks and brings the others up to date. `rules.content_packages` records each database's version of each package.
 
 ## Pipeline overview
 
 ```
-dndtools.net HTML → Scraper → JSON reference files → Generator → TypeScript seed files
-                                     ↑
-                               Human annotates
-                               mapping section
+dndtools.net HTML → Scraper → reference JSON (raw + overrides) → Generator → generated TypeScript → package seeds
+                                                   ↑
+                                         Human corrections
 ```
 
-Content is auto-generated from scraped SRD pages, not hand-written. The `mapping` section of each reference JSON is the only place for manual overrides — `raw` and `detected` are rebuilt on every re-scrape.
-
-See `database/packages/dnd35-from-parser/README.md` for scraper/generator usage.
+Most content is generated from scraped SRD pages. A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. See [Reference files](#reference-files) and `database/packages/dnd35-from-parser/README.md` for the scraper and generator.
 
 ## Package types
 
-| Type | `type` | `baseRuleset` | Purpose |
-|------|--------|---------------|---------|
-| Base ruleset | `"base_ruleset"` | — | Full game system (abilities, skills, classes, feats, spells) |
-| Extension | `"extension"` | parent package name | Supplement that adds content to a base ruleset |
+| Type | `type` | Purpose |
+|------|--------|---------|
+| Base ruleset | `"base_ruleset"` | Full game system (abilities, skills, classes, feats, spells) |
+| Extension | `"extension"` | Supplement that adds content to the base ruleset |
 
-## Package structure
-
-Base rulesets:
+## Structure
 
 ```
-database/packages/<system>/
-├── index.ts          # ContentPackage definition (default export)
-├── names.ts          # Display name constants
-├── seed-utils.ts     # Shared seed helpers (barrel export)
-├── seed-utils/       # Helper implementations
-└── v1/               # Initial seed data
-```
+database/packages/
+├── types.ts              # ContentPackage
+├── runner.ts             # applyPackages: installs and updates the registered packages
+├── registry.ts           # The packages, in the order they're applied
+└── dnd35/
+    ├── index.ts          # The core rules package
+    ├── names.ts          # Ruleset display names
+    ├── extensions/       # One file per extension package
+    ├── content/          # What the data is written with, and the hand-written data
+    │   ├── types.ts          # FeatSeed, ClassSeed, SpellSeed, BookContent…
+    │   ├── requirements.ts   # Requirement builders: eq(), gte(), or(), feat()…
+    │   ├── items.ts          # Proficiency requirements and weapon/armor/shield properties
+    │   ├── weapons.ts, skills.ts, creatureTypes.ts
+    │   ├── core.ts           # The core ruleset, abilities, saves, skills, languages
+    │   └── familiars.ts, animalCompanions.ts, mounts.ts, deitysWeapon.ts
+    └── seed/             # What writes it to the database
+        ├── context.ts        # SeedContext: the ruleset and the ids of the rows its content names
+        ├── core.ts           # seedCore: the core rules
+        ├── extension.ts      # seedExtension: an extension's book
+        └── feats.ts, powers.ts, classes.ts, domains.ts, items.ts, races.ts, bonds.ts, cow.ts, …
 
-Extensions:
-
-```
-database/packages/<system>/extensions/<name>/
-├── index.ts          # ContentPackage definition
-└── v1/
-    └── seed.ts       # Imports generated data, calls seedExtension()
-```
-
-Generated data:
-
-```
 database/packages/dnd35-from-parser/
-├── generated/        # Auto-generated TypeScript from reference JSON
-│   ├── srd/          # Base SRD content
-│   ├── dmg/          # DMG extension content
-│   ├── complete-warrior/
-│   └── ...
-├── reference/        # Scraped JSON files (raw + detected + mapping)
-└── tools/
-    ├── scraper/      # HTML → JSON reference
-    ├── generator/    # JSON reference → TypeScript seed files
-    └── buildSeeds.ts # Reference JSON → seed object conversion
+├── reference/            # Scraped JSON (raw + overrides)
+├── generated/            # Written by the generator only, one folder per book
+│   ├── srd/              #   The core rules
+│   └── dmg/, complete-warrior/, …   # Each extension book, with an index.ts exporting BOOK
+└── tools/                # Scraper, generator, validate, overrides
 ```
+
+`content/` never touches the database: the generated data, the parser and the seeds all import it. `generated/` holds only what the generator writes; hand-written content goes in `content/`.
 
 ## How seeds work
 
-Extension v1 seeds are thin wrappers that import generated data and call `seedExtension()`:
+A seed step takes a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. `seedCore` creates the core ruleset and seeds it step by step; the dev seeds (`database/seeds`) and the tests load the same context for the seeded ruleset (`loadSeedContext`).
+
+An extension is a package file that seeds its book:
 
 ```ts
-import { seedExtension } from "@/database/packages/dnd35/seed-utils.ts";
-import { ALL_CLASSES } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/classes/index.ts";
-import { ALL_STANDALONE_FEATS, ALL_CLASS_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/feats/index.ts";
-// ... other generated imports
-
-export default async function seed(db: Db) {
-  await seedExtension(db, {
-    name: DND35_COMPLETE_WARRIOR_NAME,
-    description: "...",
-    aptitudeNames: ALL_APTITUDES,
-    standaloneFeats: ALL_STANDALONE_FEATS,
-    classFeats: ALL_CLASS_FEATS,
-    cowFeats: COW_FEATS,
-    spells: ALL_SPELLS,
-    cowSpells: COW_SPELLS,
-    domains: ALL_DOMAINS,
-    classes: ALL_CLASSES,
-  });
-}
+const dnd35Dmg: ContentPackage = {
+  name: "dnd35-dmg",
+  type: "extension",
+  seedsVersion: 16,
+  seeds: [(db) => seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
+};
 ```
 
-`seedExtension()` handles: creating the extension ruleset, fetching base data maps, inserting aptitudes, seeding feats/spells/domains/classes, and COW-ing base entities.
+`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `seedExtension` creates the extension ruleset, loads the core's context, adds the aptitudes the core lacks, seeds the feats, spells, domains and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`).
+
+### Adding an extension
+
+1. Add the book to the scraper (`tools/scraper/books.ts`), scrape it, and generate it (`bun run parser:generate <book>`).
+2. Add its display name to `names.ts` and a package file under `extensions/` with `seedsVersion: 1`.
+3. Register it in `registry.ts`, after the core rules.
 
 ## Versioning & updates
 
-- `seeds` runs once on first install (establishes v1)
-- `version` starts at 1 — bump it when data needs to change
-- `updates` is keyed by target version number
-- Fresh install: runs `seeds` then `updates[2]` → `updates[version]`
-- Existing DB: runs `updates[appliedVersion + 1]` → `updates[version]`
+A package's `seeds` install it at `seedsVersion`. A change after that goes in `updates`, keyed by the version it brings the package to (`seedsVersion + 1`, `+ 2`…), and the package's version becomes its last update's:
 
-### Adding an update
-
-1. Bump `version`
-2. Add a matching entry in `updates`
-3. Write the update function in `v<N>/seed.ts`
+- A new database runs the seeds, then every update.
+- An existing database runs the updates past its version.
+- A database older than `seedsVersion` is refused: the updates it lacks are now part of the seeds, so none can bring it up to date. The runner checks every package first and applies none if one is refused. Reset a development database; any other needs those updates back (from git history) until it has them. `scripts/ops/diff-prod.ts` shows whether production's versions would be refused before a deploy.
 
 ```ts
-const myExtension: ContentPackage = {
-  name: "dnd35-complete-warrior",
-  version: 3,        // bumped from 2
-  seeds: [...],
+const dnd35Dmg: ContentPackage = {
+  name: "dnd35-dmg",
+  type: "extension",
+  seedsVersion: 16,
+  seeds: [(db) => seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
   updates: {
-    2: existingUpdate,
-    3: newFixOrAddition,
+    17: addTheMissingFeat,
   },
 };
 ```
 
-## Reference JSON & mapping
+Once every database has an update (production, staging and any other shared database: the runner refuses one below the new `seedsVersion`), fold it: change the seeds so a new database gets the same rows, drop the update, and raise `seedsVersion` to its version. The seeds alone then describe the package. Check a fold by seeding a new database both ways and comparing their content.
 
-Each scraped entity produces a JSON reference file with three sections:
+## Reference files
 
-- **`raw`** — Scraped data from the HTML page. Never manually edited. Regenerated on re-scrape.
-- **`detected`** — Auto-computed values (BAB type, save types, requirements, modifiers). Regenerated on re-scrape.
-- **`mapping`** — Human-annotated overrides. Preserved across re-scrapes.
+A reference file (`reference/<book>/…json`) has three parts:
 
-The generator uses `mapping` values when present, falling back to `detected`:
-- `buildFeatSeeds` uses `mapping.requirements ?? detected.requirements`
-- `buildClassSeeds` uses `mapping.overrides.requirements ?? detected.requirements`
-- Set `mapping.modifiers = []` to explicitly suppress auto-detected modifiers
+- **`_meta`** — its type, book and source.
+- **`raw`** — what the scraper read. Re-scraping replaces it.
+- **`overrides`** — corrections made by hand. Re-scraping keeps them. Nothing else in the file is hand-edited.
 
-**Customizations MUST go in `mapping`, not `detected`** — `detected` is rebuilt from scratch on every re-scrape.
+What the generator reads is derived from the two each time a reference is loaded (`tools/references.ts`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate, with the overrides applied). So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
-## COW-ing base entities into extensions
+`bun run parser:validate` lists unresolved detections (not yet listed in `overrides.reviewed`), classes the generator refuses, and class overrides that change nothing (they hold what's derived without them) or that the generator ignores.
 
-When an extension needs to modify a base entity (e.g., adding prestige class requirements to a base feat), it must COW it — not recreate it as a duplicate.
+## COW-ing core entities into extensions
 
-The generated `cowFeats.ts` and `cowSpells.ts` files define which base entities need COW-ing and what aptitude links to add. `seedExtension()` calls `cowFeatsIntoExtension()` and `cowSpellsIntoExtension()` automatically.
-
-For manual COW in update seeds, use `cowFeatIntoExtension` from `seed-utils/cow-feat.ts`:
-
-```ts
-import { cowFeatIntoExtension } from "../../seed-utils.ts";
-const copyId = await cowFeatIntoExtension(db, baseFeatId, extensionId);
-```
+When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/cow.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes.
 
 ### Aptitude ownership rules
 
-Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedExtension` splits `aptitudeNames` into:
+Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedExtension` splits the book's aptitudes into:
 
-- **Already in an ancestor** (e.g. `General`, `Fighter Bonus Feat`, `Cleric Domain`) — skipped; the extension references base's row via `aptMap`. Same pattern a user fork uses when adding a new feat tagged `General`.
-- **Not in any ancestor** — inserted as a new row in the extension. Covers both extension-private names (e.g. `Ronin Bonus Feat`) and sibling-shared class spell lists (e.g. `Assassin Spells`, which multiple extensions independently create because siblings can't FK to each other).
+- **Already in the core** (e.g. `General`, `Fighter Bonus Feat`, `Cleric Domain`) — skipped; the extension references the core's row. Same pattern a user fork uses when adding a new feat tagged `General`.
+- **Not in the core** — inserted as a new row in the extension. Covers both extension-private names (e.g. `Ronin Bonus Feat`) and sibling-shared class spell lists (e.g. `Assassin Spells`, which multiple extensions independently create because siblings can't FK to each other).
 
 Consequences for link rows (`feats_aptitudes`, `powers_aptitudes`, `klass_level_feats`, `klass_level_powers`):
 
-- Links targeting a base-inherited name point at base's `aptitude_id`.
+- Links targeting a core name point at the core's `aptitude_id`.
 - Links targeting an extension-owned name point at the extension's own `aptitude_id`.
 - Every raw row satisfies the invariant: *the aptitude's ruleset is on the entity's source chain.* No cross-sibling FKs in the raw data; the runtime sibling mechanism handles cross-extension visibility.
 
-`cowFeatIntoExtension` / `cowFeatsIntoExtension` / `cowSpellsIntoExtension` respect this by copying base's `aptitude_id` unchanged for inherited links and adding new links only for aptitude names the extension owns.
-
-## Seed helpers
-
-The `seed-utils.ts` barrel provides:
-
-- `seedExtension()` — full extension seeding pipeline
-- `seedFeats()` — bulk feat insert with requirements, modifiers, aptitude links
-- `seedClass()` — class insert with levels, saves, skills, features, spell tables
-- `seedPowers()` — spell insert with aptitude links, levels, DC abilities, properties
-- `seedDomains()` — domain insert with spell lists, granted power modifiers
-- `cowFeatIntoExtension()` / `cowFeatsIntoExtension()` — COW single/batch feats
-- `cowSpellsIntoExtension()` — COW spells from other books
-- Requirement builders: `eq()`, `gte()`, `or()`, `and()`, `feat()`, `eqStr()`, `classReq()`
+A copy keeps the original's aptitude links, with the core's `aptitude_id`.
 
 ## Registry
 
-All packages are registered in `database/packages/registry.ts`. The runner processes them in order, installing new packages and applying updates to existing ones.
+All packages are registered in `database/packages/registry.ts`. The runner applies them in order: the core rules first, then its extensions.
 
 ```bash
 bun db:packages    # Apply all registered packages
@@ -182,19 +141,17 @@ bun db:packages    # Apply all registered packages
 
 ### Do
 
-- Use the scraper/generator pipeline for new content — don't hand-write seed arrays
-- Annotate overrides in `mapping.overrides`, not `detected`
+- Use the scraper and generator for new content; hand-write only what no page provides, in `content/`
+- Correct scraped content in `overrides`, the only hand-edited part of a reference file
 - Make update functions idempotent (upserts, guard clauses) so retries are safe
 - Use display name constants from `names.ts` to query rulesets
 - Always add modifiers and requirements when the source material defines them
-- Strip `mapping.features` to `{}` and resync to verify changes end-to-end
 
 ### Do not
 
 - Never delete seed data — characters reference rows by ID
-- Never modify seed files to fix deployed data — bump the version and add an `updates` entry
+- Never change the seeds to fix deployed data — add an `updates` entry
 - Never add requirements to existing feats/class features without careful consideration — it can retroactively invalidate characters
-- Never remove or reorder entries in `updates`
-- Never hardcode entity IDs — always query by name
-- Never skip a version number in `updates`
-- Never put customizations in `detected` — they'll be wiped on re-scrape
+- Never remove or reorder an update some database doesn't have yet, and never skip a version in `updates`
+- Never hardcode entity IDs — always look them up by name
+- Never edit `generated/` by hand — regenerate it

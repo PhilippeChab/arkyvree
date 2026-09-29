@@ -5,213 +5,32 @@
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/void-disciple/",
     "type": "class"
   },
-  "detected": {
-    "bab": "poor",
-    "casterLevelAdvancement": {
-      "levels": [
-        2,
-        4,
-        5,
-        6,
-        8,
-        10,
-        11,
-        12
-      ],
-      "type": "any"
-    },
-    "featNameMap": {
-      "heightenspell": "Heighten Spell",
-      "spellpenetration": "Spell Penetration"
-    },
-    "featureOccurrences": [
-      {
-        "levels": [
-          1
-        ],
-        "name": "Sense Void (Physical Senses,"
-      },
-      {
-        "levels": [
-          3,
-          7,
-          11
-        ],
-        "name": "Sense Void"
-      },
-      {
-        "levels": [
-          4,
-          8,
-          12
-        ],
-        "name": "Moment Of Clarity"
-      },
-      {
-        "levels": [
-          5
-        ],
-        "name": "Sense Void (Magical Senses,"
-      },
-      {
-        "levels": [
-          7
-        ],
-        "name": "Altering The Course"
-      },
-      {
-        "levels": [
-          9
-        ],
-        "name": "Sense Void (Empathic Senses,"
-      },
-      {
-        "levels": [
-          10
-        ],
-        "name": "Void Release"
-      },
-      {
-        "levels": [
-          12
-        ],
-        "name": "Void Suppression"
-      },
-      {
-        "levels": [
-          13
-        ],
-        "name": "Sense Void (Mental Senses,"
-      },
-      {
-        "levels": [
-          13
-        ],
-        "name": "Void Strike"
-      }
-    ],
-    "hd": 6,
-    "levels": 13,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.spellcraft.rank",
-        "value": "10",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.heightenspell.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.spellpenetration.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      }
-    ],
-    "saves": {
-      "fortitude": "poor",
-      "reflex": "poor",
-      "will": "good"
-    },
-    "skillPoints": 2
-  },
-  "mapping": {
-    "classFeatureAptitude": "Void Disciple Class Feature",
+  "overrides": {
+    "description": "Among all elemental forces composing the universe, the most potent and hardest to master is the binding essence that exists between and connects the others: Void. Those who follow this path recognize that every object in existence contains all fundamental elements, unified by this most intangible of essences. Void functions like the silence separating musical notes, providing structure and form to the whole composition. For those who grasp how Void relates to all other things and who possess the innate capacity to directly perceive that connection, concepts of distance and physical form become meaningless.",
     "features": {
       "Altering the Course": {
-        "description": "Once per day, a void disciple of 7th level or higher may apply a +20 bonus to any single attack roll, skill check, or ability check she makes. This bonus is personal and cannot be transferred to another character through any means. This supernatural ability does not require an action to activate and applies only to that one roll.",
-        "level": 7,
-        "seedName": "Altering the Course (Void Disciple)"
+        "description": "Once per day, a void disciple of 7th level or higher may apply a +20 bonus to any single attack roll, skill check, or ability check she makes. This bonus is personal and cannot be transferred to another character through any means. This supernatural ability does not require an action to activate and applies only to that one roll."
       },
       "Moment of Clarity": {
-        "description": "A void disciple who has reached 4th level or higher can temporarily bestow upon an ally the capacity to use any skill or feat (excluding ancestor feats). The void disciple must spend a standard action to touch the recipient. The target receives either a single feat or a number of ranks in one skill equal to that character's relevant ability modifier for the chosen skill. As an example, a character with a Dexterity of 14 would receive 2 ranks in Ride, yielding a total skill modifier of +4. This effect persists for 1 round per void disciple level. This supernatural ability can be used twice per day at 4th level, with one additional daily use gained for every four levels thereafter.",
-        "level": 4,
-        "seedName": "Moment of Clarity (Void Disciple)",
-        "stackable": true
+        "description": "A void disciple who has reached 4th level or higher can temporarily bestow upon an ally the capacity to use any skill or feat (excluding ancestor feats). The void disciple must spend a standard action to touch the recipient. The target receives either a single feat or a number of ranks in one skill equal to that character's relevant ability modifier for the chosen skill. As an example, a character with a Dexterity of 14 would receive 2 ranks in Ride, yielding a total skill modifier of +4. This effect persists for 1 round per void disciple level. This supernatural ability can be used twice per day at 4th level, with one additional daily use gained for every four levels thereafter."
       },
       "Sense Void": {
-        "description": "The fundamental technique a void disciple learns is the power to project her awareness outward, perceiving the hidden layer of reality that most individuals never experience. Her consciousness literally leaves her body and extends into the surrounding world, enabling her to employ all her standard senses (sight, hearing, touch, taste, and smell) to observe any location, creature, or object she focuses on. The void disciple must succeed on a Spellcraft check with the DC based on the distance to the target rather than familiarity. This ability cannot cross planar boundaries; a void disciple positioned beside a gate cannot project her senses through it. Every four levels beyond 1st, the void disciple unlocks the ability to perceive progressively deeper layers of reality. At 5th level, she gains the ability to use detect magic and detect evil at will. At 9th level, she can use discern lies and perceive emotional states, receiving a +10 bonus on Sense Motive checks. At 13th level, she can use detect thoughts at will. The void disciple may use this ability once per day at 1st level. For every two levels she gains beyond 1st, she receives one additional daily use (twice at 3rd level, three times at 5th, and so forth).",
-        "level": 1,
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "skills.sensemotive.misc",
-            "value": "10",
-            "valueType": "number"
-          }
-        ],
-        "seedName": "Sense Void (Void Disciple)",
-        "stackable": true
+        "description": "The fundamental technique a void disciple learns is the power to project her awareness outward, perceiving the hidden layer of reality that most individuals never experience. Her consciousness literally leaves her body and extends into the surrounding world, enabling her to employ all her standard senses (sight, hearing, touch, taste, and smell) to observe any location, creature, or object she focuses on. The void disciple must succeed on a Spellcraft check with the DC based on the distance to the target rather than familiarity. This ability cannot cross planar boundaries; a void disciple positioned beside a gate cannot project her senses through it. Every four levels beyond 1st, the void disciple unlocks the ability to perceive progressively deeper layers of reality. At 5th level, she gains the ability to use detect magic and detect evil at will. At 9th level, she can use discern lies and perceive emotional states, receiving a +10 bonus on Sense Motive checks. At 13th level, she can use detect thoughts at will. The void disciple may use this ability once per day at 1st level. For every two levels she gains beyond 1st, she receives one additional daily use (twice at 3rd level, three times at 5th, and so forth)."
       },
       "Spells per Day/Spells Known": {
-        "description": "A void disciple advances her spellcasting ability alongside her mastery of void powers. At 2nd, 4th, 5th, 6th, 8th, 10th, 11th, and 12th level, the character receives additional spells per day (and spells known, where relevant) as though she had gained a level in a spellcasting class she belonged to previously. She does not, however, receive any other benefits that class would normally provide (such as improved turning or rebuking of undead, bonus metamagic or item creation feats, and similar abilities). If the character possessed multiple spellcasting classes capable of casting 3rd-level spells prior to entering this prestige class, she must choose which class receives the spellcasting advancement at each applicable void disciple level.",
-        "level": 1,
-        "seedName": "Spells per Day/Spells Known (Void Disciple)"
+        "description": "A void disciple advances her spellcasting ability alongside her mastery of void powers. At 2nd, 4th, 5th, 6th, 8th, 10th, 11th, and 12th level, the character receives additional spells per day (and spells known, where relevant) as though she had gained a level in a spellcasting class she belonged to previously. She does not, however, receive any other benefits that class would normally provide (such as improved turning or rebuking of undead, bonus metamagic or item creation feats, and similar abilities). If the character possessed multiple spellcasting classes capable of casting 3rd-level spells prior to entering this prestige class, she must choose which class receives the spellcasting advancement at each applicable void disciple level."
       },
       "Void Release": {
-        "description": "Three times per day, a void disciple of 10th level or higher may touch an ally, enabling that creature to substitute its highest ability score modifier for any one lower ability score modifier (chosen by the recipient) for a number of rounds equal to half the void disciple's level. For instance, a badly injured fighter could apply his high Strength modifier in place of his low Dexterity modifier temporarily, thereby improving his Armor Class, Reflex saving throw bonus, ranged attack bonus, and all Dexterity-based skill checks.",
-        "level": 10,
-        "seedName": "Void Release (Void Disciple)"
+        "description": "Three times per day, a void disciple of 10th level or higher may touch an ally, enabling that creature to substitute its highest ability score modifier for any one lower ability score modifier (chosen by the recipient) for a number of rounds equal to half the void disciple's level. For instance, a badly injured fighter could apply his high Strength modifier in place of his low Dexterity modifier temporarily, thereby improving his Armor Class, Reflex saving throw bonus, ranged attack bonus, and all Dexterity-based skill checks."
       },
       "Void Strike": {
-        "description": "Once per day, a 13th-level void disciple may deliver a melee touch attack that inflicts 1d4 negative levels on the target. The void disciple receives 5 temporary hit points for each negative level imposed. A target whose negative levels equal or exceed its Hit Dice is slain. Each negative level imposes a -1 competence penalty on attack rolls, saving throws, skill checks, ability checks, and effective level (which affects the potency, duration, DC, and other parameters of spells and special abilities). In addition, a spellcasting target loses one spell or spell slot from its highest available spell level. Negative levels are cumulative. If the target survives, the negative levels fade after 13 hours. Because this ability draws upon the void disciple's command of void rather than negative energy, it cannot be used to empower undead creatures.",
-        "level": 13,
-        "seedName": "Void Strike (Void Disciple)"
+        "description": "Once per day, a 13th-level void disciple may deliver a melee touch attack that inflicts 1d4 negative levels on the target. The void disciple receives 5 temporary hit points for each negative level imposed. A target whose negative levels equal or exceed its Hit Dice is slain. Each negative level imposes a -1 competence penalty on attack rolls, saving throws, skill checks, ability checks, and effective level (which affects the potency, duration, DC, and other parameters of spells and special abilities). In addition, a spellcasting target loses one spell or spell slot from its highest available spell level. Negative levels are cumulative. If the target survives, the negative levels fade after 13 hours. Because this ability draws upon the void disciple's command of void rather than negative energy, it cannot be used to empower undead creatures."
       },
       "Void Suppression": {
-        "description": "Once per day, a void disciple of 12th level or higher may deliver a melee touch attack that compels the target to substitute its lowest ability score modifier for any one higher modifier (selected by the void disciple) for a duration of 5 rounds. For instance, this could force an ogre to apply its low Intelligence modifier in place of its high Strength modifier, dramatically reducing the power of its physical attacks.",
-        "level": 12,
-        "seedName": "Void Suppression (Void Disciple)"
+        "description": "Once per day, a void disciple of 12th level or higher may deliver a melee touch attack that compels the target to substitute its lowest ability score modifier for any one higher modifier (selected by the void disciple) for a duration of 5 rounds. For instance, this could force an ogre to apply its low Intelligence modifier in place of its high Strength modifier, dramatically reducing the power of its physical attacks."
       },
       "Weapon and Armor Proficiency": {
-        "description": "This prestige class does not grant proficiency with any weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Void Disciple)"
-      }
-    },
-    "occurrenceMap": {
-      "Altering The Course": "Altering the Course",
-      "Moment Of Clarity": "Moment of Clarity",
-      "Sense Void": "Sense Void",
-      "Sense Void (Empathic Senses,": "Sense Void",
-      "Sense Void (Magical Senses,": "Sense Void",
-      "Sense Void (Mental Senses,": "Sense Void",
-      "Sense Void (Physical Senses,": "Sense Void",
-      "Void Release": "Void Release",
-      "Void Strike": "Void Strike",
-      "Void Suppression": "Void Suppression"
-    },
-    "overrides": {
-      "description": "Among all elemental forces composing the universe, the most potent and hardest to master is the binding essence that exists between and connects the others: Void. Those who follow this path recognize that every object in existence contains all fundamental elements, unified by this most intangible of essences. Void functions like the silence separating musical notes, providing structure and form to the whole composition. For those who grasp how Void relates to all other things and who possess the innate capacity to directly perceive that connection, concepts of distance and physical form become meaningless.",
-      "features": {
-        "Altering the Course": {
-          "description": "Once per day, a void disciple of 7th level or higher may apply a +20 bonus to any single attack roll, skill check, or ability check she makes. This bonus is personal and cannot be transferred to another character through any means. This supernatural ability does not require an action to activate and applies only to that one roll."
-        },
-        "Moment of Clarity": {
-          "description": "A void disciple who has reached 4th level or higher can temporarily bestow upon an ally the capacity to use any skill or feat (excluding ancestor feats). The void disciple must spend a standard action to touch the recipient. The target receives either a single feat or a number of ranks in one skill equal to that character's relevant ability modifier for the chosen skill. As an example, a character with a Dexterity of 14 would receive 2 ranks in Ride, yielding a total skill modifier of +4. This effect persists for 1 round per void disciple level. This supernatural ability can be used twice per day at 4th level, with one additional daily use gained for every four levels thereafter."
-        },
-        "Sense Void": {
-          "description": "The fundamental technique a void disciple learns is the power to project her awareness outward, perceiving the hidden layer of reality that most individuals never experience. Her consciousness literally leaves her body and extends into the surrounding world, enabling her to employ all her standard senses (sight, hearing, touch, taste, and smell) to observe any location, creature, or object she focuses on. The void disciple must succeed on a Spellcraft check with the DC based on the distance to the target rather than familiarity. This ability cannot cross planar boundaries; a void disciple positioned beside a gate cannot project her senses through it. Every four levels beyond 1st, the void disciple unlocks the ability to perceive progressively deeper layers of reality. At 5th level, she gains the ability to use detect magic and detect evil at will. At 9th level, she can use discern lies and perceive emotional states, receiving a +10 bonus on Sense Motive checks. At 13th level, she can use detect thoughts at will. The void disciple may use this ability once per day at 1st level. For every two levels she gains beyond 1st, she receives one additional daily use (twice at 3rd level, three times at 5th, and so forth)."
-        },
-        "Spells per Day/Spells Known": {
-          "description": "A void disciple advances her spellcasting ability alongside her mastery of void powers. At 2nd, 4th, 5th, 6th, 8th, 10th, 11th, and 12th level, the character receives additional spells per day (and spells known, where relevant) as though she had gained a level in a spellcasting class she belonged to previously. She does not, however, receive any other benefits that class would normally provide (such as improved turning or rebuking of undead, bonus metamagic or item creation feats, and similar abilities). If the character possessed multiple spellcasting classes capable of casting 3rd-level spells prior to entering this prestige class, she must choose which class receives the spellcasting advancement at each applicable void disciple level."
-        },
-        "Void Release": {
-          "description": "Three times per day, a void disciple of 10th level or higher may touch an ally, enabling that creature to substitute its highest ability score modifier for any one lower ability score modifier (chosen by the recipient) for a number of rounds equal to half the void disciple's level. For instance, a badly injured fighter could apply his high Strength modifier in place of his low Dexterity modifier temporarily, thereby improving his Armor Class, Reflex saving throw bonus, ranged attack bonus, and all Dexterity-based skill checks."
-        },
-        "Void Strike": {
-          "description": "Once per day, a 13th-level void disciple may deliver a melee touch attack that inflicts 1d4 negative levels on the target. The void disciple receives 5 temporary hit points for each negative level imposed. A target whose negative levels equal or exceed its Hit Dice is slain. Each negative level imposes a -1 competence penalty on attack rolls, saving throws, skill checks, ability checks, and effective level (which affects the potency, duration, DC, and other parameters of spells and special abilities). In addition, a spellcasting target loses one spell or spell slot from its highest available spell level. Negative levels are cumulative. If the target survives, the negative levels fade after 13 hours. Because this ability draws upon the void disciple's command of void rather than negative energy, it cannot be used to empower undead creatures."
-        },
-        "Void Suppression": {
-          "description": "Once per day, a void disciple of 12th level or higher may deliver a melee touch attack that compels the target to substitute its lowest ability score modifier for any one higher modifier (selected by the void disciple) for a duration of 5 rounds. For instance, this could force an ogre to apply its low Intelligence modifier in place of its high Strength modifier, dramatically reducing the power of its physical attacks."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "This prestige class does not grant proficiency with any weapons or armor."
-        }
+        "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     }
   },

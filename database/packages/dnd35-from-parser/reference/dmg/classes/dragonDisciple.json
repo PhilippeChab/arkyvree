@@ -5,247 +5,79 @@
     "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/dragon-disciple/",
     "type": "class"
   },
-  "detected": {
-    "bab": "medium",
-    "featNameMap": {},
-    "featureOccurrences": [
-      {
-        "levels": [
-          1,
-          4,
-          7
-        ],
-        "name": "Natural Armor Increase"
-      },
-      {
-        "levels": [
-          2,
-          4,
-          6,
-          8
-        ],
-        "name": "Ability Boost"
-      },
-      {
-        "levels": [
-          2
-        ],
-        "name": "Claws And Bite"
-      },
-      {
-        "levels": [
-          3,
-          7
-        ],
-        "name": "Breath Weapon"
-      },
-      {
-        "levels": [
-          5,
-          10
-        ],
-        "name": "Blindsense"
-      },
-      {
-        "levels": [
-          9
-        ],
-        "name": "Wings"
-      },
-      {
-        "levels": [
-          10
-        ],
-        "name": "Dragon Apotheosis"
-      }
-    ],
-    "hasOwnSpells": true,
-    "hd": 12,
-    "levels": 10,
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.knowledgearcana.rank",
-        "value": "8",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "spellcasting.arcane",
-        "value": "1",
-        "valueType": "number"
-      }
-    ],
-    "saves": {
-      "fortitude": "good",
-      "reflex": "poor",
-      "will": "good"
-    },
-    "skillPoints": 2,
-    "spellsPerDay": [
-      [
-        1
-      ],
-      [
-        1
-      ],
-      [
-        0
-      ],
-      [
-        1
-      ],
-      [
-        1
-      ],
-      [
-        1
-      ],
-      [
-        0
-      ],
-      [
-        1
-      ],
-      [
-        1
-      ],
-      [
-        0
-      ]
-    ]
-  },
-  "mapping": {
-    "classFeatureAptitude": "Dragon Disciple Class Feature",
+  "overrides": {
+    "description": "Dragon disciples channel their arcane power to awaken the latent draconic blood flowing through their veins.",
     "features": {
       "Ability Boost": {
-        "description": "As the dragon disciple progresses through this prestige class, he receives ability score increases at various levels as indicated in the class table. These bonuses are cumulative and are treated as if they were gained from character level advancement.",
-        "level": 2,
-        "seedName": "Ability Boost (Dragon Disciple)",
-        "stackable": true
+        "description": "As the dragon disciple progresses through this prestige class, he receives ability score increases at various levels as indicated in the class table. These bonuses are cumulative and are treated as if they were gained from character level advancement."
       },
       "Blindsense": {
-        "description": "Starting at 5th level, the dragon disciple acquires blindsense out to 30 feet. Through non-visual sensory input such as keen hearing or smell, he can detect things beyond his sight. He typically does not need to attempt Spot or Listen checks to perceive and locate creatures within the range of his blindsense, as long as he has line of effect to them. However, any creature he cannot actually see retains total concealment, and the standard miss chance for attacking concealed targets still applies. Blindsense does not remove the limitations that visibility imposes on movement. Additionally, a creature relying on blindsense still loses its Dexterity bonus to Armor Class against attackers it cannot see. At 10th level, the range of blindsense extends to 60 feet.",
-        "level": 5,
-        "seedName": "Blindsense (Dragon Disciple)",
-        "stackable": true
+        "description": "Starting at 5th level, the dragon disciple acquires blindsense out to 30 feet. Through non-visual sensory input such as keen hearing or smell, he can detect things beyond his sight. He typically does not need to attempt Spot or Listen checks to perceive and locate creatures within the range of his blindsense, as long as he has line of effect to them. However, any creature he cannot actually see retains total concealment, and the standard miss chance for attacking concealed targets still applies. Blindsense does not remove the limitations that visibility imposes on movement. Additionally, a creature relying on blindsense still loses its Dexterity bonus to Armor Class against attackers it cannot see. At 10th level, the range of blindsense extends to 60 feet."
       },
       "Breath Weapon": {
-        "description": "At 3rd level, the dragon disciple develops a breath weapon reflecting his chosen draconic ancestry. The energy type and area shape are determined by the specific dragon variety he descends from. Initially, the breath weapon inflicts 2d8 points of damage of the relevant energy type. This increases to 4d8 at 7th level and reaches its maximum potency of 6d8 when the disciple achieves dragon apotheosis at 10th level. Regardless of its power, the breath weapon may only be used once per day. All standard rules governing dragon breath weapons apply unless stated otherwise here. The saving throw DC equals 10 + class level + Constitution modifier. A breath weapon that takes the form of a line extends 60 feet long and is 5 feet high and 5 feet wide. A cone-shaped breath weapon reaches 30 feet in length.",
-        "level": 3,
-        "seedName": "Breath Weapon (Dragon Disciple)",
-        "stackable": true
+        "description": "At 3rd level, the dragon disciple develops a breath weapon reflecting his chosen draconic ancestry. The energy type and area shape are determined by the specific dragon variety he descends from. Initially, the breath weapon inflicts 2d8 points of damage of the relevant energy type. This increases to 4d8 at 7th level and reaches its maximum potency of 6d8 when the disciple achieves dragon apotheosis at 10th level. Regardless of its power, the breath weapon may only be used once per day. All standard rules governing dragon breath weapons apply unless stated otherwise here. The saving throw DC equals 10 + class level + Constitution modifier. A breath weapon that takes the form of a line extends 60 feet long and is 5 feet high and 5 feet wide. A cone-shaped breath weapon reaches 30 feet in length."
       },
       "Claws and Bite": {
-        "description": "Upon reaching 2nd level, the dragon disciple develops claw and bite natural attacks if he does not already possess them. If the disciple already has such attacks, he uses whichever damage values are higher. The disciple is automatically proficient with these natural weapons. During a full attack, he applies his full base attack bonus to his bite attack but suffers a -5 penalty on claw attacks. The Multiattack feat reduces this penalty to -2.",
-        "level": 2,
-        "seedName": "Claws and Bite (Dragon Disciple)"
+        "description": "Upon reaching 2nd level, the dragon disciple develops claw and bite natural attacks if he does not already possess them. If the disciple already has such attacks, he uses whichever damage values are higher. The disciple is automatically proficient with these natural weapons. During a full attack, he applies his full base attack bonus to his bite attack but suffers a -5 penalty on claw attacks. The Multiattack feat reduces this penalty to -2."
       },
       "Dragon Apotheosis": {
-        "description": "At 10th level, the dragon disciple completes his transformation and fully embraces his draconic nature, gaining the half-dragon template. His breath weapon reaches maximum strength (as described above), and he receives a +4 bonus to Strength and a +2 bonus to Charisma. His natural armor bonus rises to +4, and he gains low-light vision, darkvision out to 60 feet, immunity to sleep and paralysis effects, and immunity to the energy type associated with his breath weapon.",
-        "level": 10,
-        "seedName": "Dragon Apotheosis (Dragon Disciple)"
+        "description": "At 10th level, the dragon disciple completes his transformation and fully embraces his draconic nature, gaining the half-dragon template. His breath weapon reaches maximum strength (as described above), and he receives a +4 bonus to Strength and a +2 bonus to Charisma. His natural armor bonus rises to +4, and he gains low-light vision, darkvision out to 60 feet, immunity to sleep and paralysis effects, and immunity to the energy type associated with his breath weapon."
       },
       "Natural Armor Increase": {
-        "description": "At 1st, 4th, and 7th level, the dragon disciple's body gradually transforms to reflect his draconic lineage. Small iridescent scales emerge on his skin, barely perceptible initially but growing increasingly prominent as he advances. This transformation grants a cumulative increase to the character's natural armor bonus, as shown in the class table. As the scales thicken and spread, the disciple's outward appearance steadily takes on the physical traits of his dragon ancestor.",
-        "level": 1,
-        "seedName": "Natural Armor Increase (Dragon Disciple)",
-        "stackable": true
+        "description": "At 1st, 4th, and 7th level, the dragon disciple's body gradually transforms to reflect his draconic lineage. Small iridescent scales emerge on his skin, barely perceptible initially but growing increasingly prominent as he advances. This transformation grants a cumulative increase to the character's natural armor bonus, as shown in the class table. As the scales thicken and spread, the disciple's outward appearance steadily takes on the physical traits of his dragon ancestor."
       },
       "Weapon and Armor Proficiency": {
-        "description": "This prestige class does not grant proficiency with any weapons or armor.",
-        "level": 1,
-        "seedName": "Weapon and Armor Proficiency (Dragon Disciple)"
+        "description": "This prestige class does not grant proficiency with any weapons or armor."
       },
       "Wings": {
-        "description": "At 9th level, the dragon disciple sprouts a pair of draconic wings. He gains the ability to fly at a speed equal to his base land speed with average maneuverability.",
-        "level": 9,
-        "seedName": "Wings (Dragon Disciple)"
+        "description": "At 9th level, the dragon disciple sprouts a pair of draconic wings. He gains the ability to fly at a speed equal to his base land speed with average maneuverability."
       }
     },
-    "occurrenceMap": {
-      "Ability Boost": "Ability Boost",
-      "Blindsense": "Blindsense",
-      "Breath Weapon": "Breath Weapon",
-      "Claws And Bite": "Claws and Bite",
-      "Dragon Apotheosis": "Dragon Apotheosis",
-      "Natural Armor Increase": "Natural Armor Increase",
-      "Wings": "Wings"
-    },
-    "overrides": {
-      "description": "Dragon disciples channel their arcane power to awaken the latent draconic blood flowing through their veins.",
-      "features": {
-        "Ability Boost": {
-          "description": "As the dragon disciple progresses through this prestige class, he receives ability score increases at various levels as indicated in the class table. These bonuses are cumulative and are treated as if they were gained from character level advancement."
-        },
-        "Blindsense": {
-          "description": "Starting at 5th level, the dragon disciple acquires blindsense out to 30 feet. Through non-visual sensory input such as keen hearing or smell, he can detect things beyond his sight. He typically does not need to attempt Spot or Listen checks to perceive and locate creatures within the range of his blindsense, as long as he has line of effect to them. However, any creature he cannot actually see retains total concealment, and the standard miss chance for attacking concealed targets still applies. Blindsense does not remove the limitations that visibility imposes on movement. Additionally, a creature relying on blindsense still loses its Dexterity bonus to Armor Class against attackers it cannot see. At 10th level, the range of blindsense extends to 60 feet."
-        },
-        "Breath Weapon": {
-          "description": "At 3rd level, the dragon disciple develops a breath weapon reflecting his chosen draconic ancestry. The energy type and area shape are determined by the specific dragon variety he descends from. Initially, the breath weapon inflicts 2d8 points of damage of the relevant energy type. This increases to 4d8 at 7th level and reaches its maximum potency of 6d8 when the disciple achieves dragon apotheosis at 10th level. Regardless of its power, the breath weapon may only be used once per day. All standard rules governing dragon breath weapons apply unless stated otherwise here. The saving throw DC equals 10 + class level + Constitution modifier. A breath weapon that takes the form of a line extends 60 feet long and is 5 feet high and 5 feet wide. A cone-shaped breath weapon reaches 30 feet in length."
-        },
-        "Claws and Bite": {
-          "description": "Upon reaching 2nd level, the dragon disciple develops claw and bite natural attacks if he does not already possess them. If the disciple already has such attacks, he uses whichever damage values are higher. The disciple is automatically proficient with these natural weapons. During a full attack, he applies his full base attack bonus to his bite attack but suffers a -5 penalty on claw attacks. The Multiattack feat reduces this penalty to -2."
-        },
-        "Dragon Apotheosis": {
-          "description": "At 10th level, the dragon disciple completes his transformation and fully embraces his draconic nature, gaining the half-dragon template. His breath weapon reaches maximum strength (as described above), and he receives a +4 bonus to Strength and a +2 bonus to Charisma. His natural armor bonus rises to +4, and he gains low-light vision, darkvision out to 60 feet, immunity to sleep and paralysis effects, and immunity to the energy type associated with his breath weapon."
-        },
-        "Natural Armor Increase": {
-          "description": "At 1st, 4th, and 7th level, the dragon disciple's body gradually transforms to reflect his draconic lineage. Small iridescent scales emerge on his skin, barely perceptible initially but growing increasingly prominent as he advances. This transformation grants a cumulative increase to the character's natural armor bonus, as shown in the class table. As the scales thicken and spread, the disciple's outward appearance steadily takes on the physical traits of his dragon ancestor."
-        },
-        "Weapon and Armor Proficiency": {
-          "description": "This prestige class does not grant proficiency with any weapons or armor."
-        },
-        "Wings": {
-          "description": "At 9th level, the dragon disciple sprouts a pair of draconic wings. He gains the ability to fly at a speed equal to his base land speed with average maneuverability."
-        }
+    "modifiers": [
+      {
+        "level": 2,
+        "operator": "add",
+        "target": "abilities.strength",
+        "value": "2",
+        "valueType": "number"
       },
-      "modifiers": [
-        {
-          "level": 2,
-          "operator": "add",
-          "target": "abilities.strength",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "level": 4,
-          "operator": "add",
-          "target": "abilities.strength",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "level": 6,
-          "operator": "add",
-          "target": "abilities.constitution",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "level": 8,
-          "operator": "add",
-          "target": "abilities.intelligence",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "level": 10,
-          "operator": "add",
-          "target": "abilities.strength",
-          "value": "4",
-          "valueType": "number"
-        },
-        {
-          "level": 10,
-          "operator": "add",
-          "target": "abilities.charisma",
-          "value": "2",
-          "valueType": "number"
-        }
-      ],
-      "noSpells": true
-    }
+      {
+        "level": 4,
+        "operator": "add",
+        "target": "abilities.strength",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "level": 6,
+        "operator": "add",
+        "target": "abilities.constitution",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "level": 8,
+        "operator": "add",
+        "target": "abilities.intelligence",
+        "value": "2",
+        "valueType": "number"
+      },
+      {
+        "level": 10,
+        "operator": "add",
+        "target": "abilities.strength",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "level": 10,
+        "operator": "add",
+        "target": "abilities.charisma",
+        "value": "2",
+        "valueType": "number"
+      }
+    ],
+    "noSpells": true
   },
   "raw": {
     "classFeatures": [

@@ -22,6 +22,7 @@
 import { readFileSync } from "node:fs";
 import { Pool, type PoolClient } from "pg";
 import { registry } from "@/database/packages/registry.ts";
+import { planPackages } from "@/database/packages/runner.ts";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -90,7 +91,13 @@ try {
     );
 
     const remoteMap = new Map(remotePackages.map((p) => [p.name, p]));
-    const codeMap = new Map(registry.map((p) => [p.name, p]));
+    // What the next deploy's runner does: it applies no package while one has a problem.
+    const { plans, problems } = planPackages(registry, new Map(remotePackages.map((p) => [p.name, p.version])));
+    const codeMap = new Map([
+      ...registry.map((p): [string, number | undefined] => [p.name, undefined]),
+      ...plans.map((p): [string, number | undefined] => [p.pkg.name, p.version]),
+    ]);
+    const blocked = problems.size > 0;
     const allNames = [...new Set([...remoteMap.keys(), ...codeMap.keys()])].sort();
 
     const pad = Math.max(...allNames.map((n) => n.length), 4);
@@ -99,23 +106,27 @@ try {
 
     for (const name of allNames) {
       const r = remoteMap.get(name);
-      const c = codeMap.get(name);
+      const codeVersion = codeMap.get(name);
+      const problem = problems.get(name);
       const rv = r ? `v${r.version}` : "—";
-      const cv = c ? `v${c.version}` : "—";
+      const cv = codeVersion !== undefined ? `v${codeVersion}` : "—";
       let status: string;
-      if (!r) {
-        status = "missing on remote (next deploy will install)";
+      if (problem) {
+        status = `next deploy will be REFUSED (${problem.join("; ")})`;
         hasDrift = true;
-      } else if (!c) {
+      } else if (!r) {
+        status = blocked ? "missing on remote (blocked: the next deploy applies no package)" : "missing on remote (next deploy will install)";
+        hasDrift = true;
+      } else if (codeVersion === undefined) {
         status = "on remote but not in code";
         hasDrift = true;
-      } else if (r.version === c.version) {
+      } else if (r.version === codeVersion) {
         status = "in sync";
-      } else if (r.version < c.version) {
-        status = `next deploy will upgrade (v${r.version} -> v${c.version})`;
+      } else if (r.version < codeVersion) {
+        status = blocked ? "behind (blocked: the next deploy applies no package)" : `next deploy will upgrade (v${r.version} -> v${codeVersion})`;
         hasDrift = true;
       } else {
-        status = `remote ahead of code (v${r.version} > v${c.version})`;
+        status = `remote ahead of code (v${r.version} > v${codeVersion})`;
         hasDrift = true;
       }
       console.log(`${name.padEnd(pad)}  ${rv.padEnd(6)}  ${cv.padEnd(4)}  ${status}`);

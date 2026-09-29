@@ -1,11 +1,10 @@
 import { join, basename } from "node:path";
-import { existsSync, readdirSync } from "node:fs";
 import { $ } from "bun";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
 /**
- * Re-scrapes all existing reference JSON files (preserving mapping),
+ * Re-scrapes all existing reference JSON files (keeping their overrides),
  * then regenerates all TypeScript output.
  *
  * Usage: bun run parser:sync
@@ -36,7 +35,7 @@ async function main() {
 
   console.log(`Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`);
 
-  // Phase 1: Re-scrape all regular refs (preserves mapping)
+  // Phase 1: Re-scrape all regular refs (keeps their overrides)
   console.log("=== Scraping ===");
   for (const ref of regularRefs) {
     const name = basename(ref.path, ".json");
@@ -57,8 +56,9 @@ async function main() {
     }
   }
 
-  // Phase 1b: Re-scrape master domain reference (if domains are in scope)
-  if (!typeFilter || typeFilter === "domain") {
+  // Phase 1b: Re-scrape the domains reference, which every book shares: only when the generator then regenerates
+  // every book's domains (no book or name filter; see generateAll)
+  if (!bookFilter && !nameFilter && (!typeFilter || typeFilter === "domain")) {
     process.stdout.write("  domains (master)... ");
     const result = await $`bun ${SCRAPER} domain`.quiet().nothrow();
     if (result.exitCode !== 0) {
@@ -69,39 +69,12 @@ async function main() {
     }
   }
 
-  // Phase 2: Regenerate all regular refs
+  // Phase 2: Regenerate everything in scope, domains included
   console.log("\n=== Generating ===");
-  for (const ref of regularRefs) {
-    const name = basename(ref.path, ".json");
-    process.stdout.write(`  ${name}... `);
-    const result = await $`bun ${GENERATOR} ${ref.path}`.quiet().nothrow();
-    if (result.exitCode !== 0) {
-      console.log("FAILED");
-      console.error(result.stderr.toString());
-    } else {
-      console.log("ok");
-    }
-  }
-
-  // Phase 2b: Generate domains for each book that has spells
-  // The generator reads the master reference and filters by available spells
-  const masterDomainPath = join(REF_DIR, "domains.json");
-  if (existsSync(masterDomainPath) && (!typeFilter || typeFilter === "domain")) {
-    const booksWithSpells = readdirSync(REF_DIR, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && existsSync(join(REF_DIR, d.name, "spells.json")))
-      .map((d) => d.name)
-      .filter((b) => !bookFilter || b === bookFilter);
-
-    for (const b of booksWithSpells) {
-      process.stdout.write(`  domains (${b})... `);
-      const result = await $`bun ${GENERATOR} ${masterDomainPath} --book ${b}`.quiet().nothrow();
-      if (result.exitCode !== 0) {
-        console.log("FAILED");
-        console.error(result.stderr.toString());
-      } else {
-        console.log("ok");
-      }
-    }
+  const result = await $`bun ${GENERATOR} ${process.argv.slice(2)}`.quiet().nothrow();
+  if (result.exitCode !== 0) {
+    console.log("FAILED");
+    console.error(result.stderr.toString());
   }
 
   console.log(`\nDone. Synced ${refs.length} references.`);

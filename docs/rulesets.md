@@ -223,7 +223,7 @@ until the override is restored.
 
 ### Aptitudes and the Sibling Map
 
-Aptitudes are named pools — they have `name` but no per-ruleset content — so the seed only creates a row in the ruleset that *introduces* the name (see `docs/packages.md:COW-ing base entities into extensions → Aptitude ownership rules`). Two cases matter here:
+Aptitudes are named pools — they have `name` but no per-ruleset content — so the seed only creates a row in the ruleset that *introduces* the name (see `docs/packages.md`: COW-ing core entities into extensions → Aptitude ownership rules). Two cases matter here:
 
 - **Base-inherited names** (`General`, `Cleric Domain`, `Fighter Bonus Feat`, etc.): exactly one row exists, in base. Extensions and forks adding new feats/spells just link to base's id via `aptMap`. No sibling rows, no dedup needed.
 - **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. The sibling mechanism (the aptitude-name grouping in `buildCowData`, `cow/cowData.ts`) picks a winner per name across the source chain, closest first. Losers go into `siblingMap` / `siblingIds`, so the compose step drops them, and into `idResolveMap`, so references to a loser remap to the visible winner (its local copy, if the fork has one). They are intentionally not added to `overrideMap`, which is for true overrides only. The user never sees duplicates.
@@ -630,6 +630,6 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/rulesets/hooks/*.ts` | Universal hook interfaces (`LevelsHooks`, `ClassesHooks`, …) |
 | `server/rulesets/dnd3.5/*.ts` | 3.5 implementation (DetailedCharacter, LevelUpProjector, TargetPaths, hooks, properties, buildCharacterResponse) |
 | `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
-| `database/packages/dnd35/seed-utils.ts` | `cowFeatIntoExtension` — reusable helper for COW-ing base feats into extension seeds |
+| `database/packages/dnd35/seed/cow.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/RulesetsService.test.ts` | Includes `extension siblingMap` test block — sibling detection, filtering, requirement/modifier/aptitude merging |

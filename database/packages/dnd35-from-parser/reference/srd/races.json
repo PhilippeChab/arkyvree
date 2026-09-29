@@ -5,280 +5,25 @@
     "sourceUrl": "https://dndtools.net/races/?rulebook=6",
     "type": "race"
   },
-  "detected": {
+  "overrides": {
     "Dwarf": {
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.constitution.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.charisma.misc",
-          "value": "-2",
-          "valueType": "number"
-        }
-      ]
+      "description": "Dwarves are known for their skill in warfare, their ability to withstand physical and magical punishment, their hard work, and their capacity for drinking ale. Dwarves are slow but steady, and they hate to retreat. They have darkvision, can move normally in heavy armor, and gain racial bonuses to saving throws, hit points, weapon proficiencies with axes and hammers, and crafting."
     },
     "Elf": {
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.dexterity.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.constitution.misc",
-          "value": "-2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.listen.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.search.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.spot.misc",
-          "value": "2",
-          "valueType": "number"
-        }
-      ]
+      "description": "Elves are known for their poetry, song, and magical arts. They are slow to make friends and enemies, but once they do, these relationships last for generations. They are immune to sleep effects and gain racial bonuses to saving throws against enchantment spells, as well as racial bonuses to perception and fine manipulation tasks."
     },
     "Gnome": {
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.strength.misc",
-          "value": "-2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.constitution.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.listen.misc",
-          "value": "2",
-          "valueType": "number"
-        }
-      ],
-      "unresolvedModifiers": [
-        "Unresolved skill bonus: +2 on \"Craft (alchemy)\""
-      ]
+      "description": "Gnomes are known for their humor and engineering. Though gnomes generally get along with dwarves, they have much in common with elves, especially their love of nature and dislike of goblins and giants. Gnomes have low-light vision and gain racial bonuses to saving throws against illusions, weapon proficiencies with gnome-sized weapons, and skill checks for listening."
     },
     "Half-Orc": {
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.strength.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.intelligence.misc",
-          "value": "-2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.charisma.misc",
-          "value": "-2",
-          "valueType": "number"
-        }
-      ]
-    },
-    "Half-elf": {
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "skills.listen.misc",
-          "value": "1",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.search.misc",
-          "value": "1",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.spot.misc",
-          "value": "1",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.diplomacy.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.gatherinformation.misc",
-          "value": "2",
-          "valueType": "number"
-        }
-      ]
-    },
-    "Halfling": {
-      "modifiers": []
-    },
-    "Human": {
-      "modifiers": []
-    }
-  },
-  "mapping": {
-    "Dwarf": {
-      "description": "Dwarves are known for their skill in warfare, their ability to withstand physical and magical punishment, their hard work, and their capacity for drinking ale. Dwarves are slow but steady, and they hate to retreat. They have darkvision, can move normally in heavy armor, and gain racial bonuses to saving throws, hit points, weapon proficiencies with axes and hammers, and crafting.",
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.constitution.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.charisma.misc",
-          "value": "-2",
-          "valueType": "number"
-        }
-      ]
-    },
-    "Elf": {
-      "description": "Elves are known for their poetry, song, and magical arts. They are slow to make friends and enemies, but once they do, these relationships last for generations. They are immune to sleep effects and gain racial bonuses to saving throws against enchantment spells, as well as racial bonuses to perception and fine manipulation tasks.",
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.dexterity.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.constitution.misc",
-          "value": "-2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.listen.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.search.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.spot.misc",
-          "value": "2",
-          "valueType": "number"
-        }
-      ]
-    },
-    "Gnome": {
-      "description": "Gnomes are known for their humor and engineering. Though gnomes generally get along with dwarves, they have much in common with elves, especially their love of nature and dislike of goblins and giants. Gnomes have low-light vision and gain racial bonuses to saving throws against illusions, weapon proficiencies with gnome-sized weapons, and skill checks for listening.",
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.strength.misc",
-          "value": "-2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.constitution.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.listen.misc",
-          "value": "2",
-          "valueType": "number"
-        }
-      ]
-    },
-    "Half-Orc": {
-      "description": "Half-orcs are the result of a union between humans and orcs. They inherit the strength and durability of their orc ancestors, but are often shunned by human and orc society alike. Half-orcs have darkvision and a racial bonus to strength.",
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "abilities.strength.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.intelligence.misc",
-          "value": "-2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "abilities.charisma.misc",
-          "value": "-2",
-          "valueType": "number"
-        }
-      ]
+      "description": "Half-orcs are the result of a union between humans and orcs. They inherit the strength and durability of their orc ancestors, but are often shunned by human and orc society alike. Half-orcs have darkvision and a racial bonus to strength."
     },
     "Half-elf": {
       "description": "Half-elves have both human and elven ancestry, and share the curiosity, inventiveness, and ambition of their human ancestors and the refined senses, love of nature, and artistic tastes of their elven ancestors. They have low-light vision, immunity to sleep effects, and racial bonuses to saving throws against enchantment spells.",
-      "modifiers": [
-        {
-          "operator": "add",
-          "target": "skills.listen.misc",
-          "value": "1",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.search.misc",
-          "value": "1",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.spot.misc",
-          "value": "1",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.diplomacy.misc",
-          "value": "2",
-          "valueType": "number"
-        },
-        {
-          "operator": "add",
-          "target": "skills.gatherinformation.misc",
-          "value": "2",
-          "valueType": "number"
-        }
-      ]
+      "name": "Half-Elf"
     },
     "Halfling": {
+      "baseSpeed": 20,
       "description": "Halflings are clever, capable, and resourceful survivors. They are practical and down-to-earth, and often excel as opportunists and professionals. Halflings have good reflexes and coordination, and gain racial bonuses to saving throws for Fortitude and Will, skill checks for climbing, jumping, and moving silently, weapon proficiencies with thrown weapons and slings, and Armor Class.",
       "modifiers": [
         {
@@ -335,7 +80,8 @@
           "value": "1",
           "valueType": "number"
         }
-      ]
+      ],
+      "size": "Small"
     },
     "Human": {
       "description": "Humans are the most adaptable of the common races. They are quick to learn and possess great ingenuity. Humans have no special bonuses or penalties due to their race. They can choose any class, and they gain an extra feat at first level and an extra skill point at each level.",
@@ -354,105 +100,9 @@
         }
       ]
     },
-    "overrides": {
-      "Dwarf": {
-        "description": "Dwarves are known for their skill in warfare, their ability to withstand physical and magical punishment, their hard work, and their capacity for drinking ale. Dwarves are slow but steady, and they hate to retreat. They have darkvision, can move normally in heavy armor, and gain racial bonuses to saving throws, hit points, weapon proficiencies with axes and hammers, and crafting."
-      },
-      "Elf": {
-        "description": "Elves are known for their poetry, song, and magical arts. They are slow to make friends and enemies, but once they do, these relationships last for generations. They are immune to sleep effects and gain racial bonuses to saving throws against enchantment spells, as well as racial bonuses to perception and fine manipulation tasks."
-      },
-      "Gnome": {
-        "description": "Gnomes are known for their humor and engineering. Though gnomes generally get along with dwarves, they have much in common with elves, especially their love of nature and dislike of goblins and giants. Gnomes have low-light vision and gain racial bonuses to saving throws against illusions, weapon proficiencies with gnome-sized weapons, and skill checks for listening."
-      },
-      "Half-Orc": {
-        "description": "Half-orcs are the result of a union between humans and orcs. They inherit the strength and durability of their orc ancestors, but are often shunned by human and orc society alike. Half-orcs have darkvision and a racial bonus to strength."
-      },
-      "Half-elf": {
-        "description": "Half-elves have both human and elven ancestry, and share the curiosity, inventiveness, and ambition of their human ancestors and the refined senses, love of nature, and artistic tastes of their elven ancestors. They have low-light vision, immunity to sleep effects, and racial bonuses to saving throws against enchantment spells.",
-        "name": "Half-Elf"
-      },
-      "Halfling": {
-        "baseSpeed": 20,
-        "description": "Halflings are clever, capable, and resourceful survivors. They are practical and down-to-earth, and often excel as opportunists and professionals. Halflings have good reflexes and coordination, and gain racial bonuses to saving throws for Fortitude and Will, skill checks for climbing, jumping, and moving silently, weapon proficiencies with thrown weapons and slings, and Armor Class.",
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "abilities.strength.misc",
-            "value": "-2",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "abilities.dexterity.misc",
-            "value": "2",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "skills.climb.misc",
-            "value": "2",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "skills.jump.misc",
-            "value": "2",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "skills.movesilently.misc",
-            "value": "2",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "skills.listen.misc",
-            "value": "2",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "saves.fortitude.misc",
-            "value": "1",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "saves.reflex.misc",
-            "value": "1",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "saves.will.misc",
-            "value": "1",
-            "valueType": "number"
-          }
-        ],
-        "size": "Small"
-      },
-      "Human": {
-        "description": "Humans are the most adaptable of the common races. They are quick to learn and possess great ingenuity. Humans have no special bonuses or penalties due to their race. They can choose any class, and they gain an extra feat at first level and an extra skill point at each level.",
-        "modifiers": [
-          {
-            "operator": "add",
-            "target": "aptitudes.general.allowed",
-            "value": "1",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "target": "skills.budget.perlevel",
-            "value": "1",
-            "valueType": "number"
-          }
-        ]
-      },
-      "reviewed": [
-        "Unresolved skill bonus: +2 on \"Craft (alchemy)\""
-      ]
-    }
+    "reviewed": [
+      "Unresolved skill bonus: +2 on \"Craft (alchemy)\""
+    ]
   },
   "raw": [
     {
