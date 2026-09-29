@@ -108,7 +108,7 @@ A reference file (`reference/<book>/…json`) has three parts:
 
 What the generator reads is derived from the two each time a reference is loaded (`tools/references.ts`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate, with the overrides applied). So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
-`bun run parser:validate` lists unresolved detections (not yet listed in `overrides.reviewed`) and class overrides that change nothing, because detection now derives the same value.
+`bun run parser:validate` lists unresolved detections (not yet listed in `overrides.reviewed`), classes the generator refuses, and class overrides that change nothing (they hold what's derived without them) or that the generator ignores.
 
 ## COW-ing core entities into extensions
 

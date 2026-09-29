@@ -61,9 +61,10 @@ export const db = new Proxy(_db, {
 export async function withTransaction<T>(
   callback: (tx: Transaction) => Promise<T>,
 ): Promise<T> {
+  // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.
   const testDb = globalThis.__getTestDb?.();
   if (testDb) {
-    const result = await callback(testDb as Transaction);
+    const result = await testDb.transaction(callback);
     clearRequestCache();
     return result;
   }

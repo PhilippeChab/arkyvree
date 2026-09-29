@@ -56,8 +56,9 @@ async function main() {
     }
   }
 
-  // Phase 1b: Re-scrape master domain reference (if domains are in scope)
-  if (!typeFilter || typeFilter === "domain") {
+  // Phase 1b: Re-scrape the domains reference, which every book shares: only when the generator then regenerates
+  // every book's domains (no book or name filter; see generateAll)
+  if (!bookFilter && !nameFilter && (!typeFilter || typeFilter === "domain")) {
     process.stdout.write("  domains (master)... ");
     const result = await $`bun ${SCRAPER} domain`.quiet().nothrow();
     if (result.exitCode !== 0) {

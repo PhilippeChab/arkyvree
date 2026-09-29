@@ -186,6 +186,12 @@ export function detectClassFeatFamily(name: string): string | undefined {
   return undefined;
 }
 
+/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
+export function classSpells(ref: ClassReference) {
+  const { spells, overrides } = ref.mapping;
+  return spells && overrides?.spells ? { ...spells, ...overrides.spells } : spells;
+}
+
 /**
  * A class's aptitude picks: detected, with the overrides' (`mergedPicks`), then split per level where a bonus feat
  * list has one per level (`aptitudePicks`), and the first level each aptitude gets a pick (by slug).

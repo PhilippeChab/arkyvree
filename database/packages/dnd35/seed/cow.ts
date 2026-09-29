@@ -81,25 +81,11 @@ async function copySpellLists(db: Db, fromId: string, toId: string) {
   await linkPower(db, toId, links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)));
 }
 
-/**
- * Finds the ruleset's power by name, regardless of case: its own, or an inherited one it copies first. With two
- * names that differ only in case, the later one wins.
- */
-export function powerFinder(db: Db, ctx: SeedContext) {
-  const byLowerName = (ids: Record<string, string>) => new Map(Object.entries(ids).map(([name, id]) => [name.toLowerCase(), { name, id }]));
-  const own = byLowerName(ctx.powerMap);
-  const inherited = byLowerName(ctx.inheritedPowerMap);
-  return async (name: string): Promise<string | undefined> => {
-    const key = name.toLowerCase();
-    const found = own.get(key);
-    if (found) return found.id;
-    const original = inherited.get(key);
-    if (!original) return undefined;
-    const id = await cowPower(db, original.id, ctx.rulesetId);
-    ctx.powerMap[original.name] = id;
-    own.set(key, { name: original.name, id });
-    return id;
-  };
+/** The ruleset's own power named so, copying the inherited one first when it has none. */
+export async function ownPower(db: Db, ctx: SeedContext, name: string): Promise<string | undefined> {
+  const inheritedId = ctx.inheritedPowerMap[name];
+  if (!ctx.powerMap[name] && inheritedId) ctx.powerMap[name] = await cowPower(db, inheritedId, ctx.rulesetId);
+  return ctx.powerMap[name];
 }
 
 /**
@@ -155,14 +141,10 @@ async function addClassLevelAlternatives(db: Db, featId: string, classLevels: Co
  */
 export async function cowSpellsIntoExtension(db: Db, ctx: SeedContext, entries: CowSpellEntry[]) {
   for (const entry of entries) {
+    // A power of its own keeps the inherited one's spell lists too, as a copy does.
     const inheritedId = ctx.inheritedPowerMap[entry.spell];
-    let powerId = ctx.powerMap[entry.spell];
-    if (!powerId && inheritedId) {
-      powerId = await cowPower(db, inheritedId, ctx.rulesetId);
-      ctx.powerMap[entry.spell] = powerId;
-    } else if (powerId && inheritedId) {
-      await copySpellLists(db, inheritedId, powerId);
-    }
+    if (ctx.powerMap[entry.spell] && inheritedId) await copySpellLists(db, inheritedId, ctx.powerMap[entry.spell]);
+    const powerId = await ownPower(db, ctx, entry.spell);
     if (!powerId) continue;
     await linkPower(db, powerId, entry.aptitudes.filter(({ aptitude }) => ctx.aptMap[aptitude])
       .map(({ aptitude, level }) => ({ aptitudeId: ctx.aptMap[aptitude], level })));

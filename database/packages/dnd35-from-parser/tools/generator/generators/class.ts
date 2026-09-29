@@ -1,6 +1,6 @@
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import { buildAptitudeExpansionMaps, buildPoolParentNameMap, classAptitudePicks, detectClassFeatFamily, expandPerLevelAptitudePicks, insertOrdinalInName, loadExistingFeats, mergeAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { buildAptitudeExpansionMaps, buildPoolParentNameMap, classAptitudePicks, classSpells, detectClassFeatFamily, expandPerLevelAptitudePicks, insertOrdinalInName, loadExistingFeats, mergeAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, collectImportsFromReq, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   toConstName,
@@ -109,9 +109,7 @@ export function generateClassSeed(ref: ClassReference): string {
     lines.push(`  casterType: "${casterType}",`);
   }
 
-  const spells = overrides.spells
-    ? mapping.spells ? { ...mapping.spells, ...overrides.spells } : undefined
-    : mapping.spells;
+  const spells = classSpells(ref);
   if (spells) {
     lines.push(`  spells: {`);
     lines.push(`    slug: "${escapeString(spells.slug)}",`);

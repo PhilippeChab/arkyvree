@@ -83,7 +83,7 @@ mapping                             # Built from detected, with the overrides ap
 
 1. Start with `detected` values (bab, saves, requirements, aptitudePicks, etc.)
 2. Layer on `mapping` (features, spells, classFeatureAptitude)
-3. `overrides` win over both — any field set there replaces the detected or mapped value
+3. `overrides` win over both — any field set there replaces the detected or mapped value, except `spells`: its fields go over the detected spells, and a class with none detected ignores them (`parser:validate` reports it)
 4. For features specifically: `overrides.features[name]` fields are merged on top of the detected feature (set a field to `null` to delete it)
 
-`bun run parser:validate` reports an override that equals what's derived without it: it changes nothing, so remove it.
+`bun run parser:validate` reports a class override that changes nothing, so remove it: it holds what's derived without it, and the class's generated files come out the same without it. An override that differs from what's derived stays, even when nothing uses it today.

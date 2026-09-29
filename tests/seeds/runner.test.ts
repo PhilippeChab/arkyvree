@@ -57,15 +57,23 @@ describe("Applying content packages", () => {
     await record(staler, 5);
     const error = await applyPackages(db, [fresh, stale, staler]).catch((e: Error) => e);
     expect(error).toBeInstanceOf(Error);
-    expect(String(error)).toContain(`${stale.name} v2 (its seeds are v3)`);
-    expect(String(error)).toContain(`${staler.name} v5 (its seeds are v6)`);
+    expect(String(error)).toContain(`${stale.name} is at v2, below its seeds (v3)`);
+    expect(String(error)).toContain(`${staler.name} is at v5, below its seeds (v6)`);
     expect(ran).toEqual([]);
     expect(await recordedVersion(fresh.name)).toBeUndefined();
   });
 
-  test("refuses updates that don't follow the seeds without a gap", async () => {
+  test("applies no package when one's updates don't follow its seeds without a gap, and reports it with the refusals", async () => {
     const ran: string[] = [];
-    const pkg = testPackage(3, [5], ran);
-    await expect(applyPackages(db, [pkg])).rejects.toThrow(`${pkg.name}: update v5 doesn't follow v3`);
+    const [fresh, gapped, stale, both] = [testPackage(1, [], ran), testPackage(3, [5], ran), testPackage(3, [], ran), testPackage(3, [5], ran)];
+    await record(stale, 2);
+    await record(both, 2);
+    const error = await applyPackages(db, [fresh, gapped, stale, both]).catch((e: Error) => e);
+    expect(String(error)).toContain(`${gapped.name}: update v5 doesn't follow v3`);
+    expect(String(error)).toContain(`${stale.name} is at v2, below its seeds (v3)`);
+    expect(String(error)).toContain(`${both.name}: update v5 doesn't follow v3`);
+    expect(String(error)).toContain(`${both.name} is at v2, below its seeds (v3)`);
+    expect(ran).toEqual([]);
+    expect(await recordedVersion(fresh.name)).toBeUndefined();
   });
 });

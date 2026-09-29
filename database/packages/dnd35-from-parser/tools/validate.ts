@@ -3,7 +3,8 @@
  * overrides that change nothing.
  *
  * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks (except those listed in
- * `overrides.reviewed`), and class overrides equal to what's derived without them.
+ * `overrides.reviewed`), classes the generator refuses, and class overrides that hold what's derived without them
+ * (and leave its generated files the same) or that the generator ignores.
  *
  * Usage:
  *   bun run parser:validate                              # all issues
@@ -12,9 +13,9 @@
  */
 
 import { join } from "node:path";
-import { loadReference, readStoredReference, resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { deepEqual, discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
+import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 const REF_DIR = join(import.meta.dirname!, "../reference");
 
@@ -29,50 +30,10 @@ type Issue = {
   book: string;
   file: string;
   label: string;
-  kind: "error" | "modifier" | "prereq" | "aptitude pick" | "redundant override";
+  kind: "error" | "modifier" | "prereq" | "aptitude pick" | "redundant override" | "ignored override" | "generator refuses the class";
   text: string;
   entityName?: string;
 };
-
-/** What each class override replaces, as derived without it. */
-const DERIVED: Record<string, (ref: ClassReference) => unknown> = {
-  spells: (ref) => ref.mapping.spells,
-  bonusSpellAbility: (ref) => ref.mapping.bonusSpellAbility,
-  // Kept while prerequisites are unresolved: it stands for the reviewed requirements.
-  requirements: (ref) => (ref.detected.unresolvedPrereqs?.length ? undefined : ref.detected.requirements),
-  bab: (ref) => ref.detected.bab,
-  saves: (ref) => ref.detected.saves,
-  aptitudePicks: (ref) => ref.detected.aptitudePicks,
-  casterType: (ref) => ref.detected.casterType,
-};
-
-/**
- * A class's overrides that change nothing: each field equals what's derived with every other override applied,
- * and a feature field leaves the feature as it would be without it.
- */
-function redundantClassOverrides(stored: StoredReference<"class">): string[] {
-  const { overrides } = stored;
-  if (!overrides) return [];
-  const derive = (remove: (rest: NonNullable<typeof overrides>) => void) => {
-    const rest = structuredClone(overrides);
-    remove(rest);
-    return resolveReference("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
-  };
-  const withAll = resolveReference("class", stored);
-  const isSame = (a: unknown, b: unknown) => a !== undefined && b !== undefined && deepEqual(a, b);
-  return [
-    ...overrides.modifiers?.length === 0 ? ["modifiers"] : [],
-    ...Object.entries(DERIVED)
-      .filter(([key, derived]) => isSame(Reflect.get(overrides, key), derived(derive((rest) => Reflect.deleteProperty(rest, key)))))
-      .map(([key]) => key),
-    ...Object.entries(overrides.features ?? {}).flatMap(([name, fields]) => Object.keys(fields)
-      .filter((key) => {
-        const without = derive((rest) => rest.features?.[name] && Reflect.deleteProperty(rest.features[name], key)).mapping.features[name];
-        return deepEqual(Reflect.get(withAll.mapping.features[name] ?? {}, key), Reflect.get(without ?? {}, key));
-      })
-      .map((key) => `features.${name}.${key}`)),
-  ];
-}
 
 function main() {
   const { bookFilter, typeFilter } = parseCliArgs();
@@ -92,9 +53,13 @@ function main() {
     if (ref.type === "class") {
       const data = loadReference(ref.path, "class");
       collectIssues(data.detected, "class", new Set(data.mapping.overrides?.reviewed), ref.book, ref.path, issues, data.raw.name);
-      for (const text of redundantClassOverrides(readStoredReference(ref.path, "class"))) {
-        issues.push({ book: ref.book, file: ref.path, label: "class", kind: "redundant override", text, entityName: data.raw.name });
-      }
+      const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
+      const classIssues: { kind: Issue["kind"]; text: string }[] = [
+        ...refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : [],
+        ...redundant.map((text) => ({ kind: "redundant override" as const, text })),
+        ...ignored.map((text) => ({ kind: "ignored override" as const, text })),
+      ];
+      for (const { kind, text } of classIssues) issues.push({ book: ref.book, file: ref.path, label: "class", kind, text, entityName: data.raw.name });
     } else if (ref.type === "feat") {
       // The generator skips epic feats unless an override keeps them.
       const data = loadReference(ref.path, "feat");

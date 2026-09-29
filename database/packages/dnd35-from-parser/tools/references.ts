@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { buildDetected, buildInitialMapping, buildOccurrenceMap } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass.ts";
 import { buildDomainDetected, buildDomainMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectDomain.ts";
 import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
@@ -124,14 +125,16 @@ const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
 
 /**
  * Loads a reference of `type`, with what the generator reads derived from it. A process loads each file once (the
- * generator reads the same references many times, and writes none): the reference is frozen, since others share it.
+ * generator reads the same references many times, and writes none). The reference is shared, so it's frozen:
+ * changing it throws. Its type stays mutable, as the generator's functions and the content types take mutable data.
  */
 export function loadReference<T extends ReferenceType>(path: string, type: T): ReferenceByType[T] {
   const cache: Map<string, ReferenceByType[T]> = loaded[type];
-  const cached = cache.get(path);
+  const key = resolve(path);
+  const cached = cache.get(key);
   if (cached) return cached;
-  const reference = deepFreeze(resolveReference(type, readStoredReference(path, type)));
-  cache.set(path, reference);
+  const reference = deepFreeze(resolveReference(type, readStoredReference(key, type)));
+  cache.set(key, reference);
   return reference;
 }
 

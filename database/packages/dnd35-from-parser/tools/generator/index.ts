@@ -7,7 +7,7 @@ import { generateClassSeed, generateFeatSeeds as generateClassFeatSeeds } from "
 import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
 import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/generators/spell.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
-import { buildDomainSeeds, buildDomainFeatPoolSeeds, buildFavoredEnemyFeats, buildFeatSeeds, buildItemSeeds, buildMagicItemSeeds, buildRaceSeeds, buildSpellSeeds, buildWizardSchoolSeeds, collectAptitudes } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { buildDomainSeeds, classSpells, buildDomainFeatPoolSeeds, buildFavoredEnemyFeats, buildFeatSeeds, buildItemSeeds, buildMagicItemSeeds, buildRaceSeeds, buildSpellSeeds, buildWizardSchoolSeeds, collectAptitudes } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
@@ -703,11 +703,7 @@ function regenerateCowFeats(book: string) {
   const classFeatureNames = new Set<string>();
   for (const file of classFiles) {
     const ref = loadReference(join(classDir, file), "class");
-    const features = ref.mapping?.overrides?.features ?? {};
-    for (const [, feat] of Object.entries(features)) {
-      if (feat.seedName) classFeatureNames.add(feat.seedName);
-    }
-    for (const [, feat] of Object.entries(ref.mapping?.features ?? {})) {
+    for (const feat of Object.values(ref.mapping.features)) {
       if (feat.seedName) classFeatureNames.add(feat.seedName);
     }
   }
@@ -795,7 +791,7 @@ function regenerateCowSpells(book: string) {
   const inheritedApts = new Map<string, { aptitude: string }[]>();
   for (const file of classFiles) {
     const ref = loadReference(join(classDir, file), "class");
-    const spells = ref.mapping?.overrides?.spells ?? ref.mapping?.spells;
+    const spells = classSpells(ref);
     if (spells && ref.raw?.name) {
       classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
       if (spells.inheritsFrom) {

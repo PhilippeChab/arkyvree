@@ -15,39 +15,54 @@ function updatesOf(pkg: ContentPackage) {
   return versions.map((version) => ({ version, update: pkg.updates![version] }));
 }
 
-/** The version a package's code brings a database to: its last update's, or its seeds'. */
-export const packageVersion = (pkg: ContentPackage) => updatesOf(pkg).at(-1)?.version ?? pkg.seedsVersion;
-
 /**
  * A database's version of a package below its seeds can't be brought up to date: the updates it lacks were folded
- * into the seeds. Undefined when there's nothing to refuse.
+ * into the seeds.
  */
-export function refusal(pkg: ContentPackage, applied: number | undefined) {
-  return applied !== undefined && applied < pkg.seedsVersion ? `${pkg.name} v${applied} (its seeds are v${pkg.seedsVersion})` : undefined;
+function refusal(pkg: ContentPackage, applied: number | undefined) {
+  return applied !== undefined && applied < pkg.seedsVersion
+    ? `${pkg.name} is at v${applied}, below its seeds (v${pkg.seedsVersion}), which contain the updates it lacks`
+    : undefined;
 }
 
 /**
- * Installs the packages missing from the database, and brings the others up to date. It applies none when one is
- * below its seeds (`refusal`).
+ * What applying the packages does to a database at the `applied` versions: each package's updates, and the version
+ * they bring it to. And what stops it, by package: updates that don't follow the seeds, or a database below them.
+ * The runner applies no package while there's a problem.
  */
+export function planPackages(packages: ContentPackage[], applied: Map<string, number>) {
+  const plans: { pkg: ContentPackage; updates: ReturnType<typeof updatesOf>; version: number }[] = [];
+  const problems = new Map<string, string[]>();
+  for (const pkg of packages) {
+    const found = [refusal(pkg, applied.get(pkg.name))].filter((problem) => problem !== undefined);
+    try {
+      const updates = updatesOf(pkg);
+      plans.push({ pkg, updates, version: updates.at(-1)?.version ?? pkg.seedsVersion });
+    } catch (error) {
+      found.push(error instanceof Error ? error.message : String(error));
+    }
+    if (found.length > 0) problems.set(pkg.name, found);
+  }
+  return { plans, problems };
+}
+
+/** Installs the packages missing from the database, and brings the others up to date, or applies none (`planPackages`). */
 export async function applyPackages(db: Db, packages: ContentPackage[] = registry) {
   const applied = new Map(
     (await db.select({ name: contentPackagesInRules.name, version: contentPackagesInRules.version }).from(contentPackagesInRules))
       .map((row) => [row.name, row.version]),
   );
 
-  const refused = packages.map((pkg) => refusal(pkg, applied.get(pkg.name))).filter((line) => line !== undefined);
-  if (refused.length > 0) {
+  const { plans, problems } = planPackages(packages, applied);
+  if (problems.size > 0) {
     throw new Error([
-      "No package applied: these are below their seeds, which now contain the updates they lack:",
-      ...refused.map((line) => `  - ${line}`),
-      "Reset a development database. Any other needs those updates back (from git history) until it has them.",
+      "No package applied:",
+      ...[...problems.values()].flat().map((line) => `  - ${line}`),
+      "A database below a package's seeds needs those updates back (from git history) until it has them, or a reset if it's a development one.",
     ].join("\n"));
   }
 
-  for (const pkg of packages) {
-    const updates = updatesOf(pkg);
-    const version = packageVersion(pkg);
+  for (const { pkg, updates, version } of plans) {
     const from = applied.get(pkg.name);
 
     if (from !== undefined && from >= version) {
