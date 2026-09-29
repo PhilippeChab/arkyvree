@@ -11,7 +11,7 @@ import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, pars
 import { type ReferenceType, resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import type { FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { sanitizeJsonValues, sortKeysDeep, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { toCamelCase, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { fetchHtml, fetchAllPages, configureHttp } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { buildListingUrl, buildRaceListingUrl, getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
@@ -36,14 +36,33 @@ function writeIfChanged(outPath: string, data: StoredReference): void {
   writeFileSync(outPath, newJson);
 }
 
-/** Saves a reference as scraped (its `_meta` and `raw`), keeping the overrides its file had. */
-function saveReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+/** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
+function scrapedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]): StoredReference<T> {
   const overrides = storedOverrides(outPath, _meta.type);
   if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  const reference: StoredReference<T> = sanitizeJsonValues({ _meta, raw, ...overrides ? { overrides } : {} });
+  return sanitizeJsonValues({ _meta, raw, ...overrides ? { overrides } : {} });
+}
+
+/** Writes a reference to its file, when it changed. */
+function writeReference(outPath: string, reference: StoredReference) {
   writeIfChanged(outPath, reference);
   console.log(`Written: ${outPath}`);
-  return reference;
+}
+
+/** Saves a reference as scraped (its `_meta` and `raw`), keeping the overrides its file had. */
+function saveReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+  writeReference(outPath, scrapedReference(outPath, _meta, raw));
+}
+
+/**
+ * Saves a reference as scraped (`saveReference`), and returns it with what the generator reads derived from it. A
+ * reference that can't be derived isn't written.
+ */
+function saveResolvedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+  const reference = scrapedReference(outPath, _meta, raw);
+  const resolved = resolveReference(_meta.type, reference);
+  writeReference(outPath, reference);
+  return resolved;
 }
 
 /** A listing's entries across its pages, with absolute URLs: only `bookSlug`'s, when given. */
@@ -61,8 +80,6 @@ async function discover(listingUrl: string, section: string, bookSlug?: string) 
 // ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
-
-const BASE_DIR = join(import.meta.dirname!, "../../");
 
 async function main() {
   const args = process.argv.slice(2);
@@ -207,10 +224,9 @@ async function scrapeClass(url: string, book: string) {
   console.log(`  Features: ${raw.classFeatures.length}`);
 
   const slug = toCamelCase(raw.name);
-  const outPath = join(BASE_DIR, "reference", book, "classes", `${slug}.json`);
+  const outPath = join(REFERENCE_DIR, book, "classes", `${slug}.json`);
 
-  const stored = saveReference(outPath, _meta, raw);
-  const { detected } = resolveReference("class", stored);
+  const { detected } = saveResolvedReference(outPath, _meta, raw);
   console.log(`  BAB: ${detected.bab}`);
   console.log(`  Saves: fort=${detected.saves.fortitude} ref=${detected.saves.reflex} will=${detected.saves.will}`);
   if (detected.casterLevelAdvancement) {
@@ -244,7 +260,7 @@ async function scrapeAllFeats(book: string) {
 
   console.log(`Parsed ${raw.length} feats`);
 
-  const outPath = join(BASE_DIR, "reference", book, "feats.json");
+  const outPath = join(REFERENCE_DIR, book, "feats.json");
 
   saveReference(outPath, {
     type: "feat",
@@ -301,7 +317,7 @@ async function scrapeAllSpells(book: string) {
     console.log(`  ${school}: ${count}`);
   }
 
-  const outPath = join(BASE_DIR, "reference", book, "spells.json");
+  const outPath = join(REFERENCE_DIR, book, "spells.json");
 
   saveReference(outPath, {
     type: "spell",
@@ -346,7 +362,7 @@ async function scrapeAllDomains() {
     console.log(`  ${d.name}: ${d.spells.length} spells`);
   }
 
-  const outPath = join(BASE_DIR, "reference", "domains.json");
+  const outPath = join(REFERENCE_DIR, "domains.json");
 
   saveReference(outPath, {
     type: "domain",
@@ -386,7 +402,7 @@ async function scrapeAllRaces(book: string) {
 
   console.log(`Parsed ${raw.length} races`);
 
-  const outPath = join(BASE_DIR, "reference", book, "races.json");
+  const outPath = join(REFERENCE_DIR, book, "races.json");
 
   saveReference(outPath, {
     type: "race",
@@ -448,10 +464,9 @@ async function scrapeAllItems(book: string) {
     goods: rawGoods,
   };
 
-  const outPath = join(BASE_DIR, "reference", book, "items.json");
+  const outPath = join(REFERENCE_DIR, book, "items.json");
 
-  const reference = saveReference(outPath, { type: "item", sourceUrls: D20SRD_URLS, book, scrapedAt: new Date().toISOString() }, raw);
-  const { detected } = resolveReference("item", reference);
+  const { detected } = saveResolvedReference(outPath, { type: "item", sourceUrls: D20SRD_URLS, book, scrapedAt: new Date().toISOString() }, raw);
   console.log(`\nDetection results:`);
   const matchedWeapons = Object.values(detected.weapons).filter((w) => w.generatorName).length;
   const matchedArmor = Object.values(detected.armor).filter((a) => a.generatorName).length;
@@ -529,7 +544,7 @@ async function scrapeAllMagicItems(book: string) {
 
   console.log(`\nTotal raw entries: ${raw.length}`);
 
-  const outPath = join(BASE_DIR, "reference", book, "magicItems.json");
+  const outPath = join(REFERENCE_DIR, book, "magicItems.json");
 
   const categoryCounts: Record<string, number> = {};
   for (const entry of raw) {

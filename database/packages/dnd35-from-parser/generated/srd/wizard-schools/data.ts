@@ -1,7 +1,5 @@
 import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
 
-export const WIZARD_PROHIBITED_SCHOOL = "WIZARD_PROHIBITED_SCHOOL";
-
 export const WIZARD_SCHOOLS: WizardSchoolDefinition[] = [
   {
     name: "Abjuration",

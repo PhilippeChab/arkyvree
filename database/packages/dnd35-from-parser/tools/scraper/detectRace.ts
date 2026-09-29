@@ -1,7 +1,7 @@
 import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
-import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SKILL_MAP, SAVE_MAP, detectModifiersOf, modifierMapping, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { SKILL_MAP, SAVE_MAP, detectModifiersOf, modifierMapping, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Ability name → slug mapping
@@ -36,11 +36,7 @@ export function buildRaceMapping(
 // Internal detection
 // ---------------------------------------------------------------------------
 
-function detectRaceModifiers(entry: RaceReference["raw"][number]): {
-  modifiers: ModifierSeed[];
-  errors: string[];
-  unresolvedModifiers: string[];
-} {
+function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetection {
   const modifiers: ModifierSeed[] = [];
   const errors: string[] = [];
   const unresolvedModifiers: string[] = [];
@@ -166,7 +162,7 @@ function detectSaveBonuses(
 // ---------------------------------------------------------------------------
 
 function detectHumanTraits(
-  features: { name: string; description: string }[],
+  features: NamedText[],
   modifiers: ModifierSeed[],
 ): void {
   const fullText = features.map((f) => `${f.name} ${f.description}`).join(" ");

@@ -12,12 +12,9 @@
  *   bun run parser:validate complete-warrior              # only a specific book
  */
 
-import { join } from "node:path";
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
 import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-
-const REF_DIR = join(import.meta.dirname!, "../reference");
 
 type DetectedEntry = {
   errors?: string[];
@@ -38,7 +35,7 @@ type Issue = {
 function main() {
   const { bookFilter, typeFilter } = parseCliArgs();
 
-  let refs = discoverRefs(REF_DIR);
+  let refs = discoverRefs();
   if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
   if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
 

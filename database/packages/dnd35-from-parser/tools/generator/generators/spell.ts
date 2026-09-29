@@ -1,5 +1,5 @@
 import type { SpellSeedWithLevel } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { escapeString } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import { quote, stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
 
 // ---------------------------------------------------------------------------
 // Generate PowerSeed[] TypeScript files from a SpellReference
@@ -32,27 +32,27 @@ function generateLevelFile(constName: string, spells: SpellSeedWithLevel[]): str
 
   for (const spell of spells) {
     lines.push(`  {`);
-    lines.push(`    name: "${escapeString(spell.name)}",`);
-    lines.push(`    description: "${escapeString(spell.description)}",`);
+    lines.push(`    name: ${quote(spell.name)},`);
+    lines.push(`    description: ${quote(spell.description)},`);
 
-    const aptStrings = spell.aptitudes.map((a) => `"${a}"`).join(", ");
+    const aptStrings = spell.aptitudes.map(quote).join(", ");
     lines.push(`    aptitudes: [${aptStrings}],`);
 
     if (spell.aptitudeLevels && Object.keys(spell.aptitudeLevels).length > 0) {
       const entries = Object.entries(spell.aptitudeLevels)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => `"${k}": ${v}`)
+        .map(([k, v]) => `${quote(k)}: ${v}`)
         .join(", ");
       lines.push(`    aptitudeLevels: { ${entries} },`);
     }
 
     if (spell.savingThrow) {
-      lines.push(`    savingThrow: "${escapeString(spell.savingThrow)}",`);
+      lines.push(`    savingThrow: ${quote(spell.savingThrow)},`);
     }
 
     lines.push(`    properties: [`);
     for (const prop of spell.properties) {
-      lines.push(`      { type: "${prop.type}", value: "${escapeString(prop.value)}" },`);
+      lines.push(`      ${stringifyProperty(prop)},`);
     }
     lines.push(`    ],`);
     lines.push(`  },`);

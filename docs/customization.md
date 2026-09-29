@@ -148,7 +148,7 @@ Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
 | `WEAPON_REACH`             | _(only if > 0)_                     |
 
 Proficiency requirements (on the item, checked at equip time):
-- **Simple**: `feats.simpleweaponproficiency.possessed == true`
+- **Simple**: OR chain — `feats.simpleweaponproficiency.possessed` OR `feats.simpleweaponproficiency<weapon>.possessed`
 - **Martial**: OR chain — `feats.martialweaponproficiency.possessed` OR `feats.martialweaponproficiency<weapon>.possessed`
 - **Exotic**: `feats.exoticweaponproficiency<weapon>.possessed == true`
 
@@ -284,18 +284,7 @@ The character engine computes the **base, permanent character sheet** — no tem
 
 ### Proficiency requirements on weapon feats:
 
-Use OR groups for martial weapons (blanket OR per-weapon):
-
-```ts
-function proficiencyReqs(w: string): RequirementEntry[] {
-  if (SIMPLE_SET.has(w)) return [profReq("Simple Weapon Proficiency")];
-  if (MARTIAL_SET.has(w))
-    return [
-      or(profReq("Martial Weapon Proficiency"), profReq(`Martial Weapon Proficiency: ${w}`)),
-    ];
-  return [profReq(`Exotic Weapon Proficiency: ${w}`)];
-}
-```
+A simple or martial weapon's proficiency is its group's or its own (an OR group); an exotic weapon's is its own, as for the weapon items above. `simple`, `martial` and `exotic` in `database/packages/dnd35/content/weapons.ts` build them, and `proficiencyRequirements(weapon)` picks the weapon's.
 
 ### Item creation feats require caster level (approximated as character level):
 

@@ -4,12 +4,13 @@
 
 import { stripSeparators } from "@/shared/utils.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import { SIMPLE_WEAPONS, MARTIAL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 // Re-export stripSeparators — used as the slug function throughout the tools
 export { stripSeparators } from "@/shared/utils.ts";
@@ -141,8 +142,11 @@ export function stripClassSuffix(name: string, className: string): string | unde
 
 type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string; filter?: string } };
 
+/** The books' references: a folder per book, and the files every book shares (domains.json). */
+export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
+
 /** The reference files under `refDir`: each book's, and the ones every book shares (domains.json). */
-export function discoverRefs(refDir: string): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
+export function discoverRefs(refDir = REFERENCE_DIR): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
   const files = readdirSync(refDir, { withFileTypes: true, recursive: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
     .map((entry) => join(entry.parentPath, entry.name))
@@ -160,6 +164,26 @@ export function discoverRefs(refDir: string): { path: string; type: ReferenceTyp
 export const SKILL_MAP: Record<string, string> = {};
 for (const name of SKILL_NAMES) {
   SKILL_MAP[name.toLowerCase()] = stripSeparators(name);
+}
+
+/**
+ * A skill's slug: its own ("Knowledge (arcana)" → "knowledgearcana"), else its base skill's, for a specialization the
+ * skill list doesn't name ("Perform (dance)" → "perform").
+ */
+export function skillSlug(name: string): string {
+  const fullKey = name.toLowerCase().trim();
+  if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
+  const baseName = name.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+  return SKILL_MAP[baseName] ?? stripSeparators(baseName);
+}
+
+/** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
+export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
+  if (!/\(any\)/i.test(name)) return undefined;
+  const baseName = name.replace(/\s*\(any\)/i, "").trim().toLowerCase();
+  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) => gte(`skills.${stripSeparators(s)}.rank`, ranks));
+  if (checks.length <= 1) return checks[0];
+  return or(...checks);
 }
 
 // ---------------------------------------------------------------------------
@@ -190,11 +214,12 @@ export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
 // Per-entity modifiers — used by detectDomain, detectRace
 // ---------------------------------------------------------------------------
 
-type ModifierDetection = { modifiers: ModifierSeed[]; errors: string[]; unresolvedModifiers: string[] };
+/** What detecting an entry's modifiers finds: its modifiers, the invalid paths and the text it couldn't parse. */
+export type ModifierDetection = { modifiers: ModifierSeed[]; errors: string[]; unresolvedModifiers: string[] };
 
 /** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
 export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: (entry: E) => ModifierDetection) {
-  const detected: Record<string, { modifiers: ModifierSeed[]; errors?: string[]; unresolvedModifiers?: string[] }> = {};
+  const detected: Record<string, DetectedModifiers> = {};
   for (const entry of raw) {
     const { modifiers, errors, unresolvedModifiers } = detect(entry);
     detected[entry.name] = {
@@ -241,13 +266,6 @@ export function validateModifiers(
   }
   return { validated, errors };
 }
-
-// ---------------------------------------------------------------------------
-// Weapon sets — used by buildSeeds, generator/feat
-// ---------------------------------------------------------------------------
-
-export const SIMPLE_SET = new Set(SIMPLE_WEAPONS);
-export const MARTIAL_SET = new Set(MARTIAL_WEAPONS);
 
 // ---------------------------------------------------------------------------
 // SAVE_MAP — used by detectFeat
@@ -307,10 +325,7 @@ export function normalizeName(name: string): string {
 export const MAX_DESC = 2000;
 
 export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
-  const clean = sanitizeText(text)
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const clean = normalizeWs(sanitizeText(text));
   return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
 }
 

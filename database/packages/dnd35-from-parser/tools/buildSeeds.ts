@@ -6,21 +6,15 @@
  */
 
 import type { DomainDefinition, FeatSeed, ItemDef, ModifierSeed, PowerSeed, RaceDefinition, RequirementEntry, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
-import type { ClassReference, DomainReference, FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, ItemReference, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import {
-  favoredEnemy as FAVORED_ENEMY_VARIANTS,
-  favoredEnemySpecializationVariants as FAVORED_ENEMY_SPECIALIZATION_VARIANTS,
-} from "@/database/packages/dnd35/content/creatureTypes.ts";
-import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
-import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, expandTemplateDescription, SIMPLE_SET, MARTIAL_SET, matchesWithPluralVariants, pluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
 // ---------------------------------------------------------------------------
 // Existing feat lookup — set of known feat names
@@ -34,15 +28,13 @@ export function loadExistingFeats(book?: string): Set<string> {
   if (_existingFeatsCache.has(key)) return _existingFeatsCache.get(key)!;
 
   const feats = new Set<string>();
-  const refDir = join(import.meta.dirname!, "../reference");
-
   // Load feat names from SRD (parent) and the current book's reference JSON.
   // Skip template feats (family parents like "Weapon Specialization") — they
   // expand into per-variant feats during generation and the bare name is never
   // seeded, so matching against it would create phantom freeFeat lookups.
   const books = book ? [book, "srd"] : ["srd"];
   for (const b of books) {
-    const featsPath = join(refDir, b, "feats.json");
+    const featsPath = join(REFERENCE_DIR, b, "feats.json");
     if (!existsSync(featsPath)) continue;
     const ref = loadReference(featsPath, "feat");
     for (const feat of ref.raw) {
@@ -56,10 +48,8 @@ export function loadExistingFeats(book?: string): Set<string> {
   return feats;
 }
 
-type AptitudePick = { levels: number[]; target: string };
-
 /** Merge detected aptitude picks with overrides. Overrides win per-target; detected picks not in overrides are preserved. */
-export function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
+function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
   if (!overrides) return detected;
   if (!detected) return overrides;
   const overrideTargets = new Set(overrides.map((p) => p.target));
@@ -67,10 +57,9 @@ export function mergeAptitudePicks(detected?: AptitudePick[], overrides?: Aptitu
 }
 
 /** When bonusFeatLists has per-level entries, expand the single aptitude pick into per-level picks. */
-export function expandPerLevelAptitudePicks(
+function expandPerLevelAptitudePicks(
   picks?: AptitudePick[],
-  bonusFeatLists?: { aptitude: string; feats: string[]; levels?: number[] }[],
-  _className?: string,
+  bonusFeatLists?: BonusFeatList[],
 ): AptitudePick[] | undefined {
   if (!picks || !bonusFeatLists) return picks;
   const perLevelLists = bonusFeatLists.filter((l) => l.levels);
@@ -104,14 +93,14 @@ export function expandPerLevelAptitudePicks(
   return result;
 }
 
-export type PerLevelExpansion = { newTarget: string; levels: number[]; ordinal: string };
+type PerLevelExpansion = { newTarget: string; levels: number[]; ordinal: string };
 
 /**
  * Build maps for aptitude target remapping after per-level expansion.
  * - remap: 1-to-1 remaps (single-occurrence features like Ranger combat style tiers)
  * - perLevel: 1-to-N splits (multi-occurrence features like Monk Bonus Feat)
  */
-export function buildAptitudeExpansionMaps(
+function buildAptitudeExpansionMaps(
   preMerged: AptitudePick[] | undefined,
   expanded: AptitudePick[] | undefined,
 ): { remap: Map<string, string>; perLevel: Map<string, PerLevelExpansion[]> } {
@@ -193,19 +182,20 @@ export function classSpells(ref: ClassReference) {
 }
 
 /**
- * A class's aptitude picks: detected, with the overrides' (`mergedPicks`), then split per level where a bonus feat
- * list has one per level (`aptitudePicks`), and the first level each aptitude gets a pick (by slug).
+ * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
+ * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
+ * retargets the merged picks (`remap` one to one, `perLevel` one to several).
  */
-function classAptitudePicks(ref: ClassReference) {
+export function classAptitudePicks(ref: ClassReference) {
   const overrides = ref.mapping.overrides;
   const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists, ref.raw.name);
+  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists);
   const aptitudeMinLevel = new Map<string, number>();
   for (const pick of aptitudePicks ?? []) {
     const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
     if (slug) aptitudeMinLevel.set(slug, Math.min(...pick.levels));
   }
-  return { mergedPicks, aptitudePicks, aptitudeMinLevel };
+  return { aptitudePicks, aptitudeMinLevel, ...buildAptitudeExpansionMaps(mergedPicks, aptitudePicks) };
 }
 
 /**
@@ -216,10 +206,8 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
   const { mapping, detected } = ref;
   const classSlug = stripSeparators(ref.raw.name);
   const existingFeats = loadExistingFeats(ref._meta.book);
-  const { mergedPicks, aptitudePicks, aptitudeMinLevel } = classAptitudePicks(ref);
-  const { remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = buildAptitudeExpansionMaps(mergedPicks, aptitudePicks);
-  const levelRequirement = (level: number): RequirementEntry[] =>
-    [{ target: `classes.${classSlug}.level`, operator: "greater_than_or_equal", value: String(level), valueType: "number" }];
+  const { aptitudeMinLevel, remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = classAptitudePicks(ref);
+  const levelRequirement = (level: number): RequirementEntry[] => [gte(`classes.${classSlug}.level`, level)];
 
   // A feature granting a locked favored enemy ("Favored Enemy (Giant)") gets the shared variant through a modifier.
   const lockedFavoredEnemies = new Map<string, string>();
@@ -261,7 +249,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const modifiers: ModifierSeed[] = [
       ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
       ...autoCompanionGrantModifiers(name, feature.description ?? ""),
-      ...lockedType ? [{ target: `feats.${stripSeparators(`Favored Enemy: ${lockedType}`)}.possessed`, operator: "set", value: "true", valueType: "boolean" }] : [],
+      ...lockedType ? [{ target: feat(`Favored Enemy: ${lockedType}`), operator: "set", value: "true", valueType: "boolean" }] : [],
     ];
     // A pick in a pool of the class's own (not its class features) opens at the pool's first pick.
     const poolLevel = feature.aptitude && feature.aptitude !== mapping.classFeatureAptitude ? aptitudeMinLevel.get(stripSeparators(feature.aptitude)) : undefined;
@@ -370,10 +358,6 @@ export function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   return results;
 }
 
-export function buildFavoredEnemyFeats(): FeatSeed[] {
-  return [...FAVORED_ENEMY_VARIANTS, ...FAVORED_ENEMY_SPECIALIZATION_VARIANTS];
-}
-
 // ---------------------------------------------------------------------------
 // Wizard school reference → WizardSchoolDefinition[]
 // ---------------------------------------------------------------------------
@@ -412,8 +396,6 @@ export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {
 /** Build map of feat name → additional aptitudes from all class bonusFeatLists in a given book. */
 export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
   const map = new Map<string, string[]>();
-  const classDir = join(import.meta.dirname!, "../reference", book, "classes");
-  if (!existsSync(classDir)) return map;
 
   function add(featName: string, aptitude: string) {
     const existing = map.get(featName) ?? [];
@@ -423,9 +405,7 @@ export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
     }
   }
 
-  for (const file of readdirSync(classDir).filter((f) => f.endsWith(".json"))) {
-    const ref = loadReference(join(classDir, file), "class");
-
+  for (const { ref } of classReferences(book)) {
     // Bonus feat lists → aptitudes
     const lists = ref.detected?.bonusFeatLists;
     if (lists) {
@@ -454,11 +434,8 @@ export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
 /** Build map of feat name → class levels that grant it as a bonus feat (for alternate prereqs). */
 export function loadBonusFeatClassLevels(book: string): Map<string, { classSlug: string; minLevel: number }[]> {
   const map = new Map<string, { classSlug: string; minLevel: number }[]>();
-  const classDir = join(import.meta.dirname!, "../reference", book, "classes");
-  if (!existsSync(classDir)) return map;
 
-  for (const file of readdirSync(classDir).filter((f) => f.endsWith(".json"))) {
-    const ref = loadReference(join(classDir, file), "class");
+  for (const { file, ref } of classReferences(book)) {
     const lists = ref.detected?.bonusFeatLists;
     if (!lists) continue;
     const classSlug = file.replace(".json", "");
@@ -475,120 +452,24 @@ export function loadBonusFeatClassLevels(book: string): Map<string, { classSlug:
   return map;
 }
 
-export function buildFeatSeeds(ref: FeatReference, book?: string): FeatSeed[] {
-  const results: FeatSeed[] = [];
-
-  // Collect all template names for cross-referencing (e.g. Greater Spell Focus → Spell Focus)
-  const allTemplateNames = new Set<string>();
-  for (const entry of ref.raw) {
-    const mapped = ref.mapping[entry.name];
-    if (mapped?.template) allTemplateNames.add(entry.name);
-  }
-
-  for (const entry of ref.raw) {
-    const mapped = ref.mapping[entry.name];
-    if (!mapped || mapped.skip) continue;
-
-    if (mapped.template) {
-      results.push(...expandTemplateFeat(entry, ref.detected[entry.name], mapped, allTemplateNames));
-      continue;
-    }
-
-    const seed: FeatSeed = {
-      name: entry.name,
-      description: normalizeDescription(mapped.description ?? entry.benefit),
-      aptitudes: mapped.aptitudes ?? [],
-      ...(mapped.stackable ? { stackable: true } : {}),
-      ...(mapped.selectable === false ? { selectable: false } : {}),
-      ...(mapped.requirements?.length ? { requirements: mapped.requirements } : {}),
-      ...(mapped.modifiers?.length ? { modifiers: mapped.modifiers } : {}),
-      ...(mapped.properties?.length ? { properties: mapped.properties } : {}),
-    };
-    results.push(seed);
-  }
-
-  // System feats are only generated for the SRD — other books reuse them
-  if (book === "srd") {
-    results.push(...buildWizardSchoolFeatSeeds());
-    results.push(...buildWeaponProficiencyFeatSeeds());
-  }
-
-  return results;
-}
-
-// ---------------------------------------------------------------------------
-// System feat builders
-// ---------------------------------------------------------------------------
-
-function buildWizardSchoolFeatSeeds(): FeatSeed[] {
-  const SPEC = "Wizard Specialization";
-  const PROHIB = "Prohibited School";
-
-  return [
-    ...WIZARD_SCHOOLS.map((s) => ({
-      name: `${s.name} Specialist`,
-      description: s.description,
-      aptitudes: [SPEC],
-      modifiers: [{
-        target: "aptitudes.prohibitedschool.allowed",
-        operator: "add",
-        value: String(s.prohibitedSchoolCount),
-        valueType: "number",
-      }],
-    })),
-    {
-      name: "Generalist",
-      description: "A generalist wizard does not specialize in any school of magic. They have no prohibited schools and gain no bonus spell slots, but can freely learn spells from all schools.",
-      aptitudes: [SPEC],
-    },
-    ...WIZARD_SCHOOLS.map((s) => ({
-      name: `Prohibit ${s.name}`,
-      description: `You cannot learn, prepare, or cast spells from the school of ${s.name}. All spells from this school are removed from your spell list.`,
-      aptitudes: [PROHIB],
-      properties: [{ type: "WIZARD_PROHIBITED_SCHOOL", value: s.name }],
-    })),
-  ];
-}
-
-function buildWeaponProficiencyFeatSeeds(): FeatSeed[] {
-  return [
-    ...SIMPLE_WEAPONS.map(w => ({
-      name: `Simple Weapon Proficiency: ${w}`,
-      description: `You are proficient with the ${w.toLowerCase()}.`,
-      aptitudes: ["General"],
-      selectable: false,
-    })),
-    ...MARTIAL_WEAPONS.map(w => ({
-      name: `Martial Weapon Proficiency: ${w}`,
-      description: `You are proficient with the ${w.toLowerCase()}.`,
-      aptitudes: ["General"],
-      selectable: false,
-    })),
-  ];
-}
-
 // ---------------------------------------------------------------------------
 // Aptitude collection
 // ---------------------------------------------------------------------------
 
-export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
+/** A book's aptitudes: its feats' (`feats`, and its classes'), its classes' and spell lists', its domains' feat pools. */
+export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[], book: string): string[] {
   const names = new Set<string>();
-  const refBase = join(import.meta.dirname!, "../reference");
 
   // Collect all feats: standalone feats + class feature feats from reference JSONs
-  const allFeats = [...feats];
-  const classRefDir = join(refBase, book, "classes");
-  if (existsSync(classRefDir)) {
-    for (const file of readdirSync(classRefDir).filter((f) => f.endsWith(".json"))) {
-      const ref = loadReference(join(classRefDir, file), "class");
-      allFeats.push(...buildClassFeatSeeds(ref));
-      if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
-      if (ref.mapping.spells) names.add(`${ref.raw.name} Spells`);
+  const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [...feats];
+  for (const { ref } of classReferences(book)) {
+    allFeats.push(...buildClassFeatSeeds(ref));
+    if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
+    if (ref.mapping.spells) names.add(`${ref.raw.name} Spells`);
 
-      // From detected bonusFeatLists
-      if (ref.detected?.bonusFeatLists) {
-        for (const list of ref.detected.bonusFeatLists) names.add(list.aptitude);
-      }
+    // From detected bonusFeatLists
+    if (ref.detected?.bonusFeatLists) {
+      for (const list of ref.detected.bonusFeatLists) names.add(list.aptitude);
     }
   }
 
@@ -621,7 +502,7 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
     // Check if any of this book's domains have feat pools
     const domainFeatsPath = join(import.meta.dirname!, "../generated", book, "feats/domainFeats.ts");
     if (existsSync(domainFeatsPath)) {
-      const masterDomainPath = join(refBase, "domains.json");
+      const masterDomainPath = join(REFERENCE_DIR, "domains.json");
       if (existsSync(masterDomainPath)) {
         const domainRef = loadReference(masterDomainPath, "domain");
         // Read generated domain names to filter
@@ -637,7 +518,7 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
   }
 
   // Wizard school aptitudes
-  const wsRefPath = join(refBase, book, "wizardSchools.json");
+  const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
   if (existsSync(wsRefPath)) {
     const wsRef = loadReference(wsRefPath, "wizardSchool");
     for (const school of buildWizardSchoolSeeds(wsRef)) {
@@ -649,7 +530,7 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
   // so we can keep sibling spell list aptitudes (each extension creates its own copy).
   const spellAptitudes = new Set<string>();
   if (book !== "srd") {
-    const spellRefPath = join(refBase, book, "spells.json");
+    const spellRefPath = join(REFERENCE_DIR, book, "spells.json");
     if (existsSync(spellRefPath)) {
       const spellRef = loadReference(spellRefPath, "spell");
       const { spells } = buildSpellSeeds(spellRef, book);
@@ -661,13 +542,10 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
 
   // Exclude aptitudes created by other books (class features + spell lists).
   // For sibling extension spell lists, keep them if this book's spells reference them.
-  for (const other of readdirSync(refBase, { withFileTypes: true })) {
+  for (const other of readdirSync(REFERENCE_DIR, { withFileTypes: true })) {
     if (!other.isDirectory() || other.name === book) continue;
     const isSibling = other.name !== "srd" && book !== "srd";
-    const otherClassDir = join(refBase, other.name, "classes");
-    if (!existsSync(otherClassDir)) continue;
-    for (const f of readdirSync(otherClassDir).filter((f) => f.endsWith(".json"))) {
-      const ref = loadReference(join(otherClassDir, f), "class");
+    for (const { ref } of classReferences(other.name)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
       const spellApt = ref.mapping.spells ? `${ref.raw.name} Spells` : null;
       if (spellApt) {
@@ -681,157 +559,6 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
   }
 
   return [...names].sort();
-}
-
-// ---------------------------------------------------------------------------
-// Template expansion
-// ---------------------------------------------------------------------------
-
-function expandTemplateFeat(
-  entry: FeatReference["raw"][number],
-  detected: FeatReference["detected"][string],
-  mapped: FeatReference["mapping"][string],
-  allTemplateNames: Set<string>,
-): FeatSeed[] {
-  const template = mapped.template!;
-  const aptitudes = mapped.aptitudes ?? [];
-  const modifiers = mapped.modifiers ?? [];
-  const requirements = mapped.requirements ?? [];
-  const featNameMap = detected?.featNameMap ?? {};
-  const familyName = template.familyName;
-
-  let items: string[];
-  switch (template.type) {
-    case "weapon":
-      if (familyName === "Martial Weapon Proficiency") items = MARTIAL_WEAPONS;
-      else if (familyName === "Exotic Weapon Proficiency") items = EXOTIC_WEAPONS;
-      else items = ALL_WEAPONS;
-      break;
-    case "crossbow":
-      items = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
-      break;
-    case "skill":
-      items = SKILL_NAMES;
-      break;
-    case "school":
-      items = MAGIC_SCHOOLS;
-      break;
-    default:
-      return [];
-  }
-
-  return items.map((item) => {
-    const slug = stripSeparators(item);
-
-    // Expand per-item modifiers
-    let itemModifiers: ModifierSeed[] = [];
-    if (modifiers.length > 0) {
-      itemModifiers = modifiers.map((m) => ({
-        ...m,
-        target: m.target
-          .replace(/skills\.[^.]+/, `skills.${slug}`)
-          .replace(/^combat\./, `items.weapons.${slug}.`)
-          .replace(/powers\.groups\.[^.]+\./, `powers.groups.${slug}.`),
-      }));
-    } else if (template.type === "skill") {
-      itemModifiers = [{ target: `skills.${slug}.misc`, operator: "add", value: "3", valueType: "number" }];
-    } else if (template.type === "school") {
-      itemModifiers = [{ target: `powers.groups.${slug}.*.dc.misc`, operator: "add", value: "1", valueType: "number" }];
-    }
-
-    // Expand per-item requirements
-    const itemReqs = expandRequirements(template.type, familyName, item, requirements, featNameMap, allTemplateNames);
-
-    const seed: FeatSeed = {
-      name: `${familyName}: ${item}`,
-      description: normalizeDescription(expandTemplateDescription(mapped.description ?? entry.benefit, template.type, item)),
-      aptitudes,
-      ...(itemReqs.length > 0 ? { requirements: itemReqs } : {}),
-      ...(itemModifiers.length > 0 ? { modifiers: itemModifiers } : {}),
-      properties: [{ type: "FEAT_FAMILY", value: familyName }],
-    };
-    return seed;
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Requirement helpers
-// ---------------------------------------------------------------------------
-
-function eqFeat(name: string): RequirementEntry {
-  return { target: `feats.${stripSeparators(name)}.possessed`, operator: "equal", value: "true", valueType: "boolean" };
-}
-
-function neFeat(name: string): RequirementEntry {
-  return { target: `feats.${stripSeparators(name)}.possessed`, operator: "not_equal", value: "true", valueType: "boolean" };
-}
-
-function proficiencyReqs(weapon: string): RequirementEntry[] {
-  if (SIMPLE_SET.has(weapon)) return [
-    { chainingOperator: "or", children: [eqFeat("Simple Weapon Proficiency"), eqFeat(`Simple Weapon Proficiency: ${weapon}`)] },
-  ];
-  if (MARTIAL_SET.has(weapon)) return [
-    { chainingOperator: "or", children: [eqFeat("Martial Weapon Proficiency"), eqFeat(`Martial Weapon Proficiency: ${weapon}`)] },
-  ];
-  return [eqFeat(`Exotic Weapon Proficiency: ${weapon}`)];
-}
-
-function expandRequirements(
-  type: string,
-  familyName: string,
-  item: string,
-  detectedReqs: RequirementEntry[],
-  featNameMap: Record<string, string>,
-  allTemplateNames: Set<string>,
-): RequirementEntry[] {
-  if (type === "weapon" || type === "crossbow") {
-    return expandWeaponRequirements(familyName, item, detectedReqs, featNameMap, allTemplateNames);
-  }
-  if (type === "school") {
-    return expandSchoolRequirements(detectedReqs, item, featNameMap, allTemplateNames);
-  }
-  return [];
-}
-
-function expandWeaponRequirements(
-  familyName: string,
-  weapon: string,
-  detectedReqs: RequirementEntry[],
-  featNameMap: Record<string, string>,
-  allTemplateNames: Set<string>,
-): RequirementEntry[] {
-  const reqs: RequirementEntry[] = [];
-
-  // Proficiency requirements
-  if (familyName === "Weapon Focus" || familyName === "Improved Critical") {
-    reqs.push(...proficiencyReqs(weapon));
-  }
-
-  // Martial Weapon Proficiency: individual feats require NOT having the blanket proficiency
-  if (familyName === "Martial Weapon Proficiency") {
-    reqs.push(neFeat("Martial Weapon Proficiency"));
-    return reqs;
-  }
-
-  // Static + expanded requirements
-  for (const req of detectedReqs) {
-    if ("chainingOperator" in req) continue;
-    if (req.target === "combat.bab") {
-      reqs.push(req);
-    } else if (req.target.startsWith("classes.") || req.target.startsWith("abilities.")) {
-      reqs.push(req);
-    } else if (req.target.startsWith("feats.")) {
-      const featSlug = req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
-      const featName = featNameMap[featSlug];
-      if (featName && allTemplateNames.has(featName)) {
-        reqs.push(eqFeat(`${featName}: ${weapon}`));
-      } else if (featName) {
-        reqs.push(eqFeat(featName));
-      }
-    }
-  }
-
-  return reqs;
 }
 
 // ---------------------------------------------------------------------------
@@ -862,23 +589,14 @@ function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Rec
   };
 
   // Auto-discover from class references (scoped to book if provided)
-  const refBase = join(import.meta.dirname!, "../reference");
-  if (existsSync(refBase)) {
-    const books = readdirSync(refBase);
-    for (const book of books) {
+  if (existsSync(REFERENCE_DIR)) {
+    for (const book of readdirSync(REFERENCE_DIR)) {
       // Discover casting classes
-      const classDir = join(refBase, book, "classes");
-      if (existsSync(classDir)) {
-        for (const file of readdirSync(classDir)) {
-          if (!file.endsWith(".json")) continue;
-          try {
-            const ref = loadReference(join(classDir, file), "class");
-            if (ref.mapping?.spells && ref.raw?.name) {
-              const aptName = `${ref.raw.name} Spells`;
-              classMap[ref.raw.name] = aptName;
-              classMap[ref.raw.name.toLowerCase()] = aptName;
-            }
-          } catch { /* skip malformed files */ }
+      for (const { ref } of classReferences(book)) {
+        if (ref.mapping?.spells && ref.raw?.name) {
+          const aptName = `${ref.raw.name} Spells`;
+          classMap[ref.raw.name] = aptName;
+          classMap[ref.raw.name.toLowerCase()] = aptName;
         }
       }
 
@@ -975,10 +693,7 @@ function expandComponents(components: string[]): string[] {
 
 /** Collapse whitespace/newlines and normalize spell stat text */
 function normalizeSpellText(text: string): string {
-  return sanitizeText(text)
-    .replace(/\s+/g, " ")           // collapse newlines/whitespace
-    .replace(/(\d+)\s*\/\s*/g, "$1/")  // "1 round/ level" → "1 round/level"
-    .trim();
+  return normalizeWs(sanitizeText(text)).replace(/(\d+)\s*\/\s*/g, "$1/"); // "1 round/ level" → "1 round/level"
 }
 
 export type SpellSeedWithLevel = PowerSeed & { level: number };
@@ -1130,26 +845,6 @@ export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: 
   spells.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
 
   return { spells };
-}
-
-function expandSchoolRequirements(
-  detectedReqs: RequirementEntry[],
-  school: string,
-  featNameMap: Record<string, string>,
-  allTemplateNames: Set<string>,
-): RequirementEntry[] {
-  const reqs: RequirementEntry[] = [];
-  for (const req of detectedReqs) {
-    if ("chainingOperator" in req) continue;
-    if (req.target.startsWith("feats.")) {
-      const featSlug = req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
-      const featName = featNameMap[featSlug];
-      if (featName && allTemplateNames.has(featName)) {
-        reqs.push(eqFeat(`${featName}: ${school}`));
-      }
-    }
-  }
-  return reqs;
 }
 
 // ---------------------------------------------------------------------------

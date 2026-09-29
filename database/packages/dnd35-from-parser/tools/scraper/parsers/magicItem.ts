@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 type RawMagicItem = MagicItemReference["raw"][number];
@@ -64,11 +65,9 @@ function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
   const charges: { spell: string; charges: number }[] = [];
   let metadataText = "";
 
-  let sibling = heading.next();
-  while (sibling.length) {
-    const tag = sibling.prop("tagName")?.toLowerCase();
-    if (tag === "h5" || tag === "h4" || tag === "h3") break;
-
+  const section = sectionElements(heading, ["h3", "h4", "h5"]);
+  for (const sibling of section) {
+    const tag = tagOf(sibling);
     if (tag === "ul" && !metadataText) {
       // Spell charges (staffs): <li>Spell Name (N charges)</li>
       sibling.find("li").each((_, li) => {
@@ -86,11 +85,11 @@ function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
         descParts.push(text);
       }
     }
-
-    sibling = sibling.next();
   }
 
-  return { name: normalizeWs(heading.text()), description: descParts.join(" "), metadataText, charges, end: sibling };
+  // Where the next block starts: the heading ending this one
+  const end = (section.at(-1) ?? heading).next();
+  return { name: normalizeWs(heading.text()), description: descParts.join(" "), metadataText, charges, end };
 }
 
 /**
@@ -120,7 +119,7 @@ function parseItemEntries(
   const items: RawMagicItem[] = [];
   let current = startEl.next();
   while (current.length) {
-    const tag = current.prop("tagName")?.toLowerCase();
+    const tag = tagOf(current);
     if (tag === "h4" || tag === "h3") break;
     if (tag === "h5") {
       const block = readItemBlock($, current);

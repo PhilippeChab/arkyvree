@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { isText } from "domhandler";
 import { contentHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
@@ -46,7 +47,7 @@ export function parseSpellDetailHtml(
 ): SpellReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = contentHeading($).text().trim();
+  const name = contentHeading($)?.text().trim() ?? "";
   if (!name) return null;
 
   // Derive slug from URL: /spells/{book}/{slug}--{id}/ → slug
@@ -206,8 +207,8 @@ function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
           const text = $(node).text().trim();
           if (text) parts.push(text);
         }
-      } else if (node.type === "text") {
-        const text = (node as unknown as { data: string }).data?.trim();
+      } else if (isText(node)) {
+        const text = node.data.trim();
         if (text) parts.push(text);
       }
 

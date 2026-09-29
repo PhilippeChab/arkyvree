@@ -1,7 +1,10 @@
 import * as cheerio from "cheerio";
-import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { contentHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { contentHeading, frameHeading, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+
+/** A race page's frame also heads its listing "Races". */
+const RACE_FRAME_HEADING = frameHeading("Races");
 
 // ---------------------------------------------------------------------------
 // Race HTML Parser — dndtools.net structure
@@ -41,7 +44,7 @@ const KNOWN_SIZES = new Set(["Fine", "Diminutive", "Tiny", "Small", "Medium", "L
 export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = contentHeading($).text().trim();
+  const name = contentHeading($, RACE_FRAME_HEADING)?.text().trim() ?? "";
   if (!name) return null;
 
   // Parse attributes table
@@ -81,31 +84,25 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
   ).first();
 
   if (descHeader.length > 0) {
-    let el = descHeader.next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      if (tag === "h3" || tag === "h2") break;
+    for (const el of sectionElements(descHeader)) {
+      const tag = tagOf(el);
       if (tag === "p" || tag === "div") {
         const text = el.text().trim();
         if (text) descParts.push(text);
       }
-      el = el.next();
     }
   }
   const description = normalizeWs(descParts.join(" "));
 
   // Parse racial traits
-  const features: { name: string; description: string }[] = [];
+  const features: NamedText[] = [];
   const traitsHeader = $("h3").filter((_, el) =>
     /^Racial Traits/i.test($(el).text().trim()),
   ).first();
 
   if (traitsHeader.length > 0) {
-    let el = traitsHeader.next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      if (tag === "h3" || tag === "h2") break;
-
+    for (const el of sectionElements(traitsHeader)) {
+      const tag = tagOf(el);
       if (tag === "ul" || tag === "ol") {
         el.find("li").each((_, li) => {
           const text = normalizeWs($(li).text());
@@ -115,8 +112,6 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
         const text = normalizeWs(el.text());
         if (text) features.push(parseFeatureText(text));
       }
-
-      el = el.next();
     }
   }
 

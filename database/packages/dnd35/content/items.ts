@@ -1,6 +1,6 @@
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
-import { eq, feat, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, feat } from "@/database/packages/dnd35/content/requirements.ts";
 import type { Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 
 // Builders the generated items are written with: their proficiency requirements and their weapon, armor or shield properties.
@@ -9,13 +9,8 @@ function proficiency(featName: string): RequirementEntry[] {
   return [eq(feat(featName))];
 }
 
-export const simple = (w: string): RequirementEntry[] => [
-  or(eq(feat("Simple Weapon Proficiency")), eq(feat(`Simple Weapon Proficiency: ${w}`))),
-];
-export const martial = (w: string): RequirementEntry[] => [
-  or(eq(feat("Martial Weapon Proficiency")), eq(feat(`Martial Weapon Proficiency: ${w}`))),
-];
-export const exotic = (w: string) => proficiency(`Exotic Weapon Proficiency: ${w}`);
+export { simple, martial, exotic } from "@/database/packages/dnd35/content/weapons.ts";
+
 export function weaponProperties(weaponTypeName: string): Property[] {
   const def = getWeaponDefinition(weaponTypeName);
   if (!def) throw new Error(`Unknown weapon type: ${weaponTypeName}`);

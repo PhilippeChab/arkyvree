@@ -4,8 +4,7 @@ import { feat, eq, gte, or, and, eqStr } from "@/database/packages/dnd35/content
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { isValidModifierPath, findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { loadBonusFeatAptitudes, loadBonusFeatClassLevels } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { BOOK_ABBREV_PATTERN, SKILL_MAP, SAVE_MAP, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import { anySkillRequirement, BOOK_ABBREV_PATTERN, SKILL_MAP, SAVE_MAP, skillSlug, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Feat type → aptitudes
@@ -164,7 +163,7 @@ export function buildFeatMapping(
 // Modifier detection from benefit text
 // ---------------------------------------------------------------------------
 
-export function detectModifiers(benefit: string): { modifiers: ModifierSeed[]; errors: string[]; unresolvedModifiers: string[] } {
+export function detectModifiers(benefit: string): ModifierDetection {
   const modifiers: ModifierSeed[] = [];
   const errors: string[] = [];
   const unresolvedModifiers: string[] = [];
@@ -301,15 +300,6 @@ export function detectModifiers(benefit: string): { modifiers: ModifierSeed[]; e
 // ---------------------------------------------------------------------------
 // Prerequisite text → RequirementEntry[]
 // ---------------------------------------------------------------------------
-
-/** Resolve a skill name to its slug, falling back to the base skill for unknown specializations */
-function featSkillSlug(name: string): string {
-  const fullKey = name.toLowerCase().trim();
-  if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
-  // Strip parenthetical specialization and try base name
-  const baseName = name.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
-  return SKILL_MAP[baseName] ?? stripSeparators(name);
-}
 
 function parsePrerequisiteText(text: string): { requirements: RequirementEntry[]; featNameMap: Record<string, string>; unresolvedPrereqs: string[] } {
   const reqs: RequirementEntry[] = [];
@@ -491,25 +481,8 @@ function parsePrerequisiteText(text: string): { requirements: RequirementEntry[]
     // Skip false positives
     if (name.match(/^(Base|Must|Any|Or|And|The|Can|Has|Level)$/i)) continue;
 
-    // "Knowledge (any)" → OR of all Knowledge skills
-    if (/\(any\)/i.test(name)) {
-      const baseName = name.replace(/\s*\(any\)/i, "").trim().toLowerCase();
-      const matchingSlugs = SKILL_NAMES
-        .filter(s => s.toLowerCase().startsWith(baseName))
-        .map(s => stripSeparators(s));
-      if (matchingSlugs.length === 1) {
-        reqs.push(gte(`skills.${matchingSlugs[0]}.rank`, ranks));
-        continue;
-      }
-      if (matchingSlugs.length > 1) {
-        reqs.push(or(...matchingSlugs.map(s => gte(`skills.${s}.rank`, ranks))));
-        continue;
-      }
-    }
-
-    // Try exact match first, then base skill without specialization
-    const slug = featSkillSlug(name);
-    reqs.push(gte(`skills.${slug}.rank`, ranks));
+    // "Knowledge (any)" → OR of all Knowledge skills; else the skill, or its base skill for a specialization
+    reqs.push(anySkillRequirement(name, ranks) ?? gte(`skills.${skillSlug(name)}.rank`, ranks));
   }
 
   // Class ability prerequisites — map to actual class feature feats

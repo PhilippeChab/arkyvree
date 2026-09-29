@@ -3,7 +3,7 @@ import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SKILL_MAP as BASE_SKILL_MAP, detectModifiersOf, modifierMapping, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SKILL_MAP as BASE_SKILL_MAP, detectModifiersOf, modifierMapping, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Skill name → slug mapping (extends base with paren-stripped variants)
@@ -42,7 +42,7 @@ export function buildDomainMapping(
   return { overrides, ...modifierMapping(raw, detected, overrides, (override?: DomainReference["mapping"]["overrides"][string]) => (override?.featPool ? { featPool: override.featPool } : {})) } as DomainReference["mapping"];
 }
 
-function detectDomainModifiers(description: string): { modifiers: ModifierSeed[]; errors: string[]; unresolvedModifiers: string[] } {
+function detectDomainModifiers(description: string): ModifierDetection {
   const modifiers: ModifierSeed[] = [];
   const errors: string[] = [];
   const unresolvedModifiers: string[] = [];

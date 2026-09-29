@@ -1,13 +1,12 @@
 import { stripSeparators } from "@/shared/utils.ts";
 import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { feat, eq, gte, or, eqStr } from "@/database/packages/dnd35/content/requirements.ts";
-import type { BabType, SaveType, ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { AptitudePick, BabType, BonusFeatList, NamedText, SaveType, ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { findCreatureType } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { BOOK_ABBREV_PATTERN, normalizeWs, SKILL_MAP, lookupWithPluralVariants, matchesWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import { anySkillRequirement, BOOK_ABBREV_PATTERN, normalizeWs, SKILL_MAP, skillSlug, lookupWithPluralVariants, matchesWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // BAB detection
@@ -79,30 +78,11 @@ function normalizeCraftSubtype(subtype: string): string {
   return map[lower] ?? subtype;
 }
 
-function skillSlug(name: string): string {
-  // Try full name first (preserves subtypes like "Knowledge (arcana)" → "knowledgearcana")
-  const fullKey = name.toLowerCase().trim();
-  if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
-  // Fall back to base name without subspecialty (e.g. "Perform (dance)" → "perform")
-  const baseName = name.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
-  return SKILL_MAP[baseName] ?? stripSeparators(baseName);
-}
-
 /** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
 function expandSkillRequirement(name: string, ranks: number): RequirementEntry | null {
   // "Knowledge (any)" → OR of all Knowledge skills
-  if (/\(any\)/i.test(name)) {
-    const baseName = name.replace(/\s*\(any\)/i, "").trim().toLowerCase();
-    const matchingSlugs = SKILL_NAMES
-      .filter(s => s.toLowerCase().startsWith(baseName))
-      .map(s => stripSeparators(s));
-    if (matchingSlugs.length === 1) {
-      return gte(`skills.${matchingSlugs[0]}.rank`, ranks);
-    }
-    if (matchingSlugs.length > 1) {
-      return or(...matchingSlugs.map(s => gte(`skills.${s}.rank`, ranks)));
-    }
-  }
+  const anySkill = anySkillRequirement(name, ranks);
+  if (anySkill) return anySkill;
 
   // "Knowledge (arcana, local or psionics)" or "Craft (leather, metal, or woodworking)" → OR of individual skills
   const multiMatch = name.match(/^(.+?)\s*\(([^)]*(?:,|or)[^)]*)\)$/i);
@@ -408,19 +388,19 @@ function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
   const anyFeatMatch = text.match(/^[Aa]ny\s+(\w+)\s+feat$/i);
   if (anyFeatMatch) {
     const family = stripSeparators(anyFeatMatch[1].trim());
-    return { target: `feats.${family}.possessed`, operator: "equal", value: "true", valueType: "boolean" };
+    return eq(`feats.${family}.possessed`);
   }
   // Pattern 1: "FeatFamily (any category)" → extract base feat from parenthetical
   const parenMatch = text.match(/^(.+?)\s*\((.+)\)$/i);
   if (parenMatch) {
     const prefix = stripSeparators(parenMatch[1].trim());
-    return { target: `feats.${prefix}.*.possessed`, operator: "equal", value: "true", valueType: "boolean" };
+    return eq(`feats.${prefix}.*.possessed`);
   }
   // Pattern 2: prose like "Spell Focus in two schools of magic" → extract leading feat family
   const proseMatch = text.match(/^(.+?)\s+(?:in\s+)?\b(?:any|two)\b/i);
   if (proseMatch) {
     const prefix = stripSeparators(proseMatch[1].trim());
-    return { target: `feats.${prefix}.*.possessed`, operator: "equal", value: "true", valueType: "boolean" };
+    return eq(`feats.${prefix}.*.possessed`);
   }
   return undefined;
 }
@@ -660,6 +640,11 @@ function detectSpellsKnown(raw: ClassReference["raw"]): number[][] | undefined {
 // Feature grouping
 // ---------------------------------------------------------------------------
 
+/** A class feature's name without its ability type ("Rage (Ex)" → "Rage"). */
+function featureBaseName(name: string): string {
+  return name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
+}
+
 function normalizeFeatureName(name: string): string {
   return name
     // Replace replacement characters with spaces (encoding artifacts)
@@ -875,11 +860,11 @@ function detectAptitudePicks(
   raw: ClassReference["raw"],
   featureOccurrences: { name: string; levels: number[] }[],
 ): {
-  aptitudePicks?: { levels: number[]; target: string }[];
+  aptitudePicks?: AptitudePick[];
   unresolvedAptitudePicks?: string[];
 } {
   const classSlug = stripSeparators(raw.name);
-  const picks: { levels: number[]; target: string }[] = [];
+  const picks: AptitudePick[] = [];
   const unresolved: string[] = [];
 
   // Build a map of class feature descriptions by lowercase name
@@ -950,8 +935,8 @@ function detectAptitudePicks(
 function detectBonusFeatLists(
   raw: ClassReference["raw"],
   featureOccurrences: { name: string; levels: number[] }[],
-): { bonusFeatLists?: { aptitude: string; feats: string[]; levels?: number[] }[] } {
-  const lists: { aptitude: string; feats: string[]; levels?: number[] }[] = [];
+): { bonusFeatLists?: BonusFeatList[] } {
+  const lists: BonusFeatList[] = [];
 
   const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf);
 
@@ -1402,10 +1387,10 @@ export function buildInitialMapping(
   // Detect orphan sub-options: classFeature entries that follow a pool parent
   // and don't appear in the progression table (e.g. Stonelord's Stone Power sub-options)
   // Use poolAptitudes __pool__ entries (broader than poolFeatureNames which only has inline-sub features)
-  const orphanSubOptions = new Map<string, { name: string; description: string }[]>();
+  const orphanSubOptions = new Map<string, NamedText[]>();
   for (let i = 0; i < raw.classFeatures.length; i++) {
     const cf = raw.classFeatures[i];
-    const baseName = cf.name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
+    const baseName = featureBaseName(cf.name);
     if (!poolAptitudes.has(`__pool__${cf.name.toLowerCase()}`) && !poolAptitudes.has(`__pool__${baseName.toLowerCase()}`)) continue;
 
     // This is a pool parent — check if it has inline sub-options
@@ -1414,10 +1399,10 @@ export function buildInitialMapping(
     if (parsed && parsed.options.length >= 2) continue; // Handled by inline parsing
 
     // No inline sub-options — collect orphan features that follow
-    const orphans: { name: string; description: string }[] = [];
+    const orphans: NamedText[] = [];
     for (let j = i + 1; j < raw.classFeatures.length; j++) {
       const next = raw.classFeatures[j];
-      const nextBase = next.name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
+      const nextBase = featureBaseName(next.name);
       const nextNorm = normalizeFeatureName(nextBase).toLowerCase();
       // Stop when we hit a feature that appears in the progression table
       if (progressionFeatureNames.has(nextNorm) || progressionFeatureNames.has(nextBase.toLowerCase())) break;
@@ -1456,7 +1441,7 @@ export function buildInitialMapping(
 
     // Collect prefixed sub-option features
     const prefix = tableName + ": ";
-    const orphans: { name: string; description: string }[] = [];
+    const orphans: NamedText[] = [];
     for (let j = i + 1; j < raw.classFeatures.length; j++) {
       const next = raw.classFeatures[j];
       if (!next.name.startsWith(prefix)) break;
@@ -1472,7 +1457,7 @@ export function buildInitialMapping(
   }
 
   for (const cf of raw.classFeatures) {
-    const baseName = cf.name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
+    const baseName = featureBaseName(cf.name);
 
     // Skip "Table:" entries — not class features
     if (baseName.startsWith("Table:")) continue;

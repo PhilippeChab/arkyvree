@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-
+import type { ArmorRow, WeaponRow } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 /** A table cell's text, without its footnote markers (<sup>). */
 function cellText(cell: cheerio.Cheerio<AnyNode>): string {
@@ -10,23 +10,12 @@ function cellText(cell: cheerio.Cheerio<AnyNode>): string {
   return normalizeWs(copy.text());
 }
 
-export function parseWeaponsHtml(html: string): {
-  name: string;
-  proficiency: string;
-  category: string;
-  cost: string;
-  dmgSmall: string;
-  dmgMedium: string;
-  critical: string;
-  rangeIncrement: string;
-  weight: string;
-  damageType: string;
-}[] {
+export function parseWeaponsHtml(html: string): WeaponRow[] {
   const $ = cheerio.load(html);
   const table = $("table#tableWeapons");
   if (!table.length) return [];
 
-  const weapons: ReturnType<typeof parseWeaponsHtml> = [];
+  const weapons: WeaponRow[] = [];
   let currentProficiency = "";
   let currentCategory = "";
 
@@ -74,23 +63,12 @@ export function parseWeaponsHtml(html: string): {
   return weapons;
 }
 
-export function parseArmorHtml(html: string): {
-  name: string;
-  category: string;
-  cost: string;
-  acBonus: string;
-  maxDexBonus: string;
-  armorCheckPenalty: string;
-  arcaneSpellFailure: string;
-  speed30: string;
-  speed20: string;
-  weight: string;
-}[] {
+export function parseArmorHtml(html: string): ArmorRow[] {
   const $ = cheerio.load(html);
   const table = $("table#tableArmorandShields");
   if (!table.length) return [];
 
-  const items: ReturnType<typeof parseArmorHtml> = [];
+  const items: ArmorRow[] = [];
   let currentCategory = "";
 
   table.find("tbody tr").each((_, row) => {

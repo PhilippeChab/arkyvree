@@ -1,16 +1,18 @@
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { FeatSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import { buildAptitudeExpansionMaps, buildClassFeatSeeds, buildPoolParentNameMap, classSpells, expandPerLevelAptitudePicks, insertOrdinalInName, loadExistingFeats, mergeAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { buildClassFeatSeeds, buildPoolParentNameMap, classAptitudePicks, classSpells, insertOrdinalInName, loadExistingFeats } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { stripClassSuffix, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   toConstName,
-  escapeString,
+  quote,
   truncateDesc,
   MAX_CLASS_DESC,
   formatStringArray,
-  collectImportsFromReq,
+  listField,
+  requirementImports,
   stringifyRequirement,
-  stringifyModifier,
+  stringifyFeatModifier,
+  stringifyProperty,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
 
 // ---------------------------------------------------------------------------
@@ -31,50 +33,35 @@ export function generateClassSeed(ref: ClassReference): string {
   const constName = toConstName(raw.name);
   const { classFeatures, autoFreeFeats } = buildClassFeatures(ref);
 
-  // Determine which imports are needed
-  const imports = collectRequirementImports(requirements);
-
+  // The requirement builders the class is written with, which its imports are written from
+  const uses = new Set<string>();
   const lines: string[] = [];
-
-  lines.push(`import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`);
-  if (imports.size > 0) {
-    const importList = Array.from(imports).sort().join(", ");
-    lines.push(`import { ${importList} } from "@/database/packages/dnd35/content/requirements.ts";`);
-  }
-  lines.push("");
   lines.push(`export const ${constName}: ClassSeed = {`);
-  lines.push(`  name: "${escapeString(raw.name)}",`);
-  lines.push(`  description: "${escapeString(truncateDesc(overrides.description ?? raw.description, MAX_CLASS_DESC))}",`);
+  lines.push(`  name: ${quote(raw.name)},`);
+  lines.push(`  description: ${quote(truncateDesc(overrides.description ?? raw.description, MAX_CLASS_DESC))},`);
   lines.push(`  hd: ${detected.hd}, levels: ${detected.levels}, skillPoints: ${detected.skillPoints},`);
-  lines.push(`  bab: "${bab}",`);
-  lines.push(`  saves: { fortitude: "${saves.fortitude}", reflex: "${saves.reflex}", will: "${saves.will}" },`);
+  lines.push(`  bab: ${quote(bab)},`);
+  lines.push(`  saves: { fortitude: ${quote(saves.fortitude)}, reflex: ${quote(saves.reflex)}, will: ${quote(saves.will)} },`);
   lines.push(`  classSkills: ${formatStringArray(classSkills, 1)},`);
 
-  // Requirements
-  if (requirements.length > 0) {
-    lines.push(`  requirements: [`);
-    for (const req of requirements) {
-      lines.push(`    ${stringifyRequirement(req, 2)},`);
-    }
-    lines.push(`  ],`);
-  }
+  lines.push(...listField("requirements", requirements.map((req) => stringifyRequirement(req, uses, 2)), "  "));
 
   // Caster level advancement
   const cla = detected.casterLevelAdvancement;
   if (cla) {
-    lines.push(`  casterLevelAdvancement: { type: "${cla.type}", levels: [${cla.levels.join(", ")}] },`);
+    lines.push(`  casterLevelAdvancement: { type: ${quote(cla.type)}, levels: [${cla.levels.join(", ")}] },`);
   }
 
   // Class feature aptitude
   if (mapping.classFeatureAptitude) {
-    lines.push(`  classFeatureAptitude: "${escapeString(mapping.classFeatureAptitude)}",`);
+    lines.push(`  classFeatureAptitude: ${quote(mapping.classFeatureAptitude)},`);
   }
 
   // Class features
   if (classFeatures.length > 0) {
     lines.push(`  classFeatures: [`);
     for (const [level, name] of classFeatures) {
-      lines.push(`    [${level}, "${escapeString(name)}"],`);
+      lines.push(`    [${level}, ${quote(name)}],`);
     }
     lines.push(`  ],`);
   }
@@ -88,7 +75,7 @@ export function generateClassSeed(ref: ClassReference): string {
   if (allFreeFeats.length > 0) {
     lines.push(`  freeFeats: [`);
     for (const [level, feat, apt] of allFreeFeats) {
-      lines.push(`    [${level}, "${escapeString(feat)}", "${escapeString(apt)}"],`);
+      lines.push(`    [${level}, ${quote(feat)}, ${quote(apt)}],`);
     }
     lines.push(`  ],`);
   }
@@ -104,16 +91,16 @@ export function generateClassSeed(ref: ClassReference): string {
   }
 
   if (bonusSpellAbility) {
-    lines.push(`  bonusSpellAbility: "${escapeString(bonusSpellAbility)}",`);
+    lines.push(`  bonusSpellAbility: ${quote(bonusSpellAbility)},`);
   }
   if (casterType) {
-    lines.push(`  casterType: "${casterType}",`);
+    lines.push(`  casterType: ${quote(casterType)},`);
   }
 
   const spells = classSpells(ref);
   if (spells) {
     lines.push(`  spells: {`);
-    lines.push(`    slug: "${escapeString(spells.slug)}",`);
+    lines.push(`    slug: ${quote(spells.slug)},`);
     lines.push(`    perDay: [`);
     for (const row of spells.perDay) {
       lines.push(`      [${row.join(", ")}],`);
@@ -134,16 +121,13 @@ export function generateClassSeed(ref: ClassReference): string {
   if (overrides.modifiers && overrides.modifiers.length > 0) {
     lines.push(`  modifiers: [`);
     for (const m of overrides.modifiers) {
-      lines.push(`    { level: ${m.level}, target: "${escapeString(m.target)}", value: "${escapeString(m.value)}", valueType: "${escapeString(m.valueType)}", operator: "${escapeString(m.operator)}" },`);
+      lines.push(`    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)} },`);
     }
     lines.push(`  ],`);
   }
 
-  const mergedPicks = mergeAptitudePicks(detected.aptitudePicks, overrides.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides.bonusFeatLists ?? detected.bonusFeatLists, raw.name);
+  const { aptitudePicks, remap, perLevel } = classAptitudePicks(ref);
   if (aptitudePicks && aptitudePicks.length > 0) {
-    const { remap, perLevel } = buildAptitudeExpansionMaps(mergedPicks, aptitudePicks);
-
     // Strip picks already handled by feat modifiers on class features
     const mf = ref.mapping.features;
     const featModTargets = new Set<string>();
@@ -170,7 +154,7 @@ export function generateClassSeed(ref: ClassReference): string {
     if (filtered.length > 0) {
       lines.push(`  aptitudePicks: [`);
       for (const pick of filtered) {
-        lines.push(`    { levels: [${pick.levels.join(", ")}], target: "${escapeString(pick.target)}" },`);
+        lines.push(`    { levels: [${pick.levels.join(", ")}], target: ${quote(pick.target)} },`);
       }
       lines.push(`  ],`);
     }
@@ -198,8 +182,7 @@ export function generateClassSeed(ref: ClassReference): string {
   }
 
   lines.push("");
-
-  return lines.join("\n");
+  return [`import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`, ...requirementImports(uses), "", ...lines].join("\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -207,37 +190,33 @@ export function generateClassSeed(ref: ClassReference): string {
 // ---------------------------------------------------------------------------
 
 /** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */
-function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string): string {
+function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<string>): string {
   const parts = [
-    `name: "${escapeString(feat.name)}"`,
-    `description: "${escapeString(feat.description)}"`,
+    `name: ${quote(feat.name)}`,
+    `description: ${quote(feat.description)}`,
     ...feat.stackable ? ["stackable: true"] : [],
     ...feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : [],
-    `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : `"${escapeString(a)}"`)).join(", ")}]`,
-    ...feat.modifiers?.length ? [`modifiers: [${feat.modifiers.map((m) => stringifyModifier(m)).join(", ")}]`] : [],
-    ...feat.requirements?.length ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r)).join(", ")}]`] : [],
-    ...feat.properties?.length ? [`properties: [${feat.properties.map((p) => `{ type: "${p.type}", value: "${escapeString(p.value)}" }`).join(", ")}]`] : [],
+    `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : quote(a))).join(", ")}]`,
+    ...feat.modifiers?.length ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`] : [],
+    ...feat.requirements?.length ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`] : [],
+    ...feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : [],
   ];
   return `  { ${parts.join(", ")} },`;
 }
 
 /** A class's feats file: its own feats (`buildClassFeatSeeds`). */
 export function generateFeatSeeds(ref: ClassReference): string {
-  const feats = buildClassFeatSeeds(ref);
   const aptitude = ref.mapping.classFeatureAptitude;
-  const imports = new Set<string>();
-  for (const feat of feats) {
-    for (const requirement of feat.requirements ?? []) collectImportsFromReq(requirement, imports);
-    for (const modifier of feat.modifiers ?? []) for (const requirement of modifier.requirements ?? []) collectImportsFromReq(requirement, imports);
-  }
+  const uses = new Set<string>();
+  const feats = buildClassFeatSeeds(ref).map((feat) => stringifyFeat(feat, aptitude, uses));
   return [
     `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
-    ...imports.size > 0 ? [`import { ${[...imports].sort().join(", ")} } from "@/database/packages/dnd35/content/requirements.ts";`] : [],
+    ...requirementImports(uses),
     "",
-    `const APT = "${escapeString(aptitude)}";`,
+    `const APT = ${quote(aptitude)};`,
     "",
     `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
-    ...feats.map((feat) => stringifyFeat(feat, aptitude)),
+    ...feats,
     `];`,
     "",
   ].join("\n");
@@ -254,15 +233,22 @@ function buildClassFeatures(ref: ClassReference): {
   const features: [number, string][] = [];
   const autoFreeFeats: [number, string, string][] = [];
   const { detected, mapping } = ref;
-  const overrides = mapping.overrides ?? {};
   const features_ = ref.mapping.features;
   const poolParentNames = buildPoolParentNameMap(features_, ref.raw.name, mapping.classFeatureAptitude);
   const existingFeats = loadExistingFeats(ref._meta.book);
+  /**
+   * The existing feat a feature named `name` grants: that feat (with or without the class's suffix), or one its
+   * description says it gains as a bonus feat.
+   */
+  const existingFeatGranted = (name: string, description: string | undefined) => {
+    const baseName = stripClassSuffix(name, ref.raw.name);
+    if (baseName && existingFeats.has(baseName)) return baseName;
+    if (existingFeats.has(name)) return name;
+    return description ? extractGrantedFeatNames(description).find((n) => existingFeats.has(n)) : undefined;
+  };
 
   // Build per-level feat name map for multi-occurrence aptitude expansions
-  const preMergedForNames = mergeAptitudePicks(detected.aptitudePicks, overrides.aptitudePicks);
-  const expandedForNames = expandPerLevelAptitudePicks(preMergedForNames, overrides.bonusFeatLists ?? detected.bonusFeatLists, ref.raw.name);
-  const { perLevel: perLevelForNames } = buildAptitudeExpansionMaps(preMergedForNames, expandedForNames);
+  const { perLevel: perLevelForNames } = classAptitudePicks(ref);
   const perLevelFeatNames = new Map<string, Map<number, string>>();
   for (const [key, feat] of Object.entries(features_)) {
     if (!feat.modifiers) continue;
@@ -287,16 +273,7 @@ function buildClassFeatures(ref: ClassReference): {
     const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
     const name = mappedName ?? (poolParentNames.get(occ.name.toLowerCase()) ?? occ.name);
 
-    // Check if this is an existing feat (with or without class suffix)
-    const baseName = stripClassSuffix(name, ref.raw.name);
-    let freeFeatName = baseName && existingFeats.has(baseName) ? baseName
-      : existingFeats.has(name) ? name
-      : undefined;
-    // Fallback: parse description for "gains X as a bonus feat" patterns
-    if (!freeFeatName && feature?.description) {
-      const granted = extractGrantedFeatNames(feature.description);
-      freeFeatName = granted.find((n) => existingFeats.has(n));
-    }
+    const freeFeatName = existingFeatGranted(name, feature?.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, mapping.classFeatureAptitude]);
     } else {
@@ -320,14 +297,7 @@ function buildClassFeatures(ref: ClassReference): {
     if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
     if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
     const name = feat.seedName ?? key;
-    const baseName = stripClassSuffix(name, ref.raw.name);
-    let freeFeatName = baseName && existingFeats.has(baseName) ? baseName
-      : existingFeats.has(name) ? name
-      : undefined;
-    if (!freeFeatName && feat.description) {
-      const granted = extractGrantedFeatNames(feat.description);
-      freeFeatName = granted.find((n) => existingFeats.has(n));
-    }
+    const freeFeatName = existingFeatGranted(name, feat.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
     } else {
@@ -357,14 +327,3 @@ function findMappedName(
   return undefined;
 }
 
-// ---------------------------------------------------------------------------
-// Import collection
-// ---------------------------------------------------------------------------
-
-function collectRequirementImports(reqs: RequirementEntry[]): Set<string> {
-  const imports = new Set<string>();
-  for (const req of reqs) {
-    collectImportsFromReq(req, imports);
-  }
-  return imports;
-}

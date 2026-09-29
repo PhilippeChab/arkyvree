@@ -32,15 +32,20 @@ const APOSTROPHES: Replacements = [
   [/(\w)\?(\s)/g, "$1'$2"],
 ];
 
+/** A string's encoding fixes, its lines then joined into one. */
+const TEXT_FIXES: Replacements = [
+  ...ENCODING,
+  ...APOSTROPHES,
+  [/\s*\n\s*/g, " "], // collapse newlines into single space
+  [/  +/g, " "], // collapse multiple spaces
+];
+
 /**
  * Fix encoding artifacts only — safe to run on any string (names, descriptions, etc.).
  * Does NOT strip book references or rewrite content.
  */
 function fixEncoding(text: string): string {
-  return applyAll(text, [...ENCODING, ...APOSTROPHES])
-    .replace(/\s*\n\s*/g, " ")              // collapse newlines into single space
-    .replace(/  +/g, " ")                   // collapse multiple spaces
-    .trim();
+  return applyAll(text, TEXT_FIXES).trim();
 }
 
 /**
@@ -106,6 +111,22 @@ export function sanitizeText(text: string): string {
     .trim();
 }
 
+/** dndtools.net's HTML quirks and typos, and the encoding fixes. */
+const HTML_FIXES: Replacements = [
+  // Strip script tags and their content (dndtools.net injects ad scripts)
+  [/<script[\s\S]*?<\/script>/gi, ""],
+  [/<noscript[\s\S]*?<\/noscript>/gi, ""],
+  // Fix broken closing tags (dndtools.net quirk):
+  // `</\n` → `</p>\n` (missing tag name) and `</p\n` → `</p>\n` (missing >)
+  [/<\/\s*\n/g, "</p>\n"],
+  [/<\/(\w+)\s*\n/g, "</$1>\n"],
+  ...APOSTROPHES,
+  // Known typos from dndtools.net
+  [/Enhanse/g, "Enhance"],
+  [/[Pp]rofi [Cc]iency/g, "Proficiency"],
+  ...ENCODING,
+];
+
 /**
  * Sanitize raw HTML before Cheerio parsing.
  *
@@ -115,21 +136,7 @@ export function sanitizeText(text: string): string {
  * the next element's opening tag if newlines were collapsed).
  */
 export function sanitizeHtml(html: string): string {
-  const withoutQuirks = html
-    // Strip script tags and their content (dndtools.net injects ad scripts)
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
-    // Fix broken closing tags (dndtools.net quirk):
-    // `</\n` → `</p>\n` (missing tag name) and `</p\n` → `</p>\n` (missing >)
-    .replace(/<\/\s*\n/g, "</p>\n")
-    .replace(/<\/(\w+)\s*\n/g, "</$1>\n");
-  return applyAll(withoutQuirks, [
-    ...APOSTROPHES,
-    // Known typos from dndtools.net
-    [/Enhanse/g, "Enhance"],
-    [/[Pp]rofi [Cc]iency/g, "Proficiency"],
-    ...ENCODING,
-  ]);
+  return applyAll(html, HTML_FIXES);
 }
 
 /** Keys whose string values get full sanitization (encoding + book-reference stripping) */

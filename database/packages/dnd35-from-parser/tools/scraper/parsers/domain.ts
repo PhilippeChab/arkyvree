@@ -1,4 +1,6 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
+import { sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
@@ -69,13 +71,11 @@ export function parseDomainsHtml(
     ).join(" ");
     const name = suffix ? `${baseName} ${suffix}` : baseName;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const siblings: cheerio.Cheerio<any>[] = [];
-    let el = h5.next();
-    while (el.length && !el.is("h5")) {
+    // Up to the next domain: its heading, or the anchor before it
+    const siblings: cheerio.Cheerio<AnyNode>[] = [];
+    for (const el of sectionElements(h5, ["h5"])) {
       if (el.is("a[id]") && el.attr("id")?.endsWith("-domain")) break;
       siblings.push(el);
-      el = el.next();
     }
 
     const grantedParts: string[] = [];
@@ -93,6 +93,14 @@ export function parseDomainsHtml(
 
     const spells: { name: string; slug?: string; level: number }[] = [];
     const spellSeen = new Set<string>();
+    /** Adds a spell once per level and name, with its slug when its link has one (`#slug`). */
+    const addSpell = (level: number, spellName: string, href: string | undefined) => {
+      const key = `${level}:${spellName}`;
+      if (spellSeen.has(key)) return;
+      spellSeen.add(key);
+      const slug = href?.match(/#(.+)$/)?.[1];
+      spells.push({ name: normalizeDomainSpellName(spellName), ...(slug ? { slug } : {}), level });
+    };
     const table = siblings.find((s) => s.is("table"));
     if (table) {
       table.find("tr").each((_, tr) => {
@@ -109,16 +117,7 @@ export function parseDomainsHtml(
           const spellName = singleCellMatch[2].trim()
             .replace(/\s+[MFX]+(\s+[MFX]+)*$/, "");
 
-          const link = firstTd.find("a[href]").first();
-          const href = link.attr("href") ?? "";
-          const slugMatch = href.match(/#(.+)$/);
-          const slug = slugMatch ? slugMatch[1] : undefined;
-
-          const key = `${level}:${spellName}`;
-          if (level >= 1 && level <= 9 && spellName && !spellSeen.has(key)) {
-            spellSeen.add(key);
-            spells.push({ name: normalizeDomainSpellName(spellName), ...(slug ? { slug } : {}), level });
-          }
+          if (level >= 1 && level <= 9 && spellName) addSpell(level, spellName, firstTd.find("a[href]").first().attr("href"));
           return;
         }
 
@@ -130,16 +129,7 @@ export function parseDomainsHtml(
           const secondTd = tds.eq(1);
           secondTd.find("a").each((_, a) => {
             const spellName = $(a).text().trim();
-            if (!spellName) return;
-            const href = $(a).attr("href") ?? "";
-            const slugMatch = href.match(/#(.+)$/);
-            const slug = slugMatch ? slugMatch[1] : undefined;
-
-            const key = `${level}:${spellName}`;
-            if (!spellSeen.has(key)) {
-              spellSeen.add(key);
-              spells.push({ name: normalizeDomainSpellName(spellName), ...(slug ? { slug } : {}), level });
-            }
+            if (spellName) addSpell(level, spellName, $(a).attr("href"));
           });
         }
       });

@@ -102,7 +102,7 @@ export async function fetchHtml(url: string): Promise<string> {
       writeCache(url, html);
       return html;
     } catch (err) {
-      lastError = err as Error;
+      lastError = err instanceof Error ? err : new Error(String(err));
       if (attempt < MAX_RETRIES) {
         const backoff = Math.pow(2, attempt) * 500;
         console.warn(`Fetch error for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`);

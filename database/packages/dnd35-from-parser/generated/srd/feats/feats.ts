@@ -1,20 +1,11 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { ALL_WEAPONS, EXOTIC_WEAPONS, CROSSBOW_WEAPONS, proficiencyRequirements, weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-
-const SIMPLE_SET = new Set(SIMPLE_WEAPONS);
-const MARTIAL_SET = new Set(MARTIAL_WEAPONS);
-
-function proficiencyReqs(w: string) {
-  if (SIMPLE_SET.has(w)) return [or(eq(feat("Simple Weapon Proficiency")), eq(feat(`Simple Weapon Proficiency: ${w}`)))];
-  if (MARTIAL_SET.has(w)) return [or(eq(feat("Martial Weapon Proficiency")), eq(feat(`Martial Weapon Proficiency: ${w}`)))];
-  return [eq(feat(`Exotic Weapon Proficiency: ${w}`))];
-}
-
-const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
+import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
+import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 
 export const GENERAL_FEATS: FeatSeed[] = [
   {
@@ -960,7 +951,7 @@ export const improvedCritical: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   description: `The threat range of your chosen weapon is doubled. For instance, a longsword normally threatens a critical on 19-20 (two numbers). With this feat applied to longsword, the threat range becomes 17-20 (four numbers).`,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
-    ...proficiencyReqs(w),
+    ...proficiencyRequirements(w),
     gte("combat.bab", 8),
   ],
   modifiers: [
@@ -1001,7 +992,7 @@ export const weaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   description: `You gain a +1 bonus to all attack rolls made with the chosen weapon.`,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
-    ...proficiencyReqs(w),
+    ...proficiencyRequirements(w),
     gte("combat.bab", 1),
   ],
   modifiers: [
@@ -1024,58 +1015,6 @@ export const weaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   properties: [{ type: "FEAT_FAMILY", value: "Weapon Specialization" }],
 }));
 
-// ---------------------------------------------------------------------------
-// Wizard School feats (system-generated)
-// ---------------------------------------------------------------------------
-
-import { WIZARD_SCHOOLS, WIZARD_PROHIBITED_SCHOOL } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-
-const SPEC = "Wizard Specialization";
-const PROHIB = "Prohibited School";
-
-export const WIZARD_SCHOOL_FEATS: FeatSeed[] = [
-  ...WIZARD_SCHOOLS.map((s) => ({
-    name: `${s.name} Specialist`,
-    description: s.description,
-    aptitudes: [SPEC],
-    requirements: [gte("classes.wizard.level", 1)],
-    modifiers: [{
-      target: "aptitudes.prohibitedschool.allowed",
-      operator: "add",
-      value: String(s.prohibitedSchoolCount),
-      valueType: "number",
-    }],
-  })),
-  {
-    name: "Generalist",
-    description: "A generalist wizard does not specialize in any school of magic. They have no prohibited schools and gain no bonus spell slots, but can freely learn spells from all schools.",
-    aptitudes: [SPEC],
-    requirements: [gte("classes.wizard.level", 1)],
-  },
-  ...WIZARD_SCHOOLS.map((s) => ({
-    name: `Prohibit ${s.name}`,
-    description: `You cannot learn, prepare, or cast spells from the school of ${s.name}. All spells from this school are removed from your spell list.`,
-    aptitudes: [PROHIB],
-    requirements: [gte("classes.wizard.level", 1)],
-    properties: [{ type: WIZARD_PROHIBITED_SCHOOL, value: s.name }],
-  })),
-];
-
-// ---------------------------------------------------------------------------
-// Weapon proficiency feats (system-generated)
-// ---------------------------------------------------------------------------
-
-export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = [
-  ...SIMPLE_WEAPONS.map((w) => ({
-    name: `Simple Weapon Proficiency: ${w}`,
-    description: `You are proficient with the ${w.toLowerCase()}.`,
-    aptitudes: ["General"],
-    selectable: false as const,
-  })),
-  ...MARTIAL_WEAPONS.map((w) => ({
-    name: `Martial Weapon Proficiency: ${w}`,
-    description: `You are proficient with the ${w.toLowerCase()}.`,
-    aptitudes: ["General"],
-    selectable: false as const,
-  })),
-];
+// The system feats (`coreSystemFeats`): no reference lists them.
+export const WIZARD_SCHOOL_FEATS: FeatSeed[] = wizardSchoolFeats(WIZARD_SCHOOLS);
+export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = weaponProficiencyFeats;
