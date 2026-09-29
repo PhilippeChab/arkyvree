@@ -1,13 +1,14 @@
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import { buildAptitudeExpansionMaps, buildPoolParentNameMap, classAptitudePicks, classSpells, detectClassFeatFamily, expandPerLevelAptitudePicks, insertOrdinalInName, loadExistingFeats, mergeAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, collectImportsFromReq, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { FeatSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { buildAptitudeExpansionMaps, buildClassFeatSeeds, buildPoolParentNameMap, classSpells, expandPerLevelAptitudePicks, insertOrdinalInName, loadExistingFeats, mergeAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { stripClassSuffix, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   toConstName,
   escapeString,
   truncateDesc,
   MAX_CLASS_DESC,
   formatStringArray,
+  collectImportsFromReq,
   stringifyRequirement,
   stringifyModifier,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
@@ -205,184 +206,41 @@ export function generateClassSeed(ref: ClassReference): string {
 // Generate FeatSeed[] TypeScript file
 // ---------------------------------------------------------------------------
 
+/** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */
+function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string): string {
+  const parts = [
+    `name: "${escapeString(feat.name)}"`,
+    `description: "${escapeString(feat.description)}"`,
+    ...feat.stackable ? ["stackable: true"] : [],
+    ...feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : [],
+    `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : `"${escapeString(a)}"`)).join(", ")}]`,
+    ...feat.modifiers?.length ? [`modifiers: [${feat.modifiers.map((m) => stringifyModifier(m)).join(", ")}]`] : [],
+    ...feat.requirements?.length ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r)).join(", ")}]`] : [],
+    ...feat.properties?.length ? [`properties: [${feat.properties.map((p) => `{ type: "${p.type}", value: "${escapeString(p.value)}" }`).join(", ")}]`] : [],
+  ];
+  return `  { ${parts.join(", ")} },`;
+}
+
+/** A class's feats file: its own feats (`buildClassFeatSeeds`). */
 export function generateFeatSeeds(ref: ClassReference): string {
-  const mapping = ref.mapping;
-  const features = ref.mapping.features;
-  const constName = `${toConstName(ref.raw.name)}_FEATS`;
-  const aptConst = "APT";
-  const existingFeats = loadExistingFeats(ref._meta.book);
-
-  const lines: string[] = [];
-  const overrides = mapping.overrides ?? {};
-  const classSlug = stripSeparators(ref.raw.name);
-
-  const { mergedPicks, aptitudePicks, aptitudeMinLevel } = classAptitudePicks(ref);
-
-  // Build expansion maps for aptitude target remapping
-  const { remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = buildAptitudeExpansionMaps(mergedPicks, aptitudePicks);
-
-  // Determine imports
-  const needsModifierImports = Object.values(features).some((f) => f.modifiers && f.modifiers.length > 0);
-  const modImports = new Set<string>();
-  if (needsModifierImports) {
-    for (const f of Object.values(features)) {
-      if (f.modifiers) {
-        for (const m of f.modifiers) {
-          if (m.requirements) {
-            for (const r of m.requirements) {
-              collectImportsFromReq(r, modImports);
-            }
-          }
-        }
-      }
-    }
+  const feats = buildClassFeatSeeds(ref);
+  const aptitude = ref.mapping.classFeatureAptitude;
+  const imports = new Set<string>();
+  for (const feat of feats) {
+    for (const requirement of feat.requirements ?? []) collectImportsFromReq(requirement, imports);
+    for (const modifier of feat.modifiers ?? []) for (const requirement of modifier.requirements ?? []) collectImportsFromReq(requirement, imports);
   }
-  lines.push(`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`);
-  const allImports = new Set([...modImports]);
-  const IMPORT_PLACEHOLDER = `__SEED_UTILS_IMPORT__`;
-  lines.push(IMPORT_PLACEHOLDER);
-  lines.push("");
-  lines.push(`const ${aptConst} = "${escapeString(mapping.classFeatureAptitude)}";`);
-  lines.push("");
-  lines.push(`export const ${constName}: FeatSeed[] = [`);
-
-  const lockedFeByKey = new Map<string, string>();
-  for (const lf of ref.detected.lockedFavoredEnemies ?? []) {
-    const occName = lf.featureName;
-    const mappingKey = mapping.occurrenceMap?.[occName];
-    if (mappingKey) lockedFeByKey.set(mappingKey.toLowerCase(), lf.creatureType);
-    lockedFeByKey.set(occName.toLowerCase(), lf.creatureType);
-  }
-
-  const featureEntries = Object.entries(features).filter(([key, f]) => {
-    if (f.skip) return false;
-    // Skip feats that duplicate existing feats (handled as freeFeats).
-    // Locked-favored-enemy feats are emitted in-place — they grant the
-    // underlying base-ruleset variant via a `feats.<slug>.possessed`
-    // modifier rather than being rerouted to it.
-    if (lockedFeByKey.has(key.toLowerCase())) return true;
-    const baseName = stripClassSuffix(f.seedName ?? (f.aptitude ? `${key} (${f.aptitude})` : key), ref.raw.name);
-    if (baseName && existingFeats.has(baseName)) return false;
-    return true;
-  });
-  for (let i = 0; i < featureEntries.length; i++) {
-    const [key, feat] = featureEntries[i];
-
-    // Check if this feat has modifiers targeting a per-level expanded aptitude (multi-occurrence)
-    const perLevelMod = feat.modifiers?.find((m) => perLevelExpansion.has(m.target));
-    if (perLevelMod) {
-      const expansions = perLevelExpansion.get(perLevelMod.target)!;
-      const baseName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
-      for (const exp of expansions) {
-        const name = insertOrdinalInName(baseName, exp.ordinal);
-        const minLevel = Math.min(...exp.levels);
-        const parts: string[] = [];
-        parts.push(`name: "${escapeString(name)}"`);
-        parts.push(`description: "${escapeString(truncateDesc(feat.description ?? ""))}"`);
-        parts.push(`selectable: false`);
-        parts.push(`aptitudes: [${feat.aptitude ? `"${escapeString(feat.aptitude)}"` : aptConst}]`);
-        if (feat.modifiers && feat.modifiers.length > 0) {
-          const remapped = feat.modifiers.map((m) => {
-            if (m.target === perLevelMod.target) return { ...m, target: exp.newTarget };
-            return m;
-          });
-          const modStrs = remapped.map((m) => stringifyModifier(m));
-          parts.push(`modifiers: [${modStrs.join(", ")}]`);
-        }
-        if (minLevel > 1) {
-          allImports.add("gte");
-          parts.push(`requirements: [gte("classes.${classSlug}.level", ${minLevel})]`);
-        }
-        lines.push(`  { ${parts.join(", ")} },`);
-      }
-      continue;
-    }
-
-    const parts: string[] = [];
-    const featName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
-    const lockedFeType = lockedFeByKey.get(key.toLowerCase());
-    parts.push(`name: "${escapeString(featName)}"`);
-    parts.push(`description: "${escapeString(truncateDesc(feat.description ?? ""))}"`);
-    if (feat.stackable || lockedFeType) parts.push(`stackable: true`);
-    const isAutoGranted = feat.level != null && !feat.aptitude;
-    if (feat.selectable) parts.push(`selectable: true`);
-    else if (feat.selectable === false || isAutoGranted || lockedFeType) parts.push(`selectable: false`);
-    if (feat.aptitude) {
-      parts.push(`aptitudes: ["${escapeString(feat.aptitude)}"]`);
-    } else {
-      parts.push(`aptitudes: [${aptConst}]`);
-    }
-
-    const baseModifiers = feat.modifiers ?? [];
-    const autoModifiers = autoCompanionGrantModifiers(featName, feat.description ?? "");
-    const lockedFeModifiers = lockedFeType
-      ? [{
-          target: `feats.${stripSeparators(`Favored Enemy: ${lockedFeType}`)}.possessed`,
-          operator: "set",
-          value: "true",
-          valueType: "boolean",
-        }]
-      : [];
-    if (baseModifiers.length > 0 || autoModifiers.length > 0 || lockedFeModifiers.length > 0) {
-      const remapped = baseModifiers.map((m) => {
-        const newTarget = aptitudeTargetRemap.get(m.target);
-        return newTarget ? { ...m, target: newTarget } : m;
-      });
-      const modStrs = [...remapped, ...autoModifiers, ...lockedFeModifiers].map((m) => stringifyModifier(m));
-      parts.push(`modifiers: [${modStrs.join(", ")}]`);
-    }
-
-    if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) {
-      const aptSlug = stripSeparators(feat.aptitude);
-      const minLevel = aptitudeMinLevel.get(aptSlug);
-      if (minLevel != null && minLevel > 1) {
-        allImports.add("gte");
-        parts.push(`requirements: [gte("classes.${classSlug}.level", ${minLevel})]`);
-      }
-    }
-
-    const featFamily = lockedFeType
-      ? "Favored Enemy"
-      : detectClassFeatFamily(feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key));
-    if (featFamily) {
-      parts.push(`properties: [{ type: "FEAT_FAMILY", value: "${escapeString(featFamily)}" }]`);
-    }
-
-    const line = `  { ${parts.join(", ")} },`;
-
-    lines.push(line);
-  }
-
-  // Append advancement feat for qualifying spellcasting classes
-  const detected = ref.detected;
-  const casterType = overrides.casterType ?? detected.casterType;
-  if (detected.hasOwnSpells && casterType && !detected.casterLevelAdvancement) {
-    allImports.add("gte");
-    const aptConst = casterType === "Divine" ? `"Bonus Divine Caster Level"` : `"Bonus Arcane Caster Level"`;
-    const parts: string[] = [];
-    parts.push(`name: "Advance ${escapeString(ref.raw.name)} Spellcasting"`);
-    parts.push(`description: "Your effective ${classSlug} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${classSlug}."`);
-    parts.push(`stackable: true`);
-    parts.push(`aptitudes: [${aptConst}, "Bonus Caster Level"]`);
-    parts.push(`modifiers: [{ target: "classes.${classSlug}.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }]`);
-    parts.push(`requirements: [gte("classes.${classSlug}.level", 1)]`);
-    lines.push(`  { ${parts.join(", ")} },`);
-  }
-
-  lines.push(`];`);
-  lines.push("");
-
-  // Replace import placeholder now that we know all needed imports
-  const idx = lines.indexOf(IMPORT_PLACEHOLDER);
-  if (idx !== -1) {
-    if (allImports.size > 0) {
-      lines[idx] = `import { ${Array.from(allImports).sort().join(", ")} } from "@/database/packages/dnd35/content/requirements.ts";`;
-    } else {
-      lines.splice(idx, 1);
-    }
-  }
-
-  return lines.join("\n");
+  return [
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...imports.size > 0 ? [`import { ${[...imports].sort().join(", ")} } from "@/database/packages/dnd35/content/requirements.ts";`] : [],
+    "",
+    `const APT = "${escapeString(aptitude)}";`,
+    "",
+    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
+    ...feats.map((feat) => stringifyFeat(feat, aptitude)),
+    `];`,
+    "",
+  ].join("\n");
 }
 
 // ---------------------------------------------------------------------------

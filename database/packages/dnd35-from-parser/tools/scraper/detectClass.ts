@@ -6,7 +6,7 @@ import { SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/pack
 import { findCreatureType } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { BOOK_ABBREV_PATTERN, SKILL_MAP, lookupWithPluralVariants, matchesWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { BOOK_ABBREV_PATTERN, normalizeWs, SKILL_MAP, lookupWithPluralVariants, matchesWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 
 // ---------------------------------------------------------------------------
@@ -959,7 +959,7 @@ function detectBonusFeatLists(
     const cf = lookupWithPluralVariants(descMap, occ.name);
     if (!cf) continue;
 
-    const desc = cf.description.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+    const desc = normalizeWs(cf.description);
 
     // Single-level features: check for "treated as having" pattern (ranger combat style)
     if (occ.levels.length === 1) {
@@ -1034,7 +1034,7 @@ function detectLockedFavoredEnemies(
   for (const occ of featureOccurrences) {
     const desc = lookupWithPluralVariants(descMap, occ.name);
     if (!desc) continue;
-    const normalized = desc.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+    const normalized = normalizeWs(desc);
 
     if (!FE_TEMPLATE.test(normalized)) continue;
 
@@ -1124,7 +1124,7 @@ function parsePoolSubOptions(description: string): { intro: string; options: { n
   for (let i = 0; i < matches.length; i++) {
     const start = matches[i].index + matches[i].matchLength;
     const end = i + 1 < matches.length ? matches[i + 1].index : description.length;
-    const desc = description.slice(start, end).replace(/\.\s*$/, "").replace(/\s+/g, " ").trim();
+    const desc = normalizeWs(description.slice(start, end).replace(/\.\s*$/, ""));
     options.push({ name: matches[i].name, description: desc, ...(detectStackable(desc) ? { stackable: true } : {}) });
   }
 
@@ -1359,7 +1359,7 @@ export function buildInitialMapping(
       const cf = lookupWithPluralVariants(descMap, occ.name);
       if (!cf) continue;
 
-      const normalizedDesc = cf.description.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+      const normalizedDesc = normalizeWs(cf.description);
 
       // Check for choice language — this is a pool feature if description mentions selection
       if (!CHOICE_PATTERN.test(normalizedDesc)) continue;
@@ -1409,7 +1409,7 @@ export function buildInitialMapping(
     if (!poolAptitudes.has(`__pool__${cf.name.toLowerCase()}`) && !poolAptitudes.has(`__pool__${baseName.toLowerCase()}`)) continue;
 
     // This is a pool parent — check if it has inline sub-options
-    const normalizedDesc = cf.description.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+    const normalizedDesc = normalizeWs(cf.description);
     const parsed = parsePoolSubOptions(normalizedDesc);
     if (parsed && parsed.options.length >= 2) continue; // Handled by inline parsing
 
@@ -1423,7 +1423,7 @@ export function buildInitialMapping(
       if (progressionFeatureNames.has(nextNorm) || progressionFeatureNames.has(nextBase.toLowerCase())) break;
       // Skip "Weapon and Armor Proficiency" — it's not a sub-option
       if (nextBase.toLowerCase() === "weapon and armor proficiency") continue;
-      orphans.push({ name: nextBase, description: next.description.replace(/\n+/g, " ").replace(/\s+/g, " ").trim() });
+      orphans.push({ name: nextBase, description: normalizeWs(next.description) });
     }
     if (orphans.length >= 2) {
       orphanSubOptions.set(baseName.toLowerCase(), orphans);
@@ -1461,7 +1461,7 @@ export function buildInitialMapping(
       const next = raw.classFeatures[j];
       if (!next.name.startsWith(prefix)) break;
       const subName = next.name.substring(prefix.length);
-      orphans.push({ name: subName, description: next.description.replace(/\n+/g, " ").replace(/\s+/g, " ").trim() });
+      orphans.push({ name: subName, description: normalizeWs(next.description) });
       tableSkipNames.add(next.name.toLowerCase());
     }
 
@@ -1481,7 +1481,7 @@ export function buildInitialMapping(
 
     // If this is a pool feature, skip it and add its sub-options instead
     if (poolFeatureNames.has(cf.name.toLowerCase()) || poolFeatureNames.has(baseName.toLowerCase())) {
-      const normalizedDesc = cf.description.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+      const normalizedDesc = normalizeWs(cf.description);
       const baseSlug = stripSeparators(baseName);
       const poolOcc = detected.featureOccurrences.find((fo) =>
         matchesWithPluralVariants(stripSeparators(fo.name), baseSlug),
@@ -1583,7 +1583,7 @@ export function buildInitialMapping(
     const level = allLevels.length > 0 ? Math.min(...allLevels)
       : spellFeatureLevel || 1; // Features not in progression table are available from level 1
 
-    const normalizedDesc = cf.description.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+    const normalizedDesc = normalizeWs(cf.description);
     const { modifiers } = detectModifiers(normalizedDesc);
     const wapMods = baseName === "Weapon and Armor Proficiency" ? detectWAPModifiers(normalizedDesc) : [];
     const allModifiers = [...wapMods, ...modifiers];

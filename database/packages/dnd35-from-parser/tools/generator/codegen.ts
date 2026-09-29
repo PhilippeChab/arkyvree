@@ -1,4 +1,5 @@
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type * as requirementBuilders from "@/database/packages/dnd35/content/requirements.ts";
+import type { ModifierSeed, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { normalizeDescription, MAX_DESC } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
@@ -26,6 +27,34 @@ function indent(text: string, level: number): string {
 // Requirement stringification
 // ---------------------------------------------------------------------------
 
+/**
+ * The builder (content/requirements.ts) the generated code writes a check with, by its value type and operator,
+ * and its arguments. A check without one is written as an object.
+ */
+const CHECK_BUILDERS: Record<string, { builder: keyof typeof requirementBuilders; args: (check: RequirementCondition) => string } | undefined> = {
+  "boolean equal": { builder: "eq", args: ({ target }) => `"${target}"` },
+  "number equal": { builder: "eqNum", args: ({ target, value }) => `"${target}", ${parseInt(value, 10)}` },
+  "number greater_than_or_equal": { builder: "gte", args: ({ target, value }) => `"${target}", ${parseInt(value, 10)}` },
+  "string equal": { builder: "eqStr", args: ({ target, value }) => `"${target}", "${escapeString(value)}"` },
+};
+
+function checkBuilder(check: RequirementCondition) {
+  // `eq` checks a flag is set: a boolean compared with anything else has no builder.
+  if (check.valueType === "boolean" && check.value !== "true") return undefined;
+  return CHECK_BUILDERS[`${check.valueType} ${check.operator}`];
+}
+
+/** Adds the builders a requirement is written with to `imports`. */
+export function collectImportsFromReq(req: RequirementEntry, imports: Set<string>): void {
+  if ("chainingOperator" in req) {
+    imports.add(req.chainingOperator);
+    for (const child of req.children) collectImportsFromReq(child, imports);
+    return;
+  }
+  const builder = checkBuilder(req)?.builder;
+  if (builder) imports.add(builder);
+}
+
 export function stringifyRequirement(
   req: RequirementEntry,
   indentLevel = 2,
@@ -39,36 +68,9 @@ export function stringifyRequirement(
     return `${fn}(\n${children.map((c) => indent(c + ",", indentLevel + 1)).join("\n")}\n${indent(")", indentLevel)}`;
   }
 
+  const builder = checkBuilder(req);
+  if (builder) return `${builder.builder}(${builder.args(req)})`;
   const { target, operator, value, valueType } = req;
-
-  // Numeric comparisons
-  if (valueType === "number") {
-    const numVal = parseInt(value, 10);
-    switch (operator) {
-      case "greater_than_or_equal": return `gte("${target}", ${numVal})`;
-      case "greater_than": return `gt("${target}", ${numVal})`;
-      case "less_than_or_equal": return `lte("${target}", ${numVal})`;
-      case "less_than": return `lt("${target}", ${numVal})`;
-      case "equal": return `eqNum("${target}", ${numVal})`;
-      case "not_equal": return `neNum("${target}", ${numVal})`;
-    }
-  }
-
-  // String comparisons
-  if (valueType === "string") {
-    switch (operator) {
-      case "equal": return `eqStr("${target}", "${escapeString(value)}")`;
-      case "not_equal": return `neStr("${target}", "${escapeString(value)}")`;
-    }
-  }
-
-  // Boolean
-  if (valueType === "boolean") {
-    if (operator === "equal" && value === "true") return `eq("${target}")`;
-    if (operator === "not_equal" && value === "true") return `ne("${target}")`;
-  }
-
-  // Fallback — raw object
   return `{ target: "${target}", operator: "${operator}", value: "${value}", valueType: "${valueType}" }`;
 }
 

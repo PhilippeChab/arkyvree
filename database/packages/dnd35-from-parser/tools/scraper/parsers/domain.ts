@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Domain HTML Parser — dndtools.net structure
@@ -88,7 +89,7 @@ export function parseDomainsHtml(
         if (text) grantedParts.push(text);
       }
     }
-    const description = grantedParts.join(" ").replace(/\s+/g, " ").trim();
+    const description = normalizeWs(grantedParts.join(" "));
 
     const spells: { name: string; slug?: string; level: number }[] = [];
     const spellSeen = new Set<string>();

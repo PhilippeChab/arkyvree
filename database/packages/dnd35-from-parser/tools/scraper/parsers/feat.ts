@@ -1,5 +1,7 @@
 import * as cheerio from "cheerio";
+import { contentHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Feat HTML Parser — dndtools.net structure
@@ -17,30 +19,6 @@ import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/
 // ---------------------------------------------------------------------------
 
 /**
- * Parse a feat listing page to extract feat names and URLs.
- */
-export function parseFeatListingHtml(html: string): { name: string; url: string }[] {
-  const $ = cheerio.load(html);
-  const results: { name: string; url: string }[] = [];
-
-  $("table tr").each((_, row) => {
-    const firstCell = $(row).find("td").first();
-    if (firstCell.length === 0) return;
-
-    const link = firstCell.find("a").first();
-    if (link.length === 0) return;
-
-    const name = link.text().trim();
-    const href = link.attr("href");
-    if (!name || !href || !href.includes("/feats/")) return;
-
-    results.push({ name, url: href });
-  });
-
-  return results;
-}
-
-/**
  * Parse a single feat detail page.
  */
 export function parseFeatDetailHtml(
@@ -49,7 +27,7 @@ export function parseFeatDetailHtml(
   const $ = cheerio.load(html);
 
   // Name from <h2> — skip site tagline
-  const name = findContentH2($);
+  const name = contentHeading($).text().trim();
   if (!name) return null;
 
   // Feat type from bracketed category links: [General], [Fighter Bonus Feat], [Metamagic]
@@ -127,9 +105,6 @@ export function parseFeatDetailHtml(
 // Helpers
 // ---------------------------------------------------------------------------
 
-function normalizeWs(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
-}
 
 const KNOWN_LABELS = new Set([
   "prerequisite", "prerequisites", "benefit", "benefits",
@@ -148,14 +123,3 @@ function normalizeFeatType(raw: string): string {
   return lower;
 }
 
-/** Find the content h2, skipping the site tagline */
-function findContentH2($: cheerio.CheerioAPI): string {
-  const h2s = $("h2").toArray();
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    if (text.match(/^(Feats|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return text;
-  }
-  return h2s.length > 1 ? $(h2s[1]).text().trim() : "";
-}

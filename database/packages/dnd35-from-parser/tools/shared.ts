@@ -6,7 +6,7 @@ import { stripSeparators } from "@/shared/utils.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { SIMPLE_WEAPONS, MARTIAL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
@@ -163,52 +163,6 @@ for (const name of SKILL_NAMES) {
 }
 
 // ---------------------------------------------------------------------------
-// collectImportsFromReq — used by generator/class, generator/feat
-// ---------------------------------------------------------------------------
-
-export function collectImportsFromReq(req: RequirementEntry, imports: Set<string>): void {
-  if ("chainingOperator" in req) {
-    imports.add(req.chainingOperator);
-    for (const child of req.children) {
-      collectImportsFromReq(child, imports);
-    }
-    return;
-  }
-
-  const { target, operator, valueType } = req;
-
-  if (target.match(/^feats\..*\.possessed$/) && operator === "equal" && req.value === "true") {
-    imports.add("eq");
-    return;
-  }
-
-  if (valueType === "number") {
-    switch (operator) {
-      case "greater_than_or_equal": imports.add("gte"); break;
-      case "greater_than": imports.add("gt"); break;
-      case "less_than_or_equal": imports.add("lte"); break;
-      case "less_than": imports.add("lt"); break;
-      case "equal": imports.add("eqNum"); break;
-      case "not_equal": imports.add("neNum"); break;
-    }
-    return;
-  }
-
-  if (valueType === "string") {
-    switch (operator) {
-      case "equal": imports.add("eqStr"); break;
-      case "not_equal": imports.add("neStr"); break;
-    }
-    return;
-  }
-
-  if (valueType === "boolean") {
-    if (operator === "equal") imports.add("eq");
-    if (operator === "not_equal") imports.add("ne");
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Plural variant helpers — used by buildSeeds, detectClass
 // ---------------------------------------------------------------------------
 
@@ -227,6 +181,45 @@ export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): 
     if (result !== undefined) return result;
   }
   return undefined;
+}
+
+/** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
+export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
+
+// ---------------------------------------------------------------------------
+// Per-entity modifiers — used by detectDomain, detectRace
+// ---------------------------------------------------------------------------
+
+type ModifierDetection = { modifiers: ModifierSeed[]; errors: string[]; unresolvedModifiers: string[] };
+
+/** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
+export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: (entry: E) => ModifierDetection) {
+  const detected: Record<string, { modifiers: ModifierSeed[]; errors?: string[]; unresolvedModifiers?: string[] }> = {};
+  for (const entry of raw) {
+    const { modifiers, errors, unresolvedModifiers } = detect(entry);
+    detected[entry.name] = {
+      modifiers,
+      ...(errors.length > 0 ? { errors } : {}),
+      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
+    };
+  }
+  return detected;
+}
+
+/** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
+export function modifierMapping<E extends { name: string; description: string }, O extends { description?: string; modifiers?: ModifierSeed[] }, X extends object>(
+  raw: E[],
+  detected: Record<string, { modifiers: ModifierSeed[] } | undefined>,
+  overrides: Record<string, O | undefined>,
+  extra: (override: O | undefined) => X,
+) {
+  const mapping: Record<string, { description: string; modifiers?: ModifierSeed[] } & X> = {};
+  for (const entry of raw) {
+    const override = overrides[entry.name];
+    const modifiers = override?.modifiers ?? detected[entry.name]?.modifiers ?? [];
+    mapping[entry.name] = { description: override?.description ?? entry.description, ...(modifiers.length > 0 ? { modifiers } : {}), ...extra(override) };
+  }
+  return mapping;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,11 +1,16 @@
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
-import { autoCompanionGrantModifiers, toCamelCase, collectImportsFromReq, expandTemplateDescription, normalizeName } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { feat } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ModifierSeed, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { autoCompanionGrantModifiers, toCamelCase, expandTemplateDescription, normalizeName } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   escapeString,
   truncateDesc,
+  collectImportsFromReq,
   stringifyRequirement,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+
+/** A single martial weapon's proficiency feat is for a character without them all. */
+const NOT_MARTIAL_PROFICIENT: RequirementCondition = { target: feat("Martial Weapon Proficiency"), operator: "not_equal", value: "true", valueType: "boolean" };
 
 // ---------------------------------------------------------------------------
 // Generate FeatSeed[] TypeScript file from a FeatReference
@@ -91,7 +96,7 @@ export function generateFeatSeeds(ref: FeatReference): string {
     imports.add("eq");
     if (needsFeatHelper) imports.add("feat");
     if (needsProficiencyReqs) { imports.add("or"); imports.add("gte"); }
-    if (needsMartialProfNe) imports.add("ne");
+    if (needsMartialProfNe) collectImportsFromReq(NOT_MARTIAL_PROFICIENT, imports);
   }
   if (templateTypes.has("skill")) {
     extraImports.push(`import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";`);
@@ -257,33 +262,53 @@ function emitTemplateFeat(
   const featNameMap = { ...(detected?.featNameMap ?? {}), ...(mapped.featNameMap ?? {}) };
   const description = mapped.description ?? entry.benefit;
 
+  const expansion: TemplateExpansion = { constName, familyName, aptStr, requirements, featNameMap, modifiers, allTemplateNames, description };
   switch (template.type) {
     case "weapon":
-      emitWeaponTemplate(lines, constName, familyName, aptStr, requirements, featNameMap, modifiers, allTemplateNames, description);
+      emitWeaponTemplate(lines, expansion);
       break;
     case "crossbow":
-      emitCrossbowTemplate(lines, constName, familyName, aptStr, description);
+      emitCrossbowTemplate(lines, expansion);
       break;
     case "skill":
-      emitSkillTemplate(lines, constName, familyName, aptStr, modifiers);
+      emitSkillTemplate(lines, expansion);
       break;
     case "school":
-      emitSchoolTemplate(lines, constName, familyName, aptStr, requirements, featNameMap, modifiers, allTemplateNames, description);
+      emitSchoolTemplate(lines, expansion);
       break;
   }
 }
 
-function emitWeaponTemplate(
-  lines: string[],
-  constName: string,
-  familyName: string,
-  aptStr: string,
-  requirements: RequirementEntry[],
-  featNameMap: Record<string, string>,
-  modifiers: ModifierSeed[],
-  allTemplateNames: Set<string>,
-  description: string,
-): void {
+/** A template feat's family, expanded into one feat per item (weapon, skill, school…). */
+type TemplateExpansion = {
+  constName: string;
+  familyName: string;
+  aptStr: string;
+  requirements: RequirementEntry[];
+  featNameMap: Record<string, string>;
+  modifiers: ModifierSeed[];
+  allTemplateNames: Set<string>;
+  description: string;
+};
+
+/** A template's modifiers, each target made the item's by `retarget`. */
+function emitTemplateModifiers(lines: string[], modifiers: ModifierSeed[], retarget: (target: string) => string): void {
+  if (modifiers.length === 0) return;
+  lines.push(`  modifiers: [`);
+  for (const m of modifiers) {
+    lines.push(`    { target: \`${retarget(m.target)}\`, operator: "${m.operator}", value: "${m.value}", valueType: "${m.valueType}" },`);
+  }
+  lines.push(`  ],`);
+}
+
+/** Ends a template: its feats' family. */
+function closeTemplate(lines: string[], familyName: string): void {
+  lines.push(`  properties: [{ type: "FEAT_FAMILY", value: "${familyName}" }],`);
+  lines.push(`}));`);
+  lines.push("");
+}
+
+function emitWeaponTemplate(lines: string[], { constName, familyName, aptStr, requirements, featNameMap, modifiers, allTemplateNames, description }: TemplateExpansion): void {
   // Proficiency feats expand over their specific weapon list, not ALL_WEAPONS
   let weaponList = "ALL_WEAPONS";
   if (familyName === "Simple Weapon Proficiency") weaponList = "SIMPLE_WEAPONS";
@@ -317,7 +342,7 @@ function emitWeaponTemplate(
   }
   // Martial Weapon Proficiency: individual feats require NOT having the blanket proficiency
   if (familyName === "Martial Weapon Proficiency") {
-    reqLines.push(`    ne(feat("Martial Weapon Proficiency")),`);
+    reqLines.push(`    ${stringifyRequirement(NOT_MARTIAL_PROFICIENT)},`);
   }
   // Add feat family prereqs (e.g. Weapon Specialization requires Weapon Focus)
   for (const req of staticReqs) {
@@ -345,80 +370,38 @@ function emitWeaponTemplate(
   }
 
   // Modifiers: replace combat.X self-targeting paths with items.weapons.${slug}.X
-  if (modifiers.length > 0) {
-    lines.push(`  modifiers: [`);
-    for (const m of modifiers) {
-      const target = m.target.replace(/^combat\./, "items.weapons.${stripSeparators(w)}.");
-      lines.push(`    { target: \`${target}\`, operator: "${m.operator}", value: "${m.value}", valueType: "${m.valueType}" },`);
-    }
-    lines.push(`  ],`);
-  }
-
-  lines.push(`  properties: [{ type: "FEAT_FAMILY", value: "${familyName}" }],`);
-  lines.push(`}));`);
-  lines.push("");
+  emitTemplateModifiers(lines, modifiers, (target) => target.replace(/^combat\./, "items.weapons.${stripSeparators(w)}."));
+  closeTemplate(lines, familyName);
 }
 
-function emitCrossbowTemplate(
-  lines: string[],
-  constName: string,
-  familyName: string,
-  aptStr: string,
-  description: string,
-): void {
+function emitCrossbowTemplate(lines: string[], { constName, familyName, aptStr, description }: TemplateExpansion): void {
   const descTemplate = escapeString(expandTemplateDescription(truncateDesc(description), "crossbow", "${w}"));
 
   lines.push(`export const ${constName}: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({`);
   lines.push(`  name: \`${familyName}: \${w}\`,`);
   lines.push(`  description: \`${descTemplate}\`,`);
   lines.push(`  aptitudes: [${aptStr}],`);
-  lines.push(`  properties: [{ type: "FEAT_FAMILY", value: "${familyName}" }],`);
-  lines.push(`}));`);
-  lines.push("");
+  closeTemplate(lines, familyName);
 }
 
-function emitSkillTemplate(
-  lines: string[],
-  constName: string,
-  familyName: string,
-  aptStr: string,
-  modifiers: ModifierSeed[],
-): void {
+function emitSkillTemplate(lines: string[], { constName, familyName, aptStr, modifiers }: TemplateExpansion): void {
   lines.push(`export const ${constName}: FeatSeed[] = SKILL_NAMES.map((s) => ({`);
   lines.push(`  name: \`${familyName}: \${s}\`,`);
   lines.push(`  description: \`You get a +3 bonus on all \${s} checks.\`,`);
   lines.push(`  aptitudes: [${aptStr}],`);
 
   if (modifiers.length > 0) {
-    lines.push(`  modifiers: [`);
-    for (const m of modifiers) {
-      // Replace generic skill path with per-skill
-      const target = m.target.replace(/skills\.[^.]+/, "skills.${stripSeparators(s)}");
-      lines.push(`    { target: \`${target}\`, operator: "${m.operator}", value: "${m.value}", valueType: "${m.valueType}" },`);
-    }
-    lines.push(`  ],`);
+    // Replace generic skill path with per-skill
+    emitTemplateModifiers(lines, modifiers, (target) => target.replace(/skills\.[^.]+/, "skills.${stripSeparators(s)}"));
   } else {
     lines.push(`  modifiers: [`);
     lines.push(`    { target: \`skills.\${stripSeparators(s)}.misc\`, operator: "add", value: "3", valueType: "number" },`);
     lines.push(`  ],`);
   }
-
-  lines.push(`  properties: [{ type: "FEAT_FAMILY", value: "${familyName}" }],`);
-  lines.push(`}));`);
-  lines.push("");
+  closeTemplate(lines, familyName);
 }
 
-function emitSchoolTemplate(
-  lines: string[],
-  constName: string,
-  familyName: string,
-  aptStr: string,
-  requirements: RequirementEntry[],
-  featNameMap: Record<string, string>,
-  modifiers: ModifierSeed[],
-  allTemplateNames: Set<string>,
-  description: string,
-): void {
+function emitSchoolTemplate(lines: string[], { constName, familyName, aptStr, requirements, featNameMap, modifiers, allTemplateNames, description }: TemplateExpansion): void {
   const descTemplate = escapeString(expandTemplateDescription(truncateDesc(description), "school", "${s}"));
   lines.push(`export const ${constName}: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({`);
   lines.push(`  name: \`${familyName}: \${s}\`,`);
@@ -450,24 +433,12 @@ function emitSchoolTemplate(
     }
   }
 
-  if (modifiers.length > 0) {
-    // Use the explicit modifiers from the reference JSON. Re-write any
-    // `powers.groups.<placeholder>.` segment to the per-school slug. Other
-    // targets (e.g. `skills.spellcraft.misc`) are kept verbatim — schools
-    // don't parameterize skill names the way SKILL_NAMES does.
-    lines.push(`  modifiers: [`);
-    for (const m of modifiers) {
-      const target = m.target.replace(
-        /powers\.groups\.[^.]+\./,
-        "powers.groups.${stripSeparators(s)}.",
-      );
-      lines.push(`    { target: \`${target}\`, operator: "${m.operator}", value: "${m.value}", valueType: "${m.valueType}" },`);
-    }
-    lines.push(`  ],`);
-  }
-  lines.push(`  properties: [{ type: "FEAT_FAMILY", value: "${familyName}" }],`);
-  lines.push(`}));`);
-  lines.push("");
+  // Use the explicit modifiers from the reference JSON. Re-write any
+  // `powers.groups.<placeholder>.` segment to the per-school slug. Other
+  // targets (e.g. `skills.spellcraft.misc`) are kept verbatim — schools
+  // don't parameterize skill names the way SKILL_NAMES does.
+  emitTemplateModifiers(lines, modifiers, (target) => target.replace(/powers\.groups\.[^.]+\./, "powers.groups.${stripSeparators(s)}."));
+  closeTemplate(lines, familyName);
 }
 
 

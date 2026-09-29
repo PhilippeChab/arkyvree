@@ -6,28 +6,38 @@ const BOOK = "(?:Player's Handbook|Dungeon Master's Guide|Monster Manual|Complet
 // Matches "Book" or "the Book" with optional trailing "book"/"handbook"/"sourcebook"
 const THE_BOOK = `(?:the )?${BOOK}(?:\\s+(?:book|handbook|sourcebook))?`;
 
+/** Replacements, applied in order. */
+type Replacements = [RegExp, string][];
+const applyAll = (text: string, replacements: Replacements) =>
+  replacements.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
+
+/** Smart quotes, dashes, ellipses and non-breaking spaces, as entities or characters, and garbled apostrophes. */
+const ENCODING: Replacements = [
+  [/&#8216;|&#8217;|&#8218;|&lsquo;|&rsquo;|&sbquo;/g, "'"],
+  [/&#8220;|&#8221;|&#8222;|&ldquo;|&rdquo;|&bdquo;/g, '"'],
+  [/&#8211;|&#8212;|&ndash;|&mdash;/g, "-"],
+  [/&#8230;|&hellip;/g, "..."],
+  [/&#160;|&nbsp;/g, " "],
+  [/[\u2018\u2019\u201A]/g, "'"],
+  [/[\u201C\u201D\u201E]/g, '"'],
+  [/[\u2013\u2014]/g, "-"],
+  [/[\u2026]/g, "..."],
+  [/\u00A0/g, " "],
+  [/\uFFFD/g, "'"], // the replacement character: a garbled apostrophe in the source
+];
+
+/** dndtools.net sends a literal ? for an apostrophe: `?s`, `?t`, `s? ` → `'s`, `'t`, `s' `. */
+const APOSTROPHES: Replacements = [
+  [/(\w)\?([stST])\b/g, "$1'$2"],
+  [/(\w)\?(\s)/g, "$1'$2"],
+];
+
 /**
  * Fix encoding artifacts only — safe to run on any string (names, descriptions, etc.).
  * Does NOT strip book references or rewrite content.
  */
 function fixEncoding(text: string): string {
-  return text
-    // HTML entities for smart quotes
-    .replace(/&#8216;|&#8217;|&#8218;|&lsquo;|&rsquo;|&sbquo;/g, "'")
-    .replace(/&#8220;|&#8221;|&#8222;|&ldquo;|&rdquo;|&bdquo;/g, '"')
-    .replace(/&#8211;|&#8212;|&ndash;|&mdash;/g, "-")
-    .replace(/&#8230;|&hellip;/g, "...")
-    .replace(/&#160;|&nbsp;/g, " ")
-    // Unicode characters
-    .replace(/[\u2018\u2019\u201A]/g, "'")  // smart single quotes
-    .replace(/[\u201C\u201D\u201E]/g, '"')  // smart double quotes
-    .replace(/[\u2013\u2014]/g, "-")        // en-dash, em-dash
-    .replace(/[\u2026]/g, "...")             // ellipsis
-    .replace(/\u00A0/g, " ")                // non-breaking space
-    .replace(/\uFFFD/g, "'")                // replacement char (garbled apostrophe in source)
-    // Broken apostrophes from dndtools.net: `?s`, `?t`, `s? ` → `'s`, `'t`, `s' `
-    .replace(/(\w)\?([stST])\b/g, "$1'$2")
-    .replace(/(\w)\?(\s)/g, "$1'$2")
+  return applyAll(text, [...ENCODING, ...APOSTROPHES])
     .replace(/\s*\n\s*/g, " ")              // collapse newlines into single space
     .replace(/  +/g, " ")                   // collapse multiple spaces
     .trim();
@@ -105,33 +115,21 @@ export function sanitizeText(text: string): string {
  * the next element's opening tag if newlines were collapsed).
  */
 export function sanitizeHtml(html: string): string {
-  return html
+  const withoutQuirks = html
     // Strip script tags and their content (dndtools.net injects ad scripts)
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
     // Fix broken closing tags (dndtools.net quirk):
     // `</\n` → `</p>\n` (missing tag name) and `</p\n` → `</p>\n` (missing >)
     .replace(/<\/\s*\n/g, "</p>\n")
-    .replace(/<\/(\w+)\s*\n/g, "</$1>\n")
-    // Fix broken apostrophes: `?s` / `?t` / `s? ` etc. → `'s` / `'t` / `s' ` (dndtools.net sends literal ? for ')
-    .replace(/(\w)\?([stST])\b/g, "$1'$2")
-    .replace(/(\w)\?(\s)/g, "$1'$2")
-    // Fix known typos from dndtools.net
-    .replace(/Enhanse/g, "Enhance")
-    .replace(/[Pp]rofi [Cc]iency/g, "Proficiency")
-    // HTML entities for smart quotes
-    .replace(/&#8216;|&#8217;|&#8218;|&lsquo;|&rsquo;|&sbquo;/g, "'")
-    .replace(/&#8220;|&#8221;|&#8222;|&ldquo;|&rdquo;|&bdquo;/g, '"')
-    .replace(/&#8211;|&#8212;|&ndash;|&mdash;/g, "-")
-    .replace(/&#8230;|&hellip;/g, "...")
-    .replace(/&#160;|&nbsp;/g, " ")
-    // Unicode characters
-    .replace(/[\u2018\u2019\u201A]/g, "'")
-    .replace(/[\u201C\u201D\u201E]/g, '"')
-    .replace(/[\u2013\u2014]/g, "-")
-    .replace(/[\u2026]/g, "...")
-    .replace(/\u00A0/g, " ")
-    .replace(/\uFFFD/g, "'");
+    .replace(/<\/(\w+)\s*\n/g, "</$1>\n");
+  return applyAll(withoutQuirks, [
+    ...APOSTROPHES,
+    // Known typos from dndtools.net
+    [/Enhanse/g, "Enhance"],
+    [/[Pp]rofi [Cc]iency/g, "Proficiency"],
+    ...ENCODING,
+  ]);
 }
 
 /** Keys whose string values get full sanitization (encoding + book-reference stripping) */

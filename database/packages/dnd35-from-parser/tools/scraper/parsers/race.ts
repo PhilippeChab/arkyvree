@@ -1,4 +1,7 @@
 import * as cheerio from "cheerio";
+import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { contentHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Race HTML Parser — dndtools.net structure
@@ -28,30 +31,6 @@ const KNOWN_SIZES = new Set(["Fine", "Diminutive", "Tiny", "Small", "Medium", "L
 // Listing page parser
 // ---------------------------------------------------------------------------
 
-/**
- * Parse a race listing page to extract race names and URLs.
- */
-export function parseRaceListingHtml(html: string): { name: string; url: string }[] {
-  const $ = cheerio.load(html);
-  const results: { name: string; url: string }[] = [];
-
-  $("table tr").each((_, row) => {
-    const firstCell = $(row).find("td").first();
-    if (firstCell.length === 0) return;
-
-    const link = firstCell.find("a").first();
-    if (link.length === 0) return;
-
-    const name = link.text().trim();
-    const href = link.attr("href");
-    if (!name || !href || !href.includes("/races/")) return;
-
-    results.push({ name, url: href });
-  });
-
-  return results;
-}
-
 // ---------------------------------------------------------------------------
 // Detail page parser
 // ---------------------------------------------------------------------------
@@ -59,18 +38,10 @@ export function parseRaceListingHtml(html: string): { name: string; url: string 
 /**
  * Parse a single race detail page.
  */
-export function parseRaceDetailHtml(html: string): {
-  name: string;
-  description: string;
-  size: string;
-  baseSpeed: number;
-  abilityAdjustments: { ability: string; value: number }[];
-  favoredClass?: string;
-  features: { name: string; description: string }[];
-} | null {
+export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = findContentH2($);
+  const name = contentHeading($).text().trim();
   if (!name) return null;
 
   // Parse attributes table
@@ -121,7 +92,7 @@ export function parseRaceDetailHtml(html: string): {
       el = el.next();
     }
   }
-  const description = descParts.join(" ").replace(/\s+/g, " ").trim();
+  const description = normalizeWs(descParts.join(" "));
 
   // Parse racial traits
   const features: { name: string; description: string }[] = [];
@@ -211,18 +182,4 @@ function parseFeatureText(text: string): { name: string; description: string } {
   return { name: text.substring(0, 60), description: text };
 }
 
-function normalizeWs(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
-}
 
-/** Find the content h2, skipping the site tagline */
-function findContentH2($: cheerio.CheerioAPI): string {
-  const h2s = $("h2").toArray();
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    if (text.match(/^(Feats|Races|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return text;
-  }
-  return h2s.length > 1 ? $(h2s[1]).text().trim() : "";
-}

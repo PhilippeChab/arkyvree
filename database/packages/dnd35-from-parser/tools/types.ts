@@ -87,6 +87,8 @@ export type DomainReference = {
     type: "domain";
     sourceUrl: string;
     book: string;
+    /** Which domains the page lists ("all"). */
+    filter?: string;
     scrapedAt: string;
   };
 

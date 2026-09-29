@@ -1,5 +1,7 @@
 import * as cheerio from "cheerio";
+import { contentHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Class HTML Parser — dndtools.net structure
@@ -87,19 +89,8 @@ function titleCase(s: string): string {
 // ---------------------------------------------------------------------------
 
 function parseClassName($: cheerio.CheerioAPI): string {
-  const h2s = $("h2").toArray();
-  // Skip site tagline — find the h2 that looks like a class name
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    // Skip the site tagline and other non-class headings
-    if (text.match(/^(Feats|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return titleCase(text);
-  }
-  // Fallback
-  if (h2s.length > 1) return titleCase($(h2s[1]).text().trim());
-  if (h2s.length > 0) return titleCase($(h2s[0]).text().trim());
-  return "Unknown";
+  const heading = contentHeading($);
+  return heading.length > 0 ? titleCase(heading.text().trim()) : "Unknown";
 }
 
 // ---------------------------------------------------------------------------
@@ -110,7 +101,7 @@ function parseDescription($: cheerio.CheerioAPI): string {
   const paragraphs: string[] = [];
 
   // Find the class name h2
-  const classH2 = findClassNameH2($);
+  const classH2 = contentHeading($);
   if (classH2.length > 0) {
     let el = classH2.next();
     while (el.length > 0) {
@@ -305,7 +296,7 @@ function extractPrerequisiteText($: cheerio.CheerioAPI): string {
       if (tag === "h3" || tag === "h2") break;
       // Collapse whitespace within each line but preserve newlines as section separators
       const rawText = el.text();
-      const subLines = rawText.split(/\n/).map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+      const subLines = rawText.split(/\n/).map(normalizeWs).filter(Boolean);
       if (subLines.length) lines.push(subLines.join("\n"));
       el = el.next();
     }
@@ -580,9 +571,7 @@ function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference[
       const specialText = specialIdx >= 0 ? cells[specialIdx] : "";
       const special = specialText
         ? splitSpecial(specialText)
-            .map((s) => s.trim()
-              .replace(/'(\w+)'/g, " $1")
-              .replace(/\s+/g, " ").trim())
+            .map((s) => normalizeWs(s.trim().replace(/'(\w+)'/g, " $1")))
             .filter((s) => s && s.length > 1 && !/^[\u2014\u2013\u2012\u2015\uFFFD'"-]+$/.test(s))
         : [];
 
@@ -1091,18 +1080,6 @@ function detectBonusSpellAbility($: cheerio.CheerioAPI): string | undefined {
 // ---------------------------------------------------------------------------
 // Shared utilities for dndtools.net HTML structure
 // ---------------------------------------------------------------------------
-
-/** Find the class name h2 — skip site tagline */
-function findClassNameH2($: cheerio.CheerioAPI) {
-  const h2s = $("h2").toArray();
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    if (text.match(/^(Feats|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return $(el);
-  }
-  return h2s.length > 1 ? $(h2s[1]) : $(h2s[0] ?? []);
-}
 
 /** Find a section header (h3 or h4) whose text matches a pattern */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

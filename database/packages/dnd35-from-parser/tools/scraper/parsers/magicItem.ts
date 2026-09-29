@@ -1,20 +1,18 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 type RawMagicItem = MagicItemReference["raw"][number];
 
-function normalizeWs(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CheerioEl = cheerio.Cheerio<any>;
+type CheerioEl = cheerio.Cheerio<AnyNode>;
 
 function findH4ByText($: cheerio.CheerioAPI, text: string): CheerioEl | null {
   let found: CheerioEl | null = null;
   $("h4").each((_, el) => {
     if (normalizeWs($(el).text()).toLowerCase().includes(text.toLowerCase())) {
-      found = $(el) as CheerioEl;
+      found = $(el);
       return false;
     }
   });
@@ -58,8 +56,59 @@ function parseVariantPrices(metadataText: string): { price: string; variant: str
 }
 
 /**
- * Shared helper: extract item entries from h5 elements after a given h4 start point.
+ * An item's block, after its h5 heading up to the next heading: its description paragraphs, its metadata paragraph
+ * (its price…), and a staff's spells with their charges.
  */
+function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
+  const descParts: string[] = [];
+  const charges: { spell: string; charges: number }[] = [];
+  let metadataText = "";
+
+  let sibling = heading.next();
+  while (sibling.length) {
+    const tag = sibling.prop("tagName")?.toLowerCase();
+    if (tag === "h5" || tag === "h4" || tag === "h3") break;
+
+    if (tag === "ul" && !metadataText) {
+      // Spell charges (staffs): <li>Spell Name (N charges)</li>
+      sibling.find("li").each((_, li) => {
+        const text = normalizeWs($(li).text());
+        const chargeMatch = text.match(/^(.+?)\s*\((\d+)\s*charges?\)/i);
+        if (chargeMatch) {
+          charges.push({ spell: chargeMatch[1].trim(), charges: parseInt(chargeMatch[2], 10) });
+        }
+      });
+    } else if (tag === "p") {
+      const text = normalizeWs(sibling.text());
+      if (isMetadataParagraph(text)) {
+        metadataText = text;
+      } else if (!metadataText && text) {
+        descParts.push(text);
+      }
+    }
+
+    sibling = sibling.next();
+  }
+
+  return { name: normalizeWs(heading.text()), description: descParts.join(" "), metadataText, charges, end: sibling };
+}
+
+/**
+ * An item block's entries: one for each price of a variant-priced item, named after its variant ("+1", "Greater"…,
+ * or the variant alone when it contains the item's name: "Greater slaying arrow"), else one.
+ */
+function itemEntries(block: ReturnType<typeof readItemBlock>, category: MagicItemCategory): RawMagicItem[] {
+  const { name, description, metadataText, charges } = block;
+  const entry = (entryName: string): RawMagicItem =>
+    ({ name: entryName, category, description, metadataText, ...(charges.length > 0 ? { spellCharges: charges } : {}) });
+  const variants = parseVariantPrices(metadataText);
+  if (!variants) return [entry(name)];
+  return variants.map(({ variant }) => entry(
+    variant.toLowerCase().includes(name.toLowerCase()) ? variant : `${name}${variant.startsWith("+") ? " " : ", "}${variant}`,
+  ));
+}
+
+/** The items of the section after the h4 heading `startH4Text`: an h5 heading each. */
 function parseItemEntries(
   $: cheerio.CheerioAPI,
   startH4Text: string,
@@ -70,83 +119,17 @@ function parseItemEntries(
 
   const items: RawMagicItem[] = [];
   let current = startEl.next();
-
   while (current.length) {
     const tag = current.prop("tagName")?.toLowerCase();
     if (tag === "h4" || tag === "h3") break;
-
     if (tag === "h5") {
-      const name = normalizeWs(current.text());
-      const descParts: string[] = [];
-      const charges: { spell: string; charges: number }[] = [];
-      let metadataText = "";
-
-      let sibling = current.next();
-      while (sibling.length) {
-        const sibTag = sibling.prop("tagName")?.toLowerCase();
-        if (sibTag === "h5" || sibTag === "h4" || sibTag === "h3") break;
-
-        if (sibTag === "ul" && !metadataText) {
-          // Spell charges (staffs): <li>Spell Name (N charges)</li>
-          sibling.find("li").each((_, li) => {
-            const text = normalizeWs($(li).text());
-            const chargeMatch = text.match(/^(.+?)\s*\((\d+)\s*charges?\)/i);
-            if (chargeMatch) {
-              charges.push({ spell: chargeMatch[1].trim(), charges: parseInt(chargeMatch[2], 10) });
-            }
-          });
-        } else if (sibTag === "p") {
-          const text = normalizeWs(sibling.text());
-          if (isMetadataParagraph(text)) {
-            metadataText = text;
-          } else if (!metadataText && text) {
-            descParts.push(text);
-          }
-        }
-
-        sibling = sibling.next();
-      }
-
-      if (name) {
-        // Check for variant-priced items
-        const variants = parseVariantPrices(metadataText);
-        if (variants) {
-          for (const v of variants) {
-            // If variant contains the base name (e.g., "Greater slaying arrow" for "Slaying Arrow"),
-            // use the variant as the full name instead of appending
-            let variantName: string;
-            if (v.variant.toLowerCase().includes(name.toLowerCase())) {
-              variantName = v.variant;
-            } else {
-              const sep = v.variant.startsWith("+") ? " " : ", ";
-              variantName = `${name}${sep}${v.variant}`;
-            }
-            items.push({
-              name: variantName,
-              category,
-              description: descParts.join(" "),
-              metadataText,
-              ...(charges.length > 0 ? { spellCharges: charges } : {}),
-            });
-          }
-        } else {
-          items.push({
-            name,
-            category,
-            description: descParts.join(" "),
-            metadataText,
-            ...(charges.length > 0 ? { spellCharges: charges } : {}),
-          });
-        }
-      }
-
-      current = sibling;
+      const block = readItemBlock($, current);
+      if (block.name) items.push(...itemEntries(block, category));
+      current = block.end;
       continue;
     }
-
     current = current.next();
   }
-
   return items;
 }
 
@@ -199,73 +182,13 @@ export function parseStaffsHtml(html: string): RawMagicItem[] {
 }
 
 /**
- * Fallback: parse all h5 entries on the page (for pages without a clear section h4).
+ * Fallback: parse all h5 entries on the page (for pages without a clear section h4), those with a price only.
  */
 function parseAllH5Entries($: cheerio.CheerioAPI, category: MagicItemCategory): RawMagicItem[] {
   const items: RawMagicItem[] = [];
-
   $("h5").each((_, el) => {
-    const h5 = $(el);
-    const name = normalizeWs(h5.text());
-    const descParts: string[] = [];
-    const charges: { spell: string; charges: number }[] = [];
-    let metadataText = "";
-
-    let sibling = h5.next();
-    while (sibling.length) {
-      const sibTag = sibling.prop("tagName")?.toLowerCase();
-      if (sibTag === "h5" || sibTag === "h4" || sibTag === "h3") break;
-
-      if (sibTag === "ul" && !metadataText) {
-        sibling.find("li").each((_, li) => {
-          const text = normalizeWs($(li).text());
-          const chargeMatch = text.match(/^(.+?)\s*\((\d+)\s*charges?\)/i);
-          if (chargeMatch) {
-            charges.push({ spell: chargeMatch[1].trim(), charges: parseInt(chargeMatch[2], 10) });
-          }
-        });
-      } else if (sibTag === "p") {
-        const text = normalizeWs(sibling.text());
-        if (isMetadataParagraph(text)) {
-          metadataText = text;
-        } else if (!metadataText && text) {
-          descParts.push(text);
-        }
-      }
-
-      sibling = sibling.next();
-    }
-
-    if (name && metadataText) {
-      const variants = parseVariantPrices(metadataText);
-      if (variants) {
-        for (const v of variants) {
-          let variantName: string;
-          if (v.variant.toLowerCase().includes(name.toLowerCase())) {
-            variantName = v.variant;
-          } else {
-            const sep = v.variant.startsWith("+") ? " " : ", ";
-            variantName = `${name}${sep}${v.variant}`;
-          }
-          items.push({
-            name: variantName,
-            category,
-            description: descParts.join(" "),
-            metadataText,
-            ...(charges.length > 0 ? { spellCharges: charges } : {}),
-          });
-        }
-      } else {
-        items.push({
-          name,
-          category,
-          description: descParts.join(" "),
-          metadataText,
-          ...(charges.length > 0 ? { spellCharges: charges } : {}),
-        });
-      }
-    }
+    const block = readItemBlock($, $(el));
+    if (block.name && block.metadataText) items.push(...itemEntries(block, category));
   });
-
   return items;
 }

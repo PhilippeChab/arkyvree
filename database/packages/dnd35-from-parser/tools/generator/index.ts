@@ -677,6 +677,12 @@ function regenerateAptitudes(book: string) {
   writeGenerated(join(BASE_DIR, "generated", book, "aptitudes.ts"), aptLines.join("\n"));
 }
 
+/** A book's class reference files, or undefined for a book without classes. */
+function classReferenceFiles(book: string): string[] | undefined {
+  const classDir = join(BASE_DIR, "reference", book, "classes");
+  return existsSync(classDir) ? readdirSync(classDir).filter((f) => f.endsWith(".json")) : undefined;
+}
+
 /** Regenerate cowFeats.ts for a book from bonusFeatLists in class reference JSONs.
  *  Only emits entries for feats that don't already exist in the book's own feat pool
  *  (i.e. cross-book references that actually need COW). Same-book feats already get
@@ -684,12 +690,8 @@ function regenerateAptitudes(book: string) {
 function regenerateCowFeats(book: string) {
   if (book === "srd") return; // the core rules are what extensions copy from
   const classDir = join(BASE_DIR, "reference", book, "classes");
-  let classFiles: string[];
-  try {
-    classFiles = readdirSync(classDir).filter((f) => f.endsWith(".json"));
-  } catch {
-    return; // no classes for this book
-  }
+  const classFiles = classReferenceFiles(book);
+  if (!classFiles) return;
 
   // Load the book's own raw feat names — these already get aptitudes via the feat generator
   const bookFeats = new Set<string>();
@@ -778,12 +780,8 @@ function regenerateCowSpellsAllBooks() {
 function regenerateCowSpells(book: string) {
   if (book === "srd") return; // the core rules are what extensions copy from
   const classDir = join(BASE_DIR, "reference", book, "classes");
-  let classFiles: string[];
-  try {
-    classFiles = readdirSync(classDir).filter((f) => f.endsWith(".json"));
-  } catch {
-    return; // no classes for this book
-  }
+  const classFiles = classReferenceFiles(book);
+  if (!classFiles) return;
 
   // Build map: className → aptitude name for classes that have spell lists
   const classToApt = new Map<string, string>();

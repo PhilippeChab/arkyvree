@@ -17,7 +17,7 @@ import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { stripSeparators, stripClassSuffix, normalizeDescription, expandTemplateDescription, SIMPLE_SET, MARTIAL_SET, matchesWithPluralVariants, pluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, expandTemplateDescription, SIMPLE_SET, MARTIAL_SET, matchesWithPluralVariants, pluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
@@ -179,7 +179,7 @@ const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
   { pattern: /^Wild Shape\b/i, family: "Wild Shape" },
 ];
 
-export function detectClassFeatFamily(name: string): string | undefined {
+function detectClassFeatFamily(name: string): string | undefined {
   for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
     if (pattern.test(name)) return family;
   }
@@ -196,7 +196,7 @@ export function classSpells(ref: ClassReference) {
  * A class's aptitude picks: detected, with the overrides' (`mergedPicks`), then split per level where a bonus feat
  * list has one per level (`aptitudePicks`), and the first level each aptitude gets a pick (by slug).
  */
-export function classAptitudePicks(ref: ClassReference) {
+function classAptitudePicks(ref: ClassReference) {
   const overrides = ref.mapping.overrides;
   const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
   const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists, ref.raw.name);
@@ -208,135 +208,89 @@ export function classAptitudePicks(ref: ClassReference) {
   return { mergedPicks, aptitudePicks, aptitudeMinLevel };
 }
 
-function buildClassFeats(ref: ClassReference): FeatSeed[] {
-  const m = ref.mapping;
-  const mf = ref.mapping.features;
+/**
+ * A class's own feats: its class features (other than the existing feats it grants), one per level for a feature
+ * that gives a pick at several (its first, second… pick), and the feat advancing its spellcasting.
+ */
+export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
+  const { mapping, detected } = ref;
   const classSlug = stripSeparators(ref.raw.name);
   const existingFeats = loadExistingFeats(ref._meta.book);
-
   const { mergedPicks, aptitudePicks, aptitudeMinLevel } = classAptitudePicks(ref);
-
-  // Build expansion maps for aptitude target remapping
   const { remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = buildAptitudeExpansionMaps(mergedPicks, aptitudePicks);
+  const levelRequirement = (level: number): RequirementEntry[] =>
+    [{ target: `classes.${classSlug}.level`, operator: "greater_than_or_equal", value: String(level), valueType: "number" }];
 
-  // Build set of feature occurrence names that have aptitude picks (used for selectable detection)
-  const aptitudePickFeatureNames = new Set<string>();
-  if (aptitudePicks && ref.detected.featureOccurrences) {
-    for (const pick of aptitudePicks) {
-      const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
-      if (!slugMatch) continue;
-      const pickSlug = slugMatch[1].startsWith(classSlug) ? slugMatch[1].slice(classSlug.length) : slugMatch[1];
-      // Match back to feature occurrence by slug
-      for (const occ of ref.detected.featureOccurrences) {
-        const occSlug = stripSeparators(occ.name);
-        if (occSlug === pickSlug) aptitudePickFeatureNames.add(occ.name.toLowerCase());
-      }
-    }
+  // A feature granting a locked favored enemy ("Favored Enemy (Giant)") gets the shared variant through a modifier.
+  const lockedFavoredEnemies = new Map<string, string>();
+  for (const { featureName, creatureType } of detected.lockedFavoredEnemies ?? []) {
+    const key = mapping.occurrenceMap?.[featureName];
+    if (key) lockedFavoredEnemies.set(key.toLowerCase(), creatureType);
+    lockedFavoredEnemies.set(featureName.toLowerCase(), creatureType);
   }
 
-  const feats = Object.entries(mf)
-    .filter(([key, feat]) => {
-      if (feat.skip || key.startsWith("Table:")) return false;
-      // Skip feats that duplicate existing feats (handled as freeFeats)
-      const seedName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
-      const baseName = stripClassSuffix(seedName, ref.raw.name);
-      if (baseName && existingFeats.has(baseName)) return false;
-      return true;
-    })
-    .flatMap(([key, feat]) => {
-      // Check if this feat has modifiers targeting a per-level expanded aptitude (multi-occurrence)
-      const perLevelMod = feat.modifiers?.find((m) => perLevelExpansion.has(m.target));
-      if (perLevelMod) {
-        const expansions = perLevelExpansion.get(perLevelMod.target)!;
-        const baseName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
-        return expansions.map((exp): FeatSeed => {
-          const name = insertOrdinalInName(baseName, exp.ordinal);
-          const minLevel = Math.min(...exp.levels);
-          const requirements: RequirementEntry[] = [];
-          if (minLevel > 1) {
-            requirements.push({
-              target: `classes.${classSlug}.level`,
-              operator: "greater_than_or_equal",
-              value: String(minLevel),
-              valueType: "number",
-            });
-          }
-          return {
-            name,
-            description: normalizeDescription(feat.description ?? ""),
-            aptitudes: [feat.aptitude ?? m.classFeatureAptitude],
-            selectable: false,
-            ...(requirements.length > 0 ? { requirements } : {}),
-            ...(feat.modifiers?.length ? { modifiers: (feat.modifiers as ModifierSeed[]).map((mod) => {
-              if (mod.target === perLevelMod.target) return { ...mod, target: exp.newTarget };
-              return mod;
-            }) } : {}),
-          };
+  const feats: FeatSeed[] = [];
+  for (const [key, feature] of Object.entries(mapping.features)) {
+    if (feature.skip) continue;
+    const name = feature.seedName ?? (feature.aptitude ? `${key} (${feature.aptitude})` : key);
+    const lockedType = lockedFavoredEnemies.get(key.toLowerCase());
+    // An existing feat the class grants is a free feat, not one of its own.
+    const baseName = stripClassSuffix(name, ref.raw.name);
+    if (!lockedType && baseName && existingFeats.has(baseName)) continue;
+
+    const description = normalizeDescription(feature.description ?? "");
+    const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude];
+    const perLevelModifier = feature.modifiers?.find((m) => perLevelExpansion.has(m.target));
+    if (perLevelModifier) {
+      for (const expansion of perLevelExpansion.get(perLevelModifier.target) ?? []) {
+        const minLevel = Math.min(...expansion.levels);
+        feats.push({
+          name: insertOrdinalInName(name, expansion.ordinal),
+          description,
+          selectable: false,
+          aptitudes,
+          ...feature.modifiers?.length
+            ? { modifiers: feature.modifiers.map((m) => (m.target === perLevelModifier.target ? { ...m, target: expansion.newTarget } : m)) }
+            : {},
+          ...minLevel > 1 ? { requirements: levelRequirement(minLevel) } : {},
         });
       }
+      continue;
+    }
 
-      const requirements: RequirementEntry[] = [];
-      const aptSlug = stripSeparators(feat.aptitude ?? m.classFeatureAptitude);
-      const isPoolSubOption = feat.aptitude != null && feat.aptitude !== m.classFeatureAptitude;
-      if (isPoolSubOption) {
-        // Pool sub-option: require the minimum pick level from aptitudePicks
-        const minLevel = aptitudeMinLevel.get(aptSlug);
-        if (minLevel != null && minLevel > 1) {
-          requirements.push({
-            target: `classes.${classSlug}.level`,
-            operator: "greater_than_or_equal",
-            value: String(minLevel),
-            valueType: "number",
-          });
-        }
-      } else if (feat.level != null && feat.level > 1) {
-        requirements.push({
-          target: `classes.${classSlug}.level`,
-          operator: "greater_than_or_equal",
-          value: String(feat.level),
-          valueType: "number",
-        });
-      }
-
-      // selectable: false when explicitly set in mapping, or auto-granted (has level + main aptitude)
-      // Pool sub-options and aptitude pick targets are selectable
-      const isAptitudePickFeature = pluralVariants(key).some(v => aptitudePickFeatureNames.has(v));
-      const isAutoGranted = feat.level != null && !isPoolSubOption && !isAptitudePickFeature;
-      const notSelectable = feat.selectable === false || isAutoGranted;
-      const seedName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
-      const featFamily = detectClassFeatFamily(seedName);
-      const seed: FeatSeed = {
-        name: seedName,
-        description: normalizeDescription(feat.description ?? ""),
-        aptitudes: [feat.aptitude ?? m.classFeatureAptitude],
-        ...(feat.stackable ? { stackable: true } : {}),
-        ...(notSelectable ? { selectable: false } : {}),
-        ...(requirements.length > 0 ? { requirements } : {}),
-        ...(feat.modifiers?.length ? { modifiers: (feat.modifiers as ModifierSeed[]).map((mod) => {
-          const newTarget = aptitudeTargetRemap.get(mod.target);
-          return newTarget ? { ...mod, target: newTarget } : mod;
-        }) } : {}),
-        ...(featFamily ? { properties: [{ type: "FEAT_FAMILY", value: featFamily }] } : {}),
-      };
-      return [seed];
+    const modifiers: ModifierSeed[] = [
+      ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
+      ...autoCompanionGrantModifiers(name, feature.description ?? ""),
+      ...lockedType ? [{ target: `feats.${stripSeparators(`Favored Enemy: ${lockedType}`)}.possessed`, operator: "set", value: "true", valueType: "boolean" }] : [],
+    ];
+    // A pick in a pool of the class's own (not its class features) opens at the pool's first pick.
+    const poolLevel = feature.aptitude && feature.aptitude !== mapping.classFeatureAptitude ? aptitudeMinLevel.get(stripSeparators(feature.aptitude)) : undefined;
+    const isAutoGranted = feature.level != null && !feature.aptitude;
+    const family = lockedType ? "Favored Enemy" : detectClassFeatFamily(name);
+    feats.push({
+      name,
+      description,
+      ...feature.stackable || lockedType ? { stackable: true } : {},
+      ...feature.selectable ? { selectable: true } : feature.selectable === false || isAutoGranted || lockedType ? { selectable: false } : {},
+      aptitudes,
+      ...modifiers.length > 0 ? { modifiers } : {},
+      ...poolLevel != null && poolLevel > 1 ? { requirements: levelRequirement(poolLevel) } : {},
+      ...family ? { properties: [{ type: "FEAT_FAMILY", value: family }] } : {},
     });
+  }
 
-  // Append advancement feat for qualifying spellcasting classes
-  const casterType = m.overrides?.casterType ?? ref.detected.casterType;
-  if (ref.detected.hasOwnSpells && casterType && !ref.detected.casterLevelAdvancement) {
-    const DIVINE = "Bonus Divine Caster Level";
-    const ARCANE = "Bonus Arcane Caster Level";
-    const ALL = "Bonus Caster Level";
+  // A spellcasting class's own list gets a feat other classes advance it with.
+  const casterType = mapping.overrides?.casterType ?? detected.casterType;
+  if (detected.hasOwnSpells && casterType && !detected.casterLevelAdvancement) {
     feats.push({
       name: `Advance ${ref.raw.name} Spellcasting`,
       description: `Your effective ${classSlug} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${classSlug}.`,
       stackable: true,
-      aptitudes: [casterType === "Divine" ? DIVINE : ARCANE, ALL],
+      aptitudes: [casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level", "Bonus Caster Level"],
       modifiers: [{ target: `classes.${classSlug}.bonuscasterlevel`, operator: "add", value: "1", valueType: "number" }],
-      requirements: [{ target: `classes.${classSlug}.level`, operator: "greater_than_or_equal", value: "1", valueType: "number" }],
+      requirements: levelRequirement(1),
     });
   }
-
   return feats;
 }
 
@@ -627,7 +581,7 @@ export function collectAptitudes(feats: FeatSeed[], book: string): string[] {
   if (existsSync(classRefDir)) {
     for (const file of readdirSync(classRefDir).filter((f) => f.endsWith(".json"))) {
       const ref = loadReference(join(classRefDir, file), "class");
-      allFeats.push(...buildClassFeats(ref));
+      allFeats.push(...buildClassFeatSeeds(ref));
       if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
       if (ref.mapping.spells) names.add(`${ref.raw.name} Spells`);
 
@@ -1219,20 +1173,28 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   const shields: ItemDef[] = [];
   const goods: ItemDef[] = [];
 
+  /** An item's cost, weight and description (its override's, else its mapping's, else as detected), unless it's skipped. */
+  const corrected = (srdName: string, det: { costGp: string; weight: string }) => {
+    const override = ref.mapping.overrides[srdName];
+    const mapped = ref.mapping[srdName];
+    if (override?.skip || mapped?.skip) return undefined;
+    return {
+      costGp: override?.costGp ?? mapped?.costGp ?? det.costGp,
+      weight: override?.weight ?? mapped?.weight ?? det.weight,
+      description: override?.description ?? mapped?.description,
+    };
+  };
+
   // Build weapons
   for (const [srdName, det] of Object.entries(ref.detected.weapons)) {
     if (!det.generatorName) continue;
-    const ovr = ref.mapping.overrides[srdName];
-    if (ovr?.skip) continue;
-    if (ref.mapping[srdName]?.skip) continue;
-
-    const costGp = ovr?.costGp ?? ref.mapping[srdName]?.costGp ?? det.costGp;
-    const weight = ovr?.weight ?? ref.mapping[srdName]?.weight ?? det.weight;
+    const item = corrected(srdName, det);
+    if (!item) continue;
+    const { costGp, weight } = item;
     // Find the raw entry for category info
     const rawWeapon = ref.raw.weapons.find((w) => w.name === srdName);
     const category = rawWeapon?.category?.replace(/ Weapons?$/, "").toLowerCase() ?? "";
-    const description = ovr?.description ?? ref.mapping[srdName]?.description
-      ?? `A ${category ? `${category} ` : ""}${det.proficiency.toLowerCase()} weapon.`;
+    const description = item.description ?? `A ${category ? `${category} ` : ""}${det.proficiency.toLowerCase()} weapon.`;
 
     const seed: ItemDef = {
       name: det.generatorName,
@@ -1251,15 +1213,11 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   // Build armor & shields
   for (const [srdName, det] of Object.entries(ref.detected.armor)) {
     if (!det.generatorName) continue;
-    const ovr = ref.mapping.overrides[srdName];
-    if (ovr?.skip) continue;
-    if (ref.mapping[srdName]?.skip) continue;
-
-    const costGp = ovr?.costGp ?? ref.mapping[srdName]?.costGp ?? det.costGp;
-    const weight = ovr?.weight ?? ref.mapping[srdName]?.weight ?? det.weight;
+    const item = corrected(srdName, det);
+    if (!item) continue;
+    const { costGp, weight } = item;
     const categoryLabel = det.proficiencyCategory.replace(/ armor$/i, "");
-    const description = ovr?.description ?? ref.mapping[srdName]?.description
-      ?? `${det.type === "Shield" ? "A shield" : `${categoryLabel} armor`}.`;
+    const description = item.description ?? `${det.type === "Shield" ? "A shield" : `${categoryLabel} armor`}.`;
 
     const seed: ItemDef = {
       name: det.generatorName,
@@ -1277,19 +1235,14 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
 
   // Build goods
   for (const [name, det] of Object.entries(ref.detected.goods)) {
-    const ovr = ref.mapping.overrides[name];
-    if (ovr?.skip) continue;
-    if (ref.mapping[name]?.skip) continue;
-
-    const costGp = ovr?.costGp ?? ref.mapping[name]?.costGp ?? det.costGp;
-    const weight = ovr?.weight ?? ref.mapping[name]?.weight ?? det.weight;
-    const description = ovr?.description ?? ref.mapping[name]?.description ?? "";
+    const item = corrected(name, det);
+    if (!item) continue;
 
     goods.push({
       name,
-      description,
-      weight,
-      costGp,
+      description: item.description ?? "",
+      weight: item.weight,
+      costGp: item.costGp,
       type: "Other",
       slot: "Other" as const,
       properties: [],
