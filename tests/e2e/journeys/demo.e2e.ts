@@ -1,6 +1,6 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
-import { visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
+import { openContext, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /** Starts a demo from the sign-up page, which lands on the dashboard under the demo banner. */
 async function startDemo(page: Page) {
@@ -29,7 +29,7 @@ test.describe('Demo', () => {
   });
 
   test('ends in another tab when this one reaches sign-in', async ({ browser }) => {
-    const context = await browser.newContext();
+    const context = await openContext(browser);
     const first = await context.newPage();
     await startDemo(first);
     const second = await context.newPage();

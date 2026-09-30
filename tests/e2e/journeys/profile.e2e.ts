@@ -1,6 +1,6 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import { TEST_USERS } from '@/tests/fixtures/auth.fixture.ts';
-import { fillOtp, getEmailVerificationCode, signIn } from '@/tests/e2e/helpers.ts';
+import { fillOtp, getEmailVerificationCode, signIn, submitSignIn } from '@/tests/e2e/helpers.ts';
 
 // Each test changes a user of its own, so it needs no cleanup and no order.
 test.describe('Profile editing', () => {
@@ -87,9 +87,7 @@ test.describe('Profile editing', () => {
     // A fresh sign-in page, with nothing left of the session: a late auth check can't re-render the form mid-fill
     await page.context().clearCookies();
     await page.goto('/sign-in');
-    await page.fill('input[name="emailAddress"]', user.email);
-    await page.fill('input[name="password"]', newPassword);
-    await page.click('button[type="submit"]');
+    await submitSignIn(page, user.email, newPassword);
     await page.waitForURL('/dashboard');
   });
 });

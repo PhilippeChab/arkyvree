@@ -141,7 +141,7 @@ One workflow per concern, in `.github/workflows/`:
   - **Push** → sharded 3× via `bun test --shard` (matrix jobs in parallel)
   - **PR** → a single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
 - Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
-- E2E: the suite sharded 3×, each shard building the client and copying the e2e template (made by `bun test:db:reset`) for its own server (`bunx playwright test --shard`). A failing shard uploads its Playwright report
+- E2E: the suite sharded 3×, each shard building the client and copying the e2e template (made by `bun test:db:reset`) for its own server (`bunx playwright test --shard`), on the Google Chrome the runners come with (no browser to install). A failing shard uploads its Playwright report
 - `Deploy` deploys the web app (`fly.web.toml`, whose release command migrates the database), then the worker (`fly.worker.toml`), so the worker's code never runs before its migrations; a web deploy that fails stops it before the worker. One deploy runs at a time
 - Branch protection should require, by job name on the PRs' own runs, `Lint`, `Build` and `API Tests (changed)` (and the `E2E` shards to gate merges on them). A PR that breaks a check only required by Deploy merges, then blocks the next release
 

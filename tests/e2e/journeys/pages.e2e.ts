@@ -2,7 +2,7 @@ import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
-import { createCampaign, createCharacter, forkCoreRuleset, signIn } from '@/tests/e2e/helpers.ts';
+import { createCampaign, createCharacter, forkCoreRuleset, openContext, signIn } from '@/tests/e2e/helpers.ts';
 
 /*
  * Every page loads, with what it shows: each opened with seeded or API-made data, showing its content, with no
@@ -114,7 +114,7 @@ test.describe('Every page', () => {
     await visit(page, errors, `/campaigns/${campaignId}/characters/${characterId}`, characterName);
 
     // Signed out
-    const guest = await (await browser.newContext()).newPage();
+    const guest = await (await openContext(browser)).newPage();
     try {
       await visit(guest, watchErrors(guest), `/share/${shareToken}`, characterName);
     } finally {

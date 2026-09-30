@@ -4,7 +4,7 @@ Reference index of every flow exercised by the Playwright suite under
 `tests/e2e/`. Use this when adding new features to know what's already
 covered and where new tests should slot in.
 
-> **Suite stats:** 101 tests across 26 files, about two minutes on half the cores of a 20-core machine.
+> **Suite stats:** 107 tests across 28 files, about two minutes on half the cores of a 20-core machine.
 
 ## Project layout & directory rules
 
@@ -18,10 +18,11 @@ The directory a file lives in maps directly to a Playwright project:
 The run builds the client for production and serves it with the API from one server on port 8010 (`E2E_PORT`), on a
 database of its own (`<name>_e2e_<port>`), copied from the e2e template (`<name>_e2e`) that `bun run test:db:reset`
 refreshes. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the
-client code the run executes in `coverage/e2e` (per file in `coverage-summary.json`).
+client code the run executes in `coverage/e2e` (per file in `coverage-summary.json`): each test's page, and the pages
+of the contexts it opens with `openContext` (`signedInPage` included) until it closes them.
 
-Helpers: `tests/e2e/helpers.ts` (signing in, forking, and creating characters and campaigns, all through the API;
-invites and their answers, the actions menu, list filters, API-response waits, OTP), `tests/e2e/api.ts` (`apiOf(page)`,
+Helpers: `tests/e2e/helpers.ts` (signing in, forking, and creating characters and campaigns, all through the API; the
+sign-in form; another user's or a guest's context; invites and their answers, the actions menu, list filters, API-response waits, OTP), `tests/e2e/api.ts` (`apiOf(page)`,
 the typed API through the page's browser context), `tests/e2e/levelUpHelpers.ts` (the Add Level wizard),
 `tests/e2e/fixtures.ts` (the `test` every file imports: worker-scoped `ownerUser` / `inviteeUser`, the test's `user`, the read-only `seedUser`, and coverage),
 `tests/fixtures/auth.fixture.ts` (`TEST_USERS`).
@@ -59,6 +60,7 @@ the typed API through the page's browser context), `tests/e2e/levelUpHelpers.ts`
 | File | Coverage |
 |---|---|
 | `journeys/rulesets.e2e.ts` | Fork needs a name, then shows under Forked; rename + description persist through reload; archive → Archived view → unarchive; publish → Published pill + Community; star → Starred → unstar; the Feats search narrows and clearing restores; subscribing to Complete Arcane lists `Cloud Chariot` in the fork's spells, unsubscribing removes it |
+| `journeys/class-editing.e2e.ts` | A class created in a fork (its hit die) opens on its levels; a level's base attack bonus, save and skill points show in the table after a reload; a class skill found by search stays after a reload, then is removed |
 | `journeys/ruleset-entities.e2e.ts` | A language, a mechanic, an aptitude, a save and a skill of a fork: each created from its section (which opens its page), renamed (surviving a reload), listed and opened under its new name, and deleted from its page |
 | `journeys/fork-changes.e2e.ts` | (1) Rename Human in a fork: the fork lists it, "Local changes" narrows the races to it and toggles back, the core rules keep Human, and Restore in the Local changes dialog leaves "No local changes". (2) The same restore for a feat, grouped under Feats. (3) A brand-new feat shows in the list and under Local changes |
 | `journeys/customization.e2e.ts` | A +2 Strength modifier on a race, a feat and a class level, each surviving a reload; a class level's Fortitude save and granted feats; a Property and a Requirement (`Strength ≥ 13`) on a feat, surviving a reload |
@@ -86,6 +88,7 @@ the typed API through the page's browser context), `tests/e2e/levelUpHelpers.ts`
 | File | Coverage |
 |---|---|
 | `journeys/campaigns.e2e.ts` | Create needs a ruleset; a new campaign is listed and renamed; archive → Archived → unarchive; the owner links their character publicly |
+| `journeys/invite-links.e2e.ts` | A campaign invite's email link: opened signed out, it signs in back to the invite, which accepted opens the campaign and then says it was accepted; rejected, it lands on the dashboard and then says so; anyone else, the GM included, doesn't find it; once the campaign is archived it can't be accepted. A ruleset contributor invite's link shows its role, and a character's, accepted, opens the ruleset or character |
 | `journeys/campaign-invites.e2e.ts` | An invitee who accepts joins, and the GM sees them as a player; an invitee who rejects stays out, the invite read and the bell down by one |
 | `journeys/campaign-visibility.e2e.ts` | A player links a Public, a Partial and a Private character: the GM sees all three whole, with Download PDF but not Edit Character; another player sees the Public one whole, the Partial one without its build, and not the Private one (unlisted, its page not found) |
 | `journeys/notifications.e2e.ts` | The bell counts an invite, accepts it inline and lands on the campaign, which leaves the bell; Mark all as read clears the GM's non-actionable rejections (dots gone, bell down by ≥ 2) |
@@ -112,7 +115,7 @@ number of workers.
 icons' test ids. A chip's delete icon is `.MuiChip-deleteIcon`.
 
 **Multi-tab / multi-user flows.** Invite, share and contributor tests open
-a second browser context for the other participant (`signedInPage`) —
+a second browser context for the other participant (`signedInPage`, or `openContext` for a guest) —
 never a separate Page in the same context (cookies would leak). The demo's
 cross-tab test is the exception: its two tabs share a context on purpose.
 
