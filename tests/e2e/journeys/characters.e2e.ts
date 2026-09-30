@@ -1,7 +1,7 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
 import { statSync } from 'node:fs';
-import { apiResponse, createCharacter, fillStrengthModifier, filterList, openActionsMenu, selectOption, signedInPage, signIn } from '@/tests/e2e/helpers.ts';
+import { apiResponse, createCharacter, fillStrengthModifier, filterList, openActionsMenu, openContext, selectOption, signedInPage, signIn } from '@/tests/e2e/helpers.ts';
 
 /** Renames the character whose sheet is open, in place: clicking its name edits it. */
 async function renameInPlace(page: Page, name: string, newName: string) {
@@ -131,7 +131,7 @@ test.describe('Characters', () => {
     const shareUrl = await dialog.locator('input[readonly]').inputValue();
     expect(shareUrl).toMatch(/\/share\/[A-Za-z0-9_-]+$/);
 
-    const anyone = await (await browser.newContext({ acceptDownloads: true })).newPage();
+    const anyone = await (await openContext(browser, { acceptDownloads: true })).newPage();
     await anyone.goto(shareUrl);
     await expect(anyone.locator(`h5:has-text("${name}"), h4:has-text("${name}"), h3:has-text("${name}")`).first()).toBeVisible({ timeout: 10_000 });
     const pdf = anyone.waitForResponse((r) => /\/api\/shared\/characters\/[^/]+\/pdf$/.test(r.url()), { timeout: 60_000 });

@@ -1,6 +1,7 @@
-import { type Browser, type Page, type Locator, expect } from '@playwright/test';
+import { type Browser, type BrowserContextOptions, type Page, type Locator, expect } from '@playwright/test';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
+import { recordContext } from '@/tests/e2e/coverage.ts';
 import { queryDatabase } from '@/tests/e2e/fixtures.ts';
 
 export async function selectOption(page: Page, label: string, optionText?: string) {
@@ -27,9 +28,21 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.goto('/dashboard');
 }
 
+/** Signs in through the sign-in form, which the page shows: for the tests of what the form does after. */
+export async function submitSignIn(page: Page, email: string, password: string) {
+  await page.fill('input[name="emailAddress"]', email);
+  await page.fill('input[name="password"]', password);
+  await page.click('button[type="submit"]');
+}
+
+/** A new browser context, for another user or a guest: the run's coverage records its pages. Close it when done. */
+export async function openContext(browser: Browser, options?: BrowserContextOptions) {
+  return recordContext(await browser.newContext(options));
+}
+
 /** A page of a new browser context signed in as `user`. Close it with `page.context().close()`. */
 export async function signedInPage(browser: Browser, user: { email: string; password: string }) {
-  const page = await (await browser.newContext()).newPage();
+  const page = await (await openContext(browser)).newPage();
   await signIn(page, user.email, user.password);
   return page;
 }
