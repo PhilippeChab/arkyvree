@@ -9,7 +9,7 @@ import { EmailVerificationEmail } from "@/emails/email-verification.tsx";
 import { PasswordResetEmail } from "@/emails/password-reset.tsx";
 import { WelcomeEmail } from "@/emails/welcome.tsx";
 
-export const TEMPLATES = {
+const TEMPLATES = {
   campaignInvitation: CampaignInvitationEmail,
   characterContributorInvitation: CharacterContributorInvitationEmail,
   contributorInvitation: ContributorInvitationEmail,
@@ -20,7 +20,7 @@ export const TEMPLATES = {
 } as const;
 
 export type TemplateName = keyof typeof TEMPLATES;
-export type PropsFor<K extends TemplateName> = Parameters<(typeof TEMPLATES)[K]>[0];
+type PropsFor<K extends TemplateName> = Parameters<(typeof TEMPLATES)[K]>[0];
 
 export type EmailJobPayload = {
   [K in TemplateName]: { template: K; props: PropsFor<K> };

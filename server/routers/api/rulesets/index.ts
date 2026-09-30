@@ -290,8 +290,7 @@ const authenticatedRulesets = new Hono()
         },
         { limit: query.limit, page: query.page },
       );
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -304,8 +303,7 @@ const authenticatedRulesets = new Hono()
         c.var.requestSession,
         id,
       );
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );
 

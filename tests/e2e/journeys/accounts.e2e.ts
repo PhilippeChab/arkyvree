@@ -1,9 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import { fillOtp, getPasswordResetCode, signUpAndVerify } from '@/tests/e2e/helpers.ts';
 
 test.describe('New accounts', () => {
   test('a new user verifies their email, then walks through onboarding', async ({ page }) => {
-    await signUpAndVerify(page, `onboard_${Date.now()}@example.com`, 'password1234');
+    await signUpAndVerify(page, `onboard_${randomUUID().slice(0, 8)}@example.com`, 'password1234');
     await expect(page.getByRole('heading', { name: 'Welcome to Arkyvree' })).toBeVisible({ timeout: 10_000 });
     for (let step = 0; step < 4; step++) await page.getByRole('button', { name: /^Next$/ }).click();
     await page.getByRole('button', { name: /^Get Started$/ }).click();
@@ -14,7 +15,7 @@ test.describe('New accounts', () => {
   });
 
   test('a user who forgot their password resets it with the code they were sent', async ({ page }) => {
-    const email = `forgot_${Date.now()}@example.com`;
+    const email = `forgot_${randomUUID().slice(0, 8)}@example.com`;
     const newPassword = 'brandNewPass5678';
     await signUpAndVerify(page, email, 'password1234');
     await page.getByRole('button', { name: /^Skip$/ }).click();

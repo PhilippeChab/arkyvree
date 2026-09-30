@@ -1,4 +1,4 @@
-import { errorResponse } from "@/server/routers/respond.ts";
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
@@ -13,8 +13,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const result = await CharacterModifiersService.initialize().call("getModifiers", c.var.requestSession, characterId);
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -29,8 +28,7 @@ export default new Hono<SessionContext>()
       const { characterId } = c.req.valid("param");
       const body = c.req.valid("json");
       const result = await CharacterModifiersService.initialize().call("createModifier", c.var.requestSession, characterId, body);
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   )
   .put(
@@ -46,8 +44,7 @@ export default new Hono<SessionContext>()
       const { characterId, modifierId } = c.req.valid("param");
       const body = c.req.valid("json");
       const result = await CharacterModifiersService.initialize().call("updateModifier", c.var.requestSession, characterId, modifierId, body);
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -56,7 +53,6 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { characterId, modifierId } = c.req.valid("param");
       const result = await CharacterModifiersService.initialize().call("deleteModifier", c.var.requestSession, characterId, modifierId);
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

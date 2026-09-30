@@ -5,7 +5,7 @@ import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/s
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
-  Aptitudes, Characters, EntitySnapshots, Feats, FeatsAptitudes, KlassLevels, Modifiers, Powers, PowersAptitudes, Races,
+  Aptitudes, Characters, EntitySnapshots, Feats, FeatsAptitudes, KlassLevels, Mechanics, Modifiers, Powers, PowersAptitudes, Races,
   Requirements, RulesetExtensions, Rulesets,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
@@ -17,7 +17,8 @@ import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
-  addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestRuleset, createTestUser, getSeedCtx, uniqueId,
+  addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestRuleset, createTestUser, getSeedCtx, invalidateSeededRuleset,
+  uniqueId,
 } from "@/tests/helpers.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
@@ -283,18 +284,25 @@ describe("unsubscribing from an extension", () => {
     const { session, extension, draft } = await setupFork();
     await RulesetsMethods.subscribeExtension(session, draft.id, [extension.id]);
     const ctx = await getSeedCtx();
-    for (const [type, id] of [
-      ["items", ctx.itemMap["Longsword"]],
-      ["klasses", ctx.klassMap.pc["Fighter"]],
-      ["races", ctx.raceMap.pc["Human"]],
+    // The core rules have no mechanics: one of the base's own
+    const [mechanic] = await Mechanics.create(db, { name: `Grapple ${uniqueId()}`, rulesetId: ctx.rulesetId });
+    invalidateSeededRuleset(ctx.rulesetId);
+    const kinds = [
+      ["abilities", ctx.abilityMap["Strength"]],
       ["saves", ctx.saveMap["Fortitude"]],
       ["skills", ctx.skillMap["Climb"]],
+      ["feats", ctx.featMap["Toughness"]],
       ["powers", ctx.powerMap["Magic Missile"]],
-    ] as const) {
-      await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, []);
-    }
+      ["items", ctx.itemMap["Longsword"]],
+      ["races", ctx.raceMap.pc["Human"]],
+      ["languages", ctx.langMap["Elven"]],
+      ["klasses", ctx.klassMap.pc["Fighter"]],
+      ["aptitudes", ctx.aptMap["General"]],
+      ["mechanics", mechanic.id],
+    ] as const;
+    for (const [type, id] of kinds) await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, []);
     const copies = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
-    expect(copies).toHaveLength(6);
+    expect(new Set(copies.map((copy) => copy.entityType))).toEqual(new Set(kinds.map(([type]) => type)));
 
     expect(await RulesetsMethods.unsubscribeExtension(session, draft.id, extension.id)).toEqual({ unsubscribed: true });
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual(copies);

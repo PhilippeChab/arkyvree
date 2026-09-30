@@ -1,4 +1,4 @@
-import { errorResponse } from "@/server/routers/respond.ts";
+import { respond } from "@/server/routers/respond.ts";
 import { attachmentUploadRateLimit, denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import AttachmentsService from "@/server/services/AttachmentsService.ts";
 import { Hono } from "hono";
@@ -32,8 +32,7 @@ const attachments = new Hono()
         c.var.requestSession,
         params,
       );
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1]);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -48,8 +47,7 @@ const attachments = new Hono()
         c.var.requestSession,
         params,
       );
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1]);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -63,8 +61,7 @@ const attachments = new Hono()
         c.var.requestSession,
         signedId,
       );
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1]);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -78,8 +75,7 @@ const attachments = new Hono()
         c.var.requestSession,
         id,
       );
-      if (!result[0]) return errorResponse(c, result[2]);
-      return c.json(result[1]);
+      return respond(c, result, 200);
     },
   );
 
