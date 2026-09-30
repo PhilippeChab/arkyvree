@@ -1,6 +1,6 @@
 import type { RequirementEntry, Modifier, ModifierSeed, Property } from "@/database/packages/dnd35/content/types.ts";
 
-// References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, the overrides) with `detected` and
+// References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
 // `mapping` derived from it. The file itself holds only `StoredReference` (tools/references.ts).
 
 export type BabType = "good" | "medium" | "poor";
@@ -10,7 +10,10 @@ type Saves = { fortitude: SaveType; reflex: SaveType; will: SaveType };
 /** Where and when a reference was scraped. */
 type ScrapedMeta<T extends string> = { type: T; sourceUrl: string; book: string; scrapedAt: string };
 
-/** A reference's overrides by entry name, and the entries reviewed (no further action needed). */
+/**
+ * A reference's overrides (corrections made by hand, stored in its file and kept across re-scrapes) by entry name,
+ * and the entries reviewed (no further action needed).
+ */
 type Overrides<T> = Record<string, T> & { reviewed?: string[] };
 
 /**
@@ -68,10 +71,10 @@ type ClassFeatureFields = {
   aliases?: string[];
 };
 
-/** An item's fields a mapping derives and an override sets. */
+/** An item's fields an override sets. */
 type ItemFields = { description?: string; costGp?: string; weight?: string; skip?: boolean };
 
-/** A magic item's fields a mapping derives and an override sets. */
+/** A magic item's fields an override sets. */
 type MagicItemFields = ItemFields & { slot?: string; baseItem?: string | null };
 
 export type WeaponRow = {
@@ -132,14 +135,13 @@ export type FeatReference = {
     };
   };
 
+  overrides?: Overrides<FeatFields>;
+
   /** Merged data per feat: derived from detected and the overrides when the reference is loaded */
   mapping: Record<string, FeatFields & {
     /** Template expansion config — purely auto-detected, not overridable */
     template?: FeatTemplate;
-  }> & {
-    /** Human-annotated overrides — stored in the reference file, kept across re-scrapes */
-    overrides: Overrides<FeatFields>;
-  };
+  }>;
 };
 
 export type DomainReference = {
@@ -156,19 +158,19 @@ export type DomainReference = {
 
   detected: Record<string, DetectedModifiers>;
 
+  overrides?: Overrides<{
+    name?: string;
+    description?: string;
+    modifiers?: Modifier[];
+    spells?: { name: string; level: number }[];
+    featPool?: DomainFeatPool;
+  }>;
+
   mapping: Record<string, {
     description?: string;
     modifiers?: Modifier[];
     featPool?: DomainFeatPool;
-  }> & {
-    overrides: Overrides<{
-      name?: string;
-      description?: string;
-      modifiers?: Modifier[];
-      spells?: { name: string; level: number }[];
-      featPool?: DomainFeatPool;
-    }>;
-  };
+  }>;
 };
 
 export type WizardSchoolReference = {
@@ -180,10 +182,7 @@ export type WizardSchoolReference = {
     prohibitedSchoolCount: number;
   }[];
 
-  /** Human-annotated overrides — stored in the reference file, kept across re-scrapes */
-  mapping?: {
-    overrides: Overrides<{ description?: string }>;
-  };
+  overrides?: Overrides<{ description?: string }>;
 };
 
 export type SpellReference = {
@@ -211,14 +210,11 @@ export type SpellReference = {
     description: string;
   }[];
 
-  /** Human-annotated overrides — stored in the reference file, kept across re-scrapes */
-  mapping?: {
-    overrides: Overrides<{
-      description?: string;
-      /** Extra class/level entries missing from scraped data */
-      levelEntries?: { className: string; level: number }[];
-    }>;
-  };
+  overrides?: Overrides<{
+    description?: string;
+    /** Extra class/level entries missing from scraped data */
+    levelEntries?: { className: string; level: number }[];
+  }>;
 };
 
 export type RaceReference = {
@@ -236,20 +232,20 @@ export type RaceReference = {
 
   detected: Record<string, DetectedModifiers>;
 
+  overrides?: Overrides<{
+    name?: string;
+    description?: string;
+    size?: string;
+    baseSpeed?: number;
+    modifiers?: Modifier[];
+    skip?: boolean;
+  }>;
+
   mapping: Record<string, {
     description?: string;
     modifiers?: Modifier[];
     skip?: boolean;
-  }> & {
-    overrides: Overrides<{
-      name?: string;
-      description?: string;
-      size?: string;
-      baseSpeed?: number;
-      modifiers?: Modifier[];
-      skip?: boolean;
-    }>;
-  };
+  }>;
 };
 
 export type ClassReference = {
@@ -347,36 +343,36 @@ export type ClassReference = {
     occurrenceMap?: Record<string, string>;
     bonusSpellAbility?: string;
     spells?: ClassSpells;
-    /** Manual overrides — stored in the reference file, kept across re-scrapes */
-    overrides?: {
-      /** Class description override (for sources that lack inline descriptions) */
-      description?: string;
-      requirements?: RequirementEntry[];
-      classSkills?: string[];
-      bab?: BabType;
-      saves?: Saves;
-      /** Suppress spell backfill — class has bonus spells per day, not its own spell slots */
-      noSpells?: boolean;
-      /** Unresolved items that have been reviewed (no further action needed) */
-      reviewed?: string[];
-      proficiencies?: string[];
-      freeFeats?: [number, string, string][];
-      casterType?: "Arcane" | "Divine";
-      modifiers?: { level: number; target: string; value: string; valueType: string; operator: string }[];
-      aptitudePicks?: AptitudePick[];
-      bonusFeatLists?: BonusFeatList[];
-      /** Manual alignment override (for base classes where the source page has no alignment info) */
-      alignment?: string;
-      /** Manual bonusSpellAbility (when scraper can't detect it from page text) */
-      bonusSpellAbility?: string;
-      /** Manual spell config overrides (e.g. wizard known table instead of knowAll) */
-      spells?: Partial<ClassSpells>;
-      /** Per-feature manual overrides — fields here win over auto-generated mapping.features */
-      features?: {
-        [rawName: string]: ClassFeatureFields & {
-          level?: number | null;
-          aptitude?: string | null;
-        };
+  };
+
+  overrides?: {
+    /** Class description override (for sources that lack inline descriptions) */
+    description?: string;
+    requirements?: RequirementEntry[];
+    classSkills?: string[];
+    bab?: BabType;
+    saves?: Saves;
+    /** Suppress spell backfill — class has bonus spells per day, not its own spell slots */
+    noSpells?: boolean;
+    /** Unresolved items that have been reviewed (no further action needed) */
+    reviewed?: string[];
+    proficiencies?: string[];
+    freeFeats?: [number, string, string][];
+    casterType?: "Arcane" | "Divine";
+    modifiers?: { level: number; target: string; value: string; valueType: string; operator: string }[];
+    aptitudePicks?: AptitudePick[];
+    bonusFeatLists?: BonusFeatList[];
+    /** Manual alignment override (for base classes where the source page has no alignment info) */
+    alignment?: string;
+    /** Manual bonusSpellAbility (when scraper can't detect it from page text) */
+    bonusSpellAbility?: string;
+    /** Manual spell config overrides (e.g. wizard known table instead of knowAll) */
+    spells?: Partial<ClassSpells>;
+    /** Per-feature manual overrides — fields here win over auto-generated mapping.features */
+    features?: {
+      [rawName: string]: ClassFeatureFields & {
+        level?: number | null;
+        aptitude?: string | null;
       };
     };
   };
@@ -409,9 +405,7 @@ export type MagicItemReference = {
     modifiers?: Modifier[];
   }>;
 
-  mapping: Record<string, MagicItemFields> & {
-    overrides: Overrides<MagicItemFields & { aura?: string; casterLevel?: number }>;
-  };
+  overrides?: Overrides<MagicItemFields & { aura?: string; casterLevel?: number }>;
 };
 
 export type ItemReference = {
@@ -450,7 +444,5 @@ export type ItemReference = {
     unresolved: string[];
   };
 
-  mapping: Record<string, ItemFields> & {
-    overrides: Overrides<ItemFields & { generatorName?: string }> & { nameMap?: Record<string, string> };
-  };
+  overrides?: Overrides<ItemFields & { generatorName?: string }> & { nameMap?: Record<string, string> };
 };

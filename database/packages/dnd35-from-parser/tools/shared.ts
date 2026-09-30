@@ -212,6 +212,13 @@ export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): 
   return undefined;
 }
 
+/** `value` as one of `options`: a reference's text that must be one of a fixed set (`what`), which throws otherwise. */
+export function oneOf<T extends string>(value: string, options: readonly T[], what: string): T {
+  const option = options.find((o) => o === value);
+  if (option === undefined) throw new Error(`${what}: "${value}" isn't one of ${options.join(", ")}`);
+  return option;
+}
+
 /** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
 export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
 

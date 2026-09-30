@@ -162,16 +162,15 @@ export function sanitizeJsonValues<T>(obj: T, parentKey?: string): T {
   return obj;
 }
 
+/** Whether `value` is a JSON object: not an array, not null. */
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 /** Recursively sort all object keys for deterministic JSON output */
 export function sortKeysDeep(val: unknown): unknown {
   if (Array.isArray(val)) return val.map(sortKeysDeep);
-  if (val !== null && typeof val === "object") {
-    const sorted: Record<string, unknown> = {};
-    for (const key of Object.keys(val as Record<string, unknown>).sort()) {
-      sorted[key] = sortKeysDeep((val as Record<string, unknown>)[key]);
-    }
-    return sorted;
-  }
+  if (isRecord(val)) return Object.fromEntries(Object.keys(val).sort().map((key) => [key, sortKeysDeep(val[key])]));
   return val;
 }
 

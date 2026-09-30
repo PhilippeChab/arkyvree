@@ -49,7 +49,7 @@ function main() {
   for (const ref of refs) {
     if (ref.type === "class") {
       const data = loadReference(ref.path, "class");
-      collectIssues(data.detected, "class", new Set(data.mapping.overrides?.reviewed), ref.book, ref.path, issues, data.raw.name);
+      collectIssues(data.detected, "class", new Set(data.overrides?.reviewed), ref.book, ref.path, issues, data.raw.name);
       const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
       const classIssues: { kind: Issue["kind"]; text: string }[] = [
         ...refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : [],
@@ -60,12 +60,12 @@ function main() {
     } else if (ref.type === "feat") {
       // The generator skips epic feats unless an override keeps them.
       const data = loadReference(ref.path, "feat");
-      const overrides = data.mapping.overrides;
-      const epic = new Set(data.raw.filter((f) => f.featType === "epic" && overrides[f.name]?.skip !== false).map((f) => f.name));
-      entityIssues(ref, data.detected, new Set(overrides.reviewed), epic);
+      const { overrides } = data;
+      const epic = new Set(data.raw.filter((f) => f.featType === "epic" && overrides?.[f.name]?.skip !== false).map((f) => f.name));
+      entityIssues(ref, data.detected, new Set(overrides?.reviewed), epic);
     } else if (ref.type === "domain" || ref.type === "race") {
       const data = loadReference(ref.path, ref.type);
-      entityIssues(ref, data.detected, new Set(data.mapping.overrides.reviewed));
+      entityIssues(ref, data.detected, new Set(data.overrides?.reviewed));
     }
   }
 

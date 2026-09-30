@@ -112,12 +112,12 @@ export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["det
 export function buildFeatMapping(
   raw: FeatReference["raw"],
   detected: FeatReference["detected"],
-  overrides: FeatReference["mapping"]["overrides"],
+  overrides: NonNullable<FeatReference["overrides"]>,
   book: string,
 ): FeatReference["mapping"] {
   const bonusFeatAptitudes = loadBonusFeatAptitudes(book);
   const bonusFeatClassLevels = loadBonusFeatClassLevels(book);
-  const mapping = { overrides } as FeatReference["mapping"];
+  const mapping: FeatReference["mapping"] = {};
   for (const entry of raw) {
     const det = detected[entry.name];
     const ovr = overrides[entry.name];

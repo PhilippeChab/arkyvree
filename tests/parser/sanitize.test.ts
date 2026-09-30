@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { sanitizeHtml, sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { sanitizeHtml, sanitizeText, sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 
 describe("Scraped HTML", () => {
   test("loses its scripts", () => {
@@ -19,5 +19,12 @@ describe("Scraped HTML", () => {
 describe("Scraped text", () => {
   test("gets its encoding fixed and its lines joined", () => {
     expect(sanitizeText("dogs? ‘bone’\n  and  cats")).toBe("dogs' 'bone' and cats");
+  });
+});
+
+describe("A reference's JSON", () => {
+  test("is written with every object's keys sorted, its arrays kept in order", () => {
+    const sorted = sortKeysDeep({ b: 1, a: { d: [{ z: 1, y: 2 }, 3], c: null } });
+    expect(JSON.stringify(sorted)).toBe(`{"a":{"c":null,"d":[{"y":2,"z":1},3]},"b":1}`);
   });
 });

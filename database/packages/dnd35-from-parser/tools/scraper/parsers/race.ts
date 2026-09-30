@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { contentHeading, frameHeading, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { frameHeading, pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 /** A race page's frame also heads its listing "Races". */
@@ -44,7 +44,7 @@ const KNOWN_SIZES = new Set(["Fine", "Diminutive", "Tiny", "Small", "Medium", "L
 export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = contentHeading($, RACE_FRAME_HEADING)?.text().trim() ?? "";
+  const name = pageTitle($, RACE_FRAME_HEADING);
   if (!name) return null;
 
   // Parse attributes table

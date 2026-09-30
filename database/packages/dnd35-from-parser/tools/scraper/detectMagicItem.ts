@@ -387,12 +387,3 @@ export function buildMagicItemDetected(
 
   return detected;
 }
-
-export function buildMagicItemMapping(
-  _detected: MagicItemReference["detected"],
-  existingOverrides?: MagicItemReference["mapping"]["overrides"],
-): MagicItemReference["mapping"] {
-  return {
-    overrides: existingOverrides ?? { reviewed: [] },
-  } as MagicItemReference["mapping"];
-}

@@ -597,7 +597,7 @@ function regenerateCowFeats(book: string) {
   const entries: CowEntry[] = [];
 
   for (const { ref } of classes) {
-    const bonusFeatLists = ref.mapping?.overrides?.bonusFeatLists ?? ref.detected?.bonusFeatLists;
+    const bonusFeatLists = ref.overrides?.bonusFeatLists ?? ref.detected?.bonusFeatLists;
     if (!bonusFeatLists?.length) continue;
 
     for (const list of bonusFeatLists) {
@@ -703,7 +703,7 @@ function regenerateCowSpells(book: string) {
       const isSameBook = bookSpellNames.has(spell.name);
       const isFromBase = otherBook === baseBook;
       const matchedApts: { aptitude: string; level: number }[] = [];
-      const overrideLe = ref.mapping?.overrides?.[spell.name]?.levelEntries ?? [];
+      const overrideLe = ref.overrides?.[spell.name]?.levelEntries ?? [];
       for (const le of [...spell.levelEntries, ...overrideLe]) {
         // Direct class matches: only from the base book (not siblings).
         // Same-book spells are seeded by seedPowers directly.

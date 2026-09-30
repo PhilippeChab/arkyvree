@@ -27,9 +27,9 @@ export function buildRaceDetected(raw: RaceReference["raw"]): RaceReference["det
 export function buildRaceMapping(
   raw: RaceReference["raw"],
   detected: RaceReference["detected"],
-  overrides: RaceReference["mapping"]["overrides"],
+  overrides: NonNullable<RaceReference["overrides"]>,
 ): RaceReference["mapping"] {
-  return { overrides, ...modifierMapping(raw, detected, overrides, (override?: RaceReference["mapping"]["overrides"][string]) => (override?.skip ? { skip: true } : {})) } as RaceReference["mapping"];
+  return modifierMapping(raw, detected, overrides, (override?: NonNullable<RaceReference["overrides"]>[string]) => (override?.skip ? { skip: true } : {}));
 }
 
 // ---------------------------------------------------------------------------

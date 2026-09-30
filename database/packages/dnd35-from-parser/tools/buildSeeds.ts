@@ -10,10 +10,12 @@ import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, Item
 import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, oneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
 // ---------------------------------------------------------------------------
@@ -177,8 +179,8 @@ function detectClassFeatFamily(name: string): string | undefined {
 
 /** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
 export function classSpells(ref: ClassReference) {
-  const { spells, overrides } = ref.mapping;
-  return spells && overrides?.spells ? { ...spells, ...overrides.spells } : spells;
+  const { spells } = ref.mapping;
+  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
 }
 
 /**
@@ -187,7 +189,7 @@ export function classSpells(ref: ClassReference) {
  * retargets the merged picks (`remap` one to one, `perLevel` one to several).
  */
 export function classAptitudePicks(ref: ClassReference) {
-  const overrides = ref.mapping.overrides;
+  const { overrides } = ref;
   const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
   const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists);
   const aptitudeMinLevel = new Map<string, number>();
@@ -268,7 +270,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
   }
 
   // A spellcasting class's own list gets a feat other classes advance it with.
-  const casterType = mapping.overrides?.casterType ?? detected.casterType;
+  const casterType = ref.overrides?.casterType ?? detected.casterType;
   if (detected.hasOwnSpells && casterType && !detected.casterLevelAdvancement) {
     feats.push({
       name: `Advance ${ref.raw.name} Spellcasting`,
@@ -289,7 +291,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
 /** A domain of the domains reference, as its mapping and overrides make it. */
 function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
   const mapping = ref.mapping?.[entry.name];
-  const override = ref.mapping?.overrides?.[entry.name];
+  const override = ref.overrides?.[entry.name];
   const spellSource = override?.spells ?? entry.spells;
 
   return {
@@ -396,7 +398,7 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
 export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchoolDefinition[] {
   return ref.raw.map((entry) => ({
     name: entry.name,
-    description: ref.mapping?.overrides?.[entry.name]?.description ?? entry.description,
+    description: ref.overrides?.[entry.name]?.description ?? entry.description,
     prohibitedSchoolCount: entry.prohibitedSchoolCount,
   }));
 }
@@ -408,12 +410,12 @@ export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchool
 export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {
   return ref.raw.map((entry) => {
     const mapping = ref.mapping?.[entry.name];
-    const ovr = ref.mapping?.overrides?.[entry.name];
+    const ovr = ref.overrides?.[entry.name];
 
     return {
       name: ovr?.name ?? entry.name,
       description: mapping?.description ?? entry.description,
-      size: (ovr?.size ?? entry.size) as RaceDefinition["size"],
+      size: oneOf(ovr?.size ?? entry.size, SIZE_OPTIONS, `${entry.name}'s size`),
       baseSpeed: ovr?.baseSpeed ?? entry.baseSpeed,
       ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
     };
@@ -843,7 +845,7 @@ export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: 
     const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
     const seed: SpellSeedWithLevel = {
       name: entry.name,
-      description: normalizeDescription(ref.mapping?.overrides?.[entry.name]?.description ?? entry.description),
+      description: normalizeDescription(ref.overrides?.[entry.name]?.description ?? entry.description),
       aptitudes: [...aptitudes].sort(),
       ...(hasVaryingLevels ? { aptitudeLevels } : {}),
       savingThrow,
@@ -881,15 +883,14 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   const shields: ItemDef[] = [];
   const goods: ItemDef[] = [];
 
-  /** An item's cost, weight and description (its override's, else its mapping's, else as detected), unless it's skipped. */
+  /** An item's cost, weight and description (its override's, else as detected), unless it's skipped. */
   const corrected = (srdName: string, det: { costGp: string; weight: string }) => {
-    const override = ref.mapping.overrides[srdName];
-    const mapped = ref.mapping[srdName];
-    if (override?.skip || mapped?.skip) return undefined;
+    const override = ref.overrides?.[srdName];
+    if (override?.skip) return undefined;
     return {
-      costGp: override?.costGp ?? mapped?.costGp ?? det.costGp,
-      weight: override?.weight ?? mapped?.weight ?? det.weight,
-      description: override?.description ?? mapped?.description,
+      costGp: override?.costGp ?? det.costGp,
+      weight: override?.weight ?? det.weight,
+      description: override?.description,
     };
   };
 
@@ -994,22 +995,20 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
   };
 
   for (const [name, det] of Object.entries(ref.detected)) {
-    const ovr = ref.mapping.overrides?.[name];
+    const ovr = ref.overrides?.[name];
     if (ovr?.skip) continue;
-    if (ref.mapping[name]?.skip) continue;
 
-    const costGp = ovr?.costGp ?? ref.mapping[name]?.costGp ?? det.costGp;
-    const weight = ovr?.weight ?? ref.mapping[name]?.weight ?? det.weight;
-    const slot = ovr?.slot ?? ref.mapping[name]?.slot ?? det.slot;
+    const costGp = ovr?.costGp ?? det.costGp;
+    const weight = ovr?.weight ?? det.weight;
+    const slot = ovr?.slot ?? det.slot;
     // Find the raw entry for description
     const rawEntry = ref.raw.find((r) => r.name === name);
     const baseItemRaw = ovr?.baseItem !== undefined ? ovr.baseItem
-      : ref.mapping[name]?.baseItem !== undefined ? ref.mapping[name]!.baseItem
       : det.baseItem ?? detectBaseItem(name, rawEntry?.description ?? "", det.category);
     const sourceItem = baseItemRaw ?? undefined;
 
     const description = normalizeDescription(
-      ovr?.description ?? ref.mapping[name]?.description ?? rawEntry?.description ?? "",
+      ovr?.description ?? rawEntry?.description ?? "",
     );
 
     const aura = ovr?.aura ?? det.aura;
@@ -1039,7 +1038,7 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
       weight,
       costGp,
       type: det.itemType,
-      slot: slot as ItemDef["slot"],
+      slot: slot ? oneOf(slot, SLOT_OPTIONS, `${name}'s slot`) : undefined,
       properties,
       ...(sourceItem ? { sourceItem } : {}),
       ...(det.modifiers?.length ? { modifiers: det.modifiers } : {}),

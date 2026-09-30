@@ -23,7 +23,7 @@ export function generateClassSeed(ref: ClassReference): string {
   const detected = ref.detected;
   const mapping = ref.mapping;
   const raw = ref.raw;
-  const overrides = mapping.overrides ?? {};
+  const overrides = ref.overrides ?? {};
 
   const bab = overrides.bab ?? detected.bab;
   const saves = overrides.saves ?? detected.saves;

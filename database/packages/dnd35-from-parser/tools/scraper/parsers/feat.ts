@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { contentHeading, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
@@ -26,8 +26,7 @@ export function parseFeatDetailHtml(
 ): FeatReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  // Name from <h2> — skip site tagline
-  const name = contentHeading($)?.text().trim() ?? "";
+  const name = pageTitle($);
   if (!name) return null;
 
   // Feat type from bracketed category links: [General], [Fighter Bonus Feat], [Metamagic]

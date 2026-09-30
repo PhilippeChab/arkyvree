@@ -25,6 +25,11 @@ export function contentHeading($: cheerio.CheerioAPI, frame = FRAME_HEADING) {
   return title ? $(title) : undefined;
 }
 
+/** A page's title: its content heading's text (`contentHeading`), or "" for a page without one. */
+export function pageTitle($: cheerio.CheerioAPI, frame = FRAME_HEADING): string {
+  return contentHeading($, frame)?.text().trim() ?? "";
+}
+
 /** An element's tag name, lowercased. */
 export function tagOf(el: cheerio.Cheerio<AnyNode>): string | undefined {
   return el.prop("tagName")?.toLowerCase();
