@@ -5,8 +5,8 @@ import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/s
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
-  Aptitudes, Characters, EntitySnapshots, Feats, FeatsAptitudes, KlassLevels, Mechanics, Modifiers, Powers, PowersAptitudes, Races,
-  Requirements, RulesetExtensions, Rulesets,
+  Aptitudes, Characters, EntitySnapshots, Feats, FeatsAptitudes, Items, Klasses, KlassLevels, Languages, Mechanics, Modifiers,
+  Powers, PowersAptitudes, Races, Requirements, RulesetExtensions, Rulesets, Saves, Skills,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { cowEntity, getOrBuildCowData, invalidateAllCowData } from "@/server/services/rulesets/cow.ts";
@@ -280,14 +280,16 @@ describe("unsubscribing from an extension", () => {
     expect(await featsNamed(draft.id, "Other Feat")).toMatchObject([{ id: copy.id }]);
   });
 
-  test("keeps the fork's copies of its base's content, of every kind", async () => {
-    const { session, extension, draft } = await setupFork();
+  test("removes the fork's copies of its content and keeps those of its base's, of every kind", async () => {
+    const { user, session, draft } = await setupFork();
+    const extension = await createExtension(user.id);
     await RulesetsMethods.subscribeExtension(session, draft.id, [extension.id]);
     const ctx = await getSeedCtx();
+    const name = (kind: string) => `${kind} ${uniqueId()}`;
     // The core rules have no mechanics: one of the base's own
-    const [mechanic] = await Mechanics.create(db, { name: `Grapple ${uniqueId()}`, rulesetId: ctx.rulesetId });
+    const [baseMechanic] = await Mechanics.create(db, { name: name("Grapple"), rulesetId: ctx.rulesetId });
     invalidateSeededRuleset(ctx.rulesetId);
-    const kinds = [
+    const fromBase = [
       ["abilities", ctx.abilityMap["Strength"]],
       ["saves", ctx.saveMap["Fortitude"]],
       ["skills", ctx.skillMap["Climb"]],
@@ -298,14 +300,33 @@ describe("unsubscribing from an extension", () => {
       ["languages", ctx.langMap["Elven"]],
       ["klasses", ctx.klassMap.pc["Fighter"]],
       ["aptitudes", ctx.aptMap["General"]],
-      ["mechanics", mechanic.id],
+      ["mechanics", baseMechanic.id],
     ] as const;
-    for (const [type, id] of kinds) await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, []);
+
+    // An extension adds every kind but abilities, which only the core rules define
+    const rulesetId = extension.id;
+    const charisma = ctx.abilityMap["Charisma"];
+    const fromExtension = [
+      ["saves", (await Saves.create(db, { name: name("Luck Save"), abilityId: charisma, rulesetId }))[0].id],
+      ["skills", (await Skills.create(db, { name: name("Gambling"), primaryAbilityId: charisma, rulesetId }))[0].id],
+      ["feats", (await Feats.create(db, { name: name("Lucky"), rulesetId }))[0].id],
+      ["powers", (await Powers.create(db, { name: name("Fortune"), rulesetId }))[0].id],
+      ["items", (await Items.create(db, { name: name("Charm"), slot: "Neck", rulesetId }))[0].id],
+      ["races", (await Races.create(db, { name: name("Halfling Kin"), size: "Small", baseSpeed: 20, rulesetId }))[0].id],
+      ["languages", (await Languages.create(db, { name: name("Cant"), type: "Secret", rulesetId }))[0].id],
+      ["klasses", (await Klasses.create(db, { name: name("Gambler"), hd: 6, rulesetId }))[0].id],
+      ["aptitudes", (await Aptitudes.create(db, { name: name("Luck Feats"), rulesetId }))[0].id],
+      ["mechanics", (await Mechanics.create(db, { name: name("Wager"), rulesetId }))[0].id],
+    ] as const;
+
+    for (const [type, id] of [...fromBase, ...fromExtension]) await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, [extension.id]);
     const copies = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
-    expect(new Set(copies.map((copy) => copy.entityType))).toEqual(new Set(kinds.map(([type]) => type)));
+    const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
+    expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));
+    expect(copies).toHaveLength(fromBase.length + fromExtension.length);
 
     expect(await RulesetsMethods.unsubscribeExtension(session, draft.id, extension.id)).toEqual({ unsubscribed: true });
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual(copies);
+    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual(ofBase);
   });
 
   test("is refused while a character picked its content, or the fork's copy of it, even an archived character", async () => {
