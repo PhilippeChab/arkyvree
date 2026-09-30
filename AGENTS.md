@@ -30,6 +30,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 - Repositories accept `db` via dependency injection
 - Schema is defined in `/drizzle/schema.ts`
 - Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference.
+- A route answers its service call with `respond(c, result, status)` (`server/routers/respond.ts`): the value as JSON, or the error in the envelope. A route that shapes its own success answers a failure with `errorResponse(c, error)`.
 - A response never carries a user's `passwordDigest`. Auth responses return the user through `toSafeUser` (`AuthenticationService`), and a query that joins users selects their public columns (`id`, `username`, `emailAddress`), never the whole row.
 - `deletedAt IS NOT NULL` means **archived**. The codebase has two row-removal primitives — `repo.archive()` (soft) and `repo.delete()` (hard). Which one to use depends on the table. See [docs/persistence.md](./docs/persistence.md) for the full policy and decision rule. Quick rule: first-class user-facing entities archive by default; junctions, character-state, and customization rows always hard-delete.
 
@@ -159,7 +160,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Test Structure:**
 
-- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`
+- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`, `/tests/middlewares` (the rate limits)
 - Client tests: `/tests/client` (the client's logic that needs no browser: `lib/`)
 - E2E tests: `/tests/e2e`
 - Each test runs in its own transaction, rolled back afterwards (`tests/setup.ts`); a transaction the code opens in it (`withTransaction`, `db.transaction`) is a savepoint on the same connection, rolled back when it throws. In production that transaction is its own, on another connection, so tests don't catch transaction-boundary bugs (what it can see, when it commits). It has a single connection: run service calls that write one at a time, never in a `Promise.all`: concurrent savepoints share a name, so one's failure silently undoes the other's writes
@@ -185,11 +186,11 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 
 **Shared helpers** — reuse them instead of inlining:
 
-- `tests/helpers.ts`: users, sessions, rulesets (seeded forks), campaigns, characters, levels and contributors written straight to the database; `getSeedCtx()` for the seeded ids; `invalidateSeededRuleset`
+- `tests/helpers.ts`: users, sessions, rulesets (seeded forks), campaigns, characters, levels and contributors written straight to the database; `insertRows(table, rows)` for bulk setup, `findKlassLevel`, `queuedJobs` / `queuedPdfJobs` for what was queued; `getSeedCtx()` for the seeded ids; `invalidateSeededRuleset`
 - `tests/api.ts`: the typed API client as the seed user (`api`), a guest (`guestApi`) or a new user (`createSignedInUser`), and `expectOk`
 - `tests/levelFixtures.ts`: seeded character builds, level plans and level-ups, and masters with their bonded creature
 - `tests/seeds/seededRows.ts`: a seeded ruleset's own rows, for the seed tests; `tests/seeds/freshSeed.ts`: a new system ruleset (or extension) for a seeder test to seed into, and what an entity was seeded with; `tests/storage.ts`: the fake storage backend
-- `tests/e2e/helpers.ts`: signing in (`signIn`, `signedInPage`, the form's `submitSignIn`), another user's or a guest's context (`openContext`, which the run's coverage records), `createCharacter`, `createCampaign`, `forkCoreRuleset` (all through the API), invites (`invitePlayer`, `inviteContributor`, `answerInvite`), `openActionsMenu`, `filterList`, `apiResponse` waits. They scope dialog interactions to `[role="dialog"][aria-modal="true"]`. `tests/e2e/levelUpHelpers.ts` walks the Add Level wizard; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`
+- `tests/e2e/helpers.ts`: signing in (`signIn`, `signedInPage`, the form's `submitSignIn`), another user's or a guest's context (`openContext`, which the run's coverage records), `createCharacter`, `createCampaign`, `forkCoreRuleset` (all through the API), `uniqueName` (ruleset names are unique across users), invites (`invitePlayer`, `inviteContributor`, `answerInvite`), `openActionsMenu`, `filterList`, `apiResponse` waits. They scope dialog interactions to `[role="dialog"][aria-modal="true"]`. `tests/e2e/levelUpHelpers.ts` walks the Add Level wizard; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`
 - [docs/e2e-coverage.md](./docs/e2e-coverage.md) indexes what each e2e file covers: update it with the suite
 
 ## Application Logic

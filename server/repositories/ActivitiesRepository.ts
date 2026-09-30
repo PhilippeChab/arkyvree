@@ -38,12 +38,6 @@ class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount, Ac
       .where(and(inArray(this.table.targetId, where.targetIds), eq(this.table.targetTable, where.targetTable)));
   }
 
-  async findOne(db: Db, where: { id: string }) {
-    return await db.query.activitiesInAccount.findFirst({
-      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
-    });
-  }
-
   async findMany(
     db: Db,
     where: {

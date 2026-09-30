@@ -1,4 +1,4 @@
-import { toJson } from "@/server/errors/index.ts";
+import { respond } from "@/server/routers/respond.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/index.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
@@ -34,14 +34,7 @@ export default new Hono<SessionContext>()
         { search, orderBy, orderDir },
         { limit, page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -67,14 +60,7 @@ export default new Hono<SessionContext>()
         email,
         role,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   )
   .put(
@@ -97,14 +83,7 @@ export default new Hono<SessionContext>()
         contributorId,
         role,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -120,14 +99,7 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         contributorId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -142,14 +114,7 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -160,14 +125,7 @@ export default new Hono<SessionContext>()
         "getUserContributorInvites",
         c.var.requestSession.userId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -182,14 +140,7 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -204,14 +155,7 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -226,13 +170,6 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

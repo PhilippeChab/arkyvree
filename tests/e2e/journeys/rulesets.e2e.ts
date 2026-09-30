@@ -1,6 +1,6 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
-import { apiResponse, filterList, forkCoreRuleset, openActionsMenu, signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
+import { apiResponse, filterList, forkCoreRuleset, openActionsMenu, signIn, uniqueName, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /** Opens the core rules. */
 async function openCoreRuleset(page: Page) {
@@ -17,7 +17,7 @@ test.describe('Rulesets', () => {
   });
 
   test('a fork needs a name, and is listed under Forked', async ({ page }) => {
-    const name = `My Fork ${Date.now()}`;
+    const name = uniqueName('My Fork');
     await openCoreRuleset(page);
     await openActionsMenu(page, /^Fork\b/);
     const dialog = page.getByRole('dialog', { name: 'Fork Ruleset' });
@@ -36,7 +36,7 @@ test.describe('Rulesets', () => {
   });
 
   test('a fork\'s name and description can be changed', async ({ page }) => {
-    const name = `Edit Fork ${Date.now()}`;
+    const name = uniqueName('Edit Fork');
     const description = `Updated description ${Date.now()}`;
     await forkCoreRuleset(page, name);
     await openActionsMenu(page, /^Edit$/);
@@ -53,7 +53,7 @@ test.describe('Rulesets', () => {
   });
 
   test('an archived fork is listed under Archived until unarchived', async ({ page }) => {
-    const name = `Archive Test ${Date.now()}`;
+    const name = uniqueName('Archive Test');
     await forkCoreRuleset(page, name);
     await openActionsMenu(page, /^Archive$/);
     const archived = apiResponse(page, 'POST', /\/api\/rulesets\/[a-f0-9-]+\/archive/);
@@ -76,7 +76,7 @@ test.describe('Rulesets', () => {
   });
 
   test('a published fork is listed under Community', async ({ page }) => {
-    const name = `Publish Test ${Date.now()}`;
+    const name = uniqueName('Publish Test');
     await forkCoreRuleset(page, name);
     await expect(page.locator('text=/^Draft$/').first()).toBeVisible();
     await openActionsMenu(page, /^Publish$/);
@@ -104,7 +104,7 @@ test.describe('Rulesets', () => {
   });
 
   test('a subscribed extension adds its content to the fork until unsubscribed', async ({ page }) => {
-    await forkCoreRuleset(page, `Extension Fork ${Date.now()}`);
+    await forkCoreRuleset(page, uniqueName('Extension Fork'));
     await openActionsMenu(page, /^Subscribe\b/);
     const dialog = page.getByRole('dialog', { name: 'Subscribe to Extensions' });
     await dialog.getByRole('button', { name: 'Open' }).click();

@@ -1,4 +1,4 @@
-import { toJson } from "@/server/errors/index.ts";
+import { respond } from "@/server/routers/respond.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
 import { limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
@@ -32,14 +32,7 @@ export default new Hono<SessionContext>()
         { search, orderBy, orderDir },
         { limit, page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -64,14 +57,7 @@ export default new Hono<SessionContext>()
         role,
         email,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .put(
@@ -96,14 +82,7 @@ export default new Hono<SessionContext>()
         role,
         email,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -124,13 +103,6 @@ export default new Hono<SessionContext>()
         id,
         playerId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

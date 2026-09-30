@@ -1,6 +1,5 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { randomUUID } from 'node:crypto';
-import { apiResponse, forkCoreRuleset, selectOption, signIn } from '@/tests/e2e/helpers.ts';
+import { apiResponse, forkCoreRuleset, selectOption, signIn, uniqueName } from '@/tests/e2e/helpers.ts';
 
 /*
  * Writing a class of one's own in a fork: its hit die, a level (its base attack bonus, a save and skill points), and
@@ -10,10 +9,8 @@ import { apiResponse, forkCoreRuleset, selectOption, signIn } from '@/tests/e2e/
 test.describe('A class created in a fork', () => {
   test('gets a level and a class skill, which it can lose again', async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
-    // Ruleset names are unique: parallel runs of the test mustn't fork under the same one
-    const id = randomUUID().slice(0, 8);
-    const forkId = await forkCoreRuleset(page, `Class Fork ${id}`);
-    const name = `Test Class ${id}`;
+    const forkId = await forkCoreRuleset(page, uniqueName('Class Fork'));
+    const name = uniqueName('Test Class');
 
     // Created, it opens on its levels, none yet
     await page.goto(`/rulesets/${forkId}/classes`);

@@ -1,4 +1,4 @@
-import { toJson } from "@/server/errors/index.ts";
+import { respond, errorResponse } from "@/server/routers/respond.ts";
 import { denyDemoUser, exportRateLimit, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
@@ -43,14 +43,7 @@ const characters = new Hono()
         { search },
         { limit, page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   // Create a new character
@@ -93,14 +86,7 @@ const characters = new Hono()
         c.var.requestSession,
         characterData,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   )
   // List all characters
@@ -130,14 +116,7 @@ const characters = new Hono()
         { visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir, accessRole: query.accessRole },
         { limit: query.limit, page: query.page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   // Get characters not in a campaign
@@ -162,14 +141,7 @@ const characters = new Hono()
         { search: query.search },
         { limit: query.limit, page: query.page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   // Enqueue async PDF generation
@@ -188,10 +160,7 @@ const characters = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "PDF generation started" }, 202);
     },
@@ -238,14 +207,7 @@ const characters = new Hono()
         id,
         updateData,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .put(
@@ -264,10 +226,7 @@ const characters = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ success: true }, 200);
     },
@@ -291,10 +250,7 @@ const characters = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ success: true }, 200);
     },
@@ -314,10 +270,7 @@ const characters = new Hono()
     );
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     const { character, detailedCharacter, bondedByKind } = result[1];
 
@@ -346,10 +299,7 @@ const characters = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "Character archived successfully" }, 200);
     },
@@ -367,14 +317,7 @@ const characters = new Hono()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   // Revoke share token
@@ -389,14 +332,7 @@ const characters = new Hono()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   // Permanently delete an archived character
@@ -413,10 +349,7 @@ const characters = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "Character permanently deleted" }, 200);
     },
@@ -435,10 +368,7 @@ const characters = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "Character unarchived successfully" }, 200);
     },

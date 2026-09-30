@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { location } from "@/drizzle/schema.ts";
 import { CharacterInventoryService } from "@/server/services/characters/index.ts";
@@ -18,13 +18,7 @@ const inventory = new Hono<SessionContext>()
         characterId,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -61,13 +55,7 @@ const inventory = new Hono<SessionContext>()
         force,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   )
   .put(
@@ -108,13 +96,7 @@ const inventory = new Hono<SessionContext>()
         updatedAt,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -132,13 +114,7 @@ const inventory = new Hono<SessionContext>()
         itemId,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );
 

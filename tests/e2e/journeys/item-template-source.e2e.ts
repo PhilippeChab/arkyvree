@@ -1,7 +1,7 @@
 import type { InferResponseType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { test, expect } from "@/tests/e2e/fixtures.ts";
-import { forkCoreRuleset, signIn } from "@/tests/e2e/helpers.ts";
+import { forkCoreRuleset, signIn, uniqueName } from "@/tests/e2e/helpers.ts";
 
 type Templates = InferResponseType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"], 200>;
 type EditedItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$put"], 200>;
@@ -13,7 +13,7 @@ for (const width of [375, 1280]) {
 
     test("templates stay editable without a source selector, while variants retain it", async ({ page, ownerUser }) => {
       await signIn(page, ownerUser.email, ownerUser.password);
-      const forkId = await forkCoreRuleset(page, `Template source ${width} ${Date.now()}`);
+      const forkId = await forkCoreRuleset(page, uniqueName(`Template source ${width}`));
 
       const templatesResponse = await page.request.get(`/api/rulesets/${forkId}/templates?type=Weapon`);
       expect(templatesResponse.ok()).toBe(true);

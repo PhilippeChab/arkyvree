@@ -30,16 +30,6 @@ class CharacterLevelFeatsRepository
       .where(eq(this.table.characterLevelId, where.characterLevelId));
   }
 
-  async findOne(db: Db, where: { characterLevelId: string; featId: string }) {
-    return await db.query.levelFeatsInCharacter.findFirst({
-      where: and(
-        eq(this.table.characterLevelId, where.characterLevelId),
-        eq(this.table.featId, where.featId),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
   async existsByFeatId(db: Db, where: { featId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.featId })

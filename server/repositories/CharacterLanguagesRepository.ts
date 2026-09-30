@@ -67,15 +67,6 @@ class CharacterLanguagesRepository
     return rows.length > 0;
   }
 
-  async findOne(db: Db, where: { characterId: string; languageId: string }) {
-    return await db.query.languagesInCharacter.findFirst({
-      where: and(
-        eq(this.table.characterId, where.characterId),
-        eq(this.table.languageId, where.languageId),
-      ),
-    });
-  }
-
   async findMany(db: Db, where: { characterId: string }) {
     return await db.query.languagesInCharacter.findMany({
       where: eq(this.table.characterId, where.characterId),

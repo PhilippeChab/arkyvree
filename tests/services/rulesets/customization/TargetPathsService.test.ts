@@ -123,6 +123,25 @@ describe("TargetPathsService", () => {
       expect((await complete("abilities.strength.misc.", "modifier")).items.map((item) => item.insertText)).toEqual(["misc"]);
     });
 
+    test("complete a segment partly typed: its groups first, described, then its leaves", async () => {
+      const items = (await complete("feats.weap", "modifier")).items;
+      expect(items.slice(0, 2)).toMatchObject([
+        { label: "weaponfocus", kind: "group", detail: "All Weapon Focus feats" },
+        { label: "weaponspecialization", kind: "group", detail: "All Weapon Specialization feats" },
+      ]);
+      expect(items.slice(2).every((item) => item.kind === "property" && item.label.startsWith("weapon"))).toBe(true);
+    });
+
+    test("complete a leaf partly typed with its path, and what it holds", async () => {
+      expect((await complete("abilities.strength.mi", "modifier")).items).toMatchObject([
+        { label: "misc", kind: "property", path: "abilities.strength.misc", valueType: expect.any(String), operators: expect.any(Array) },
+      ]);
+    });
+
+    test("describe an item's stat by its kind, whatever the item", async () => {
+      expect((await complete("items.weapons.club.tohit.st", "modifier")).items).toMatchObject([{ label: "strength", detail: "Str/Dex bonus to attack" }]);
+    });
+
     test("describe each weapon by its name", async () => {
       expect((await complete("items.weapons.", "modifier", { limit: 1 })).items).toMatchObject([{ label: "bastardsword", detail: "Bastard Sword weapon stats" }]);
     });

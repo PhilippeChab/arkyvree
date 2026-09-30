@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { abilitiesInRules, klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Aptitudes, Feats, KlassLevelPowers, KlassLevels, KlassSkills, Modifiers, Powers, Properties, Requirements, Saves, Skills } from "@/server/repositories/index.ts";
+import { Aptitudes, Feats, KlassLevels, KlassSkills, Modifiers, Powers, Properties, Requirements, Saves, Skills } from "@/server/repositories/index.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
@@ -50,7 +50,7 @@ describe("ClassesService", () => {
       feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
       saves: [{ saveId: save.id, base: 2 }],
     });
-    await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id });
+    await insertRows(klassLevelPowersInRules, [{ klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id }]);
     await Modifiers.create(db, { sourceId: level.id, sourceType: "klass_levels", target: "abilities.strength", value: "1", valueType: "number", operator: "add" });
 
     await ClassesMethods.deleteRulesetKlass(session, rulesetId, klass.id);

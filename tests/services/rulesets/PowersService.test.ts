@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { aptitudesInRules, klassLevelPowersInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
-import { KlassLevelPowers, Properties } from "@/server/repositories/index.ts";
+import { Properties } from "@/server/repositories/index.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
 import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestRuleset, createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
@@ -86,7 +86,7 @@ describe("PowersService", () => {
     const { session, ruleset, aptitudeIds: [wizard] } = await setup();
     const power = await PowersMethods.createRulesetPower(session, ruleset.id, { name: "Doomed Spell", aptitudes: [{ id: wizard }] });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
-    await KlassLevelPowers.create(db, { klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: wizard });
+    await insertRows(klassLevelPowersInRules, [{ klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: wizard }]);
 
     await PowersMethods.deleteRulesetPower(session, ruleset.id, power.id);
 

@@ -1,9 +1,8 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
-import { randomUUID } from 'node:crypto';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
-import { createCampaign, createCharacter, forkCoreRuleset, signedInPage, signIn, submitSignIn } from '@/tests/e2e/helpers.ts';
+import { createCampaign, createCharacter, forkCoreRuleset, signedInPage, signIn, submitSignIn, uniqueName } from '@/tests/e2e/helpers.ts';
 
 /*
  * The pages an invitation email links to: the invite, answered there, or why it can't be anymore. The sender, the
@@ -15,7 +14,7 @@ const entityPage = (kind: string, id: string) => new RegExp(`/${kind}/${id}(/[a-
 
 /** A campaign `gm` runs, with an invite for `email`: its name, its id, the invite's link, and its page. */
 async function campaignInvite(gm: Page, email: string) {
-  const name = `Invite Campaign ${randomUUID().slice(0, 8)}`;
+  const name = uniqueName('Invite Campaign');
   const id = await createCampaign(gm, name);
   const { invite } = await parseResponse(apiOf(gm).api.campaigns[':id'].players.$post({ param: { id }, json: { role: 'Player Character', email } }));
   return { name, id, link: `/campaign-invite/${invite!.id}`, page: entityPage('campaigns', id) };
@@ -99,8 +98,7 @@ for (const { kind, path, role, open, invite } of [
 ] as const) {
   test(`A ${kind} contributor invite link${role ? ', with its role,' : ''} opens the ${kind} once accepted`, async ({ page, browser, ownerUser, user }) => {
     const owner = await signedInPage(browser, ownerUser);
-    // Ruleset names are unique: parallel runs of the test mustn't use the same one
-    const name = `Invite ${kind} ${randomUUID().slice(0, 8)}`;
+    const name = uniqueName(`Invite ${kind}`);
     const id = await open(owner, name);
     const contributor = await invite(owner, id, user.email);
     await owner.context().close();

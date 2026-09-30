@@ -1,6 +1,5 @@
+import { errorResponse } from "@/server/routers/respond.ts";
 import { Hono } from "hono";
-
-import { toJson } from "@/server/errors/index.ts";
 import { getSessionCookie, publicApiRateLimit, setSessionCookie } from "@/server/middlewares/index.ts";
 import { AuthenticationService } from "@/server/services/index.ts";
 
@@ -11,10 +10,7 @@ export default new Hono()
       "startDemo",
       existingSessionId,
     );
-    if (!result[0]) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!result[0]) return errorResponse(c, result[2]);
 
     const { session, user, reused } = result[1];
     if (!reused) setSessionCookie(c, session.id);

@@ -1,22 +1,4 @@
-import {
-  and,
-  asc,
-  type Column,
-  desc,
-  eq,
-  getTableColumns,
-  ilike,
-  inArray,
-  type InferInsertModel,
-  type InferSelectModel,
-  isNull,
-  not,
-  notInArray,
-  or,
-  sql,
-  type SQL,
-  type Table,
-} from "drizzle-orm";
+import { and, asc, type Column, desc, eq, getTableColumns, ilike, inArray, type InferSelectModel, isNull, not, notInArray, or, sql, type SQL, type Table } from "drizzle-orm";
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -45,16 +27,8 @@ export const visibilityMap = {
 abstract class BaseRepository<T extends Table, I extends Instance<InferSelectModel<T>>> {
   constructor(protected readonly table: T, private readonly entityType?: string) {}
 
-  abstract create(
-    db: Db,
-    values: InferInsertModel<T> | InferInsertModel<T>[] | Record<string, unknown>,
-  ): Promise<InferSelectModel<T>[]>;
-  abstract findOne(
-    db: Db,
-    where: Record<string, unknown>,
-  ): Promise<InferSelectModel<T> | undefined>;
-
-  async exists(db: Db, where: Record<string, unknown>) {
+  /** Whether a row matches `where`, on the repositories that look rows up. */
+  async exists<W>(this: { findOne(db: Db, where: W): Promise<unknown> }, db: Db, where: W) {
     return Boolean(await this.findOne(db, where));
   }
 

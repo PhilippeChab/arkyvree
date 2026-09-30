@@ -1,3 +1,6 @@
+import { toPlainText } from "@react-email/render";
+import { renderToStaticMarkup } from "react-dom/server";
+
 import { CampaignInvitationEmail } from "@/emails/campaign-invitation.tsx";
 import { CharacterContributorInvitationEmail } from "@/emails/character-contributor-invitation.tsx";
 import { ContributorInvitationEmail } from "@/emails/contributor-invitation.tsx";
@@ -32,3 +35,14 @@ export const EmailTemplate = {
   PasswordReset: "passwordReset",
   Welcome: "welcome",
 } as const satisfies Record<string, TemplateName>;
+
+const XHTML_DOCTYPE =
+  '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+
+/** An email's HTML and its plain-text version, from its template and props. */
+export function renderEmail({ template, props }: EmailJobPayload) {
+  const Component = TEMPLATES[template] as ((p: unknown) => React.JSX.Element) | undefined;
+  if (!Component) throw new Error(`Unknown email template: ${template}`);
+  const html = `${XHTML_DOCTYPE}${renderToStaticMarkup(Component(props))}`;
+  return { html, text: toPlainText(html) };
+}

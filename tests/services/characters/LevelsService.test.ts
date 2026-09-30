@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { DND35_DMG_NAME } from "@/database/packages/dnd35/names.ts";
 import { addClassLevels, addFeats, addPowers, addSkills, SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { abilitiesInRules, featsInRules, levelsInCharacter, powersInRules, skillsInRules } from "@/drizzle/schema.ts";
+import { abilitiesInRules, featsInRules, klassLevelPowersInRules, levelsInCharacter, powersInRules, skillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
-import { Aptitudes, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Feats, FeatsAptitudes, KlassLevelFeats, KlassLevelPowers, KlassLevels, Klasses, KlassSkills, Modifiers, PowersAptitudes, Properties, Races, Rulesets, Skills } from "@/server/repositories/index.ts";
+import { Aptitudes, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Feats, FeatsAptitudes, KlassLevelFeats, KlassLevels, Klasses, KlassSkills, Modifiers, PowersAptitudes, Properties, Races, Rulesets, Skills } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
@@ -445,7 +445,7 @@ describe("LevelsService", () => {
   describe("power slots and the powers of a pool", () => {
     test("list a class level's granted powers, and leave them and those the character has out of the picks", async () => {
       const { session, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
-      await KlassLevelPowers.create(db, { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id });
+      await insertRows(klassLevelPowersInRules, [{ klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id }]);
       await addCharacterLevel(character.id, klassLevels[0].id, { powers: [{ powerId: powers["Sneak Attack"].id, aptitudeId: powerAptitude.id }] });
 
       expect((await CharacterLevelsMethods.getPowerSlots(session, character.id, klass.id, 2)).autoGrantedPowers).toMatchObject([{ id: powers["Rage"].id }]);

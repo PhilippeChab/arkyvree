@@ -1,6 +1,6 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
-import { apiResponse, forkCoreRuleset, openActionsMenu, openFeat, openRace, renameEntity, signIn, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
+import { apiResponse, forkCoreRuleset, openActionsMenu, openFeat, openRace, renameEntity, signIn, uniqueName, visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 
 /** Opens the fork's Local changes, from its page. */
 async function openLocalChanges(page: Page, forkId: string) {
@@ -27,7 +27,7 @@ test.describe('Changes to a fork', () => {
 
   test('a renamed race is the fork\'s alone, its only local change, until restored', async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
-    const forkName = `COW Fork ${Date.now()}`;
+    const forkName = uniqueName('COW Fork');
     const renamed = `Wandering Folk ${Date.now()}`;
     const forkId = await forkCoreRuleset(page, forkName);
     await openRace(page, 'Human');
@@ -62,7 +62,7 @@ test.describe('Changes to a fork', () => {
   test('a renamed feat is listed under Feats in Local changes, until restored', async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const renamed = `Feat Override Test ${Date.now()}`;
-    const forkId = await forkCoreRuleset(page, `Feat Override Fork ${Date.now()}`);
+    const forkId = await forkCoreRuleset(page, uniqueName('Feat Override Fork'));
     await openFeat(page, 'Toughness');
     await renameEntity(page, renamed);
     await restore(page, await openLocalChanges(page, forkId), 'Feats', renamed);
@@ -71,7 +71,7 @@ test.describe('Changes to a fork', () => {
   test('a new feat is listed with the inherited ones, and under Local changes', async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const featName = `Custom Feat ${Date.now()}`;
-    const forkId = await forkCoreRuleset(page, `Add-Feat Fork ${Date.now()}`);
+    const forkId = await forkCoreRuleset(page, uniqueName('Add-Feat Fork'));
     await page.getByRole('tab', { name: 'Feats' }).click();
     await page.getByRole('button', { name: 'Add Feat' }).click();
     const dialog = page.getByRole('dialog', { name: 'Create New Feat' });

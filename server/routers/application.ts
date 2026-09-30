@@ -10,9 +10,9 @@ import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
-import { toJson } from "@/server/errors/index.ts";
 import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
+import { errorResponse } from "@/server/routers/respond.ts";
 import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
 import { broadcastNotificationsForActor, publishWsEvent } from "@/server/ws.ts";
@@ -114,8 +114,7 @@ const app = new Hono()
     if (err instanceof HTTPException) {
       return c.json({ error: "Forbidden", cause: "forbidden", message: "Forbidden" }, 403);
     }
-    const [error, code] = toJson(err);
-    return c.json(error, code);
+    return errorResponse(c, err);
   });
 
 export type Application = typeof app;

@@ -279,6 +279,27 @@ describe("unsubscribing from an extension", () => {
     expect(await featsNamed(draft.id, "Other Feat")).toMatchObject([{ id: copy.id }]);
   });
 
+  test("keeps the fork's copies of its base's content, of every kind", async () => {
+    const { session, extension, draft } = await setupFork();
+    await RulesetsMethods.subscribeExtension(session, draft.id, [extension.id]);
+    const ctx = await getSeedCtx();
+    for (const [type, id] of [
+      ["items", ctx.itemMap["Longsword"]],
+      ["klasses", ctx.klassMap.pc["Fighter"]],
+      ["races", ctx.raceMap.pc["Human"]],
+      ["saves", ctx.saveMap["Fortitude"]],
+      ["skills", ctx.skillMap["Climb"]],
+      ["powers", ctx.powerMap["Magic Missile"]],
+    ] as const) {
+      await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, []);
+    }
+    const copies = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
+    expect(copies).toHaveLength(6);
+
+    expect(await RulesetsMethods.unsubscribeExtension(session, draft.id, extension.id)).toEqual({ unsubscribed: true });
+    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual(copies);
+  });
+
   test("is refused while a character picked its content, or the fork's copy of it, even an archived character", async () => {
     const { user, session, extension, draft } = await setupFork();
     await RulesetsMethods.subscribeExtension(session, draft.id, [extension.id]);

@@ -22,12 +22,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     return await db.insert(this.table).values(values).returning();
   }
 
-  async findOne(db: Db, where: { id: string }) {
-    return await db.query.entitySnapshotsInRules.findFirst({
-      where: eq(this.table.id, where.id),
-    });
-  }
-
   async findByRulesetId(db: Db, where: { rulesetId: string }) {
     return await db.query.entitySnapshotsInRules.findMany({
       where: eq(this.table.rulesetId, where.rulesetId),

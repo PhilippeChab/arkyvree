@@ -1,4 +1,4 @@
-import { toJson } from "@/server/errors/index.ts";
+import { respond, errorResponse } from "@/server/routers/respond.ts";
 import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import ActivitiesService from "@/server/services/ActivitiesService.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
@@ -37,14 +37,7 @@ const activities = new Hono()
         },
         { limit: query.limit, page: query.page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   // Resolve activity target to frontend URL
@@ -68,10 +61,7 @@ const activities = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       const value = result[1];
       if (!value) {

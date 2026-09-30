@@ -1,19 +1,14 @@
-import { toPlainText } from "@react-email/render";
 import type { Task } from "graphile-worker";
 import nodemailer, { type Transporter } from "nodemailer";
-import { renderToStaticMarkup } from "react-dom/server";
 import { Resend } from "resend";
 
-import { TEMPLATES, type EmailJobPayload, type TemplateName } from "@/server/emails/templates.ts";
+import { renderEmail, type EmailJobPayload } from "@/server/emails/templates.ts";
 
 type SendEmailPayload = {
   to: string[];
   from: string;
   subject: string;
 } & EmailJobPayload;
-
-const XHTML_DOCTYPE =
-  '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
 
 const env = process.env.NODE_ENV;
 const isProduction = env === "production";
@@ -38,7 +33,8 @@ if (isProduction) {
 }
 
 export const sendEmailTask: Task = async (payload, helpers) => {
-  const { to, from, subject, template, props } = payload as SendEmailPayload;
+  const email = payload as SendEmailPayload;
+  const { to, from, subject } = email;
 
   if (!smtpTransport && !resend) {
     if (isProduction) {
@@ -48,12 +44,7 @@ export const sendEmailTask: Task = async (payload, helpers) => {
     return;
   }
 
-  const Component = TEMPLATES[template as TemplateName] as (p: unknown) => React.JSX.Element;
-  if (!Component) {
-    throw new Error(`Unknown email template: ${template}`);
-  }
-  const html = `${XHTML_DOCTYPE}${renderToStaticMarkup(Component(props))}`;
-  const text = toPlainText(html);
+  const { html, text } = renderEmail(email);
 
   if (smtpTransport) {
     await smtpTransport.sendMail({
