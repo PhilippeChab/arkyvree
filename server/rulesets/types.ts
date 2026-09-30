@@ -258,7 +258,7 @@ export type DetailedCharacterWithSheet = {
   }>;
 };
 
-export const CHARACTER_KINDS_DND35 = ["pc", "familiar", "animalcompanion", "mount"] as const;
+const CHARACTER_KINDS_DND35 = ["pc", "familiar", "animalcompanion", "mount"] as const;
 export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
 
 export interface RulesetModule {

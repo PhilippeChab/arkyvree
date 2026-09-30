@@ -6,7 +6,7 @@ import type { Session } from "@/shared/relations.ts";
 
 const ACTIONABLE_TYPES = ["createCampaignInvite", "inviteContributor", "inviteCharacterContributor"];
 
-export const NotificationsMethods = {
+const NotificationsMethods = {
   async getNotifications(
     session: Session,
     where: {

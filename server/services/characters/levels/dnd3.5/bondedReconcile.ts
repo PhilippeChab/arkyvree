@@ -27,7 +27,7 @@ export async function reconcileAllBondedKinds(
   }
 }
 
-export async function reconcileBonded(
+async function reconcileBonded(
   tx: Db,
   masterRecord: Character,
   kind: BondedKind,
