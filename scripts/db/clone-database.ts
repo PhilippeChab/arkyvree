@@ -31,8 +31,10 @@ export async function cloneDatabase(templateUrl: string, targets: string[]) {
   if (!/^[a-z0-9_]+$/.test(template) || !/(^|_)test(_|$)/.test(template)) {
     throw new Error(`${template} isn't a test database (test a word of a name of letters, digits and _): only a test database is copied`);
   }
-  const unrelated = targets.filter((target) => !target.startsWith(`${template}_`) || !/^[a-z0-9_]+$/.test(target.slice(template.length + 1)));
-  if (unrelated.length) throw new Error(`The copies of ${template} are named ${template}_ and letters, digits or _, not ${unrelated.join(", ")}`);
+  // Postgres cuts a longer name to 63 bytes, which could make a copy's name its template's, or another copy's
+  const unrelated = targets.filter((target) =>
+    !target.startsWith(`${template}_`) || !/^[a-z0-9_]+$/.test(target.slice(template.length + 1)) || target.length > 63);
+  if (unrelated.length) throw new Error(`The copies of ${template} are named ${template}_ and letters, digits or _, in 63 characters, not ${unrelated.join(", ")}`);
 
   const client = new pg.Client({ connectionString: `${server}/postgres` });
   await client.connect();

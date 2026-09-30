@@ -239,6 +239,8 @@ export function useLevelWizard({
   const finalizeMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: LevelUpFormData; force?: boolean }) => {
       if (!data.selectedHP) throw new Error("HP not selected");
+      // The level's feat and power slots fill its saved picks in: saving before them would erase the picks
+      if (!featData || !powerData) throw new Error("The level hasn't finished loading");
       return parseResponse(rpc.api.characters.levels[":characterId"][
         ":characterLevelId"
       ]["$put"]({

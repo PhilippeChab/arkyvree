@@ -120,11 +120,10 @@ export function EditLevelModal({
 
   const Sections = wizard.levelUpSections;
 
-  const renderStepContent = (step: number) => {
-    if (levelError) return <Alert severity="error">{loadFailureMessage("Level", levelError)}</Alert>;
-    const contentType = editStepContent[step];
+  const renderStepContent = () => {
+    if (!editLevelData && levelError) return <Alert severity="error">{loadFailureMessage("Level", levelError)}</Alert>;
 
-    switch (contentType) {
+    switch (step) {
       case "hp":
         return <Sections.LevelUpHpStep wizard={wizard} />;
       case "attributes":
@@ -159,7 +158,7 @@ export function EditLevelModal({
       finishLabel="Finish"
       isSaving={wizard.finalizeMutation.isPending}
     >
-      {renderStepContent(wizard.activeStep)}
+      {renderStepContent()}
     </LevelWizardDialog>
   );
 }
