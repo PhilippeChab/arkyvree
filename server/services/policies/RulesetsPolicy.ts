@@ -31,14 +31,6 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
     return this.contributorRole !== null;
   }
 
-  canCreate() {
-    return true;
-  }
-
-  canRead() {
-    return true;
-  }
-
   /**
    * Used by RulesetsService for updating the ruleset itself (name, description, privacy, archive).
    * Only owner and Admin contributors are allowed.
@@ -77,10 +69,6 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
     }
 
     return true;
-  }
-
-  canDelete() {
-    return false;
   }
 
   canPublish() {

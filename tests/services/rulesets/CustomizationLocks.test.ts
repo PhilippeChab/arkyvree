@@ -1,3 +1,4 @@
+import { featsInRules } from "@/drizzle/schema.ts";
 import { afterAll, afterEach, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
@@ -9,7 +10,7 @@ import { lockEntityForMutation, withRulesetScope } from "@/server/services/rules
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession } from "@/tests/helpers.ts";
 
 const pool = createTestPool();
 afterAll(() => pool.end());
@@ -64,7 +65,7 @@ test("a missing owner is rejected before customization writes", async () => {
 async function setupRemovedCustomizations() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [feat] = await Feats.createMany(db, [{ name: "Removed Customizations", rulesetId: ruleset.id }]);
+  const [feat] = await insertRows(featsInRules, [{ name: "Removed Customizations", rulesetId: ruleset.id }]);
   const owner = { entityId: feat.id, entityType: "feats" };
   const [modifier] = await Modifiers.createMany(db, [{ target: "abilities.strength.misc", value: "1", operator: "add", valueType: "number", sourceId: feat.id, sourceType: "feats" }]);
   const [property] = await Properties.createMany(db, [{ ...owner, type: "NOTE", value: "Removed" }]);

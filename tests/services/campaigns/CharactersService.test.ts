@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { and, eq, inArray } from "drizzle-orm";
-import { klassLevelsInRules } from "@/drizzle/schema.ts";
+import { klassLevelsInRules, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Campaigns, CharacterLevels, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
+import { Campaigns, CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
 import { PlayerCharactersMethods } from "@/server/services/campaigns/CharactersService.ts";
 import {
   addCharacterContributor, createTestCampaign, createTestCharacter, createTestUser, getSeedCtx, makeSession,
@@ -99,7 +99,7 @@ describe("PlayerCharactersService", () => {
       const { campaign, player } = await createTestCampaign(user.id);
       const [kept, unlinked, archived] = [await createTestCharacter(user.id), await createTestCharacter(user.id), await createTestCharacter(user.id)];
       for (const { id } of [kept, unlinked, archived]) await link(user.id, campaign.id, id);
-      await PlayerCharacters.archive(db, { playerId: player.id, characterId: unlinked.id });
+      await db.update(playerCharactersInCampaign).set({ deletedAt: new Date().toISOString() }).where(and(eq(playerCharactersInCampaign.playerId, player.id), eq(playerCharactersInCampaign.characterId, unlinked.id)));
       await Characters.archive(db, { id: archived.id });
 
       expect((await list(user.id, campaign.id)).items.map((c) => c.id)).toEqual([kept.id]);

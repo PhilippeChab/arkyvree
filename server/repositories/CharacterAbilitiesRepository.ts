@@ -1,7 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 
 import { characterAbilitiesInCharacter } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -38,12 +37,6 @@ class CharacterAbilitiesRepository
         ),
       )
       .returning();
-  }
-
-  // Character ability rows are FK-cascaded when the character is deleted —
-  // there's no standalone archive flow.
-  async archive(): Promise<never> {
-    throw new InternalError("character abilities don't soft-archive — they cascade on character delete");
   }
 
   async findOne(db: Db, where: { characterId: string; abilityId: string }) {

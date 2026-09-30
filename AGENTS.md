@@ -42,7 +42,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 
 **Permission Checks (Policy vs. Identity):**
 
-Permission gates that determine whether a session is *allowed* to perform an action belong in a Policy class under `server/services/policies/` — `CampaignsPolicy`, `CharactersPolicy`, `RulesetsPolicy`, etc. Each exposes `canRead`/`canUpdate`/`canDelete` plus action-specific methods (`canManageContributors`, `canPublish`, …). Policies throw `ForbiddenError` / `UnprocessableEntityError`; services call them and let the throw propagate.
+Permission gates that determine whether a session is *allowed* to perform an action belong in a Policy class under `server/services/policies/` — `CampaignsPolicy`, `CharactersPolicy`, `RulesetsPolicy`, etc. Each has the checks its services make (`canUpdate`, `canDelete`, `canManageContributors`, `canPublish`, …): a check no service makes doesn't exist. Policies throw `ForbiddenError` / `UnprocessableEntityError`; services call them and let the throw propagate.
 
 Inline `<x>.userId === session.userId` comparisons are only acceptable when they're **identity matches**, not permission gates:
 

@@ -1,4 +1,4 @@
-import { and, eq, isNull, inArray, not, or, sql } from "drizzle-orm";
+import { and, eq, isNull, inArray, or, sql } from "drizzle-orm";
 
 import { aptitudesInRules, charactersInCharacter, levelPowersInCharacter, levelsInCharacter, powersInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
@@ -23,48 +23,11 @@ class CharacterLevelPowersRepository
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof levelPowersInCharacter>>,
-    where: { characterLevelId: string; powerId: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.characterLevelId, where.characterLevelId),
-          this.idMatches(this.table.powerId, where.powerId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
   // Exception to soft-delete: old picks are disposable when re-finalizing a level
   async deleteByCharacterLevelId(db: Db, where: { characterLevelId: string }) {
     return await db
       .delete(this.table)
       .where(eq(this.table.characterLevelId, where.characterLevelId));
-  }
-
-  // Cascade from character archive/unarchive
-  async archive(db: Db, where: { characterLevelIds: string[] }) {
-    if (where.characterLevelIds.length === 0) return [];
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(inArray(this.table.characterLevelId, where.characterLevelIds), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async unarchive(db: Db, where: { characterLevelIds: string[] }) {
-    if (where.characterLevelIds.length === 0) return [];
-    return await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(inArray(this.table.characterLevelId, where.characterLevelIds), not(isNull(this.table.deletedAt))))
-      .returning();
   }
 
   async findOne(db: Db, where: { characterLevelId: string; powerId: string }) {

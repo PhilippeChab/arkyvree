@@ -1,7 +1,8 @@
+import { featsInRules } from "@/drizzle/schema.ts";
 import { expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { createSeededTestRuleset, insertRows, makeSession } from "@/tests/helpers.ts";
 import { copyEntityCustomizations, fetchEntityCustomizations } from "@/server/services/rulesets/cow.ts";
 import { timingStorage } from "@/server/timing.ts";
 
@@ -10,7 +11,7 @@ test("modifier and requirement copies stay batched as modifier count grows", asy
   const ruleset = await createSeededTestRuleset(session.userId);
   const counts: number[] = [];
   for (const width of [1, 12]) {
-    const [source, target] = await Feats.createMany(db, ["Source", "Target"].map(name => ({ name: `${name} ${width}`, description: "Copy budget", rulesetId: ruleset.id })));
+    const [source, target] = await insertRows(featsInRules, ["Source", "Target"].map(name => ({ name: `${name} ${width}`, description: "Copy budget", rulesetId: ruleset.id })));
     const values = { target: "abilities.strength.misc", value: "1", operator: "add", valueType: "number" };
     const roots = await Modifiers.createMany(db, Array.from({ length: width }, () => ({ ...values, sourceId: source.id, sourceType: "feats" })));
     await Requirements.createMany(db, roots.map(modifier => ({ entityId: modifier.id, entityType: "modifiers", level: "1", chainingOperator: "and" })));

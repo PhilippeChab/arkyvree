@@ -29,10 +29,6 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
       .returning();
   }
 
-  async update(): Promise<InferSelectModel<typeof starredRulesetsInAccount>[]> {
-    throw new Error("Not supported");
-  }
-
   async archive(db: Db, where: { userId: string; rulesetId: string }) {
     return await db
       .update(this.table)

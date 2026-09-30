@@ -1,3 +1,5 @@
+import { playersInCampaign } from "@/drizzle/schema.ts";
+import { eq } from "drizzle-orm";
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -44,7 +46,7 @@ describe("CampaignsPolicy", () => {
   test("still recognizes the Game Master once the campaign is archived", async () => {
     const { campaign, policy } = await policyFor("Game Master");
     await Campaigns.archive(db, { id: campaign.id });
-    await Players.archive(db, { campaignId: campaign.id });
+    await db.update(playersInCampaign).set({ deletedAt: new Date().toISOString() }).where(eq(playersInCampaign.campaignId, campaign.id));
     expect(await policy.canDelete()).toBe(true);
   });
 

@@ -21,39 +21,6 @@ class PowersAptitudesRepository
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof powersAptitudesInRules>>,
-    where: { powerId: string; aptitudeId: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(
-        eq(this.table.powerId, where.powerId),
-        eq(this.table.aptitudeId, where.aptitudeId),
-        isNull(this.table.deletedAt),
-      ))
-      .returning();
-  }
-
-  async archive(db: Db, where: { powerId: string; aptitudeId?: string }) {
-    const conditions = [
-      eq(this.table.powerId, where.powerId),
-      isNull(this.table.deletedAt),
-    ];
-
-    if (where.aptitudeId) {
-      conditions.push(eq(this.table.aptitudeId, where.aptitudeId));
-    }
-
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(...conditions))
-      .returning();
-  }
-
   // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { powerId: string; aptitudeId?: string }) {
     const conditions = [

@@ -1,5 +1,5 @@
 import { and, eq, isNull, lt } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 
 import { passwordResetsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -12,14 +12,6 @@ class PasswordResetsRepository extends BaseRepository<typeof passwordResetsInAcc
 
   async create(db: Db, values: { userId: string; code: string; expiresAt: string }) {
     return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof passwordResetsInAccount>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
   }
 
   async archive(db: Db, where: { id: string }) {

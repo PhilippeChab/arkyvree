@@ -6,7 +6,6 @@ import {
   levelSkillsInCharacter,
   skillsInRules,
 } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -18,11 +17,6 @@ class SkillsRepository extends BaseRepository<typeof skillsInRules, SkillInstanc
   }
 
   async create(db: Db, values: InferInsertModel<typeof skillsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof skillsInRules>[]) {
-    if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -40,10 +34,6 @@ class SkillsRepository extends BaseRepository<typeof skillsInRules, SkillInstanc
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("skills don't soft-archive — use Skills.delete()");
   }
 
   async delete(db: Db, where: { id: string }) {

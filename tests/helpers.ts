@@ -1,6 +1,7 @@
-import { eq, sql, type InferInsertModel } from "drizzle-orm";
+import { and, eq, isNull, sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import type { PgTable } from "drizzle-orm/pg-core";
 import type { JobHelpers } from "graphile-worker";
-import { type charactersInCharacter, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { type charactersInCharacter, klassLevelsInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
 import { getSeedContext, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
@@ -8,6 +9,19 @@ import { db } from "@/server/database/index.ts";
 import { Campaigns, CharacterContributors, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Contributors, Exports, Klasses, KlassLevels, Players, Properties, Rulesets, Users } from "@/server/repositories/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
 import type { Session } from "@/shared/relations.ts";
+
+/** Inserts rows straight into `table` and returns them: test data set up in bulk, which the app writes one at a time. */
+export async function insertRows<T extends PgTable>(table: T, rows: InferInsertModel<T>[]): Promise<InferSelectModel<T>[]> {
+  if (rows.length === 0) return [];
+  return await db.insert(table).values(rows).returning() as InferSelectModel<T>[];
+}
+
+/** A class's level `level`. */
+export async function findKlassLevel(klassId: string, level: number) {
+  return await db.query.klassLevelsInRules.findFirst({
+    where: and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, level), isNull(klassLevelsInRules.deletedAt)),
+  });
+}
 
 /** An id no row has: for "not found" cases. */
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000";

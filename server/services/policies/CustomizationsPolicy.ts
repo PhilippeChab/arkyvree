@@ -79,14 +79,6 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
     return name;
   }
 
-  canCreate() {
-    return true;
-  }
-
-  canRead() {
-    return true;
-  }
-
   async canUpdate() {
     const recordId = "sourceId" in this.entity ? this.entity.sourceId : this.entity.entityId;
     const recordType = "sourceType" in this.entity

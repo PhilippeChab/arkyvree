@@ -9,7 +9,6 @@ import {
   levelsInCharacter,
   savesInRules,
 } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -21,11 +20,6 @@ class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstanc
   }
 
   async create(db: Db, values: InferInsertModel<typeof powersInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof powersInRules>[]) {
-    if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -43,10 +37,6 @@ class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstanc
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("powers don't soft-archive — use Powers.delete()");
   }
 
   async delete(db: Db, where: { id: string }) {
@@ -161,29 +151,6 @@ class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstanc
       .offset(offset);
 
     return this.paginated(rows, pagination);
-  }
-
-  async findManyByAptitudeIds(db: Db, where: { aptitudeIds: string[]; levels?: number[] }) {
-    return await db
-      .select({
-        ...getTableColumns(powersInRules),
-        aptitudeId: powersAptitudesInRules.aptitudeId,
-        powerLevel: powersAptitudesInRules.level,
-        saveName: savesInRules.name,
-      })
-      .from(powersInRules)
-      .innerJoin(powersAptitudesInRules, eq(powersInRules.id, powersAptitudesInRules.powerId))
-      .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
-      .where(
-        and(
-          inArray(powersAptitudesInRules.aptitudeId, where.aptitudeIds),
-          isNull(powersInRules.deletedAt),
-          ...(where.levels && where.levels.length > 0
-            ? [inArray(powersAptitudesInRules.level, where.levels)]
-            : []),
-        ),
-      )
-      .orderBy(asc(powersAptitudesInRules.level), asc(powersInRules.name));
   }
 
   async findManyByCharacterLevelIds(db: Db, where: { characterLevelIds: string[] }) {

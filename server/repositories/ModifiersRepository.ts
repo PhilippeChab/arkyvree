@@ -1,7 +1,6 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -35,18 +34,6 @@ class ModifiersRepository
         isNull(this.table.deletedAt),
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
-      .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("modifiers don't soft-archive — use Modifiers.delete()");
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { id: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.id, where.id))
       .returning();
   }
 

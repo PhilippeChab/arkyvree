@@ -581,7 +581,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 ### How to add a new ruleset
 
-1. **Define the module**: `server/rulesets/<ruleset>/index.ts` implementing `RulesetModule`. Provide `hooks` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedRuleset`, etc.
+1. **Define the module**: `server/rulesets/<ruleset>/index.ts` implementing `RulesetModule`. Provide `hooks` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
 2. **Subclass `AbstractDetailedCharacter`** in `server/rulesets/<ruleset>/DetailedCharacter.ts`. Instantiate the universal sub-components (`DetailedCharacterAbilities`, `DetailedCharacterClasses`, …) and any ruleset-specific ones (`<Ruleset>DetailedCharacterSkills`, etc.).
 3. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
    - `<Ruleset>ProjectedCharacterData extends ProjectedCharacterData` (add skill/power shapes if your ruleset has ranked skills or leveled spells).

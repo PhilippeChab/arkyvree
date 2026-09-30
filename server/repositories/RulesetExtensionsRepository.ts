@@ -29,10 +29,6 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
       .returning();
   }
 
-  async update(): Promise<InferSelectModel<typeof rulesetExtensionsInRules>[]> {
-    throw new Error("Not supported — use upsert");
-  }
-
   async archive(db: Db, where: { rulesetId: string; extensionId: string }) {
     return await db
       .update(this.table)

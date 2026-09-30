@@ -1,17 +1,18 @@
+import { abilitiesInRules } from "@/drizzle/schema.ts";
 /**
  * Customizing an entity a fork inherits copies the entity into the fork and
  * changes the copy: the parent's rows never move.
  */
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Abilities, EntitySnapshots, Feats, KlassLevels, Klasses, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { EntitySnapshots, Feats, KlassLevels, Klasses, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestRuleset, createTestUser } from "@/tests/helpers.ts";
+import { createTestRuleset, createTestUser, insertRows } from "@/tests/helpers.ts";
 
 const requirement = { valueType: "number", operator: "greater_than_or_equal" } as const;
 
@@ -25,7 +26,7 @@ async function setup() {
   const { session } = await createTestUser();
   const parent = await createTestRuleset(owner.id, { private: false, status: "Published" });
   const rulesetId = parent.id;
-  await Abilities.createMany(db, ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId })));
+  await insertRows(abilitiesInRules, ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId })));
 
   const [feat] = await Feats.create(db, { name: "Power Attack", description: "Parent feat", rulesetId });
   const [modifier] = await Modifiers.create(db, { sourceId: feat.id, sourceType: "feats", target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" });
@@ -160,7 +161,7 @@ describe("customizing an inherited feat", () => {
   test("copies nothing when the ruleset owns the feat", async () => {
     const { user, session } = await createTestUser();
     const ruleset = await createTestRuleset(user.id);
-    await Abilities.createMany(db, ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })));
+    await insertRows(abilitiesInRules, ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })));
     const [feat] = await Feats.create(db, { name: "Owned Feat", rulesetId: ruleset.id });
     const modifier = await ModifiersMethods.createEntityModifier(session, ruleset.id, "feats", feat.id, dexterityBonus);
 

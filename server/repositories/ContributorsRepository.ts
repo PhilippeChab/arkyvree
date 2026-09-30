@@ -3,7 +3,6 @@ import { and, eq, isNull, not, or } from "drizzle-orm";
 
 import { contributorsInRules, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class ContributorsRepository extends BaseRepository<typeof contributorsInRules, ContributorInstance> {
@@ -37,12 +36,6 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules, 
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
-  }
-
-  // Contributor lifecycle is status-based (Pending/Active/Rejected/Revoked) —
-  // there's no soft-archive flow.
-  async archive(): Promise<never> {
-    throw new InternalError("contributors don't soft-archive — use the status field");
   }
 
   async findOne(

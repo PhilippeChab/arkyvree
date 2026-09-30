@@ -1,13 +1,14 @@
+import { featsInRules } from "@/drizzle/schema.ts";
 import { expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { copyEntityCustomizationsToMany, fetchEntityCustomizations } from "@/server/services/rulesets/cow.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, insertRows, makeSession } from "@/tests/helpers.ts";
 
 async function setup() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [source, ...targets] = await Feats.createMany(db, ["Source", "Target A", "Target B"].map(name => ({ name: `Copy ${name}`, rulesetId: ruleset.id })));
+  const [source, ...targets] = await insertRows(featsInRules, ["Source", "Target A", "Target B"].map(name => ({ name: `Copy ${name}`, rulesetId: ruleset.id })));
   const [modifier] = await Modifiers.createMany(db, [{ target: "abilities.strength.misc", value: "1", operator: "add", valueType: "number", sourceId: source.id, sourceType: "feats" }]);
   await Requirements.createMany(db, [{ entityId: modifier.id, entityType: "modifiers", level: "1", target: "combat.bab", operator: "greater_than_or_equal", value: "1", valueType: "number" }]);
   const customizations = (await fetchEntityCustomizations(db, [source.id], "feats", "feats")).get(source.id)!;

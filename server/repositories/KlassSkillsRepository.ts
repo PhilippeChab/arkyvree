@@ -20,51 +20,6 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules, Kl
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof klassSkillsInRules>>,
-    where: { klassId: string; skillId: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassId, where.klassId),
-          eq(this.table.skillId, where.skillId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archive(db: Db, where: { klassId: string; skillId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassId, where.klassId),
-          eq(this.table.skillId, where.skillId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archiveByKlassId(db: Db, where: { klassId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassId, where.klassId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
   // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { klassId: string; skillId: string }) {
     return await db
@@ -110,18 +65,6 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules, Kl
         inArray(this.table.klassId, where.klassIds),
         isNull(this.table.deletedAt),
       ),
-    });
-  }
-
-  async findManyWithSkills(db: Db, where: { klassId: string }) {
-    return await db.query.klassSkillsInRules.findMany({
-      where: and(
-        eq(this.table.klassId, where.klassId),
-        isNull(this.table.deletedAt),
-      ),
-      with: {
-        skillsInRule: true,
-      },
     });
   }
 

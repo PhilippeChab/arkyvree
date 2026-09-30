@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 
 import { oauthAccountsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -12,14 +12,6 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
 
   async create(db: Db, values: { userId: string; provider: string; providerAccountId: string }) {
     return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof oauthAccountsInAccount>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
   }
 
   async findOne(

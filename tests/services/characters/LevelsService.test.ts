@@ -2,14 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { DND35_DMG_NAME } from "@/database/packages/dnd35/names.ts";
 import { addClassLevels, addFeats, addPowers, addSkills, SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { levelsInCharacter } from "@/drizzle/schema.ts";
+import { abilitiesInRules, featsInRules, levelsInCharacter, powersInRules, skillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
-import {
-  Abilities, Aptitudes, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Feats,
-  FeatsAptitudes, KlassLevelFeats, KlassLevelPowers, KlassLevels, Klasses, KlassSkills, Modifiers, Powers, PowersAptitudes,
-  Properties, Races, Rulesets, Skills,
-} from "@/server/repositories/index.ts";
+import { Aptitudes, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Feats, FeatsAptitudes, KlassLevelFeats, KlassLevelPowers, KlassLevels, Klasses, KlassSkills, Modifiers, PowersAptitudes, Properties, Races, Rulesets, Skills } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
@@ -17,7 +13,7 @@ import { CharactersMethods } from "@/server/services/CharactersService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import { addFighterLevels, createSeedCharacter, FIGHTER_LEVELS, levelUp, picks, SORCERER_1, WAR_CLERIC_1, WIZARD_1 } from "@/tests/levelFixtures.ts";
-import { addCharacterLevel, addOneLevel, createTestCharacter, createTestRuleset, createTestUser, getSeedCtx, invalidateSeededRuleset, makeSession, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
+import { addCharacterLevel, addOneLevel, createTestCharacter, createTestRuleset, createTestUser, findKlassLevel, getSeedCtx, insertRows, invalidateSeededRuleset, makeSession, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
 const session = makeSession(SEED_USER_ID);
 const page = { limit: 500, page: 1 };
@@ -49,14 +45,14 @@ async function setupRuleset({ fork = false } = {}) {
   }
   await Aptitudes.create(db, { name: "general", rulesetId });
   const [[featAptitude], [powerAptitude]] = [await Aptitudes.create(db, { name: "Feat Aptitude", rulesetId }), await Aptitudes.create(db, { name: "Power Aptitude", rulesetId })];
-  const abilities = await Abilities.createMany(db, ["Charisma", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId })));
-  const skillList = await Skills.createMany(db, [["Diplomacy", 0], ["Stealth", 1], ["Knowledge (Arcana)", 2]].map(([name, ability]) => ({ name: name as string, rulesetId, primaryAbilityId: abilities[ability as number].id })));
-  const featList = await Feats.createMany(db, [
+  const abilities = await insertRows(abilitiesInRules, ["Charisma", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId })));
+  const skillList = await insertRows(skillsInRules, [["Diplomacy", 0], ["Stealth", 1], ["Knowledge (Arcana)", 2]].map(([name, ability]) => ({ name: name as string, rulesetId, primaryAbilityId: abilities[ability as number].id })));
+  const featList = await insertRows(featsInRules, [
     { name: "Power Attack", rulesetId, stackable: false },
     { name: "Weapon Focus", rulesetId, stackable: true },
     { name: "Dodge", rulesetId, stackable: false },
   ]);
-  const powerList = await Powers.createMany(db, ["Sneak Attack", "Rage", "Uncanny Dodge"].map((name) => ({ name, rulesetId })));
+  const powerList = await insertRows(powersInRules, ["Sneak Attack", "Rage", "Uncanny Dodge"].map((name) => ({ name, rulesetId })));
   await FeatsAptitudes.createMany(db, featList.map((f) => ({ featId: f.id, aptitudeId: featAptitude.id })));
   await PowersAptitudes.createMany(db, powerList.map((p) => ({ powerId: p.id, aptitudeId: powerAptitude.id })));
 
@@ -138,7 +134,7 @@ describe("LevelsService", () => {
 
         const eligible = async (...pending: PendingPicks) =>
           (await CharacterLevelsMethods.getAvailableKlasses(session, characterId, {}, page, ...pending)).items.find((k) => k.id === blackguard.id)!.eligible;
-        const fighterLevel = async (level: number) => (await KlassLevels.findOneByKlassAndLevel(db, { klassId: ctx.klassMap.pc["Fighter"], level }))!.id;
+        const fighterLevel = async (level: number) => (await findKlassLevel(ctx.klassMap.pc["Fighter"], level))!.id;
         return { ctx, eligible, fighterLevel };
       }
 
@@ -341,8 +337,8 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
       // The first ranger level grants Track.
       const pending = [
-        (await KlassLevels.findOneByKlassAndLevel(db, { klassId: ctx.klassMap.pc["Ranger"], level: 1 }))!.id,
-        (await KlassLevels.findOneByKlassAndLevel(db, { klassId: ctx.klassMap.pc["Fighter"], level: 1 }))!.id,
+        (await findKlassLevel(ctx.klassMap.pc["Ranger"], 1))!.id,
+        (await findKlassLevel(ctx.klassMap.pc["Fighter"], 1))!.id,
       ];
       const args = [session, characterId, ctx.aptMap["General"], ctx.klassMap.pc["Fighter"], 1, { search: "Track" }, page] as const;
       expect(names((await CharacterLevelsMethods.getAvailableFeats(...args)).items)).toContain("Track");
@@ -753,7 +749,7 @@ describe("LevelsService", () => {
     test("removes the last one taken, with its picks, even when an earlier one is higher", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
-      const klassLevel = async (klass: string, level: number) => (await KlassLevels.findOneByKlassAndLevel(db, { klassId: ctx.klassMap.pc[klass], level }))!.id;
+      const klassLevel = async (klass: string, level: number) => (await findKlassLevel(ctx.klassMap.pc[klass], level))!.id;
       const [fighter2] = await CharacterLevels.create(db, { characterId, klassLevelId: await klassLevel("Fighter", 2), hp: 10, createdAt: "2020-01-01T00:00:00.000Z" });
       const [rogue1] = await CharacterLevels.create(db, { characterId, klassLevelId: await klassLevel("Rogue", 1), hp: 6, createdAt: "2020-01-02T00:00:00.000Z" });
       await addSkills(db, ctx, [rogue1.id], [{ levelIndex: 0, skillName: "Hide", rank: 4 }]);

@@ -1,7 +1,6 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -36,10 +35,6 @@ class RequirementsRepository
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("requirements don't soft-archive — use Requirements.delete()");
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal

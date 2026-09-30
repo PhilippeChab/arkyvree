@@ -263,7 +263,6 @@ export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
 
 export interface RulesetModule {
   hooks: ServiceHooks;
-  seedRuleset(tx: Db, rulesetId: string): Promise<void>;
   seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
   remapRulesetProperties(tx: Db, sourceProperties: Property[], newRulesetId: string, idMaps: Record<string, Record<string, string>>): Promise<void>;
   createDetailedCharacter(record: CharacterRecord, kind?: CharacterKind): DetailedCharacterInterface;

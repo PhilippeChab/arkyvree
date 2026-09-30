@@ -89,7 +89,6 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted.
 | `SIGNING_SECRET` | web | Signs upload attachment tokens; required at startup |
 | `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage and cleanup; required by web startup |
 | `GOOGLE_CLIENT_ID` | web | OAuth |
-| `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME` | web | Feedback → GitHub issues |
 | `APP_URL` | both | Email links + logo image (worker — `EmailLayout` reads it at render time), CORS allowed origin and OG meta (web), canonical-host redirect (web) |
 | `WORKER_FLYCAST_URL` | web | `http://arkyvree-worker.flycast:8001/health` |
 | `SENTRY_DSN` | both | Server/worker error reporting via Better Stack's Sentry-compatible ingest (unset = disabled) |

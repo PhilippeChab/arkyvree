@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, not } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -27,18 +27,6 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerI
       .returning();
   }
 
-  async archive(db: Db, where: { id: string } | { campaignId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "campaignId" in where && eq(this.table.campaignId, where.campaignId),
-        isNull(this.table.deletedAt),
-      ]))
-      .returning();
-  }
-
   // Hard delete — used when intentionally removing a player from a campaign
   async delete(db: Db, where: { id: string }) {
     return await db
@@ -51,14 +39,6 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerI
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async unarchive(db: Db, where: { campaignId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.campaignId, where.campaignId), not(isNull(this.table.deletedAt))))
       .returning();
   }
 

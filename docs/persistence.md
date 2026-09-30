@@ -2,7 +2,7 @@
 
 Two row-removal primitives:
 
-- `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Defined as `abstract` on `BaseRepository`; every table has a `deletedAt` column. Repos that intentionally don't soft-archive define `archive` as a throwing stub.
+- `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Every table has a `deletedAt` column, but only the repositories of tables that archive define `archive`: on the others it doesn't exist, so a call is a type error.
 - `repo.delete(...)` — real `db.delete(this.table)`. Hard delete; FK CASCADE fires. Implemented per-repo where used.
 
 This doc categorizes every table by which primitive its services use, and what's load-bearing vs convention.
@@ -23,7 +23,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 
 `Abilities` is hard-coded in the schema and never deleted.
 
-Repos in this category define `archive` as a throwing stub (matching the pattern in `BlobsRepository`/`AttachmentsRepository`/etc.) so future code can't mistakenly soft-archive into dead state.
+Repos in this category have no `archive`, so future code can't mistakenly soft-archive into dead state: the call wouldn't compile.
 
 ### Why ruleset entities are hard-delete
 
@@ -63,9 +63,9 @@ There is no un-delete UI for accounts. The archive isn't about reversibility; it
 | `Sessions` | user signs out / account deleted | `runCleanup.ts` reaps expired |
 | `EmailVerifications` | code consumed / account email changed | `runCleanup.ts` reaps expired |
 | `PasswordResets` | code consumed / account deleted | `runCleanup.ts` reaps expired |
-| `Activities` | (none — repo's archive is unused) | `runCleanup.ts` retention sweep, or `deleteByTargets` when target hard-deleted |
-| `Notifications` | (`archive` is a no-op stub — use `markRead`) | `runCleanup.ts` retention sweep |
-| `Blobs`, `Attachments`, `Exports` | (`archive` throws or no-ops) | linked S3 object reaped / export expired |
+| `Activities` | (none: no `archive`) | `runCleanup.ts` retention sweep, or `deleteByTargets` when target hard-deleted |
+| `Notifications` | (none: no `archive`, use `markRead`) | `runCleanup.ts` retention sweep |
+| `Blobs`, `Attachments`, `Exports` | (none: no `archive`) | linked S3 object reaped / export expired |
 
 Archive while the row is still referenced by user-visible state (a session in flight, a verification email someone might click); hard-delete once the row is just data debris.
 

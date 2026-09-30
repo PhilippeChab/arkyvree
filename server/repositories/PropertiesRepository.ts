@@ -1,7 +1,6 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -36,10 +35,6 @@ class PropertiesRepository
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("properties don't soft-archive — use Properties.delete()");
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
@@ -103,22 +98,6 @@ class PropertiesRepository
         isNull(this.table.deletedAt),
       ),
     });
-  }
-
-  async findEntityIdsByPropertyValues(
-    db: Db,
-    where: { entityType: string; type: string; values: string[] },
-  ): Promise<string[]> {
-    const rows = await db.query.propertiesInCustomization.findMany({
-      columns: { entityId: true },
-      where: this.where([
-        eq(this.table.entityType, where.entityType),
-        eq(this.table.type, where.type),
-        inArray(this.table.value, where.values),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-    return rows.map((r) => r.entityId);
   }
 
   withInstance(instance: InferSelectModel<typeof propertiesInCustomization>) {

@@ -49,12 +49,6 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
     db: Db,
     values: InferInsertModel<T> | InferInsertModel<T>[] | Record<string, unknown>,
   ): Promise<InferSelectModel<T>[]>;
-  abstract update(
-    db: Db,
-    values: Partial<InferInsertModel<T>>,
-    where: Record<string, unknown>,
-  ): Promise<InferSelectModel<T>[]>;
-  abstract archive(db: Db, where: Record<string, unknown>): Promise<InferSelectModel<T>[]>;
   abstract findOne(
     db: Db,
     where: Record<string, unknown>,

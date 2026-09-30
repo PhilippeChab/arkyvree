@@ -7,11 +7,11 @@ import { characterAbilitiesInCharacter, charactersInCharacter, inventoryInCharac
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Aptitudes, CharacterLevelFeats, CharacterLevels, Characters, Feats, Items, KlassLevels, Klasses, Modifiers, Properties, Races, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Aptitudes, CharacterLevelFeats, CharacterLevels, Characters, Feats, Items, Klasses, Modifiers, Properties, Races, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type { Character } from "@/shared/relations.ts";
-import { addCharacterLevel, createTestRuleset, getSeedCtx, invalidateSeededRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { addCharacterLevel, createTestRuleset, findKlassLevel, getSeedCtx, invalidateSeededRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 /** A seeded character of the seed user's, by name. */
 async function seeded(name: string): Promise<Character> {
@@ -434,7 +434,7 @@ describe("DetailedCharacter", () => {
       // A barbarian level grants the fighter's proficiency feats again.
       const bjorn = await seeded("Bjorn Ironhand");
       const { klassMap } = await getSeedCtx();
-      await addCharacterLevel(bjorn.id, (await KlassLevels.findOneByKlassAndLevel(db, { klassId: klassMap.pc["Barbarian"], level: 1 }))!.id);
+      await addCharacterLevel(bjorn.id, (await findKlassLevel(klassMap.pc["Barbarian"], 1))!.id);
       const detailed = await build(bjorn);
 
       const general = detailed.getDetailedCharacterAptitudes().getAptitudes()["general"];
@@ -583,7 +583,7 @@ describe("DetailedCharacter", () => {
         const advance = (await Feats.findOne(db, { name: "Advance Cleric Spellcasting", rulesetId: extension.id }))?.id ?? ctx.featMap["Advance Cleric Spellcasting"];
         const bonusLevel = (await Aptitudes.findOne(db, { name: "Bonus Divine Caster Level", rulesetId: extension.id }))?.id ?? ctx.aptMap["Bonus Divine Caster Level"];
         for (let level = 1; level <= 5; level++) {
-          const klassLevel = (await KlassLevels.findOneByKlassAndLevel(db, { klassId: stormlord.id, level }))!;
+          const klassLevel = (await findKlassLevel(stormlord.id, level))!;
           await addCharacterLevel(characterId, klassLevel.id, { feats: [{ featId: advance, aptitudeId: bonusLevel }] });
         }
 
@@ -686,7 +686,7 @@ describe("DetailedCharacter", () => {
           { levelIndex: 2, featName: "Toughness", aptitude: "General" },
         ]);
         const thaumaturgist = (await Klasses.findOne(db, { name: "Thaumaturgist", rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id }))!;
-        const firstLevel = (await KlassLevels.findOneByKlassAndLevel(db, { klassId: thaumaturgist.id, level: 1 }))!;
+        const firstLevel = (await findKlassLevel(thaumaturgist.id, 1))!;
 
         const detailed = new DetailedCharacter((await Characters.findOne(db, { id: characterId }))!);
         const now = new Date().toISOString();

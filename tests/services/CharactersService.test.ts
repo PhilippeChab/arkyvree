@@ -1,18 +1,16 @@
+import { and, eq } from "drizzle-orm";
 import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { charactersInCharacter } from "@/drizzle/schema.ts";
+import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import {
-  Activities, Campaigns, CharacterAbilities, CharacterInventory, CharacterLanguages, CharacterLevelFeats, CharacterLevels, CharacterLevelSkills,
-  Characters, KlassLevels, Modifiers, PlayerCharacters, Players, Races, Requirements,
-} from "@/server/repositories/index.ts";
+import { Activities, Campaigns, CharacterAbilities, CharacterInventory, CharacterLanguages, CharacterLevelFeats, CharacterLevels, CharacterLevelSkills, Characters, Modifiers, PlayerCharacters, Players, Races, Requirements } from "@/server/repositories/index.ts";
 import { cowEntity } from "@/server/services/rulesets/cow.ts";
 import { CharactersMethods } from "@/server/services/CharactersService.ts";
 import type { Session } from "@/shared/relations.ts";
-import { addCharacterLevel, addRulesetContributor, createTestCampaign, createTestRuleset, createTestUser, getSeedCtx, invalidateSeededRuleset, makeSession, NIL_UUID, queuedPdfJobs, uniqueId } from "@/tests/helpers.ts";
+import { addCharacterLevel, addRulesetContributor, createTestCampaign, createTestRuleset, createTestUser, findKlassLevel, getSeedCtx, invalidateSeededRuleset, makeSession, NIL_UUID, queuedPdfJobs, uniqueId } from "@/tests/helpers.ts";
 
 type CharacterBody = Parameters<typeof CharactersMethods.createCharacter>[1];
 const page = { limit: 100, page: 1 };
@@ -36,7 +34,7 @@ async function setupPrivateRuleset() {
 
 async function fighterLevel() {
   const { klassMap } = await getSeedCtx();
-  return (await KlassLevels.findOneByKlassAndLevel(db, { klassId: klassMap.pc["Fighter"], level: 1 }))!;
+  return (await findKlassLevel(klassMap.pc["Fighter"], 1))!;
 }
 
 const ids = (rows: { id: string }[]) => rows.map((r) => r.id);
@@ -262,7 +260,7 @@ describe("CharactersService", () => {
         const character = await createCharacter(session);
         const { campaign, player } = await createTestCampaign(session.userId);
         await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
-        if (situation === "removed from the campaign") await PlayerCharacters.archive(db, { playerId: player.id, characterId: character.id });
+        if (situation === "removed from the campaign") await db.update(playerCharactersInCampaign).set({ deletedAt: new Date().toISOString() }).where(and(eq(playerCharactersInCampaign.playerId, player.id), eq(playerCharactersInCampaign.characterId, character.id)));
         else await Campaigns.archive(db, { id: campaign.id });
 
         await CharactersMethods.archiveCharacter(session, character.id);

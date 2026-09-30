@@ -55,7 +55,7 @@ the disposable local setup.
 Email/password development works without production service credentials. Google
 sign-in and uploads require their own optional configuration; leave them
 unconfigured unless you need to work on those features. The example environment
-disables the hosted feedback integration and leaves monitoring credentials empty.
+leaves monitoring credentials empty.
 
 ## Testing
 
