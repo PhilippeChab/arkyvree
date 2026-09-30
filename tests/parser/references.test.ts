@@ -6,11 +6,11 @@ import { buildMagicItemSeeds, buildRaceSeeds, seededMagicItems, seededRaces } fr
 import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
-import { checkOneOf, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 describe("A book's class references", () => {
-  test("are its classes folder's reference files, each loaded", () => {
-    const files = readdirSync(join(REFERENCE_DIR, "srd", "classes")).filter((file) => file.endsWith(".json"));
+  test("are its classes folder's reference files, sorted (the same on every filesystem), each loaded", () => {
+    const files = readdirSync(join(REFERENCE_DIR, "srd", "classes")).filter((file) => file.endsWith(".json")).sort();
     const classes = classReferences("srd");
     expect(classes.map(({ file }) => file)).toEqual(files);
     expect(classes.every(({ ref }) => ref._meta.type === "class" && ref.raw.name.length > 0)).toBe(true);
@@ -19,6 +19,11 @@ describe("A book's class references", () => {
   test("are none for a book without classes", () => {
     expect(classReferences("a-book-without-classes")).toEqual([]);
   });
+});
+
+test("The books with references are their folders, sorted", () => {
+  const folders = readdirSync(REFERENCE_DIR, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+  expect(referenceBooks()).toEqual(folders.sort());
 });
 
 /** A committed reference of `type` as stored. */

@@ -132,11 +132,11 @@ export function loadReference<T extends ReferenceType>(path: string, type: T): R
   return reference;
 }
 
-/** A book's class references with their file's name, in the order its folder lists them: none for a book without classes. */
+/** A book's class references with their file's name, sorted by it: none for a book without classes. */
 export function classReferences(book: string): { file: string; ref: ClassReference }[] {
   const dir = join(REFERENCE_DIR, book, "classes");
   if (!existsSync(dir)) return [];
-  return readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => ({ file, ref: loadReference(join(dir, file), "class") }));
+  return readdirSync(dir).filter((file) => file.endsWith(".json")).sort().map((file) => ({ file, ref: loadReference(join(dir, file), "class") }));
 }
 
 /** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */

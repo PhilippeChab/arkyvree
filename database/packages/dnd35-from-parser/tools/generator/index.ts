@@ -849,7 +849,7 @@ function regenerateFeatIndex(out: Output, book: string) {
   type FeatFileExport = { file: string; exports: string[] };
   const featFiles: FeatFileExport[] = [];
   try {
-    for (const file of readdirSync(featDir)) {
+    for (const file of readdirSync(featDir).sort()) {
       if (!file.endsWith(".ts") || file === "index.ts") continue;
       const content = readFileSync(join(featDir, file), "utf-8");
       const exports: string[] = [];
