@@ -3,13 +3,14 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { classReferences, readStoredReference, resolveReference, type ReferenceType, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { buildMagicItemSeeds, buildRaceSeeds, seededMagicItems, seededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
-import { checkOneOf, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 describe("A book's class references", () => {
-  test("are its classes folder's reference files, each loaded", () => {
-    const files = readdirSync(join(REFERENCE_DIR, "srd", "classes")).filter((file) => file.endsWith(".json"));
+  test("are its classes folder's reference files, sorted (the same on every filesystem), each loaded", () => {
+    const files = readdirSync(join(REFERENCE_DIR, "srd", "classes")).filter((file) => file.endsWith(".json")).sort();
     const classes = classReferences("srd");
     expect(classes.map(({ file }) => file)).toEqual(files);
     expect(classes.every(({ ref }) => ref._meta.type === "class" && ref.raw.name.length > 0)).toBe(true);
@@ -18,6 +19,11 @@ describe("A book's class references", () => {
   test("are none for a book without classes", () => {
     expect(classReferences("a-book-without-classes")).toEqual([]);
   });
+});
+
+test("The books with references are their folders, sorted", () => {
+  const folders = readdirSync(REFERENCE_DIR, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+  expect(referenceBooks()).toEqual(folders.sort());
 });
 
 /** A committed reference of `type` as stored. */
@@ -80,6 +86,42 @@ describe("A race reference's races", () => {
     reference.overrides = { ...reference.overrides, [first.name]: { size: "Titanic" } };
     expect(sizeOf(first.name)).toEqual({ ok: false, problem: `${first.name}'s size: "Titanic" isn't one of ${SIZE_OPTIONS.join(", ")}` });
     expect(() => buildRaceSeeds(resolveReference("race", reference))).toThrow(`${first.name}'s size`);
+  });
+});
+
+describe("A race's detected modifiers", () => {
+  const race = (name: string, abilityAdjustments: { ability: string; value: number }[], ...features: string[]) =>
+    ({ name, description: "", size: "Medium", baseSpeed: 30, abilityAdjustments, features: features.map((feature) => ({ name: feature, description: "" })) });
+  const add = (target: string, value: number) => ({ target, operator: "add", value: String(value), valueType: "number" });
+
+  test("are its ability adjustments, and its unconditional skill and save bonuses", () => {
+    const detected = buildRaceDetected([
+      race("Stout", [{ ability: "Constitution", value: 2 }, { ability: "Luck", value: 1 }],
+        "+2 racial bonus on Climb and Jump checks", "+2 racial bonus on Search checks made to notice unusual stonework", "+1 racial bonus on Underwater Basketry checks",
+        "+1 racial bonus on all saving throws"),
+      race("Hardy", [], "+2 racial bonus on Fortitude saving throws against poison, and a +1 racial bonus on Will saving throws",
+        "+1 racial bonus on all saving throws against fear, and a +2 racial bonus on Reflex saving throws",
+        "+2 racial bonus on Will saving throws vs. enchantment spells", "+2 racial bonus on Fortitude saving throws for resisting poison",
+        "+2 racial bonus on Listen checks if the creature can hear", "+2 racial bonus on Spot checks, while in shadow"),
+      race("Twice", [], "+1 racial bonus on Fortitude saving throws and a +2 racial bonus on Will saving throws",
+        "+1 racial bonus on all saving throws, and another +1 racial bonus on all saving throws", "+2 racial bonus on Hide checks, to a maximum of +10"),
+    ]);
+    expect(detected.Stout).toEqual({
+      modifiers: [
+        add("abilities.constitution.misc", 2), add("skills.climb.misc", 2), add("skills.jump.misc", 2),
+        add("saves.fortitude.misc", 1), add("saves.reflex.misc", 1), add("saves.will.misc", 1),
+      ],
+      unresolvedModifiers: [`Unknown ability: "Luck"`, `Unresolved skill bonus: +1 on "Underwater Basketry"`],
+    });
+    expect(detected.Hardy).toEqual({ modifiers: [add("saves.will.misc", 1), add("saves.reflex.misc", 2)] });
+    // Each bonus of a text, whatever follows a comma but a condition
+    expect(detected.Twice).toEqual({
+      modifiers: [
+        add("saves.fortitude.misc", 1), add("saves.will.misc", 2),
+        ...["fortitude", "reflex", "will", "fortitude", "reflex", "will"].map((save) => add(`saves.${save}.misc`, 1)),
+        add("skills.hide.misc", 2),
+      ],
+    });
   });
 });
 

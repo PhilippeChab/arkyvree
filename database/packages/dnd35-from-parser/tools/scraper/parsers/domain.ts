@@ -4,20 +4,13 @@ import { sectionElements } from "@/database/packages/dnd35-from-parser/tools/scr
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
-// Domain HTML Parser — dndtools.net structure
+// Domain HTML Parser — srd.dndtools.org's page of every domain
 //
-// Listing page: /spells/domains/
-//   <ul><li><a href="/spells/domains/{slug}/">Domain Name</a></li>...</ul>
-//
-// Detail page: /spells/domains/{slug}/
-//   <h2>Domain Name</h2>
-//   <h4>Granted power (Su)</h4>
-//   <p>Description text...</p>
-//   <table> spell listing (no level column — levels resolved by orchestrator)
-//
-// Note: dndtools.net domain pages do NOT include spell levels. The
-// orchestrator resolves levels by cross-referencing individual spell pages
-// or existing reference data.
+//   <a id="air-domain"></a>
+//   <h5>AIR DOMAIN</h5>
+//   <p>Granted Power: ...</p>
+//   <h6>Air Domain Spells</h6>
+//   <table> a row a spell level: "1 Obscuring Mist: ..." in one cell, or (a planar domain) the level, then its spells
 // ---------------------------------------------------------------------------
 
 const CORE_DOMAINS = new Set([
@@ -31,14 +24,6 @@ export type DomainRaw = {
   description: string;
   spells: { name: string; slug?: string; level: number }[];
 };
-
-// ---------------------------------------------------------------------------
-// Detail page parser
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Legacy: single-page all-domains parser (old srd.dndtools.org format)
-// ---------------------------------------------------------------------------
 
 export function parseDomainsHtml(
   html: string,
@@ -203,8 +188,3 @@ function normalizeDomainSpellName(name: string): string {
 
   return normalized;
 }
-
-// ---------------------------------------------------------------------------
-// Shared helpers
-// ---------------------------------------------------------------------------
-

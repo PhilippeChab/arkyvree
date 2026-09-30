@@ -146,6 +146,17 @@ const TABLE_CATEGORIES: Record<string, string> = {
   tableTransport: "Transport",
 };
 
+/**
+ * The weapons, armor and shields the generator has no definition of, and leaves out ("weapon: Name"): all of them, or
+ * those `skipped` doesn't name.
+ */
+export function unresolvedItems({ weapons, armor }: Pick<ItemReference["detected"], "weapons" | "armor">, skipped = (_name: string) => false): string[] {
+  return [
+    ...Object.entries(weapons).filter(([name, weapon]) => !weapon.generatorName && !skipped(name)).map(([name]) => `weapon: ${name}`),
+    ...Object.entries(armor).filter(([name, piece]) => !piece.generatorName && !skipped(name)).map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
+  ];
+}
+
 export function buildItemDetected(
   raw: ItemReference["raw"],
   overrideNameMap?: Record<string, string>,
@@ -153,7 +164,6 @@ export function buildItemDetected(
   const weapons: ItemReference["detected"]["weapons"] = {};
   const armor: ItemReference["detected"]["armor"] = {};
   const goods: ItemReference["detected"]["goods"] = {};
-  const unresolved: string[] = [];
 
   for (const w of raw.weapons) {
     if (DEFAULT_WEAPON_SKIPS.has(w.name)) continue;
@@ -168,10 +178,6 @@ export function buildItemDetected(
       costGp: parseCost(w.cost),
       weight: parseWeight(w.weight),
     };
-
-    if (!def) {
-      unresolved.push(`weapon: ${w.name}`);
-    }
   }
 
   for (const a of raw.armor) {
@@ -192,10 +198,6 @@ export function buildItemDetected(
       costGp: parseCost(a.cost),
       weight: parseWeight(a.weight),
     };
-
-    if (!def) {
-      unresolved.push(`${itemType.toLowerCase()}: ${a.name}`);
-    }
   }
 
   for (const g of raw.goods) {
@@ -206,5 +208,5 @@ export function buildItemDetected(
     };
   }
 
-  return { weapons, armor, goods, unresolved };
+  return { weapons, armor, goods, unresolved: unresolvedItems({ weapons, armor }) };
 }

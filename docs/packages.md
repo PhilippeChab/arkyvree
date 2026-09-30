@@ -111,10 +111,11 @@ A reference file (`reference/<book>/…json`) has three parts:
 What the generator reads is derived from the two each time a reference is loaded (`tools/references.ts`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
 `bun run parser:validate` lists:
-- unresolved detections (not yet listed in `overrides.reviewed`);
+- unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;
 - classes the generator refuses;
 - class overrides that change nothing (they hold what's derived without them) or that the generator ignores;
-- values the seed refuses, such as a race's size or a magic item's slot. These can't be marked reviewed: correct the value with an override, or skip the entry.
+- values the seed refuses, such as a race's size or a magic item's slot. These can't be marked reviewed: correct the value with an override, or skip the entry;
+- references of a type the tools don't read (a misspelled `_meta.type`).
 
 ## COW-ing core entities into extensions
 

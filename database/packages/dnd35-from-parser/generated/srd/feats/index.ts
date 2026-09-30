@@ -2,6 +2,14 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export {
+  DOMAIN_POOL_FEATS,
+} from "./domainFeats.ts";
+
+export {
+  favoredEnemy,
+} from "./favoredEnemy.ts";
+
+export {
   GENERAL_FEATS,
   ITEM_CREATION_FEATS,
   METAMAGIC_FEATS,
@@ -20,16 +28,14 @@ export {
   WEAPON_PROFICIENCY_FEATS,
 } from "./feats.ts";
 
-export {
-  DOMAIN_POOL_FEATS,
-} from "./domainFeats.ts";
-
-export {
-  favoredEnemy,
-} from "./favoredEnemy.ts";
-
 export { ALL_CLASS_FEATS } from "./classes/index.ts";
 
+import {
+  DOMAIN_POOL_FEATS as _DOMAIN_POOL_FEATS,
+} from "./domainFeats.ts";
+import {
+  favoredEnemy as _favoredEnemy,
+} from "./favoredEnemy.ts";
 import {
   GENERAL_FEATS as _GENERAL_FEATS,
   ITEM_CREATION_FEATS as _ITEM_CREATION_FEATS,
@@ -48,15 +54,11 @@ import {
   WIZARD_SCHOOL_FEATS as _WIZARD_SCHOOL_FEATS,
   WEAPON_PROFICIENCY_FEATS as _WEAPON_PROFICIENCY_FEATS,
 } from "./feats.ts";
-import {
-  DOMAIN_POOL_FEATS as _DOMAIN_POOL_FEATS,
-} from "./domainFeats.ts";
-import {
-  favoredEnemy as _favoredEnemy,
-} from "./favoredEnemy.ts";
 import { ALL_CLASS_FEATS as _ALL_CLASS_FEATS } from "./classes/index.ts";
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
+  ..._DOMAIN_POOL_FEATS,
+  ..._favoredEnemy,
   ..._GENERAL_FEATS,
   ..._ITEM_CREATION_FEATS,
   ..._METAMAGIC_FEATS,
@@ -73,11 +75,11 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ..._weaponSpecialization,
   ..._WIZARD_SCHOOL_FEATS,
   ..._WEAPON_PROFICIENCY_FEATS,
-  ..._DOMAIN_POOL_FEATS,
-  ..._favoredEnemy,
 ];
 
 export const ALL_FEATS: FeatSeed[] = [
+  ..._DOMAIN_POOL_FEATS,
+  ..._favoredEnemy,
   ..._GENERAL_FEATS,
   ..._ITEM_CREATION_FEATS,
   ..._METAMAGIC_FEATS,
@@ -94,7 +96,5 @@ export const ALL_FEATS: FeatSeed[] = [
   ..._weaponSpecialization,
   ..._WIZARD_SCHOOL_FEATS,
   ..._WEAPON_PROFICIENCY_FEATS,
-  ..._DOMAIN_POOL_FEATS,
-  ..._favoredEnemy,
   ..._ALL_CLASS_FEATS,
 ];

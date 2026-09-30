@@ -14,7 +14,9 @@ import zen from "@/database/seeds/zen.ts";
 import { getSeedContext, seedCharacter } from "@/database/seeds/helpers.ts";
 
 /** The seed user's characters on the core rules. */
+export const CHARACTERS = [bjorn, grak, lyra, zen, kael, elara, vex, theron, melody, rowan, aldric, fenn];
+
 export default async function seed(db: Db) {
   const ctx = await getSeedContext(db);
-  for (const character of [bjorn, grak, lyra, zen, kael, elara, vex, theron, melody, rowan, aldric, fenn]) await seedCharacter(db, ctx, character);
+  for (const character of CHARACTERS) await seedCharacter(db, ctx, character);
 }

@@ -8,7 +8,7 @@ import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import type { Modifier, ModifierEffect, ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types.ts";
@@ -146,9 +146,12 @@ type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string;
 /** The books' references: a folder per book, and the files every book shares (domains.json). */
 export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 
-/** The books with references: the folders of REFERENCE_DIR. */
+/** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
 export function referenceBooks(): string[] {
-  return readdirSync(REFERENCE_DIR, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+  return readdirSync(REFERENCE_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() || (entry.isSymbolicLink() && statSync(join(REFERENCE_DIR, entry.name)).isDirectory()))
+    .map((entry) => entry.name)
+    .sort();
 }
 
 /** The reference files under `refDir`: each book's, and the ones every book shares (domains.json). */

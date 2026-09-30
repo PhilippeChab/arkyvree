@@ -2,6 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { abilitiesInRules, aptitudesInRules, featsInRules, powersInRules, rulesetExtensionsInRules, rulesetsInRules, savesInRules, skillsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
 type Ids = Record<string, string>;
 
@@ -41,6 +42,13 @@ export async function createSystemRuleset(db: Db, ruleset: { name: string; descr
   return id;
 }
 
+/** The seeded core rules' id, which `user` (what needs them) can't do without. */
+export async function coreRulesetId(db: Db, user: string): Promise<string> {
+  const [core] = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules).where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
+  if (!core) throw new Error(`${user} needs ${DND35_RULESET_NAME}, which isn't seeded`);
+  return core.id;
+}
+
 /** The context of a ruleset about to be seeded. */
 export const newSeedContext = (rulesetId: string): SeedContext =>
   ({ rulesetId, abilityMap: {}, saveMap: {}, skillMap: {}, aptMap: {}, featMap: {}, powerMap: {}, inheritedPowerMap: {} });
@@ -60,6 +68,16 @@ export async function loadSeedContext(db: Db, rulesetId: string): Promise<SeedCo
     powerMap: await names(powersInRules),
     inheritedPowerMap: {},
   };
+}
+
+/**
+ * The context of a new extension of the context's ruleset: it names the base's rows (in maps of its own, which leave
+ * the base's as they are), and has no powers of its own yet, its base's (and those its base inherits) being the ones
+ * it copies before changing them (`inheritedPowerMap`).
+ */
+export async function extensionContext(db: Db, base: SeedContext, ruleset: { name: string; description: string }): Promise<SeedContext> {
+  const { powerMap, inheritedPowerMap, ...names } = structuredClone(base);
+  return { ...names, rulesetId: await createSystemRuleset(db, ruleset, base.rulesetId), powerMap: {}, inheritedPowerMap: { ...inheritedPowerMap, ...powerMap } };
 }
 
 /** The id of a row the content names, or an error that says which. */

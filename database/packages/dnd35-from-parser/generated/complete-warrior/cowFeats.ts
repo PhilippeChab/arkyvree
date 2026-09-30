@@ -2,6 +2,15 @@
 import type { CowFeatEntry } from "@/database/packages/dnd35/content/types.ts";
 
 export const COW_FEATS: CowFeatEntry[] = [
+  { feat: "Combat Casting", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Spell Focus: Enchantment", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Spell Focus: Necromancy", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Spell Focus: Transmutation", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Greater Spell Focus: Enchantment", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Greater Spell Focus: Necromancy", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Greater Spell Focus: Transmutation", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Spell Penetration", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
+  { feat: "Greater Spell Penetration", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
   { feat: "Far Shot", requirements: [], aptitudes: ["Ronin Bonus Feat"] },
   { feat: "Improved Precise Shot", requirements: [], aptitudes: ["Ronin Bonus Feat"] },
   { feat: "Manyshot", requirements: [], aptitudes: ["Ronin Bonus Feat"] },
@@ -14,13 +23,4 @@ export const COW_FEATS: CowFeatEntry[] = [
   { feat: "Shot on the Run", requirements: [], aptitudes: ["Ronin Bonus Feat"] },
   { feat: "Spirited Charge", requirements: [], aptitudes: ["Ronin Bonus Feat"] },
   { feat: "Trample", requirements: [], aptitudes: ["Ronin Bonus Feat"] },
-  { feat: "Combat Casting", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Spell Focus: Enchantment", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Spell Focus: Necromancy", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Spell Focus: Transmutation", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Greater Spell Focus: Enchantment", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Greater Spell Focus: Necromancy", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Greater Spell Focus: Transmutation", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Spell Penetration", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
-  { feat: "Greater Spell Penetration", requirements: [], aptitudes: ["Hexblade Bonus Feat"] },
 ];

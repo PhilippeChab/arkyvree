@@ -15,8 +15,7 @@ export async function seedWizardSchools(db: Db, ctx: SeedContext, schools: Wizar
     spellListSlots(ctx.featMap[`${s.name} Specialist`], "feats", `${stripSeparators(s.name)}specialistspells`)), "classes.wizard.level", wizardSpellLevels);
 
   const wizardSpells = ctx.aptMap["Wizard Spells"];
-  const intelligence = ctx.abilityMap["Intelligence"];
-  if (!wizardSpells || !intelligence) return;
+  if (!wizardSpells) return;
   const spells = await db
     .select({ powerId: powersAptitudesInRules.powerId, level: powersAptitudesInRules.level, school: propertiesInCustomization.value })
     .from(powersAptitudesInRules)
@@ -29,6 +28,6 @@ export async function seedWizardSchools(db: Db, ctx: SeedContext, schools: Wizar
   await insertAll(db, powersAptitudesInRules, spells.flatMap(({ powerId, level, school }) => {
     const aptitudeId = ctx.aptMap[`${school} Specialist Spells`];
     if (school === "Universal" || !aptitudeId || level === null) return [];
-    return [{ powerId, aptitudeId, level, abilityDcId: intelligence }];
+    return [{ powerId, aptitudeId, level }];
   }));
 }
