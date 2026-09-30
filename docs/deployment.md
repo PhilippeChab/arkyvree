@@ -125,7 +125,7 @@ Fly has no toggle to disable the default `*.fly.dev` hostname, so a Hono middlew
 
 ## CI/CD
 
-Single workflow: `.github/workflows/ci.yml`.
+Two workflows: `.github/workflows/ci.yml` builds, tests the API and deploys; `.github/workflows/e2e.yml` runs the Playwright suite.
 
 ```
 build ─┐
@@ -137,8 +137,9 @@ tests ─┘
 - API tests split by trigger:
   - **Push** to main/develop → `api-tests-full`, sharded 3× via `bun test --shard` (matrix jobs in parallel)
   - **PR** → `api-tests-changed`, single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
-- `deploy` needs successful `build` and all `api-tests-full` shards from the same `main` push. It never substitutes a green result from another branch or revision. E2E tests are run separately; this workflow does not run them.
+- `deploy` needs successful `build` and all `api-tests-full` shards from the same `main` push. It never substitutes a green result from another branch or revision. It doesn't wait for the E2E workflow.
 - Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
+- `e2e.yml` runs on the same pushes and PRs: the suite sharded 3×, each shard building the client and copying the seeded database for its own server (`bunx playwright test --shard`). A new push to a PR cancels its previous run, and a failing shard uploads its Playwright report
 - Deploy is a matrix over `{fly.web.toml, fly.worker.toml}` — both apps deploy in parallel
 
 `FLY_API_TOKEN` must be at **repository-level** secrets (Settings → Secrets and variables → Actions → Repository secrets). The deploy job doesn't declare an `environment:`, so environment-scoped secrets won't be visible.

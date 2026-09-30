@@ -45,7 +45,7 @@ test.describe('Customization of a fork', () => {
     await fortitude.press('Control+a');
     await fortitude.fill('3');
     const proficiency = page.locator('.MuiChip-root', { hasText: /Weapon and Armor Proficiency \(Fighter\)/ });
-    await proficiency.first().locator('[data-testid="CancelIcon"]').click();
+    await proficiency.first().locator('.MuiChip-deleteIcon').click();
     await expect(proficiency).toHaveCount(0);
 
     const saved = apiResponse(page, 'PUT', /\/api\/rulesets\/[a-f0-9-]+\/classes\/[a-f0-9-]+\/levels\/[a-f0-9-]+/);

@@ -154,7 +154,7 @@ export default function NotificationsPage() {
                           <Tooltip describeChild title={formatActivityDetails(notification.data) ?? ""} arrow enterDelay={300} slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                               {isUnread && (
-                                <CircleIcon sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
+                                <CircleIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
                               )}
                               <Typography variant="body2">
                                 {formatNotificationMessage(notification.type, notification.data)}

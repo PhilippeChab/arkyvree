@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@/tests/e2e/fixtures.ts';
 import { fillOtp, getPasswordResetCode, signUpAndVerify } from '@/tests/e2e/helpers.ts';
 
 test.describe('New accounts', () => {
@@ -18,7 +18,7 @@ test.describe('New accounts', () => {
     const newPassword = 'brandNewPass5678';
     await signUpAndVerify(page, email, 'password1234');
     await page.getByRole('button', { name: /^Skip$/ }).click();
-    await page.locator('[data-testid="AccountCircleIcon"]').first().click();
+    await page.getByRole('button', { name: 'Account menu' }).click();
     await page.getByRole('menuitem', { name: 'Sign Out' }).click();
     await page.waitForURL('/sign-in', { timeout: 10_000 });
 

@@ -24,14 +24,6 @@ async function save(dialog: Locator, button: RegExp) {
   await expect(dialog).toBeHidden({ timeout: 10_000 });
 }
 
-/** Closes the Add Level wizard, which a late refresh of a new character can open again. */
-async function closeLevelWizard(page: Page) {
-  const wizard = page.getByRole('dialog', { name: 'Add Level' });
-  if (!(await wizard.isVisible())) return;
-  await wizard.getByRole('button', { name: 'Cancel' }).click();
-  await expect(wizard).toBeHidden({ timeout: 10_000 });
-}
-
 test.describe('Character inventory', () => {
   test.setTimeout(90_000);
 
@@ -49,15 +41,13 @@ test.describe('Character inventory', () => {
     const row = page.locator('table tbody tr', { hasText: 'Amulet of Health +2' }).first();
     await expect(row.getByText('Neck', { exact: false })).toBeVisible({ timeout: 15_000 });
 
-    await closeLevelWizard(page);
-    await row.locator('[data-testid="EditIcon"]').click();
+    await row.getByRole('button', { name: /^Edit / }).click();
     const edit = page.getByRole('dialog', { name: 'Edit Inventory Item' });
     await edit.locator('input[name="quantity"]').fill('2');
     await save(edit, /^Update$/);
     await expect(row.getByText('2', { exact: true }).first()).toBeVisible();
 
-    await closeLevelWizard(page);
-    await row.locator('[data-testid="DeleteIcon"]').click();
+    await row.getByRole('button', { name: /^Remove / }).click();
     const remove = page.getByRole('dialog', { name: 'Remove Item' });
     await remove.getByRole('button', { name: /^Remove$/ }).click();
     await expect(remove).toBeHidden({ timeout: 10_000 });
@@ -75,8 +65,7 @@ test.describe('Character inventory', () => {
     const row = () => page.locator('div', { hasText: /^Equipment & Inventory/ }).first().locator('table tbody tr', { hasText: 'Longsword' }).first();
     await expect(row().getByText('Main Hand (Set 1)')).toBeVisible();
 
-    await closeLevelWizard(page);
-    await row().locator('[data-testid="EditIcon"]').click();
+    await row().getByRole('button', { name: /^Edit / }).click();
     const edit = page.getByRole('dialog', { name: 'Edit Inventory Item' });
     await selectOption(page, 'Hand Slot', 'Two Handed');
     await save(edit, /^Update$/);

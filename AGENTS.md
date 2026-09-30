@@ -154,11 +154,13 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Never skip failing tests or use mocks
 - Use seed data from test database
 - Run with `bun run test`, or `bun run test:changed` for the files changed from the parent branch
-- E2E (`bun run test:e2e`) runs on a quarter of the CPU cores locally so the machine stays usable; pass `--workers N` to change it for one run
+- E2E (`bun run test:e2e`) builds the client and serves it with the API from one server, as in production, on a copy of the seeded test database (`<name>_e2e`, refreshed by `bun run test:db:reset`). It runs on half the CPU cores locally; pass `--workers N` to change it for one run. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the client code the journeys run (coverage/e2e)
+- E2E setup goes through the API (`signIn`, `forkCoreRuleset`, `createCharacter`, `createCampaign`, or `apiOf(page)` from `tests/e2e/api.ts`): a journey clicks through only what it tests. Select by role and accessible name, never by `data-testid` (the production build strips MUI's). Every e2e file imports `test` / `expect` from `tests/e2e/fixtures.ts`
 
 **Test Structure:**
 
 - Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`
+- Client tests: `/tests/client` (the client's logic that needs no browser: `lib/`)
 - E2E tests: `/tests/e2e`
 - Each test runs in its own transaction, rolled back afterwards (`tests/setup.ts`); a transaction the code opens in it (`withTransaction`, `db.transaction`) is a savepoint on the same connection, rolled back when it throws. In production that transaction is its own, on another connection, so tests don't catch transaction-boundary bugs (what it can see, when it commits). It has a single connection: run service calls that write one at a time, never in a `Promise.all`: concurrent savepoints share a name, so one's failure silently undoes the other's writes
 - The ruleset cache outlives the rollback. Write a test's rows into a fork (`createSeededTestRuleset`), not a seeded ruleset; a test that has to write into a seeded one calls `invalidateSeededRuleset(rulesetId)` afterwards, and the setup drops those rules again once the rollback undoes the rows
@@ -166,15 +168,10 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **E2E directory → Playwright project mapping:**
 
-The directory a new e2e file lives in determines which `project` it runs under, which controls auth state. Get this wrong and the file either won't be picked up or starts with the wrong session.
+The directory a new e2e file lives in determines which `project` it runs under. Get this wrong and the file won't be picked up.
 
-- `journeys/` → `journeys` project. No prepared auth state — each test signs in itself. **Default home for any test that does its own sign-in**, whether multi-user (invite flows, contributor flows, share with anonymous viewer) or single-user single-area (ruleset fork/archive/publish, character archive/rename, campaign CRUD).
-- `auth/`, `navigation/unauthenticated-redirect.e2e.ts` → `guest` project. No auth. Use for sign-in / sign-up / forgot-password / pre-auth redirects.
-- `profile/`, `session/`, `navigation/protected-routes.e2e.ts` → `authenticated` project. Loads the prepared `testuser1` storageState from `tests/fixtures/.auth/user.json`. Use only when the test specifically wants the prepared session (no fresh sign-in).
-
-Decision rule: if your test signs in fresh (its own `signIn(page, ...)` call), put it under `journeys/`. If it relies on the prepared `testuser1` storageState being preloaded, put it under `profile/` / `session/` / `navigation/protected-routes`. Avoid mixing — don't override storageState in an `authenticated` file when you can just live in `journeys/`.
-
-For tests under `authenticated/` that nevertheless need to mutate the user (e.g. `profile-edit`'s email/password change tests), keep them in a separate `describe` block with `test.use({ storageState: { cookies: [], origins: [] } })` and use a different seed user (testuser3) so other tests aren't broken by leaked DB state.
+- `journeys/` → `journeys` project: every signed-in test. Each signs in itself through the API (`signIn`), as users of its own from `tests/e2e/fixtures.ts`: the worker's `ownerUser` / `inviteeUser` for tests that build their own content, and the test's own `user` for one that changes the user itself (email, password, session), so no test depends on another's order or leftovers.
+- `auth/`, `navigation/unauthenticated-redirect.e2e.ts` → `guest` project: signed out. Sign-in / sign-up / forgot-password / pre-auth redirects.
 
 Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `testMatch` for the relevant project) — otherwise the files won't run.
 
@@ -192,7 +189,7 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 - `tests/api.ts`: the typed API client as the seed user (`api`), a guest (`guestApi`) or a new user (`createSignedInUser`), and `expectOk`
 - `tests/levelFixtures.ts`: seeded character builds, level plans and level-ups, and masters with their bonded creature
 - `tests/seeds/seededRows.ts`: a seeded ruleset's own rows, for the seed tests; `tests/seeds/freshSeed.ts`: a new system ruleset (or extension) for a seeder test to seed into, and what an entity was seeded with; `tests/storage.ts`: the fake storage backend
-- `tests/e2e/helpers.ts`: signing in (`signIn`, `signedInPage`), `createCharacter`, `createCampaign`, `forkCoreRuleset`, invites (`invitePlayer`, `inviteContributor`, `answerInvite`), `openActionsMenu`, `filterList`, `apiResponse` waits. They scope dialog interactions to `[role="dialog"][aria-modal="true"]`. `tests/e2e/levelUpHelpers.ts` walks the Add Level wizard; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`
+- `tests/e2e/helpers.ts`: signing in (`signIn`, `signedInPage`), `createCharacter`, `createCampaign`, `forkCoreRuleset` (all through the API), invites (`invitePlayer`, `inviteContributor`, `answerInvite`), `openActionsMenu`, `filterList`, `apiResponse` waits. They scope dialog interactions to `[role="dialog"][aria-modal="true"]`. `tests/e2e/levelUpHelpers.ts` walks the Add Level wizard; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`
 - [docs/e2e-coverage.md](./docs/e2e-coverage.md) indexes what each e2e file covers: update it with the suite
 
 ## Application Logic

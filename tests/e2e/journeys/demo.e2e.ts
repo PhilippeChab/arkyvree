@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
 import { visitCoreRulesetList } from '@/tests/e2e/helpers.ts';
 

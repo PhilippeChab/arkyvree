@@ -1,4 +1,6 @@
 import { type Browser, type Page, type Locator, expect } from '@playwright/test';
+import { parseResponse } from 'hono/client';
+import { apiOf } from '@/tests/e2e/api.ts';
 
 export async function selectOption(page: Page, label: string, optionText?: string) {
   // Scope to the open MUI dialog (aria-modal="true") when one is showing
@@ -18,12 +20,10 @@ export async function visitCoreRulesetList(page: Page) {
   await page.goto('/rulesets?search=Core%20SRD%203.5');
 }
 
+/** Signs the page's browser context in, through the API (the sign-in form has tests of its own), and opens the dashboard. */
 export async function signIn(page: Page, email: string, password: string) {
-  await page.goto('/sign-in');
-  await page.fill('input[name="emailAddress"]', email);
-  await page.fill('input[name="password"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL('/dashboard', { timeout: 10000 });
+  await parseResponse(apiOf(page).auth['sign-in'].$post({ json: { emailAddress: email, password } }));
+  await page.goto('/dashboard');
 }
 
 /** A page of a new browser context signed in as `user`. Close it with `page.context().close()`. */
@@ -33,20 +33,25 @@ export async function signedInPage(browser: Browser, user: { email: string; pass
   return page;
 }
 
+/** The core rules' id. */
+async function coreRulesetId(page: Page) {
+  const { items } = await parseResponse(apiOf(page).api.rulesets.$get({ query: { scope: 'base', search: 'Core SRD 3.5' } }));
+  const core = items.find((ruleset) => ruleset.name === 'Core SRD 3.5');
+  if (!core) throw new Error('Core SRD 3.5 isn\'t seeded');
+  return core.id;
+}
+
 /** Waits for a successful `method` request to a URL matching `url`. Start it before the action that sends it. */
 export function apiResponse(page: Page, method: string, url: RegExp) {
   return page.waitForResponse((r) => url.test(r.url()) && r.request().method() === method && r.ok(), { timeout: 15_000 });
 }
 
-/** Creates a campaign on the core rules, leaving the user on its page. */
+/** Creates a campaign on the core rules through the API, and opens its page. Returns its id. */
 export async function createCampaign(page: Page, name: string) {
-  await page.goto('/campaigns');
-  await page.getByRole('button', { name: 'Create New Campaign' }).click();
-  const dialog = page.locator('[role="dialog"][aria-modal="true"]');
-  await dialog.locator('input[name="name"]').fill(name);
-  await selectOption(page, 'Ruleset', 'Core SRD 3.5');
-  await dialog.getByRole('button', { name: /^Create$/ }).click();
-  await expect(page).toHaveURL(/\/campaigns\/[a-f0-9-]+/, { timeout: 10_000 });
+  const { campaign } = await parseResponse(apiOf(page).api.campaigns.$post({ json: { name, rulesetId: await coreRulesetId(page) } }));
+  await page.goto(`/campaigns/${campaign.id}`);
+  await expect(page.getByRole('heading', { name })).toBeVisible({ timeout: 10_000 });
+  return campaign.id;
 }
 
 /** Invites `email` as a player of the open campaign. */
@@ -61,21 +66,20 @@ export async function invitePlayer(page: Page, email: string) {
   await expect(page.locator('text="Invite Pending"').first()).toBeVisible({ timeout: 15_000 });
 }
 
-/** Forks the core rules, leaving the user on the fork's page. Returns the fork's id. */
+/** Forks the core rules through the API, and opens the fork's page. Returns the fork's id. */
 export async function forkCoreRuleset(page: Page, name: string) {
-  await visitCoreRulesetList(page);
-  await page.locator('h6:has-text("Core SRD 3.5")').first().click();
-  await openActionsMenu(page, /^Fork\b/);
-  const dialog = page.getByRole('dialog', { name: 'Fork Ruleset' });
-  await dialog.locator('input[name="name"]').fill(name);
-  await dialog.getByRole('button', { name: /Fork Ruleset/ }).click();
+  const fork = await parseResponse(apiOf(page).api.rulesets[':id'].fork.$post({
+    param: { id: await coreRulesetId(page) },
+    json: { name, description: '', private: false },
+  }));
+  await page.goto(`/rulesets/${fork.id}`);
   await expect(page.getByRole('heading', { name })).toBeVisible({ timeout: 10_000 });
-  return page.url().match(/\/rulesets\/([a-f0-9-]+)/)![1];
+  return fork.id;
 }
 
 /** Picks `item` in the actions menu of the ruleset, character or campaign on the page. */
 export async function openActionsMenu(page: Page, item: string | RegExp) {
-  await page.locator('[data-testid="MoreVertIcon"]').first().click();
+  await page.getByRole('button', { name: 'More actions' }).first().click();
   const menu = page.getByRole('menu');
   await expect(menu).toBeVisible();
   await menu.getByRole('menuitem', { name: item }).click();
@@ -205,15 +209,28 @@ export async function fillNewCharacter(page: Page, name: string) {
   return dialog;
 }
 
-/** Creates a D&D 3.5 character, leaving the user on its sheet with the Add Level wizard it opens closed. */
+/** Creates a human D&D 3.5 character with 10 in each ability through the API, and opens its sheet. Returns its id. */
 export async function createCharacter(page: Page, name: string) {
-  const dialog = await fillNewCharacter(page, name);
-  await dialog.locator('input[name="name"]').press('Enter');
-  await expect(page).toHaveURL(/\/characters\/[a-f0-9-]+/, { timeout: 10_000 });
+  const api = apiOf(page);
+  const rulesetId = await coreRulesetId(page);
+  const races = await parseResponse(api.api.characters['available-races'].$get({ query: { rulesetId, search: 'Human' } }));
+  const human = races.items.find((race) => race.name === 'Human');
+  if (!human) throw new Error('The core rules have no Human');
+  const abilities = await parseResponse(api.api.rulesets[':id'].abilities.$get({ param: { id: rulesetId }, query: {} }));
+  const character = await parseResponse(api.api.characters.$post({
+    json: {
+      rulesetId,
+      raceId: human.id,
+      name,
+      xp: 0,
+      alignment: 'True Neutral',
+      gender: 'Other',
+      abilities: Object.fromEntries(abilities.items.map((ability) => [ability.id, 10])),
+    },
+  }));
+  await page.goto(`/characters/${character.id}`);
   await expect(page.locator(`h5:has-text("${name}")`)).toBeVisible({ timeout: 10_000 });
-  const wizard = page.getByRole('dialog', { name: 'Add Level' });
-  await wizard.getByRole('button', { name: 'Cancel' }).click();
-  await expect(wizard).toBeHidden({ timeout: 10_000 });
+  return character.id;
 }
 
 /**

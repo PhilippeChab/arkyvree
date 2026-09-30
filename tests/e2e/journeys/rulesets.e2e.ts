@@ -92,17 +92,17 @@ test.describe('Rulesets', () => {
   test('a starred ruleset is listed under Starred until unstarred', async ({ page }) => {
     await visitCoreRulesetList(page);
     // The card opens the ruleset when clicked: press its star button, not the card.
-    const star = (icon: string) => page.locator('h6:has-text("Core SRD 3.5")').first()
+    const star = (name: string) => page.locator('h6:has-text("Core SRD 3.5")').first()
       .locator('xpath=ancestor::*[contains(@class, "MuiCard-root")][1]')
-      .locator(`[data-testid="${icon}"]`).locator('xpath=ancestor::button[1]');
+      .getByRole('button', { name });
     const starred = apiResponse(page, 'POST', /\/api\/rulesets\/[a-f0-9-]+\/star/);
-    await star('StarBorderIcon').click();
+    await star('Star ruleset').click();
     await starred;
 
     await filterList(page, /^Starred$/);
     await expect(page).toHaveURL(/scope=starred/);
     const unstarred = apiResponse(page, 'DELETE', /\/api\/rulesets\/[a-f0-9-]+\/star/);
-    await star('StarIcon').click();
+    await star('Unstar ruleset').click();
     await unstarred;
     await expect(page.locator('h6:has-text("Core SRD 3.5")')).toHaveCount(0, { timeout: 15_000 });
   });
@@ -142,7 +142,7 @@ test.describe('Rulesets', () => {
     await expect(cloudChariot).toBeVisible({ timeout: 10_000 });
 
     await page.locator('text="1 extension"').first().click();
-    await page.locator('.MuiChip-root').filter({ hasText: 'Complete Arcane' }).first().locator('[data-testid="CancelIcon"]').click();
+    await page.locator('.MuiChip-root').filter({ hasText: 'Complete Arcane' }).first().locator('.MuiChip-deleteIcon').click();
     const unsubscribed = apiResponse(page, 'POST', /\/api\/rulesets\/[a-f0-9-]+\/unsubscribe/);
     await page.getByRole('dialog', { name: 'Unsubscribe from Extension' }).getByRole('button', { name: /^Unsubscribe$/ }).click();
     await unsubscribed;

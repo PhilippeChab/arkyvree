@@ -17,7 +17,7 @@ async function restore(page: Page, dialog: ReturnType<Page['getByRole']>, group:
   const row = dialog.getByRole('listitem').filter({ hasText: renamed });
   await expect(row.locator('.MuiChip-root', { hasText: 'modified' })).toBeVisible();
   const restored = apiResponse(page, 'POST', /\/api\/rulesets\/[a-f0-9-]+\/entities\/[^/]+\/[^/]+\/restore/);
-  await row.locator('[data-testid="RestoreIcon"]').click();
+  await row.getByRole('button', { name: 'Revert to parent version' }).click();
   await restored;
   await expect(dialog.getByText('No local changes')).toBeVisible({ timeout: 15_000 });
 }

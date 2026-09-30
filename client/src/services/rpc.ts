@@ -1,6 +1,7 @@
 import type { ErrorJson } from "@/server/errors/index.ts";
 import type { Application } from "@/server/routers/application.ts";
 import { hc } from "hono/client";
+import { ApiError, type ApiValidationIssue } from "@/client/src/services/apiError.ts";
 
 // Same-origin in all environments — vite's dev proxy forwards
 // /api/* and /auth/* to API_PORT, and the SSR server serves them
@@ -9,21 +10,7 @@ import { hc } from "hono/client";
 // failed sign-in because requests bypassed the configured proxy.
 const host = document.location.origin;
 
-export type ApiValidationIssue = NonNullable<ErrorJson["issues"]>[number];
-
-export class ApiError extends Error {
-  status: number;
-  errorName: string;
-  issues?: ApiValidationIssue[];
-
-  constructor(message: string, status: number, errorName: string, issues?: ApiValidationIssue[]) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.errorName = errorName;
-    this.issues = issues;
-  }
-}
+export { ApiError, type ApiValidationIssue };
 
 // We need to do this in order for tsserver to be usuable
 const _rpc = hc<Application>("");

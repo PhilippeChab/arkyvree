@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 export interface FilterOption<T extends string = string> {
   value: T | undefined;
@@ -82,12 +83,17 @@ export function SearchBar<
 
   // Propagate the debounced value to the parent once typing has settled. While
   // the debounce lags behind an external change (the sync above already reset
-  // inputValue), the stale debounced value must not be written back.
+  // inputValue), the stale debounced value must not be written back. Nor once the
+  // user has left the page (clicked a result before the search applied): the page
+  // stays on screen while the next one loads, and writing the search to the URL
+  // would cancel that navigation. The address bar has moved on already (even to
+  // a sub-route, such as the entity clicked), where the router's location hasn't.
+  const { pathname } = useLocation();
   useEffect(() => {
-    if (debouncedInputValue === inputValue && debouncedInputValue !== searchValue) {
+    if (debouncedInputValue === inputValue && debouncedInputValue !== searchValue && window.location.pathname === pathname) {
       onSearchChange(debouncedInputValue);
     }
-  }, [debouncedInputValue, inputValue, searchValue, onSearchChange]);
+  }, [debouncedInputValue, inputValue, searchValue, onSearchChange, pathname]);
 
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
