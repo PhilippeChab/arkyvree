@@ -51,9 +51,6 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      # The headless shell only: the tests don't run a headed browser
-      - name: Install Chromium
-        run: bunx playwright install --with-deps --only-shell chromium
       # The seeded database, and the e2e template each shard's run copies for itself
       - name: Seed database
         run: bun test:db:reset

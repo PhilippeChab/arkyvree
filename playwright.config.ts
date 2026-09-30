@@ -24,6 +24,12 @@ process.env.DATABASE_URL = withDatabase(process.env.TEMPLATE_DATABASE_URL, `${da
 
 const coverage = process.env.E2E_COVERAGE === '1';
 
+/*
+ * CI runs the Google Chrome its runners come with, so it installs no browser (whose system packages come from a mirror
+ * that can take minutes); locally, Playwright's own Chromium (`bunx playwright install chromium`).
+ */
+const desktop = { ...devices['Desktop Chrome'], ...process.env.CI ? { channel: 'chrome' } : {} };
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -61,18 +67,14 @@ export default defineConfig({
     // Signed-in tests: each signs in itself, through the API, as users of its own (tests/e2e/fixtures.ts)
     {
       name: 'journeys',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
+      use: desktop,
       testMatch: /journeys\/.*\.e2e\.ts/,
     },
 
     // Signed-out tests: sign-in, sign-up, redirects
     {
       name: 'guest',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
+      use: desktop,
       testMatch: /auth\/.*\.e2e\.ts|navigation\/unauthenticated-redirect\.e2e\.ts/,
     },
   ],
