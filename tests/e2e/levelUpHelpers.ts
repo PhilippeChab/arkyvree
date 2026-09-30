@@ -68,8 +68,10 @@ export async function walkToFeats(wizard: Locator, ability?: string) {
 /** Clicks `button` to finish the wizard, which must take the levels without warnings. */
 export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {
   await wizard.getByRole('button', { name: button }).click();
-  await expect(wizard.getByRole('button', { name: /^Proceed Anyway$/ })).toBeHidden({ timeout: 1_500 });
-  await expect(wizard).toBeHidden({ timeout: 15_000 });
+  // Taken, the wizard closes; refused, it stays open on its warnings
+  const proceed = wizard.getByRole('button', { name: /^Proceed Anyway$/ });
+  await expect.poll(async () => (await proceed.isVisible()) ? 'warnings' : (await wizard.isVisible()) ? 'open' : 'closed', { timeout: 15_000 })
+    .toBe('closed');
 }
 
 /** Walks from the Feats step to the end, filling every required feat pool and every spell pool. Returns the spells picked. */

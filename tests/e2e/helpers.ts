@@ -1,6 +1,7 @@
 import { type Browser, type Page, type Locator, expect } from '@playwright/test';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
+import { queryDatabase } from '@/tests/e2e/fixtures.ts';
 
 export async function selectOption(page: Page, label: string, optionText?: string) {
   // Scope to the open MUI dialog (aria-modal="true") when one is showing
@@ -267,26 +268,19 @@ export async function signUpAndVerify(page: Page, email: string, password: strin
  * `table` is where the flow keeps its codes.
  */
 async function latestCode(table: 'email_verifications' | 'password_resets', email: string): Promise<string> {
-  const { Pool } = await import('pg');
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  try {
-    const r = await pool.query(
-      `SELECT c.code
-         FROM account.${table} c
-         JOIN account.users u ON u.id = c.user_id
-        WHERE u.email_address = $1
-          AND c.deleted_at IS NULL
-          AND c.expires_at > NOW()
-        ORDER BY c.created_at DESC
-        LIMIT 1`,
-      [email],
-    );
-    const code = r.rows[0]?.code;
-    if (!code) throw new Error(`No active code in ${table} for ${email}`);
-    return code;
-  } finally {
-    await pool.end();
-  }
+  const [row] = await queryDatabase<{ code: string }>(
+    `SELECT c.code
+       FROM account.${table} c
+       JOIN account.users u ON u.id = c.user_id
+      WHERE u.email_address = $1
+        AND c.deleted_at IS NULL
+        AND c.expires_at > NOW()
+      ORDER BY c.created_at DESC
+      LIMIT 1`,
+    [email],
+  );
+  if (!row) throw new Error(`No active code in ${table} for ${email}`);
+  return row.code;
 }
 
 /** The code that verifies a user's email address. */

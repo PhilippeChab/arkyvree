@@ -48,6 +48,9 @@ test.describe('A fork\'s entities', () => {
       // The section lists it under its new name, and opens it
       await page.getByRole('button', { name: 'Back' }).click();
       await page.getByPlaceholder(/^Search /).fill(name);
+      // The search applied (the header and its one row), so the list doesn't re-render under the click
+      await expect(page).toHaveURL(/[?&]search=/);
+      await expect(page.getByRole('row')).toHaveCount(2);
       await page.getByRole('cell', { name: `${name} renamed`, exact: true }).click();
       await expect(page).toHaveURL(detailPage);
       // The address changes before the page does: its actions menu is the ruleset's until then
@@ -59,6 +62,8 @@ test.describe('A fork\'s entities', () => {
       await deleted;
       await expect(page).not.toHaveURL(detailPage);
       await page.getByPlaceholder(/^Search /).fill(name);
+      // The search ran: the list is empty, not loading
+      await expect(page.getByText('No matches', { exact: true })).toBeVisible();
       await expect(page.getByRole('cell', { name: `${name} renamed`, exact: true })).toHaveCount(0);
     });
   }

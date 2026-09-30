@@ -76,9 +76,10 @@ bun test:all
 ```
 
 Tests use the separate local `arkyvree_test` database on port **5433**.
-`test:db:reset` deletes and recreates that database; the unit tests and Playwright
-run on copies of it. Never point `.env.test` at production. Playwright serves the
-built client and the API on port **8001**.
+`test:db:reset` deletes and recreates that database; `bun run test` runs on copies
+of it, the other test commands on it directly, and Playwright on a copy of its own.
+Never point `.env.test` at production. Playwright serves the built client and the
+API on port **8010**.
 See [CONTRIBUTING.md](./CONTRIBUTING.md#verification) for focused checks.
 
 ## Project Structure

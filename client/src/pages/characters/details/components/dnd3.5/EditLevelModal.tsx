@@ -107,6 +107,10 @@ export function EditLevelModal({
     }
   }, [open, editingLevelId, resetEditRefs]);
 
+  // The saved level fills the picks in as it loads (the level, then its class's feat and power slots): Next waits for
+  // all of it, or a quick Finish would save the level without its feats and powers.
+  const loaded = !!editLevelData && !!wizard.featData && !!wizard.powerData;
+
   // ── Render steps ────────────────────────────────────────────────────
 
   const Sections = wizard.levelUpSections;
@@ -144,7 +148,7 @@ export function EditLevelModal({
     <LevelWizardDialog
       open={open}
       title="Edit Level"
-      wizard={wizard}
+      wizard={{ ...wizard, isNextDisabled: wizard.isNextDisabled || !loaded }}
       stepLabels={editStepLabels}
       finishLabel="Finish"
       isSaving={wizard.finalizeMutation.isPending}

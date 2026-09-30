@@ -8,17 +8,21 @@ import { databaseOf, withDatabase } from './scripts/db/clone-database.ts';
  */
 dotenv.config({ path: resolve(process.cwd(), '.env.test') });
 
-/*
- * The run has a database of its own: a copy of the seeded test database (`bun run test:db:reset` refreshes it), made
- * when the server starts, so the unit tests' template never holds what the journeys write. Its name keeps "test",
- * which turns off the rate limits. The workers inherit the environment, so this runs once.
- */
-process.env.TEMPLATE_DATABASE_URL ??= process.env.DATABASE_URL;
-process.env.DATABASE_URL = withDatabase(process.env.TEMPLATE_DATABASE_URL!, `${databaseOf(process.env.TEMPLATE_DATABASE_URL!).name}_e2e`);
+/** The server the run starts, on a port of its own: the API, its websocket, and the built client, served as in production. */
+const port = process.env.E2E_PORT ?? '8010';
+process.env.PORT = port;
+process.env.E2E_BASE_URL = process.env.APP_URL = `http://localhost:${port}`;
 
-/** The server the run starts: the API, its websocket, and the built client, served as in production. */
-const port = process.env.PORT ?? '8001';
-process.env.E2E_BASE_URL = `http://localhost:${port}`;
+/*
+ * The run has a database of its own: a copy, made when its server starts, of the e2e template, which `bun run
+ * test:db:reset` copies from the seeded test database. So a run never locks the unit tests' database, nor holds what
+ * another run writes: runs on other ports have other copies. Its name keeps "test", which turns off the rate limits.
+ * The workers re-read this file with the environment it sets: only the first read derives the names.
+ */
+process.env.TEMPLATE_DATABASE_URL ??= withDatabase(process.env.DATABASE_URL!, `${databaseOf(process.env.DATABASE_URL!).name}_e2e`);
+process.env.DATABASE_URL = withDatabase(process.env.TEMPLATE_DATABASE_URL, `${databaseOf(process.env.TEMPLATE_DATABASE_URL).name}_${port}`);
+
+const coverage = process.env.E2E_COVERAGE === '1';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -75,21 +79,24 @@ export default defineConfig({
 
   webServer: {
     /*
-     * Builds the client (a couple of seconds; `E2E_SKIP_BUILD=1` reuses dist/), copies the database, then serves both.
-     * `E2E_COVERAGE=1` builds with inline source maps, which the coverage report maps back to client/src.
+     * Builds the client for production (a couple of seconds; `E2E_SKIP_BUILD=1` reuses dist/), copies the database,
+     * then serves both, with .env.test's settings only (not a developer's .env). `E2E_COVERAGE=1` builds with inline
+     * source maps, which the coverage report maps back to client/src.
      * WSL2 mirrored networking drops TCP RSTs on 127.0.0.1 for closed ports, so Playwright's probe would hang until
      * the timeout: it checks [::1], and HOST=:: makes Bun.serve bind both loopbacks.
      * https://github.com/microsoft/WSL/issues/13327
      */
     command: [
-      ...process.env.E2E_SKIP_BUILD ? [] : [`bunx vite build${process.env.E2E_COVERAGE ? ' --sourcemap inline' : ''}`],
-      'bun scripts/db/clone-database.ts',
-      'HOST=:: bun server/main.ts',
+      ...process.env.E2E_SKIP_BUILD === '1' ? [] : [`NODE_ENV=production bunx vite build${coverage ? ' --sourcemap inline' : ''}`],
+      `bun --env-file=.env.test scripts/db/clone-database.ts ${port}`,
+      'HOST=:: bun --env-file=.env.test server/main.ts',
     ].join(' && '),
     url: `http://[::1]:${port}/health`,
-    reuseExistingServer: !process.env.CI,
+    // A server already on the port isn't this run's: it would serve another database
+    reuseExistingServer: false,
     timeout: 120 * 1000,
-    stdout: 'pipe',
+    // Its errors, not every request it logs
+    stdout: 'ignore',
     stderr: 'pipe',
   },
 

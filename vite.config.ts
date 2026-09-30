@@ -75,7 +75,7 @@ const baseConfig: UserConfig = {
     VitePWA({
       // The e2e coverage build inlines its source maps, which puts the chunks past the precache limit; its runs
       // block service workers anyway.
-      disable: !!process.env.E2E_COVERAGE,
+      disable: process.env.E2E_COVERAGE === "1",
       registerType: "autoUpdate",
       workbox: {
         // Only precache hashed JS/CSS — they have content-hash filenames so

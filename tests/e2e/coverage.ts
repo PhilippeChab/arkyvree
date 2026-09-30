@@ -5,9 +5,11 @@ import MCR, { type CoverageReportOptions } from 'monocart-coverage-reports';
  * The client's coverage by the journeys, when a run sets `E2E_COVERAGE=1`: Chromium's JavaScript coverage of each
  * test's page, mapped through the build's inline source maps back to client/src (whose files no page loaded count
  * as uncovered), and reported at the end of the run in coverage/e2e: a summary in the console, per-file figures in
- * coverage-summary.json, the details in index.html.
+ * coverage-summary.json, the details in index.html. Only the tests' own `page` is recorded (not the pages of other
+ * browser contexts, such as `signedInPage`'s), and a document the app itself replaces (a full-page redirect) loses its
+ * coverage.
  */
-const COVERAGE = !!process.env.E2E_COVERAGE;
+const COVERAGE = process.env.E2E_COVERAGE === '1';
 
 const options: CoverageReportOptions = {
   name: 'Client coverage by the e2e journeys',
@@ -33,8 +35,13 @@ export async function startCoverage() {
 export async function recordCoverage(page: Page, run: () => Promise<void>) {
   if (!COVERAGE) return run();
   const start = () => page.coverage.startJSCoverage({ resetOnNavigation: false });
+  const add = async () => {
+    const entries = await page.coverage.stopJSCoverage();
+    // A page that hasn't loaded anything yet (about:blank) has none
+    if (entries.length) await MCR(options).add(entries);
+  };
   const take = async () => {
-    await MCR(options).add(await page.coverage.stopJSCoverage());
+    await add();
     await start();
   };
   const goto = page.goto.bind(page);
@@ -49,7 +56,7 @@ export async function recordCoverage(page: Page, run: () => Promise<void>) {
   };
   await start();
   await run();
-  await MCR(options).add(await page.coverage.stopJSCoverage());
+  await add();
 }
 
 /** Reports the run's coverage. */

@@ -89,24 +89,6 @@ test.describe('Rulesets', () => {
     await expect(page.locator(`h6:has-text("${name}")`)).toBeVisible();
   });
 
-  test('a starred ruleset is listed under Starred until unstarred', async ({ page }) => {
-    await visitCoreRulesetList(page);
-    // The card opens the ruleset when clicked: press its star button, not the card.
-    const star = (name: string) => page.locator('h6:has-text("Core SRD 3.5")').first()
-      .locator('xpath=ancestor::*[contains(@class, "MuiCard-root")][1]')
-      .getByRole('button', { name });
-    const starred = apiResponse(page, 'POST', /\/api\/rulesets\/[a-f0-9-]+\/star/);
-    await star('Star ruleset').click();
-    await starred;
-
-    await filterList(page, /^Starred$/);
-    await expect(page).toHaveURL(/scope=starred/);
-    const unstarred = apiResponse(page, 'DELETE', /\/api\/rulesets\/[a-f0-9-]+\/star/);
-    await star('Unstar ruleset').click();
-    await unstarred;
-    await expect(page.locator('h6:has-text("Core SRD 3.5")')).toHaveCount(0, { timeout: 15_000 });
-  });
-
   test('searching the feats narrows the list, and clearing the search restores it', async ({ page }) => {
     await openCoreRuleset(page);
     await page.getByRole('tab', { name: 'Feats' }).click();
@@ -149,5 +131,27 @@ test.describe('Rulesets', () => {
     await expect(page.locator('text="1 extension"')).toHaveCount(0, { timeout: 15_000 });
     await searchSpells();
     await expect(cloudChariot).toHaveCount(0, { timeout: 10_000 });
+  });
+});
+
+// Starring changes the user: the test has one of its own, which never starred anything
+test.describe('A starred ruleset', () => {
+  test('is listed under Starred until unstarred', async ({ page, user }) => {
+    await signIn(page, user.email, user.password);
+    await visitCoreRulesetList(page);
+    // The card opens the ruleset when clicked: press its star button, not the card.
+    const star = (name: string) => page.locator('h6:has-text("Core SRD 3.5")').first()
+      .locator('xpath=ancestor::*[contains(@class, "MuiCard-root")][1]')
+      .getByRole('button', { name, exact: true });
+    const starred = apiResponse(page, 'POST', /\/api\/rulesets\/[a-f0-9-]+\/star/);
+    await star('Star ruleset').click();
+    await starred;
+
+    await filterList(page, /^Starred$/);
+    await expect(page).toHaveURL(/scope=starred/);
+    const unstarred = apiResponse(page, 'DELETE', /\/api\/rulesets\/[a-f0-9-]+\/star/);
+    await star('Unstar ruleset').click();
+    await unstarred;
+    await expect(page.locator('h6:has-text("Core SRD 3.5")')).toHaveCount(0, { timeout: 15_000 });
   });
 });

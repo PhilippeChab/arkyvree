@@ -56,6 +56,8 @@ test.describe('Characters', () => {
     await wizard.getByRole('button', { name: 'Cancel' }).click();
     await expect(wizard).toBeHidden();
     await renameInPlace(page, name, `${name} renamed`);
+    // A reopened wizard would show a render after the refetched character: it's still closed a second later
+    await page.waitForTimeout(1_000);
     await expect(wizard).toBeHidden();
   });
 

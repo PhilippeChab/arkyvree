@@ -84,6 +84,9 @@ test.describe('Profile editing', () => {
     await page.getByRole('button', { name: 'Account menu' }).click();
     await page.getByRole('menuitem', { name: 'Sign Out' }).click();
     await page.waitForURL('/sign-in');
+    // A fresh sign-in page, with nothing left of the session: a late auth check can't re-render the form mid-fill
+    await page.context().clearCookies();
+    await page.goto('/sign-in');
     await page.fill('input[name="emailAddress"]', user.email);
     await page.fill('input[name="password"]', newPassword);
     await page.click('button[type="submit"]');

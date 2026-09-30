@@ -8,7 +8,8 @@ test.describe('A session', () => {
 
   test('opens the protected pages', async ({ page }) => {
     for (const route of ['/dashboard', '/campaigns', '/characters', '/rulesets']) {
-      await page.goto(route);
+      // Loaded, auth check included: a redirect to sign in would have happened
+      await page.goto(route, { waitUntil: 'networkidle' });
       await expect(page).toHaveURL(route);
     }
   });

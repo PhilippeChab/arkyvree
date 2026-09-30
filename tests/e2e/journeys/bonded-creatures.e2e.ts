@@ -1,12 +1,11 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
-import { TEST_USERS } from '@/tests/fixtures/auth.fixture.ts';
+import { signIn } from '@/tests/e2e/helpers.ts';
 
 /*
  * The seeded characters bonded to a creature: its master's sheet sums it up under the feat that bonds it, and links to
- * its own sheet, read-only, whose Back returns to the master. The tests only read seeded characters, so they share the
- * seed user; the run's database is its own copy, so completing the user's onboarding changes nothing else.
+ * its own sheet, read-only, whose Back returns to the master. The tests only read the seeded characters, as their owner.
  */
 const BONDS = [
   { master: 'Elara Starweaver', creature: 'Owl', feat: 'Owl Familiar' },
@@ -16,12 +15,9 @@ const BONDS = [
 
 test.describe('A bonded creature', () => {
   for (const { master, creature, feat } of BONDS) {
-    test(`of ${master}, a ${creature}, is summed up on the master's sheet and opens its own`, async ({ page }) => {
-      const api = apiOf(page);
-      // The seed user hasn't been through the onboarding: completed before the app loads, its dialog doesn't open
-      await parseResponse(api.auth['sign-in'].$post({ json: { emailAddress: TEST_USERS.seedUser.email, password: TEST_USERS.seedUser.password } }));
-      await parseResponse(api.auth['complete-onboarding'].$post());
-      const { items } = await parseResponse(api.api.characters.$get({ query: { search: master } }));
+    test(`of ${master}, a ${creature}, is summed up on the master's sheet and opens its own`, async ({ page, seedUser }) => {
+      await signIn(page, seedUser.email, seedUser.password);
+      const { items } = await parseResponse(apiOf(page).api.characters.$get({ query: { search: master } }));
       const masterId = items.find((character) => character.name === master)!.id;
 
       await page.goto(`/characters/${masterId}`);

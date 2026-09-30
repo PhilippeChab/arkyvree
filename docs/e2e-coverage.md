@@ -15,14 +15,15 @@ The directory a file lives in maps directly to a Playwright project:
 | `journeys/` | `journeys` | Each test signs in itself, through the API, as users of its own |
 | `auth/`, `navigation/unauthenticated-redirect.e2e.ts` | `guest` | Signed out |
 
-The run builds the client and serves it with the API from one server on port 8001, as in production, on its own
-copy of the seeded test database (`<name>_e2e`). `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the
+The run builds the client for production and serves it with the API from one server on port 8010 (`E2E_PORT`), on a
+database of its own (`<name>_e2e_<port>`), copied from the e2e template (`<name>_e2e`) that `bun run test:db:reset`
+refreshes. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the
 client code the run executes in `coverage/e2e` (per file in `coverage-summary.json`).
 
 Helpers: `tests/e2e/helpers.ts` (signing in, forking, and creating characters and campaigns, all through the API;
 invites and their answers, the actions menu, list filters, API-response waits, OTP), `tests/e2e/api.ts` (`apiOf(page)`,
 the typed API through the page's browser context), `tests/e2e/levelUpHelpers.ts` (the Add Level wizard),
-`tests/e2e/fixtures.ts` (the `test` every file imports: worker-scoped `ownerUser` / `inviteeUser`, and coverage),
+`tests/e2e/fixtures.ts` (the `test` every file imports: worker-scoped `ownerUser` / `inviteeUser`, the test's `user`, the read-only `seedUser`, and coverage),
 `tests/fixtures/auth.fixture.ts` (`TEST_USERS`).
 
 ---
@@ -101,8 +102,10 @@ character and campaign dialogs, and invites have journeys of their own.
 **Users of their own.** Journey tests sign in as users created as they're
 used (`tests/e2e/fixtures.ts`): the worker's `ownerUser` and `inviteeUser`, for
 tests that build their own content, and the test's own `user`, for one that
-changes the user (email, password, session). No test depends on another's
-order or leftovers, and a run takes any number of workers.
+changes the user (email, password, session, stars). `seedUser`, the seeded
+characters' owner, onboarded before any page loads, is for tests that only read
+them. No test depends on another's order or leftovers, and a run takes any
+number of workers.
 
 **Selectors.** By role and accessible name (`getByRole('button', { name:
 'More actions' })`), never `data-testid`: the production build strips MUI

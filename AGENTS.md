@@ -154,7 +154,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Never skip failing tests or use mocks
 - Use seed data from test database
 - Run with `bun run test`, or `bun run test:changed` for the files changed from the parent branch
-- E2E (`bun run test:e2e`) builds the client and serves it with the API from one server, as in production, on a copy of the seeded test database (`<name>_e2e`, refreshed by `bun run test:db:reset`). It runs on half the CPU cores locally; pass `--workers N` to change it for one run. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the client code the journeys run (coverage/e2e)
+- E2E (`bun run test:e2e`) builds the client for production and serves it with the API from one server on port 8010 (`E2E_PORT`), on a database of its own (`<name>_e2e_<port>`): a copy of the e2e template (`<name>_e2e`), which `bun run test:db:reset` copies from the seeded test database, so a run never locks the unit tests' database. It runs on half the CPU cores locally; pass `--workers N` to change it for one run. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the client code the journeys run (coverage/e2e)
 - E2E setup goes through the API (`signIn`, `forkCoreRuleset`, `createCharacter`, `createCampaign`, or `apiOf(page)` from `tests/e2e/api.ts`): a journey clicks through only what it tests. Select by role and accessible name, never by `data-testid` (the production build strips MUI's). Every e2e file imports `test` / `expect` from `tests/e2e/fixtures.ts`
 
 **Test Structure:**
@@ -170,7 +170,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 The directory a new e2e file lives in determines which `project` it runs under. Get this wrong and the file won't be picked up.
 
-- `journeys/` → `journeys` project: every signed-in test. Each signs in itself through the API (`signIn`), as users of its own from `tests/e2e/fixtures.ts`: the worker's `ownerUser` / `inviteeUser` for tests that build their own content, and the test's own `user` for one that changes the user itself (email, password, session), so no test depends on another's order or leftovers.
+- `journeys/` → `journeys` project: every signed-in test. Each signs in itself through the API (`signIn`), as users of its own from `tests/e2e/fixtures.ts`: the worker's `ownerUser` / `inviteeUser` for tests that build their own content, and the test's own `user` for one that changes the user itself (email, password, session, stars), so no test depends on another's order or leftovers. `seedUser`, the seeded characters' owner, is for tests that only read them.
 - `auth/`, `navigation/unauthenticated-redirect.e2e.ts` → `guest` project: signed out. Sign-in / sign-up / forgot-password / pre-auth redirects.
 
 Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `testMatch` for the relevant project) — otherwise the files won't run.

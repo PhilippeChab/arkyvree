@@ -70,10 +70,10 @@ bunx playwright install chromium
 bun test:e2e
 ```
 
-Playwright builds the client, copies the seeded test database into one of its
-own (`<name>_e2e`, so refresh the seeded one with `bun test:db:reset` after a
-schema or seed change), and serves both from the API server on port 8001, as in
-production. See [AGENTS.md](./AGENTS.md) for test-directory/authentication
+Playwright builds the client for production, copies the e2e template into a
+database of its own (`<name>_e2e_<port>`), and serves both from the API server on
+port 8010 (`E2E_PORT` changes it). `bun test:db:reset` refreshes the template
+from the seeded test database: run it after a schema or seed change. See [AGENTS.md](./AGENTS.md) for test-directory/authentication
 mapping and shared fixtures. During development, a focused run is fine, for example
 (`E2E_SKIP_BUILD=1` reuses the last build when only tests changed):
 

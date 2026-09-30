@@ -8,13 +8,14 @@ on:
 
 # A new push to a pull request supersedes its run
 concurrency:
-  group: e2e-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   e2e:
     name: E2E (shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -35,8 +36,6 @@ jobs:
           --health-retries 5
     env:
       NODE_ENV: test
-      PORT: 8001
-      APP_URL: http://localhost:8001
       DATABASE_URL: postgresql://postgres:postgres@localhost:5433/arkyvree_test
       SIGNING_SECRET: ci-signing-secret
       S3_BUCKET: ci-bucket
@@ -50,9 +49,10 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      # The headless shell only: the tests don't run a headed browser
       - name: Install Chromium
-        run: bunx playwright install --with-deps chromium
-      # The seeded database each shard's run copies for itself
+        run: bunx playwright install --with-deps --only-shell chromium
+      # The seeded database, and the e2e template each shard's run copies for itself
       - name: Seed database
         run: bun test:db:reset
       - name: Run E2E tests (shard ${{ matrix.shard }}/3)

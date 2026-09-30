@@ -125,22 +125,25 @@ Fly has no toggle to disable the default `*.fly.dev` hostname, so a Hono middlew
 
 ## CI/CD
 
-Two workflows: `.github/workflows/ci.yml` builds, tests the API and deploys; `.github/workflows/e2e.yml` runs the Playwright suite.
+One workflow per concern, in `.github/workflows/`:
 
-```
-build ─┐
-       ├── deploy (matrix: web + worker)
-tests ─┘
-```
+| Workflow | Runs on | Jobs |
+|---|---|---|
+| `lint.yml` | push to main/develop, PR | `Lint`: TypeScript (`tsgo`) and oxlint |
+| `build.yml` | push to main/develop, PR | `Build`: the production build and the compiled PDF smoke check |
+| `api-tests.yml` | push to main/develop, PR | `API Tests (shard n/3)` on a push, `API Tests (changed)` on a PR |
+| `e2e.yml` | push to main/develop, PR | `E2E (shard n/3)` |
+| `deploy.yml` | push to main | `Checks`, then `Deploy` (matrix: web + worker) |
 
-- `build` (including TypeScript and the compiled PDF smoke check) and `api-tests-*` run in parallel
+- The check workflows run in parallel. A new push to a PR cancels its superseded runs; a push to a branch always runs to the end
 - API tests split by trigger:
-  - **Push** to main/develop → `api-tests-full`, sharded 3× via `bun test --shard` (matrix jobs in parallel)
-  - **PR** → `api-tests-changed`, single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
-- `deploy` needs successful `build` and all `api-tests-full` shards from the same `main` push. It never substitutes a green result from another branch or revision. It doesn't wait for the E2E workflow.
+  - **Push** → sharded 3× via `bun test --shard` (matrix jobs in parallel)
+  - **PR** → a single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
 - Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
-- `e2e.yml` runs on the same pushes and PRs: the suite sharded 3×, each shard building the client and copying the seeded database for its own server (`bunx playwright test --shard`). A new push to a PR cancels its previous run, and a failing shard uploads its Playwright report
+- E2E: the suite sharded 3×, each shard building the client and copying the e2e template (made by `bun test:db:reset`) for its own server (`bunx playwright test --shard`). A failing shard uploads its Playwright report
+- `Checks` waits for the `Lint`, `Build`, `API Tests` and `E2E` runs of the same `main` push, and `Deploy` needs it: a deploy never substitutes a green result from another branch or revision. A failed workflow fails `Checks`; once it passes on a re-run, re-run the Deploy workflow. A workflow renamed in its `name:` must be renamed in `deploy.yml`'s `WORKFLOWS` too
 - Deploy is a matrix over `{fly.web.toml, fly.worker.toml}` — both apps deploy in parallel
+- Branch protection matches required checks by job name: `Lint`, `Build` and `API Tests (changed)` (and the `E2E` shards to gate merges on them)
 
 `FLY_API_TOKEN` must be at **repository-level** secrets (Settings → Secrets and variables → Actions → Repository secrets). The deploy job doesn't declare an `environment:`, so environment-scoped secrets won't be visible.
 
