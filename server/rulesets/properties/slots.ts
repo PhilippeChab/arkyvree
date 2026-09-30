@@ -17,7 +17,7 @@ const isWeaponLocation = (loc: string): loc is WeaponLocation =>
 
 export type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[WeaponLocation];
 
-export type EquipmentSlot = Lowercase<
+type EquipmentSlot = Lowercase<
   Exclude<(typeof location.enumValues)[number], WeaponLocation>
 >;
 
