@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
@@ -18,14 +18,7 @@ export default new Hono<SessionContext>()
         id,
         classId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -43,14 +36,7 @@ export default new Hono<SessionContext>()
         classId,
         levelId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -64,14 +50,7 @@ export default new Hono<SessionContext>()
         id,
         classLevelId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -85,14 +64,7 @@ export default new Hono<SessionContext>()
         id,
         classId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -106,14 +78,7 @@ export default new Hono<SessionContext>()
         id,
         classId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -127,14 +92,7 @@ export default new Hono<SessionContext>()
         id,
         classId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -160,14 +118,7 @@ export default new Hono<SessionContext>()
         { level, search },
         { limit, page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -201,14 +152,7 @@ export default new Hono<SessionContext>()
         classId,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   )
   .put(
@@ -245,14 +189,7 @@ export default new Hono<SessionContext>()
         levelId,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -271,13 +208,6 @@ export default new Hono<SessionContext>()
         classId,
         levelId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

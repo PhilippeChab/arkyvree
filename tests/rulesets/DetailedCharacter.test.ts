@@ -210,6 +210,25 @@ describe("DetailedCharacter", () => {
       expect(weapons["longsword1"]).toBeUndefined();
     });
 
+    test("apply a weapon's own bonus to the hand that holds it, not the other", async () => {
+      const blade = await createItem({ name: "Keen Blade", type: "Weapon", slot: "Main Hand" }, {
+        WEAPON_PROFICIENCY: "Martial", WEAPON_FAMILY: "Sword", WEAPON_BASE_DAMAGE: "1d8", WEAPON_CRITICAL_RANGE: "2",
+        WEAPON_CRITICAL_MULTIPLIER: "2", DAMAGE_TYPE: "Slashing", WEAPON_SIZE: "Medium", WEAPON_TYPE: "Longsword",
+      });
+      for (const target of ["combat.tohit.misc", "combat.damage.misc"]) {
+        await Modifiers.create(db, { sourceId: blade.id, sourceType: "items", target, value: "2", valueType: "number", operator: "add" });
+      }
+      invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+
+      const { mainhand, offhand } = weaponSet(await buildCarrying("Bjorn Ironhand", [
+        { item: blade.id, location: "Main Hand", weaponSet: 0 },
+        { item: "Shortsword", location: "Off Hand", weaponSet: 0 },
+      ]));
+      // On top of Bjorn's Weapon Focus (+1 to attack) and Weapon Specialization (+2 to damage) in longswords
+      expect(mainhand).toMatchObject({ name: "Keen Blade", tohit: { misc: 3 }, damage: { misc: 4 } });
+      expect(offhand).toMatchObject({ name: "Shortsword", tohit: { misc: 0 }, damage: { misc: 0 } });
+    });
+
     test("write damage with the strength bonus added or taken away", async () => {
       // STR 18, Longsword.
       expect(weaponSet(await buildSeeded("Bjorn Ironhand")).mainhand!.damage.total).toMatch(/^\d+d\d+ \+ \d+$/);

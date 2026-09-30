@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { SkillsService } from "@/server/services/rulesets/index.ts";
 import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
@@ -27,14 +27,7 @@ export default new Hono<SessionContext>()
 
       const skillsService = SkillsService.initialize();
       const result = await skillsService.call("getRulesetSkills", id, { search, childOnly, orderBy, orderDir }, { limit, page });
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -45,14 +38,7 @@ export default new Hono<SessionContext>()
 
       const skillsService = SkillsService.initialize();
       const result = await skillsService.call("getRulesetSkill", id, skillId);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -74,14 +60,7 @@ export default new Hono<SessionContext>()
 
       const skillsService = SkillsService.initialize();
       const result = await skillsService.call("createRulesetSkill", c.var.requestSession, id, body);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .put(
@@ -110,14 +89,7 @@ export default new Hono<SessionContext>()
         skillId,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -133,13 +105,6 @@ export default new Hono<SessionContext>()
         id,
         skillId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

@@ -29,12 +29,6 @@ class NotificationsRepository extends BaseRepository<typeof notificationsInAccou
       ]));
   }
 
-  async findOne(db: Db, where: { id: string }) {
-    return await db.query.notificationsInAccount.findFirst({
-      where: eq(this.table.id, where.id),
-    });
-  }
-
   async findMany(
     db: Db,
     where: {

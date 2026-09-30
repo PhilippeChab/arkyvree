@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/index.ts";
 import { Hono } from "hono";
@@ -59,13 +59,7 @@ const levels = new Hono<SessionContext>()
         parsedPendingSkillAllocations,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -78,14 +72,7 @@ const levels = new Hono<SessionContext>()
         c.var.requestSession,
         characterId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -109,13 +96,7 @@ const levels = new Hono<SessionContext>()
         pendingLevelCount,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -149,13 +130,7 @@ const levels = new Hono<SessionContext>()
         parsedPendingAbilityIds,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -198,13 +173,7 @@ const levels = new Hono<SessionContext>()
         parsedPendingAbilityIds,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -246,13 +215,7 @@ const levels = new Hono<SessionContext>()
         parsedPendingAbilityIds,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -276,13 +239,7 @@ const levels = new Hono<SessionContext>()
         ? await service.call("getEditFeatSlots", c.var.requestSession, characterId, klassId, level, characterLevelId)
         : await service.call("getFeatSlots", c.var.requestSession, characterId, klassId, level, parsedPendingKlassLevelIds);
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -306,13 +263,7 @@ const levels = new Hono<SessionContext>()
         ? await service.call("getEditPowerSlots", c.var.requestSession, characterId, klassId, level, characterLevelId)
         : await service.call("getPowerSlots", c.var.requestSession, characterId, klassId, level, parsedPendingKlassLevelIds);
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -353,13 +304,7 @@ const levels = new Hono<SessionContext>()
         parsedPendingKlassLevelIds,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -377,13 +322,7 @@ const levels = new Hono<SessionContext>()
         characterLevelId,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .put(
@@ -419,13 +358,7 @@ const levels = new Hono<SessionContext>()
         force,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -452,13 +385,7 @@ const levels = new Hono<SessionContext>()
         abilityIds,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -493,13 +420,7 @@ const levels = new Hono<SessionContext>()
         force,
       );
 
-      const success = result[0];
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );
 

@@ -45,16 +45,6 @@ class KlassLevelFeatsRepository
       .returning();
   }
 
-  async findOne(db: Db, where: { klassLevelId: string; featId: string }) {
-    return await db.query.klassLevelFeatsInRules.findFirst({
-      where: and(
-        eq(this.table.klassLevelId, where.klassLevelId),
-        eq(this.table.featId, where.featId),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
   async findMany(db: Db, where: { klassLevelIds: string[] }) {
     return await db.query.klassLevelFeatsInRules.findMany({
       where: and(

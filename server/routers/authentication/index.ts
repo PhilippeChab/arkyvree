@@ -1,6 +1,5 @@
+import { respond, errorResponse } from "@/server/routers/respond.ts";
 import { Hono } from "hono";
-
-import { toJson } from "@/server/errors/index.ts";
 import {
   authEmailRateLimit,
   authRateLimit,
@@ -35,10 +34,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("signUp", body);
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     return c.json({ message: "Verification email sent" }, 201);
   })
@@ -47,10 +43,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("verifyEmail", body, getSessionCookie(c));
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     const { session, user } = result[1];
     setSessionCookie(c, session.id);
@@ -61,10 +54,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("resendVerification", body);
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     return c.json({ success: true }, 200);
   })
@@ -73,10 +63,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("forgotPassword", body);
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     return c.json({ success: true }, 200);
   })
@@ -85,10 +72,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("resetPassword", body);
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     return c.json({ success: true }, 200);
   })
@@ -97,10 +81,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("signIn", body, getSessionCookie(c));
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     const { session, user } = result[1];
     setSessionCookie(c, session.id);
@@ -111,10 +92,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("signInWithGoogle", body, getSessionCookie(c));
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     const { session, user } = result[1];
     setSessionCookie(c, session.id);
@@ -124,14 +102,7 @@ export default new Hono()
   .use(sessionMiddleware)
   .get("/me", async (c) => {
     const result = await AuthenticationService.initialize().call("me", c.var.requestSession);
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .put("/profile", denyDemoUser, zValidator("json", UpdateProfileJson), async (c) => {
     const body = c.req.valid("json");
@@ -140,14 +111,7 @@ export default new Hono()
       c.var.requestSession,
       body,
     );
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .put("/password", denyDemoUser, zValidator("json", UpdatePasswordJson), async (c) => {
     const body = c.req.valid("json");
@@ -156,14 +120,7 @@ export default new Hono()
       c.var.requestSession,
       body,
     );
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .post("/set-password", denyDemoUser, zValidator("json", SetPasswordJson), async (c) => {
     const body = c.req.valid("json");
@@ -172,28 +129,14 @@ export default new Hono()
       c.var.requestSession,
       body,
     );
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .get("/linked-accounts", async (c) => {
     const result = await AuthenticationService.initialize().call(
       "getLinkedAccounts",
       c.var.requestSession,
     );
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .post("/link-google", denyDemoUser, zValidator("json", GoogleSignInJson), async (c) => {
     const body = c.req.valid("json");
@@ -202,14 +145,7 @@ export default new Hono()
       c.var.requestSession,
       body,
     );
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .post("/unlink-oauth", denyDemoUser, zValidator("json", UnlinkOauthJson), async (c) => {
     const body = c.req.valid("json");
@@ -218,14 +154,7 @@ export default new Hono()
       c.var.requestSession,
       body,
     );
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .post("/verify-email-change", denyDemoUser, zValidator("json", VerifyEmailChangeJson), async (c) => {
     const body = c.req.valid("json");
@@ -234,14 +163,7 @@ export default new Hono()
       c.var.requestSession,
       body,
     );
-    const success = result[0];
-
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
-
-    return c.json(result[1], 200);
+    return respond(c, result, 200);
   })
   .post("/cancel-email-change", denyDemoUser, async (c) => {
     const result = await AuthenticationService.initialize().call(
@@ -250,10 +172,7 @@ export default new Hono()
     );
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     return c.json({ success: true }, 200);
   })
@@ -264,10 +183,7 @@ export default new Hono()
     );
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     return c.json({ success: true }, 200);
   })
@@ -280,10 +196,7 @@ export default new Hono()
     );
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     deleteSessionCookie(c);
     return c.json({ success: true }, 200);
@@ -295,10 +208,7 @@ export default new Hono()
     );
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     return c.json({ success: true }, 200);
   })
@@ -306,10 +216,7 @@ export default new Hono()
     const result = await AuthenticationService.initialize().call("signOut", c.var.requestSession);
     const success = result[0];
 
-    if (!success) {
-      const [error, code] = toJson(result[2]);
-      return c.json(error, code);
-    }
+    if (!success) return errorResponse(c, result[2]);
 
     deleteSessionCookie(c);
     return c.json({ success: true }, 200);

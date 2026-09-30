@@ -11,10 +11,6 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
     super(rulesetExtensionsInRules);
   }
 
-  async create(db: Db, values: { rulesetId: string; extensionId: string }) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async upsert(db: Db, values: { rulesetId: string; extensionId: string }) {
     return await db
       .insert(this.table)
@@ -41,16 +37,6 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
         ),
       )
       .returning();
-  }
-
-  async findOne(db: Db, where: { rulesetId: string; extensionId: string }) {
-    return await db.query.rulesetExtensionsInRules.findFirst({
-      where: and(
-        eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.extensionId, where.extensionId),
-        isNull(this.table.deletedAt),
-      ),
-    });
   }
 
   async findByRulesetId(db: Db, where: { rulesetId: string }) {

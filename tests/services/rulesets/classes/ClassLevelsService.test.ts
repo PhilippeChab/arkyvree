@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { featsInRules, klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Abilities, Aptitudes, EntitySnapshots, Feats, KlassLevelFeats, KlassLevelPowers, KlassLevels, Modifiers, Powers, Properties, Requirements, Saves } from "@/server/repositories/index.ts";
+import { Abilities, Aptitudes, EntitySnapshots, Feats, KlassLevelFeats, KlassLevels, Modifiers, Powers, Properties, Requirements, Saves } from "@/server/repositories/index.ts";
 import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
@@ -172,7 +172,7 @@ describe("ClassLevelsService", () => {
       const save = await createSave(ruleset.id, "Fortitude");
       await createLevel(session, ruleset.id, klass.id, 1);
       const level = await createLevel(session, ruleset.id, klass.id, 2, { feats: [{ featId: feat.id, aptitudeId: aptitude.id }], saves: [{ saveId: save.id, base: 2 }] });
-      await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id });
+      await insertRows(klassLevelPowersInRules, [{ klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id }]);
       await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
 
       await ClassLevelsMethods.deleteClassLevel(session, ruleset.id, klass.id, level.id);

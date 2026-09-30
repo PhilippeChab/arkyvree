@@ -12,10 +12,6 @@ class KlassLevelPowersRepository
     super(klassLevelPowersInRules);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof klassLevelPowersInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async createMany(db: Db, values: InferInsertModel<typeof klassLevelPowersInRules>[]) {
     if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
@@ -43,16 +39,6 @@ class KlassLevelPowersRepository
       .delete(this.table)
       .where(eq(this.table.aptitudeId, where.aptitudeId))
       .returning();
-  }
-
-  async findOne(db: Db, where: { klassLevelId: string; powerId: string }) {
-    return await db.query.klassLevelPowersInRules.findFirst({
-      where: and(
-        eq(this.table.klassLevelId, where.klassLevelId),
-        eq(this.table.powerId, where.powerId),
-        isNull(this.table.deletedAt),
-      ),
-    });
   }
 
   async findMany(db: Db, where: { klassLevelIds: string[] }) {

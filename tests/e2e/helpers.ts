@@ -1,4 +1,5 @@
 import { type Browser, type BrowserContextOptions, type Page, type Locator, expect } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
 import { recordContext } from '@/tests/e2e/coverage.ts';
@@ -79,6 +80,9 @@ export async function invitePlayer(page: Page, email: string) {
   await invited;
   await expect(page.locator('text="Invite Pending"').first()).toBeVisible({ timeout: 15_000 });
 }
+
+/** A name no other test uses: ruleset names are unique across users, and parallel tests can start in the same millisecond. */
+export const uniqueName = (prefix: string) => `${prefix} ${randomUUID().slice(0, 8)}`;
 
 /** Forks the core rules through the API, and opens the fork's page. Returns the fork's id. */
 export async function forkCoreRuleset(page: Page, name: string) {

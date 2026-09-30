@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/index.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
@@ -32,14 +32,7 @@ export default new Hono<SessionContext>()
         { search, orderBy, orderDir },
         { limit, page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -50,14 +43,7 @@ export default new Hono<SessionContext>()
         "getUserInvites",
         c.var.requestSession.userId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -71,14 +57,7 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         inviteId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -92,14 +71,7 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         inviteId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -113,14 +85,7 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         inviteId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -135,13 +100,6 @@ export default new Hono<SessionContext>()
         c.var.requestSession,
         inviteId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

@@ -2,7 +2,7 @@ import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
-import { createCampaign, createCharacter, forkCoreRuleset, openContext, signIn } from '@/tests/e2e/helpers.ts';
+import { createCampaign, createCharacter, forkCoreRuleset, openContext, signIn, uniqueName } from '@/tests/e2e/helpers.ts';
 
 /*
  * Every page loads, with what it shows: each opened with seeded or API-made data, showing its content, with no
@@ -62,7 +62,7 @@ test.describe('Every page', () => {
   });
 
   test('of a ruleset loads: its sections', async ({ page }) => {
-    const rulesetId = await forkCoreRuleset(page, `Pages Fork ${Date.now()}`);
+    const rulesetId = await forkCoreRuleset(page, uniqueName('Pages Fork'));
     const errors = watchErrors(page);
     for (const section of ['races', 'languages', 'skills', 'feats', 'powers', 'items', 'aptitudes', 'classes', 'saves', 'abilities', 'mechanics']) {
       await visit(page, errors, `/rulesets/${rulesetId}/${section}`, 'Pages Fork');
@@ -70,7 +70,7 @@ test.describe('Every page', () => {
   });
 
   test('of a ruleset\'s entity loads, for each kind with a page of its own', async ({ page }) => {
-    const rulesetId = await forkCoreRuleset(page, `Entity Pages Fork ${Date.now()}`);
+    const rulesetId = await forkCoreRuleset(page, uniqueName('Entity Pages Fork'));
     // The core rules have no mechanics
     await parseResponse(apiOf(page).api.rulesets[':id'].mechanics.$post({ param: { id: rulesetId }, json: { name: 'Grapple' } }));
     const errors = watchErrors(page);
@@ -81,7 +81,7 @@ test.describe('Every page', () => {
   });
 
   test('of a class loads, each of its sections', async ({ page }) => {
-    const rulesetId = await forkCoreRuleset(page, `Class Pages Fork ${Date.now()}`);
+    const rulesetId = await forkCoreRuleset(page, uniqueName('Class Pages Fork'));
     const { items } = await parseResponse(apiOf(page).api.rulesets[':id'].classes.$get({ param: { id: rulesetId }, query: { search: 'Wizard' } }));
     const wizard = items.find((klass) => klass.name === 'Wizard')!;
     const errors = watchErrors(page);
@@ -92,7 +92,7 @@ test.describe('Every page', () => {
 
   for (const list of ['races', 'feats', 'items', 'powers'] as const) {
     test(`of the customization of ${list} loads, each of its sections`, async ({ page }) => {
-      const rulesetId = await forkCoreRuleset(page, `Customization Pages Fork ${Date.now()}`);
+      const rulesetId = await forkCoreRuleset(page, uniqueName('Customization Pages Fork'));
       const entity = await firstOf(page, rulesetId, list);
       const errors = watchErrors(page);
       for (const section of ['', '/properties', '/modifiers', '/requirements']) {

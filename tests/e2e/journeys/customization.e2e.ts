@@ -1,6 +1,6 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
-import { apiResponse, fillStrengthModifier, forkCoreRuleset, openFeat, openFighterLevel1, openRace, signIn } from '@/tests/e2e/helpers.ts';
+import { apiResponse, fillStrengthModifier, forkCoreRuleset, openFeat, openFighterLevel1, openRace, signIn, uniqueName } from '@/tests/e2e/helpers.ts';
 
 /** Where a customization of `section` is saved. */
 const customizationApi = (section: string) => new RegExp(`/api/rulesets/[a-f0-9-]+/customization/[^/]+/[^/]+/${section}(?:\\?|$)`);
@@ -10,7 +10,7 @@ test.describe('Customization of a fork', () => {
 
   test.beforeEach(async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
-    await forkCoreRuleset(page, `Customize Fork ${Date.now()}`);
+    await forkCoreRuleset(page, uniqueName('Customize Fork'));
   });
 
   // Inherited entities are copied into the fork on their first change, the same way for every kind.

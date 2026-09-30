@@ -1,6 +1,6 @@
+import { respond } from "@/server/routers/respond.ts";
 import { requirementOperator, chainingOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/index.ts";
 import { Hono } from "hono";
@@ -27,14 +27,7 @@ export default new Hono<SessionContext>()
         entityType,
         entityId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -71,14 +64,7 @@ export default new Hono<SessionContext>()
         entityId,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   )
   .put(
@@ -118,14 +104,7 @@ export default new Hono<SessionContext>()
         requirement_id,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -151,13 +130,6 @@ export default new Hono<SessionContext>()
         entityId,
         requirement_id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

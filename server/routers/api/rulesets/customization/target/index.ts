@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import { TargetPathsService } from "@/server/services/rulesets/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
@@ -28,14 +28,7 @@ const targetPaths = new Hono()
 
       const service = TargetPathsService.initialize();
       const result = await service.call("validatePath", rulesetId, path, kind);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   /**
@@ -75,14 +68,7 @@ const targetPaths = new Hono()
         page,
         flat,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );
 

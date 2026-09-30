@@ -59,16 +59,6 @@ export const TargetPathsMethods = {
 
     const segments = path.split(".");
 
-    if (segments.length === 0) {
-      errors.push({
-        message: "Path cannot be empty",
-        position: { start: 0, end: 0 },
-        severity: "error",
-        code: "EMPTY_PATH",
-      });
-      return { isValid: false, errors, suggestions, completions };
-    }
-
     const category = segments[0];
 
     if (!validCategories.includes(category)) {

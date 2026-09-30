@@ -11,10 +11,6 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     super(starredRulesetsInAccount);
   }
 
-  async create(db: Db, values: { userId: string; rulesetId: string }) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async createOrRestore(db: Db, values: { userId: string; rulesetId: string }) {
     return await db
       .insert(this.table)

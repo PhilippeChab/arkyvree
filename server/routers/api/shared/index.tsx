@@ -1,6 +1,6 @@
+import { errorResponse } from "@/server/routers/respond.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import CharactersService from "@/server/services/CharactersService.ts";
 import { pdf } from "@react-pdf/renderer";
@@ -21,10 +21,7 @@ const shared = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       const { character, detailedCharacter, bondedByKind, portraitUrl } = result[1];
       const response = buildFullCharacterResponse(character, detailedCharacter);
@@ -49,10 +46,7 @@ const shared = new Hono()
         );
         const success = result[0];
 
-        if (!success) {
-          const [error, code] = toJson(result[2]);
-          return c.json(error, code);
-        }
+        if (!success) return errorResponse(c, result[2]);
 
         const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } = result[1];
 

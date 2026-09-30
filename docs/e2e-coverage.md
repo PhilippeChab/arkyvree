@@ -21,8 +21,8 @@ refreshes. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports th
 client code the run executes in `coverage/e2e` (per file in `coverage-summary.json`): each test's page, and the pages
 of the contexts it opens with `openContext` (`signedInPage` included) until it closes them.
 
-Helpers: `tests/e2e/helpers.ts` (signing in, forking, and creating characters and campaigns, all through the API; the
-sign-in form; another user's or a guest's context; invites and their answers, the actions menu, list filters, API-response waits, OTP), `tests/e2e/api.ts` (`apiOf(page)`,
+Helpers: `tests/e2e/helpers.ts` (signing in, forking, and creating characters and campaigns, all through the API; names
+no other test uses, since ruleset names are unique; the sign-in form; another user's or a guest's context; invites and their answers, the actions menu, list filters, API-response waits, OTP), `tests/e2e/api.ts` (`apiOf(page)`,
 the typed API through the page's browser context), `tests/e2e/levelUpHelpers.ts` (the Add Level wizard),
 `tests/e2e/fixtures.ts` (the `test` every file imports: worker-scoped `ownerUser` / `inviteeUser`, the test's `user`, the read-only `seedUser`, and coverage),
 `tests/fixtures/auth.fixture.ts` (`TEST_USERS`).

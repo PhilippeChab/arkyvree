@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/index.ts";
 import { Hono } from "hono";
@@ -26,14 +26,7 @@ const propertyTypes = new Hono()
       const { entityType } = c.req.valid("query");
       const service = PropertyTypesService.initialize();
       const result = await service.call("getPropertyTypes", rulesetId, entityType);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   /**
@@ -55,14 +48,7 @@ const propertyTypes = new Hono()
       const { query, entityType } = c.req.valid("query");
       const service = PropertyTypesService.initialize();
       const result = await service.call("searchPropertyTypes", rulesetId, query, entityType);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   /**
@@ -92,14 +78,7 @@ const propertyTypes = new Hono()
         { limit: limitValue, page: pageValue },
         entityType,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   /**
@@ -129,14 +108,7 @@ const propertyTypes = new Hono()
         query,
         { limit: limitValue, page: pageValue },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );
 

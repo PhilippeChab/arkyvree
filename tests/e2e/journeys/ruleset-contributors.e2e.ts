@@ -1,10 +1,10 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
-import { answerInvite, apiResponse, forkCoreRuleset, inviteContributor, openContributors, openRace, renameEntity, signedInPage } from '@/tests/e2e/helpers.ts';
+import { answerInvite, apiResponse, forkCoreRuleset, inviteContributor, openContributors, openRace, renameEntity, signedInPage, uniqueName } from '@/tests/e2e/helpers.ts';
 
 test.describe('Ruleset contributors', () => {
   test('an Editor who accepts edits the fork, and the owner sees the change', async ({ browser, ownerUser, inviteeUser }) => {
     test.setTimeout(60_000);
-    const forkName = `Contrib Fork ${Date.now()}`;
+    const forkName = uniqueName('Contrib Fork');
     const renamedRace = `Editor Touched ${Date.now()}`;
     const owner = await signedInPage(browser, ownerUser);
     const forkId = await forkCoreRuleset(owner, forkName);
@@ -24,7 +24,7 @@ test.describe('Ruleset contributors', () => {
   });
 
   test('an invitee who rejects never gets the fork', async ({ browser, ownerUser, inviteeUser }) => {
-    const forkName = `Contrib Reject Fork ${Date.now()}`;
+    const forkName = uniqueName('Contrib Reject Fork');
     const owner = await signedInPage(browser, ownerUser);
     await forkCoreRuleset(owner, forkName);
     await inviteContributor(owner, inviteeUser.email);
@@ -41,7 +41,7 @@ test.describe('Ruleset contributors', () => {
 
   test('a contributor who leaves loses the fork', async ({ browser, ownerUser, inviteeUser }) => {
     test.setTimeout(60_000);
-    const forkName = `Leave Fork ${Date.now()}`;
+    const forkName = uniqueName('Leave Fork');
     const owner = await signedInPage(browser, ownerUser);
     const forkId = await forkCoreRuleset(owner, forkName);
     await inviteContributor(owner, inviteeUser.email);

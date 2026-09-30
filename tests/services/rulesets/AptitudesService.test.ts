@@ -3,12 +3,12 @@ import { eq } from "drizzle-orm";
 import { featsAptitudesInRules, klassLevelFeatsInRules, klassLevelPowersInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Feats, Klasses, KlassLevelPowers, Powers } from "@/server/repositories/index.ts";
+import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
 import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
 import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("AptitudesService", () => {
@@ -33,7 +33,7 @@ describe("AptitudesService", () => {
     const level = await ClassLevelsMethods.createClassLevel(session, ruleset.id, klass.id, {
       level: 1, bab: 1, skills: 2, feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
     });
-    await KlassLevelPowers.create(db, { klassLevelId: level.id, powerId: power.id, aptitudeId: powerAptitude.id });
+    await insertRows(klassLevelPowersInRules, [{ klassLevelId: level.id, powerId: power.id, aptitudeId: powerAptitude.id }]);
 
     await AptitudesMethods.deleteRulesetAptitude(session, ruleset.id, featAptitude.id);
     await AptitudesMethods.deleteRulesetAptitude(session, ruleset.id, powerAptitude.id);

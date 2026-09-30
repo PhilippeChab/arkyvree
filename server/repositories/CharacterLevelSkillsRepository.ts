@@ -30,16 +30,6 @@ class CharacterLevelSkillsRepository
       .where(eq(this.table.characterLevelId, where.characterLevelId));
   }
 
-  async findOne(db: Db, where: { characterLevelId: string; skillId: string }) {
-    return await db.query.levelSkillsInCharacter.findFirst({
-      where: and(
-        eq(this.table.characterLevelId, where.characterLevelId),
-        this.idMatches(this.table.skillId, where.skillId),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
   async existsBySkillId(db: Db, where: { skillId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.skillId })

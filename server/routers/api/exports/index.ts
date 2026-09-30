@@ -1,4 +1,4 @@
-import { toJson } from "@/server/errors/index.ts";
+import { errorResponse } from "@/server/routers/respond.ts";
 import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import ExportsService from "@/server/services/ExportsService.ts";
 import { Hono } from "hono";
@@ -19,10 +19,7 @@ const exports = new Hono()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       const exportRecord = result[1];
 

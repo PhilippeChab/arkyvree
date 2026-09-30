@@ -49,16 +49,6 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules, Kl
       .returning();
   }
 
-  async findOne(db: Db, where: { klassId: string; skillId: string }) {
-    return await db.query.klassSkillsInRules.findFirst({
-      where: and(
-        eq(this.table.klassId, where.klassId),
-        eq(this.table.skillId, where.skillId),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
   async findMany(db: Db, where: { klassIds: string[] }) {
     return await db.query.klassSkillsInRules.findMany({
       where: and(

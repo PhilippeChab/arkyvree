@@ -1,4 +1,4 @@
-import { toJson } from "@/server/errors/index.ts";
+import { respond, errorResponse } from "@/server/routers/respond.ts";
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
 import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";
@@ -61,14 +61,7 @@ const authenticatedRulesets = new Hono()
         id,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   )
   .post(
@@ -79,14 +72,7 @@ const authenticatedRulesets = new Hono()
 
       const rulesetsService = RulesetsService.initialize();
       const result = await rulesetsService.call("archiveRuleset", c.var.requestSession, id);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -99,10 +85,7 @@ const authenticatedRulesets = new Hono()
       const result = await rulesetsService.call("unarchiveRuleset", c.var.requestSession, id);
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "Ruleset unarchived successfully" }, 200);
     },
@@ -123,14 +106,7 @@ const authenticatedRulesets = new Hono()
 
       const rulesetsService = RulesetsService.initialize();
       const result = await rulesetsService.call("publishRuleset", c.var.requestSession, id, body);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -143,10 +119,7 @@ const authenticatedRulesets = new Hono()
       const result = await rulesetsService.call("starRuleset", c.var.requestSession, id);
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "Ruleset starred" }, 201);
     },
@@ -161,10 +134,7 @@ const authenticatedRulesets = new Hono()
       const result = await rulesetsService.call("unstarRuleset", c.var.requestSession, id);
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "Ruleset unstarred" }, 200);
     },
@@ -193,14 +163,7 @@ const authenticatedRulesets = new Hono()
         id,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -223,14 +186,7 @@ const authenticatedRulesets = new Hono()
         id,
         body.extensionIds,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -253,14 +209,7 @@ const authenticatedRulesets = new Hono()
         id,
         body.extensionId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -281,14 +230,7 @@ const authenticatedRulesets = new Hono()
         entityType,
         entityId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -303,14 +245,7 @@ const authenticatedRulesets = new Hono()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -325,14 +260,7 @@ const authenticatedRulesets = new Hono()
         c.var.requestSession,
         id,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -362,11 +290,7 @@ const authenticatedRulesets = new Hono()
         },
         { limit: query.limit, page: query.page },
       );
-      if (!result[0]) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -379,11 +303,7 @@ const authenticatedRulesets = new Hono()
         c.var.requestSession,
         id,
       );
-      if (!result[0]) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );
 

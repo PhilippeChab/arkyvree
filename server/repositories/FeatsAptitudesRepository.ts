@@ -45,16 +45,6 @@ class FeatsAptitudesRepository
       .returning();
   }
 
-  async findOne(db: Db, where: { featId: string; aptitudeId: string }) {
-    return await db.query.featsAptitudesInRules.findFirst({
-      where: and(
-        eq(this.table.featId, where.featId),
-        eq(this.table.aptitudeId, where.aptitudeId),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
   async findDistinctAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
     if (where.aptitudeIds.length === 0) return [];
     const rows = await db

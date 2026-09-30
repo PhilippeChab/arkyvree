@@ -1,5 +1,5 @@
+import { respond } from "@/server/routers/respond.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/index.ts";
 import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
@@ -32,14 +32,7 @@ export default new Hono<SessionContext>()
         { search, childOnly, orderBy, orderDir },
         { limit, page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -50,14 +43,7 @@ export default new Hono<SessionContext>()
 
       const languagesService = LanguagesService.initialize();
       const result = await languagesService.call("getRulesetLanguage", id, languageId);
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -82,14 +68,7 @@ export default new Hono<SessionContext>()
         id,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .put(
@@ -116,14 +95,7 @@ export default new Hono<SessionContext>()
         languageId,
         body,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .delete(
@@ -139,13 +111,6 @@ export default new Hono<SessionContext>()
         id,
         languageId,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   );

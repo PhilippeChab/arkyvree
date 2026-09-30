@@ -1,6 +1,6 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
-import { apiResponse, forkCoreRuleset, openActionsMenu, selectOption, signIn } from '@/tests/e2e/helpers.ts';
+import { apiResponse, forkCoreRuleset, openActionsMenu, selectOption, signIn, uniqueName } from '@/tests/e2e/helpers.ts';
 
 /*
  * A fork's own entities of each kind with a page of its own: created from its section, renamed on its page (surviving a
@@ -20,7 +20,7 @@ test.describe('A fork\'s entities', () => {
   for (const { section, label, fill } of KINDS) {
     test(`a ${label.toLowerCase()} is created, renamed and deleted`, async ({ page, ownerUser }) => {
       await signIn(page, ownerUser.email, ownerUser.password);
-      const forkId = await forkCoreRuleset(page, `${label} Fork ${Date.now()}`);
+      const forkId = await forkCoreRuleset(page, uniqueName(`${label} Fork`));
       const name = `Test ${label} ${Date.now()}`;
       const detailPage = new RegExp(`/rulesets/${forkId}/${section}/[a-f0-9-]+`);
 

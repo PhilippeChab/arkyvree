@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { test, expect } from "@/tests/e2e/fixtures.ts";
-import { signIn, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
+import { signIn, uniqueName, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
 
 test("concurrent first edits preserve every property on one fork copy", async ({ page, ownerUser }) => {
   await signIn(page, ownerUser.email, ownerUser.password);
@@ -9,7 +9,7 @@ test("concurrent first edits preserve every property on one fork copy", async ({
   const baseId = page.url().match(/\/rulesets\/([a-f0-9-]+)/)?.[1];
   expect(baseId).toBeTruthy();
 
-  const forkName = `Concurrent COW ${Date.now()}`;
+  const forkName = uniqueName("Concurrent COW");
   await page.getByRole('button', { name: 'More actions' }).first().click();
   await page.getByRole("menuitem", { name: /^Fork\b/ }).click();
   const dialog = page.getByRole("dialog", { name: "Fork Ruleset" });

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { eq, type InferInsertModel } from "drizzle-orm";
-import { featsAptitudesInRules, featsInRules, klassSkillsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { featsAptitudesInRules, featsInRules, klassSkillsInRules, type rulesetsInRules, starredRulesetsInAccount } from "@/drizzle/schema.ts";
 import { DND35_COMPLETE_WARRIOR_NAME } from "@/database/packages/dnd35/names.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -69,7 +69,7 @@ describe("RulesetsService", () => {
       await addRulesetContributor(rulesets.contributedPublished.id, user, other.id);
       const { campaign } = await createTestCampaign(other.id, rulesets.campaign.id);
       await Players.create(db, { userId: user.id, campaignId: campaign.id, role: "Player Character" });
-      await StarredRulesets.create(db, { userId: user.id, rulesetId: rulesets.othersExtension.id });
+      await insertRows(starredRulesetsInAccount, [{ userId: user.id, rulesetId: rulesets.othersExtension.id }]);
       return { session, rulesets };
     }
 

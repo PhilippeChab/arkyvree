@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import { z } from "zod";
 import { test, expect } from "@/tests/e2e/fixtures.ts";
-import { signIn, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
+import { signIn, uniqueName, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
 
 for (const operation of ["delete", "revert"] as const) {
   for (const kind of ["properties", "requirements", "modifiers"] as const) {
@@ -16,7 +16,7 @@ for (const operation of ["delete", "revert"] as const) {
       await expect(page).toHaveURL(/\/races\/[a-f0-9-]+\/customization/);
       const sourceId = page.url().match(/\/races\/([a-f0-9-]+)/)![1];
       const fork = await page.request.post(`/api/rulesets/${baseId}/fork`, {
-        data: { name: `Delete race ${operation} ${kind} ${Date.now()}`, description: "Concurrency regression", private: true },
+        data: { name: uniqueName(`Delete race ${operation} ${kind}`), description: "Concurrency regression", private: true },
       });
       expect(fork.status(), await fork.text()).toBe(201);
       const forkId = z.object({ id: z.string().uuid() }).parse(await fork.json()).id;

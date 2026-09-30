@@ -30,16 +30,6 @@ class CharacterLevelPowersRepository
       .where(eq(this.table.characterLevelId, where.characterLevelId));
   }
 
-  async findOne(db: Db, where: { characterLevelId: string; powerId: string }) {
-    return await db.query.levelPowersInCharacter.findFirst({
-      where: and(
-        eq(this.table.characterLevelId, where.characterLevelId),
-        this.idMatches(this.table.powerId, where.powerId),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
   async existsByPowerId(db: Db, where: { powerId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.powerId })

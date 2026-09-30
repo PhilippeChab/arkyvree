@@ -1,6 +1,6 @@
+import { respond, errorResponse } from "@/server/routers/respond.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
-import { toJson } from "@/server/errors/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/index.ts";
@@ -22,10 +22,7 @@ export default new Hono<SessionContext>()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       const data = result[1];
       const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
@@ -96,10 +93,7 @@ export default new Hono<SessionContext>()
       );
       const success = result[0];
 
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
+      if (!success) return errorResponse(c, result[2]);
 
       return c.json({ message: "PDF generation started" }, 202);
     },
@@ -120,14 +114,7 @@ export default new Hono<SessionContext>()
         characterId,
         visibility,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .get(
@@ -150,14 +137,7 @@ export default new Hono<SessionContext>()
         { search, orderBy, orderDir },
         { limit, page },
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 200);
+      return respond(c, result, 200);
     },
   )
   .post(
@@ -177,13 +157,6 @@ export default new Hono<SessionContext>()
         characterId,
         visibility,
       );
-      const success = result[0];
-
-      if (!success) {
-        const [error, code] = toJson(result[2]);
-        return c.json(error, code);
-      }
-
-      return c.json(result[1], 201);
+      return respond(c, result, 201);
     },
   );

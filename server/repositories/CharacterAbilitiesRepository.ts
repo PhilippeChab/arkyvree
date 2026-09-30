@@ -12,10 +12,6 @@ class CharacterAbilitiesRepository
     super(characterAbilitiesInCharacter);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof characterAbilitiesInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async createMany(db: Db, values: InferInsertModel<typeof characterAbilitiesInCharacter>[]) {
     if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
@@ -37,16 +33,6 @@ class CharacterAbilitiesRepository
         ),
       )
       .returning();
-  }
-
-  async findOne(db: Db, where: { characterId: string; abilityId: string }) {
-    return await db.query.characterAbilitiesInCharacter.findFirst({
-      where: this.where([
-        eq(this.table.characterId, where.characterId),
-        this.idMatches(this.table.abilityId, where.abilityId),
-        isNull(this.table.deletedAt),
-      ]),
-    });
   }
 
   async findMany(db: Db, where: { characterId: string }) {
