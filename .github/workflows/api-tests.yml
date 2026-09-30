@@ -26,7 +26,8 @@ jobs:
   full:
     name: API Tests (shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    # A push, or Deploy calling it for one
+    if: github.event_name != 'pull_request'
     timeout-minutes: 20
     strategy:
       fail-fast: false

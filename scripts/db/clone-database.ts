@@ -28,8 +28,10 @@ export async function cloneDatabase(templateUrl: string, targets: string[]) {
   const { server, name: template } = databaseOf(templateUrl);
   const { hostname } = new URL(templateUrl);
   if (!LOCAL_HOSTS.includes(hostname)) throw new Error(`${hostname} isn't a local database server: only a local test database is copied`);
-  if (!/(^|_)test(_|$)/.test(template)) throw new Error(`${template} isn't a test database: only a test database is copied`);
-  const unrelated = targets.filter((target) => !new RegExp(`^${template}_[a-z0-9_]+$`).test(target));
+  if (!/^[a-z0-9_]+$/.test(template) || !/(^|_)test(_|$)/.test(template)) {
+    throw new Error(`${template} isn't a test database (test a word of a name of letters, digits and _): only a test database is copied`);
+  }
+  const unrelated = targets.filter((target) => !target.startsWith(`${template}_`) || !/^[a-z0-9_]+$/.test(target.slice(template.length + 1)));
   if (unrelated.length) throw new Error(`The copies of ${template} are named ${template}_ and letters, digits or _, not ${unrelated.join(", ")}`);
 
   const client = new pg.Client({ connectionString: `${server}/postgres` });

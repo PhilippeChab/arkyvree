@@ -133,17 +133,17 @@ One workflow per concern, in `.github/workflows/`:
 | `build.yml` | push to develop, PR, called by Deploy | `Build`: the production build and the compiled PDF smoke check |
 | `api-tests.yml` | push to develop, PR, called by Deploy | `API Tests (shard n/3)` on a push, `API Tests (changed)` on a PR |
 | `e2e.yml` | push to develop, PR, called by Deploy | `E2E (shard n/3)` |
-| `deploy.yml` | push to main | the four above, then `Deploy` (matrix: web + worker) |
+| `deploy.yml` | push to main | the four above, then `Deploy`: the web app, then the worker |
 
-- A push to main runs only `deploy.yml`, which calls the four check workflows (`workflow_call`) and needs them: a deploy never uses a green result from another branch or commit. When a check fails, **Re-run failed jobs** re-runs it and deploys once it passes. `Deploy` skips a commit main has moved on from, so re-running an older push never deploys it over a newer one
+- A push to main runs only `deploy.yml`, which calls the four check workflows (`workflow_call`) and needs them: a deploy never uses a green result from another branch or commit. When a check fails, **Re-run failed jobs** re-runs it and deploys once it passes. `Deploy` skips a commit main has moved on from, so re-running an older push never deploys it over a newer one: if the newer one fails its checks, nothing deploys until a fix lands on main. To roll back, redeploy an earlier image: `fly releases -a <app> --image` lists them, `fly deploy -a <app> --config <its fly.*.toml> --image <image>` deploys one (the web app's migrations don't run backwards)
 - The check workflows run in parallel. A new push to a PR cancels its previous runs; each push runs to the end
 - API tests split by trigger:
   - **Push** → sharded 3× via `bun test --shard` (matrix jobs in parallel)
   - **PR** → a single job using `bun test --changed=origin/<base>` — only runs tests affected by the diff
 - Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
 - E2E: the suite sharded 3×, each shard building the client and copying the e2e template (made by `bun test:db:reset`) for its own server (`bunx playwright test --shard`). A failing shard uploads its Playwright report
-- Deploy is a matrix over `{fly.web.toml, fly.worker.toml}` — both apps deploy in parallel
-- Branch protection matches required checks by job name, on the PRs' own runs: `Lint`, `Build` and `API Tests (changed)` (and the `E2E` shards to gate merges on them)
+- `Deploy` deploys the web app (`fly.web.toml`, whose release command migrates the database), then the worker (`fly.worker.toml`), so the worker's code never runs before its migrations; a web deploy that fails stops it before the worker. One deploy runs at a time
+- Branch protection should require, by job name on the PRs' own runs, `Lint`, `Build` and `API Tests (changed)` (and the `E2E` shards to gate merges on them). A PR that breaks a check only required by Deploy merges, then blocks the next release
 
 `FLY_API_TOKEN` must be at **repository-level** secrets (Settings → Secrets and variables → Actions → Repository secrets). The deploy job doesn't declare an `environment:`, so environment-scoped secrets won't be visible.
 

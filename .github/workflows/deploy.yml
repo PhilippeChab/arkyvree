@@ -22,33 +22,31 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: [lint, build, api-tests, e2e]
-    timeout-minutes: 20
-    concurrency: deploy-${{ matrix.app }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - app: arkyvree
-            config: fly.web.toml
-          - app: arkyvree-worker
-            config: fly.worker.toml
+    timeout-minutes: 30
+    # One deploy at a time, both apps on one commit
+    concurrency: deploy
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       # A re-run of an older push mustn't deploy over a newer one, which its own run deploys
       - name: Check that main is still at ${{ github.sha }}
         id: head
+        shell: bash
         run: |
           head=$(git ls-remote origin refs/heads/main | cut -f1)
-          if [ "$head" = "$GITHUB_SHA" ]; then
+          if [ -z "$head" ]; then
+            echo "::error::Couldn't read main's head"
+            exit 1
+          elif [ "$head" = "$GITHUB_SHA" ]; then
             echo "current=true" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::main has moved on to $head, which its own run deploys"
           fi
       - if: steps.head.outputs.current == 'true'
         uses: superfly/flyctl-actions/setup-flyctl@master
+      # The web app first: its release command migrates the database the worker's code expects
       - if: steps.head.outputs.current == 'true'
-        run: flyctl deploy --remote-only --config ${{ matrix.config }} --app ${{ matrix.app }}
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only --config fly.web.toml --app arkyvree
+      - if: steps.head.outputs.current == 'true'
+        run: flyctl deploy --remote-only --config fly.worker.toml --app arkyvree-worker
