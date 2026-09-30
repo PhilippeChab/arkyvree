@@ -2,10 +2,12 @@
  * Validates all reference files for unresolved issues that would produce incomplete seed data, and for
  * overrides that change nothing.
  *
- * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks (except those listed in
- * `overrides.reviewed`), classes the generator refuses, class overrides that hold what's derived without them
- * (and leave its generated files the same) or that the generator ignores, and values the seed refuses (a race's
- * size, a magic item's slot): these can't be marked reviewed, correct them with an override or skip the entry.
+ * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks and items without a definition
+ * (except those listed in `overrides.reviewed`), entries of `overrides.reviewed` that cover none of them (or repeat
+ * one), classes the generator refuses, class overrides that hold what's derived without them (and leave its
+ * generated files the same) or that the generator ignores, and values the seed refuses (a race's size, a magic
+ * item's slot), and references of a type the tools don't read: these can't be marked reviewed, correct them with an
+ * override or skip the entry.
  *
  * Usage:
  *   bun run parser:validate                              # all issues
@@ -15,8 +17,10 @@
 
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
 import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { seededMagicItems, seededRaces, skippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { unresolvedItems } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
 
 type DetectedEntry = {
   errors?: string[];
@@ -25,56 +29,134 @@ type DetectedEntry = {
   unresolvedAptitudePicks?: string[];
 };
 
+/** A detection's kinds of issue, each with the issue it's reported as. */
+const DETECTED_ISSUES = [
+  ["errors", "error"],
+  ["unresolvedModifiers", "modifier"],
+  ["unresolvedPrereqs", "prereq"],
+  ["unresolvedAptitudePicks", "aptitude pick"],
+] as const;
+
+/**
+ * A reference's review list (`overrides.reviewed`): the entries it has, those that covered an issue (`use`), and,
+ * once each, the ones that covered none or are repeated.
+ */
+function reviewOf(reviewed: string[] = []) {
+  const used = new Set<string>();
+  return {
+    has: (entry: string) => reviewed.includes(entry),
+    use: (entry: string) => void used.add(entry),
+    stale: () => [...new Set(reviewed.filter((entry, i) => !used.has(entry) || reviewed.indexOf(entry) < i))],
+  };
+}
+type Review = ReturnType<typeof reviewOf>;
+
 export type Issue = {
   book: string;
   file: string;
   label: string;
-  kind: "error" | "modifier" | "prereq" | "aptitude pick" | "redundant override" | "ignored override" | "generator refuses the class" | "not seedable";
+  kind: "error" | "modifier" | "prereq" | "aptitude pick" | "unresolved item" | "stale review" | "unknown type" | "redundant override" | "ignored override" | "generator refuses the class" | "not seedable";
   text: string;
   entityName?: string;
 };
 
+type Found = { kind: Issue["kind"]; text: string };
+
+/** An entry's detected issues. */
+const detectedIssues = (d: DetectedEntry): Found[] => DETECTED_ISSUES.flatMap(([key, kind]) => (d[key] ?? []).map((text) => ({ kind, text })));
+
 /** The issues of the references `refs` (`discoverRefs`): what the header lists. */
 export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] {
   const issues: Issue[] = [];
-  /** An entity whose value the generator refuses: it has to be corrected in the reference's overrides, or skipped. */
-  const notSeedable = (ref: { path: string; book: string }, name: string, text: string) =>
-    issues.push({ book: ref.book, file: ref.path, label: name, kind: "not seedable", text, entityName: name });
-  const entityIssues = (ref: { path: string; book: string }, detected: Record<string, DetectedEntry>, reviewed: Set<string>, skip = new Set<string>()) => {
-    for (const [name, d] of Object.entries(detected)) {
-      if (!reviewed.has(name) && !skip.has(name)) collectIssues(d, name, reviewed, ref.book, ref.path, issues, name);
-    }
-  };
 
   for (const ref of refs) {
-    if (ref.type === "class") {
-      const data = loadReference(ref.path, "class");
-      collectIssues(data.detected, "class", new Set(data.overrides?.reviewed), ref.book, ref.path, issues, data.raw.name);
-      const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
-      const classIssues: { kind: Issue["kind"]; text: string }[] = [
-        ...refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : [],
-        ...redundant.map((text) => ({ kind: "redundant override" as const, text })),
-        ...ignored.map((text) => ({ kind: "ignored override" as const, text })),
-      ];
-      for (const { kind, text } of classIssues) issues.push({ book: ref.book, file: ref.path, label: "class", kind, text, entityName: data.raw.name });
-    } else if (ref.type === "feat") {
-      // The generator skips epic feats unless an override keeps them.
-      const data = loadReference(ref.path, "feat");
-      const { overrides } = data;
-      const epic = new Set(data.raw.filter((f) => f.featType === "epic" && overrides?.[f.name]?.skip !== false).map((f) => f.name));
-      entityIssues(ref, data.detected, new Set(overrides?.reviewed), epic);
-    } else if (ref.type === "domain") {
-      const data = loadReference(ref.path, "domain");
-      entityIssues(ref, data.detected, new Set(data.overrides?.reviewed));
-    } else if (ref.type === "race") {
-      // A skipped race isn't seeded: its detections don't matter. A seeded one's size must be one the seed accepts.
-      const data = loadReference(ref.path, "race");
-      entityIssues(ref, data.detected, new Set(data.overrides?.reviewed), skippedRaces(data));
-      for (const { name, size } of seededRaces(data)) if (!size.ok) notSeedable(ref, name, size.problem);
-    } else if (ref.type === "magicItem") {
-      // A seeded magic item's slot must be one the seed accepts
-      for (const { name, slot } of seededMagicItems(loadReference(ref.path, "magicItem"))) if (slot && !slot.ok) notSeedable(ref, name, slot.problem);
-    }
+    const at = { book: ref.book, file: ref.path };
+    /** Reports the issues the review list doesn't cover, and marks the entries that cover the others used. */
+    const unreviewed = (review: Review, found: Found[], where: { label: string; entityName?: string }) => {
+      for (const { kind, text } of found) {
+        if (review.has(text)) review.use(text);
+        else issues.push({ ...at, ...where, kind, text });
+      }
+    };
+    /** An entity whose value the generator refuses: it has to be corrected in the reference's overrides, or skipped. */
+    const notSeedable = (name: string, text: string) => issues.push({ ...at, label: name, kind: "not seedable", text, entityName: name });
+    const entityIssues = (detected: Record<string, DetectedEntry>, review: Review, skip = new Set<string>()) => {
+      for (const [name, d] of Object.entries(detected)) {
+        const found = detectedIssues(d);
+        // An entity skipped, or reviewed by name, has nothing reported: the entries for its issues are used
+        const covered = found.length > 0 ? [name, ...found.map(({ text }) => text)] : [];
+        if (skip.has(name) || (covered.length > 0 && review.has(name))) {
+          for (const entry of covered) if (review.has(entry)) review.use(entry);
+          continue;
+        }
+        unreviewed(review, found, { label: name, entityName: name });
+      }
+    };
+
+    /** Reports the reference's issues, and returns its review list: of a type with no issue to review, all stale. */
+    const reviewedIssues = (): Review => {
+      switch (ref.type) {
+        case "class": {
+          const data = loadReference(ref.path, "class");
+          const review = reviewOf(data.overrides?.reviewed);
+          unreviewed(review, detectedIssues(data.detected), { label: "class", entityName: data.raw.name });
+          const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
+          const classIssues: Found[] = [
+            ...refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : [],
+            ...redundant.map((text) => ({ kind: "redundant override" as const, text })),
+            ...ignored.map((text) => ({ kind: "ignored override" as const, text })),
+          ];
+          for (const { kind, text } of classIssues) issues.push({ ...at, label: "class", kind, text, entityName: data.raw.name });
+          return review;
+        }
+        case "feat": {
+          // The generator skips epic feats unless an override keeps them.
+          const data = loadReference(ref.path, "feat");
+          const { overrides } = data;
+          const review = reviewOf(overrides?.reviewed);
+          entityIssues(data.detected, review, new Set(data.raw.filter((f) => f.featType === "epic" && overrides?.[f.name]?.skip !== false).map((f) => f.name)));
+          return review;
+        }
+        case "domain": {
+          const data = loadReference(ref.path, "domain");
+          const review = reviewOf(data.overrides?.reviewed);
+          entityIssues(data.detected, review);
+          return review;
+        }
+        case "race": {
+          // A skipped race isn't seeded: its detections don't matter. A seeded one's size must be one the seed accepts.
+          const data = loadReference(ref.path, "race");
+          const review = reviewOf(data.overrides?.reviewed);
+          entityIssues(data.detected, review, skippedRaces(data));
+          for (const { name, size } of seededRaces(data)) if (!size.ok) notSeedable(name, size.problem);
+          return review;
+        }
+        case "item": {
+          // An item the generator has no definition of isn't generated, whether its override skips it or not
+          const data = loadReference(ref.path, "item");
+          const review = reviewOf(data.overrides?.reviewed);
+          const unresolved = unresolvedItems(data.detected, (name) => Boolean(data.overrides?.[name]?.skip));
+          unreviewed(review, unresolved.map((text) => ({ kind: "unresolved item" as const, text })), { label: "item" });
+          return review;
+        }
+        case "magicItem": {
+          // A seeded magic item's slot must be one the seed accepts
+          const data = loadReference(ref.path, "magicItem");
+          for (const { name, slot } of seededMagicItems(data)) if (slot && !slot.ok) notSeedable(name, slot.problem);
+          return reviewOf(data.overrides?.reviewed);
+        }
+        case "spell":
+        case "wizardSchool":
+          // Nothing derived from them, so no loaded reference sanitizes their list: its entries read as the others'
+          return reviewOf(sanitizeJsonValues(readStoredReference(ref.path, ref.type).overrides?.reviewed));
+        default:
+          // A type the tools don't read (its _meta.type misspelled): the generator refuses it too
+          issues.push({ ...at, label: "reference", kind: "unknown type", text: String(ref.type) });
+          return reviewOf();
+      }
+    };
+
+    for (const entry of reviewedIssues().stale()) issues.push({ ...at, label: "reviewed", kind: "stale review", text: entry });
   }
   return issues;
 }
@@ -112,37 +194,6 @@ function main() {
   }
 
   process.exit(1);
-}
-
-function collectIssues(
-  d: DetectedEntry,
-  label: string,
-  reviewed: Set<string>,
-  book: string,
-  file: string,
-  issues: Issue[],
-  entityName?: string,
-) {
-  for (const err of d.errors ?? []) {
-    if (!reviewed.has(err)) {
-      issues.push({ book, file, label, kind: "error", text: err, entityName });
-    }
-  }
-  for (const mod of d.unresolvedModifiers ?? []) {
-    if (!reviewed.has(mod)) {
-      issues.push({ book, file, label, kind: "modifier", text: mod, entityName });
-    }
-  }
-  for (const req of d.unresolvedPrereqs ?? []) {
-    if (!reviewed.has(req)) {
-      issues.push({ book, file, label, kind: "prereq", text: req, entityName });
-    }
-  }
-  for (const pick of d.unresolvedAptitudePicks ?? []) {
-    if (!reviewed.has(pick)) {
-      issues.push({ book, file, label, kind: "aptitude pick", text: pick, entityName });
-    }
-  }
 }
 
 if (import.meta.main) main();

@@ -72,6 +72,15 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetec
   return { modifiers: validated, errors, unresolvedModifiers };
 }
 
+/**
+ * Whether a bonus applies only sometimes: what follows it says when ("checks that are related to stone", "checks to
+ * notice…", "saving throws against poison", "…vs. enchantments", "…, if…").
+ */
+function isConditional(text: string, match: RegExpMatchArray): boolean {
+  // After a comma, only a condition: ", to a maximum of…", ", for example" qualify nothing
+  return /^(?:\s+(?:that|to|for|made|related|involving)\b|,?\s+(?:(?:when|while|if|against|versus)\b|vs\.?\s))/i.test(text.slice((match.index ?? 0) + match[0].length));
+}
+
 // ---------------------------------------------------------------------------
 // Skill bonus detection
 // ---------------------------------------------------------------------------
@@ -89,9 +98,7 @@ function detectSkillBonuses(
     const bonus = parseInt(match[1], 10);
     const skillText = match[2];
 
-    // Skip conditional bonuses: "checks that are related to...", "checks to notice..."
-    const afterMatch = text.substring(match.index + match[0].length);
-    if (/^\s+(?:that\b|to\b|when\b|made\b|related\b|involving\b)/i.test(afterMatch)) continue;
+    if (isConditional(text, match)) continue;
 
     const skills = skillText.split(/,\s*(?:and\s+)?|\s+and\s+/);
     for (const raw of skills) {
@@ -121,33 +128,16 @@ function detectSaveBonuses(
   text: string,
   modifiers: Modifier[],
 ): void {
+  const add = (save: string, bonus: string) => modifiers.push({ target: `saves.${save}.misc`, operator: "add", value: String(parseInt(bonus, 10)), valueType: "number" });
+
   // "+N racial bonus on all saving throws"
-  const allSavesMatch = text.match(/\+(\d+)\s+racial\s+bonus\s+on\s+all\s+saving\s+throws/i);
-  if (allSavesMatch) {
-    const bonus = parseInt(allSavesMatch[1], 10);
-    for (const save of ["fortitude", "reflex", "will"]) {
-      modifiers.push({
-        target: `saves.${save}.misc`,
-        operator: "add",
-        value: String(bonus),
-        valueType: "number",
-      });
-    }
-    return;
+  for (const match of text.matchAll(/\+(\d+)\s+racial\s+bonus\s+on\s+all\s+saving\s+throws/gi)) {
+    if (!isConditional(text, match)) for (const save of ["fortitude", "reflex", "will"]) add(save, match[1]);
   }
 
   // "+N racial bonus on Fortitude saving throws" (specific save)
-  const specificSaveMatch = text.match(/\+(\d+)\s+racial\s+bonus\s+on\s+(\w+)\s+saving\s+throws/i);
-  if (specificSaveMatch) {
-    const bonus = parseInt(specificSaveMatch[1], 10);
-    const saveSlug = SAVE_MAP[specificSaveMatch[2].toLowerCase()];
-    if (saveSlug) {
-      modifiers.push({
-        target: `saves.${saveSlug}.misc`,
-        operator: "add",
-        value: String(bonus),
-        valueType: "number",
-      });
-    }
+  for (const match of text.matchAll(/\+(\d+)\s+racial\s+bonus\s+on\s+(\w+)\s+saving\s+throws/gi)) {
+    const saveSlug = SAVE_MAP[match[2].toLowerCase()];
+    if (saveSlug && !isConditional(text, match)) add(saveSlug, match[1]);
   }
 }

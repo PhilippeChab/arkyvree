@@ -1,7 +1,6 @@
-import { asc, eq, inArray } from "drizzle-orm";
-import { createSystemRuleset, loadSeedContext, newSeedContext, type SeedContext } from "@/database/packages/dnd35/seed/context.ts";
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization, rulesetsInRules } from "@/drizzle/schema.ts";
+import { asc, eq } from "drizzle-orm";
+import { coreRulesetId, createSystemRuleset, extensionContext, loadSeedContext, newSeedContext, type SeedContext } from "@/database/packages/dnd35/seed/context.ts";
+import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { uniqueId } from "@/tests/helpers.ts";
 import { describeRequirement } from "@/tests/seeds/seededRows.ts";
@@ -10,22 +9,22 @@ import { describeRequirement } from "@/tests/seeds/seededRows.ts";
 export async function freshSeedContext({ named = false } = {}): Promise<SeedContext> {
   const rulesetId = await createSystemRuleset(db, { name: `Seed test ${uniqueId()}`, description: "A ruleset a test seeds into" });
   if (!named) return newSeedContext(rulesetId);
-  const [core] = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules).where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
-  return { ...await loadSeedContext(db, core.id), rulesetId, powerMap: {}, inheritedPowerMap: {} };
+  return { ...await loadSeedContext(db, await coreRulesetId(db, "A seed test naming its rows")), rulesetId, powerMap: {}, inheritedPowerMap: {} };
 }
 
-/** A new extension of the context's ruleset, and its context: it names the base's rows, as `seedExtension`'s does. */
-export async function freshExtensionContext(base: SeedContext): Promise<SeedContext> {
-  const rulesetId = await createSystemRuleset(db, { name: `Seed test extension ${uniqueId()}`, description: "An extension a test seeds into" }, base.rulesetId);
-  return { ...structuredClone(base), rulesetId, powerMap: {}, inheritedPowerMap: { ...base.powerMap } };
-}
+/** A new extension of the context's ruleset, and its context (`seedExtension`'s). */
+export const freshExtensionContext = (base: SeedContext) =>
+  extensionContext(db, base, { name: `Seed test extension ${uniqueId()}`, description: "An extension a test seeds into" });
+
+/** The names of a context's ids, by id. */
+export const namesOf = (ids: Record<string, string>) => Object.fromEntries(Object.entries(ids).map(([name, id]) => [id, name]));
 
 /** A modifier as a line: "target operator value valueType". */
 const describeModifier = (m: { target: string; operator: string; value: string; valueType: string }) => `${m.target} ${m.operator} ${m.value} ${m.valueType}`;
 
 /**
- * What an entity was seeded with, as its content reads: its requirements ("level target operator value"), its
- * modifiers (each with its requirements) and its properties ("type value"), each sorted.
+ * What an entity was seeded with, as its content reads: its requirements ("level target operator value") by level,
+ * and its modifiers (each with its requirements) and properties ("type value"), sorted.
  */
 export async function customizationsOf(entityId: string) {
   const requirementsOf = async (id: string) =>
@@ -43,11 +42,4 @@ export async function customizationsOf(entityId: string) {
     modifiers: modifierLines.sort(),
     properties: properties.map((p) => `${p.type} ${p.value}`).sort(),
   };
-}
-
-/** The modifiers of several entities (class levels, feats), each as `describeModifier` with its requirements. */
-export async function modifiersOf(entityIds: string[]) {
-  if (entityIds.length === 0) return [];
-  const modifiers = await db.select().from(modifiersInCustomization).where(inArray(modifiersInCustomization.sourceId, entityIds));
-  return modifiers.map((m) => ({ sourceId: m.sourceId, line: describeModifier(m), id: m.id }));
 }

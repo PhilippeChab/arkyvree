@@ -14,18 +14,23 @@ import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/
 import { registry } from "@/database/packages/registry.ts";
 import { entitySnapshotsInRules, featsInRules, itemsInRules, klassesInRules, powersInRules, racesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
+import { invalidateSeededRuleset } from "@/tests/helpers.ts";
 
 const BONDS = [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS];
-const namesOf = (rows: { name: string }[]) => rows.map((row) => row.name).sort();
+const sortedNames = (rows: { name: string }[]) => rows.map((row) => row.name).sort();
 
 /** Renames the seeded system rulesets (the seeds find the core rules by name, and a system ruleset's name is its own). Returns their ids. */
-const renameSeeded = async () => (await db.update(rulesetsInRules).set({ name: sql`${rulesetsInRules.name} || ' (seeded)'` })
-  .where(eq(rulesetsInRules.system, true)).returning({ id: rulesetsInRules.id })).map(({ id }) => id);
+async function renameSeeded() {
+  const ids = (await db.update(rulesetsInRules).set({ name: sql`${rulesetsInRules.name} || ' (seeded)'` })
+    .where(eq(rulesetsInRules.system, true)).returning({ id: rulesetsInRules.id })).map(({ id }) => id);
+  for (const id of ids) invalidateSeededRuleset(id);
+  return ids;
+}
 
 test("An extension doesn't seed without the core rules", async () => {
   await renameSeeded();
   const extension = registry.find((pkg) => pkg.type === "extension")!;
-  await expect(extension.seeds[0](db)).rejects.toThrow(`extends ${DND35_RULESET_NAME}, which isn't seeded`);
+  await expect(extension.seeds[0](db)).rejects.toThrow(`needs ${DND35_RULESET_NAME}, which isn't seeded`);
 });
 
 test("Every content package seeds into a database without them, its extensions extending the core rules it seeds", async () => {
@@ -44,11 +49,11 @@ test("Every content package seeds into a database without them, its extensions e
     db.select({ id: table.id, name: table.name }).from(table).where(eq(table.rulesetId, core.id));
   const coreFeats = await own(featsInRules);
   const corePowers = await own(powersInRules);
-  expect(namesOf(coreFeats)).toEqual([...ALL_FEATS.map((feat) => feat.name), ...ALL_DOMAINS.map((domain) => `${domain.name} Domain`), ...BONDS.flatMap((bond) => bond.feats.map((feat) => feat.name))].sort());
-  expect(namesOf(await own(klassesInRules))).toEqual([...ALL_CLASSES, ...BONDS.map((bond) => bond.klass)].map((klass) => klass.name).sort());
-  expect(namesOf(corePowers)).toEqual(ALL_SPELLS.map((spell) => spell.name).sort());
-  expect(namesOf(await own(racesInRules))).toEqual([...ALL_RACES, ...BONDS.flatMap((bond) => bond.races)].map((race) => race.name).sort());
-  expect(namesOf(await own(itemsInRules)))
+  expect(sortedNames(coreFeats)).toEqual([...ALL_FEATS.map((feat) => feat.name), ...ALL_DOMAINS.map((domain) => `${domain.name} Domain`), ...BONDS.flatMap((bond) => bond.feats.map((feat) => feat.name))].sort());
+  expect(sortedNames(await own(klassesInRules))).toEqual([...ALL_CLASSES, ...BONDS.map((bond) => bond.klass)].map((klass) => klass.name).sort());
+  expect(sortedNames(corePowers)).toEqual(ALL_SPELLS.map((spell) => spell.name).sort());
+  expect(sortedNames(await own(racesInRules))).toEqual([...ALL_RACES, ...BONDS.flatMap((bond) => bond.races)].map((race) => race.name).sort());
+  expect(sortedNames(await own(itemsInRules)))
     .toEqual([...TEMPLATE_ITEMS, ...GOODS, ...MAGIC_ARMOR, ...MAGIC_SHIELDS, ...MAGIC_WEAPONS, ...WONDROUS_ITEMS, ...RINGS, ...RODS, ...STAFFS].map((item) => item.name).sort());
 
   // What the extensions copy is the new core's

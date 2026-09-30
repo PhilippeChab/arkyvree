@@ -25,16 +25,12 @@ import {
   klassSkillsInRules,
   powersAptitudesInRules,
   powersInRules,
-  propertiesInCustomization,
   racesInRules,
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/power.ts";
-import { customizationsOf, freshExtensionContext, freshSeedContext, modifiersOf } from "@/tests/seeds/freshSeed.ts";
-
-/** The names of a context's ids, by id. */
-const namesOf = (ids: Record<string, string>) => Object.fromEntries(Object.entries(ids).map(([name, id]) => [id, name]));
+import { customizationsOf, freshExtensionContext, freshSeedContext, namesOf } from "@/tests/seeds/freshSeed.ts";
 
 const feats = (...names: string[]) => names.map((name) => ({ name, description: "", aptitudes: [] }));
 const spell = (name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed => ({ name, description: "", level, aptitudes: [], properties: [], ...fields });
@@ -125,30 +121,30 @@ describe("Seeding", () => {
   });
 
   describe("a class", () => {
-    /** Each level's base attack, skill points, saves, modifiers, requirements and granted feats. */
+    /** Each level's properties (base attack, skill points), saves, modifiers, requirements and granted feats. */
     async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
       const saves = namesOf(ctx.saveMap);
       const feats = namesOf(ctx.featMap);
       const aptitudes = namesOf(ctx.aptMap);
       const ids = Object.values(levelIds);
-      const properties = await db.select().from(propertiesInCustomization).where(inArray(propertiesInCustomization.entityId, ids));
       const levelSaves = await db.select().from(klassLevelSavesInRules).where(inArray(klassLevelSavesInRules.klassLevelId, ids));
-      const modifiers = await modifiersOf(ids);
       const granted = await db.select().from(klassLevelFeatsInRules).where(inArray(klassLevelFeatsInRules.klassLevelId, ids));
       const levels = [];
       for (const [level, id] of Object.entries(levelIds)) {
+        const { properties, modifiers, requirements } = await customizationsOf(id);
         levels.push({
           level: Number(level),
-          bab: properties.find((p) => p.entityId === id && p.type === KLASS_LEVEL_BAB)?.value,
-          skillPoints: properties.find((p) => p.entityId === id && p.type === KLASS_LEVEL_SKILL_POINTS)?.value,
+          properties,
           saves: Object.fromEntries(levelSaves.filter((s) => s.klassLevelId === id).map((s) => [saves[s.saveId], s.base])),
-          modifiers: modifiers.filter((m) => m.sourceId === id).map((m) => m.line).sort(),
-          requirements: (await customizationsOf(id)).requirements,
+          modifiers,
+          requirements,
           feats: granted.filter((g) => g.klassLevelId === id).map((g) => `${feats[g.featId]} in ${aptitudes[g.aptitudeId]}${g.free ? ", free" : ""}`).sort(),
         });
       }
       return levels;
     }
+    /** A level's properties: its base attack and skill points. */
+    const levelProperties = (bab: number, skillPoints: number) => [`${KLASS_LEVEL_BAB} ${bab}`, `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
 
     test("seeds its levels: base attack, saves, skill points, spell slots, picks, modifiers, granted feats and what it takes to reach each", async () => {
       const ctx = await freshSeedContext({ named: true });
@@ -188,7 +184,7 @@ describe("Seeding", () => {
       const slot = (spellLevel: number, kind: string, operator: string, value: number) => `aptitudes.testmagespells.${spellLevel}.${kind} ${operator} ${value} number`;
       expect(await levelsOf(ctx, levelIds)).toEqual([
         {
-          level: 1, bab: "0", skillPoints: "4", saves: { Fortitude: 2, Reflex: 0, Will: 2 },
+          level: 1, properties: levelProperties(0, 4), saves: { Fortitude: 2, Reflex: 0, Will: 2 },
           modifiers: [
             "aptitudes.testbonusfeat.allowed add 1 number",
             slot(0, "allowed", "add", 4), slot(0, "uses", "add", 3), slot(1, "allowed", "add", 2), slot(1, "uses", "add", 1),
@@ -197,7 +193,7 @@ describe("Seeding", () => {
           feats: ["Test Proficiency in General, free"],
         },
         {
-          level: 2, bab: "1", skillPoints: "4", saves: { Fortitude: 3, Reflex: 0, Will: 3 },
+          level: 2, properties: levelProperties(1, 4), saves: { Fortitude: 3, Reflex: 0, Will: 3 },
           modifiers: [
             "aptitudes.bonusarcanecasterlevel.allowed add 1 number", "aptitudes.bonusdivinecasterlevel.allowed add 1 number", "combat.ac.misc add 1 number",
             slot(0, "allowed", "add", 1), slot(0, "uses", "add", 1), slot(1, "uses", "add", 1),
@@ -206,7 +202,7 @@ describe("Seeding", () => {
           feats: ["Test Evasion in Test Class Feature, free"],
         },
         {
-          level: 3, bab: "2", skillPoints: "4", saves: { Fortitude: 3, Reflex: 1, Will: 3 },
+          level: 3, properties: levelProperties(2, 4), saves: { Fortitude: 3, Reflex: 1, Will: 3 },
           modifiers: ["aptitudes.testbonusfeat.allowed add 1 number", slot(1, "allowed", "add", 1), slot(2, "allowed", "add", 1), slot(2, "uses", "add", 1)].sort(),
           requirements: ["1 classes.testmage.level greater_than 2"],
           feats: ["Test Bonus in Test Bonus Feat, free"],
@@ -223,10 +219,10 @@ describe("Seeding", () => {
       expect((await db.select().from(klassesInRules).where(eq(klassesInRules.id, klassId)))[0].kind).toBe("npc");
       expect(await customizationsOf(klassId)).toEqual({ requirements: [], modifiers: [], properties: [] });
       const levels = await levelsOf(ctx, levelIds);
-      expect(levels.map(({ level, bab, modifiers }) => ({ level, bab, modifiers }))).toEqual([
-        { level: 1, bab: "1", modifiers: ["aptitudes.testhealerspells.1.allowed set -1 number", "aptitudes.testhealerspells.1.uses add 1 number"] },
-        { level: 2, bab: "2", modifiers: ["aptitudes.testhealerspells.1.uses add 1 number"] },
-        { level: 3, bab: "3", modifiers: ["aptitudes.testhealerspells.2.allowed set -1 number", "aptitudes.testhealerspells.2.uses add 1 number"] },
+      expect(levels.map(({ level, properties, modifiers }) => ({ level, properties, modifiers }))).toEqual([
+        { level: 1, properties: levelProperties(1, 2), modifiers: ["aptitudes.testhealerspells.1.allowed set -1 number", "aptitudes.testhealerspells.1.uses add 1 number"] },
+        { level: 2, properties: levelProperties(2, 2), modifiers: ["aptitudes.testhealerspells.1.uses add 1 number"] },
+        { level: 3, properties: levelProperties(3, 2), modifiers: ["aptitudes.testhealerspells.2.allowed set -1 number", "aptitudes.testhealerspells.2.uses add 1 number"] },
       ]);
     });
 
@@ -436,9 +432,11 @@ describe("Seeding", () => {
       expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Single"])).toEqual(["General"]);
       expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Open"])).toEqual(["General", "Test Class Feature"]);
 
-      // The originals are as they were
+      // The originals are as they were, and the core rules' context too
       expect(await customizationsOf(original["Test Grouped"])).toEqual(before);
       expect(await aptitudesOfFeat(ctx, original["Test Grouped"])).toEqual(["General"]);
+      expect(core.featMap).toEqual(original);
+      expect(Object.keys(core.aptMap)).toEqual(["General"]);
     });
 
     test("copies the inherited spells it adds to its spell lists, which keep the originals' spell lists", async () => {
@@ -448,6 +446,7 @@ describe("Seeding", () => {
       await seedPowers(db, core, [
         spell("Test Bolt", 3, { aptitudes: ["Wizard Spells", "Test Source"], savingThrow: "See text", properties: [school] }),
         spell("Test Ward", 1, { aptitudes: ["Cleric Spells"] }),
+        spell("Test Light", 0, { aptitudes: ["Cleric Spells"] }),
       ]);
 
       const ctx = await freshExtensionContext(core);
@@ -471,6 +470,14 @@ describe("Seeding", () => {
       const snapshots = await db.select().from(entitySnapshotsInRules).where(eq(entitySnapshotsInRules.rulesetId, ctx.rulesetId));
       expect(snapshots).toMatchObject([{ entityType: "powers", sourceEntityId: core.powerMap["Test Bolt"], forkedEntityId: boltId, contentHash: "seed" }]);
       expect(await spellListsOf(ctx, core.powerMap["Test Bolt"])).toEqual(["Test Source 3", "Wizard Spells 3"]);
+
+      // An extension of the extension copies the core's spells too
+      const grandchild = await freshExtensionContext(ctx);
+      await cowSpellsIntoExtension(db, grandchild, [{ spell: "Test Light", aptitudes: [{ aptitude: "Arcane Spells", level: 1 }] }]);
+      const light = grandchild.powerMap["Test Light"];
+      expect(light).not.toBe(core.powerMap["Test Light"]);
+      expect((await db.select().from(powersInRules).where(eq(powersInRules.id, light)))[0]).toMatchObject({ rulesetId: grandchild.rulesetId, name: "Test Light" });
+      expect(await spellListsOf(grandchild, light)).toEqual(["Arcane Spells 1", "Cleric Spells 0"]);
     });
   });
 });

@@ -1,7 +1,7 @@
 import { eq, sql, type InferInsertModel } from "drizzle-orm";
 import type { JobHelpers } from "graphile-worker";
-import { type charactersInCharacter, rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+import { type charactersInCharacter, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
 import { getSeedContext, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
@@ -85,20 +85,17 @@ export async function createSeededTestRuleset(
     status?: "Draft" | "Published" | "Archived";
   } = {},
 ) {
-  const [seedRuleset] = await db
-    .select({ id: rulesetsInRules.id })
-    .from(rulesetsInRules)
-    .where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
+  const coreId = await coreRulesetId(db, "A seeded test ruleset");
 
   const ruleset = await createTestRuleset(userId, {
-    rulesetId: seedRuleset.id,
-    ancestorRulesetIds: [seedRuleset.id],
+    rulesetId: coreId,
+    ancestorRulesetIds: [coreId],
     ...options,
   });
 
   // Copy ruleset-level properties (e.g., RULESET_SKILL_POINT_ABILITY_ID)
   const sourceProperties = await Properties.findManyByEntity(db, {
-    entityIds: [seedRuleset.id],
+    entityIds: [coreId],
     entityType: "rulesets",
   });
   if (sourceProperties.length > 0) {

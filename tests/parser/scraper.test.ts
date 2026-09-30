@@ -24,10 +24,16 @@ import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/share
 // committed reference's entries.
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, "fixtures", `${name}.html`), "utf8");
+/** The URL a fixture's page was fetched from, which its second line names. */
+function urlOf(name: string) {
+  const url = fixture(name).match(/^<!-- (\S+), trimmed/m)?.[1];
+  if (!url) throw new Error(`${name} doesn't name its URL`);
+  return url;
+}
 /** A reference as the scraper stored it, before its overrides. */
-const reference = <T extends ReferenceType>(path: string, type: T) => readStoredReference(join(REFERENCE_DIR, path), type);
+const stored = <T extends ReferenceType>(file: string, type: T) => readStoredReference(join(REFERENCE_DIR, file), type);
 /** What the scraper stores of a parse. */
-const stored = <T>(parsed: T) => sanitizeJsonValues(parsed);
+const scraped = <T>(parsed: T) => sanitizeJsonValues(parsed);
 /** The reference's entries with these names, in order: each the next with its name (a table can list one twice). */
 function named<T extends { name: string }>(entries: T[], names: string[]) {
   let from = 0;
@@ -43,10 +49,11 @@ describe("The scraper reads from a page the reference's entries:", () => {
     ["acrobatic", "Acrobatic"],
     ["armor-proficiency-heavy", "Armor Proficiency (heavy)"],
     ["brew-potion", "Brew Potion"],
+    // Stored as general, not fighter: its two categories are #75
     ["cleave", "Cleave"],
   ])("the feat %s", (page, name) => {
-    const feats = reference("srd/feats.json", "feat").raw;
-    expect(stored(parseFeatDetailHtml(fixture(`feat-${page}`)))).toEqual(feats.find((feat) => feat.name === name)!);
+    const feats = stored("srd/feats.json", "feat").raw;
+    expect(scraped(parseFeatDetailHtml(fixture(`feat-${page}`)))).toEqual(feats.find((feat) => feat.name === name)!);
   });
 
   test.each([
@@ -55,9 +62,11 @@ describe("The scraper reads from a page the reference's entries:", () => {
     ["aid", "Aid"],
     ["align-weapon", "Align Weapon"],
     ["animate-dead", "Animate Dead"],
+    // Its slug is its URL's, bears-endurance, not its name's
+    ["bears-endurance", "Bear's Endurance"],
   ])("the spell %s", (page, name) => {
-    const spells = reference("srd/spells.json", "spell").raw;
-    expect(stored(parseSpellDetailHtml(fixture(`spell-${page}`), ""))).toEqual(spells.find((spell) => spell.name === name)!);
+    const spells = stored("srd/spells.json", "spell").raw;
+    expect(scraped(parseSpellDetailHtml(fixture(`spell-${page}`), urlOf(`spell-${page}`)))).toEqual(spells.find((spell) => spell.name === name)!);
   });
 
   test.each([
@@ -66,8 +75,8 @@ describe("The scraper reads from a page the reference's entries:", () => {
     ["half-elf", "Half-elf"],
     ["human", "Human"],
   ])("the race %s", (page, name) => {
-    const races = reference("srd/races.json", "race").raw;
-    expect(stored(parseRaceDetailHtml(fixture(`race-${page}`)))).toEqual(races.find((race) => race.name === name)!);
+    const races = stored("srd/races.json", "race").raw;
+    expect(scraped(parseRaceDetailHtml(fixture(`race-${page}`)))).toEqual(races.find((race) => race.name === name)!);
   });
 
   test.each([
@@ -80,29 +89,29 @@ describe("The scraper reads from a page the reference's entries:", () => {
     ["shadowmind", "complete-adventurer"],
     ["vigilante", "complete-adventurer"],
   ])("the class %s", (page, book) => {
-    const klass = reference(`${book}/classes/${page}.json`, "class");
-    const { _meta, ...raw } = parseClassHtml(fixture(`class-${page}`), klass._meta.sourceUrl, book);
-    expect(stored(raw)).toEqual(klass.raw);
+    const klass = stored(`${book}/classes/${page}.json`, "class");
+    const { _meta, ...raw } = parseClassHtml(fixture(`class-${page}`), urlOf(`class-${page}`), book);
+    expect(scraped(raw)).toEqual(klass.raw);
     expect({ ..._meta, scrapedAt: klass._meta.scrapedAt }).toEqual(klass._meta);
   });
 
   test("the domains with spells, core or not", () => {
-    const domains = reference("domains.json", "domain").raw;
-    const parse = (filter: "core" | "non-core" | "all") => stored(parseDomainsHtml(fixture("domains"), "", "all-domains", filter).raw);
-    // Sand has no spells; Planar Domains heads the planar ones
+    const domains = stored("domains.json", "domain").raw;
+    const parse = (filter: "core" | "non-core" | "all") => scraped(parseDomainsHtml(fixture("domains"), "", "all-domains", filter).raw);
+    // Sand is left out: its granted power's table is read as its spells (#77)
     expect(parse("all")).toEqual(named(domains, ["Air", "Artifice", "Celestial", "Glory (BoED)", "Healing", "Strength", "War", "The Abyss"]));
     expect(parse("core")).toEqual(named(domains, ["Air", "Healing", "Strength", "War"]));
     expect(parse("non-core")).toEqual(named(domains, ["Artifice", "Celestial", "Glory (BoED)", "The Abyss"]));
   });
 
   test("the weapons, armor and goods", () => {
-    const items = reference("srd/items.json", "item").raw;
-    expect(stored(parseWeaponsHtml(fixture("weapons")))).toEqual(named(items.weapons, [
+    const items = stored("srd/items.json", "item").raw;
+    expect(scraped(parseWeaponsHtml(fixture("weapons")))).toEqual(named(items.weapons, [
       "Gauntlet", "Unarmed strike", "Dagger", "Dagger, punching", "Club", "Mace, heavy", "Longspear", "Quarterstaff", "Crossbow, heavy", "Bolts, crossbow (10)",
       "Axe, throwing", "Hammer, light", "Battleaxe", "Flail", "Falchion", "Glaive", "Longbow", "Arrows (20)",
       "Kama", "Nunchaku", "Sword, bastard", "Waraxe, dwarven", "Axe, orc double", "Chain, spiked", "Bolas", "Crossbow, hand",
     ]));
-    expect(stored(parseArmorHtml(fixture("armor"))))
+    expect(scraped(parseArmorHtml(fixture("armor"))))
       .toEqual(named(items.armor, ["Padded", "Leather", "Hide", "Scale mail", "Splint mail", "Banded mail", "Buckler", "Shield, light wooden", "Armor spikes", "Gauntlet, locked"]));
     // The spellcasting services aren't goods
     const goods = [
@@ -113,13 +122,13 @@ describe("The scraper reads from a page the reference's entries:", () => {
       ["tableFoodDrinkAndLodging", "Gallon"], ["tableMountsAndRelatedGear", "Medium creature"],
       ["tableTransport", "Carriage"], ["tableTransport", "Cart"],
     ];
-    expect(stored(parseGoodsHtml(fixture("goods")))).toEqual(goods.map(([tableId, name]) => items.goods.find((good) => good.tableId === tableId && good.name === name)!));
+    expect(scraped(parseGoodsHtml(fixture("goods")))).toEqual(goods.map(([tableId, name]) => items.goods.find((good) => good.tableId === tableId && good.name === name)!));
   });
 
   test("the magic items, one a price of those with several", () => {
-    const items = reference("srd/magicItems.json", "magicItem").raw;
+    const items = stored("srd/magicItems.json", "magicItem").raw;
     const page = (parsed: ReturnType<typeof parseRingsHtml>, category: string, names: string[]) =>
-      expect(stored(parsed)).toEqual(named(items.filter((item) => item.category === category), names));
+      expect(scraped(parsed)).toEqual(named(items.filter((item) => item.category === category), names));
     const armor = fixture("magicArmor");
     page(parseMagicArmorHtml(armor), "specificArmor", ["Adamantine Breastplate", "Banded Mail of Luck"]);
     page(parseMagicShieldsHtml(armor), "specificShield", ["Absorbing Shield", "Caster's Shield"]);
