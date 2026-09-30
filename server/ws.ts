@@ -165,7 +165,6 @@ async function connectListener(): Promise<void> {
 }
 
 export async function startBroadcastListener(): Promise<void> {
-  if (process.env.NODE_ENV === "test") return;
   shuttingDownListener = false;
   currentAttempt = 0;
   await connectListener();
