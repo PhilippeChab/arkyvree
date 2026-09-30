@@ -20,19 +20,6 @@ class NotificationsRepository extends BaseRepository<typeof notificationsInAccou
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(db: Db, values: Partial<InferInsertModel<typeof notificationsInAccount>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set(values)
-      .where(eq(this.table.id, where.id))
-      .returning();
-  }
-
-  async archive(_db: Db, _where: { id: string }) {
-    // Notifications don't use soft-delete — use markRead instead
-    return [] as InferSelectModel<typeof notificationsInAccount>[];
-  }
-
   async delete(db: Db, where: { id: string } | { createdBefore: string }) {
     return await db
       .delete(this.table)

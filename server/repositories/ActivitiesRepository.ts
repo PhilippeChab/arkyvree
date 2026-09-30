@@ -15,22 +15,6 @@ class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount, Ac
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(db: Db, values: Partial<InferInsertModel<typeof activitiesInAccount>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
   async delete(db: Db, where: { id: string } | { createdBefore: string }) {
     return await db
       .delete(this.table)

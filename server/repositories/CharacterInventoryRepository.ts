@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, not, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 
 import { charactersInCharacter, inventoryInCharacter, itemsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
@@ -29,23 +29,6 @@ class CharacterInventoryRepository
         this.idMatches(this.table.itemId, where.itemId),
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
-      .returning();
-  }
-
-  // Cascade from character archive/unarchive
-  async archive(db: Db, where: { characterId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async unarchive(db: Db, where: { characterId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.characterId, where.characterId), not(isNull(this.table.deletedAt))))
       .returning();
   }
 

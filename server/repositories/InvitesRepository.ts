@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { and, desc, eq, getTableColumns, ilike, inArray, isNull, not, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ilike, inArray, isNull, or } from "drizzle-orm";
 
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -27,19 +27,6 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
       .returning();
   }
 
-  async archive(db: Db, where: { id: string } | { playerId: string } | { playerIds: string[] }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "playerId" in where && eq(this.table.playerId, where.playerId),
-        "playerIds" in where && inArray(this.table.playerId, where.playerIds),
-        isNull(this.table.deletedAt),
-      ]))
-      .returning();
-  }
-
   // Hard delete — used when intentionally removing a player from a campaign
   async deleteByPlayerId(db: Db, where: { playerId: string }) {
     return await db
@@ -53,16 +40,6 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async unarchive(db: Db, where: { playerIds: string[] }) {
-    if (where.playerIds.length === 0) return [];
-
-    return await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(inArray(this.table.playerId, where.playerIds), not(isNull(this.table.deletedAt))))
       .returning();
   }
 
@@ -186,20 +163,6 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
         ),
       )
       .returning();
-  }
-
-  async findManyByPlayerIds(db: Db, playerIds: string[]) {
-    if (playerIds.length === 0) {
-      return [];
-    }
-
-    return await db.query.invitesInCampaign.findMany({
-      where: and(
-        inArray(this.table.playerId, playerIds),
-        isNull(this.table.deletedAt),
-      ),
-      orderBy: [desc(this.table.createdAt)],
-    });
   }
 
   withInstance(instance: InferSelectModel<typeof invitesInCampaign>) {

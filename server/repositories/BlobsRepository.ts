@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 
 import { blobsInStorage } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -26,10 +25,6 @@ class BlobsRepository extends BaseRepository<typeof blobsInStorage, BlobInstance
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(eq(this.table.id, where.id))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("blobs don't soft-archive — use Blobs.delete()");
   }
 
   async delete(db: Db, where: { id: string }) {

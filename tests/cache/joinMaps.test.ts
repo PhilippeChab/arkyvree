@@ -1,19 +1,15 @@
 /**
  * Parity tests: composed cache join maps must return the same rows and shape
- * as the repository queries they replaced. Guards against silent drift if
- * someone adds a filter/column to a repo method and forgets to mirror it in
- * the cache compose step.
+ * as the queries they replaced, kept here as the reference. Guards against
+ * silent drift if someone adds a filter/column to the tables and forgets to
+ * mirror it in the cache compose step.
  */
 
+import { and, eq, isNull } from "drizzle-orm";
+import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { type SeedContext } from "@/database/seeds/helpers.ts";
-import {
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassSkills,
-  PowersAptitudes,
-  Rulesets,
-} from "@/server/repositories/index.ts";
+import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
 import {
   getOrBuildCowData,
   getOrFetchRulesetData,
@@ -37,14 +33,15 @@ describe("cache join-maps — parity with repository queries", () => {
   const sortById = <T extends { id: string }>(xs: T[]) =>
     [...xs].sort((a, b) => a.id.localeCompare(b.id));
 
-  test("klassLevelFeatsWithFeatsByKlassLevel matches KlassLevelFeats.findManyWithFeats", async () => {
+  test("klassLevelFeatsWithFeatsByKlassLevel matches the class level's feats with their feat", async () => {
     const fighterId = ctx.klassMap.pc["Fighter"];
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${fighterId}:1`);
     expect(klassLevel).toBeDefined();
 
     const fromCache = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel!.id) ?? [];
-    const fromDb = await KlassLevelFeats.findManyWithFeats(db, {
-      klassLevelId: klassLevel!.id,
+    const fromDb = await db.query.klassLevelFeatsInRules.findMany({
+      where: and(eq(klassLevelFeatsInRules.klassLevelId, klassLevel!.id), isNull(klassLevelFeatsInRules.deletedAt)),
+      with: { featsInRule: true },
     });
 
     expect(fromCache.length).toBe(fromDb.length);
@@ -59,15 +56,16 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(sortById(fromCache).map(mapRow)).toEqual(sortById(fromDb).map(mapRow));
   });
 
-  test("klassLevelPowersWithPowersByKlassLevel matches KlassLevelPowers.findManyWithPowers", async () => {
+  test("klassLevelPowersWithPowersByKlassLevel matches the class level's powers with their power", async () => {
     // Pick a class level that's likely to have auto-granted powers — Wizard L1.
     const klassId = ctx.klassMap.pc["Wizard"];
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:1`);
     if (!klassLevel) return; // seed doesn't have Wizard at this level — skip
 
     const fromCache = rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
-    const fromDb = await KlassLevelPowers.findManyWithPowers(db, {
-      klassLevelId: klassLevel.id,
+    const fromDb = await db.query.klassLevelPowersInRules.findMany({
+      where: and(eq(klassLevelPowersInRules.klassLevelId, klassLevel.id), isNull(klassLevelPowersInRules.deletedAt)),
+      with: { powersInRule: true },
     });
 
     expect(fromCache.length).toBe(fromDb.length);
@@ -87,11 +85,14 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(sortByPowerApt(fromCache).map(mapRow)).toEqual(sortByPowerApt(fromDb).map(mapRow));
   });
 
-  test("klassSkillsWithSkillsByKlass matches KlassSkills.findManyWithSkills", async () => {
+  test("klassSkillsWithSkillsByKlass matches the class's skills with their skill", async () => {
     const fighterId = ctx.klassMap.pc["Fighter"];
 
     const fromCache = rulesetData.klassSkillsWithSkillsByKlass.get(fighterId) ?? [];
-    const fromDb = await KlassSkills.findManyWithSkills(db, { klassId: fighterId });
+    const fromDb = await db.query.klassSkillsInRules.findMany({
+      where: and(eq(klassSkillsInRules.klassId, fighterId), isNull(klassSkillsInRules.deletedAt)),
+      with: { skillsInRule: true },
+    });
 
     expect(fromCache.length).toBe(fromDb.length);
     // klassSkillsInRules has no `id` column — sort by skillId (composite key).

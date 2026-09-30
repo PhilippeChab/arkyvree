@@ -16,11 +16,6 @@ class PlayerCharactersRepository
     return await db.insert(this.table).values(values).returning();
   }
 
-  async createMany(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof playerCharactersInCampaign>>,
@@ -37,48 +32,11 @@ class PlayerCharactersRepository
       .returning();
   }
 
-  async archive(db: Db, where: { playerId: string; characterId?: string } | { playerIds: string[] }) {
-    if ("playerIds" in where) {
-      if (where.playerIds.length === 0) return [];
-
-      return await db
-        .update(this.table)
-        .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-        .where(and(inArray(this.table.playerId, where.playerIds), isNull(this.table.deletedAt)))
-        .returning();
-    }
-
-    const conditions = [
-      eq(this.table.playerId, where.playerId),
-      isNull(this.table.deletedAt),
-    ];
-
-    if (where.characterId) {
-      conditions.push(eq(this.table.characterId, where.characterId));
-    }
-
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(...conditions))
-      .returning();
-  }
-
   // Hard delete — used when intentionally removing a player from a campaign
   async deleteByPlayerId(db: Db, where: { playerId: string }) {
     return await db
       .delete(this.table)
       .where(eq(this.table.playerId, where.playerId));
-  }
-
-  async unarchive(db: Db, where: { playerIds: string[] }) {
-    if (where.playerIds.length === 0) return [];
-
-    return await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(inArray(this.table.playerId, where.playerIds), not(isNull(this.table.deletedAt))))
-      .returning();
   }
 
   async findOne(

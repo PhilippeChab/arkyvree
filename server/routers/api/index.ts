@@ -6,7 +6,6 @@ import characters from "./characters/index.tsx";
 import dashboard from "./dashboard/index.ts";
 import demo from "./demo/index.ts";
 import exports from "./exports/index.ts";
-import feedback from "./feedback/index.ts";
 import notifications from "./notifications/index.ts";
 import rulesets from "./rulesets/index.ts";
 import shared from "./shared/index.tsx";
@@ -20,7 +19,6 @@ const api = new Hono()
   .route("/dashboard", dashboard)
   .route("/demo", demo)
   .route("/exports", exports)
-  .route("/feedback", feedback)
   .route("/notifications", notifications)
   .route("/rulesets", rulesets)
   .route("/campaigns", campaigns);

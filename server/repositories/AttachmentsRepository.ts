@@ -1,7 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 
 import { attachmentsInStorage, blobsInStorage } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -14,14 +13,6 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage, 
 
   async create(db: Db, values: InferInsertModel<typeof attachmentsInStorage>) {
     return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(): Promise<never> {
-    throw new InternalError("attachments are immutable — create + delete instead");
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("attachments don't soft-archive — use Attachments.delete()");
   }
 
   async delete(db: Db, where: { id: string } | { recordType: string; recordIds: string[] }) {

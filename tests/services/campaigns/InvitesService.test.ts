@@ -1,3 +1,5 @@
+import { playersInCampaign } from "@/drizzle/schema.ts";
+import { eq } from "drizzle-orm";
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
@@ -183,7 +185,7 @@ describe("InvitesService", () => {
     test("throws NotFoundError for a missing invite or a removed slot", async () => {
       const { gmSession, slot, invite } = await setup();
       await expect(CampaignInvitesMethods.revokeCampaignInvite(gmSession, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await Players.archive(db, { id: slot.id });
+      await db.update(playersInCampaign).set({ deletedAt: new Date().toISOString() }).where(eq(playersInCampaign.id, slot.id));
       await expect(CampaignInvitesMethods.revokeCampaignInvite(gmSession, invite.id)).rejects.toThrow(NotFoundError);
     });
   });

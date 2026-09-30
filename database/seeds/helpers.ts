@@ -19,7 +19,12 @@ import {
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { coreRulesetId, idsByName, loadSeedContext, type SeedContext as RulesetSeedContext } from "@/database/packages/dnd35/seed/context.ts";
-import { reconcileBondedForCharacter } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
+import { Characters } from "@/server/repositories/index.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import { reconcileAllBondedKinds } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 
 export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
 
@@ -85,6 +90,23 @@ export async function seedCharacter(db: Db, ctx: SeedContext, { classes, skills,
   await addPowers(db, ctx, levelIds, powers);
   await addInventory(db, ctx, characterId, inventory);
   await reconcileBondedForCharacter(db, characterId);
+}
+
+/** Builds a seeded master's bonded creatures (familiar, companion, mount) from its levels, as leveling up does. */
+async function reconcileBondedForCharacter(
+  tx: Db,
+  characterId: string,
+): Promise<void> {
+  const master = await Characters.findOne(tx, { id: characterId });
+  if (!master) throw new NotFoundError(`Character ${characterId} not found`);
+  if (master.kind !== "pc") return;
+
+  await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
+    const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const detailed = module.createDetailedCharacter(master) as Dnd35DetailedCharacter;
+    await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
+    await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
+  });
 }
 
 export async function createCharacter(

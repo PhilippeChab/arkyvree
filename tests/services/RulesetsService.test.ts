@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { eq, type InferInsertModel } from "drizzle-orm";
-import { featsAptitudesInRules, klassSkillsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { featsAptitudesInRules, featsInRules, klassSkillsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { DND35_COMPLETE_WARRIOR_NAME } from "@/database/packages/dnd35/names.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -13,10 +13,7 @@ import { cowEntity } from "@/server/services/rulesets/cow.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import type { Session } from "@/shared/relations.ts";
-import {
-  addCharacterLevel, addRulesetContributor, createTestCampaign, createTestCharacter, createTestKlassLevel, createTestRuleset,
-  createTestUser, getSeedCtx, NIL_UUID, uniqueId,
-} from "@/tests/helpers.ts";
+import { addCharacterLevel, addRulesetContributor, createTestCampaign, createTestCharacter, createTestKlassLevel, createTestRuleset, createTestUser, getSeedCtx, insertRows, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 100, page: 1 };
@@ -350,7 +347,7 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const parent = await createParent(owner.id);
       const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
-      const [modified, deleted, untouched] = await Feats.createMany(db, ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })));
+      const [modified, deleted, untouched] = await insertRows(featsInRules, ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })));
       await FeatsAptitudes.create(db, { featId: modified.id, aptitudeId: aptitude.id });
       const forked = await fork(session, parent, values);
       return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };

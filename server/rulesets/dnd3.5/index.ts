@@ -1,6 +1,6 @@
 import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
 import type { Db } from "@/server/database/index.ts";
-import { Abilities, Properties, Saves } from "@/server/repositories/index.ts";
+import { Properties } from "@/server/repositories/index.ts";
 import type { CharacterKind, DetailedCharacterWithSheet, RulesetModule } from "@/server/rulesets/types.ts";
 
 import Dnd35DetailedCharacter from "./DetailedCharacter.ts";
@@ -32,37 +32,6 @@ function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35Detail
 export function createRulesetModule(): RulesetModule {
   return {
     hooks: createServiceHooks(),
-
-    async seedRuleset(tx: Db, rulesetId: string) {
-      const createdAbilities = await Abilities.createMany(tx, [
-        { name: "Strength", description: "Measures physical power and carrying capacity", rulesetId },
-        { name: "Dexterity", description: "Measures agility, reflexes, and balance", rulesetId },
-        { name: "Constitution", description: "Measures health, stamina, and vital force", rulesetId },
-        { name: "Intelligence", description: "Measures reasoning and memory", rulesetId },
-        { name: "Wisdom", description: "Measures perception and insight", rulesetId },
-        { name: "Charisma", description: "Measures force of personality and leadership", rulesetId },
-      ]);
-
-      const abilityLookup = new Map(createdAbilities.map((a) => [a.name, a.id]));
-
-      await Saves.createMany(tx, [
-        { name: "Fortitude", description: "Resistance to physical threats", abilityId: abilityLookup.get("Constitution")!, rulesetId },
-        { name: "Reflex", description: "Ability to dodge area attacks", abilityId: abilityLookup.get("Dexterity")!, rulesetId },
-        { name: "Will", description: "Resistance to mental influence", abilityId: abilityLookup.get("Wisdom")!, rulesetId },
-      ]);
-
-      const skillPointAbilityId = abilityLookup.get("Intelligence");
-      if (skillPointAbilityId) {
-        await Properties.createMany(tx, [{
-          entityId: rulesetId,
-          entityType: "rulesets",
-          type: RULESET_SKILL_POINT_ABILITY_ID,
-          value: skillPointAbilityId,
-        }]);
-      }
-
-      await seedTemplateItems(tx, rulesetId);
-    },
 
     async seedTemplateItems(tx: Db, rulesetId: string) {
       await seedTemplateItems(tx, rulesetId);

@@ -1,9 +1,10 @@
+import { itemsInRules } from "@/drizzle/schema.ts";
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { Feats, Items, Properties } from "@/server/repositories/index.ts";
+import { Feats, Properties } from "@/server/repositories/index.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS, SPELL_SCHOOL, WEAPON_PROFICIENCY } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { PropertyTypesMethods } from "@/server/services/rulesets/customization/PropertyTypesService.ts";
-import { createTestUserAndRuleset } from "@/tests/helpers.ts";
+import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 const firstPage = { limit: 50, page: 1 };
 
@@ -15,7 +16,7 @@ const firstPage = { limit: 50, page: 1 };
 async function setup() {
   const { ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
-  const [sword, shield] = await Items.createMany(db, [{ name: "Sword", rulesetId }, { name: "Shield", rulesetId }]);
+  const [sword, shield] = await insertRows(itemsInRules, [{ name: "Sword", rulesetId }, { name: "Shield", rulesetId }]);
   const [feat] = await Feats.create(db, { name: "Test Feat", rulesetId });
   const itemProperty = (type: string, value: string, item = sword) => ({ entityId: item.id, entityType: "items", type, value });
   await Properties.createMany(db, [

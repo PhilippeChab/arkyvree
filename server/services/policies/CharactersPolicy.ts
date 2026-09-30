@@ -16,31 +16,6 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     return this.entity.userId === this.session.userId;
   }
 
-  canCreate() {
-    return true;
-  }
-
-  canRead() {
-    return true;
-  }
-
-  canUpdate() {
-    if (!this.isOwner && !this.isActiveContributor) {
-      throw new ForbiddenError("Only the owner or active contributors can edit this character");
-    }
-    if (this.entity.deletedAt) {
-      throw new UnprocessableEntityError("Archived characters are read-only");
-    }
-    return true;
-  }
-
-  canDelete() {
-    if (!this.isOwner) {
-      throw new ForbiddenError("Only the owner can archive this character");
-    }
-    return true;
-  }
-
   async canHardDelete() {
     if (!this.isOwner) {
       throw new ForbiddenError("Only the owner can permanently delete this character");

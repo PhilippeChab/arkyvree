@@ -1,12 +1,13 @@
+import { featsInRules, itemsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { Feats, Items, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { getOrBuildCowData, getOrFetchRulesetData, getOrFetchRulesetRawData, invalidateRuleset, invalidateAll, isRulesetRawDataPinned } from "@/server/cache/rulesetCache.ts";
 import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { makeSession, getSeedCtx, createTestRuleset, uniqueId } from "@/tests/helpers.ts";
+import { createTestRuleset, getSeedCtx, insertRows, makeSession, uniqueId } from "@/tests/helpers.ts";
 
 describe("rulesetCache", () => {
   async function getRuleset() {
@@ -333,7 +334,7 @@ describe("rulesetCache", () => {
       const seedRawBefore = await getOrFetchRulesetRawData(seed.id);
       const forkBefore = await composeFork(fork);
 
-      await Feats.createMany(db, [{
+      await insertRows(featsInRules, [{
         name: `Fork-only Feat ${uniqueId()}`,
         description: "Created directly in the fork",
         rulesetId: fork.id,
@@ -353,7 +354,7 @@ describe("rulesetCache", () => {
       const seed = await getRuleset();
 
       // Create a fresh base feat with a modifier, property, and modifier-level requirement.
-      const [baseFeat] = await Feats.createMany(db, [{
+      const [baseFeat] = await insertRows(featsInRules, [{
         name: `Cascade Feat ${uniqueId()}`,
         description: "For cascade test",
         rulesetId: seed.id,
@@ -475,7 +476,7 @@ describe("rulesetCache", () => {
       const featCountBefore = forkBefore.feats.length;
 
       // Add a new feat directly to the seed (simulating external mutation).
-      await Feats.createMany(db, [{
+      await insertRows(featsInRules, [{
         name: `Seed-added Feat ${uniqueId()}`,
         description: "Added to seed after fork composed",
         rulesetId: seed.id,
@@ -517,7 +518,7 @@ describe("rulesetCache", () => {
       const seed = await getRuleset();
 
       // Create a throwaway base feat + two system-owned extensions that each COW it.
-      const [baseFeat] = await Feats.createMany(db, [{
+      const [baseFeat] = await insertRows(featsInRules, [{
         name: `Sibling Base Feat ${uniqueId()}`,
         description: "To be COW'd by two extensions",
         rulesetId: seed.id,
@@ -555,7 +556,7 @@ describe("rulesetCache", () => {
       // Same sibling scenario as above, but on an item to prove compose's
       // exclusion logic works uniformly across entity types (races, items,
       // languages, klasses — all go through the same isExcluded filter).
-      const [baseItem] = await Items.createMany(db, [{
+      const [baseItem] = await insertRows(itemsInRules, [{
         name: `Sibling Base Item ${uniqueId()}`,
         description: "To be COW'd by two extensions",
         rulesetId: seed.id,

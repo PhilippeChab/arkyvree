@@ -17,7 +17,7 @@ const isWeaponLocation = (loc: string): loc is WeaponLocation =>
 
 export type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[WeaponLocation];
 
-export type EquipmentSlot = Lowercase<
+type EquipmentSlot = Lowercase<
   Exclude<(typeof location.enumValues)[number], WeaponLocation>
 >;
 
@@ -32,17 +32,7 @@ const LOCATION_TO_SLOT: Record<string, InventorySlot> = Object.fromEntries(
   ]),
 );
 
-export const EQUIPMENT_SLOTS: EquipmentSlot[] = [
-  ...location.enumValues
-    .filter((loc): loc is Exclude<typeof loc, WeaponLocation> => !isWeaponLocation(loc))
-    .map((loc) => loc.toLowerCase() as EquipmentSlot),
-];
-
 export const WEAPON_SET_SLOTS: WeaponSetSlot[] = Object.values(WEAPON_LOCATION_MAP);
-
-export const ALL_INVENTORY_SLOTS: InventorySlot[] = [
-  ...EQUIPMENT_SLOTS, ...WEAPON_SET_SLOTS,
-];
 
 export function getInventorySlot(
   type: string | null,

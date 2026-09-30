@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules } from "@/drizzle/schema.ts";
+import { featsInRules, klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, Aptitudes, EntitySnapshots, Feats, KlassLevelFeats, KlassLevelPowers, KlassLevels, Modifiers, Powers, Properties, Requirements, Saves } from "@/server/repositories/index.ts";
@@ -9,7 +9,7 @@ import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLeve
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
 
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {
@@ -52,7 +52,7 @@ describe("ClassLevelsService", () => {
 
     test("an update replaces them, keeps them when it omits them, and clears them", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const [cleave, dodge] = await Feats.createMany(db, [{ name: "Cleave", rulesetId: ruleset.id }, { name: "Dodge", rulesetId: ruleset.id }]);
+      const [cleave, dodge] = await insertRows(featsInRules, [{ name: "Cleave", rulesetId: ruleset.id }, { name: "Dodge", rulesetId: ruleset.id }]);
       const [fortitude, reflex] = [await createSave(ruleset.id, "Fortitude"), await createSave(ruleset.id, "Reflex")];
       const level = await createLevel(session, ruleset.id, klass.id, 1, { feats: [{ featId: cleave.id, aptitudeId: aptitude.id }], saves: [{ saveId: fortitude.id, base: 2 }] });
       const update = (body: Partial<LevelBody>) => ClassLevelsMethods.updateClassLevel(session, ruleset.id, klass.id, level.id, body);

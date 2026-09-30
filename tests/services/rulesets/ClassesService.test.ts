@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
+import { abilitiesInRules, klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Abilities, Aptitudes, Feats, KlassLevelPowers, KlassLevels, KlassSkills, Modifiers, Powers, Properties, Requirements, Saves, Skills } from "@/server/repositories/index.ts";
+import { Aptitudes, Feats, KlassLevelPowers, KlassLevels, KlassSkills, Modifiers, Powers, Properties, Requirements, Saves, Skills } from "@/server/repositories/index.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
-import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("ClassesService", () => {
@@ -28,7 +28,7 @@ describe("ClassesService", () => {
     expect(await ClassesMethods.getRulesetKlass(ruleset.id, fighter.id)).toMatchObject({ bonusSpellAbilityId: null, bonusSpellPropertyId: null });
 
     const wizard = await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Wizard", hd: 4 });
-    const [intelligence] = await Abilities.createMany(db, [{ name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id }]);
+    const [intelligence] = await insertRows(abilitiesInRules, [{ name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id }]);
     const [property] = await Properties.create(db, { entityId: wizard.id, entityType: "klasses", type: KLASS_BONUS_SPELL_ABILITY_ID, value: intelligence.id });
     expect(await ClassesMethods.getRulesetKlass(ruleset.id, wizard.id)).toMatchObject({ bonusSpellAbilityId: intelligence.id, bonusSpellPropertyId: property.id });
   });
@@ -36,7 +36,7 @@ describe("ClassesService", () => {
   test("deletes a class's levels with their feats, powers, saves and modifiers, and its class skills", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const rulesetId = ruleset.id;
-    const [ability] = await Abilities.createMany(db, [{ name: "Strength", description: "Strength", rulesetId }]);
+    const [ability] = await insertRows(abilitiesInRules, [{ name: "Strength", description: "Strength", rulesetId }]);
     const [aptitude] = await Aptitudes.create(db, { name: "Class Aptitude", rulesetId });
     const [feat] = await Feats.create(db, { name: "Class Feat", rulesetId });
     const [power] = await Powers.create(db, { name: "Class Power", rulesetId });

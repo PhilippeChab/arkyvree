@@ -22,8 +22,6 @@ import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { currentCowContext } from "@/server/services/rulesets/cowContext.ts";
 
-export const FIND_ALL_LIMIT = 5000;
-
 export type Paginated<T> = {
   items: T[];
   page: number;
@@ -49,12 +47,6 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
     db: Db,
     values: InferInsertModel<T> | InferInsertModel<T>[] | Record<string, unknown>,
   ): Promise<InferSelectModel<T>[]>;
-  abstract update(
-    db: Db,
-    values: Partial<InferInsertModel<T>>,
-    where: Record<string, unknown>,
-  ): Promise<InferSelectModel<T>[]>;
-  abstract archive(db: Db, where: Record<string, unknown>): Promise<InferSelectModel<T>[]>;
   abstract findOne(
     db: Db,
     where: Record<string, unknown>,

@@ -12,14 +12,6 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
     return player?.role === "Game Master";
   }
 
-  canCreate() {
-    return true;
-  }
-
-  canRead() {
-    return true;
-  }
-
   async canUpdate() {
     if (!await CampaignsPolicy.isGameMaster(this.session.userId, this.entity.id)) {
       throw new ForbiddenError("Only the Game Master can edit this campaign");

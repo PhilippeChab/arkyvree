@@ -1,18 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
+import { aptitudesInRules, featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
-import { Aptitudes, Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
+import { Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
 import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestRuleset, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestRuleset, createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 /** A new user's empty ruleset with three aptitudes. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const aptitudes = await Aptitudes.createMany(db, ["Combat", "Metamagic", "General"].map((name) => ({ name, rulesetId: ruleset.id })));
+  const aptitudes = await insertRows(aptitudesInRules, ["Combat", "Metamagic", "General"].map((name) => ({ name, rulesetId: ruleset.id })));
   return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
 }
 

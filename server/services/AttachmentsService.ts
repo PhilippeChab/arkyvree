@@ -28,7 +28,7 @@ type AttachableConfig = {
 
 const ATTACHABLE_TYPES = new Map<string, AttachableConfig>();
 
-export function registerAttachable(recordType: string, config: AttachableConfig): void {
+function registerAttachable(recordType: string, config: AttachableConfig): void {
   ATTACHABLE_TYPES.set(recordType, config);
 }
 
@@ -160,7 +160,7 @@ function buildKey(blobId: string, filename: string): string {
 // re-warns instead of staying silent forever after the first miss.
 const URL_FOR_WARN_COOLDOWN_MS = 5 * 60 * 1000;
 let urlForLastWarnedAt = 0;
-export function urlFor(blob: { key: string }): string | null {
+function urlFor(blob: { key: string }): string | null {
   try {
     return getStorage().publicUrl(blob.key);
   } catch (err) {

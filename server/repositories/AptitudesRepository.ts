@@ -1,7 +1,6 @@
 import { and, eq, inArray, isNotNull, isNull, notInArray } from "drizzle-orm";
 
 import { aptitudesInRules, featsAptitudesInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -13,11 +12,6 @@ class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, Aptitu
   }
 
   async create(db: Db, values: InferInsertModel<typeof aptitudesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof aptitudesInRules>[]) {
-    if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -35,10 +29,6 @@ class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, Aptitu
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("aptitudes don't soft-archive — use Aptitudes.delete()");
   }
 
   async delete(db: Db, where: { id: string }) {

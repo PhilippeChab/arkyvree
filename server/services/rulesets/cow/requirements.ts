@@ -34,7 +34,7 @@ type ReqChainNode = {
   op: string; // "or" | "and"
   children: ReqNode[];
 };
-export type ReqNode = ReqLeafNode | ReqChainNode;
+type ReqNode = ReqLeafNode | ReqChainNode;
 
 function parentLevelOf(level: string): string | null {
   const idx = level.lastIndexOf(".");
@@ -46,7 +46,7 @@ function parentLevelOf(level: string): string | null {
  * Top-level entries (rows with no parent in the set) become forest roots.
  * Chain roots recurse into their direct children. Throws on depth overflow.
  */
-export function buildReqForest(rows: Requirement[]): ReqNode[] {
+function buildReqForest(rows: Requirement[]): ReqNode[] {
   const byLevel = new Map<string, Requirement>();
   for (const r of rows) byLevel.set(r.level, r);
 
@@ -96,7 +96,7 @@ export function buildReqForest(rows: Requirement[]): ReqNode[] {
  * indices, so the result is collision-free as long as the caller picks a
  * non-overlapping `level`.
  */
-export function serializeReqNode(
+function serializeReqNode(
   node: ReqNode,
   level: string,
   entityId: string,
@@ -112,7 +112,7 @@ export function serializeReqNode(
 }
 
 /** Deduplicate standalone roots only; preserve every condition inside a chain. */
-export function dedupAgainstExisting(
+function dedupAgainstExisting(
   node: ReqNode,
   existingKeys: Set<string>,
 ): ReqNode | null {
@@ -125,20 +125,7 @@ export function dedupAgainstExisting(
   return node;
 }
 
-export function collectAllLeafKeys(forest: ReqNode[]): Set<string> {
-  const keys = new Set<string>();
-  function walk(node: ReqNode) {
-    if (node.kind === "leaf") {
-      keys.add(`${node.target}|${node.operator}|${node.value}`);
-    } else {
-      for (const child of node.children) walk(child);
-    }
-  }
-  for (const node of forest) walk(node);
-  return keys;
-}
-
-export function collectTopLevelStandaloneKeys(forest: ReqNode[]): Set<string> {
+function collectTopLevelStandaloneKeys(forest: ReqNode[]): Set<string> {
   const keys = new Set<string>();
   for (const node of forest) {
     if (node.kind === "leaf") {

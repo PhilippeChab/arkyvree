@@ -1,7 +1,6 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -13,11 +12,6 @@ class KlassesRepository extends BaseRepository<typeof klassesInRules, KlassInsta
   }
 
   async create(db: Db, values: InferInsertModel<typeof klassesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof klassesInRules>[]) {
-    if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -35,10 +29,6 @@ class KlassesRepository extends BaseRepository<typeof klassesInRules, KlassInsta
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("klasses don't soft-archive — use Klasses.delete()");
   }
 
   async delete(db: Db, where: { id: string }) {

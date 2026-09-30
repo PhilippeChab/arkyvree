@@ -21,64 +21,6 @@ class KlassLevelSavesRepository
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof klassLevelSavesInRules>>,
-    where: { klassLevelId: string; saveId: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.saveId, where.saveId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archive(db: Db, where: { klassLevelId: string; saveId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.saveId, where.saveId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archiveByKlassLevelId(db: Db, where: { klassLevelId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { klassLevelId: string; saveId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.saveId, where.saveId),
-        ),
-      )
-      .returning();
-  }
-
   // Exception to soft-delete: disposable configuration data
   async deleteByKlassLevelId(db: Db, where: { klassLevelId: string }) {
     return await db

@@ -22,19 +22,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     return await db.insert(this.table).values(values).returning();
   }
 
-  async createMany(db: Db, values: InferInsertModel<typeof entitySnapshotsInRules>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(): Promise<never> {
-    throw new Error("Snapshots are immutable — delete and recreate instead");
-  }
-
-  async archive(): Promise<never> {
-    throw new Error("Snapshots do not support soft delete — use deleteByRulesetId");
-  }
-
   async findOne(db: Db, where: { id: string }) {
     return await db.query.entitySnapshotsInRules.findFirst({
       where: eq(this.table.id, where.id),
@@ -89,10 +76,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
         eq(this.table.rulesetId, where.rulesetId),
       ),
     );
-  }
-
-  async deleteByRulesetId(db: Db, where: { rulesetId: string }) {
-    return await db.delete(this.table).where(eq(this.table.rulesetId, where.rulesetId));
   }
 
   withInstance(instance: InferSelectModel<typeof entitySnapshotsInRules>) {

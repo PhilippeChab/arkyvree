@@ -1,7 +1,6 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";
@@ -13,11 +12,6 @@ class LanguagesRepository extends BaseRepository<typeof languagesInRules, Langua
   }
 
   async create(db: Db, values: InferInsertModel<typeof languagesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof languagesInRules>[]) {
-    if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -35,10 +29,6 @@ class LanguagesRepository extends BaseRepository<typeof languagesInRules, Langua
         this.casUpdatedAt(where.expectedUpdatedAt),
       ]))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("languages don't soft-archive — use Languages.delete()");
   }
 
   async delete(db: Db, where: { id: string }) {

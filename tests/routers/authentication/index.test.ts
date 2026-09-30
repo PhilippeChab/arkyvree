@@ -1,7 +1,9 @@
+import { eq } from "drizzle-orm";
+import { emailVerificationsInAccount, sessionsInAccount } from "@/drizzle/schema.ts";
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
-import { EmailVerifications, OauthAccounts, PasswordResets, Sessions, Users } from "@/server/repositories/index.ts";
+import { EmailVerifications, OauthAccounts, PasswordResets, Users } from "@/server/repositories/index.ts";
 import { apiAs, expectOk, guestApi, sessionIdFrom, signedInApi } from "@/tests/api.ts";
 import { uniqueId } from "@/tests/helpers.ts";
 
@@ -89,7 +91,7 @@ describe("authentication", () => {
 
     test("refuses an expired session", async () => {
       const { sessionId, api } = await signUpAndVerify("expired");
-      await Sessions.update(db, { expiresAt: new Date(Date.now() - 1000).toISOString() }, { id: sessionId });
+      await db.update(sessionsInAccount).set({ expiresAt: new Date(Date.now() - 1000).toISOString() }).where(eq(sessionsInAccount.id, sessionId));
       expect((await api.auth.me.$get()).status).toBe(401);
     });
 
@@ -127,7 +129,7 @@ describe("authentication", () => {
 
       // Past the resend cooldown.
       const verification = await EmailVerifications.findOne(db, { userId: user.id });
-      await EmailVerifications.update(db, { createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() }, { id: verification!.id });
+      await db.update(emailVerificationsInAccount).set({ createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() }).where(eq(emailVerificationsInAccount.id, verification!.id));
       expect(await expectOk(api.auth["resend-email-change"].$post())).toEqual({ success: true });
 
       expect(await expectOk(api.auth["cancel-email-change"].$post())).toEqual({ success: true });

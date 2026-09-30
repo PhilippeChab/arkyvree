@@ -21,64 +21,6 @@ class KlassLevelPowersRepository
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof klassLevelPowersInRules>>,
-    where: { klassLevelId: string; powerId: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.powerId, where.powerId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archive(db: Db, where: { klassLevelId: string; powerId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.powerId, where.powerId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archiveByKlassLevelId(db: Db, where: { klassLevelId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { klassLevelId: string; powerId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.powerId, where.powerId),
-        ),
-      )
-      .returning();
-  }
-
   // Exception to soft-delete: disposable configuration data — intentional removal
   async deleteByKlassLevelId(db: Db, where: { klassLevelId: string }) {
     return await db
@@ -119,18 +61,6 @@ class KlassLevelPowersRepository
         inArray(this.table.klassLevelId, where.klassLevelIds),
         isNull(this.table.deletedAt),
       ),
-    });
-  }
-
-  async findManyWithPowers(db: Db, where: { klassLevelId: string }) {
-    return await db.query.klassLevelPowersInRules.findMany({
-      where: and(
-        eq(this.table.klassLevelId, where.klassLevelId),
-        isNull(this.table.deletedAt),
-      ),
-      with: {
-        powersInRule: true,
-      },
     });
   }
 

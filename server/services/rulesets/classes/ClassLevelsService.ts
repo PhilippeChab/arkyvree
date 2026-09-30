@@ -92,10 +92,6 @@ function buildClassLevelDetail<L extends KlassLevel>(
 }
 
 export const ClassLevelsMethods = {
-  async getRulesetKlassLevels(rulesetId: string, klassId: string) {
-    return await listClassLevels(rulesetId, klassId);
-  },
-
   async getClassLevels(rulesetId: string, classId: string) {
     return await listClassLevels(rulesetId, classId);
   },

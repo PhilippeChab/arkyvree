@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, not, sql } from "drizzle-orm";
+import { and, count, eq, isNull, not, sql } from "drizzle-orm";
 
 import { campaignsInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -55,34 +55,6 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, Cam
         this.visibility(visibility),
       ]),
     });
-  }
-
-  async findManyWithPlayerCount(db: Db, where: { ids: string[] }) {
-    return await db
-      .select({
-        id: campaignsInCampaign.id,
-        name: campaignsInCampaign.name,
-        description: campaignsInCampaign.description,
-        createdAt: campaignsInCampaign.createdAt,
-        updatedAt: campaignsInCampaign.updatedAt,
-        currentPlayers: count(playersInCampaign.userId).as("currentPlayers"),
-      })
-      .from(campaignsInCampaign)
-      .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .where(and(
-        inArray(campaignsInCampaign.id, where.ids),
-        not(isNull(playersInCampaign.userId)),
-        isNull(campaignsInCampaign.deletedAt),
-        isNull(playersInCampaign.deletedAt),
-      ))
-      .groupBy(
-        campaignsInCampaign.id,
-        campaignsInCampaign.name,
-        campaignsInCampaign.description,
-        campaignsInCampaign.createdAt,
-        campaignsInCampaign.updatedAt,
-      )
-      .orderBy(campaignsInCampaign.name);
   }
 
   async findOneWithPlayerCount(db: Db, where: { id: string }) {

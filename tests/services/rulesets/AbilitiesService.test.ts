@@ -1,9 +1,8 @@
+import { abilitiesInRules } from "@/drizzle/schema.ts";
 import { AbilitiesMethods } from "@/server/services/rulesets/AbilitiesService.ts";
-import { db } from "@/server/database/index.ts";
-import { Abilities } from "@/server/repositories/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { describe, expect, test } from "bun:test";
-import { createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("AbilitiesService", () => {
   describe("getRulesetAbilities", () => {
@@ -22,7 +21,7 @@ describe("AbilitiesService", () => {
     test("should return abilities for a ruleset", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Abilities.createMany(db, [
+      await insertRows(abilitiesInRules, [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
@@ -40,7 +39,7 @@ describe("AbilitiesService", () => {
     test("should support search filtering", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Abilities.createMany(db, [
+      await insertRows(abilitiesInRules, [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
       ]);
@@ -58,7 +57,7 @@ describe("AbilitiesService", () => {
     test("should support pagination", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Abilities.createMany(db, [
+      await insertRows(abilitiesInRules, [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },

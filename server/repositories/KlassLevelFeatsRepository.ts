@@ -21,64 +21,6 @@ class KlassLevelFeatsRepository
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof klassLevelFeatsInRules>>,
-    where: { klassLevelId: string; featId: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.featId, where.featId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archive(db: Db, where: { klassLevelId: string; featId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.featId, where.featId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  async archiveByKlassLevelId(db: Db, where: { klassLevelId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { klassLevelId: string; featId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        and(
-          eq(this.table.klassLevelId, where.klassLevelId),
-          eq(this.table.featId, where.featId),
-        ),
-      )
-      .returning();
-  }
-
   // Exception to soft-delete: disposable configuration data — intentional removal
   async deleteByKlassLevelId(db: Db, where: { klassLevelId: string }) {
     return await db
@@ -119,20 +61,6 @@ class KlassLevelFeatsRepository
         inArray(this.table.klassLevelId, where.klassLevelIds),
         isNull(this.table.deletedAt),
       ),
-    });
-  }
-
-  async findManyWithFeats(db: Db, where: { klassLevelId: string } | { klassLevelIds: string[] }) {
-    return await db.query.klassLevelFeatsInRules.findMany({
-      where: this.where([
-        "klassLevelIds" in where
-          ? inArray(this.table.klassLevelId, where.klassLevelIds)
-          : eq(this.table.klassLevelId, where.klassLevelId),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        featsInRule: true,
-      },
     });
   }
 

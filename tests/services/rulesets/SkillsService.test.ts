@@ -1,19 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { klassSkillsInRules } from "@/drizzle/schema.ts";
+import { abilitiesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Abilities, KlassSkills } from "@/server/repositories/index.ts";
+import { KlassSkills } from "@/server/repositories/index.ts";
 import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { SkillsMethods } from "@/server/services/rulesets/SkillsService.ts";
-import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 type SkillBody = Parameters<typeof SkillsMethods.createRulesetSkill>[2];
 
 /** A new user's empty ruleset with three abilities, and a skill body using its Strength. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const abilities = await Abilities.createMany(db, ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })));
+  const abilities = await insertRows(abilitiesInRules, ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })));
   const abilityMap = Object.fromEntries(abilities.map((a) => [a.name, a.id]));
   const body = (overrides: Partial<SkillBody> = {}): SkillBody => ({
     name: "Climb", description: "Climbing skill", primaryAbilityId: abilityMap.Strength, impactedByWeight: true, usableWithoutTraining: true, ...overrides,

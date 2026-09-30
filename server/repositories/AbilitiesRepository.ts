@@ -15,19 +15,6 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, Abilit
     return await db.insert(this.table).values(values).returning();
   }
 
-  async createMany(db: Db, values: InferInsertModel<typeof abilitiesInRules>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(): Promise<never> {
-    throw new Error("Abilities are immutable and cannot be updated");
-  }
-
-  async archive(): Promise<never> {
-    throw new Error("Abilities are immutable and cannot be archived");
-  }
-
   async delete(): Promise<never> {
     throw new Error("Abilities are immutable and cannot be deleted");
   }

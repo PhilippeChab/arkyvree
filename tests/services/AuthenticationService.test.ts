@@ -1,3 +1,5 @@
+import { eq } from "drizzle-orm";
+import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
@@ -73,7 +75,7 @@ describe("AuthenticationService", () => {
       await expect(AuthenticationMethods.verifyEmail({ emailAddress: account.emailAddress, code: "000000" })).rejects.toThrow(UnauthorizedError);
 
       const verification = (await EmailVerifications.findOne(db, { userId: user.id }))!;
-      await EmailVerifications.update(db, { expiresAt: ago(1000) }, { id: verification.id });
+      await db.update(emailVerificationsInAccount).set({ expiresAt: ago(1000) }).where(eq(emailVerificationsInAccount.id, verification.id));
       await expect(AuthenticationMethods.verifyEmail({ emailAddress: account.emailAddress, code: verification.code })).rejects.toThrow(UnauthorizedError);
     });
 
@@ -81,7 +83,7 @@ describe("AuthenticationService", () => {
       const account = credentials();
       const { user } = await AuthenticationMethods.signUp(account);
       const old = (await EmailVerifications.findOne(db, { userId: user.id }))!;
-      await EmailVerifications.update(db, { createdAt: ago(6 * 60 * 1000) }, { id: old.id });
+      await db.update(emailVerificationsInAccount).set({ createdAt: ago(6 * 60 * 1000) }).where(eq(emailVerificationsInAccount.id, old.id));
 
       await AuthenticationMethods.resendVerification({ emailAddress: account.emailAddress });
       const fresh = (await EmailVerifications.findOne(db, { userId: user.id }))!;
@@ -243,7 +245,7 @@ describe("AuthenticationService", () => {
       await Users.update(db, { emailAddress: contested, emailVerifiedAt: new Date().toISOString() }, { id: other.user.id });
       await expect(AuthenticationMethods.verifyEmailChange(session, { code: verification.code })).rejects.toThrow(BadRequestError);
 
-      await EmailVerifications.update(db, { expiresAt: ago(1000) }, { id: verification.id });
+      await db.update(emailVerificationsInAccount).set({ expiresAt: ago(1000) }).where(eq(emailVerificationsInAccount.id, verification.id));
       await expect(AuthenticationMethods.verifyEmailChange(session, { code: verification.code })).rejects.toThrow(UnauthorizedError);
       expect((await Users.findOne(db, { id: user.id }))!.emailAddress).toBe(account.emailAddress);
     });
@@ -255,7 +257,7 @@ describe("AuthenticationService", () => {
       await expect(AuthenticationMethods.resendEmailChange(session)).rejects.toThrow(BadRequestError);
 
       const old = (await EmailVerifications.findOne(db, { userId: user.id }))!;
-      await EmailVerifications.update(db, { createdAt: ago(6 * 60 * 1000) }, { id: old.id });
+      await db.update(emailVerificationsInAccount).set({ createdAt: ago(6 * 60 * 1000) }).where(eq(emailVerificationsInAccount.id, old.id));
       expect(await AuthenticationMethods.resendEmailChange(session)).toEqual({ success: true });
       expect((await EmailVerifications.findOne(db, { userId: user.id }))!.id).not.toBe(old.id);
 
@@ -318,7 +320,7 @@ describe("AuthenticationService", () => {
         const { user, account } = await signUpAndVerify();
         await AuthenticationMethods.forgotPassword({ emailAddress: account.emailAddress });
         const reset = (await PasswordResets.findOne(db, { userId: user.id }))!;
-        await PasswordResets.update(db, { expiresAt: ago(1000) }, { id: reset.id });
+        await db.update(passwordResetsInAccount).set({ expiresAt: ago(1000) }).where(eq(passwordResetsInAccount.id, reset.id));
         await expect(AuthenticationMethods.resetPassword({ emailAddress: account.emailAddress, code: reset.code, newPassword: "newpassword1234", newPasswordConfirmation: "newpassword1234" })).rejects.toThrow(UnauthorizedError);
       });
     });

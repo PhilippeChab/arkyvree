@@ -1,17 +1,15 @@
 import { eq } from "drizzle-orm";
 import { characterAbilitiesInCharacter, charactersInCharacter } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { BadRequestError } from "@/server/errors/index.ts";
 import {
   CharacterLevels,
   Characters,
 } from "@/server/repositories/index.ts";
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/bondedRaceData.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/AttachmentsService.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { BONDED_CLASS_NAME_BY_KIND, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";
 
@@ -29,7 +27,7 @@ export async function reconcileAllBondedKinds(
   }
 }
 
-export async function reconcileBonded(
+async function reconcileBonded(
   tx: Db,
   masterRecord: Character,
   kind: BondedKind,
@@ -119,22 +117,6 @@ function computeBondedTargetHD(
   // `{{ floor([classes.ranger.level] / 2) }}`). Adding a new contributor
   // class needs only a feat with the right template — no change here.
   return Math.max(1, detailedMaster.getDetailedCharacterBonds().getBondedLevel(kind));
-}
-
-export async function reconcileBondedForCharacter(
-  tx: Db,
-  characterId: string,
-): Promise<void> {
-  const master = await Characters.findOne(tx, { id: characterId });
-  if (!master) throw new NotFoundError(`Character ${characterId} not found`);
-  if (master.kind !== "pc") return;
-
-  await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
-    const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailed = module.createDetailedCharacter(master) as Dnd35DetailedCharacter;
-    await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
-    await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
-  });
 }
 
 async function createBonded(

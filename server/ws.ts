@@ -59,7 +59,7 @@ function broadcast(userId: string, event: WsEvent) {
  * (any web instance or the worker) via Postgres LISTEN/NOTIFY.
  * Payload: JSON `{ userId, event }`.
  */
-export const BROADCAST_CHANNEL = "ws_broadcast";
+const BROADCAST_CHANNEL = "ws_broadcast";
 
 /**
  * Publish a WebSocket event to all connected sockets for `userId`, regardless

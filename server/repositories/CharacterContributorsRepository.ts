@@ -3,7 +3,6 @@ import { and, eq, isNull, not, or } from "drizzle-orm";
 
 import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { InternalError } from "@/server/errors/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class CharacterContributorsRepository extends BaseRepository<typeof contributorsInCharacter, CharacterContributorInstance> {
@@ -37,10 +36,6 @@ class CharacterContributorsRepository extends BaseRepository<typeof contributors
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
-  }
-
-  async archive(): Promise<never> {
-    throw new InternalError("character contributors don't soft-archive — use the status field");
   }
 
   async findOne(
@@ -173,16 +168,6 @@ class CharacterContributorsRepository extends BaseRepository<typeof contributors
         ),
       )
       .returning();
-  }
-
-  async findActiveByCharacterId(db: Db, where: { characterId: string }) {
-    return await db.query.contributorsInCharacter.findMany({
-      where: this.where([
-        eq(this.table.characterId, where.characterId),
-        eq(this.table.status, "Active"),
-        isNull(this.table.deletedAt),
-      ]),
-    });
   }
 
   withInstance(instance: InferSelectModel<typeof contributorsInCharacter>) {

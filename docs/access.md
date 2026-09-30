@@ -23,15 +23,14 @@ Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor ro
 
 | Method | Allowed actors | Notes |
 |---|---|---|
-| `canCreate` | anyone | ruleset access enforced separately in service |
-| `canRead` | anyone | listing/visibility is enforced by `findMany` scopes, not the policy |
 | `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on base rulesets and Archived rulesets |
 | `canUpdateEntity` | owner, **Admin**, **Editor** | edits entity content (feats, items, classes, …). Same archive guard |
-| `canDelete` | nobody | hard deletion of rulesets isn't supported; archive instead |
 | `canDeleteEntity({ inUse })` | owner, **Admin**, **Editor** | deletes individual entities. Throws if `inUse` (would orphan a character pick on this ruleset or any descendant fork). See [rulesets.md](./rulesets.md#what-inuse-means-in-entity-delete-services) |
 | `canPublish` | **owner only** | Draft → Published; can't be delegated to Admin |
 | `canFork` | anyone (any session) | source must be Published and be a base ruleset (`rulesetId IS NULL`) |
 | `canSubscribeExtension` | **owner only** | private to the owner of the host fork |
+
+Reading and listing rulesets is enforced by the `findMany` scopes, not the policy. Rulesets are never hard-deleted: they're archived (`canUpdate`).
 | `canUnsubscribeExtension({ inUse })` | **owner only** | adds the in-use guard on top of `canSubscribeExtension` |
 | `canManageContributors` | owner, **Admin** | invite / revoke / role-change |
 | `canManageAdminContributors` | **owner only** | narrowing of the above for touching `Admin`-tier rows |
@@ -74,15 +73,11 @@ Constructed with `(session, character, isActiveContributor?)`. The boolean comes
 
 | Method | Allowed actors |
 |---|---|
-| `canCreate` | anyone (subject to the ruleset access check below) |
-| `canRead` | anyone (per-character privacy is enforced at the campaign-character level via `link.visibility`, not here) |
-| `canUpdate` | owner, active contributor. Throws on archived (soft-deleted) characters |
-| `canDelete` | **owner only** (archive, not hard delete) |
 | `canHardDelete` | **owner only**, must be archived, must not be linked to an *active* campaign (links to archived campaigns don't block). Throws `ConflictError` on active-campaign link. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canManageContributors` | **owner only** |
 | `canReadContributors` | owner, active contributor |
 
-**Edit-permission lookup helper:** `Characters.findOneEditable(db, { id, userId })` returns the character iff the session user can edit it (owner OR active contributor). Most write services call this as their first guard so the rest of the function can assume edit rights.
+**Editing and archiving aren't policy methods.** `Characters.findOneEditable(db, { id, userId })` returns the character iff the session user can edit it (owner OR active contributor), and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
 
 **Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `getRulesetPolicy`), and `CampaignsService` calls `canCreateCampaign`, which applies the same rule. A deleted ruleset is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
 
@@ -102,8 +97,6 @@ Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDe
 
 | Method | Allowed actors |
 |---|---|
-| `canCreate` | anyone |
-| `canRead` | anyone (privacy of contents enforced elsewhere) |
 | `canUpdate` | **Game Master only** |
 | `canDelete` | **Game Master only** (archive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
@@ -150,10 +143,6 @@ Modifiers, properties, and requirements live on a parent entity (a feat, item, k
 
 `CustomizationsPolicy.sourceExists` resolves a display name for the parent — used both for activity logging and to fail closed if the parent has been deleted between policy construction and write.
 
-## Ruleset entities — `RulesetEntitiesPolicy`
-
-Stub class that no service calls: all its methods return `true`. Real authorization for these surfaces is on the parent ruleset (`RulesetsPolicy.canUpdateEntity` / `canDeleteEntity`).
-
 ## Identity vs. policy
 
 There are still a few inline `entity.userId === session.userId` checks in services. Those are **identity matches**, not permission gates — they're answering "is this me?" rather than "may I do this?". Keep them inline, don't move them into a policy:
@@ -173,7 +162,6 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `Characters.findOneEditable` instead and skip the policy class — same effective rule, fewer object instantiations |
 | `CampaignsPolicy` | `CampaignsService`, `PlayersService`, campaigns sub-services |
 | `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization). `CharacterModifiersService` uses `Characters.findOneEditable`, like the other character writes |
-| `RulesetEntitiesPolicy` | no service calls it; entity services check `getRulesetPolicy(...).canUpdateEntity()` / `canDeleteEntity()` |
 | `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 
 Campaign creation validates ruleset access before inserting the campaign or GM membership. It uses the character-creation access policy: public published, owner, contributor, or existing active campaign membership. Archived rulesets and extensions cannot be used to create campaigns or characters. A newly requested campaign cannot grant its own ruleset access.
