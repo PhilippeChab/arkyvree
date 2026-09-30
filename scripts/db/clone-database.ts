@@ -17,41 +17,46 @@ export function databaseOf(url: string) {
 /** The URL of the database named `name` on `url`'s server. */
 export const withDatabase = (url: string, name: string) => `${databaseOf(url).server}/${name}${new URL(url).search}`;
 
+/** The hosts of a local database server: the only one whose databases are replaced. */
+const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
 /**
- * Replaces the databases `targets` with copies of `templateUrl`'s database. A template can't have connections while
- * it's copied: it takes none meanwhile, and the ones it has are closed. Only a test database is copied, and only into
- * databases named after it, so no other database is ever dropped.
+ * Replaces the databases `targets` with copies of `templateUrl`'s database. Only a local test database (`test` a word
+ * of its name) is copied, and only into databases named after it, so no other database is ever dropped.
  */
 export async function cloneDatabase(templateUrl: string, targets: string[]) {
   const { server, name: template } = databaseOf(templateUrl);
-  if (!template.includes("test")) throw new Error(`${template} isn't a test database: only a test database is copied`);
-  const unrelated = targets.filter((target) => !target.startsWith(`${template}_`));
-  if (unrelated.length) throw new Error(`The copies of ${template} are named ${template}_…, not ${unrelated.join(", ")}`);
+  const { hostname } = new URL(templateUrl);
+  if (!LOCAL_HOSTS.includes(hostname)) throw new Error(`${hostname} isn't a local database server: only a local test database is copied`);
+  if (!/(^|_)test(_|$)/.test(template)) throw new Error(`${template} isn't a test database: only a test database is copied`);
+  const unrelated = targets.filter((target) => !new RegExp(`^${template}_[a-z0-9_]+$`).test(target));
+  if (unrelated.length) throw new Error(`The copies of ${template} are named ${template}_ and letters, digits or _, not ${unrelated.join(", ")}`);
 
   const client = new pg.Client({ connectionString: `${server}/postgres` });
   await client.connect();
+  const name = (database: string) => client.escapeIdentifier(database);
+  const connections = async (database: string) => Number((await client.query<{ count: string }>(
+    "SELECT count(*) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
+    [database],
+  )).rows[0].count);
   try {
     const found = await client.query("SELECT 1 FROM pg_database WHERE datname = $1", [template]);
     if (!found.rowCount) throw new Error(`${template} doesn't exist: run \`bun run test:db:reset\``);
-    for (const target of targets) await client.query(`DROP DATABASE IF EXISTS "${target}" WITH (FORCE)`);
-
-    await client.query(`ALTER DATABASE "${template}" WITH allow_connections = false`);
-    try {
-      for (let attempt = 0; attempt < 10; attempt++) {
-        const active = await client.query<{ count: string }>(
-          "SELECT count(*) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
-          [template],
-        );
-        if (Number(active.rows[0].count) === 0) break;
-        if (attempt === 9) {
-          await client.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()", [template]);
+    for (const target of targets) {
+      await client.query(`DROP DATABASE IF EXISTS ${name(target)} WITH (FORCE)`);
+      // A template can't have connections while it's copied: wait for its own to end, then end them. It keeps taking
+      // new ones meanwhile, so an interrupted copy leaves it as it was; one that comes in just before the copy fails it
+      // (after five seconds), and it's tried again.
+      for (let attempt = 1; ; attempt++) {
+        for (let wait = 0; wait < 10 && (await connections(template)) > 0; wait++) await new Promise((resolve) => setTimeout(resolve, 500));
+        await client.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()", [template]);
+        try {
+          await client.query(`CREATE DATABASE ${name(target)} TEMPLATE ${name(template)}`);
+          break;
+        } catch (error) {
+          if (!(error instanceof pg.DatabaseError && error.code === "55006") || attempt === 3) throw error;
         }
-        await new Promise((resolve) => setTimeout(resolve, 500));
       }
-
-      for (const target of targets) await client.query(`CREATE DATABASE "${target}" TEMPLATE "${template}"`);
-    } finally {
-      await client.query(`ALTER DATABASE "${template}" WITH allow_connections = true`);
     }
   } finally {
     await client.end();

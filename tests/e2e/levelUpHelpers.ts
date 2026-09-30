@@ -70,8 +70,9 @@ export async function finishWithoutWarnings(wizard: Locator, button = /^Finish A
   await wizard.getByRole('button', { name: button }).click();
   // Taken, the wizard closes; refused, it stays open on its warnings
   const proceed = wizard.getByRole('button', { name: /^Proceed Anyway$/ });
-  await expect.poll(async () => (await proceed.isVisible()) ? 'warnings' : (await wizard.isVisible()) ? 'open' : 'closed', { timeout: 15_000 })
-    .toBe('closed');
+  const state = async () => (await proceed.isVisible()) ? 'warnings' : (await wizard.isVisible()) ? 'open' : 'closed';
+  await expect.poll(state, { timeout: 15_000 }).not.toBe('open');
+  expect(await state()).toBe('closed');
 }
 
 /** Walks from the Feats step to the end, filling every required feat pool and every spell pool. Returns the spells picked. */

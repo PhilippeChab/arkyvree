@@ -45,7 +45,7 @@ export function EditLevelModal({
 
   // ── Edit-only: fetch existing level data ────────────────────────────
 
-  const { data: editLevelData } = useQuery({
+  const { data: editLevelData, isLoading: isLoadingLevel } = useQuery({
     queryKey: queryKeys.characters.levelUp.levelData(
       characterId,
       editingLevelId,
@@ -107,9 +107,10 @@ export function EditLevelModal({
     }
   }, [open, editingLevelId, resetEditRefs]);
 
-  // The saved level fills the picks in as it loads (the level, then its class's feat and power slots): Next waits for
-  // all of it, or a quick Finish would save the level without its feats and powers.
-  const loaded = !!editLevelData && !!wizard.featData && !!wizard.powerData;
+  // The saved level fills the picks in as it loads (the level, then its class's feat and power slots): Next waits while
+  // it loads, or a quick Finish would save the level without its feats and powers. A load that fails lets it through,
+  // to the step that shows the error.
+  const loading = isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
 
   // ── Render steps ────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ export function EditLevelModal({
     <LevelWizardDialog
       open={open}
       title="Edit Level"
-      wizard={{ ...wizard, isNextDisabled: wizard.isNextDisabled || !loaded }}
+      wizard={{ ...wizard, isNextDisabled: wizard.isNextDisabled || loading }}
       stepLabels={editStepLabels}
       finishLabel="Finish"
       isSaving={wizard.finalizeMutation.isPending}

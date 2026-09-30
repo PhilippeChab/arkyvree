@@ -56,9 +56,11 @@ test.describe('Characters', () => {
     await wizard.getByRole('button', { name: 'Cancel' }).click();
     await expect(wizard).toBeHidden();
     await renameInPlace(page, name, `${name} renamed`);
-    // A reopened wizard would show a render after the refetched character: it's still closed a second later
-    await page.waitForTimeout(1_000);
+    // A reopened wizard would cover the page: its actions menu still opens, the wizard closed
+    await page.getByRole('button', { name: 'More actions' }).first().click({ timeout: 5_000 });
+    await expect(page.getByRole('menu')).toBeVisible();
     await expect(wizard).toBeHidden();
+    await page.keyboard.press('Escape');
   });
 
   test('one renamed in place and archived is listed under Archived until unarchived', async ({ page, ownerUser }) => {

@@ -2,13 +2,15 @@ name: API Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
   pull_request:
     branches: [main, develop]
+  # Deploy runs it for main's pushes
+  workflow_call:
 
-# A new push to a pull request supersedes its run
+# A new push to a pull request cancels its previous run; each push runs to the end
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: api-tests-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -51,7 +53,7 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - name: Seed database
-        run: bun test:db:reset
+        run: bun --env-file=.env.test scripts/db/reset.ts --with-test-data
       - name: Run API Tests (shard ${{ matrix.shard }}/3)
         run: bun --env-file=.env.test test --shard=${{ matrix.shard }}/3 tests
 
@@ -83,6 +85,6 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - name: Seed database
-        run: bun test:db:reset
+        run: bun --env-file=.env.test scripts/db/reset.ts --with-test-data
       - name: Run API Tests (changed vs ${{ github.base_ref }})
         run: bun --env-file=.env.test test --changed=origin/${{ github.base_ref }} tests

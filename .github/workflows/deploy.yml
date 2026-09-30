@@ -6,39 +6,22 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
-  checks:
-    name: Checks
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      # Deploys only a commit that every check workflow passed on, in its own runs for this push: never a green result
-      # from another branch or revision. A failed workflow fails this job; re-run it once the workflow passes.
-      - name: Wait for the checks of ${{ github.sha }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          WORKFLOWS: '["Lint", "Build", "API Tests", "E2E"]'
-        run: |
-          while :; do
-            state=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$GITHUB_SHA&event=push&per_page=100" | jq -r --argjson names "$WORKFLOWS" '
-              [.workflow_runs[] | select(.name as $name | $names | index($name))] as $runs
-              | if any($runs[]; .status == "completed" and .conclusion != "success") then "failed"
-                elif ([$runs[] | select(.conclusion == "success") | .name] | unique | length) == ($names | length) then "passed"
-                else "pending" end')
-            echo "$(date +%T) $state"
-            case $state in
-              passed) exit 0 ;;
-              failed) exit 1 ;;
-            esac
-            sleep 20
-          done
+  # The push's own checks, which the deploy needs: never another branch's or commit's results
+  lint:
+    uses: ./.github/workflows/lint.yml
+  build:
+    uses: ./.github/workflows/build.yml
+  api-tests:
+    uses: ./.github/workflows/api-tests.yml
+  e2e:
+    uses: ./.github/workflows/e2e.yml
 
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: checks
+    needs: [lint, build, api-tests, e2e]
     timeout-minutes: 20
     concurrency: deploy-${{ matrix.app }}
     strategy:
@@ -53,7 +36,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only --config ${{ matrix.config }} --app ${{ matrix.app }}
+      # A re-run of an older push mustn't deploy over a newer one, which its own run deploys
+      - name: Check that main is still at ${{ github.sha }}
+        id: head
+        run: |
+          head=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$head" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main has moved on to $head, which its own run deploys"
+          fi
+      - if: steps.head.outputs.current == 'true'
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - if: steps.head.outputs.current == 'true'
+        run: flyctl deploy --remote-only --config ${{ matrix.config }} --app ${{ matrix.app }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

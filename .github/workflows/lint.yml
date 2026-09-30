@@ -2,13 +2,15 @@ name: Lint
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
   pull_request:
     branches: [main, develop]
+  # Deploy runs it for main's pushes
+  workflow_call:
 
-# A new push to a pull request supersedes its run
+# A new push to a pull request cancels its previous run; each push runs to the end
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: lint-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
