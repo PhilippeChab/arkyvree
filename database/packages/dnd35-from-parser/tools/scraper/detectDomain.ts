@@ -1,9 +1,9 @@
 import { stripSeparators } from "@/shared/utils.ts";
-import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SKILL_MAP as BASE_SKILL_MAP, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SKILL_MAP as BASE_SKILL_MAP, detectModifiersOf, modifierMapping, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Skill name → slug mapping (extends base with paren-stripped variants)
@@ -31,19 +31,7 @@ const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge")
 // ---------------------------------------------------------------------------
 
 export function buildDomainDetected(raw: DomainReference["raw"]): DomainReference["detected"] {
-  const detected: DomainReference["detected"] = {};
-
-  for (const entry of raw) {
-    const { modifiers, errors, unresolvedModifiers } = detectDomainModifiers(entry.description);
-
-    detected[entry.name] = {
-      modifiers,
-      ...(errors.length > 0 ? { errors } : {}),
-      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
-    };
-  }
-
-  return detected;
+  return detectModifiersOf(raw, (entry) => detectDomainModifiers(entry.description));
 }
 
 export function buildDomainMapping(
@@ -51,24 +39,11 @@ export function buildDomainMapping(
   detected: DomainReference["detected"],
   overrides: DomainReference["mapping"]["overrides"],
 ): DomainReference["mapping"] {
-  const mapping = { overrides } as DomainReference["mapping"];
-  for (const entry of raw) {
-    const det = detected[entry.name];
-    const ovr = overrides[entry.name];
-    const description = ovr?.description ?? entry.description;
-    const modifiers = ovr?.modifiers ?? det?.modifiers ?? [];
-
-    mapping[entry.name] = {
-      description,
-      ...(modifiers.length > 0 ? { modifiers } : {}),
-      ...(ovr?.featPool ? { featPool: ovr.featPool } : {}),
-    };
-  }
-  return mapping;
+  return { overrides, ...modifierMapping(raw, detected, overrides, (override?: DomainReference["mapping"]["overrides"][string]) => (override?.featPool ? { featPool: override.featPool } : {})) } as DomainReference["mapping"];
 }
 
-function detectDomainModifiers(description: string): { modifiers: ModifierSeed[]; errors: string[]; unresolvedModifiers: string[] } {
-  const modifiers: ModifierSeed[] = [];
+function detectDomainModifiers(description: string): ModifierDetection<Modifier> {
+  const modifiers: Modifier[] = [];
   const errors: string[] = [];
   const unresolvedModifiers: string[] = [];
 

@@ -13,14 +13,13 @@ import { getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/too
  */
 
 const BASE_DIR = join(import.meta.dirname!, "../");
-const REF_DIR = join(BASE_DIR, "reference");
 const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");
 const GENERATOR = join(BASE_DIR, "tools/generator/index.ts");
 
 async function main() {
   const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
 
-  let refs = discoverRefs(REF_DIR);
+  let refs = discoverRefs();
   if (refs.length === 0) {
     console.log("No reference files found.");
     return;
@@ -35,6 +34,9 @@ async function main() {
 
   console.log(`Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`);
 
+  // What failed: the sync then exits with an error, so a script running it stops
+  const failed: string[] = [];
+
   // Phase 1: Re-scrape all regular refs (keeps their overrides)
   console.log("=== Scraping ===");
   for (const ref of regularRefs) {
@@ -47,37 +49,37 @@ async function main() {
       continue;
     }
 
-    const result = await $`bun ${SCRAPER} ${args}`.quiet().nothrow();
-    if (result.exitCode !== 0) {
-      console.log("FAILED");
-      console.error(result.stderr.toString());
-    } else {
-      console.log("ok");
-    }
+    if (await run(SCRAPER, args)) console.log("ok");
+    else failed.push(name);
   }
 
   // Phase 1b: Re-scrape the domains reference, which every book shares: only when the generator then regenerates
   // every book's domains (no book or name filter; see generateAll)
   if (!bookFilter && !nameFilter && (!typeFilter || typeFilter === "domain")) {
     process.stdout.write("  domains (master)... ");
-    const result = await $`bun ${SCRAPER} domain`.quiet().nothrow();
-    if (result.exitCode !== 0) {
-      console.log("FAILED");
-      console.error(result.stderr.toString());
-    } else {
-      console.log("ok");
-    }
+    if (await run(SCRAPER, ["domain"])) console.log("ok");
+    else failed.push("domains");
   }
 
   // Phase 2: Regenerate everything in scope, domains included
   console.log("\n=== Generating ===");
-  const result = await $`bun ${GENERATOR} ${process.argv.slice(2)}`.quiet().nothrow();
-  if (result.exitCode !== 0) {
-    console.log("FAILED");
-    console.error(result.stderr.toString());
-  }
+  if (!(await run(GENERATOR, process.argv.slice(2)))) failed.push("generation");
 
+  if (failed.length > 0) {
+    console.log(`\nFailed: ${failed.join(", ")}.`);
+    process.exitCode = 1;
+    return;
+  }
   console.log(`\nDone. Synced ${refs.length} references.`);
+}
+
+/** Runs a tool (`script` with `args`), printing FAILED and its errors when it fails: whether it succeeded. */
+async function run(script: string, args: string[]): Promise<boolean> {
+  const result = await $`bun ${script} ${args}`.quiet().nothrow();
+  if (result.exitCode === 0) return true;
+  console.log("FAILED");
+  console.error(result.stderr.toString());
+  return false;
 }
 
 /**

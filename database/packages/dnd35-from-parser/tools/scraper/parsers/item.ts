@@ -1,26 +1,21 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { ArmorRow, WeaponRow } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
-function normalizeWs(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+/** A table cell's text, without its footnote markers (<sup>). */
+function cellText(cell: cheerio.Cheerio<AnyNode>): string {
+  const copy = cell.clone();
+  copy.find("sup").remove();
+  return normalizeWs(copy.text());
 }
 
-export function parseWeaponsHtml(html: string): {
-  name: string;
-  proficiency: string;
-  category: string;
-  cost: string;
-  dmgSmall: string;
-  dmgMedium: string;
-  critical: string;
-  rangeIncrement: string;
-  weight: string;
-  damageType: string;
-}[] {
+export function parseWeaponsHtml(html: string): WeaponRow[] {
   const $ = cheerio.load(html);
   const table = $("table#tableWeapons");
   if (!table.length) return [];
 
-  const weapons: ReturnType<typeof parseWeaponsHtml> = [];
+  const weapons: WeaponRow[] = [];
   let currentProficiency = "";
   let currentCategory = "";
 
@@ -47,53 +42,33 @@ export function parseWeaponsHtml(html: string): {
     const cells = $row.find("td");
     if (cells.length < 8) return;
 
-    // Strip <sup> footnotes from name cell before extracting text
-    const nameCell = $(cells[0]).clone();
-    nameCell.find("sup").remove();
-    const name = normalizeWs(nameCell.text());
+    const text = (i: number) => cellText($(cells[i]));
+    const name = text(0);
     if (!name || !currentProficiency) return;
-
-    // Helper to get cell text with <sup> footnotes stripped
-    const cellText = (i: number) => {
-      const cell = $(cells[i]).clone();
-      cell.find("sup").remove();
-      return normalizeWs(cell.text());
-    };
 
     weapons.push({
       name,
       proficiency: currentProficiency,
       category: currentCategory,
-      cost: cellText(1),
-      dmgSmall: cellText(2),
-      dmgMedium: cellText(3),
-      critical: cellText(4),
-      rangeIncrement: cellText(5),
-      weight: cellText(6),
-      damageType: cellText(7),
+      cost: text(1),
+      dmgSmall: text(2),
+      dmgMedium: text(3),
+      critical: text(4),
+      rangeIncrement: text(5),
+      weight: text(6),
+      damageType: text(7),
     });
   });
 
   return weapons;
 }
 
-export function parseArmorHtml(html: string): {
-  name: string;
-  category: string;
-  cost: string;
-  acBonus: string;
-  maxDexBonus: string;
-  armorCheckPenalty: string;
-  arcaneSpellFailure: string;
-  speed30: string;
-  speed20: string;
-  weight: string;
-}[] {
+export function parseArmorHtml(html: string): ArmorRow[] {
   const $ = cheerio.load(html);
   const table = $("table#tableArmorandShields");
   if (!table.length) return [];
 
-  const items: ReturnType<typeof parseArmorHtml> = [];
+  const items: ArmorRow[] = [];
   let currentCategory = "";
 
   table.find("tbody tr").each((_, row) => {
@@ -111,26 +86,22 @@ export function parseArmorHtml(html: string): {
     const cells = $row.find("td");
     if (cells.length < 9) return;
 
-    const cellText = (i: number) => {
-      const cell = $(cells[i]).clone();
-      cell.find("sup").remove();
-      return normalizeWs(cell.text());
-    };
+    const text = (i: number) => cellText($(cells[i]));
 
-    const name = cellText(0);
+    const name = text(0);
     if (!name || !currentCategory) return;
 
     items.push({
       name,
       category: currentCategory,
-      cost: cellText(1),
-      acBonus: cellText(2),
-      maxDexBonus: cellText(3),
-      armorCheckPenalty: cellText(4),
-      arcaneSpellFailure: cellText(5),
-      speed30: cellText(6),
-      speed20: cellText(7),
-      weight: cellText(8),
+      cost: text(1),
+      acBonus: text(2),
+      maxDexBonus: text(3),
+      armorCheckPenalty: text(4),
+      arcaneSpellFailure: text(5),
+      speed30: text(6),
+      speed20: text(7),
+      weight: text(8),
     });
   });
 
@@ -169,15 +140,11 @@ export function parseGoodsHtml(html: string): {
       const cells = $row.find("td");
       if (cells.length < 2) return;
 
-      const cellText = (i: number) => {
-        const cell = $(cells[i]).clone();
-        cell.find("sup").remove();
-        return normalizeWs(cell.text());
-      };
+      const text = (i: number) => cellText($(cells[i]));
 
-      const name = cellText(0);
-      const cost = cellText(1);
-      const weight = cells.length >= 3 ? cellText(2) : "—";
+      const name = text(0);
+      const cost = text(1);
+      const weight = cells.length >= 3 ? text(2) : "—";
 
       if (!name) return;
 

@@ -1,16 +1,17 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
-import { parseFeatListingHtml, parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
-import { parseSpellListingHtml, parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
+import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
+import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
-import { parseRaceListingHtml, parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
+import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseWeaponsHtml, parseArmorHtml, parseGoodsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
 import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, parseWondrousItemsHtml, parseRingsHtml, parseRodsHtml, parseStaffsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
-import { resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { type ReferenceType, resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import type { FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { sanitizeJsonValues, sortKeysDeep, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { toCamelCase, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { fetchHtml, fetchAllPages, configureHttp } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { buildListingUrl, buildRaceListingUrl, getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
@@ -35,11 +36,50 @@ function writeIfChanged(outPath: string, data: StoredReference): void {
   writeFileSync(outPath, newJson);
 }
 
+/** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
+function scrapedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]): StoredReference<T> {
+  const overrides = storedOverrides(outPath, _meta.type);
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  return sanitizeJsonValues({ _meta, raw, ...overrides ? { overrides } : {} });
+}
+
+/** Writes a reference to its file, when it changed. */
+function writeReference(outPath: string, reference: StoredReference) {
+  writeIfChanged(outPath, reference);
+  console.log(`Written: ${outPath}`);
+}
+
+/** Saves a reference as scraped (its `_meta` and `raw`), keeping the overrides its file had. */
+function saveReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+  writeReference(outPath, scrapedReference(outPath, _meta, raw));
+}
+
+/**
+ * Saves a reference as scraped (`saveReference`), and returns it with what the generator reads derived from it. A
+ * reference that can't be derived isn't written.
+ */
+function saveResolvedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+  const reference = scrapedReference(outPath, _meta, raw);
+  const resolved = resolveReference(_meta.type, reference);
+  writeReference(outPath, reference);
+  return resolved;
+}
+
+/** A listing's entries across its pages, with absolute URLs: only `bookSlug`'s, when given. */
+async function discover(listingUrl: string, section: string, bookSlug?: string) {
+  const entries: { name: string; url: string }[] = [];
+  for (const pageHtml of await fetchAllPages(listingUrl)) {
+    for (const { name, url } of parseListingHtml(pageHtml, section)) {
+      if (bookSlug && !url.includes(`/${bookSlug}/`)) continue;
+      entries.push({ name, url: url.startsWith("http") ? url : `${BASE_URL}${url}` });
+    }
+  }
+  return entries;
+}
+
 // ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
-
-const BASE_DIR = join(import.meta.dirname!, "../../");
 
 async function main() {
   const args = process.argv.slice(2);
@@ -143,24 +183,7 @@ async function scrapeAllClasses(book: string) {
   const listingUrl = `${BASE_URL}/classes/`;
   console.log(`Discovering classes from ${listingUrl} (filtering for ${bookSlug})...`);
 
-  const pages = await fetchAllPages(listingUrl);
-  const classUrls: { name: string; url: string }[] = [];
-
-  for (const pageHtml of pages) {
-    const $ = (await import("cheerio")).load(pageHtml);
-    $("table tr").each((_, row) => {
-      const firstCell = $(row).find("td").first();
-      if (firstCell.length === 0) return;
-      const link = firstCell.find("a").first();
-      if (link.length === 0) return;
-      const name = link.text().trim();
-      const href = link.attr("href");
-      if (!name || !href || !href.includes("/classes/")) return;
-      // Filter by book slug in URL path
-      if (!href.includes(`/${bookSlug}/`)) return;
-      classUrls.push({ name, url: href.startsWith("http") ? href : `${BASE_URL}${href}` });
-    });
-  }
+  const classUrls = await discover(listingUrl, "classes", bookSlug);
 
   console.log(`Found ${classUrls.length} classes`);
 
@@ -201,22 +224,14 @@ async function scrapeClass(url: string, book: string) {
   console.log(`  Features: ${raw.classFeatures.length}`);
 
   const slug = toCamelCase(raw.name);
-  const outPath = join(BASE_DIR, "reference", book, "classes", `${slug}.json`);
+  const outPath = join(REFERENCE_DIR, book, "classes", `${slug}.json`);
 
-  const overrides = storedOverrides(outPath, "class");
-  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  const stored: StoredReference<"class"> = sanitizeJsonValues({ _meta, raw, ...overrides ? { overrides } : {} });
-
-  const { detected } = resolveReference("class", stored);
+  const { detected } = saveResolvedReference(outPath, _meta, raw);
   console.log(`  BAB: ${detected.bab}`);
   console.log(`  Saves: fort=${detected.saves.fortitude} ref=${detected.saves.reflex} will=${detected.saves.will}`);
   if (detected.casterLevelAdvancement) {
     console.log(`  Caster advancement: ${detected.casterLevelAdvancement.type} at levels ${detected.casterLevelAdvancement.levels.join(", ")}`);
   }
-
-  writeIfChanged(outPath, stored);
-
-  console.log(`Written: ${outPath}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -227,18 +242,7 @@ async function scrapeAllFeats(book: string) {
   const listingUrl = buildListingUrl("feats", book);
   console.log(`Discovering feats from ${listingUrl}...`);
 
-  const pages = await fetchAllPages(listingUrl);
-  const featUrls: { name: string; url: string }[] = [];
-
-  for (const pageHtml of pages) {
-    const entries = parseFeatListingHtml(pageHtml);
-    for (const entry of entries) {
-      featUrls.push({
-        name: entry.name,
-        url: entry.url.startsWith("http") ? entry.url : `${BASE_URL}${entry.url}`,
-      });
-    }
-  }
+  const featUrls = await discover(listingUrl, "feats");
 
   console.log(`Found ${featUrls.length} feats, fetching detail pages...`);
 
@@ -256,23 +260,14 @@ async function scrapeAllFeats(book: string) {
 
   console.log(`Parsed ${raw.length} feats`);
 
-  const outPath = join(BASE_DIR, "reference", book, "feats.json");
+  const outPath = join(REFERENCE_DIR, book, "feats.json");
 
-  const overrides = storedOverrides(outPath, "feat");
-  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  const reference: StoredReference<"feat"> = sanitizeJsonValues({
-    _meta: {
-      type: "feat",
-      sourceUrl: listingUrl,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-    ...overrides ? { overrides } : {},
-  });
-
-  writeIfChanged(outPath, reference);
-  console.log(`Written: ${outPath}`);
+  saveReference(outPath, {
+    type: "feat",
+    sourceUrl: listingUrl,
+    book,
+    scrapedAt: new Date().toISOString(),
+  }, raw);
 }
 
 async function scrapeSingleFeat(url: string) {
@@ -297,18 +292,7 @@ async function scrapeAllSpells(book: string) {
   const listingUrl = buildListingUrl("spells", book);
   console.log(`Discovering spells from ${listingUrl}...`);
 
-  const pages = await fetchAllPages(listingUrl);
-  const spellUrls: { name: string; url: string }[] = [];
-
-  for (const pageHtml of pages) {
-    const entries = parseSpellListingHtml(pageHtml);
-    for (const entry of entries) {
-      spellUrls.push({
-        name: entry.name,
-        url: entry.url.startsWith("http") ? entry.url : `${BASE_URL}${entry.url}`,
-      });
-    }
-  }
+  const spellUrls = await discover(listingUrl, "spells");
 
   console.log(`Found ${spellUrls.length} spells, fetching detail pages...`);
 
@@ -333,23 +317,14 @@ async function scrapeAllSpells(book: string) {
     console.log(`  ${school}: ${count}`);
   }
 
-  const outPath = join(BASE_DIR, "reference", book, "spells.json");
+  const outPath = join(REFERENCE_DIR, book, "spells.json");
 
-  const overrides = storedOverrides(outPath, "spell");
-  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  const reference: StoredReference<"spell"> = sanitizeJsonValues({
-    _meta: {
-      type: "spell",
-      sourceUrl: listingUrl,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-    ...overrides ? { overrides } : {},
-  });
-
-  writeIfChanged(outPath, reference);
-  console.log(`Written: ${outPath}`);
+  saveReference(outPath, {
+    type: "spell",
+    sourceUrl: listingUrl,
+    book,
+    scrapedAt: new Date().toISOString(),
+  }, raw);
 }
 
 async function scrapeSingleSpell(url: string) {
@@ -387,23 +362,15 @@ async function scrapeAllDomains() {
     console.log(`  ${d.name}: ${d.spells.length} spells`);
   }
 
-  const outPath = join(BASE_DIR, "reference", "domains.json");
+  const outPath = join(REFERENCE_DIR, "domains.json");
 
-  const overrides = storedOverrides(outPath, "domain");
-  const reference: StoredReference<"domain"> = sanitizeJsonValues({
-    _meta: {
-      type: "domain",
-      sourceUrl: DOMAIN_SOURCE_URL,
-      book: "all-domains",
-      filter: "all",
-      scrapedAt: new Date().toISOString(),
-    },
-    raw: result.raw,
-    ...overrides ? { overrides } : {},
-  });
-
-  writeIfChanged(outPath, reference);
-  console.log(`Written: ${outPath}`);
+  saveReference(outPath, {
+    type: "domain",
+    sourceUrl: DOMAIN_SOURCE_URL,
+    book: "all-domains",
+    filter: "all",
+    scrapedAt: new Date().toISOString(),
+  }, result.raw);
 }
 
 // ---------------------------------------------------------------------------
@@ -415,20 +382,7 @@ async function scrapeAllRaces(book: string) {
   const listingUrl = buildRaceListingUrl(book);
   console.log(`Discovering races from ${listingUrl} (filtering for ${bookSlug})...`);
 
-  const pages = await fetchAllPages(listingUrl);
-  const raceUrls: { name: string; url: string }[] = [];
-
-  for (const pageHtml of pages) {
-    const entries = parseRaceListingHtml(pageHtml);
-    for (const entry of entries) {
-      // Filter by book slug in URL path
-      if (!entry.url.includes(`/${bookSlug}/`)) continue;
-      raceUrls.push({
-        name: entry.name,
-        url: entry.url.startsWith("http") ? entry.url : `${BASE_URL}${entry.url}`,
-      });
-    }
-  }
+  const raceUrls = await discover(listingUrl, "races", bookSlug);
 
   console.log(`Found ${raceUrls.length} races`);
 
@@ -448,23 +402,14 @@ async function scrapeAllRaces(book: string) {
 
   console.log(`Parsed ${raw.length} races`);
 
-  const outPath = join(BASE_DIR, "reference", book, "races.json");
+  const outPath = join(REFERENCE_DIR, book, "races.json");
 
-  const overrides = storedOverrides(outPath, "race");
-  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  const reference: StoredReference<"race"> = sanitizeJsonValues({
-    _meta: {
-      type: "race",
-      sourceUrl: listingUrl,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-    ...overrides ? { overrides } : {},
-  });
-
-  writeIfChanged(outPath, reference);
-  console.log(`Written: ${outPath}`);
+  saveReference(outPath, {
+    type: "race",
+    sourceUrl: listingUrl,
+    book,
+    scrapedAt: new Date().toISOString(),
+  }, raw);
 }
 
 async function scrapeSingleRace(url: string) {
@@ -519,22 +464,9 @@ async function scrapeAllItems(book: string) {
     goods: rawGoods,
   };
 
-  const outPath = join(BASE_DIR, "reference", book, "items.json");
+  const outPath = join(REFERENCE_DIR, book, "items.json");
 
-  const overrides = storedOverrides(outPath, "item");
-  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  const reference: StoredReference<"item"> = sanitizeJsonValues({
-    _meta: {
-      type: "item",
-      sourceUrls: D20SRD_URLS,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-    ...overrides ? { overrides } : {},
-  });
-
-  const { detected } = resolveReference("item", reference);
+  const { detected } = saveResolvedReference(outPath, { type: "item", sourceUrls: D20SRD_URLS, book, scrapedAt: new Date().toISOString() }, raw);
   console.log(`\nDetection results:`);
   const matchedWeapons = Object.values(detected.weapons).filter((w) => w.generatorName).length;
   const matchedArmor = Object.values(detected.armor).filter((a) => a.generatorName).length;
@@ -545,9 +477,6 @@ async function scrapeAllItems(book: string) {
     console.log(`  Unresolved (${detected.unresolved.length}):`);
     for (const u of detected.unresolved) console.log(`    ${u}`);
   }
-
-  writeIfChanged(outPath, reference);
-  console.log(`\nWritten: ${outPath}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -615,10 +544,7 @@ async function scrapeAllMagicItems(book: string) {
 
   console.log(`\nTotal raw entries: ${raw.length}`);
 
-  const outPath = join(BASE_DIR, "reference", book, "magicItems.json");
-
-  const overrides = storedOverrides(outPath, "magicItem");
-  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  const outPath = join(REFERENCE_DIR, book, "magicItems.json");
 
   const categoryCounts: Record<string, number> = {};
   for (const entry of raw) {
@@ -629,19 +555,7 @@ async function scrapeAllMagicItems(book: string) {
     console.log(`  ${cat}: ${count}`);
   }
 
-  const reference: StoredReference<"magicItem"> = sanitizeJsonValues({
-    _meta: {
-      type: "magicItem",
-      sourceUrls: D20SRD_MAGIC_URLS,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-    ...overrides ? { overrides } : {},
-  });
-
-  writeIfChanged(outPath, reference);
-  console.log(`\nWritten: ${outPath}`);
+  saveReference(outPath, { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book, scrapedAt: new Date().toISOString() }, raw);
 }
 
 // ---------------------------------------------------------------------------

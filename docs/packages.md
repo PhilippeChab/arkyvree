@@ -33,8 +33,10 @@ database/packages/
     ├── content/          # What the data is written with, and the hand-written data
     │   ├── types.ts          # FeatSeed, ClassSeed, SpellSeed, BookContent…
     │   ├── requirements.ts   # Requirement builders: eq(), gte(), or(), feat()…
-    │   ├── items.ts          # Proficiency requirements and weapon/armor/shield properties
-    │   ├── weapons.ts, skills.ts, creatureTypes.ts
+    │   ├── items.ts          # Weapon/armor/shield properties and proficiency requirements
+    │   ├── weapons.ts        # The weapons by proficiency, their proficiency requirements and feats
+    │   ├── wizardSchools.ts  # The wizard's school feats
+    │   ├── skills.ts, creatureTypes.ts
     │   ├── core.ts           # The core ruleset, abilities, saves, skills, languages
     │   └── familiars.ts, animalCompanions.ts, mounts.ts, deitysWeapon.ts
     └── seed/             # What writes it to the database

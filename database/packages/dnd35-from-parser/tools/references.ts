@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { buildDetected, buildInitialMapping, buildOccurrenceMap } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass.ts";
 import { buildDomainDetected, buildDomainMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectDomain.ts";
 import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
@@ -7,6 +7,7 @@ import { buildItemDetected, buildItemMapping } from "@/database/packages/dnd35-f
 import { buildMagicItemDetected, buildMagicItemMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { buildRaceDetected, buildRaceMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type {
   ClassReference,
   DomainReference,
@@ -136,6 +137,13 @@ export function loadReference<T extends ReferenceType>(path: string, type: T): R
   const reference = deepFreeze(resolveReference(type, readStoredReference(key, type)));
   cache.set(key, reference);
   return reference;
+}
+
+/** A book's class references with their file's name, in the order its folder lists them: none for a book without classes. */
+export function classReferences(book: string): { file: string; ref: ClassReference }[] {
+  const dir = join(REFERENCE_DIR, book, "classes");
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => ({ file, ref: loadReference(join(dir, file), "class") }));
 }
 
 /** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */

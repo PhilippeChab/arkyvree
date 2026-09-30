@@ -4,12 +4,13 @@
 
 import { stripSeparators } from "@/shared/utils.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import { SIMPLE_WEAPONS, MARTIAL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier, ModifierEffect, ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 // Re-export stripSeparators — used as the slug function throughout the tools
 export { stripSeparators } from "@/shared/utils.ts";
@@ -141,8 +142,16 @@ export function stripClassSuffix(name: string, className: string): string | unde
 
 type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string; filter?: string } };
 
+/** The books' references: a folder per book, and the files every book shares (domains.json). */
+export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
+
+/** The books with references: the folders of REFERENCE_DIR. */
+export function referenceBooks(): string[] {
+  return readdirSync(REFERENCE_DIR, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+}
+
 /** The reference files under `refDir`: each book's, and the ones every book shares (domains.json). */
-export function discoverRefs(refDir: string): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
+export function discoverRefs(refDir = REFERENCE_DIR): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
   const files = readdirSync(refDir, { withFileTypes: true, recursive: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
     .map((entry) => join(entry.parentPath, entry.name))
@@ -162,50 +171,24 @@ for (const name of SKILL_NAMES) {
   SKILL_MAP[name.toLowerCase()] = stripSeparators(name);
 }
 
-// ---------------------------------------------------------------------------
-// collectImportsFromReq — used by generator/class, generator/feat
-// ---------------------------------------------------------------------------
+/**
+ * A skill's slug: its own ("Knowledge (arcana)" → "knowledgearcana"), else its base skill's, for a specialization the
+ * skill list doesn't name ("Perform (dance)" → "perform").
+ */
+export function skillSlug(name: string): string {
+  const fullKey = name.toLowerCase().trim();
+  if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
+  const baseName = name.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+  return SKILL_MAP[baseName] ?? stripSeparators(baseName);
+}
 
-export function collectImportsFromReq(req: RequirementEntry, imports: Set<string>): void {
-  if ("chainingOperator" in req) {
-    imports.add(req.chainingOperator);
-    for (const child of req.children) {
-      collectImportsFromReq(child, imports);
-    }
-    return;
-  }
-
-  const { target, operator, valueType } = req;
-
-  if (target.match(/^feats\..*\.possessed$/) && operator === "equal" && req.value === "true") {
-    imports.add("eq");
-    return;
-  }
-
-  if (valueType === "number") {
-    switch (operator) {
-      case "greater_than_or_equal": imports.add("gte"); break;
-      case "greater_than": imports.add("gt"); break;
-      case "less_than_or_equal": imports.add("lte"); break;
-      case "less_than": imports.add("lt"); break;
-      case "equal": imports.add("eqNum"); break;
-      case "not_equal": imports.add("neNum"); break;
-    }
-    return;
-  }
-
-  if (valueType === "string") {
-    switch (operator) {
-      case "equal": imports.add("eqStr"); break;
-      case "not_equal": imports.add("neStr"); break;
-    }
-    return;
-  }
-
-  if (valueType === "boolean") {
-    if (operator === "equal") imports.add("eq");
-    if (operator === "not_equal") imports.add("ne");
-  }
+/** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
+export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
+  if (!/\(any\)/i.test(name)) return undefined;
+  const baseName = name.replace(/\s*\(any\)/i, "").trim().toLowerCase();
+  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) => gte(`skills.${stripSeparators(s)}.rank`, ranks));
+  if (checks.length <= 1) return checks[0];
+  return or(...checks);
 }
 
 // ---------------------------------------------------------------------------
@@ -229,15 +212,58 @@ export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): 
   return undefined;
 }
 
+/** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
+export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
+
+// ---------------------------------------------------------------------------
+// Per-entity modifiers — used by detectDomain, detectRace
+// ---------------------------------------------------------------------------
+
+/**
+ * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
+ * `Modifier`), the invalid paths and the text it couldn't parse.
+ */
+export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = { modifiers: M[]; errors: string[]; unresolvedModifiers: string[] };
+
+/** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
+export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: (entry: E) => ModifierDetection<Modifier>) {
+  const detected: Record<string, DetectedModifiers> = {};
+  for (const entry of raw) {
+    const { modifiers, errors, unresolvedModifiers } = detect(entry);
+    detected[entry.name] = {
+      modifiers,
+      ...(errors.length > 0 ? { errors } : {}),
+      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
+    };
+  }
+  return detected;
+}
+
+/** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
+export function modifierMapping<E extends { name: string; description: string }, O extends { description?: string; modifiers?: Modifier[] }, X extends object>(
+  raw: E[],
+  detected: Record<string, { modifiers: Modifier[] } | undefined>,
+  overrides: Record<string, O | undefined>,
+  extra: (override: O | undefined) => X,
+) {
+  const mapping: Record<string, { description: string; modifiers?: Modifier[] } & X> = {};
+  for (const entry of raw) {
+    const override = overrides[entry.name];
+    const modifiers = override?.modifiers ?? detected[entry.name]?.modifiers ?? [];
+    mapping[entry.name] = { description: override?.description ?? entry.description, ...(modifiers.length > 0 ? { modifiers } : {}), ...extra(override) };
+  }
+  return mapping;
+}
+
 // ---------------------------------------------------------------------------
 // validateModifiers — used by detectFeat, detectDomain
 // ---------------------------------------------------------------------------
 
-export function validateModifiers(
-  modifiers: ModifierSeed[],
+export function validateModifiers<M extends ModifierEffect>(
+  modifiers: M[],
   isValid: (target: string) => boolean,
-): { validated: ModifierSeed[]; errors: string[] } {
-  const validated: ModifierSeed[] = [];
+): { validated: M[]; errors: string[] } {
+  const validated: M[] = [];
   const errors: string[] = [];
   for (const m of modifiers) {
     if (isValid(m.target)) {
@@ -248,13 +274,6 @@ export function validateModifiers(
   }
   return { validated, errors };
 }
-
-// ---------------------------------------------------------------------------
-// Weapon sets — used by buildSeeds, generator/feat
-// ---------------------------------------------------------------------------
-
-export const SIMPLE_SET = new Set(SIMPLE_WEAPONS);
-export const MARTIAL_SET = new Set(MARTIAL_WEAPONS);
 
 // ---------------------------------------------------------------------------
 // SAVE_MAP — used by detectFeat
@@ -314,10 +333,7 @@ export function normalizeName(name: string): string {
 export const MAX_DESC = 2000;
 
 export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
-  const clean = sanitizeText(text)
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const clean = normalizeWs(sanitizeText(text));
   return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
 }
 

@@ -1,18 +1,107 @@
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { RequirementEntry, Modifier, ModifierSeed, Property } from "@/database/packages/dnd35/content/types.ts";
 
 // References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, the overrides) with `detected` and
 // `mapping` derived from it. The file itself holds only `StoredReference` (tools/references.ts).
 
 export type BabType = "good" | "medium" | "poor";
 export type SaveType = "good" | "poor";
+type Saves = { fortitude: SaveType; reflex: SaveType; will: SaveType };
+
+/** Where and when a reference was scraped. */
+type ScrapedMeta<T extends string> = { type: T; sourceUrl: string; book: string; scrapedAt: string };
+
+/** A reference's overrides by entry name, and the entries reviewed (no further action needed). */
+type Overrides<T> = Record<string, T> & { reviewed?: string[] };
+
+/**
+ * A domain's or a race's detected modifiers, the invalid paths (bugs to fix) and the text that couldn't be parsed (to
+ * review). Their modifiers have no requirements: only a feat's has.
+ */
+export type DetectedModifiers = { modifiers: Modifier[]; errors?: string[]; unresolvedModifiers?: string[] };
+
+/** A named piece of text: a race's trait, a class feature's sub-option. */
+export type NamedText = { name: string; description: string };
+
+/** A class level pick of an aptitude's feats. */
+export type AptitudePick = { levels: number[]; target: string };
+
+/** Existing feats a class lets its player pick, as an aptitude (at `levels` only, when given). */
+export type BonusFeatList = { aptitude: string; feats: string[]; levels?: number[] };
+
+/** Template expansion config for family feats (Weapon Focus, Skill Focus, etc.) */
+type FeatTemplate = { type: "weapon" | "skill" | "school" | "crossbow"; familyName: string };
+
+/** A feat's fields a mapping derives and an override sets. */
+type FeatFields = {
+  description?: string;
+  aptitudes?: string[];
+  requirements?: RequirementEntry[];
+  modifiers?: ModifierSeed[];
+  properties?: Property[];
+  stackable?: boolean;
+  selectable?: boolean;
+  featNameMap?: Record<string, string>;
+  skip?: boolean;
+};
+
+/** A domain's pool of feats (e.g. War Domain Weapon: a feat per martial weapon). */
+type DomainFeatPool = {
+  aptitude: string;
+  namePrefix: string;
+  items: "martial" | "simple" | "exotic" | "all" | string[];
+  grants: string[];
+  description?: string;
+};
+
+/** A class's own spell list: its slots per day, its spells known, and the list it inherits. */
+type ClassSpells = { slug: string; perDay: number[][]; known?: number[][]; knowAll?: boolean; noCantrips?: boolean; inheritsFrom?: string };
+
+/** A class feature's fields a mapping derives and an override sets. */
+type ClassFeatureFields = {
+  seedName?: string;
+  description?: string;
+  stackable?: boolean;
+  selectable?: boolean;
+  skip?: boolean;
+  modifiers?: ModifierSeed[];
+  /** Alternative occurrence names that map to this feature (e.g. "Summon Familiar" → "Familiar") */
+  aliases?: string[];
+};
+
+/** An item's fields a mapping derives and an override sets. */
+type ItemFields = { description?: string; costGp?: string; weight?: string; skip?: boolean };
+
+/** A magic item's fields a mapping derives and an override sets. */
+type MagicItemFields = ItemFields & { slot?: string; baseItem?: string | null };
+
+export type WeaponRow = {
+  name: string;
+  proficiency: string;
+  category: string;
+  cost: string;
+  dmgSmall: string;
+  dmgMedium: string;
+  critical: string;
+  rangeIncrement: string;
+  weight: string;
+  damageType: string;
+};
+
+export type ArmorRow = {
+  name: string;
+  category: string;
+  cost: string;
+  acBonus: string;
+  maxDexBonus: string;
+  armorCheckPenalty: string;
+  arcaneSpellFailure: string;
+  speed30: string;
+  speed20: string;
+  weight: string;
+};
 
 export type FeatReference = {
-  _meta: {
-    type: "feat";
-    sourceUrl: string;
-    book: string;
-    scrapedAt: string;
-  };
+  _meta: ScrapedMeta<"feat">;
 
   /** All feats scraped from the page */
   raw: {
@@ -32,62 +121,31 @@ export type FeatReference = {
       featNameMap: Record<string, string>;
       stackable?: boolean;
       modifiers?: ModifierSeed[];
-      properties?: { type: string; value: string }[];
+      properties?: Property[];
       /** Invalid paths that failed validation — bugs to fix */
       errors?: string[];
       /** Modifier text we couldn't auto-parse — needs human review */
       unresolvedModifiers?: string[];
       /** Prerequisite text we recognized but couldn't map to a requirement */
       unresolvedPrereqs?: string[];
-      /** Template expansion config for family feats (Weapon Focus, Skill Focus, etc.) */
-      template?: {
-        type: "weapon" | "skill" | "school" | "crossbow";
-        familyName: string;
-      };
+      template?: FeatTemplate;
     };
   };
 
   /** Merged data per feat: derived from detected and the overrides when the reference is loaded */
-  mapping: Record<string, {
-    description?: string;
-    aptitudes?: string[];
-    requirements?: RequirementEntry[];
-    modifiers?: ModifierSeed[];
-    properties?: { type: string; value: string }[];
-    stackable?: boolean;
-    selectable?: boolean;
+  mapping: Record<string, FeatFields & {
     /** Template expansion config — purely auto-detected, not overridable */
-    template?: {
-      type: "weapon" | "skill" | "school" | "crossbow";
-      familyName: string;
-    };
-    featNameMap?: Record<string, string>;
-    skip?: boolean;
+    template?: FeatTemplate;
   }> & {
     /** Human-annotated overrides — stored in the reference file, kept across re-scrapes */
-    overrides: Record<string, {
-      skip?: boolean;
-      aptitudes?: string[];
-      requirements?: RequirementEntry[];
-      modifiers?: ModifierSeed[];
-      properties?: { type: string; value: string }[];
-      stackable?: boolean;
-      selectable?: boolean;
-      description?: string;
-      featNameMap?: Record<string, string>;
-    }> & {
-      /** Unresolved items that have been reviewed (no further action needed) */
-      reviewed?: string[];
-    };
+    overrides: Overrides<FeatFields>;
   };
 };
 
 export type DomainReference = {
-  _meta: {
-    type: "domain";
-    sourceUrl: string;
-    book: string;
-    scrapedAt: string;
+  _meta: ScrapedMeta<"domain"> & {
+    /** Which domains the page lists ("all"). */
+    filter?: string;
   };
 
   raw: {
@@ -96,51 +154,25 @@ export type DomainReference = {
     spells: { name: string; slug?: string; level: number }[];
   }[];
 
-  detected: {
-    [domainName: string]: {
-      modifiers: ModifierSeed[];
-      errors?: string[];
-      unresolvedModifiers?: string[];
-    };
-  };
+  detected: Record<string, DetectedModifiers>;
 
   mapping: Record<string, {
     description?: string;
-    modifiers?: ModifierSeed[];
-    featPool?: {
-      aptitude: string;
-      namePrefix: string;
-      items: "martial" | "simple" | "exotic" | "all" | string[];
-      grants: string[];
-      description?: string;
-    };
+    modifiers?: Modifier[];
+    featPool?: DomainFeatPool;
   }> & {
-    overrides: Record<string, {
+    overrides: Overrides<{
       name?: string;
       description?: string;
-      modifiers?: ModifierSeed[];
+      modifiers?: Modifier[];
       spells?: { name: string; level: number }[];
-      featPool?: {
-        aptitude: string;
-        namePrefix: string;
-        items: "martial" | "simple" | "exotic" | "all" | string[];
-        grants: string[];
-        description?: string;
-      };
-    }> & {
-      /** Domains that have been reviewed (no further action needed) */
-      reviewed?: string[];
-    };
+      featPool?: DomainFeatPool;
+    }>;
   };
 };
 
 export type WizardSchoolReference = {
-  _meta: {
-    type: "wizardSchool";
-    sourceUrl: string;
-    book: string;
-    scrapedAt: string;
-  };
+  _meta: ScrapedMeta<"wizardSchool">;
 
   raw: {
     name: string;
@@ -150,21 +182,12 @@ export type WizardSchoolReference = {
 
   /** Human-annotated overrides — stored in the reference file, kept across re-scrapes */
   mapping?: {
-    overrides: Record<string, {
-      description?: string;
-    }> & {
-      reviewed?: string[];
-    };
+    overrides: Overrides<{ description?: string }>;
   };
 };
 
 export type SpellReference = {
-  _meta: {
-    type: "spell";
-    sourceUrl: string;
-    book: string;
-    scrapedAt: string;
-  };
+  _meta: ScrapedMeta<"spell">;
 
   /** All spells scraped from the detail page */
   raw: {
@@ -190,23 +213,16 @@ export type SpellReference = {
 
   /** Human-annotated overrides — stored in the reference file, kept across re-scrapes */
   mapping?: {
-    overrides: Record<string, {
+    overrides: Overrides<{
       description?: string;
       /** Extra class/level entries missing from scraped data */
       levelEntries?: { className: string; level: number }[];
-    }> & {
-      reviewed?: string[];
-    };
+    }>;
   };
 };
 
 export type RaceReference = {
-  _meta: {
-    type: "race";
-    sourceUrl: string;
-    book: string;
-    scrapedAt: string;
-  };
+  _meta: ScrapedMeta<"race">;
 
   raw: {
     name: string;
@@ -215,42 +231,29 @@ export type RaceReference = {
     baseSpeed: number;
     abilityAdjustments: { ability: string; value: number }[];
     favoredClass?: string;
-    features: { name: string; description: string }[];
+    features: NamedText[];
   }[];
 
-  detected: {
-    [raceName: string]: {
-      modifiers: ModifierSeed[];
-      errors?: string[];
-      unresolvedModifiers?: string[];
-    };
-  };
+  detected: Record<string, DetectedModifiers>;
 
   mapping: Record<string, {
     description?: string;
-    modifiers?: ModifierSeed[];
+    modifiers?: Modifier[];
     skip?: boolean;
   }> & {
-    overrides: Record<string, {
+    overrides: Overrides<{
       name?: string;
       description?: string;
       size?: string;
       baseSpeed?: number;
-      modifiers?: ModifierSeed[];
+      modifiers?: Modifier[];
       skip?: boolean;
-    }> & {
-      reviewed?: string[];
-    };
+    }>;
   };
 };
 
 export type ClassReference = {
-  _meta: {
-    type: "class";
-    sourceUrl: string;
-    book: string;
-    scrapedAt: string;
-  };
+  _meta: ScrapedMeta<"class">;
 
   raw: {
     name: string;
@@ -299,7 +302,7 @@ export type ClassReference = {
     levels: number;
     skillPoints: number;
     bab: BabType;
-    saves: { fortitude: SaveType; reflex: SaveType; will: SaveType };
+    saves: Saves;
     casterLevelAdvancement?: { type: "divine" | "arcane" | "any" | "dual"; levels: number[] };
     requirements: RequirementEntry[];
     /** Map from feat slug (e.g. "pointblankshot") to original name (e.g. "Point Blank Shot") */
@@ -314,11 +317,11 @@ export type ClassReference = {
     /** Detected caster type from class feature descriptions */
     casterType?: "Arcane" | "Divine";
     /** Auto-detected aptitude picks from class features with choice language */
-    aptitudePicks?: { levels: number[]; target: string }[];
+    aptitudePicks?: AptitudePick[];
     /** Aptitude pick features where we couldn't generate a valid target path */
     unresolvedAptitudePicks?: string[];
     /** Bonus feat lists — features that let the player pick from existing feats */
-    bonusFeatLists?: { aptitude: string; feats: string[]; levels?: number[] }[];
+    bonusFeatLists?: BonusFeatList[];
     /** Locked creature-type favored-enemy variants (Gnome Giant-slayer's
      *  "Favored Enemy (Giant)" etc.) — re-routed at generation time to the
      *  shared `Favored Enemy: <Type>` variant. The keyed feature is suppressed
@@ -333,25 +336,17 @@ export type ClassReference = {
   mapping: {
     classFeatureAptitude: string;
     features: {
-      [rawName: string]: {
-        seedName?: string;
-        description?: string;
+      [rawName: string]: ClassFeatureFields & {
         /** Minimum class level at which this feature is gained */
         level?: number;
-        stackable?: boolean;
-        selectable?: boolean;
-        skip?: boolean;
         /** Override the default classFeatureAptitude for this specific feat */
         aptitude?: string;
-        modifiers?: ModifierSeed[];
-        /** Alternative occurrence names that map to this feature (e.g. "Summon Familiar" → "Familiar") */
-        aliases?: string[];
       };
     };
     /** Map from feature occurrence name → mapping key (derived at load, used by generator) */
     occurrenceMap?: Record<string, string>;
     bonusSpellAbility?: string;
-    spells?: { slug: string; perDay: number[][]; known?: number[][]; knowAll?: boolean; noCantrips?: boolean; inheritsFrom?: string };
+    spells?: ClassSpells;
     /** Manual overrides — stored in the reference file, kept across re-scrapes */
     overrides?: {
       /** Class description override (for sources that lack inline descriptions) */
@@ -359,7 +354,7 @@ export type ClassReference = {
       requirements?: RequirementEntry[];
       classSkills?: string[];
       bab?: BabType;
-      saves?: { fortitude: SaveType; reflex: SaveType; will: SaveType };
+      saves?: Saves;
       /** Suppress spell backfill — class has bonus spells per day, not its own spell slots */
       noSpells?: boolean;
       /** Unresolved items that have been reviewed (no further action needed) */
@@ -368,27 +363,19 @@ export type ClassReference = {
       freeFeats?: [number, string, string][];
       casterType?: "Arcane" | "Divine";
       modifiers?: { level: number; target: string; value: string; valueType: string; operator: string }[];
-      aptitudePicks?: { levels: number[]; target: string }[];
-      bonusFeatLists?: { aptitude: string; feats: string[]; levels?: number[] }[];
+      aptitudePicks?: AptitudePick[];
+      bonusFeatLists?: BonusFeatList[];
       /** Manual alignment override (for base classes where the source page has no alignment info) */
       alignment?: string;
       /** Manual bonusSpellAbility (when scraper can't detect it from page text) */
       bonusSpellAbility?: string;
       /** Manual spell config overrides (e.g. wizard known table instead of knowAll) */
-      spells?: { slug?: string; perDay?: number[][]; known?: number[][]; knowAll?: boolean; noCantrips?: boolean; inheritsFrom?: string };
+      spells?: Partial<ClassSpells>;
       /** Per-feature manual overrides — fields here win over auto-generated mapping.features */
       features?: {
-        [rawName: string]: {
-          seedName?: string;
-          description?: string;
+        [rawName: string]: ClassFeatureFields & {
           level?: number | null;
-          stackable?: boolean;
-          selectable?: boolean;
-          skip?: boolean;
           aptitude?: string | null;
-          modifiers?: ModifierSeed[];
-          /** Alternative occurrence names that map to this feature (e.g. "Summon Familiar" → "Familiar") */
-          aliases?: string[];
         };
       };
     };
@@ -399,12 +386,7 @@ export type MagicItemCategory = "specificArmor" | "specificShield" | "specificWe
   | "wondrousItem" | "ring" | "rod" | "staff";
 
 export type MagicItemReference = {
-  _meta: {
-    type: "magicItem";
-    sourceUrls: Record<string, string>;
-    book: string;
-    scrapedAt: string;
-  };
+  _meta: Omit<ScrapedMeta<"magicItem">, "sourceUrl"> & { sourceUrls: Record<string, string> };
 
   raw: {
     name: string;
@@ -424,65 +406,20 @@ export type MagicItemReference = {
     slot: string;
     variant?: string;
     baseItem?: string;
-    modifiers?: { target: string; operator: string; value: string; valueType: string }[];
+    modifiers?: Modifier[];
   }>;
 
-  mapping: Record<string, {
-    description?: string;
-    costGp?: string;
-    weight?: string;
-    slot?: string;
-    baseItem?: string | null;
-    skip?: boolean;
-  }> & {
-    overrides: Record<string, {
-      description?: string;
-      costGp?: string;
-      weight?: string;
-      slot?: string;
-      baseItem?: string | null;
-      skip?: boolean;
-      aura?: string;
-      casterLevel?: number;
-    }> & {
-      reviewed?: string[];
-    };
+  mapping: Record<string, MagicItemFields> & {
+    overrides: Overrides<MagicItemFields & { aura?: string; casterLevel?: number }>;
   };
 };
 
 export type ItemReference = {
-  _meta: {
-    type: "item";
-    sourceUrls: { weapons: string; armor: string; goods: string };
-    book: string;
-    scrapedAt: string;
-  };
+  _meta: Omit<ScrapedMeta<"item">, "sourceUrl"> & { sourceUrls: { weapons: string; armor: string; goods: string } };
 
   raw: {
-    weapons: {
-      name: string;
-      proficiency: string;
-      category: string;
-      cost: string;
-      dmgSmall: string;
-      dmgMedium: string;
-      critical: string;
-      rangeIncrement: string;
-      weight: string;
-      damageType: string;
-    }[];
-    armor: {
-      name: string;
-      category: string;
-      cost: string;
-      acBonus: string;
-      maxDexBonus: string;
-      armorCheckPenalty: string;
-      arcaneSpellFailure: string;
-      speed30: string;
-      speed20: string;
-      weight: string;
-    }[];
+    weapons: WeaponRow[];
+    armor: ArmorRow[];
     goods: {
       name: string;
       tableId: string;
@@ -513,21 +450,7 @@ export type ItemReference = {
     unresolved: string[];
   };
 
-  mapping: Record<string, {
-    description?: string;
-    costGp?: string;
-    weight?: string;
-    skip?: boolean;
-  }> & {
-    overrides: Record<string, {
-      description?: string;
-      costGp?: string;
-      weight?: string;
-      skip?: boolean;
-      generatorName?: string;
-    }> & {
-      nameMap?: Record<string, string>;
-      reviewed?: string[];
-    };
+  mapping: Record<string, ItemFields> & {
+    overrides: Overrides<ItemFields & { generatorName?: string }> & { nameMap?: Record<string, string> };
   };
 };

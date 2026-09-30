@@ -1,5 +1,8 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
+import { contentHeading, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Class HTML Parser — dndtools.net structure
@@ -86,20 +89,14 @@ function titleCase(s: string): string {
 // Class name — second <h2> (first is site tagline)
 // ---------------------------------------------------------------------------
 
+/** The class's heading: its page's title, or its only h2. */
+function classHeading($: cheerio.CheerioAPI) {
+  return contentHeading($) ?? $("h2").first();
+}
+
 function parseClassName($: cheerio.CheerioAPI): string {
-  const h2s = $("h2").toArray();
-  // Skip site tagline — find the h2 that looks like a class name
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    // Skip the site tagline and other non-class headings
-    if (text.match(/^(Feats|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return titleCase(text);
-  }
-  // Fallback
-  if (h2s.length > 1) return titleCase($(h2s[1]).text().trim());
-  if (h2s.length > 0) return titleCase($(h2s[0]).text().trim());
-  return "Unknown";
+  const heading = classHeading($);
+  return heading.length > 0 ? titleCase(heading.text().trim()) : "Unknown";
 }
 
 // ---------------------------------------------------------------------------
@@ -110,13 +107,11 @@ function parseDescription($: cheerio.CheerioAPI): string {
   const paragraphs: string[] = [];
 
   // Find the class name h2
-  const classH2 = findClassNameH2($);
+  const classH2 = classHeading($);
   if (classH2.length > 0) {
-    let el = classH2.next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      // Stop at any section heading
-      if (tag === "h2" || tag === "h3" || tag === "h4") break;
+    // Up to any section heading
+    for (const el of sectionElements(classH2, ["h2", "h3", "h4"])) {
+      const tag = tagOf(el);
       if (tag === "p") {
         const text = el.text().trim();
         // Skip short text, page references, and "all of the following" boilerplate
@@ -133,7 +128,6 @@ function parseDescription($: cheerio.CheerioAPI): string {
           if (text && text.length >= 20) paragraphs.push(text);
         });
       }
-      el = el.next();
     }
   }
 
@@ -208,12 +202,8 @@ function parseClassSkills($: cheerio.CheerioAPI): string[] {
   if (header.length === 0) return skills;
 
   // Look for the skills table after the header
-  let el = header.next();
-  while (el.length > 0) {
-    const tag = el.prop("tagName")?.toLowerCase();
-    if (tag === "h3" || tag === "h2") break;
-
-    if (tag === "table") {
+  for (const el of sectionElements(header)) {
+    if (tagOf(el) === "table") {
       el.find("tr").each((_, row) => {
         const firstCell = $(row).find("td").first();
         if (firstCell.length === 0) return;
@@ -255,8 +245,6 @@ function parseClassSkills($: cheerio.CheerioAPI): string[] {
 
       if (skills.length > 0) break;
     }
-
-    el = el.next();
   }
 
   return skills;
@@ -270,14 +258,9 @@ function parseAlignment($: cheerio.CheerioAPI): string | undefined {
   // dndtools.net: <h3>Requirements</h3> → <p><strong>Alignment:</strong> ...</p>
   const reqHeader = findSectionHeader($, /^Requirements?$/i);
   if (reqHeader.length > 0) {
-    let el = reqHeader.next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      if (tag === "h3" || tag === "h2") break;
-      const text = el.text().trim();
-      const alignMatch = text.match(/^Alignment:\s*(.+)/i);
+    for (const el of sectionElements(reqHeader)) {
+      const alignMatch = el.text().trim().match(/^Alignment:\s*(.+)/i);
       if (alignMatch) return alignMatch[1].trim();
-      el = el.next();
     }
   }
 
@@ -299,15 +282,10 @@ function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   const reqHeader = findSectionHeader($, /^Requirements?$/i);
   if (reqHeader.length > 0) {
     const lines: string[] = [];
-    let el = reqHeader.next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      if (tag === "h3" || tag === "h2") break;
+    for (const el of sectionElements(reqHeader)) {
       // Collapse whitespace within each line but preserve newlines as section separators
-      const rawText = el.text();
-      const subLines = rawText.split(/\n/).map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+      const subLines = el.text().split(/\n/).map(normalizeWs).filter(Boolean);
       if (subLines.length) lines.push(subLines.join("\n"));
-      el = el.next();
     }
     return lines.join("\n");
   }
@@ -316,13 +294,9 @@ function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   const h6Header = $("h6").filter((_, el) => $(el).text().trim().match(/^Requirements?$/i) !== null);
   if (h6Header.length > 0) {
     const lines: string[] = [];
-    let el = h6Header.first().next();
-    while (el.length > 0) {
-      const tag = el.prop("tagName")?.toLowerCase();
-      if (tag === "h6" || tag === "h3" || tag === "table") break;
+    for (const el of sectionElements(h6Header.first(), ["h6", "h3", "table"])) {
       const text = el.text().trim();
       if (text) lines.push(text);
-      el = el.next();
     }
     return lines.join("\n");
   }
@@ -475,8 +449,7 @@ function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference[
 
     // Find the header row that contains Level and BAB columns
     // This may be the first row (simple) or the second (when first row is spanning groups)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let mainHeaderRow: cheerio.Cheerio<any> | null = null;
+    let mainHeaderRow: cheerio.Cheerio<AnyNode> | null = null;
     headerRows.each((_, row) => {
       if (mainHeaderRow) return;
       const ths: string[] = [];
@@ -580,9 +553,7 @@ function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference[
       const specialText = specialIdx >= 0 ? cells[specialIdx] : "";
       const special = specialText
         ? splitSpecial(specialText)
-            .map((s) => s.trim()
-              .replace(/'(\w+)'/g, " $1")
-              .replace(/\s+/g, " ").trim())
+            .map((s) => normalizeWs(s.trim().replace(/'(\w+)'/g, " $1")))
             .filter((s) => s && s.length > 1 && !/^[\u2014\u2013\u2012\u2015\uFFFD'"-]+$/.test(s))
         : [];
 
@@ -694,12 +665,10 @@ function parseClassFeatures(
   const featureHeaderPattern = /^(.+?)\s*(\((Ex|Su|Sp)\))?\s*$/;
   const contentMap = new Map<string, { type?: string; desc: string }>();
 
-  let el = cfHeader.next();
   let currentFeature: string | null = null;
 
-  while (el.length > 0) {
-    const tag = el.prop("tagName")?.toLowerCase();
-    if (tag === "h2" || tag === "h3") break;
+  for (const el of sectionElements(cfHeader)) {
+    const tag = tagOf(el);
 
     // h4 heading — potential feature or sub-section header
     if (tag === "h4") {
@@ -719,11 +688,8 @@ function parseClassFeatures(
           const subMatch = name.match(/^(.+?)\s+(?:Benefits|Options|Choices|Selections)$/i);
           if (subMatch) {
             const parentName = subMatch[1];
-            let next = el.next();
-            while (next.length > 0) {
-              const nextTag = next.prop("tagName")?.toLowerCase();
-              if (nextTag === "h2" || nextTag === "h3" || nextTag === "h4" || nextTag === "table") break;
-              if (nextTag === "p") {
+            for (const next of sectionElements(el, ["h2", "h3", "h4", "table"])) {
+              if (tagOf(next) === "p") {
                 const pText = next.text().trim();
                 const subFeatureMatch = pText.match(/^([A-Z][^:]{1,60}?)\s*:\s*([\s\S]*)/);
                 if (subFeatureMatch) {
@@ -733,13 +699,11 @@ function parseClassFeatures(
                   contentMap.set(normalizeFeatureName(subName), { desc: subDesc });
                 }
               }
-              next = next.next();
             }
           }
           currentFeature = null;
         }
       }
-      el = el.next();
       continue;
     }
 
@@ -804,28 +768,14 @@ function parseClassFeatures(
 
     // Table — check for sub-option tables (e.g. Loremaster Secrets)
     if (tag === "table" && currentFeature) {
-      const { nameCol, effectCol } = findSubOptionColumns($, el);
-      if (nameCol >= 0) {
-        el.find("tr").each((_, row) => {
-          const cells = $(row).find("td").toArray().map((td) => $(td).text().trim());
-          if (cells.length <= nameCol || !cells[nameCol]) return;
-          if ($(row).find("td[colspan]").length > 0) return;
-          const subName = cells[nameCol].replace(/\s*\*$/, "");
-          const effect = effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "";
-          const key = normalizeFeatureName(`${currentFeature}: ${subName}`);
-          contentMap.set(key, { desc: effect });
-        });
-      }
+      for (const { key, desc } of subOptionRows($, el, currentFeature)) contentMap.set(key, { desc });
     }
-
-    el = el.next();
   }
 
   // Scan ALL tables on the page for sub-option tables linked to known features
   // (some tables like Loremaster Secrets appear outside the Class Features section)
   $("table").each((_, table) => {
-    const { nameCol, effectCol } = findSubOptionColumns($, $(table));
-    if (nameCol < 0) return;
+    if (findSubOptionColumns($, $(table)).nameCol < 0) return;
 
     // Find the parent feature from the table title (first th in first row, often spanning)
     const titleRow = $(table).find("tr").first();
@@ -842,17 +792,9 @@ function parseClassFeatures(
     }
     if (!parentKey) return;
 
-    $(table).find("tr").each((_, row) => {
-      const cells = $(row).find("td").toArray().map((td) => $(td).text().trim());
-      if (cells.length <= nameCol || !cells[nameCol]) return;
-      if ($(row).find("td[colspan]").length > 0) return;
-      const subName = cells[nameCol].replace(/\s*\*$/, "");
-      const effect = effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "";
-      const key = normalizeFeatureName(`${parentKey}: ${subName}`);
-      if (!contentMap.has(key)) {
-        contentMap.set(key, { desc: effect });
-      }
-    });
+    for (const { key, desc } of subOptionRows($, $(table), parentKey)) {
+      if (!contentMap.has(key)) contentMap.set(key, { desc });
+    }
   });
 
   // Step 3: Build the features array in progression order
@@ -934,9 +876,20 @@ function cleanSpecialEntry(s: string): string {
     .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
 }
 
+/** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */
+function subOptionRows($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>, parentKey: string): { key: string; desc: string }[] {
+  const { nameCol, effectCol } = findSubOptionColumns($, table);
+  if (nameCol < 0) return [];
+  return table.find("tr").toArray().flatMap((row) => {
+    const cells = $(row).find("td").toArray().map((td) => $(td).text().trim());
+    if (cells.length <= nameCol || !cells[nameCol] || $(row).find("td[colspan]").length > 0) return [];
+    const subName = cells[nameCol].replace(/\s*\*$/, "");
+    return [{ key: normalizeFeatureName(`${parentKey}: ${subName}`), desc: effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "" }];
+  });
+}
+
 /** Find name and effect column indices from a sub-option table */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function findSubOptionColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<any>): { nameCol: number; effectCol: number } {
+function findSubOptionColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>): { nameCol: number; effectCol: number } {
   // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
   const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
   if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
@@ -958,20 +911,22 @@ function findSubOptionColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<any>
 /** Find the exact key in the known features set that matches this name */
 function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
   const norm = normalizeFeatureName(name);
-  if (knownFeatures.has(norm)) return norm;
   const lower = name.toLowerCase();
-  if (knownFeatures.has(lower)) return lower;
-  if (knownFeatures.has(lower + "s")) return lower + "s";
-  if (knownFeatures.has(lower.replace(/s$/, ""))) return lower.replace(/s$/, "");
-  if (knownFeatures.has(norm + "s")) return norm + "s";
-  if (knownFeatures.has(norm.replace(/s$/, ""))) return norm.replace(/s$/, "");
+  // The name, or a plural variant
+  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) => knownFeatures.has(n));
+  if (exact !== undefined) return exact;
+  // A known feature starting with this name
+  // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
   for (const known of knownFeatures) {
     if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
   }
+  // A known feature this name starts with, then a non-alpha suffix
+  // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
+  // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
   for (const known of knownFeatures) {
     if (norm.startsWith(known) && norm.length > known.length) {
       const suffix = norm.substring(known.length);
-      if (/^[^a-z\s]/.test(suffix.trim())) return known;
+      if (/^[^a-z\s]/.test(suffix.trim())) return known; // +1/day, (lance), etc. — but not "Benefits"
     }
   }
   return undefined;
@@ -979,37 +934,13 @@ function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): strin
 
 /** Normalize a feature name for matching — strips plurals, collapses whitespace */
 function normalizeFeatureName(name: string): string {
-  let n = name.toLowerCase().trim();
-  n = n.replace(/\s+/g, " "); // collapse double spaces
   // "Special Abilities" → "special ability"
-  n = n.replace(/ies$/, "y");
-  return n;
+  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
 }
 
 /** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
 function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
-  const norm = normalizeFeatureName(name);
-  if (knownFeatures.has(norm)) return true;
-  const lower = name.toLowerCase();
-  if (knownFeatures.has(lower)) return true;
-  // Plural variants
-  if (knownFeatures.has(lower + "s") || knownFeatures.has(lower.replace(/s$/, ""))) return true;
-  if (knownFeatures.has(norm + "s") || knownFeatures.has(norm.replace(/s$/, ""))) return true;
-  // Check if any known feature starts with this name
-  // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
-  for (const known of knownFeatures) {
-    if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return true;
-  }
-  // Check if this name starts with a known feature + non-alpha suffix
-  // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
-  // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
-  for (const known of knownFeatures) {
-    if (norm.startsWith(known) && norm.length > known.length) {
-      const suffix = norm.substring(known.length);
-      if (/^[^a-z\s]/.test(suffix.trim())) return true; // +1/day, (lance), etc. — but not "Benefits"
-    }
-  }
-  return false;
+  return findMatchingFeatureKey(name, knownFeatures) !== undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -1092,21 +1023,8 @@ function detectBonusSpellAbility($: cheerio.CheerioAPI): string | undefined {
 // Shared utilities for dndtools.net HTML structure
 // ---------------------------------------------------------------------------
 
-/** Find the class name h2 — skip site tagline */
-function findClassNameH2($: cheerio.CheerioAPI) {
-  const h2s = $("h2").toArray();
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    if (text.match(/^(Feats|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return $(el);
-  }
-  return h2s.length > 1 ? $(h2s[1]) : $(h2s[0] ?? []);
-}
-
 /** Find a section header (h3 or h4) whose text matches a pattern */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheerio.Cheerio<any> {
+function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheerio.Cheerio<AnyNode> {
   // Try h3 first, then h4
   const h3 = $("h3").filter((_, el) => pattern.test($(el).text().trim())).first();
   if (h3.length > 0) return h3;
@@ -1114,17 +1032,13 @@ function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheerio.Chee
 }
 
 /** Get the text content after a header, from the next sibling(s) until the next header */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getTextAfterHeader(header: cheerio.Cheerio<any>): string {
+function getTextAfterHeader(header: cheerio.Cheerio<AnyNode>): string {
   const parts: string[] = [];
-  let el = header.next();
-  while (el.length > 0) {
-    const tag = el.prop("tagName")?.toLowerCase();
-    if (tag === "h3" || tag === "h4" || tag === "h2") break;
+  for (const el of sectionElements(header, ["h2", "h3", "h4"])) {
     const text = el.text().trim();
     if (text) parts.push(text);
+    const tag = tagOf(el);
     if (tag === "p" || tag === "div") break;
-    el = el.next();
   }
   // If no sibling had content, try parent's text after the header
   if (parts.length === 0) {

@@ -40,7 +40,6 @@ export type CreatureType = (typeof CREATURE_TYPES)[number];
 
 export function findCreatureType(text: string): CreatureType | null {
   if (!text) return null;
-  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const tries: { keyword: string; variant: CreatureType }[] = [];
   for (const t of CREATURE_TYPES) {
     const m = t.match(/^(.+?)\s*\(([^)]+)\)$/);
@@ -50,7 +49,7 @@ export function findCreatureType(text: string): CreatureType | null {
     if (!/\(/.test(t)) tries.push({ keyword: t, variant: t });
   }
   for (const { keyword, variant } of tries) {
-    if (new RegExp(`\\b${escape(keyword)}s?\\b`, "i").test(text)) return variant;
+    if (new RegExp(`\\b${RegExp.escape(keyword)}s?\\b`, "i").test(text)) return variant;
   }
   return null;
 }
@@ -59,14 +58,14 @@ const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
 const FAVORED_ENEMY_SPECIALIZATION_APTITUDE = "Favored Enemy Specialization";
 const FAVORED_ENEMY_FAMILY = "Favored Enemy";
 
-export const favoredEnemy: FeatSeed[] = CREATURE_TYPES.map((t) => ({
+const favoredEnemy: FeatSeed[] = CREATURE_TYPES.map((t) => ({
   name: `Favored Enemy: ${t}`,
   description: `Designate ${t} as a favored enemy. +2 on Bluff, Listen, Sense Motive, Spot, and Survival checks made against ${t}, and +2 on weapon damage rolls targeting them.`,
   aptitudes: [FAVORED_ENEMY_APTITUDE],
   properties: [{ type: "FEAT_FAMILY", value: FAVORED_ENEMY_FAMILY }],
 }));
 
-export const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map((t) => ({
+const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map((t) => ({
   name: `Favored Enemy Specialization: ${t}`,
   description: `Increases your favored enemy bonus against ${t} by +2. May be taken multiple times to stack the bonus further.`,
   stackable: true,
@@ -76,7 +75,7 @@ export const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map
 }));
 
 const FAVORED_ENEMY_SPECIALIZATION_UMBRELLA = "Favored Enemy Specialization (Ranger)";
-export const favoredEnemySpecializationUmbrella: FeatSeed = {
+const favoredEnemySpecializationUmbrella: FeatSeed = {
   name: FAVORED_ENEMY_SPECIALIZATION_UMBRELLA,
   description: "At 5th level and every 5 levels thereafter, the ranger may increase the bonus against one of their favored enemies by +2.",
   stackable: true,
@@ -86,3 +85,6 @@ export const favoredEnemySpecializationUmbrella: FeatSeed = {
     { target: "aptitudes.favoredenemyspecialization.allowed", operator: "add", value: "1", valueType: "number" },
   ],
 };
+
+/** A favored enemy feat per creature type, its specialization per type, and the ranger's pick of one. */
+export const favoredEnemyFeats: FeatSeed[] = [...favoredEnemy, ...favoredEnemySpecializationVariants, favoredEnemySpecializationUmbrella];

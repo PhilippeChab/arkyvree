@@ -1,5 +1,8 @@
 import * as cheerio from "cheerio";
+import { isText } from "domhandler";
+import { contentHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Spell HTML Parser — supports both dndtools.net and legacy srd.dndtools.org
@@ -31,30 +34,6 @@ const VALID_SCHOOLS = new Set([
 // Listing page parser (dndtools.net)
 // ---------------------------------------------------------------------------
 
-/**
- * Parse a spell listing page to extract spell names and URLs.
- */
-export function parseSpellListingHtml(html: string): { name: string; url: string }[] {
-  const $ = cheerio.load(html);
-  const results: { name: string; url: string }[] = [];
-
-  $("table tr").each((_, row) => {
-    const firstCell = $(row).find("td").first();
-    if (firstCell.length === 0) return;
-
-    const link = firstCell.find("a").first();
-    if (link.length === 0) return;
-
-    const name = link.text().trim();
-    const href = link.attr("href");
-    if (!name || !href || !href.includes("/spells/")) return;
-
-    results.push({ name, url: href });
-  });
-
-  return results;
-}
-
 // ---------------------------------------------------------------------------
 // Detail page parser (dndtools.net)
 // ---------------------------------------------------------------------------
@@ -68,7 +47,7 @@ export function parseSpellDetailHtml(
 ): SpellReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = findContentH2($);
+  const name = contentHeading($)?.text().trim() ?? "";
   if (!name) return null;
 
   // Derive slug from URL: /spells/{book}/{slug}--{id}/ → slug
@@ -228,15 +207,15 @@ function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
           const text = $(node).text().trim();
           if (text) parts.push(text);
         }
-      } else if (node.type === "text") {
-        const text = (node as unknown as { data: string }).data?.trim();
+      } else if (isText(node)) {
+        const text = node.data.trim();
         if (text) parts.push(text);
       }
 
       node = node.nextSibling;
     }
 
-    const value = parts.join(" ").replace(/^:\s*/, "").replace(/,\s*$/, "").replace(/\s+/g, " ").trim();
+    const value = normalizeWs(parts.join(" ").replace(/^:\s*/, "").replace(/,\s*$/, ""));
     if (value) {
       const normalizedLabel = rawLabel.replace(/^Targets?( or (?:Area|Targets?))?$/, "Target");
       stats.set(normalizedLabel, value);
@@ -255,14 +234,3 @@ function isStatLabel(text: string): boolean {
   return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));
 }
 
-/** Find the content h2, skipping the site tagline */
-function findContentH2($: cheerio.CheerioAPI): string {
-  const h2s = $("h2").toArray();
-  for (const el of h2s) {
-    const text = $(el).text().trim();
-    if (text.match(/^(Feats|D&D|Welcome|Home|About|Search|Login)/i)) continue;
-    if (text.length > 60) continue;
-    if (text) return text;
-  }
-  return h2s.length > 1 ? $(h2s[1]).text().trim() : "";
-}

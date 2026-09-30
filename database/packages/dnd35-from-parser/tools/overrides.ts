@@ -1,4 +1,4 @@
-import { join, basename } from "node:path";
+import { basename } from "node:path";
 import { readStoredReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
@@ -13,9 +13,6 @@ import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parse
  *   bun run parser:overrides complete-warrior --type feat  # combine filters
  */
 
-const BASE_DIR = join(import.meta.dirname!, "../");
-const REF_DIR = join(BASE_DIR, "reference");
-
 type OverrideEntry = {
   book: string;
   refType: string;
@@ -25,44 +22,17 @@ type OverrideEntry = {
   prereqText?: string;
 };
 
-function collectFeatOverrides(data: StoredReference<"feat">, book: string): OverrideEntry[] {
-  const entries: OverrideEntry[] = [];
-  const { reviewed: _reviewed, ...rest } = data.overrides ?? {};
-
-  for (const [name, ovr] of Object.entries(rest)) {
-    const keys = Object.keys(ovr).filter(k => k !== "description");
-    if (keys.length === 0) continue;
-    const raw = data.raw.find(r => r.name === name);
-    entries.push({
-      book,
-      refType: "feat",
-      refName: "feats",
-      entryName: name,
-      keys,
-      prereqText: raw?.prerequisiteText,
-    });
-  }
-
-  return entries;
-}
-
-function collectDomainOverrides(data: StoredReference<"domain">, book: string): OverrideEntry[] {
-  const entries: OverrideEntry[] = [];
-  const { reviewed: _reviewed, ...rest } = data.overrides ?? {};
-
-  for (const [name, ovr] of Object.entries(rest)) {
-    const keys = Object.keys(ovr).filter(k => k !== "description");
-    if (keys.length === 0) continue;
-    entries.push({
-      book,
-      refType: "domain",
-      refName: "domains",
-      entryName: name,
-      keys,
-    });
-  }
-
-  return entries;
+/** The entries of a feat or domain reference whose overrides change more than their description. */
+function collectEntryOverrides(
+  overrides: Record<string, object> | undefined,
+  reference: Pick<OverrideEntry, "book" | "refType" | "refName">,
+  prereqText: (name: string) => string | undefined = () => undefined,
+): OverrideEntry[] {
+  const { reviewed: _reviewed, ...rest } = overrides ?? {};
+  return Object.entries(rest).flatMap(([name, override]) => {
+    const keys = Object.keys(override).filter((k) => k !== "description");
+    return keys.length === 0 ? [] : [{ ...reference, entryName: name, keys, prereqText: prereqText(name) }];
+  });
 }
 
 function collectClassOverrides(data: StoredReference<"class">, book: string, fileName: string): OverrideEntry[] {
@@ -73,9 +43,8 @@ function collectClassOverrides(data: StoredReference<"class">, book: string, fil
   const keys = Object.keys(overrides).filter(k => {
     if (k === "reviewed" || k === "description") return false;
     // For features, check if any feature has non-description overrides
-    if (k === "features" && typeof overrides[k] === "object") {
-      return Object.values(overrides[k] as Record<string, Record<string, unknown>>)
-        .some(feat => Object.keys(feat).some(fk => fk !== "description"));
+    if (k === "features") {
+      return Object.values(overrides.features ?? {}).some((feat) => Object.keys(feat).some((fk) => fk !== "description"));
     }
     return true;
   });
@@ -95,7 +64,7 @@ function collectClassOverrides(data: StoredReference<"class">, book: string, fil
 function main() {
   const { bookFilter, typeFilter, nameFilter, keyFilter } = parseCliArgs();
 
-  let refs = discoverRefs(REF_DIR);
+  let refs = discoverRefs();
   if (bookFilter) refs = refs.filter(r => r.book === bookFilter);
   if (typeFilter) refs = refs.filter(r => r.type === typeFilter);
   if (nameFilter) refs = refs.filter(r => basename(r.path, ".json").toLowerCase() === nameFilter);
@@ -104,9 +73,10 @@ function main() {
 
   for (const ref of refs) {
     if (ref.type === "feat") {
-      allEntries.push(...collectFeatOverrides(readStoredReference(ref.path, "feat"), ref.book));
+      const { raw, overrides } = readStoredReference(ref.path, "feat");
+      allEntries.push(...collectEntryOverrides(overrides, { book: ref.book, refType: "feat", refName: "feats" }, (name) => raw.find((r) => r.name === name)?.prerequisiteText));
     } else if (ref.type === "domain") {
-      allEntries.push(...collectDomainOverrides(readStoredReference(ref.path, "domain"), ref.book));
+      allEntries.push(...collectEntryOverrides(readStoredReference(ref.path, "domain").overrides, { book: ref.book, refType: "domain", refName: "domains" }));
     } else if (ref.type === "class") {
       allEntries.push(...collectClassOverrides(readStoredReference(ref.path, "class"), ref.book, basename(ref.path)));
     }

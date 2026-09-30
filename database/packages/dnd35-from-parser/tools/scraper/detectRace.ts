@@ -1,7 +1,7 @@
-import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
-import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SKILL_MAP, SAVE_MAP, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { SKILL_MAP, SAVE_MAP, detectModifiersOf, modifierMapping, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Ability name → slug mapping
@@ -21,19 +21,7 @@ const ABILITY_MAP: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export function buildRaceDetected(raw: RaceReference["raw"]): RaceReference["detected"] {
-  const detected: RaceReference["detected"] = {};
-
-  for (const entry of raw) {
-    const { modifiers, errors, unresolvedModifiers } = detectRaceModifiers(entry);
-
-    detected[entry.name] = {
-      modifiers,
-      ...(errors.length > 0 ? { errors } : {}),
-      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
-    };
-  }
-
-  return detected;
+  return detectModifiersOf(raw, detectRaceModifiers);
 }
 
 export function buildRaceMapping(
@@ -41,32 +29,15 @@ export function buildRaceMapping(
   detected: RaceReference["detected"],
   overrides: RaceReference["mapping"]["overrides"],
 ): RaceReference["mapping"] {
-  const mapping = { overrides } as RaceReference["mapping"];
-  for (const entry of raw) {
-    const det = detected[entry.name];
-    const ovr = overrides[entry.name];
-    const description = ovr?.description ?? entry.description;
-    const modifiers = ovr?.modifiers ?? det?.modifiers ?? [];
-
-    mapping[entry.name] = {
-      description,
-      ...(modifiers.length > 0 ? { modifiers } : {}),
-      ...(ovr?.skip ? { skip: true } : {}),
-    };
-  }
-  return mapping;
+  return { overrides, ...modifierMapping(raw, detected, overrides, (override?: RaceReference["mapping"]["overrides"][string]) => (override?.skip ? { skip: true } : {})) } as RaceReference["mapping"];
 }
 
 // ---------------------------------------------------------------------------
 // Internal detection
 // ---------------------------------------------------------------------------
 
-function detectRaceModifiers(entry: RaceReference["raw"][number]): {
-  modifiers: ModifierSeed[];
-  errors: string[];
-  unresolvedModifiers: string[];
-} {
-  const modifiers: ModifierSeed[] = [];
+function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetection<Modifier> {
+  const modifiers: Modifier[] = [];
   const errors: string[] = [];
   const unresolvedModifiers: string[] = [];
 
@@ -112,7 +83,7 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): {
 
 function detectSkillBonuses(
   text: string,
-  modifiers: ModifierSeed[],
+  modifiers: Modifier[],
   unresolvedModifiers: string[],
 ): void {
   // "+N racial bonus on X checks" or "+N racial bonus on X, Y, and Z checks"
@@ -153,7 +124,7 @@ function detectSkillBonuses(
 
 function detectSaveBonuses(
   text: string,
-  modifiers: ModifierSeed[],
+  modifiers: Modifier[],
 ): void {
   // "+N racial bonus on all saving throws"
   const allSavesMatch = text.match(/\+(\d+)\s+racial\s+bonus\s+on\s+all\s+saving\s+throws/i);
@@ -191,8 +162,8 @@ function detectSaveBonuses(
 // ---------------------------------------------------------------------------
 
 function detectHumanTraits(
-  features: { name: string; description: string }[],
-  modifiers: ModifierSeed[],
+  features: NamedText[],
+  modifiers: Modifier[],
 ): void {
   const fullText = features.map((f) => `${f.name} ${f.description}`).join(" ");
 

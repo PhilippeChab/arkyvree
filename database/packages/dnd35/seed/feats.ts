@@ -22,12 +22,13 @@ export async function seedFeats(db: Db, ctx: SeedContext, feats: FeatSeed[]) {
   await insertAll(db, requirementsInCustomization, feats.flatMap((f) => requirementRows(ids[f.name], "feats", f.requirements)));
   await insertAll(db, propertiesInCustomization, feats.flatMap((f) => propertyRows(ids[f.name], "feats", f.properties)));
 
-  const modifiers = feats.flatMap((f) => (f.modifiers ?? []).map((modifier) => ({ featId: ids[f.name], modifier })));
-  await insertAll(db, modifiersInCustomization, modifiers.filter(({ modifier }) => !modifier.requirements)
-    .flatMap(({ featId, modifier }) => modifierRows(featId, "feats", [modifier])));
-  for (const { featId, modifier } of modifiers.filter(({ modifier }) => modifier.requirements)) {
-    const [row] = await db.insert(modifiersInCustomization).values(modifierRows(featId, "feats", [modifier]))
+  // Each modifier's effect, a row; its requirements, rows of that row
+  const modifiers = feats.flatMap((f) => (f.modifiers ?? []).map(({ requirements, ...effect }) => ({ featId: ids[f.name], effect, requirements })));
+  await insertAll(db, modifiersInCustomization, modifiers.filter(({ requirements }) => !requirements)
+    .flatMap(({ featId, effect }) => modifierRows(featId, "feats", [effect])));
+  for (const { featId, effect, requirements } of modifiers.filter(({ requirements }) => requirements)) {
+    const [row] = await db.insert(modifiersInCustomization).values(modifierRows(featId, "feats", [effect]))
       .returning({ id: modifiersInCustomization.id });
-    await insertAll(db, requirementsInCustomization, requirementRows(row.id, "modifiers", modifier.requirements));
+    await insertAll(db, requirementsInCustomization, requirementRows(row.id, "modifiers", requirements));
   }
 }
