@@ -69,8 +69,8 @@ test.describe('Characters', () => {
     const raise = page.getByRole('button', { name: 'Raise base Strength' });
     const lower = page.getByRole('button', { name: 'Lower base Strength' });
     const base = raise.locator('..').getByText(/^Base: \d+$/);
-    // The ability's own card, inside the section's
-    const strength = page.locator('.MuiPaper-root').filter({ has: raise }).last();
+    // The ability's card: its name's block, the one with its buttons
+    const strength = page.getByText(/^strength$/i).locator('..').filter({ has: raise });
     const decrease = page.getByRole('dialog', { name: 'Decrease Ability Score' });
     const saved = () => apiResponse(page, 'PUT', /\/api\/characters\/[a-f0-9-]+\/abilities$/);
 

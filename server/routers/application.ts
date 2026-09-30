@@ -15,7 +15,7 @@ import authenticationRouter from "@/server/routers/authentication/index.ts";
 import { errorResponse } from "@/server/routers/respond.ts";
 import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
-import { broadcastNotificationsForActor, publishWsEvent } from "@/server/ws.ts";
+import { collectingNotified, publishWsEvent } from "@/server/ws.ts";
 
 const isDev = process.env.NODE_ENV !== "production";
 const isTest = process.env.NODE_ENV === "test"
@@ -93,16 +93,14 @@ const app = new Hono()
   .route("/", wsRouter)
   .route("/auth", authenticationRouter)
   .use("/api/*", async (c, next) => {
-    await next();
+    const notified = await collectingNotified(next);
     if (["POST", "PUT", "DELETE"].includes(c.req.method) && c.res.ok) {
+      const publish = (userId: string, type: "activities:updated" | "notifications:updated") =>
+        publishWsEvent(userId, { type }).catch((err) => console.error("[ws] Failed to publish event:", err));
+      for (const userId of notified) publish(userId, "notifications:updated");
       try {
         const session = c.get("requestSession" as never) as { userId: string } | undefined;
-        if (session) {
-          publishWsEvent(session.userId, { type: "activities:updated" }).catch((err) =>
-            console.error("[ws] Failed to publish event:", err),
-          );
-          broadcastNotificationsForActor(session.userId);
-        }
+        if (session) publish(session.userId, "activities:updated");
       } catch {
         // Session middleware didn't run (e.g. unauthenticated route)
       }
