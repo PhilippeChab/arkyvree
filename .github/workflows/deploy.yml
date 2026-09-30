@@ -51,6 +51,18 @@ jobs:
     # One deploy at a time, both apps on one commit
     concurrency: deploy
     steps:
+      # A re-run keeps the first attempt's Main's head: main may have moved on since, its newer commit deployed
+      - name: Check that main is still at ${{ github.sha }}
+        if: github.run_attempt != '1'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          head=$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq .commit.sha)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::error::main has moved on to $head: a re-run would deploy an older commit"
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       # The web app first: its release command migrates the database the worker's code expects
