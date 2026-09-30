@@ -3,6 +3,7 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { classReferences, readStoredReference, resolveReference, type ReferenceType, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { buildMagicItemSeeds, buildRaceSeeds, seededMagicItems, seededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { checkOneOf, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
@@ -80,6 +81,29 @@ describe("A race reference's races", () => {
     reference.overrides = { ...reference.overrides, [first.name]: { size: "Titanic" } };
     expect(sizeOf(first.name)).toEqual({ ok: false, problem: `${first.name}'s size: "Titanic" isn't one of ${SIZE_OPTIONS.join(", ")}` });
     expect(() => buildRaceSeeds(resolveReference("race", reference))).toThrow(`${first.name}'s size`);
+  });
+});
+
+describe("A race's detected modifiers", () => {
+  const race = (name: string, abilityAdjustments: { ability: string; value: number }[], ...features: string[]) =>
+    ({ name, description: "", size: "Medium", baseSpeed: 30, abilityAdjustments, features: features.map((feature) => ({ name: feature, description: "" })) });
+  const add = (target: string, value: number) => ({ target, operator: "add", value: String(value), valueType: "number" });
+
+  test("are its ability adjustments, and its unconditional skill and save bonuses", () => {
+    const detected = buildRaceDetected([
+      race("Stout", [{ ability: "Constitution", value: 2 }, { ability: "Luck", value: 1 }],
+        "+2 racial bonus on Climb and Jump checks", "+2 racial bonus on Search checks made to notice unusual stonework", "+1 racial bonus on Underwater Basketry checks",
+        "+1 racial bonus on all saving throws"),
+      race("Hardy", [], "+2 racial bonus on Fortitude saving throws against poison"),
+    ]);
+    expect(detected.Stout).toEqual({
+      modifiers: [
+        add("abilities.constitution.misc", 2), add("skills.climb.misc", 2), add("skills.jump.misc", 2),
+        add("saves.fortitude.misc", 1), add("saves.reflex.misc", 1), add("saves.will.misc", 1),
+      ],
+      unresolvedModifiers: [`Unknown ability: "Luck"`, `Unresolved skill bonus: +1 on "Underwater Basketry"`],
+    });
+    expect(detected.Hardy).toEqual({ modifiers: [add("saves.fortitude.misc", 2)] });
   });
 });
 

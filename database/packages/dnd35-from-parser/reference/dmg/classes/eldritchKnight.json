@@ -17,10 +17,7 @@
       "Weapon and Armor Proficiency": {
         "description": "An eldritch knight does not gain proficiency with any additional weapons or armor upon entering this class."
       }
-    },
-    "reviewed": [
-      "Bonus Feat"
-    ]
+    }
   },
   "raw": {
     "classFeatures": [

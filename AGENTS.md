@@ -158,7 +158,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Test Structure:**
 
-- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeded content and the package runner), `/tests/parser` (the parser tools), `/tests/jobs`
+- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`
 - E2E tests: `/tests/e2e`
 - Each test runs in its own transaction, rolled back afterwards (`tests/setup.ts`); a transaction the code opens in it (`withTransaction`, `db.transaction`) is a savepoint on the same connection, rolled back when it throws. In production that transaction is its own, on another connection, so tests don't catch transaction-boundary bugs (what it can see, when it commits). It has a single connection: run service calls that write one at a time, never in a `Promise.all`: concurrent savepoints share a name, so one's failure silently undoes the other's writes
 - The ruleset cache outlives the rollback. Write a test's rows into a fork (`createSeededTestRuleset`), not a seeded ruleset; a test that has to write into a seeded one calls `invalidateSeededRuleset(rulesetId)` afterwards, and the setup drops those rules again once the rollback undoes the rows
@@ -191,7 +191,7 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 - `tests/helpers.ts`: users, sessions, rulesets (seeded forks), campaigns, characters, levels and contributors written straight to the database; `getSeedCtx()` for the seeded ids; `invalidateSeededRuleset`
 - `tests/api.ts`: the typed API client as the seed user (`api`), a guest (`guestApi`) or a new user (`createSignedInUser`), and `expectOk`
 - `tests/levelFixtures.ts`: seeded character builds, level plans and level-ups, and masters with their bonded creature
-- `tests/seeds/seededRows.ts`: a seeded ruleset's own rows, for the seed tests; `tests/storage.ts`: the fake storage backend
+- `tests/seeds/seededRows.ts`: a seeded ruleset's own rows, for the seed tests; `tests/seeds/freshSeed.ts`: a new system ruleset (or extension) for a seeder test to seed into, and what an entity was seeded with; `tests/storage.ts`: the fake storage backend
 - `tests/e2e/helpers.ts`: signing in (`signIn`, `signedInPage`), `createCharacter`, `createCampaign`, `forkCoreRuleset`, invites (`invitePlayer`, `inviteContributor`, `answerInvite`), `openActionsMenu`, `filterList`, `apiResponse` waits. They scope dialog interactions to `[role="dialog"][aria-modal="true"]`. `tests/e2e/levelUpHelpers.ts` walks the Add Level wizard; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`
 - [docs/e2e-coverage.md](./docs/e2e-coverage.md) indexes what each e2e file covers: update it with the suite
 

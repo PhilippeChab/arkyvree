@@ -51,13 +51,12 @@ export type SeedContext = RulesetSeedContext & {
 
 export async function getSeedContext(db: Db): Promise<SeedContext> {
   const [ruleset] = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules).where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
-  const [names, langs, races, klasses, items] = await Promise.all([
-    loadSeedContext(db, ruleset.id),
-    db.select({ id: languagesInRules.id, name: languagesInRules.name }).from(languagesInRules).where(eq(languagesInRules.rulesetId, ruleset.id)),
-    db.select({ id: racesInRules.id, name: racesInRules.name, kind: racesInRules.kind }).from(racesInRules).where(eq(racesInRules.rulesetId, ruleset.id)),
-    db.select({ id: klassesInRules.id, name: klassesInRules.name, kind: klassesInRules.kind }).from(klassesInRules).where(eq(klassesInRules.rulesetId, ruleset.id)),
-    db.select({ id: itemsInRules.id, name: itemsInRules.name }).from(itemsInRules).where(eq(itemsInRules.rulesetId, ruleset.id)),
-  ]);
+  // One after the other: a transaction runs one query at a time.
+  const names = await loadSeedContext(db, ruleset.id);
+  const langs = await db.select({ id: languagesInRules.id, name: languagesInRules.name }).from(languagesInRules).where(eq(languagesInRules.rulesetId, ruleset.id));
+  const races = await db.select({ id: racesInRules.id, name: racesInRules.name, kind: racesInRules.kind }).from(racesInRules).where(eq(racesInRules.rulesetId, ruleset.id));
+  const klasses = await db.select({ id: klassesInRules.id, name: klassesInRules.name, kind: klassesInRules.kind }).from(klassesInRules).where(eq(klassesInRules.rulesetId, ruleset.id));
+  const items = await db.select({ id: itemsInRules.id, name: itemsInRules.name }).from(itemsInRules).where(eq(itemsInRules.rulesetId, ruleset.id));
   return { ...names, langMap: idsByName(langs), raceMap: buildKindMap(races), klassMap: buildKindMap(klasses), itemMap: idsByName(items) };
 }
 

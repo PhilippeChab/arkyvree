@@ -1,6 +1,6 @@
 import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
-import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SKILL_MAP, SAVE_MAP, detectModifiersOf, modifierMapping, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
@@ -63,11 +63,6 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetec
       : feature.name;
     detectSkillBonuses(text, modifiers, unresolvedModifiers);
     detectSaveBonuses(text, modifiers);
-  }
-
-  // 3. Human special traits
-  if (entry.name === "Human") {
-    detectHumanTraits(entry.features, modifiers);
   }
 
   // Validate paths
@@ -154,36 +149,5 @@ function detectSaveBonuses(
         valueType: "number",
       });
     }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Human special traits
-// ---------------------------------------------------------------------------
-
-function detectHumanTraits(
-  features: NamedText[],
-  modifiers: Modifier[],
-): void {
-  const fullText = features.map((f) => `${f.name} ${f.description}`).join(" ");
-
-  // Bonus feat at 1st level
-  if (/extra feat at 1st level|bonus feat at 1st level|1 extra feat at 1st level/i.test(fullText)) {
-    modifiers.push({
-      target: "aptitudes.general.allowed",
-      operator: "add",
-      value: "1",
-      valueType: "number",
-    });
-  }
-
-  // Extra skill points
-  if (/4 extra skill points at 1st level|extra skill point at each|1 extra skill point at each additional level/i.test(fullText)) {
-    modifiers.push({
-      target: "skills.budget.perlevel",
-      operator: "add",
-      value: "1",
-      valueType: "number",
-    });
   }
 }

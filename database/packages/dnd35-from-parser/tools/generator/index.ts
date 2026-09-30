@@ -16,6 +16,8 @@ import { classReferences, loadReference } from "@/database/packages/dnd35-from-p
 // ---------------------------------------------------------------------------
 
 const BASE_DIR = join(import.meta.dirname!, "../../");
+/** Where the generator writes: generated/, or the folder `generateAll` is given (a test's). */
+let generatedDir = join(BASE_DIR, "generated");
 let quiet = false;
 
 function generateRef(jsonPath: string, bookOverride?: string) {
@@ -65,7 +67,7 @@ function generateRef(jsonPath: string, bookOverride?: string) {
 
 /** Regenerate index.ts for an extension's book: its content, as the extension seeds it. */
 function regenerateBookIndex(book: string) {
-  const dir = join(BASE_DIR, "generated", book);
+  const dir = join(generatedDir, book);
   const parts: { key: string; file: string; name: string }[] = [
     { key: "aptitudes", file: "aptitudes.ts", name: "ALL_APTITUDES" },
     { key: "standaloneFeats", file: "feats/index.ts", name: "ALL_STANDALONE_FEATS" },
@@ -124,10 +126,11 @@ function writeGenerated(path: string, code: string) {
 }
 
 /**
- * Regenerates every reference (of a book, type or name, when given), then each book's domains unless a name picks
- * one reference. A reference that fails doesn't stop the others: the failures are listed at the end.
+ * Regenerates every reference (of a book, type or name, when given) into `outDir`, then each book's domains unless a
+ * name picks one reference. A reference that fails doesn't stop the others: the failures are returned.
  */
-function generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>) {
+export function generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>, outDir = join(BASE_DIR, "generated")): string[] {
+  generatedDir = outDir;
   const refs = discoverRefs().filter((r) =>
     (!bookFilter || r.book === bookFilter) && (!typeFilter || r.type === typeFilter) && (!nameFilter || basename(r.path, ".json").toLowerCase() === nameFilter));
 
@@ -149,10 +152,7 @@ function generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof p
     }
   }
 
-  if (failures.length > 0) {
-    console.error(`${failures.length} reference(s) failed:\n${failures.map((f) => `  ${f}`).join("\n")}`);
-    process.exit(1);
-  }
+  return failures;
 }
 
 function main() {
@@ -168,7 +168,11 @@ function main() {
     const bookIdx = args.indexOf("--book");
     generateRef(args[0], bookIdx >= 0 ? args[bookIdx + 1] : undefined);
   } else {
-    generateAll(parseCliArgs());
+    const failures = generateAll(parseCliArgs());
+    if (failures.length > 0) {
+      console.error(`${failures.length} reference(s) failed:\n${failures.map((f) => `  ${f}`).join("\n")}`);
+      process.exit(1);
+    }
   }
 }
 
@@ -177,12 +181,12 @@ function generateClass(ref: ClassReference, book: string) {
 
   // Generate class seed .ts
   const classCode = generateClassSeed(ref);
-  const classPath = join(BASE_DIR, "generated", book, "classes", `${slug}.ts`);
+  const classPath = join(generatedDir, book, "classes", `${slug}.ts`);
   writeGenerated(classPath, classCode);
 
   // Generate class feature seeds .ts
   const featCode = generateClassFeatSeeds(ref);
-  const featPath = join(BASE_DIR, "generated", book, "feats", "classes", `${slug}.ts`);
+  const featPath = join(generatedDir, book, "feats", "classes", `${slug}.ts`);
   writeGenerated(featPath, featCode);
 
   regenerateFavoredEnemyFeats(book);
@@ -206,7 +210,7 @@ function generateClass(ref: ClassReference, book: string) {
 
 function generateFeat(ref: FeatReference, book: string) {
   const featCode = generateFeatSeeds(ref);
-  const featPath = join(BASE_DIR, "generated", book, "feats", "feats.ts");
+  const featPath = join(generatedDir, book, "feats", "feats.ts");
   writeGenerated(featPath, featCode);
 
   regenerateFavoredEnemyFeats(book);
@@ -222,7 +226,7 @@ function generateSpell(ref: SpellReference, book: string) {
 
   // Generate .ts files per level
   const files = generateSpellFiles(spells);
-  const spellDir = join(BASE_DIR, "generated", book, "spells");
+  const spellDir = join(generatedDir, book, "spells");
 
   // Remove stale level files that won't be regenerated (e.g. cantrips.ts when no level-0 spells)
   const LEVEL_FILES = ["cantrips.ts", ...Array.from({ length: 9 }, (_, i) => `level${i + 1}.ts`)];
@@ -264,7 +268,7 @@ function generateWizardSchool(ref: WizardSchoolReference, book: string) {
   lines.push(`];`);
   lines.push(``);
 
-  writeGenerated(join(BASE_DIR, "generated", book, "wizard-schools", "data.ts"), lines.join("\n"));
+  writeGenerated(join(generatedDir, book, "wizard-schools", "data.ts"), lines.join("\n"));
 
   if (!quiet) console.log(`\nDone!`);
 }
@@ -295,7 +299,7 @@ function generateDomain(_ref: DomainReference, book: string) {
   const { seeds, poolFeats, skipped } = bookDomainSeeds(book);
   if (!quiet) console.log(`Built ${seeds.length} domain seeds (${skipped} skipped — missing spells)`);
 
-  const outDir = join(BASE_DIR, "generated", book, "domains");
+  const outDir = join(generatedDir, book, "domains");
   const dataPath = join(outDir, "data.ts");
 
   if (seeds.length === 0) {
@@ -312,7 +316,7 @@ function generateDomain(_ref: DomainReference, book: string) {
   }
 
   // Generate feat pool feats (e.g. War Domain Weapon) — only for domains in this book
-  const domainFeatsPath = join(BASE_DIR, "generated", book, "feats", "domainFeats.ts");
+  const domainFeatsPath = join(generatedDir, book, "feats", "domainFeats.ts");
   if (poolFeats.length > 0) {
     generateDomainFeatPool(poolFeats, book);
   } else if (existsSync(domainFeatsPath)) {
@@ -330,7 +334,7 @@ function generateDomain(_ref: DomainReference, book: string) {
 function regenerateFavoredEnemyFeats(book: string) {
   if (book !== "srd") return;
 
-  writeGenerated(join(BASE_DIR, "generated", book, "feats", "favoredEnemy.ts"), generateFavoredEnemyFeats());
+  writeGenerated(join(generatedDir, book, "feats", "favoredEnemy.ts"), generateFavoredEnemyFeats());
 }
 
 /** Writes a book's domain pool feats (domainFeats.ts): one list, the feats grouped by their pool's aptitude. */
@@ -344,7 +348,7 @@ function generateDomainFeatPool(feats: FeatSeed[], book: string) {
   ];
 
   const head = [GENERATED_HEADER, `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`, ...requirementImports(uses), ``];
-  writeGenerated(join(BASE_DIR, "generated", book, "feats", "domainFeats.ts"), [...head, ...lines].join("\n"));
+  writeGenerated(join(generatedDir, book, "feats", "domainFeats.ts"), [...head, ...lines].join("\n"));
 }
 
 function generateRace(ref: RaceReference, book: string) {
@@ -367,14 +371,14 @@ function generateRace(ref: RaceReference, book: string) {
   lines.push(``);
 
   const head = [`import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";`, ``];
-  writeGenerated(join(BASE_DIR, "generated", book, "races", "data.ts"), [...head, ...lines].join("\n"));
+  writeGenerated(join(generatedDir, book, "races", "data.ts"), [...head, ...lines].join("\n"));
 
   if (!quiet) console.log(`\nDone!`);
 }
 
 function generateItem(ref: ItemReference, book: string) {
   const seeds = buildItemSeeds(ref);
-  const outDir = join(BASE_DIR, "generated", book, "items");
+  const outDir = join(generatedDir, book, "items");
 
   // --- weapons.ts ---
   generateWeaponFile(join(outDir, "weapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons, "simple");
@@ -490,7 +494,7 @@ function generateItemIndex(outDir: string) {
 
 function generateMagicItem(ref: MagicItemReference, book: string) {
   const seeds = buildMagicItemSeeds(ref);
-  const outDir = join(BASE_DIR, "generated", book, "items");
+  const outDir = join(generatedDir, book, "items");
 
   const files: [string, string, ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>]][] = [
     ["magic-armor.ts", "MAGIC_ARMOR", seeds.magicArmor],
@@ -566,7 +570,7 @@ function regenerateAptitudes(book: string) {
   }
   aptLines.push(`];`);
   aptLines.push(``);
-  writeGenerated(join(BASE_DIR, "generated", book, "aptitudes.ts"), aptLines.join("\n"));
+  writeGenerated(join(generatedDir, book, "aptitudes.ts"), aptLines.join("\n"));
 }
 
 /** Regenerate cowFeats.ts for a book from bonusFeatLists in class reference JSONs.
@@ -610,7 +614,7 @@ function regenerateCowFeats(book: string) {
     }
   }
 
-  const outPath = join(BASE_DIR, "generated", book, "cowFeats.ts");
+  const outPath = join(generatedDir, book, "cowFeats.ts");
 
   // Deduplicate: a feat might appear in multiple lists
   const deduped = new Map<string, CowEntry>();
@@ -739,7 +743,7 @@ function regenerateCowSpells(book: string) {
     }
   }
 
-  const outPath = join(BASE_DIR, "generated", book, "cowSpells.ts");
+  const outPath = join(generatedDir, book, "cowSpells.ts");
 
   const lines: string[] = [];
   lines.push(GENERATED_HEADER);
@@ -785,14 +789,14 @@ function regenerateClassIndex(book: string) {
     ...prestigeEntries.length > 0 ? listExport("ALL_PRESTIGE_CLASSES", "ClassSeed", names(prestigeEntries)) : [],
   ];
 
-  const genClassDir = join(BASE_DIR, "generated", book, "classes");
+  const genClassDir = join(generatedDir, book, "classes");
   const outPath = join(genClassDir, "index.ts");
   writeGenerated(outPath, lines.join("\n"));
 }
 
 /** Regenerate feats/classes/index.ts for a book from all generated class feat .ts files. */
 function regenerateClassFeatIndex(book: string) {
-  const classFeatDir = join(BASE_DIR, "generated", book, "feats", "classes");
+  const classFeatDir = join(generatedDir, book, "feats", "classes");
   let tsFiles: string[];
   try {
     tsFiles = readdirSync(classFeatDir).filter((f) => f.endsWith(".ts") && f !== "index.ts").sort();
@@ -844,7 +848,7 @@ function regenerateClassFeatIndex(book: string) {
 
 /** Regenerate feats/index.ts for a book from all .ts files in feats/ and classes/index.ts. */
 function regenerateFeatIndex(book: string) {
-  const featDir = join(BASE_DIR, "generated", book, "feats");
+  const featDir = join(generatedDir, book, "feats");
 
   // Discover all .ts files in feats/ (excluding index.ts and classes/)
   type FeatFileExport = { file: string; exports: string[] };
@@ -919,7 +923,7 @@ function regenerateFeatIndex(book: string) {
 
 /** Regenerate spells/index.ts for a book from existing level .ts files. */
 function regenerateSpellIndex(book: string) {
-  const spellDir = join(BASE_DIR, "generated", book, "spells");
+  const spellDir = join(generatedDir, book, "spells");
   let allFiles: string[];
   try {
     allFiles = readdirSync(spellDir);
@@ -951,4 +955,4 @@ function regenerateSpellIndex(book: string) {
   writeGenerated(outPath, lines.join("\n"));
 }
 
-main();
+if (import.meta.main) main();

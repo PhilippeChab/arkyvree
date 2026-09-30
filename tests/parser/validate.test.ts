@@ -55,4 +55,20 @@ describe("parser:validate", () => {
     });
     expect(issues).toEqual([{ kind: "not seedable", entityName: item, text: expect.stringContaining(`${item}'s slot: "Tail"`) }]);
   });
+
+  test("finds no issue in the committed references", () => {
+    expect(referenceIssues(discoverRefs())).toEqual([]);
+  });
+
+  test("reports what a reference's review list covers, once cleared: a class's aptitude picks and prerequisites, feats' modifiers", () => {
+    const clear = (overrides: Record<string, unknown>) => void (overrides.reviewed = []);
+    expect(issuesOf("complete-adventurer/classes/animalLord.json", clear)).toEqual([
+      { kind: "aptitude pick", entityName: "Animal Lord", text: "Animal Bond" },
+      { kind: "aptitude pick", entityName: "Animal Lord", text: "Third Totem" },
+    ]);
+    expect(issuesOf("complete-warrior/classes/stonelord.json", clear)).toEqual([{ kind: "prereq", entityName: "Stonelord", text: expect.stringContaining("arduous ritual") }]);
+    const feats = issuesOf("complete-divine/feats.json", clear);
+    expect(feats.map(({ kind, entityName }) => `${kind} ${entityName}`))
+      .toEqual(["modifier Divine Spell Power", "modifier Oaken Resilience", "modifier Swim like a Fish", "modifier Swim like a Fish", "modifier Wolverine's Rage"]);
+  });
 });
