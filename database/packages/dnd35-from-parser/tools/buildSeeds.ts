@@ -6,14 +6,16 @@
  */
 
 import type { DomainDefinition, FeatSeed, ItemDef, ModifierSeed, PowerSeed, RaceDefinition, RequirementEntry, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
-import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, ItemReference, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, ItemReference, MagicItemCategory, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, checkedValue, checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
 // ---------------------------------------------------------------------------
@@ -177,8 +179,8 @@ function detectClassFeatFamily(name: string): string | undefined {
 
 /** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
 export function classSpells(ref: ClassReference) {
-  const { spells, overrides } = ref.mapping;
-  return spells && overrides?.spells ? { ...spells, ...overrides.spells } : spells;
+  const { spells } = ref.mapping;
+  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
 }
 
 /**
@@ -187,7 +189,7 @@ export function classSpells(ref: ClassReference) {
  * retargets the merged picks (`remap` one to one, `perLevel` one to several).
  */
 export function classAptitudePicks(ref: ClassReference) {
-  const overrides = ref.mapping.overrides;
+  const { overrides } = ref;
   const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
   const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists);
   const aptitudeMinLevel = new Map<string, number>();
@@ -268,7 +270,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
   }
 
   // A spellcasting class's own list gets a feat other classes advance it with.
-  const casterType = mapping.overrides?.casterType ?? detected.casterType;
+  const casterType = ref.overrides?.casterType ?? detected.casterType;
   if (detected.hasOwnSpells && casterType && !detected.casterLevelAdvancement) {
     feats.push({
       name: `Advance ${ref.raw.name} Spellcasting`,
@@ -289,7 +291,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
 /** A domain of the domains reference, as its mapping and overrides make it. */
 function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
   const mapping = ref.mapping?.[entry.name];
-  const override = ref.mapping?.overrides?.[entry.name];
+  const override = ref.overrides?.[entry.name];
   const spellSource = override?.spells ?? entry.spells;
 
   return {
@@ -396,7 +398,7 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
 export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchoolDefinition[] {
   return ref.raw.map((entry) => ({
     name: entry.name,
-    description: ref.mapping?.overrides?.[entry.name]?.description ?? entry.description,
+    description: ref.overrides?.[entry.name]?.description ?? entry.description,
     prohibitedSchoolCount: entry.prohibitedSchoolCount,
   }));
 }
@@ -405,16 +407,32 @@ export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchool
 // Race reference → RaceDefinition[]
 // ---------------------------------------------------------------------------
 
+/**
+ * The races a race reference seeds (those its overrides don't skip), each with its override and its size, checked:
+ * the override's, else as scraped. Generation throws a size's problem, and `parser:validate` reports it.
+ */
+export function seededRaces(ref: RaceReference) {
+  const skipped = skippedRaces(ref);
+  return ref.raw.filter(({ name }) => !skipped.has(name)).map((entry) => {
+    const override = ref.overrides?.[entry.name];
+    return { name: entry.name, entry, override, size: checkOneOf(override?.size ?? entry.size, SIZE_OPTIONS, `${entry.name}'s size`) };
+  });
+}
+
+/** The races a race reference's overrides skip, which the seed leaves out. */
+export function skippedRaces(ref: RaceReference): Set<string> {
+  return new Set(ref.raw.filter(({ name }) => ref.overrides?.[name]?.skip).map(({ name }) => name));
+}
+
 export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {
-  return ref.raw.map((entry) => {
-    const mapping = ref.mapping?.[entry.name];
-    const ovr = ref.mapping?.overrides?.[entry.name];
+  return seededRaces(ref).map(({ entry, override, size }) => {
+    const mapping = ref.mapping[entry.name];
 
     return {
-      name: ovr?.name ?? entry.name,
+      name: override?.name ?? entry.name,
       description: mapping?.description ?? entry.description,
-      size: (ovr?.size ?? entry.size) as RaceDefinition["size"],
-      baseSpeed: ovr?.baseSpeed ?? entry.baseSpeed,
+      size: checkedValue(size),
+      baseSpeed: override?.baseSpeed ?? entry.baseSpeed,
       ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
     };
   });
@@ -843,7 +861,7 @@ export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: 
     const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
     const seed: SpellSeedWithLevel = {
       name: entry.name,
-      description: normalizeDescription(ref.mapping?.overrides?.[entry.name]?.description ?? entry.description),
+      description: normalizeDescription(ref.overrides?.[entry.name]?.description ?? entry.description),
       aptitudes: [...aptitudes].sort(),
       ...(hasVaryingLevels ? { aptitudeLevels } : {}),
       savingThrow,
@@ -881,15 +899,14 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   const shields: ItemDef[] = [];
   const goods: ItemDef[] = [];
 
-  /** An item's cost, weight and description (its override's, else its mapping's, else as detected), unless it's skipped. */
+  /** An item's cost, weight and description (its override's, else as detected), unless it's skipped. */
   const corrected = (srdName: string, det: { costGp: string; weight: string }) => {
-    const override = ref.mapping.overrides[srdName];
-    const mapped = ref.mapping[srdName];
-    if (override?.skip || mapped?.skip) return undefined;
+    const override = ref.overrides?.[srdName];
+    if (override?.skip) return undefined;
     return {
-      costGp: override?.costGp ?? mapped?.costGp ?? det.costGp,
-      weight: override?.weight ?? mapped?.weight ?? det.weight,
-      description: override?.description ?? mapped?.description,
+      costGp: override?.costGp ?? det.costGp,
+      weight: override?.weight ?? det.weight,
+      description: override?.description,
     };
   };
 
@@ -974,6 +991,23 @@ export type MagicItemSeedSets = {
   staffs: ItemDef[];
 };
 
+/** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
+const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
+
+/**
+ * The magic items a magic item reference seeds (those its overrides don't skip), each with its override and its slot,
+ * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
+ * `parser:validate` reports it.
+ */
+export function seededMagicItems(ref: MagicItemReference) {
+  return Object.entries(ref.detected).flatMap(([name, det]) => {
+    const override = ref.overrides?.[name];
+    if (override?.skip) return [];
+    const slot = override?.slot ?? det.slot;
+    return [{ name, det, override, slot: slot ? checkOneOf(slot, SLOT_OPTIONS, `${name}'s slot`) : undefined }];
+  });
+}
+
 export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets {
   const magicArmor: ItemDef[] = [];
   const magicShields: ItemDef[] = [];
@@ -983,7 +1017,7 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
   const rods: ItemDef[] = [];
   const staffs: ItemDef[] = [];
 
-  const categoryBuckets: Record<string, ItemDef[]> = {
+  const categoryBuckets: Record<MagicItemCategory, ItemDef[]> = {
     specificArmor: magicArmor,
     specificShield: magicShields,
     specificWeapon: magicWeapons,
@@ -993,23 +1027,17 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     staff: staffs,
   };
 
-  for (const [name, det] of Object.entries(ref.detected)) {
-    const ovr = ref.mapping.overrides?.[name];
-    if (ovr?.skip) continue;
-    if (ref.mapping[name]?.skip) continue;
-
-    const costGp = ovr?.costGp ?? ref.mapping[name]?.costGp ?? det.costGp;
-    const weight = ovr?.weight ?? ref.mapping[name]?.weight ?? det.weight;
-    const slot = ovr?.slot ?? ref.mapping[name]?.slot ?? det.slot;
+  for (const { name, det, override: ovr, slot } of seededMagicItems(ref)) {
+    const costGp = ovr?.costGp ?? det.costGp;
+    const weight = ovr?.weight ?? det.weight;
     // Find the raw entry for description
     const rawEntry = ref.raw.find((r) => r.name === name);
     const baseItemRaw = ovr?.baseItem !== undefined ? ovr.baseItem
-      : ref.mapping[name]?.baseItem !== undefined ? ref.mapping[name]!.baseItem
       : det.baseItem ?? detectBaseItem(name, rawEntry?.description ?? "", det.category);
     const sourceItem = baseItemRaw ?? undefined;
 
     const description = normalizeDescription(
-      ovr?.description ?? ref.mapping[name]?.description ?? rawEntry?.description ?? "",
+      ovr?.description ?? rawEntry?.description ?? "",
     );
 
     const aura = ovr?.aura ?? det.aura;
@@ -1019,10 +1047,8 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     if (casterLevel) properties.push({ type: "MAGIC_CASTER_LEVEL", value: String(casterLevel) });
 
     const bucket = categoryBuckets[det.category];
-    if (!bucket) continue;
+    if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
 
-    // Prefix ring/rod/staff names with their category when the SRD heading is just the bare name
-    const CATEGORY_PREFIX: Partial<Record<string, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
     const categoryWord = CATEGORY_PREFIX[det.category];
     let itemName = name;
     if (categoryWord) {
@@ -1039,7 +1065,7 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
       weight,
       costGp,
       type: det.itemType,
-      slot: slot as ItemDef["slot"],
+      slot: slot && checkedValue(slot),
       properties,
       ...(sourceItem ? { sourceItem } : {}),
       ...(det.modifiers?.length ? { modifiers: det.modifiers } : {}),

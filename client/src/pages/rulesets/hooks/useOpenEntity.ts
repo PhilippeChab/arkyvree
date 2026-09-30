@@ -1,4 +1,4 @@
-import { isRecord } from "@/client/src/lib/isRecord.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 

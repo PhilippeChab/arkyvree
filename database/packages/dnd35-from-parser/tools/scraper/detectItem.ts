@@ -208,12 +208,3 @@ export function buildItemDetected(
 
   return { weapons, armor, goods, unresolved };
 }
-
-export function buildItemMapping(
-  _detected: ItemReference["detected"],
-  existingOverrides?: ItemReference["mapping"]["overrides"],
-): ItemReference["mapping"] {
-  return {
-    overrides: existingOverrides ?? { nameMap: {}, reviewed: [] },
-  } as ItemReference["mapping"];
-}

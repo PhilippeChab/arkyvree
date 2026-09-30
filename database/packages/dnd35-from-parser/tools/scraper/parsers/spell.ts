@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import { isText } from "domhandler";
-import { contentHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { pageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
@@ -31,10 +31,6 @@ const VALID_SCHOOLS = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
-// Listing page parser (dndtools.net)
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // Detail page parser (dndtools.net)
 // ---------------------------------------------------------------------------
 
@@ -47,7 +43,7 @@ export function parseSpellDetailHtml(
 ): SpellReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = contentHeading($)?.text().trim() ?? "";
+  const name = pageTitle($);
   if (!name) return null;
 
   // Derive slug from URL: /spells/{book}/{slug}--{id}/ → slug

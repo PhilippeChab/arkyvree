@@ -89,5 +89,3 @@ export const MONK: ClassSeed = {
     { level: 20, target: "items.weapons.unarmedstrike.damage.base", value: "2d10", valueType: "string", operator: "set" },
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

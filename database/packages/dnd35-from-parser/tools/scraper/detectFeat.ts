@@ -5,6 +5,7 @@ import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/
 import { isValidModifierPath, findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { loadBonusFeatAptitudes, loadBonusFeatClassLevels } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { anySkillRequirement, BOOK_ABBREV_PATTERN, SKILL_MAP, SAVE_MAP, skillSlug, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SIZE_OPTIONS } from "@/shared/enums.ts";
 
 // ---------------------------------------------------------------------------
 // Feat type → aptitudes
@@ -112,12 +113,12 @@ export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["det
 export function buildFeatMapping(
   raw: FeatReference["raw"],
   detected: FeatReference["detected"],
-  overrides: FeatReference["mapping"]["overrides"],
+  overrides: NonNullable<FeatReference["overrides"]>,
   book: string,
 ): FeatReference["mapping"] {
   const bonusFeatAptitudes = loadBonusFeatAptitudes(book);
   const bonusFeatClassLevels = loadBonusFeatClassLevels(book);
-  const mapping = { overrides } as FeatReference["mapping"];
+  const mapping: FeatReference["mapping"] = {};
   for (const entry of raw) {
     const det = detected[entry.name];
     const ovr = overrides[entry.name];
@@ -336,30 +337,29 @@ function parsePrerequisiteText(text: string): { requirements: RequirementEntry[]
 
   // Size requirements: "Small or Medium size", "Medium or smaller size", "Small size"
   const SIZE_TARGET = "identity.physiology.race.size";
-  const SIZE_ORDER = ["Fine", "Diminutive", "Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan", "Colossal"];
-  const sizeNames = SIZE_ORDER.join("|");
+  const sizeNames = SIZE_OPTIONS.join("|");
 
   // "X or Y size"
   const explicitSizeMatch = cleanedText.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+(${sizeNames})\\s+size`, "i"));
   if (explicitSizeMatch) {
-    const s1 = SIZE_ORDER.find(s => s.toLowerCase() === explicitSizeMatch[1].toLowerCase())!;
-    const s2 = SIZE_ORDER.find(s => s.toLowerCase() === explicitSizeMatch[2].toLowerCase())!;
+    const s1 = SIZE_OPTIONS.find(s => s.toLowerCase() === explicitSizeMatch[1].toLowerCase())!;
+    const s2 = SIZE_OPTIONS.find(s => s.toLowerCase() === explicitSizeMatch[2].toLowerCase())!;
     reqs.push(or(eqStr(SIZE_TARGET, s1), eqStr(SIZE_TARGET, s2)));
   }
 
   // "X or smaller size"
   const orSmallerMatch = !explicitSizeMatch && cleanedText.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+smaller\\s+size`, "i"));
   if (orSmallerMatch) {
-    const maxSize = SIZE_ORDER.find(s => s.toLowerCase() === orSmallerMatch[1].toLowerCase())!;
-    const maxIdx = SIZE_ORDER.indexOf(maxSize);
-    const sizes = SIZE_ORDER.slice(0, maxIdx + 1);
+    const maxSize = SIZE_OPTIONS.find(s => s.toLowerCase() === orSmallerMatch[1].toLowerCase())!;
+    const maxIdx = SIZE_OPTIONS.indexOf(maxSize);
+    const sizes = SIZE_OPTIONS.slice(0, maxIdx + 1);
     reqs.push(or(...sizes.map(s => eqStr(SIZE_TARGET, s))));
   }
 
   // "X size" (standalone)
   const exactSizeMatch = !explicitSizeMatch && !orSmallerMatch && cleanedText.match(new RegExp(`\\b(${sizeNames})\\s+size\\b`, "i"));
   if (exactSizeMatch) {
-    const size = SIZE_ORDER.find(s => s.toLowerCase() === exactSizeMatch[1].toLowerCase())!;
+    const size = SIZE_OPTIONS.find(s => s.toLowerCase() === exactSizeMatch[1].toLowerCase())!;
     reqs.push(eqStr(SIZE_TARGET, size));
   }
 

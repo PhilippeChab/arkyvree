@@ -1,4 +1,5 @@
 import type { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
+import type { SizeType } from "@/shared/enums.ts";
 
 // The shapes of the content packages' data: the generated books and the hand-written content alike.
 
@@ -88,8 +89,6 @@ export type ClassSeed = {
     levels: number[];
   };
 };
-
-type SizeType = "Fine" | "Diminutive" | "Tiny" | "Small" | "Medium" | "Large" | "Huge" | "Gargantuan" | "Colossal";
 
 export type RaceDefinition = {
   name: string;

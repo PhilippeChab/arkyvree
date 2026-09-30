@@ -1,5 +1,5 @@
 import type { ChangedField } from "@/shared/activity.ts";
-import { isRecord } from "./isRecord.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { getActivityLabelOverrides } from "./rulesetLabels.ts";
 
 /** An activity's payload: the fields its type records, or none. */

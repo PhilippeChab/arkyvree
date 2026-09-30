@@ -59,5 +59,3 @@ export const CLERIC: ClassSeed = {
     { level: 1, target: "aptitudes.clericdomain.allowed", value: "2", valueType: "number", operator: "add" },
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

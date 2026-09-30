@@ -47,7 +47,7 @@ function referenceFeats(ref: FeatReference) {
   for (const entry of ref.raw) {
     const mapped = ref.mapping[entry.name];
     if (!mapped || mapped.skip) continue;
-    if (entry.featType === "epic" && ref.mapping.overrides?.[entry.name]?.skip !== false) continue;
+    if (entry.featType === "epic" && ref.overrides?.[entry.name]?.skip !== false) continue;
     kept.push({ entry, detected: ref.detected[entry.name], mapped });
   }
 

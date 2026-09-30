@@ -54,7 +54,7 @@ export function checkClassOverrides(stored: StoredReference<"class">): { refusal
       ...Object.keys(rest).filter((key) => {
         const ref = without((copy) => Reflect.deleteProperty(copy, key));
         const derived = [ref.mapping, ref.detected, ref.raw].map((part) => Reflect.get(part, key)).find((value) => value !== undefined);
-        return redundant(ref, alike(Reflect.get(withAll.mapping.overrides ?? {}, key), derived));
+        return redundant(ref, alike(Reflect.get(withAll.overrides ?? {}, key), derived));
       }),
       ...withAll.mapping.spells ? Object.keys(spellFields).filter((key) => {
         const ref = without((copy) => copy.spells && Reflect.deleteProperty(copy.spells, key));

@@ -11,6 +11,7 @@ import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, pars
 import { type ReferenceType, resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import type { FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { sanitizeJsonValues, sortKeysDeep, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { toCamelCase, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { fetchHtml, fetchAllPages, configureHttp } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { buildListingUrl, buildRaceListingUrl, getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
@@ -24,8 +25,8 @@ function writeIfChanged(outPath: string, data: StoredReference): void {
   if (existsSync(outPath)) {
     const oldData = sortKeysDeep(JSON.parse(readFileSync(outPath, "utf-8")));
     const stripTimestamp = (d: unknown) => {
-      const copy = structuredClone(d) as Record<string, Record<string, unknown>>;
-      delete copy._meta.scrapedAt;
+      const copy = structuredClone(d);
+      if (isRecord(copy) && isRecord(copy._meta)) delete copy._meta.scrapedAt;
       return JSON.stringify(copy);
     };
     if (stripTimestamp(sortKeysDeep(data)) === stripTimestamp(oldData)) {

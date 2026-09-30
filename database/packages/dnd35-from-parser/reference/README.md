@@ -1,6 +1,6 @@
 # Reference JSON Schema
 
-A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`tools/references.ts`) derives what the generator reads: `detected`, parsed from `raw`, and `mapping`, the entities to generate with the overrides applied. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
+A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`tools/references.ts`) derives what the generator reads: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items and magic items have only `detected`; spells and wizard schools, neither). The overrides win over both. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
 
 A class reference, as stored (see `tools/types.ts` for the definitive types):
 
@@ -59,7 +59,7 @@ detected                            # Parsed from raw
 ├── unresolvedPrereqs[]             #   Recognized but couldn't map
 └── errors[]                        #   Invalid paths
 
-mapping                             # Built from detected, with the overrides applied
+mapping                             # Built from detected, with overrides.features and noSpells applied
 ├── classFeatureAptitude            #   Main aptitude name (e.g. "Fighter Class Feature")
 ├── features{}                      #   Feature name → seed config
 │   └── [name]
@@ -74,10 +74,11 @@ mapping                             # Built from detected, with the overrides ap
 │       └── aliases[]               #     Alt occurrence names
 ├── occurrenceMap{}                 #   Occurrence name → features{} key
 ├── bonusSpellAbility               #   Ability for bonus spells
-├── spells{}                        #   Spell slot config (slug, perDay, known, knowAll,
-│                                   #     noCantrips, inheritsFrom)
-└── overrides                       #   The stored overrides
+└── spells{}                        #   Spell slot config (slug, perDay, known, knowAll,
+                                    #     noCantrips, inheritsFrom)
 ```
+
+Next to `detected` and `mapping`, the loaded reference keeps `_meta` as stored; `raw` as stored, except that a class's `overrides.alignment` fills its prerequisites' alignment when they have none; and `overrides`, their text cleaned up (sanitized) except a spell's or a wizard school's.
 
 ## How the generator reads it
 

@@ -29,7 +29,7 @@ bun run parser:sync
 bun run parser:sync srd                     # filter by book
 bun run parser:sync srd --type class         # filter by book + type
 
-# Validate reference files: unresolved detections, and class overrides that change nothing
+# Validate reference files: unresolved detections, class overrides that change nothing, and values the seed refuses
 bun run parser:validate
 bun run parser:validate --type class
 bun run parser:validate complete-warrior
@@ -57,7 +57,7 @@ Each reference JSON stores:
 - **`raw`** — Scraped data, never manually edited. Replaced on re-scrape.
 - **`overrides`** — Corrections made by hand. Kept on re-scrape.
 
-Loading a reference (`tools/references.ts`) derives the rest: **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`) and **`mapping`** (the entities to generate, with the overrides applied). A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
+Loading a reference (`tools/references.ts`) derives the rest: **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`) and **`mapping`** (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
 
 `generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/content/`.
 

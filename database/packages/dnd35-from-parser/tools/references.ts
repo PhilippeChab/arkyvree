@@ -3,8 +3,8 @@ import { join, resolve } from "node:path";
 import { buildDetected, buildInitialMapping, buildOccurrenceMap } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass.ts";
 import { buildDomainDetected, buildDomainMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectDomain.ts";
 import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { buildItemDetected, buildItemMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
-import { buildMagicItemDetected, buildMagicItemMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
+import { buildItemDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
+import { buildMagicItemDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { buildRaceDetected, buildRaceMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
@@ -20,9 +20,10 @@ import type {
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 // A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing
-// else: re-scraping replaces `raw` and keeps `overrides`. What the generator reads (`detected`, and `mapping`,
-// with the overrides applied) is derived from the two each time a reference is loaded, so a correction takes
-// effect at the next generate and can't be lost to a re-scrape.
+// else: re-scraping replaces `raw` and keeps `overrides`. What the generator reads is derived from the two each time
+// a reference is loaded: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items and magic
+// items have only `detected`; spells and wizard schools, neither). The overrides win over both, so a correction
+// takes effect at the next generate and can't be lost to a re-scrape.
 
 export type ReferenceByType = {
   class: ClassReference;
@@ -35,10 +36,8 @@ export type ReferenceByType = {
   wizardSchool: WizardSchoolReference;
 };
 export type ReferenceType = keyof ReferenceByType;
-type OverridesOf<R> = R extends { mapping?: { overrides?: infer O } } ? O : never;
-
 /** A reference as it's stored. */
-export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<ReferenceByType[T], "_meta" | "raw"> & { overrides?: OverridesOf<ReferenceByType[T]> };
+export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<ReferenceByType[T], "_meta" | "raw" | "overrides">;
 
 /** A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one). */
 function resolveClass({ _meta, raw, overrides }: StoredReference<"class">): ClassReference {
@@ -46,7 +45,6 @@ function resolveClass({ _meta, raw, overrides }: StoredReference<"class">): Clas
   if (overrides?.alignment && !scraped.prerequisites.parsed.alignment) scraped.prerequisites.parsed.alignment = overrides.alignment;
   const detected = buildDetected(scraped);
   const mapping = buildInitialMapping(scraped, detected);
-  if (overrides) mapping.overrides = overrides;
   if (overrides?.noSpells) {
     delete mapping.spells;
     delete mapping.bonusSpellAbility;
@@ -57,7 +55,7 @@ function resolveClass({ _meta, raw, overrides }: StoredReference<"class">): Clas
     mapping.features[name] = feature;
   }
   mapping.occurrenceMap = buildOccurrenceMap(mapping.features, detected.featureOccurrences);
-  return { _meta, raw: scraped, ...sanitizeJsonValues({ detected, mapping }) };
+  return { _meta, raw: scraped, ...sanitizeJsonValues({ overrides, detected, mapping }) };
 }
 
 const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => ReferenceByType[T] } = {
@@ -65,27 +63,22 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
   feat: ({ _meta, raw, overrides }) => {
     const feats = sanitizeJsonValues(raw);
     const detected = buildFeatDetected(feats);
-    return { _meta, raw, ...sanitizeJsonValues({ detected, mapping: buildFeatMapping(feats, detected, overrides ?? {}, _meta.book) }) };
+    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: buildFeatMapping(feats, detected, overrides ?? {}, _meta.book) }) };
   },
   domain: ({ _meta, raw, overrides }) => {
     const detected = buildDomainDetected(raw);
-    return { _meta, raw, ...sanitizeJsonValues({ detected, mapping: buildDomainMapping(raw, detected, overrides ?? {}) }) };
+    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: buildDomainMapping(raw, detected, overrides ?? {}) }) };
   },
   race: ({ _meta, raw, overrides }) => {
     const races = sanitizeJsonValues(raw);
     const detected = buildRaceDetected(races);
-    return { _meta, raw, ...sanitizeJsonValues({ detected, mapping: buildRaceMapping(races, detected, overrides ?? {}) }) };
+    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: buildRaceMapping(races, detected, overrides ?? {}) }) };
   },
-  item: ({ _meta, raw, overrides }) => {
-    const detected = buildItemDetected(raw, overrides?.nameMap);
-    return { _meta, raw, ...sanitizeJsonValues({ detected, mapping: buildItemMapping(detected, overrides) }) };
-  },
-  magicItem: ({ _meta, raw, overrides }) => {
-    const detected = buildMagicItemDetected(raw);
-    return { _meta, raw, ...sanitizeJsonValues({ detected, mapping: buildMagicItemMapping(detected, overrides) }) };
-  },
-  spell: ({ _meta, raw, overrides }) => ({ _meta, raw, ...overrides ? { mapping: { overrides } } : {} }),
-  wizardSchool: ({ _meta, raw, overrides }) => ({ _meta, raw, ...overrides ? { mapping: { overrides } } : {} }),
+  item: ({ _meta, raw, overrides }) => ({ _meta, raw, ...sanitizeJsonValues({ overrides, detected: buildItemDetected(raw, overrides?.nameMap) }) }),
+  magicItem: ({ _meta, raw, overrides }) => ({ _meta, raw, ...sanitizeJsonValues({ overrides, detected: buildMagicItemDetected(raw) }) }),
+  // Nothing to derive: the reference is as stored
+  spell: (stored) => stored,
+  wizardSchool: (stored) => stored,
 };
 
 /**

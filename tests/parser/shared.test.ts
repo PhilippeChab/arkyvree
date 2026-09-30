@@ -3,7 +3,8 @@ import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-import { anySkillRequirement, detectModifiersOf, modifierMapping, skillSlug } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { anySkillRequirement, checkedValue, checkOneOf, detectModifiersOf, modifierMapping, skillSlug } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 
 const STRENGTH: Modifier = { target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" };
 const DEXTERITY: Modifier = { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" };
@@ -55,5 +56,18 @@ describe("An any-skill requirement", () => {
   test("is none for a name that isn't an any-skill one, or covers no skill", () => {
     expect(anySkillRequirement("Knowledge (arcana)", 8)).toBeUndefined();
     expect(anySkillRequirement("Basketweaving (any)", 8)).toBeUndefined();
+  });
+});
+
+describe("A value of a fixed set", () => {
+  test("is one of its options, or refused with what it is", () => {
+    expect(isOneOf("Medium", ["Small", "Medium"])).toBe(true);
+    expect(isOneOf("medium", ["Small", "Medium"])).toBe(false);
+    expect(isOneOf(undefined, ["Small", "Medium"])).toBe(false);
+    expect(checkOneOf("Small", ["Small", "Medium"], "Elf's size")).toEqual({ ok: true, value: "Small" });
+    const titanic = checkOneOf("Titanic", ["Small", "Medium"], "Elf's size");
+    expect(titanic).toEqual({ ok: false, problem: `Elf's size: "Titanic" isn't one of Small, Medium` });
+    expect(checkedValue(checkOneOf("Small", ["Small"], "Elf's size"))).toBe("Small");
+    expect(() => checkedValue(titanic)).toThrow(`Elf's size: "Titanic"`);
   });
 });

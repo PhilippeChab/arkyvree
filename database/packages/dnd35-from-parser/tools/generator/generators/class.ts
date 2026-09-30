@@ -23,7 +23,7 @@ export function generateClassSeed(ref: ClassReference): string {
   const detected = ref.detected;
   const mapping = ref.mapping;
   const raw = ref.raw;
-  const overrides = mapping.overrides ?? {};
+  const overrides = ref.overrides ?? {};
 
   const bab = overrides.bab ?? detected.bab;
   const saves = overrides.saves ?? detected.saves;
@@ -163,15 +163,15 @@ export function generateClassSeed(ref: ClassReference): string {
   lines.push(`};`);
 
   // Flag unresolved items as TODO comments
-  // Convention: if the key exists in mapping (even empty []), it's been reviewed — no TODO
+  // Convention: if the key exists in the overrides (even empty []), it's been reviewed — no TODO
   const todos: string[] = [];
   if (!("requirements" in (overrides)) && detected.unresolvedPrereqs?.length) {
     for (const p of detected.unresolvedPrereqs) todos.push(p);
   }
-  if (!("aptitudePicks" in mapping) && !("aptitudePicks" in overrides) && detected.unresolvedAptitudePicks?.length) {
+  if (!("aptitudePicks" in overrides) && detected.unresolvedAptitudePicks?.length) {
     for (const a of detected.unresolvedAptitudePicks) todos.push(`Unresolved aptitude pick: "${a}"`);
   }
-  if (!("modifiers" in mapping)) {
+  if (!("modifiers" in overrides)) {
     todos.push("No modifiers defined — review if this class needs any");
   }
   if (todos.length > 0) {

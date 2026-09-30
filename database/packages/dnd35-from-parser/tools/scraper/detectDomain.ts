@@ -37,9 +37,9 @@ export function buildDomainDetected(raw: DomainReference["raw"]): DomainReferenc
 export function buildDomainMapping(
   raw: DomainReference["raw"],
   detected: DomainReference["detected"],
-  overrides: DomainReference["mapping"]["overrides"],
+  overrides: NonNullable<DomainReference["overrides"]>,
 ): DomainReference["mapping"] {
-  return { overrides, ...modifierMapping(raw, detected, overrides, (override?: DomainReference["mapping"]["overrides"][string]) => (override?.featPool ? { featPool: override.featPool } : {})) } as DomainReference["mapping"];
+  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) => (override?.featPool ? { featPool: override.featPool } : {}));
 }
 
 function detectDomainModifiers(description: string): ModifierDetection<Modifier> {

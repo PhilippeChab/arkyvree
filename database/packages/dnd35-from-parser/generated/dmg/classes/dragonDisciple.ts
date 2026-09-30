@@ -62,5 +62,3 @@ export const DRAGON_DISCIPLE: ClassSeed = {
     { level: 10, target: "abilities.charisma", value: "2", valueType: "number", operator: "add" },
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

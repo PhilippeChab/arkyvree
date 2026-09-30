@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import * as cheerio from "cheerio";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
-import { contentHeading, frameHeading, parseListingHtml, sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { contentHeading, frameHeading, pageTitle, parseListingHtml, sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 
@@ -27,6 +27,12 @@ describe("A page's content heading", () => {
     expect(headingOf(page("Races", "Elf"))).toBe("Races");
     expect(headingOf(page("Races", "Elf"), frameHeading("Races"))).toBe("Elf");
     expect(parseRaceDetailHtml(page("Races", "Elf"))?.name).toBe("Elf");
+  });
+
+  test("gives the page's title, or none", () => {
+    expect(pageTitle(cheerio.load(page("D&D Tools", "  Power Attack  ")))).toBe("Power Attack");
+    expect(pageTitle(cheerio.load(page("D&D Tools")))).toBe("");
+    expect(pageTitle(cheerio.load(page("Races", "Elf")), frameHeading("Races"))).toBe("Elf");
   });
 
   test("matches a frame heading literally", () => {
