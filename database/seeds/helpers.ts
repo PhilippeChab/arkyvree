@@ -92,23 +92,6 @@ export async function seedCharacter(db: Db, ctx: SeedContext, { classes, skills,
   await reconcileBondedForCharacter(db, characterId);
 }
 
-/** Builds a seeded master's bonded creatures (familiar, companion, mount) from its levels, as leveling up does. */
-async function reconcileBondedForCharacter(
-  tx: Db,
-  characterId: string,
-): Promise<void> {
-  const master = await Characters.findOne(tx, { id: characterId });
-  if (!master) throw new NotFoundError(`Character ${characterId} not found`);
-  if (master.kind !== "pc") return;
-
-  await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
-    const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailed = module.createDetailedCharacter(master) as Dnd35DetailedCharacter;
-    await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
-    await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
-  });
-}
-
 export async function createCharacter(
   db: Db,
   ctx: SeedContext,
@@ -255,4 +238,21 @@ async function addInventory(
       weaponSet: item.weaponSet,
     })),
   );
+}
+
+/** Builds a seeded master's bonded creatures (familiar, companion, mount) from its levels, as leveling up does. */
+async function reconcileBondedForCharacter(
+  tx: Db,
+  characterId: string,
+): Promise<void> {
+  const master = await Characters.findOne(tx, { id: characterId });
+  if (!master) throw new NotFoundError(`Character ${characterId} not found`);
+  if (master.kind !== "pc") return;
+
+  await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
+    const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const detailed = module.createDetailedCharacter(master) as Dnd35DetailedCharacter;
+    await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
+    await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
+  });
 }
