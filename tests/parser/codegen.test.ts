@@ -96,6 +96,12 @@ describe("Generated strings", () => {
       .toBe(`{ target: "x.\\"y\\"", operator: "add", value: "1", valueType: "number" }`);
   });
 
+  test("keep a template description's text, the item named where it's mentioned", () => {
+    const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+    ref.mapping["Weapon Focus"].description = "With the selected weapon: `a` ${b} \\u0000.";
+    expect(generateFeatSeeds(ref)).toContain("description: `With ${w}: \\`a\\` \\${b} \\\\u0000.`,");
+  });
+
   test("are escaped for a template literal: its backticks and interpolations too", () => {
     const text = "a `b` ${c} \"d\"";
     expect(escapeTemplate(text)).toBe("a \\`b\\` \\${c} \\\"d\\\"");
@@ -108,9 +114,9 @@ describe("The generated feats", () => {
     expect([...WIZARD_SCHOOL_FEATS, ...WEAPON_PROFICIENCY_FEATS, ...favoredEnemy]).toEqual(coreSystemFeats(WIZARD_SCHOOLS));
   });
 
-  test("keep a template family's modifier requirements on each of its feats", () => {
+  test("refuse a template family's modifier with requirements, whose targets can't follow the item", () => {
     const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
-    ref.mapping["Weapon Focus"].modifiers = [{ target: "combat.tohit.misc", operator: "add", value: "1", valueType: "number", requirements: [gte("combat.bab", 3)] }];
-    expect(generateFeatSeeds(ref)).toContain("{ target: `items.weapons.${stripSeparators(w)}.tohit.misc`, operator: \"add\", value: \"1\", valueType: \"number\", requirements: [gte(\"combat.bab\", 3)] }");
+    ref.mapping["Weapon Focus"].modifiers = [{ target: "combat.tohit.misc", operator: "add", value: "1", valueType: "number", requirements: [gte("combat.tohit.base", 3)] }];
+    expect(() => generateFeatSeeds(ref)).toThrow("a template feat's modifier can't have requirements");
   });
 });

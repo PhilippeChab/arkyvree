@@ -1,5 +1,5 @@
 import { stripSeparators } from "@/shared/utils.ts";
-import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
@@ -42,8 +42,8 @@ export function buildDomainMapping(
   return { overrides, ...modifierMapping(raw, detected, overrides, (override?: DomainReference["mapping"]["overrides"][string]) => (override?.featPool ? { featPool: override.featPool } : {})) } as DomainReference["mapping"];
 }
 
-function detectDomainModifiers(description: string): ModifierDetection {
-  const modifiers: ModifierSeed[] = [];
+function detectDomainModifiers(description: string): ModifierDetection<Modifier> {
+  const modifiers: Modifier[] = [];
   const errors: string[] = [];
   const unresolvedModifiers: string[] = [];
 

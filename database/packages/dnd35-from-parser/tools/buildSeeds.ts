@@ -10,9 +10,9 @@ import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, Item
 import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
@@ -286,20 +286,51 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
 // Domain reference → DomainDefinition[]
 // ---------------------------------------------------------------------------
 
-export function buildDomainSeeds(ref: DomainReference): DomainDefinition[] {
-  return ref.raw.map((entry) => {
-    const mapping = ref.mapping?.[entry.name];
-    const override = ref.mapping?.overrides?.[entry.name];
-    const spellSource = override?.spells ?? entry.spells;
+/** A domain of the domains reference, as its mapping and overrides make it. */
+function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
+  const mapping = ref.mapping?.[entry.name];
+  const override = ref.mapping?.overrides?.[entry.name];
+  const spellSource = override?.spells ?? entry.spells;
 
-    return {
-      name: override?.name ?? entry.name,
-      description: mapping?.description ?? entry.description,
-      ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
-      spells: spellSource.map((s) => ({ name: s.name, level: s.level }))
-        .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
-    };
-  });
+  return {
+    name: override?.name ?? entry.name,
+    description: mapping?.description ?? entry.description,
+    ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
+    spells: spellSource.map((s) => ({ name: s.name, level: s.level }))
+      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
+  };
+}
+
+/**
+ * A book's domains (of the master domain reference): those whose spells the book, with the core rules, all has, and
+ * for an extension, not all the core rules'. Their spells are named as the spell references name them. Also their
+ * feat pools' feats, and how many domains were skipped.
+ */
+export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[]; skipped: number } {
+  const masterRef = loadReference(join(REFERENCE_DIR, "domains.json"), "domain");
+  const spellNames = (b: string) => {
+    const path = join(REFERENCE_DIR, b, "spells.json");
+    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
+  };
+  // Spell names by their lowercase: the core rules', and the book's
+  const core = spellNames("srd");
+  const available = new Map([...core, ...book === "srd" ? [] : spellNames(book)].map((name) => [name.toLowerCase(), name]));
+  const inCore = new Set(core.map((name) => name.toLowerCase()));
+
+  // Each domain's seed with its scraped entry, which its mapping (its feat pool) is keyed by
+  const all = masterRef.raw.map((entry) => ({ entry, seed: domainSeed(masterRef, entry) }));
+  const kept = all.filter(({ seed }) =>
+    seed.spells.every((s) => available.has(s.name.toLowerCase()))
+    && (book === "srd" || !seed.spells.every((s) => inCore.has(s.name.toLowerCase()))));
+  for (const { seed } of kept) {
+    for (const s of seed.spells) s.name = available.get(s.name.toLowerCase()) ?? s.name;
+  }
+  const keptEntries = new Set(kept.map(({ entry }) => entry));
+  return {
+    seeds: kept.map(({ seed }) => seed),
+    poolFeats: buildDomainFeatPoolSeeds({ ...masterRef, raw: masterRef.raw.filter((entry) => keptEntries.has(entry)) }),
+    skipped: all.length - kept.length,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -316,7 +347,7 @@ function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | s
   }
 }
 
-export function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
+function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   const results: FeatSeed[] = [];
 
   for (const entry of ref.raw) {
@@ -494,28 +525,10 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
     }
   }
 
-  // Domain aptitudes — check if this book has generated domain data (non-empty)
-  const generatedDomainPath = join(import.meta.dirname!, "../generated", book, "domains/data.ts");
-  const hasDomains = existsSync(generatedDomainPath) && !readFileSync(generatedDomainPath, "utf-8").includes("ALL_DOMAINS: DomainDefinition[] = [];");
-  if (hasDomains) {
-    names.add("Cleric Domain");
-    // Check if any of this book's domains have feat pools
-    const domainFeatsPath = join(import.meta.dirname!, "../generated", book, "feats/domainFeats.ts");
-    if (existsSync(domainFeatsPath)) {
-      const masterDomainPath = join(REFERENCE_DIR, "domains.json");
-      if (existsSync(masterDomainPath)) {
-        const domainRef = loadReference(masterDomainPath, "domain");
-        // Read generated domain names to filter
-        const generatedContent = readFileSync(generatedDomainPath, "utf-8");
-        for (const entry of domainRef.raw) {
-          if (!generatedContent.includes(`name: "${entry.name}"`)) continue;
-          const pool = domainRef.mapping?.[entry.name]?.featPool
-            ?? domainRef.mapping?.overrides?.[entry.name]?.featPool;
-          if (pool) names.add(pool.aptitude);
-        }
-      }
-    }
-  }
+  // Domain aptitudes: the book's domains, and their feat pools'
+  const domains = bookDomainSeeds(book);
+  if (domains.seeds.length > 0) names.add("Cleric Domain");
+  for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
 
   // Wizard school aptitudes
   const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
@@ -542,10 +555,10 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
 
   // Exclude aptitudes created by other books (class features + spell lists).
   // For sibling extension spell lists, keep them if this book's spells reference them.
-  for (const other of readdirSync(REFERENCE_DIR, { withFileTypes: true })) {
-    if (!other.isDirectory() || other.name === book) continue;
-    const isSibling = other.name !== "srd" && book !== "srd";
-    for (const { ref } of classReferences(other.name)) {
+  for (const other of referenceBooks()) {
+    if (other === book) continue;
+    const isSibling = other !== "srd" && book !== "srd";
+    for (const { ref } of classReferences(other)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
       const spellApt = ref.mapping.spells ? `${ref.raw.name} Spells` : null;
       if (spellApt) {
@@ -590,7 +603,7 @@ function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Rec
 
   // Auto-discover from class references (scoped to book if provided)
   if (existsSync(REFERENCE_DIR)) {
-    for (const book of readdirSync(REFERENCE_DIR)) {
+    for (const book of referenceBooks()) {
       // Discover casting classes
       for (const { ref } of classReferences(book)) {
         if (ref.mapping?.spells && ref.raw?.name) {

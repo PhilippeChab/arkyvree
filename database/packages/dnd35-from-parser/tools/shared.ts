@@ -5,7 +5,7 @@
 import { stripSeparators } from "@/shared/utils.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier, ModifierEffect, ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -145,6 +145,11 @@ type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string;
 /** The books' references: a folder per book, and the files every book shares (domains.json). */
 export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 
+/** The books with references: the folders of REFERENCE_DIR. */
+export function referenceBooks(): string[] {
+  return readdirSync(REFERENCE_DIR, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+}
+
 /** The reference files under `refDir`: each book's, and the ones every book shares (domains.json). */
 export function discoverRefs(refDir = REFERENCE_DIR): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
   const files = readdirSync(refDir, { withFileTypes: true, recursive: true })
@@ -214,11 +219,14 @@ export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
 // Per-entity modifiers — used by detectDomain, detectRace
 // ---------------------------------------------------------------------------
 
-/** What detecting an entry's modifiers finds: its modifiers, the invalid paths and the text it couldn't parse. */
-export type ModifierDetection = { modifiers: ModifierSeed[]; errors: string[]; unresolvedModifiers: string[] };
+/**
+ * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
+ * `Modifier`), the invalid paths and the text it couldn't parse.
+ */
+export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = { modifiers: M[]; errors: string[]; unresolvedModifiers: string[] };
 
 /** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
-export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: (entry: E) => ModifierDetection) {
+export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: (entry: E) => ModifierDetection<Modifier>) {
   const detected: Record<string, DetectedModifiers> = {};
   for (const entry of raw) {
     const { modifiers, errors, unresolvedModifiers } = detect(entry);
@@ -232,13 +240,13 @@ export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: 
 }
 
 /** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
-export function modifierMapping<E extends { name: string; description: string }, O extends { description?: string; modifiers?: ModifierSeed[] }, X extends object>(
+export function modifierMapping<E extends { name: string; description: string }, O extends { description?: string; modifiers?: Modifier[] }, X extends object>(
   raw: E[],
-  detected: Record<string, { modifiers: ModifierSeed[] } | undefined>,
+  detected: Record<string, { modifiers: Modifier[] } | undefined>,
   overrides: Record<string, O | undefined>,
   extra: (override: O | undefined) => X,
 ) {
-  const mapping: Record<string, { description: string; modifiers?: ModifierSeed[] } & X> = {};
+  const mapping: Record<string, { description: string; modifiers?: Modifier[] } & X> = {};
   for (const entry of raw) {
     const override = overrides[entry.name];
     const modifiers = override?.modifiers ?? detected[entry.name]?.modifiers ?? [];
@@ -251,11 +259,11 @@ export function modifierMapping<E extends { name: string; description: string },
 // validateModifiers — used by detectFeat, detectDomain
 // ---------------------------------------------------------------------------
 
-export function validateModifiers(
-  modifiers: ModifierSeed[],
+export function validateModifiers<M extends ModifierEffect>(
+  modifiers: M[],
   isValid: (target: string) => boolean,
-): { validated: ModifierSeed[]; errors: string[] } {
-  const validated: ModifierSeed[] = [];
+): { validated: M[]; errors: string[] } {
+  const validated: M[] = [];
   const errors: string[] = [];
   for (const m of modifiers) {
     if (isValid(m.target)) {

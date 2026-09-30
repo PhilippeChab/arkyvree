@@ -2,8 +2,8 @@ import { stripSeparators } from "@/shared/utils.ts";
 import type { RequirementCondition, RequirementEntry, RequirementGroup } from "@/database/packages/dnd35/content/types.ts";
 
 // Builders the content's requirements are written with: `or(eq(feat("Dodge")), gte("combat.bab", 4))`. The
-// generator writes a check with the one for its type and operator (`CHECK_BUILDERS` in generator/codegen.ts), and
-// one without a builder as an object.
+// generator writes a check with the builder that makes exactly that check (`builderOf` in generator/codegen.ts), and
+// any other check as an object.
 
 /** The path of having a feat. */
 export const feat = (name: string) => `feats.${stripSeparators(name)}.possessed`;

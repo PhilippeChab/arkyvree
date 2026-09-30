@@ -185,7 +185,7 @@ function openTemplate({ lines, uses }: FeatFile, { constName, familyName, aptitu
 /** A template's description, each mention of the chosen item made the item (`variable`). */
 function templateDescription({ description, type }: TemplateFamily, variable: string): string {
   const ITEM = "\u0000";
-  return escapeTemplate(expandTemplateDescription(truncateDesc(description), type, ITEM)).replaceAll(escapeTemplate(ITEM), `\${${variable}}`);
+  return expandTemplateDescription(truncateDesc(description), type, ITEM).split(ITEM).map(escapeTemplate).join(`\${${variable}}`);
 }
 
 /** A template's requirements, when it has some. */
@@ -194,9 +194,13 @@ function emitTemplateRequirements({ lines }: FeatFile, reqLines: string[]): void
   lines.push(`  requirements: [`, ...reqLines, `  ],`);
 }
 
-/** A template's modifiers, each target made the item's by `retarget`. */
+/**
+ * A template's modifiers, each target made the item's by `retarget`. A requirement on one throws: its targets would
+ * have to be the item's too.
+ */
 function emitTemplateModifiers({ lines, uses }: FeatFile, modifiers: ModifierSeed[], retarget: (target: string) => string): void {
   lines.push(...listField("modifiers", modifiers.map((m) => {
+    if (m.requirements?.length) throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
     const target = retarget(escapeTemplate(m.target));
     if (target.includes("${stripSeparators(")) uses.add("stripSeparators");
     return stringifyFeatModifier(m, uses, 2, `\`${target}\``);
@@ -219,6 +223,9 @@ function featRequirement({ uses }: FeatFile, featName: string, perItem: boolean,
 
 /** A single martial weapon's proficiency feat is for a character without them all. */
 const NOT_MARTIAL_PROFICIENT: RequirementCondition = { target: feat("Martial Weapon Proficiency"), operator: "not_equal", value: "true", valueType: "boolean" };
+
+/** A weapon family's modifier target, made the item's: a combat.X path becomes items.weapons.<weapon>.X. */
+const weaponTarget = (target: string) => target.replace(/^combat\./, "items.weapons.${stripSeparators(w)}.");
 
 /** Weapon proficiency families expand over their own weapons, the others over every weapon. */
 const WEAPON_LISTS: Record<string, string> = {
@@ -256,13 +263,13 @@ function emitWeaponTemplate(file: FeatFile, family: TemplateFamily, templateName
   }
   emitTemplateRequirements(file, reqLines);
 
-  // Modifiers: replace combat.X self-targeting paths with items.weapons.${slug}.X
-  emitTemplateModifiers(file, modifiers, (target) => target.replace(/^combat\./, "items.weapons.${stripSeparators(w)}."));
+  emitTemplateModifiers(file, modifiers, weaponTarget);
   closeTemplate(file, familyName);
 }
 
 function emitCrossbowTemplate(file: FeatFile, family: TemplateFamily): void {
   openTemplate(file, family, "CROSSBOW_WEAPONS", "w", templateDescription(family, "w"));
+  emitTemplateModifiers(file, family.modifiers, weaponTarget);
   closeTemplate(file, family.familyName);
 }
 

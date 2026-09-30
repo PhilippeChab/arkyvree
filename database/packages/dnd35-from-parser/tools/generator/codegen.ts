@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed, Modifier, ModifierSeed, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import type { FeatSeed, Modifier, ModifierEffect, ModifierSeed, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { normalizeDescription, MAX_DESC } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ export function stringifyRequirement(req: RequirementEntry, uses: Set<string>, i
 // ---------------------------------------------------------------------------
 
 /** A modifier's fields written as code, its target as `target`. */
-function modifierFields(mod: Modifier, target: string): string[] {
+function modifierFields(mod: ModifierEffect, target: string): string[] {
   return [`target: ${target}`, `operator: ${quote(mod.operator)}`, `value: ${quote(mod.value)}`, `valueType: ${quote(mod.valueType)}`];
 }
 
@@ -129,9 +129,9 @@ export function stringifyFeatModifier(mod: ModifierSeed, uses: Set<string>, inde
   return `{ ${[...modifierFields(mod, target), ...requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : []].join(", ")} }`;
 }
 
-/** A `key: [...]` field of `items`, one per line, at `indent`; none when there are no items. */
-export function listField(key: string, items: string[], indent: string): string[] {
-  return items.length === 0 ? [] : [`${indent}${key}: [`, ...items.map((item) => `${indent}  ${item},`), `${indent}],`];
+/** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
+export function listField(key: string, items: string[], prefix: string): string[] {
+  return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
 }
 
 /** A feat written as code, a list's item: its builders added to `uses` (`stringifyRequirement`). */

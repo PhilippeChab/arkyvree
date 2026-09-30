@@ -31,7 +31,8 @@ export function generateClassSeed(ref: ClassReference): string {
   const requirements = overrides.requirements ?? detected.requirements;
 
   const constName = toConstName(raw.name);
-  const { classFeatures, autoFreeFeats } = buildClassFeatures(ref);
+  const { aptitudePicks, remap, perLevel } = classAptitudePicks(ref);
+  const { classFeatures, autoFreeFeats } = buildClassFeatures(ref, perLevel);
 
   // The requirement builders the class is written with, which its imports are written from
   const uses = new Set<string>();
@@ -126,7 +127,6 @@ export function generateClassSeed(ref: ClassReference): string {
     lines.push(`  ],`);
   }
 
-  const { aptitudePicks, remap, perLevel } = classAptitudePicks(ref);
   if (aptitudePicks && aptitudePicks.length > 0) {
     // Strip picks already handled by feat modifiers on class features
     const mf = ref.mapping.features;
@@ -226,7 +226,8 @@ export function generateFeatSeeds(ref: ClassReference): string {
 // Build classFeatures array from mapping + detected
 // ---------------------------------------------------------------------------
 
-function buildClassFeatures(ref: ClassReference): {
+/** A class's features and the existing feats it grants, a feature split per level named as `perLevelPicks` splits its pick. */
+function buildClassFeatures(ref: ClassReference, perLevelPicks: ReturnType<typeof classAptitudePicks>["perLevel"]): {
   classFeatures: [number, string][];
   autoFreeFeats: [number, string, string][];
 } {
@@ -248,15 +249,14 @@ function buildClassFeatures(ref: ClassReference): {
   };
 
   // Build per-level feat name map for multi-occurrence aptitude expansions
-  const { perLevel: perLevelForNames } = classAptitudePicks(ref);
   const perLevelFeatNames = new Map<string, Map<number, string>>();
   for (const [key, feat] of Object.entries(features_)) {
     if (!feat.modifiers) continue;
     for (const mod of feat.modifiers) {
-      if (perLevelForNames.has(mod.target)) {
+      if (perLevelPicks.has(mod.target)) {
         const baseName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
         const levelMap = new Map<number, string>();
-        for (const exp of perLevelForNames.get(mod.target)!) {
+        for (const exp of perLevelPicks.get(mod.target)!) {
           const perLevelName = insertOrdinalInName(baseName, exp.ordinal);
           for (const level of exp.levels) levelMap.set(level, perLevelName);
         }

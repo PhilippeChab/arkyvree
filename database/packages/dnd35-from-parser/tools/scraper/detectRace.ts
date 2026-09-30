@@ -1,4 +1,4 @@
-import type { ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SKILL_MAP, SAVE_MAP, detectModifiersOf, modifierMapping, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
@@ -36,8 +36,8 @@ export function buildRaceMapping(
 // Internal detection
 // ---------------------------------------------------------------------------
 
-function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetection {
-  const modifiers: ModifierSeed[] = [];
+function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetection<Modifier> {
+  const modifiers: Modifier[] = [];
   const errors: string[] = [];
   const unresolvedModifiers: string[] = [];
 
@@ -83,7 +83,7 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetec
 
 function detectSkillBonuses(
   text: string,
-  modifiers: ModifierSeed[],
+  modifiers: Modifier[],
   unresolvedModifiers: string[],
 ): void {
   // "+N racial bonus on X checks" or "+N racial bonus on X, Y, and Z checks"
@@ -124,7 +124,7 @@ function detectSkillBonuses(
 
 function detectSaveBonuses(
   text: string,
-  modifiers: ModifierSeed[],
+  modifiers: Modifier[],
 ): void {
   // "+N racial bonus on all saving throws"
   const allSavesMatch = text.match(/\+(\d+)\s+racial\s+bonus\s+on\s+all\s+saving\s+throws/i);
@@ -163,7 +163,7 @@ function detectSaveBonuses(
 
 function detectHumanTraits(
   features: NamedText[],
-  modifiers: ModifierSeed[],
+  modifiers: Modifier[],
 ): void {
   const fullText = features.map((f) => `${f.name} ${f.description}`).join(" ");
 
