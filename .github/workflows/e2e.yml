@@ -51,6 +51,9 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      # The browser is the runners' Google Chrome; Playwright records a failing test's video with its own ffmpeg
+      - name: Install ffmpeg
+        run: bunx playwright install ffmpeg
       # The seeded database, and the e2e template each shard's run copies for itself
       - name: Seed database
         run: bun test:db:reset
