@@ -6,11 +6,11 @@
  */
 
 import type { DomainDefinition, FeatSeed, ItemDef, ModifierSeed, PowerSeed, RaceDefinition, RequirementEntry, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
-import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, ItemReference, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, ItemReference, MagicItemCategory, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, oneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, checkedValue, checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -407,16 +407,32 @@ export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchool
 // Race reference → RaceDefinition[]
 // ---------------------------------------------------------------------------
 
+/**
+ * The races a race reference seeds (those its overrides don't skip), each with its override and its size, checked:
+ * the override's, else as scraped. Generation throws a size's problem, and `parser:validate` reports it.
+ */
+export function seededRaces(ref: RaceReference) {
+  const skipped = skippedRaces(ref);
+  return ref.raw.filter(({ name }) => !skipped.has(name)).map((entry) => {
+    const override = ref.overrides?.[entry.name];
+    return { name: entry.name, entry, override, size: checkOneOf(override?.size ?? entry.size, SIZE_OPTIONS, `${entry.name}'s size`) };
+  });
+}
+
+/** The races a race reference's overrides skip, which the seed leaves out. */
+export function skippedRaces(ref: RaceReference): Set<string> {
+  return new Set(ref.raw.filter(({ name }) => ref.overrides?.[name]?.skip).map(({ name }) => name));
+}
+
 export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {
-  return ref.raw.map((entry) => {
-    const mapping = ref.mapping?.[entry.name];
-    const ovr = ref.overrides?.[entry.name];
+  return seededRaces(ref).map(({ entry, override, size }) => {
+    const mapping = ref.mapping[entry.name];
 
     return {
-      name: ovr?.name ?? entry.name,
+      name: override?.name ?? entry.name,
       description: mapping?.description ?? entry.description,
-      size: oneOf(ovr?.size ?? entry.size, SIZE_OPTIONS, `${entry.name}'s size`),
-      baseSpeed: ovr?.baseSpeed ?? entry.baseSpeed,
+      size: checkedValue(size),
+      baseSpeed: override?.baseSpeed ?? entry.baseSpeed,
       ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
     };
   });
@@ -975,6 +991,23 @@ export type MagicItemSeedSets = {
   staffs: ItemDef[];
 };
 
+/** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
+const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
+
+/**
+ * The magic items a magic item reference seeds (those its overrides don't skip), each with its override and its slot,
+ * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
+ * `parser:validate` reports it.
+ */
+export function seededMagicItems(ref: MagicItemReference) {
+  return Object.entries(ref.detected).flatMap(([name, det]) => {
+    const override = ref.overrides?.[name];
+    if (override?.skip) return [];
+    const slot = override?.slot ?? det.slot;
+    return [{ name, det, override, slot: slot ? checkOneOf(slot, SLOT_OPTIONS, `${name}'s slot`) : undefined }];
+  });
+}
+
 export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets {
   const magicArmor: ItemDef[] = [];
   const magicShields: ItemDef[] = [];
@@ -984,7 +1017,7 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
   const rods: ItemDef[] = [];
   const staffs: ItemDef[] = [];
 
-  const categoryBuckets: Record<string, ItemDef[]> = {
+  const categoryBuckets: Record<MagicItemCategory, ItemDef[]> = {
     specificArmor: magicArmor,
     specificShield: magicShields,
     specificWeapon: magicWeapons,
@@ -994,13 +1027,9 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     staff: staffs,
   };
 
-  for (const [name, det] of Object.entries(ref.detected)) {
-    const ovr = ref.overrides?.[name];
-    if (ovr?.skip) continue;
-
+  for (const { name, det, override: ovr, slot } of seededMagicItems(ref)) {
     const costGp = ovr?.costGp ?? det.costGp;
     const weight = ovr?.weight ?? det.weight;
-    const slot = ovr?.slot ?? det.slot;
     // Find the raw entry for description
     const rawEntry = ref.raw.find((r) => r.name === name);
     const baseItemRaw = ovr?.baseItem !== undefined ? ovr.baseItem
@@ -1018,10 +1047,8 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     if (casterLevel) properties.push({ type: "MAGIC_CASTER_LEVEL", value: String(casterLevel) });
 
     const bucket = categoryBuckets[det.category];
-    if (!bucket) continue;
+    if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
 
-    // Prefix ring/rod/staff names with their category when the SRD heading is just the bare name
-    const CATEGORY_PREFIX: Partial<Record<string, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
     const categoryWord = CATEGORY_PREFIX[det.category];
     let itemName = name;
     if (categoryWord) {
@@ -1038,7 +1065,7 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
       weight,
       costGp,
       type: det.itemType,
-      slot: slot ? oneOf(slot, SLOT_OPTIONS, `${name}'s slot`) : undefined,
+      slot: slot && checkedValue(slot),
       properties,
       ...(sourceItem ? { sourceItem } : {}),
       ...(det.modifiers?.length ? { modifiers: det.modifiers } : {}),

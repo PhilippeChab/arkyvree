@@ -1,4 +1,4 @@
-import { isRecord } from "./isRecord.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
 /**
  * Deep equality for plain values, with form-friendly normalization:

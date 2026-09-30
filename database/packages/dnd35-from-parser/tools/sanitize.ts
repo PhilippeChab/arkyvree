@@ -1,3 +1,4 @@
+import { isRecord } from "@/shared/isRecord.ts";
 /** Book abbreviation suffixes found in scraped feat prerequisites (e.g., "Dodge (PH)"). */
 export const BOOK_ABBREV_PATTERN = /\s*\((?:CAd|CAr|CA|CC|CD|CS|CW|DMG|DMG2|ECS|ELH|FR|MIC|MM|PH|PH2|PHB|PHB2|CV)\)/;
 
@@ -152,7 +153,7 @@ export function sanitizeJsonValues<T>(obj: T, parentKey?: string): T {
     return (parentKey && DESCRIPTION_KEYS.has(parentKey) ? sanitizeText(obj) : fixEncoding(obj)) as T;
   }
   if (Array.isArray(obj)) return obj.map((item) => sanitizeJsonValues(item, parentKey)) as T;
-  if (obj !== null && typeof obj === "object") {
+  if (isRecord(obj)) {
     const result: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
       result[fixEncoding(k)] = sanitizeJsonValues(v, k);
@@ -160,11 +161,6 @@ export function sanitizeJsonValues<T>(obj: T, parentKey?: string): T {
     return result as T;
   }
   return obj;
-}
-
-/** Whether `value` is a JSON object: not an array, not null. */
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Recursively sort all object keys for deterministic JSON output */

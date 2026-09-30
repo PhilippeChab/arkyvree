@@ -90,7 +90,6 @@ export type ClassSeed = {
   };
 };
 
-
 export type RaceDefinition = {
   name: string;
   description: string;

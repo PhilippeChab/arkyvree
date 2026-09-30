@@ -20,9 +20,10 @@ import type {
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 // A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing
-// else: re-scraping replaces `raw` and keeps `overrides`. What the generator reads (`detected`, and `mapping`,
-// with the overrides applied) is derived from the two each time a reference is loaded, so a correction takes
-// effect at the next generate and can't be lost to a re-scrape.
+// else: re-scraping replaces `raw` and keeps `overrides`. What the generator reads is derived from the two each time
+// a reference is loaded: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items and magic
+// items have only `detected`; spells and wizard schools, neither). The overrides win over both, so a correction
+// takes effect at the next generate and can't be lost to a re-scrape.
 
 export type ReferenceByType = {
   class: ClassReference;
@@ -75,8 +76,9 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
   },
   item: ({ _meta, raw, overrides }) => ({ _meta, raw, ...sanitizeJsonValues({ overrides, detected: buildItemDetected(raw, overrides?.nameMap) }) }),
   magicItem: ({ _meta, raw, overrides }) => ({ _meta, raw, ...sanitizeJsonValues({ overrides, detected: buildMagicItemDetected(raw) }) }),
-  spell: ({ _meta, raw, overrides }) => ({ _meta, raw, overrides }),
-  wizardSchool: ({ _meta, raw, overrides }) => ({ _meta, raw, overrides }),
+  // Nothing to derive: the reference is as stored
+  spell: (stored) => stored,
+  wizardSchool: (stored) => stored,
 };
 
 /**

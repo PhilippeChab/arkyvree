@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { frameHeading, pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 /** A race page's frame also heads its listing "Races". */
 const RACE_FRAME_HEADING = frameHeading("Races");
@@ -22,17 +23,11 @@ const RACE_FRAME_HEADING = frameHeading("Races");
 
 const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]);
 
-// Django model IDs for size (fallback for "RaceSize object (N)" rendering)
-const SIZE_ID_MAP: Record<string, string> = {
+/** dndtools' Django ids of the sizes, for its "RaceSize object (N)" rendering: the site's keys, not ours. */
+const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
   "1": "Fine", "2": "Diminutive", "3": "Tiny", "4": "Small",
   "5": "Medium", "6": "Large", "7": "Huge", "8": "Gargantuan", "9": "Colossal",
 };
-
-const KNOWN_SIZES = new Set(["Fine", "Diminutive", "Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan", "Colossal"]);
-
-// ---------------------------------------------------------------------------
-// Listing page parser
-// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Detail page parser
@@ -131,13 +126,13 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
 // ---------------------------------------------------------------------------
 
 function parseSize(text: string): string {
-  // Try known size names first (case-insensitive)
-  for (const s of KNOWN_SIZES) {
+  // Try the size names first (case-insensitive)
+  for (const s of SIZE_OPTIONS) {
     if (text.toLowerCase().includes(s.toLowerCase())) return s;
   }
   // Fallback: "RaceSize object (N)" pattern from Django
   const idMatch = text.match(/\((\d+)\)/);
-  if (idMatch && SIZE_ID_MAP[idMatch[1]]) return SIZE_ID_MAP[idMatch[1]];
+  if (idMatch && DNDTOOLS_SIZE_IDS[idMatch[1]]) return DNDTOOLS_SIZE_IDS[idMatch[1]];
   return text;
 }
 

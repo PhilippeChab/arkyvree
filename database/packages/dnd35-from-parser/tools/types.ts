@@ -1,7 +1,8 @@
 import type { RequirementEntry, Modifier, ModifierSeed, Property } from "@/database/packages/dnd35/content/types.ts";
 
 // References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
-// `mapping` derived from it. The file itself holds only `StoredReference` (tools/references.ts).
+// `mapping` derived from it (items and magic items have only `detected`; spells and wizard schools, neither). The
+// file itself holds only `StoredReference` (tools/references.ts).
 
 export type BabType = "good" | "medium" | "poor";
 export type SaveType = "good" | "poor";
@@ -244,7 +245,6 @@ export type RaceReference = {
   mapping: Record<string, {
     description?: string;
     modifiers?: Modifier[];
-    skip?: boolean;
   }>;
 };
 
@@ -444,5 +444,5 @@ export type ItemReference = {
     unresolved: string[];
   };
 
-  overrides?: Overrides<ItemFields & { generatorName?: string }> & { nameMap?: Record<string, string> };
+  overrides?: Overrides<ItemFields> & { nameMap?: Record<string, string> };
 };

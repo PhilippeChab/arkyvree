@@ -1,4 +1,4 @@
-import { isRecord } from "@/client/src/lib/isRecord.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useNavigate } from "react-router-dom";
