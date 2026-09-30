@@ -22,8 +22,6 @@ import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { currentCowContext } from "@/server/services/rulesets/cowContext.ts";
 
-export const FIND_ALL_LIMIT = 5000;
-
 export type Paginated<T> = {
   items: T[];
   page: number;

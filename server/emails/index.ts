@@ -1,1 +1,1 @@
-export { emailService, EmailService } from "./EmailService";
+export { emailService } from "./EmailService";

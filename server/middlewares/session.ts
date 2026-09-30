@@ -9,10 +9,10 @@ import type { Session, User } from "@/shared/relations.ts";
 import { db } from "@/server/database/index.ts";
 
 export const SESSION_COOKIE_NAME = "session-id";
-export const SESSION_CONTEXT_KEY = "requestSession";
-export const USER_CONTEXT_KEY = "requestUser";
+const SESSION_CONTEXT_KEY = "requestSession";
+const USER_CONTEXT_KEY = "requestUser";
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-export const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
+const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 export type SessionContext = {
   Variables: {

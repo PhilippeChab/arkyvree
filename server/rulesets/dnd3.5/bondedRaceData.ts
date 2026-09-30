@@ -68,7 +68,7 @@ export type BondedRaceStatBlock = {
 // via Monster Manual advancement.
 const GENERIC_TAIL = ["Toughness", "Iron Will", "Lightning Reflexes", "Great Fortitude"];
 
-export const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
+const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
   // ───── Familiars (Tiny/Diminutive, fractional HD rounded up to 1)
   "Bat": {
     baseHD: 1,
