@@ -15,7 +15,7 @@ test.describe('Character contributors', () => {
     await answerInvite(contributor, name, 'Accept');
     await openSharedCharacter(contributor, name);
     // Sharing and archiving are the owner's.
-    await contributor.locator('[data-testid="MoreVertIcon"]').first().click();
+    await contributor.getByRole('button', { name: 'More actions' }).first().click();
     const menu = contributor.getByRole('menu');
     await expect(menu).toBeVisible();
     await expect(menu.getByRole('menuitem', { name: 'Share' })).toHaveCount(0);

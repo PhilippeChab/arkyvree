@@ -1,0 +1,67 @@
+name: E2E
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main, develop]
+  # Deploy runs it for main's pushes
+  workflow_call:
+
+# A new push to a pull request cancels its previous run; each push runs to the end
+concurrency:
+  group: e2e-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  e2e:
+    name: E2E (shard ${{ matrix.shard }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: arkyvree_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/arkyvree_test
+      SIGNING_SECRET: ci-signing-secret
+      S3_BUCKET: ci-bucket
+      S3_ENDPOINT: https://fake.example.com
+      S3_ACCESS_KEY_ID: ci-access-key
+      S3_SECRET_ACCESS_KEY: ci-secret-key
+      S3_PUBLIC_URL: https://fake.example.com/ci-bucket
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      # The headless shell only: the tests don't run a headed browser
+      - name: Install Chromium
+        run: bunx playwright install --with-deps --only-shell chromium
+      # The seeded database, and the e2e template each shard's run copies for itself
+      - name: Seed database
+        run: bun test:db:reset
+      - name: Run E2E tests (shard ${{ matrix.shard }}/3)
+        run: bunx playwright test --shard=${{ matrix.shard }}/3
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: playwright-report/
+          retention-days: 7

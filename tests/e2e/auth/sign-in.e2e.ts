@@ -1,5 +1,5 @@
-import { test, expect } from '@/tests/fixtures/auth.fixture';
-import { TEST_USERS } from '@/tests/fixtures/auth.fixture';
+import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { TEST_USERS } from '@/tests/fixtures/auth.fixture.ts';
 
 test.describe('Sign In', () => {
   test('should sign in with valid credentials and redirect to dashboard', async ({ page }) => {

@@ -1,6 +1,18 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
+import type { Page } from '@playwright/test';
 import { statSync } from 'node:fs';
 import { apiResponse, createCharacter, fillStrengthModifier, filterList, openActionsMenu, selectOption, signedInPage, signIn } from '@/tests/e2e/helpers.ts';
+
+/** Renames the character whose sheet is open, in place: clicking its name edits it. */
+async function renameInPlace(page: Page, name: string, newName: string) {
+  await page.locator(`h5:has-text("${name}")`).first().click();
+  const field = page.locator('input:focus');
+  await field.fill(newName);
+  const renamed = apiResponse(page, 'PUT', /\/api\/characters\/[a-f0-9-]+(?:\?|$)/);
+  await field.press('Enter');
+  await renamed;
+  await expect(page.locator(`h5:has-text("${newName}")`)).toBeVisible({ timeout: 15_000 });
+}
 
 test.describe('Characters', () => {
   test.setTimeout(90_000);
@@ -15,7 +27,8 @@ test.describe('Characters', () => {
     await submit.click();
     await expect(dialog.getByText(/Name is required/i)).toBeVisible();
     await expect(dialog.getByText(/Ruleset is required/i)).toBeVisible();
-    await dialog.locator('input[name="name"]').fill(`Validation Hero ${Date.now()}`);
+    const name = `Validation Hero ${Date.now()}`;
+    await dialog.locator('input[name="name"]').fill(name);
     await submit.click();
     await expect(dialog.getByText(/Ruleset is required/i)).toBeVisible();
     await expect(dialog.getByText(/Name is required/i)).toHaveCount(0);
@@ -36,6 +49,18 @@ test.describe('Characters', () => {
     await selectOption(page, 'Gender');
     await submit.click();
     await expect(page).toHaveURL(/\/characters\/[a-f0-9-]+/, { timeout: 15_000 });
+
+    // The new character opens the Add Level wizard once: closed, it stays closed when the character changes.
+    const wizard = page.getByRole('dialog', { name: 'Add Level' });
+    await expect(wizard).toBeVisible({ timeout: 10_000 });
+    await wizard.getByRole('button', { name: 'Cancel' }).click();
+    await expect(wizard).toBeHidden();
+    await renameInPlace(page, name, `${name} renamed`);
+    // A reopened wizard would cover the page: its actions menu still opens, the wizard closed
+    await page.getByRole('button', { name: 'More actions' }).first().click({ timeout: 5_000 });
+    await expect(page.getByRole('menu')).toBeVisible();
+    await expect(wizard).toBeHidden();
+    await page.keyboard.press('Escape');
   });
 
   test('one renamed in place and archived is listed under Archived until unarchived', async ({ page, ownerUser }) => {
@@ -43,14 +68,7 @@ test.describe('Characters', () => {
     const name = `Archive Hero ${Date.now()}`;
     await createCharacter(page, name);
 
-    // Clicking the heading edits the name in place.
-    await page.locator(`h5:has-text("${name}")`).first().click();
-    const field = page.locator('input:focus');
-    await field.fill(`${name} renamed`);
-    const renamed = apiResponse(page, 'PUT', /\/api\/characters\/[a-f0-9-]+(?:\?|$)/);
-    await field.press('Enter');
-    await renamed;
-    await expect(page.locator(`h5:has-text("${name} renamed")`)).toBeVisible({ timeout: 15_000 });
+    await renameInPlace(page, name, `${name} renamed`);
 
     await openActionsMenu(page, /^Archive$/);
     const archived = apiResponse(page, 'DELETE', /\/api\/characters\/[a-f0-9-]+$/);
@@ -64,7 +82,7 @@ test.describe('Characters', () => {
     await page.locator(`text="${name} renamed"`).first().click();
     await openActionsMenu(page, /^Unarchive$/);
     await expect(page.locator(`h5:has-text("${name} renamed")`)).toBeVisible({ timeout: 10_000 });
-    await page.locator('[data-testid="MoreVertIcon"]').first().click();
+    await page.getByRole('button', { name: 'More actions' }).first().click();
     await expect(page.getByRole('menu').getByRole('menuitem', { name: /^Archive$/ })).toBeVisible();
   });
 
@@ -96,7 +114,7 @@ test.describe('Characters', () => {
     await expect(page.locator('input[name="age"]')).toHaveValue('27');
     const aquan = page.locator('.MuiChip-root').filter({ hasText: 'Aquan' });
 
-    await aquan.first().locator('[data-testid="CancelIcon"]').click();
+    await aquan.first().locator('.MuiChip-deleteIcon').click();
     await saveIdentity();
     await expect(aquan).toHaveCount(0);
   });
@@ -118,7 +136,7 @@ test.describe('Characters', () => {
     await expect(anyone.locator(`h5:has-text("${name}"), h4:has-text("${name}"), h3:has-text("${name}")`).first()).toBeVisible({ timeout: 10_000 });
     const pdf = anyone.waitForResponse((r) => /\/api\/shared\/characters\/[^/]+\/pdf$/.test(r.url()), { timeout: 60_000 });
     const download = anyone.waitForEvent('download', { timeout: 60_000 });
-    await anyone.locator('button:has([data-testid="DownloadIcon"])').first().click();
+    await anyone.getByRole('button', { name: 'Download PDF' }).first().click();
     expect((await pdf).headers()['content-type']).toContain('application/pdf');
     const file = await download;
     expect(file.suggestedFilename()).toMatch(/\.pdf$/i);
@@ -164,7 +182,7 @@ test.describe('Characters', () => {
     const row = manager.locator('table tbody tr').filter({ hasText: /Abilities.*Strength.*Misc/ });
     await expect(row.locator('text="1"').first()).toBeVisible({ timeout: 15_000 });
 
-    await row.locator('[data-testid="DeleteIcon"]').click();
+    await row.getByRole('button', { name: 'Delete modifier' }).click();
     const removed = apiResponse(page, 'DELETE', /\/api\/characters\/modifiers\/[a-f0-9-]+\/modifiers\/[a-f0-9-]+/);
     await page.getByRole('dialog', { name: 'Delete Modifier' }).getByRole('button', { name: /^Delete$/ }).click();
     await removed;

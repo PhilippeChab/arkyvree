@@ -1,0 +1,91 @@
+name: API Tests
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main, develop]
+  # Deploy runs it for main's pushes
+  workflow_call:
+
+# A new push to a pull request cancels its previous run; each push runs to the end
+concurrency:
+  group: api-tests-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5433/arkyvree_test
+  SIGNING_SECRET: ci-signing-secret
+  S3_BUCKET: ci-bucket
+  S3_ENDPOINT: https://fake.example.com
+  S3_ACCESS_KEY_ID: ci-access-key
+  S3_SECRET_ACCESS_KEY: ci-secret-key
+  S3_PUBLIC_URL: https://fake.example.com/ci-bucket
+
+jobs:
+  full:
+    name: API Tests (shard ${{ matrix.shard }}/3)
+    runs-on: ubuntu-latest
+    # A push, or Deploy calling it for one
+    if: github.event_name != 'pull_request'
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: arkyvree_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Seed database
+        run: bun --env-file=.env.test scripts/db/reset.ts --with-test-data
+      - name: Run API Tests (shard ${{ matrix.shard }}/3)
+        run: bun --env-file=.env.test test --shard=${{ matrix.shard }}/3 tests
+
+  changed:
+    name: API Tests (changed)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: arkyvree_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so --changed can diff against the base branch
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Seed database
+        run: bun --env-file=.env.test scripts/db/reset.ts --with-test-data
+      - name: Run API Tests (changed vs ${{ github.base_ref }})
+        run: bun --env-file=.env.test test --changed=origin/${{ github.base_ref }} tests

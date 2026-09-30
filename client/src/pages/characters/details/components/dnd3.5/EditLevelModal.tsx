@@ -1,5 +1,7 @@
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { Alert } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import type { EditingLevel } from "@/client/src/types/character.ts";
@@ -45,7 +47,7 @@ export function EditLevelModal({
 
   // ── Edit-only: fetch existing level data ────────────────────────────
 
-  const { data: editLevelData } = useQuery({
+  const { data: editLevelData, isLoading: isLoadingLevel, error: levelError } = useQuery({
     queryKey: queryKeys.characters.levelUp.levelData(
       characterId,
       editingLevelId,
@@ -107,14 +109,21 @@ export function EditLevelModal({
     }
   }, [open, editingLevelId, resetEditRefs]);
 
+  // The saved level fills the picks in as it loads (the level, then its class's feat and power slots): Next waits while
+  // it loads, or a quick Finish would save the level without its feats and powers. Saving without them would erase
+  // them, so a load that failed stops the wizard at the step that shows its error.
+  const loading = isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
+  const step = editStepContent[wizard.activeStep];
+  const failed = !editLevelData || (step === "feats" && !wizard.featData) || (step === "powers" && !wizard.powerData);
+
   // ── Render steps ────────────────────────────────────────────────────
 
   const Sections = wizard.levelUpSections;
 
-  const renderStepContent = (step: number) => {
-    const contentType = editStepContent[step];
+  const renderStepContent = () => {
+    if (!editLevelData && levelError) return <Alert severity="error">{loadFailureMessage("Level", levelError)}</Alert>;
 
-    switch (contentType) {
+    switch (step) {
       case "hp":
         return <Sections.LevelUpHpStep wizard={wizard} />;
       case "attributes":
@@ -144,12 +153,12 @@ export function EditLevelModal({
     <LevelWizardDialog
       open={open}
       title="Edit Level"
-      wizard={wizard}
+      wizard={{ ...wizard, isNextDisabled: wizard.isNextDisabled || loading || failed }}
       stepLabels={editStepLabels}
       finishLabel="Finish"
       isSaving={wizard.finalizeMutation.isPending}
     >
-      {renderStepContent(wizard.activeStep)}
+      {renderStepContent()}
     </LevelWizardDialog>
   );
 }

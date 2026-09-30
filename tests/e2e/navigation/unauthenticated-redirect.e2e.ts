@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@/tests/e2e/fixtures.ts';
 
 test.describe('Protected Routes - Unauthenticated', () => {
   const protectedRoutes = [

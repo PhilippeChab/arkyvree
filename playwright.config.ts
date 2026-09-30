@@ -1,11 +1,28 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
+import { databaseOf, withDatabase } from './scripts/db/clone-database.ts';
 
 /**
  * Read environment variables from test environment file
  */
 dotenv.config({ path: resolve(process.cwd(), '.env.test') });
+
+/** The server the run starts, on a port of its own: the API, its websocket, and the built client, served as in production. */
+const port = process.env.E2E_PORT ?? '8010';
+process.env.PORT = port;
+process.env.E2E_BASE_URL = process.env.APP_URL = `http://localhost:${port}`;
+
+/*
+ * The run has a database of its own: a copy, made when its server starts, of the e2e template, which `bun run
+ * test:db:reset` copies from the seeded test database. So a run never locks the unit tests' database, nor holds what
+ * another run writes: runs on other ports have other copies. Its name keeps "test", which turns off the rate limits.
+ * The workers re-read this file with the environment it sets: only the first read derives the names.
+ */
+process.env.TEMPLATE_DATABASE_URL ??= withDatabase(process.env.DATABASE_URL!, `${databaseOf(process.env.DATABASE_URL!).name}_e2e`);
+process.env.DATABASE_URL = withDatabase(process.env.TEMPLATE_DATABASE_URL, `${databaseOf(process.env.TEMPLATE_DATABASE_URL).name}_${port}`);
+
+const coverage = process.env.E2E_COVERAGE === '1';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -18,20 +35,20 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   /*
-   * One worker on CI. Locally a quarter of the cores: each worker drives its
-   * own browser against the shared dev server, API and database, and the
-   * default (half the cores) saturates the machine and makes timing-sensitive
-   * journeys flaky. Override for one run with `--workers N`.
+   * Locally half the cores: each worker drives its own browser against the one server and database. Setup goes
+   * through the API and pages are the built client, so that leaves the machine usable. Override for one run with
+   * `--workers N`.
    */
-  workers: process.env.CI ? 1 : '25%',
+  workers: process.env.CI ? 2 : '50%',
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI
     ? [['html'], ['list'], ['github']]
     : [['html'], ['list']],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:5175',
+    baseURL: process.env.E2E_BASE_URL,
+    /* The built client registers a service worker: it would cache across a test's pages and serve stale bundles. */
+    serviceWorkers: 'block',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     /* Screenshot on failure */
@@ -40,75 +57,48 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
 
-  /* Configure projects for major browsers */
   projects: [
-    // Setup project - runs before all tests
-    {
-      name: 'setup',
-      testMatch: /global\.setup\.ts/,
-    },
-
-    // Journey tests - comprehensive end-to-end workflows (no auth state, each test creates its own users)
+    // Signed-in tests: each signs in itself, through the API, as users of its own (tests/e2e/fixtures.ts)
     {
       name: 'journeys',
       use: {
         ...devices['Desktop Chrome'],
       },
-      dependencies: ['setup'],
       testMatch: /journeys\/.*\.e2e\.ts/,
     },
 
-    // Authenticated user tests (campaigns, characters, protected routes)
-    {
-      name: 'authenticated',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Use prepared auth state
-        storageState: 'tests/fixtures/.auth/user.json',
-      },
-      dependencies: ['setup'],
-      testMatch: /profile\/.*\.e2e\.ts|session\/.*\.e2e\.ts|navigation\/protected-routes\.e2e\.ts/,
-    },
-
-    // Guest/unauthenticated user tests (sign-in, sign-up, redirect tests)
+    // Signed-out tests: sign-in, sign-up, redirects
     {
       name: 'guest',
       use: {
         ...devices['Desktop Chrome'],
       },
-      dependencies: ['setup'],
       testMatch: /auth\/.*\.e2e\.ts|navigation\/unauthenticated-redirect\.e2e\.ts/,
     },
   ],
 
-  /* Run test servers on separate ports (8001/5174) to avoid conflicts with dev servers (8000/5173) */
-  webServer: [
-    {
-      // WSL2 mirrored-networking mode silently drops TCP RSTs on 127.0.0.1
-      // for closed ports — Playwright's pre-spawn probe hangs the full timeout
-      // before starting the server. IPv6 ::1 is unaffected.
-      // https://github.com/microsoft/WSL/issues/13327
-      // HOST=:: makes Bun.serve dual-stack (binds both v4 + v6 loopback).
-      command: 'HOST=:: bun --env-file=.env.test run dev:server',
-      url: 'http://[::1]:8001',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120 * 1000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-    {
-      // Always use vite dev. `vite preview` serves the production build
-      // which strips `data-testid` from MUI icons (test selectors break).
-      // The separate `build` CI job already validates the production bundle.
-      // --host :: matches the IPv6 loopback used by the Playwright probe.
-      command: 'API_PORT=8001 bun vite --port 5175 --host ::',
-      url: 'http://[::1]:5175',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120 * 1000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-  ],
+  webServer: {
+    /*
+     * Builds the client for production (a couple of seconds; `E2E_SKIP_BUILD=1` reuses dist/), copies the database,
+     * then serves both, with .env.test's settings only (not a developer's .env). `E2E_COVERAGE=1` builds with inline
+     * source maps, which the coverage report maps back to client/src.
+     * WSL2 mirrored networking drops TCP RSTs on 127.0.0.1 for closed ports, so Playwright's probe would hang until
+     * the timeout: it checks [::1], and HOST=:: makes Bun.serve bind both loopbacks.
+     * https://github.com/microsoft/WSL/issues/13327
+     */
+    command: [
+      ...process.env.E2E_SKIP_BUILD === '1' ? [] : [`NODE_ENV=production bunx vite build${coverage ? ' --sourcemap inline' : ''}`],
+      `bun --env-file=.env.test scripts/db/clone-database.ts ${port}`,
+      'HOST=:: bun --env-file=.env.test server/main.ts',
+    ].join(' && '),
+    url: `http://[::1]:${port}/health`,
+    // A server already on the port isn't this run's: it would serve another database
+    reuseExistingServer: false,
+    timeout: 120 * 1000,
+    // Its errors, not every request it logs
+    stdout: 'ignore',
+    stderr: 'pipe',
+  },
 
   /* Global setup and teardown */
   globalSetup: './tests/fixtures/global.setup.ts',

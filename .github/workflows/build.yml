@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main, develop]
+  # Deploy runs it for main's pushes
+  workflow_call:
+
+# A new push to a pull request cancels its previous run; each push runs to the end
+concurrency:
+  group: build-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Verify production PDF generation
+        run: bun run test:pdf-bundle

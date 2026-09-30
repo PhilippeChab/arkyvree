@@ -48,7 +48,6 @@ migrate-bin
 # Playwright
 /playwright-report/
 /test-results/
-/tests/fixtures/.auth/
 /.playwright-mcp/
 
 # Scraper cache

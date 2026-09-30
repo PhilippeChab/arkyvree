@@ -1,6 +1,8 @@
+import { reportCoverage } from '@/tests/e2e/coverage.ts';
+
+/** Ends the run: reports the client's coverage, when the run recorded it (`E2E_COVERAGE=1`). */
 async function globalTeardown() {
-  // Cleanup logic can be added here if needed
-  console.log('✅ Test teardown complete');
+  await reportCoverage();
 }
 
 export default globalTeardown;

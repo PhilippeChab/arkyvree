@@ -1,5 +1,5 @@
-import { test, expect } from '@/tests/fixtures/auth.fixture';
-import { TEST_USERS } from '@/tests/fixtures/auth.fixture';
+import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { TEST_USERS } from '@/tests/fixtures/auth.fixture.ts';
 
 // A successful sign-up is the start of the new-account journeys (journeys/accounts.e2e.ts).
 test.describe('Sign Up', () => {

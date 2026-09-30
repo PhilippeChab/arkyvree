@@ -1,4 +1,4 @@
-import { ApiError } from "@/client/src/services/rpc.ts";
+import { ApiError } from "@/client/src/services/apiError.ts";
 
 /** A caught error's message for the user, or the fallback when it carries none. */
 export function errorMessage(error: unknown, fallback: string): string {

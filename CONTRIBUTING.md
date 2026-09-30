@@ -70,14 +70,19 @@ bunx playwright install chromium
 bun test:e2e
 ```
 
-Playwright starts its own servers on ports 8001 and 5175 and resets the test
-database during global setup. Do not run it alongside other tests using that
-same database. See [AGENTS.md](./AGENTS.md) for test-directory/authentication
-mapping and shared fixtures. During development, a focused run is fine, for example:
+Playwright builds the client for production, copies the e2e template into a
+database of its own (`<name>_e2e_<port>`), and serves both from the API server on
+port 8010 (`E2E_PORT` changes it). `bun test:db:reset` refreshes the template
+from the seeded test database: run it after a schema or seed change. See [AGENTS.md](./AGENTS.md) for test-directory/authentication
+mapping and shared fixtures. During development, a focused run is fine, for example
+(`E2E_SKIP_BUILD=1` reuses the last build when only tests changed):
 
 ```bash
-bun test:e2e tests/e2e/journeys/ruleset-fork.e2e.ts --project=journeys
+bun test:e2e tests/e2e/journeys/rulesets.e2e.ts --project=journeys
 ```
+
+`E2E_COVERAGE=1 bun test:e2e` also reports the client code the journeys run, in
+`coverage/e2e`.
 
 Describe what you actually ran in your pull request, including any checks you
 could not run. Do not disable or skip failing tests to obtain a green result.

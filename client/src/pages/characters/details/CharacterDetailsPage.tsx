@@ -31,7 +31,7 @@ import {
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   AddLevelModal,
@@ -74,9 +74,13 @@ export default function CharacterDetailsPage() {
 
   usePageTitle(character?.identity?.physiology?.name);
 
+  // A new character opens the Add Level wizard once: the character refetching (a rename, say) before the navigation
+  // state clears mustn't open it again after it was closed.
+  const openedLevelUp = useRef(false);
   useEffect(() => {
     const characterIsBonded = character && "kind" in character && character.kind !== "pc";
-    if (location.state?.openLevelUp && character && !characterIsBonded) {
+    if (location.state?.openLevelUp && character && !characterIsBonded && !openedLevelUp.current) {
+      openedLevelUp.current = true;
       // oxlint-disable-next-line react/set-state-in-effect
       setAddLevelOpen(true);
       navigate(location.pathname, { replace: true, state: {} });
