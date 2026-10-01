@@ -7,7 +7,7 @@
 - Be DRY
 - Reuse existing patterns, naming
 - A file reads bottom-up: a helper sits above the code that uses it, in a file's sections too (oxlint's `no-use-before-define`). Functions that call each other keep one `oxlint-disable-next-line` saying so
-- `oxfmt` formats the code (`bun run format`; CI runs `format:check`): 120 columns, the imports sorted and grouped. What tools write keeps their layout: the drizzle schema and relations (`drizzle-kit pull`) and the parser's `generated/`. oxlint's `sort-imports` sorts the names inside an import
+- `oxfmt` formats the code (`bun run format`; CI runs `format:check`): 120 columns, the imports sorted and grouped. What tools write keeps their layout: the drizzle schema and relations (`drizzle-kit pull`) and the parser's `generated/`. A data table keeps one row per line under `// oxfmt-ignore`. oxlint's `sort-imports` sorts the names inside an import
 
 **TypeScript & Naming:**
 
