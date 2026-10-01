@@ -6,6 +6,7 @@ import { CharacterContributorsMethods } from "@/server/services/CharacterContrib
 import { ContributorsMethods } from "@/server/services/rulesets/ContributorsService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
+import { collectingNotified } from "@/server/ws.ts";
 import { addRulesetContributor, createTestCampaign, createTestCharacter, createTestRuleset, createTestUser } from "@/tests/helpers.ts";
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
@@ -139,5 +140,31 @@ describe("activity notifications", () => {
     const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
     await FeatsMethods.createRulesetFeat(owner.session, ruleset.id, { name: "Unnoticed Feat", description: "", aptitudeIds: [aptitude.id] });
     expect(await inbox(owner)).toEqual([]);
+  });
+});
+
+// Who the server pushes a new notification to once a request is answered (server/ws.ts)
+describe("the users a request notified", () => {
+  /** A Game Master's campaign with an empty slot, and someone to invite into it. */
+  async function setup() {
+    const [gm, invitee] = await users(2);
+    const { campaign } = await createTestCampaign(gm.user.id);
+    const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
+    const invite = () => CampaignInvitesMethods.createCampaignInvite(gm.session, slot, invitee.user.emailAddress);
+    return { invitee, invite };
+  }
+
+  test("are collected while it runs, through its transaction", async () => {
+    const { invitee, invite } = await setup();
+    const notified = await collectingNotified(async () => {
+      await invite();
+    });
+    expect([...notified]).toEqual([invitee.user.id]);
+  });
+
+  test("aren't collected outside a request: another request's are its own", async () => {
+    const { invite } = await setup();
+    await invite();
+    expect([...await collectingNotified(async () => {})]).toEqual([]);
   });
 });

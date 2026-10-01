@@ -4,7 +4,7 @@ Reference index of every flow exercised by the Playwright suite under
 `tests/e2e/`. Use this when adding new features to know what's already
 covered and where new tests should slot in.
 
-> **Suite stats:** 107 tests across 28 files, about two minutes on half the cores of a 20-core machine.
+> **Suite stats:** 110 tests across 30 files, about two minutes on half the cores of a 20-core machine.
 
 ## Project layout & directory rules
 
@@ -75,7 +75,7 @@ the typed API through the page's browser context), `tests/e2e/levelUpHelpers.ts`
 
 | File | Coverage |
 |---|---|
-| `journeys/characters.e2e.ts` | Create needs a name, a ruleset and a race, and opens the Add Level wizard once (closed, it stays closed through a rename); inline rename, archive → Archived → unarchive; identity edits and a language added then removed survive reloads; a share link shows the sheet and its PDF to an anonymous viewer until revoked (404 + revoked alert); the owner's Download PDF queues a job (202 + snackbar; the job itself is `tests/jobs/generatePdf.test.ts`); a runtime modifier added and removed in Manage Modifiers |
+| `journeys/characters.e2e.ts` | Create needs a name, a ruleset and a race, and opens the Add Level wizard once (closed, it stays closed through a rename); inline rename, archive → Archived → unarchive; ability scores raised and lowered from the sheet (lowering confirmed once a session) survive reloads; identity edits and a language added then removed survive reloads; a share link shows the sheet and its PDF to an anonymous viewer until revoked (404 + revoked alert); the owner's Download PDF queues a job (202 + snackbar; the job itself is `tests/jobs/generatePdf.test.ts`); a runtime modifier added and removed in Manage Modifiers |
 | `journeys/character-inventory.e2e.ts` | An amulet goes to the Neck slot, its quantity changes, it's removed; a longsword goes to Main Hand, then Two Handed |
 | `journeys/level-up.e2e.ts` | Fighter + Sorcerer levels in one pass; a fourth Fighter level's Strength increase; a Sorcerer's picked spells on the sheet; a feat found by search and a Weapon Focus variant through its family; editing a level's HP then removing it, for a Fighter and a Sorcerer. Every wizard finishes without "Proceed Anyway" |
 | `journeys/bonded-creatures.e2e.ts` | A seeded familiar, animal companion and special mount: the master's sheet sums each up under the feat that bonds it and links to its sheet, which has no Add Level and whose Back returns to the master |
@@ -90,7 +90,9 @@ the typed API through the page's browser context), `tests/e2e/levelUpHelpers.ts`
 | `journeys/campaigns.e2e.ts` | Create needs a ruleset; a new campaign is listed and renamed; archive → Archived → unarchive; the owner links their character publicly |
 | `journeys/invite-links.e2e.ts` | A campaign invite's email link: opened signed out, it signs in back to the invite, which accepted opens the campaign and then says it was accepted; rejected, it lands on the dashboard and then says so; anyone else, the GM included, doesn't find it; once the campaign is archived it can't be accepted. A ruleset contributor invite's link shows its role, and a character's, accepted, opens the ruleset or character |
 | `journeys/campaign-invites.e2e.ts` | An invitee who accepts joins, and the GM sees them as a player; an invitee who rejects stays out, the invite read and the bell down by one |
+| `journeys/campaign-players.e2e.ts` | The GM promotes a player to Game Master, revokes an invite to an email without an account, and removes another player, each kept after a reload |
 | `journeys/campaign-visibility.e2e.ts` | A player links a Public, a Partial and a Private character: the GM sees all three whole, with Download PDF but not Edit Character; another player sees the Public one whole, the Partial one without its build, and not the Private one (unlisted, its page not found) |
+| `journeys/realtime.e2e.ts` | An open page's bell counts a new notification as the server pushes it over the websocket, without a reload (the push itself is asserted: the bell also refetches every minute) |
 | `journeys/notifications.e2e.ts` | The bell counts an invite, accepts it inline and lands on the campaign, which leaves the bell; Mark all as read clears the GM's non-actionable rejections (dots gone, bell down by ≥ 2) |
 
 ---
@@ -156,7 +158,7 @@ Per project decisions, these are not e2e-tested:
 
 - Real email mailer (we read OTPs from the DB)
 - Real S3 file uploads (3rd-party, would require sandbox)
-- WebSocket realtime updates beyond what's incidentally exercised
+- WebSocket updates beyond a notification's (`realtime.e2e.ts`): the activity feed's, and the new-version prompt, which needs the server's version to change mid-run
 - Mobile UI (no mobile-specific Playwright project)
 - Spells, items, class sections and customizations are edited in `customization.e2e.ts` and `item-template-source.e2e.ts` only; `pages.e2e.ts` loads the rest
 - Higher-level ability bumps (level 8 / 12 / 16 / 20 — level 4 covers the path)

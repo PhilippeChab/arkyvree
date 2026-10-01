@@ -32,6 +32,7 @@ import {
   invitesInCampaign,
 } from "@/drizzle/schema.ts";
 
+import { noteNotified } from "@/server/ws.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel } from "drizzle-orm";
 import type { activitiesInAccount } from "@/drizzle/schema.ts";
@@ -306,7 +307,8 @@ export async function createActivityWithNotifications(
         data: { ...(values.data as Record<string, unknown> ?? {}), actorName },
       })),
     );
-
+    // Their pages hear of it once the request is answered, and its transaction committed
+    noteNotified(recipientIds);
   }
 
   return { activity, recipientIds };

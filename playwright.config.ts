@@ -21,6 +21,8 @@ process.env.E2E_BASE_URL = process.env.APP_URL = `http://localhost:${port}`;
  */
 process.env.TEMPLATE_DATABASE_URL ??= withDatabase(process.env.DATABASE_URL!, `${databaseOf(process.env.DATABASE_URL!).name}_e2e`);
 process.env.DATABASE_URL = withDatabase(process.env.TEMPLATE_DATABASE_URL, `${databaseOf(process.env.TEMPLATE_DATABASE_URL).name}_${port}`);
+// The websocket listener prefers a direct URL: it must listen on the run's database too
+process.env.DIRECT_DATABASE_URL = process.env.DATABASE_URL;
 
 const coverage = process.env.E2E_COVERAGE === '1';
 

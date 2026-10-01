@@ -1,10 +1,10 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { upgradeWebSocket, websocket } from "hono/bun";
 import type { WSContext } from "hono/ws";
 import { Client as PgClient } from "pg";
 
-import { and, eq, gte, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
-import { notificationsInAccount } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 
 export type WsEvent =
@@ -165,7 +165,6 @@ async function connectListener(): Promise<void> {
 }
 
 export async function startBroadcastListener(): Promise<void> {
-  if (process.env.NODE_ENV === "test") return;
   shuttingDownListener = false;
   currentAttempt = 0;
   await connectListener();
@@ -184,24 +183,17 @@ export async function stopBroadcastListener(): Promise<void> {
   }
 }
 
-export function broadcastNotificationsForActor(actorId: string) {
-  setTimeout(async () => {
-    try {
-      const twoSecondsAgo = new Date(Date.now() - 2000).toISOString();
-      const recent = await db
-        .selectDistinct({ recipientId: notificationsInAccount.recipientId })
-        .from(notificationsInAccount)
-        .where(
-          and(
-            eq(notificationsInAccount.actorId, actorId),
-            gte(notificationsInAccount.createdAt, twoSecondsAgo),
-          ),
-        );
-      for (const { recipientId } of recent) {
-        await publishWsEvent(recipientId, { type: "notifications:updated" });
-      }
-    } catch {
-      // Fire-and-forget — never block the response
-    }
-  }, 0);
+const notifiedThisRequest = new AsyncLocalStorage<Set<string>>();
+
+/** Runs a request, collecting the users its notifications go to (`noteNotified`), to push to once it's answered. */
+export async function collectingNotified(run: () => Promise<void>) {
+  const notified = new Set<string>();
+  await notifiedThisRequest.run(notified, run);
+  return notified;
+}
+
+/** Records users the current request notified. Outside a request (the worker), whoever notifies pushes itself. */
+export function noteNotified(userIds: Iterable<string>) {
+  const notified = notifiedThisRequest.getStore();
+  if (notified) for (const userId of userIds) notified.add(userId);
 }

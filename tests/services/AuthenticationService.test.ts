@@ -5,7 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Characters, EmailVerifications, Invites, OauthAccounts, PasswordResets, Players, Rulesets, Sessions, Users } from "@/server/repositories/index.ts";
-import { AuthenticationMethods } from "@/server/services/AuthenticationService.ts";
+import { AuthenticationMethods, linkGoogleAccountTo, signInAsGoogleAccount } from "@/server/services/AuthenticationService.ts";
 import { CampaignInvitesMethods } from "@/server/services/campaigns/InvitesService.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign, createTestCharacter, createTestRuleset, createTestUser, makeSession, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
@@ -330,6 +330,68 @@ describe("AuthenticationService", () => {
     const { session } = await signUpAndVerify();
     await expect(AuthenticationMethods.unlinkOauthAccount(session, { provider: "google" })).rejects.toThrow(BadRequestError);
     expect(await AuthenticationMethods.getLinkedAccounts(session)).toEqual([]);
+  });
+
+  // What follows Google verifying an ID token: the Google account's id (`sub`) and email
+  describe("Google", () => {
+    const googleAccount = (email = `google-${uniqueId()}@example.com`) => ({ sub: `google-${uniqueId()}`, email });
+
+    test("signs up a new user, verified, with the invites sent to their email, then signs them in as that user", async () => {
+      const account = googleAccount();
+      const { user: gm, session: gmSession } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
+      const invite = await CampaignInvitesMethods.createCampaignInvite(gmSession, slot, account.email);
+
+      const { user } = await signInAsGoogleAccount({ ...account, email: account.email.toUpperCase() });
+      expect(user).toMatchObject({ emailAddress: account.email, hasPassword: false, emailVerifiedAt: expect.any(String) });
+      expect((await Invites.findOne(db, { id: invite!.id }))!.userId).toBe(user.id);
+      expect(await AuthenticationMethods.getLinkedAccounts(makeSession(user.id))).toMatchObject([{ provider: "google" }]);
+
+      const again = await signInAsGoogleAccount(account);
+      expect(again.user.id).toBe(user.id);
+      expect(again.session.userId).toBe(user.id);
+    });
+
+    test("links the account with its email, and verifies it", async () => {
+      const account = credentials();
+      const { user } = await AuthenticationMethods.signUp(account);
+      expect(user.emailVerifiedAt).toBeNull();
+
+      const signedIn = await signInAsGoogleAccount(googleAccount(account.emailAddress));
+      expect(signedIn.user).toMatchObject({ id: user.id, hasPassword: true, emailVerifiedAt: expect.any(String) });
+      expect(await EmailVerifications.findOne(db, { userId: user.id })).toBeUndefined();
+      expect(await AuthenticationMethods.getLinkedAccounts(makeSession(user.id))).toMatchObject([{ provider: "google" }]);
+    });
+
+    test("refuses the email of a deleted account", async () => {
+      const { session, account } = await signUpAndVerify();
+      await AuthenticationMethods.deleteAccount(session, { password: account.password });
+      await expect(signInAsGoogleAccount(googleAccount(account.emailAddress))).rejects.toThrow(ConflictError);
+    });
+
+    test("links an account to the signed-in user, once, and never to another user", async () => {
+      const { session } = await signUpAndVerify();
+      const { session: other } = await signUpAndVerify();
+      const { sub } = googleAccount();
+      expect(await linkGoogleAccountTo(session, sub)).toEqual({ success: true });
+      await expect(linkGoogleAccountTo(session, sub)).rejects.toThrow("already linked to your account");
+      await expect(linkGoogleAccountTo(other, sub)).rejects.toThrow("already linked to another user");
+
+      // Signing in with it is signing in as that user, whatever email Google gives now
+      expect((await signInAsGoogleAccount({ sub, email: `renamed-${uniqueId()}@example.com` })).user.id).toBe(session.userId);
+    });
+
+    test("unlinks an account from a user with a password, but not from one without", async () => {
+      const { session } = await signUpAndVerify();
+      await linkGoogleAccountTo(session, googleAccount().sub);
+      expect(await AuthenticationMethods.unlinkOauthAccount(session, { provider: "google" })).toEqual({ success: true });
+      expect(await AuthenticationMethods.getLinkedAccounts(session)).toEqual([]);
+
+      const { user } = await signInAsGoogleAccount(googleAccount());
+      await expect(AuthenticationMethods.unlinkOauthAccount(makeSession(user.id), { provider: "google" })).rejects.toThrow("without a password set");
+      expect(await AuthenticationMethods.getLinkedAccounts(makeSession(user.id))).toHaveLength(1);
+    });
   });
 
   describe("deleting the account", () => {

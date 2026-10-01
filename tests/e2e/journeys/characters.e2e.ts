@@ -1,7 +1,7 @@
 import { test, expect } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
 import { statSync } from 'node:fs';
-import { apiResponse, createCharacter, fillStrengthModifier, filterList, openActionsMenu, openContext, selectOption, signedInPage, signIn } from '@/tests/e2e/helpers.ts';
+import { apiResponse, createCharacter, fillStrengthModifier, filterList, openActionsMenu, openContext, selectOption, signedInPage, signIn, uniqueName } from '@/tests/e2e/helpers.ts';
 
 /** Renames the character whose sheet is open, in place: clicking its name edits it. */
 async function renameInPlace(page: Page, name: string, newName: string) {
@@ -61,6 +61,42 @@ test.describe('Characters', () => {
     await expect(page.getByRole('menu')).toBeVisible();
     await expect(wizard).toBeHidden();
     await page.keyboard.press('Escape');
+  });
+
+  test('ability scores raise and lower from the sheet, lowering asking once, each kept after a reload', async ({ page, ownerUser }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    await createCharacter(page, uniqueName('Abilities Hero'));
+    const raise = page.getByRole('button', { name: 'Raise base Strength' });
+    const lower = page.getByRole('button', { name: 'Lower base Strength' });
+    const base = raise.locator('..').getByText(/^Base: \d+$/);
+    // The ability's card: its name's block, the one with its buttons
+    const strength = page.getByText(/^strength$/i).locator('..').filter({ has: raise });
+    const decrease = page.getByRole('dialog', { name: 'Decrease Ability Score' });
+    const saved = () => apiResponse(page, 'PUT', /\/api\/characters\/[a-f0-9-]+\/abilities$/);
+
+    await expect(base).toHaveText('Base: 10', { timeout: 10_000 });
+    for (const _ of [1, 2]) {
+      const save = saved();
+      await raise.click();
+      await save;
+    }
+    await page.reload();
+    await expect(base).toHaveText('Base: 12', { timeout: 10_000 });
+    await expect(strength).toContainText('+1');
+
+    // Lowering a score may break prerequisites: it asks first, then not again this session
+    const confirmed = saved();
+    await lower.click();
+    await decrease.getByRole('button', { name: 'Decrease' }).click();
+    await confirmed;
+    await expect(base).toHaveText('Base: 11');
+    const again = saved();
+    await lower.click();
+    await again;
+    await expect(decrease).toHaveCount(0);
+    await page.reload();
+    await expect(base).toHaveText('Base: 10', { timeout: 10_000 });
+    await expect(strength).toContainText('+0');
   });
 
   test('one renamed in place and archived is listed under Archived until unarchived', async ({ page, ownerUser }) => {
