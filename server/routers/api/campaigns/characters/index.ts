@@ -1,4 +1,4 @@
-import { respond, errorResponse } from "@/server/routers/respond.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";

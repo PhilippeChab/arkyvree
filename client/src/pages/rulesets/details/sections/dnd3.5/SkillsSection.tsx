@@ -1,8 +1,8 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import { SkillFormFields, type SkillFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { type SkillFormData, SkillFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Psychology as SkillsIcon } from "@mui/icons-material";
 import {

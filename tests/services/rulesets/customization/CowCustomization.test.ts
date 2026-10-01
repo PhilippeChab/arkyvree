@@ -5,7 +5,7 @@ import { abilitiesInRules } from "@/drizzle/schema.ts";
  */
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
-import { EntitySnapshots, Feats, KlassLevels, Klasses, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { EntitySnapshots, Feats, Klasses, KlassLevels, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";

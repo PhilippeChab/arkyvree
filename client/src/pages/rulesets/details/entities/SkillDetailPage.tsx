@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import {
-  SkillFormFields,
   type SkillFormData,
+  SkillFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { skillQuery } from "./entityDetailQueries.ts";

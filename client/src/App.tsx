@@ -58,17 +58,6 @@ function handleGlobalError(error: unknown) {
   }
 }
 
-// Seeded from current store so a localStorage-hydrated session that later
-// signs out triggers the clear. Assumes synchronous persist hydration.
-let lastUserId: string | null = useAuthStore.getState().user?.id ?? null;
-useAuthStore.subscribe((state) => {
-  const userId = state.user?.id ?? null;
-  if (userId !== lastUserId) {
-    lastUserId = userId;
-    queryClient.clear();
-  }
-});
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -82,6 +71,17 @@ const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     onError: (error) => handleGlobalError(error),
   }),
+});
+
+// Seeded from current store so a localStorage-hydrated session that later
+// signs out triggers the clear. Assumes synchronous persist hydration.
+let lastUserId: string | null = useAuthStore.getState().user?.id ?? null;
+useAuthStore.subscribe((state) => {
+  const userId = state.user?.id ?? null;
+  if (userId !== lastUserId) {
+    lastUserId = userId;
+    queryClient.clear();
+  }
 });
 
 // One-shot per browser-tab: probe /auth/me at most once even if the visitor

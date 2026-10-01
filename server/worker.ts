@@ -6,7 +6,7 @@ import { Sentry } from "@/server/sentry.ts";
 
 import { sql } from "drizzle-orm";
 import { EventEmitter } from "events";
-import { run, Logger, type Runner } from "graphile-worker";
+import { Logger, run, type Runner } from "graphile-worker";
 import { Pool } from "pg";
 
 import { db } from "@/server/database/index.ts";

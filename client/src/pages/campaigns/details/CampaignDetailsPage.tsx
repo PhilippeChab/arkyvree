@@ -5,15 +5,15 @@ import {
   type EditCampaignFormData,
 } from "@/client/src/pages/campaigns/components/index.ts";
 import {
+  ActionMenuItem,
   ConfirmDialog,
   DeleteDialog,
   DetailPageHeader,
   DiceSpinner,
-  PageTransition,
-  SectionTabs,
-  type SectionTab,
   PageError,
-  ActionMenuItem,
+  PageTransition,
+  type SectionTab,
+  SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
@@ -21,10 +21,10 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
   Archive as ArchiveIcon,
+  Person as CharactersIcon,
   DeleteForever as DeleteForeverIcon,
   Edit as EditIcon,
   Group as PlayersIcon,
-  Person as CharactersIcon,
   Unarchive as UnarchiveIcon,
 } from "@mui/icons-material";
 import {

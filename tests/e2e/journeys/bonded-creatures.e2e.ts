@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
 import { signIn } from '@/tests/e2e/helpers.ts';

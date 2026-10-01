@@ -1,6 +1,6 @@
-import { and, eq, isNull, inArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 
-import { charactersInCharacter, levelSkillsInCharacter, levelsInCharacter, rulesetsInRules, skillsInRules } from "@/drizzle/schema.ts";
+import { charactersInCharacter, levelsInCharacter, levelSkillsInCharacter, rulesetsInRules, skillsInRules } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 import type { Db } from "@/server/database/index.ts";

@@ -21,6 +21,10 @@ export type SessionContext = {
   };
 };
 
+export function getSessionCookie(c: Context) {
+  return getCookie(c, SESSION_COOKIE_NAME);
+}
+
 export default createMiddleware<SessionContext>(async (c, next) => {
   const sessionId = getSessionCookie(c);
   if (!sessionId) throw new UnauthorizedError("Invalid session");
@@ -40,10 +44,6 @@ export default createMiddleware<SessionContext>(async (c, next) => {
 
   await next();
 });
-
-export function getSessionCookie(c: Context) {
-  return getCookie(c, SESSION_COOKIE_NAME);
-}
 
 const isProduction = process.env.NODE_ENV === "production";
 

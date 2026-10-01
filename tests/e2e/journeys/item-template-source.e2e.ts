@@ -1,6 +1,6 @@
 import type { InferResponseType } from "hono/client";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { test, expect } from "@/tests/e2e/fixtures.ts";
+import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { forkCoreRuleset, signIn, uniqueName } from "@/tests/e2e/helpers.ts";
 
 type Templates = InferResponseType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"], 200>;

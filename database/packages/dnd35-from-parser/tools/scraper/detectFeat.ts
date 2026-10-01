@@ -1,10 +1,10 @@
 import { stripSeparators } from "@/shared/utils.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
-import { feat, eq, gte, or, and, eqStr } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { isValidModifierPath, findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import { findInvalidRequirementPaths, isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { loadBonusFeatAptitudes, loadBonusFeatClassLevels } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { anySkillRequirement, BOOK_ABBREV_PATTERN, SKILL_MAP, SAVE_MAP, skillSlug, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { anySkillRequirement, BOOK_ABBREV_PATTERN, type ModifierDetection, SAVE_MAP, SKILL_MAP, skillSlug, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 
 // ---------------------------------------------------------------------------
@@ -37,74 +37,6 @@ const ABILITY_PREREQ_PATTERNS = [
   /^sudden strike \+\d+d\d+$/i,
   /^Weapon Proficiency\b/i,
 ];
-
-// ---------------------------------------------------------------------------
-// Detect requirements + aptitudes for all feats
-// ---------------------------------------------------------------------------
-
-export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["detected"] {
-  const detected: FeatReference["detected"] = {};
-
-  for (const entry of raw) {
-    const { requirements: rawReqs, featNameMap, unresolvedPrereqs } = parsePrerequisiteText(entry.prerequisiteText);
-    const aptitudes = [...(FEAT_TYPE_APTITUDES[entry.featType] ?? ["General"])];
-
-    // Detect fighter bonus feat from Special text
-    if (entry.special && /fighter may select/i.test(entry.special) && !aptitudes.includes("Fighter Bonus Feat")) {
-      aptitudes.push("Fighter Bonus Feat");
-    }
-
-    const { modifiers, errors: modErrors, unresolvedModifiers } = detectModifiers(entry.benefit);
-    const errors: string[] = [...modErrors];
-
-    // Validate requirement paths
-    const requirements: RequirementEntry[] = [];
-    for (const req of rawReqs) {
-      const invalid = findInvalidRequirementPaths(req);
-      if (invalid.length > 0) {
-        for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
-      } else {
-        requirements.push(req);
-      }
-    }
-
-    // Detect implicit feat prerequisites from benefit/special text
-    // e.g. "to which you already have applied the Spell Focus feat"
-    const implicitFeatReqs = detectImplicitFeatPrereqs(entry);
-    for (const f of implicitFeatReqs) {
-      if (!featNameMap[stripSeparators(f)]) {
-        const slug = stripSeparators(f);
-        featNameMap[slug] = f;
-        requirements.push(eq(feat(f)));
-      }
-    }
-
-    const template = detectTemplate(entry);
-
-    // Auto-add FEAT_FAMILY property for metamagic and item creation feats
-    const properties: { type: string; value: string }[] = [];
-    if (entry.featType === "metamagic") {
-      properties.push({ type: "FEAT_FAMILY", value: "Metamagic" });
-    } else if (entry.featType === "item creation") {
-      properties.push({ type: "FEAT_FAMILY", value: "Item Creation" });
-    }
-
-    detected[entry.name] = {
-      aptitudes,
-      requirements,
-      modifiers,
-      ...(properties.length > 0 ? { properties } : {}),
-      ...(errors.length > 0 ? { errors } : {}),
-      ...(!template && unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
-      ...(!template && unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
-      featNameMap,
-      ...(isStackable(entry) ? { stackable: true } : {}),
-      ...(template ? { template } : {}),
-    };
-  }
-
-  return detected;
-}
 
 // ---------------------------------------------------------------------------
 // Build mapping (merged from detected + overrides)
@@ -296,6 +228,72 @@ export function detectModifiers(benefit: string): ModifierDetection {
   }
 
   return { modifiers: validated, errors, unresolvedModifiers };
+}
+
+// ---------------------------------------------------------------------------
+// Extract feat names from prerequisite text
+// ---------------------------------------------------------------------------
+
+function isCommonPhrase(text: string): boolean {
+  const lower = text.toLowerCase();
+  if (/^(or|any|must|have|the|can|has|level|none|proficient|proficiency|ability|able|size|medium|large|small|tiny|at least|damage|innate)/.test(lower)) return true;
+  // "X class ability" / "X class feature" — these are class features, not feats
+  if (/\bclass (?:ability|feature)\b/i.test(lower)) return true;
+  // "Spell-like ability at caster level X or higher" — not a feat
+  if (/^spell-like ability/i.test(lower)) return true;
+  return false;
+}
+
+function titleCaseFeat(s: string): string {
+  // Most feat names from SRD are already in a reasonable case
+  // Just ensure first letter of each word is uppercase
+  return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
+function extractFeatPrereqs(text: string): string[] {
+  const feats: string[] = [];
+
+  // Known feat patterns in prerequisite text
+  // They appear as capitalized names, sometimes with additional context
+  // We need to match things like "Power Attack", "Combat Expertise", "Dodge"
+  // but NOT ability scores, BAB, skill ranks, or generic phrases
+
+  // Remove ability scores, BAB, base save bonus, skill rank, and caster level clauses first
+  const cleaned = text
+    .replace(/(?:Base attack bonus|BAB)[:\s]+\+{1,2}\d+/gi, "")
+    .replace(/[Bb]ase\s+(?:Fortitude|Reflex|Will)\s+save\s+bonus\s+\+\d+/gi, "")
+    .replace(/\b(?:Str|Dex|Con|Int|Wis|Cha)\s+\d+/gi, "")
+    .replace(/[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?\s+\d+\s+ranks?/gi, "")
+    .replace(/[Cc]aster level \d+(?:st|nd|rd|th)/g, "")
+    .replace(/\w+\s+level\s+\d+(?:st|nd|rd|th)?/gi, "")
+    .replace(/[Aa](?:bility|ble) to cast[^,.]+/gi, "")
+    .replace(/proficiency with[^,.]+/gi, "")
+    .replace(/\b(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s+(?:or\s+(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal|smaller)\s+)?size\b/gi, "")
+    .replace(/must be[^,.]+/gi, "")
+    .trim();
+
+  // Split remaining text on comma boundaries
+  const parts = cleaned.split(/,\s*/);
+
+  for (const part of parts) {
+    let trimmed = part.trim().replace(/\.$/, "").replace(/^and\s+/i, "");
+    if (!trimmed || trimmed.length < 3) continue;
+
+    // Strip weapon/school qualifiers — refers to the template family feat
+    trimmed = trimmed
+      .replace(/\s*\(?with (?:selected |the )?(?:weapon|school)(?:\s+chosen)?\)?$/i, "")
+      .replace(/\s+(?:in|of) the (?:chosen|selected|same) (?:school|weapon)$/i, "");
+
+    // A feat name: starts with uppercase, at least 2 chars, not a common phrase or class ability
+    if (trimmed.match(/^[A-Z][a-zA-Z]/) && !isCommonPhrase(trimmed)) {
+      const titled = titleCaseFeat(trimmed);
+      if (!ABILITY_PREREQ_PATTERNS.some(p => p.test(titled))) {
+        feats.push(titled);
+      }
+    }
+  }
+
+  return feats;
 }
 
 // ---------------------------------------------------------------------------
@@ -598,72 +596,6 @@ function parsePrerequisiteText(text: string): { requirements: RequirementEntry[]
 }
 
 // ---------------------------------------------------------------------------
-// Extract feat names from prerequisite text
-// ---------------------------------------------------------------------------
-
-function extractFeatPrereqs(text: string): string[] {
-  const feats: string[] = [];
-
-  // Known feat patterns in prerequisite text
-  // They appear as capitalized names, sometimes with additional context
-  // We need to match things like "Power Attack", "Combat Expertise", "Dodge"
-  // but NOT ability scores, BAB, skill ranks, or generic phrases
-
-  // Remove ability scores, BAB, base save bonus, skill rank, and caster level clauses first
-  const cleaned = text
-    .replace(/(?:Base attack bonus|BAB)[:\s]+\+{1,2}\d+/gi, "")
-    .replace(/[Bb]ase\s+(?:Fortitude|Reflex|Will)\s+save\s+bonus\s+\+\d+/gi, "")
-    .replace(/\b(?:Str|Dex|Con|Int|Wis|Cha)\s+\d+/gi, "")
-    .replace(/[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?\s+\d+\s+ranks?/gi, "")
-    .replace(/[Cc]aster level \d+(?:st|nd|rd|th)/g, "")
-    .replace(/\w+\s+level\s+\d+(?:st|nd|rd|th)?/gi, "")
-    .replace(/[Aa](?:bility|ble) to cast[^,.]+/gi, "")
-    .replace(/proficiency with[^,.]+/gi, "")
-    .replace(/\b(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s+(?:or\s+(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal|smaller)\s+)?size\b/gi, "")
-    .replace(/must be[^,.]+/gi, "")
-    .trim();
-
-  // Split remaining text on comma boundaries
-  const parts = cleaned.split(/,\s*/);
-
-  for (const part of parts) {
-    let trimmed = part.trim().replace(/\.$/, "").replace(/^and\s+/i, "");
-    if (!trimmed || trimmed.length < 3) continue;
-
-    // Strip weapon/school qualifiers — refers to the template family feat
-    trimmed = trimmed
-      .replace(/\s*\(?with (?:selected |the )?(?:weapon|school)(?:\s+chosen)?\)?$/i, "")
-      .replace(/\s+(?:in|of) the (?:chosen|selected|same) (?:school|weapon)$/i, "");
-
-    // A feat name: starts with uppercase, at least 2 chars, not a common phrase or class ability
-    if (trimmed.match(/^[A-Z][a-zA-Z]/) && !isCommonPhrase(trimmed)) {
-      const titled = titleCaseFeat(trimmed);
-      if (!ABILITY_PREREQ_PATTERNS.some(p => p.test(titled))) {
-        feats.push(titled);
-      }
-    }
-  }
-
-  return feats;
-}
-
-function isCommonPhrase(text: string): boolean {
-  const lower = text.toLowerCase();
-  if (/^(or|any|must|have|the|can|has|level|none|proficient|proficiency|ability|able|size|medium|large|small|tiny|at least|damage|innate)/.test(lower)) return true;
-  // "X class ability" / "X class feature" — these are class features, not feats
-  if (/\bclass (?:ability|feature)\b/i.test(lower)) return true;
-  // "Spell-like ability at caster level X or higher" — not a feat
-  if (/^spell-like ability/i.test(lower)) return true;
-  return false;
-}
-
-function titleCaseFeat(s: string): string {
-  // Most feat names from SRD are already in a reasonable case
-  // Just ensure first letter of each word is uppercase
-  return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
-}
-
-// ---------------------------------------------------------------------------
 // Detect implicit feat prerequisites from benefit/special text
 // e.g. "to which you already have applied the Spell Focus feat"
 // ---------------------------------------------------------------------------
@@ -722,4 +654,72 @@ function isStackable(entry: FeatReference["raw"][number]): boolean {
   return /(?:can|may) (?:gain|take).*multiple times/i.test(special) ||
     /select this feat multiple times/i.test(special) ||
     special.includes("its effects stack");
+}
+
+// ---------------------------------------------------------------------------
+// Detect requirements + aptitudes for all feats
+// ---------------------------------------------------------------------------
+
+export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["detected"] {
+  const detected: FeatReference["detected"] = {};
+
+  for (const entry of raw) {
+    const { requirements: rawReqs, featNameMap, unresolvedPrereqs } = parsePrerequisiteText(entry.prerequisiteText);
+    const aptitudes = [...(FEAT_TYPE_APTITUDES[entry.featType] ?? ["General"])];
+
+    // Detect fighter bonus feat from Special text
+    if (entry.special && /fighter may select/i.test(entry.special) && !aptitudes.includes("Fighter Bonus Feat")) {
+      aptitudes.push("Fighter Bonus Feat");
+    }
+
+    const { modifiers, errors: modErrors, unresolvedModifiers } = detectModifiers(entry.benefit);
+    const errors: string[] = [...modErrors];
+
+    // Validate requirement paths
+    const requirements: RequirementEntry[] = [];
+    for (const req of rawReqs) {
+      const invalid = findInvalidRequirementPaths(req);
+      if (invalid.length > 0) {
+        for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
+      } else {
+        requirements.push(req);
+      }
+    }
+
+    // Detect implicit feat prerequisites from benefit/special text
+    // e.g. "to which you already have applied the Spell Focus feat"
+    const implicitFeatReqs = detectImplicitFeatPrereqs(entry);
+    for (const f of implicitFeatReqs) {
+      if (!featNameMap[stripSeparators(f)]) {
+        const slug = stripSeparators(f);
+        featNameMap[slug] = f;
+        requirements.push(eq(feat(f)));
+      }
+    }
+
+    const template = detectTemplate(entry);
+
+    // Auto-add FEAT_FAMILY property for metamagic and item creation feats
+    const properties: { type: string; value: string }[] = [];
+    if (entry.featType === "metamagic") {
+      properties.push({ type: "FEAT_FAMILY", value: "Metamagic" });
+    } else if (entry.featType === "item creation") {
+      properties.push({ type: "FEAT_FAMILY", value: "Item Creation" });
+    }
+
+    detected[entry.name] = {
+      aptitudes,
+      requirements,
+      modifiers,
+      ...(properties.length > 0 ? { properties } : {}),
+      ...(errors.length > 0 ? { errors } : {}),
+      ...(!template && unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
+      ...(!template && unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
+      featNameMap,
+      ...(isStackable(entry) ? { stackable: true } : {}),
+      ...(template ? { template } : {}),
+    };
+  }
+
+  return detected;
 }

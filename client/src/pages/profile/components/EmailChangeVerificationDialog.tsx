@@ -11,8 +11,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Typography,
   Link as MuiLink,
+  Typography,
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

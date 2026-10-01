@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { test, expect } from "@/tests/e2e/fixtures.ts";
+import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { signIn, uniqueName, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
 
 test("concurrent first edits preserve every property on one fork copy", async ({ page, ownerUser }) => {

@@ -1,7 +1,7 @@
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { useMutation, useQuery, useQueryClient, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
-import { useForm, type DefaultValues, type FieldValues, type UseFormReturn } from "react-hook-form";
+import { type QueryKey, useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { type ReactNode, useState } from "react";
+import { type DefaultValues, type FieldValues, useForm, type UseFormReturn } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { DeleteDialog } from "@/client/src/components/common/index.ts";
@@ -11,7 +11,7 @@ import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityDetailsCard, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { useRulesetPermissions, entityPageState } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 interface EntityBase {
   id: string;

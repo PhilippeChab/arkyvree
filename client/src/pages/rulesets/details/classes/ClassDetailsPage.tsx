@@ -1,19 +1,19 @@
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { DeleteDialog, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
+import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { EntityDetailLayout, EntityDetailsCard, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { useRulesetPermissions, entityPageState } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { isHitDie } from "@/shared/dnd3.5/classes.ts";
 import {
-  Bolt as SpellListIcon,
   EmojiEvents as FeatPoolsIcon,
   TrendingUp as LevelsIcon,
   Psychology as SkillsIcon,
+  Bolt as SpellListIcon,
   AutoStories as SpellsIcon,
 } from "@mui/icons-material";
 import {
@@ -27,7 +27,7 @@ import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hoo
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { classDetailQuery, prefetchClassSection, type ClassDetail, type ClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { type ClassDetail, classDetailQuery, type ClassSection, prefetchClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,

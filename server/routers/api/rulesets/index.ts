@@ -1,4 +1,4 @@
-import { respond, errorResponse } from "@/server/routers/respond.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
 import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";

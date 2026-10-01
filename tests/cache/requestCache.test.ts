@@ -18,7 +18,7 @@ import {
   runWithRequestCache,
 } from "@/server/database/requestCache.ts";
 import { beforeAll, describe, expect, test } from "bun:test";
-import { NIL_UUID, getSeedCtx } from "@/tests/helpers.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("requestCache — repository Proxy memoization", () => {
   let ctx: SeedContext;

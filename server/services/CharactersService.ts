@@ -1,4 +1,4 @@
-import { eq, sql, getTableName } from "drizzle-orm";
+import { eq, getTableName, sql } from "drizzle-orm";
 
 import { type alignment, charactersInCharacter, type gender, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";

@@ -1,5 +1,5 @@
 import { respond } from "@/server/routers/respond.ts";
-import { requirementOperator, chainingOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
+import { chainingOperator, requirementOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/index.ts";

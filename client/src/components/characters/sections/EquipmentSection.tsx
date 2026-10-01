@@ -4,8 +4,8 @@ import {
   BlankState,
   CreateDialog,
   DeleteDialog,
-  EditDialog,
   DiceSpinner,
+  EditDialog,
   ScrollSafeListbox,
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
@@ -28,7 +28,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient, skipToken } from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";

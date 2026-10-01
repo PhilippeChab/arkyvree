@@ -3,8 +3,8 @@ import {
   FeatsAptitudes,
   KlassLevelFeats,
   KlassLevelPowers,
-  KlassLevelSaves,
   KlassLevels,
+  KlassLevelSaves,
   KlassSkills,
   Modifiers,
   PowersAptitudes,
@@ -15,16 +15,31 @@ import type { EntityCustomizations, EntityType } from "@/server/services/ruleset
 import { ENTITY_TYPE_TO_SOURCE_TYPE } from "./constants.ts";
 import { fetchEntityCustomizations } from "./customizations.ts";
 
-// Copy customizations from source entity to target entity
-export async function copyEntityCustomizations(
+/**
+ * Inserts one copy of each row per target in a single batch, target-major, with
+ * `owner` repointing each copy. Copies pair with their sources by position, and
+ * the first target's copies are recorded in `customizationIds`: equal values do
+ * not imply the same row (a modifier's requirements may differ).
+ */
+async function copyRows<R extends { id: string }>(
   tx: Db,
-  _sourceEntityId: string,
-  targetEntityId: string,
-  entityType: string,
-  sourceCust: EntityCustomizations,
+  repo: { createMany(db: Db, values: (Omit<R, "id"> & { id: undefined })[]): Promise<{ id: string }[]> },
+  rows: R[],
+  targetEntityIds: string[],
+  owner: (row: R, targetId: string, targetIndex: number) => Partial<R>,
   customizationIds?: Map<string, string>,
-): Promise<void> {
-  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, customizationIds);
+): Promise<{ id: string }[]> {
+  if (rows.length === 0) return [];
+  const copies = await repo.createMany(
+    tx,
+    targetEntityIds.flatMap((targetId, targetIndex) =>
+      rows.map((row) => ({ ...row, ...owner(row, targetId, targetIndex), id: undefined })),
+    ),
+  );
+  for (let i = 0; i < rows.length; i++) {
+    customizationIds?.set(rows[i].id, copies[i].id);
+  }
+  return copies;
 }
 
 export async function copyEntityCustomizationsToMany(
@@ -60,31 +75,16 @@ export async function copyEntityCustomizationsToMany(
   }), customizationIds);
 }
 
-/**
- * Inserts one copy of each row per target in a single batch, target-major, with
- * `owner` repointing each copy. Copies pair with their sources by position, and
- * the first target's copies are recorded in `customizationIds`: equal values do
- * not imply the same row (a modifier's requirements may differ).
- */
-async function copyRows<R extends { id: string }>(
+// Copy customizations from source entity to target entity
+export async function copyEntityCustomizations(
   tx: Db,
-  repo: { createMany(db: Db, values: (Omit<R, "id"> & { id: undefined })[]): Promise<{ id: string }[]> },
-  rows: R[],
-  targetEntityIds: string[],
-  owner: (row: R, targetId: string, targetIndex: number) => Partial<R>,
+  _sourceEntityId: string,
+  targetEntityId: string,
+  entityType: string,
+  sourceCust: EntityCustomizations,
   customizationIds?: Map<string, string>,
-): Promise<{ id: string }[]> {
-  if (rows.length === 0) return [];
-  const copies = await repo.createMany(
-    tx,
-    targetEntityIds.flatMap((targetId, targetIndex) =>
-      rows.map((row) => ({ ...row, ...owner(row, targetId, targetIndex), id: undefined })),
-    ),
-  );
-  for (let i = 0; i < rows.length; i++) {
-    customizationIds?.set(rows[i].id, copies[i].id);
-  }
-  return copies;
+): Promise<void> {
+  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, customizationIds);
 }
 
 // Copy relationship data (join tables) for a single entity

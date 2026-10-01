@@ -22,6 +22,12 @@ export function isStorageConfigured(): boolean {
   );
 }
 
+function isNotFound(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const e = err as { code?: string; status?: number; statusCode?: number };
+  return e.code === "NoSuchKey" || e.status === 404 || e.statusCode === 404;
+}
+
 class S3StorageBackend implements StorageBackend {
   presignPut(key: string, opts: { contentType: string; expiresIn?: number }): string {
     return Bun.s3.presign(key, {
@@ -54,12 +60,6 @@ class S3StorageBackend implements StorageBackend {
       throw err;
     }
   }
-}
-
-function isNotFound(err: unknown): boolean {
-  if (typeof err !== "object" || err === null) return false;
-  const e = err as { code?: string; status?: number; statusCode?: number };
-  return e.code === "NoSuchKey" || e.status === 404 || e.statusCode === 404;
 }
 
 let _storage: StorageBackend | null = null;

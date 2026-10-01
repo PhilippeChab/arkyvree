@@ -1,5 +1,5 @@
 import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { GoldDivider, PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, GoldDivider, PageTransition } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
@@ -8,8 +8,8 @@ import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components
 import {
   HelpOutlined as FaqIcon,
   Map as MapIcon,
-  MenuBook as RulesetIcon,
   Person as PersonIcon,
+  MenuBook as RulesetIcon,
 } from "@mui/icons-material";
 import { Alert, Box, Card, CardActionArea, CardContent, Container, Link, Paper, type Theme, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";

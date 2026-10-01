@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import { answerInvite, apiResponse, forkCoreRuleset, inviteContributor, openContributors, openRace, renameEntity, signedInPage, uniqueName } from '@/tests/e2e/helpers.ts';
 
 test.describe('Ruleset contributors', () => {

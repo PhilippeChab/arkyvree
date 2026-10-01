@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed, Modifier, ModifierEffect, ModifierSeed, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import { normalizeDescription, MAX_DESC } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { MAX_DESC, normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Naming helpers
@@ -22,6 +22,31 @@ export function toConstName(name: string): string {
 function indent(text: string, level: number): string {
   const prefix = "  ".repeat(level);
   return text.split("\n").map((line) => line ? prefix + line : line).join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// String escaping
+// ---------------------------------------------------------------------------
+
+function escapeString(s: string): string {
+  // String(): a hand-typed reference can hold a number or a boolean where the seed has text
+  return JSON.stringify(String(s)).slice(1, -1);
+}
+
+/** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
+export function escapeTemplate(s: string): string {
+  return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+}
+
+/** `s` as a string literal. */
+export function quote(s: string): string {
+  return `"${escapeString(s)}"`;
+}
+
+export const MAX_CLASS_DESC = MAX_DESC;
+
+export function truncateDesc(text: string, maxLen = MAX_DESC): string {
+  return normalizeDescription(text, maxLen);
 }
 
 // ---------------------------------------------------------------------------
@@ -134,6 +159,11 @@ export function listField(key: string, items: string[], prefix: string): string[
   return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
 }
 
+/** A property written as code. */
+export function stringifyProperty({ type, value }: { type: string; value: string }): string {
+  return `{ type: ${quote(type)}, value: ${quote(value)} }`;
+}
+
 /** A feat written as code, a list's item: its builders added to `uses` (`stringifyRequirement`). */
 export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
   return [
@@ -148,36 +178,6 @@ export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
     ...listField("properties", (feat.properties ?? []).map(stringifyProperty), "    "),
     `  },`,
   ];
-}
-
-/** A property written as code. */
-export function stringifyProperty({ type, value }: { type: string; value: string }): string {
-  return `{ type: ${quote(type)}, value: ${quote(value)} }`;
-}
-
-// ---------------------------------------------------------------------------
-// String escaping
-// ---------------------------------------------------------------------------
-
-function escapeString(s: string): string {
-  // String(): a hand-typed reference can hold a number or a boolean where the seed has text
-  return JSON.stringify(String(s)).slice(1, -1);
-}
-
-/** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
-export function escapeTemplate(s: string): string {
-  return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
-}
-
-/** `s` as a string literal. */
-export function quote(s: string): string {
-  return `"${escapeString(s)}"`;
-}
-
-export const MAX_CLASS_DESC = MAX_DESC;
-
-export function truncateDesc(text: string, maxLen = MAX_DESC): string {
-  return normalizeDescription(text, maxLen);
 }
 
 // ---------------------------------------------------------------------------

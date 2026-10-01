@@ -1,8 +1,8 @@
 import type { RulesetItem } from "@/client/src/lib/queries.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import { SearchBar, CreateDialog, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { useOpenEntity, useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -39,6 +39,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
+  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
 
   const {
     createDialogOpen,
@@ -77,8 +78,6 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const handleRowClick = (item: Item) => {
     openEntity(`items/${item.id}/customization`);
   };
-
-  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
 
   const handleDuplicate = (item: Item) => {
     createForm.reset({

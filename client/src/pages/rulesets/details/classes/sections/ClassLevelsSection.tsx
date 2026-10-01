@@ -5,7 +5,7 @@ import {
   CreateLevelDialog,
 } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { useClassLevels, useRulesetPermissions, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useClassLevels, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { Add as AddIcon, FormatListNumbered as LevelsIcon } from "@mui/icons-material";

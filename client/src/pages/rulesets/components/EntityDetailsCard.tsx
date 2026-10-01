@@ -1,5 +1,5 @@
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
-import { Box, Button, Card, CardContent, Typography, type SxProps, type Theme } from "@mui/material";
+import { Box, Button, Card, CardContent, type SxProps, type Theme, Typography } from "@mui/material";
 import type { FormEventHandler, ReactNode } from "react";
 
 interface EntityDetailsCardProps {

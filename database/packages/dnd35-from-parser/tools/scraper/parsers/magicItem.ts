@@ -151,20 +151,6 @@ export function parseMagicWeaponsHtml(html: string): RawMagicItem[] {
   return parseItemEntries($, "Specific Weapons", "specificWeapon");
 }
 
-export function parseWondrousItemsHtml(html: string): RawMagicItem[] {
-  const $ = cheerio.load(html);
-  // Try "Wondrous Item Descriptions" first, then fall back to "Item Descriptions"
-  let items = parseItemEntries($, "Wondrous Item Descriptions", "wondrousItem");
-  if (items.length === 0) {
-    items = parseItemEntries($, "Item Descriptions", "wondrousItem");
-  }
-  if (items.length === 0) {
-    // Fallback: parse all h5 entries on the page after any table
-    items = parseAllH5Entries($, "wondrousItem");
-  }
-  return items;
-}
-
 export function parseRingsHtml(html: string): RawMagicItem[] {
   const $ = cheerio.load(html);
   return parseItemEntries($, "Ring Descriptions", "ring");
@@ -189,5 +175,19 @@ function parseAllH5Entries($: cheerio.CheerioAPI, category: MagicItemCategory): 
     const block = readItemBlock($, $(el));
     if (block.name && block.metadataText) items.push(...itemEntries(block, category));
   });
+  return items;
+}
+
+export function parseWondrousItemsHtml(html: string): RawMagicItem[] {
+  const $ = cheerio.load(html);
+  // Try "Wondrous Item Descriptions" first, then fall back to "Item Descriptions"
+  let items = parseItemEntries($, "Wondrous Item Descriptions", "wondrousItem");
+  if (items.length === 0) {
+    items = parseItemEntries($, "Item Descriptions", "wondrousItem");
+  }
+  if (items.length === 0) {
+    // Fallback: parse all h5 entries on the page after any table
+    items = parseAllH5Entries($, "wondrousItem");
+  }
   return items;
 }

@@ -1,35 +1,35 @@
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { DeleteDialog, DiceSpinner, FaqHelpIcon, SectionTabs, type SectionTab } from "@/client/src/components/common/index.ts";
+import { DeleteDialog, DiceSpinner, FaqHelpIcon, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { rulesetDetailQuery, type RulesetDetail } from "@/client/src/lib/queries.ts";
+import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   ClassLevelEditor,
+  type EditorProps,
   FeatEditor,
   ItemEditor,
   RaceEditor,
   SpellEditor,
-  type EditorProps,
 } from "@/client/src/pages/rulesets/customization/editors/index.ts";
 import {
-  customizationEntityQuery,
   type CustomizationEntity,
+  customizationEntityQuery,
 } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useRulesetPermissions, entityPageState } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
+  Settings as ModifiersIcon,
   Label as PropertiesIcon,
   Rule as RequirementsIcon,
-  Settings as ModifiersIcon,
 } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
-import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
-import { useEffect, useState, type ReactNode } from "react";
+import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type ReactNode, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ModifiersSection,
@@ -85,85 +85,6 @@ const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as 
 type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
 const isEditable = (data: CustomizationEntity): data is EditableEntity =>
   EDITABLE_TYPES.some((type) => type === data.type);
-
-export default function CustomizationPage() {
-  const { id: rulesetId = "", entityType, entityId = "", section } = useParams<{
-    id: string;
-    entityType: string;
-    entityId: string;
-    section?: string;
-  }>();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const validType = isEntityType(entityType) ? entityType : undefined;
-
-  const { copiedFrom } = entityPageState(location.state);
-
-  const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
-  const { data, isLoading: isEntityLoading, isPlaceholderData, error: entityError } = useQuery({
-    ...customizationEntityQuery(rulesetId, validType ?? "feats", entityId),
-    enabled: !!validType && !!entityId,
-    // Right after a copy-on-write, keep showing the entity the copy was made
-    // from until the copy loads, so the page and any unsaved edits stay; the
-    // page is locked meanwhile. A refetch of the source may already return the
-    // copy, as the server resolves an inherited entity to its copy. The
-    // ruleset must match too: an inherited entity keeps its id in every fork.
-    placeholderData: (previous, previousQuery) =>
-      copiedFrom && previous && previousQuery?.queryKey[2] === rulesetId
-        && (previous.entity.id === copiedFrom || previous.entity.id === entityId)
-        ? previous
-        : undefined,
-  });
-  // Load the editors' pickers alongside the entity.
-  const { canEditEntities } = useRulesetPermissions(ruleset);
-  useRulesetSaves(rulesetId, validType === "powers" || validType === "klass_levels");
-  useRulesetFeats(rulesetId, "", validType === "klass_levels" && canEditEntities);
-
-  const tabs = validType ? tabsFor(validType) : [];
-  const currentTab = tabs.find((tab) => tab.key === section)?.key;
-
-  // Normalize the URL to a tab the entity has.
-  useEffect(() => {
-    if (validType && entityId && !currentTab) {
-      navigate(`/rulesets/${rulesetId}/${validType}/${entityId}/customization/${tabsFor(validType)[0].key}`, {
-        replace: true,
-        state: location.state,
-      });
-    }
-  }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
-
-  // A failed refetch keeps showing the data it has (and any unsaved edits).
-  if (!validType || (rulesetError && !ruleset) || (entityError && !data) || (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))) {
-    return (
-      <EntityPageError
-        message={!validType
-          ? `Invalid entity type: ${entityType}`
-          : !ruleset && (rulesetError || !entityError)
-            ? loadFailureMessage("Ruleset", rulesetError)
-            : loadFailureMessage(ENTITY_LABELS[validType], entityError)}
-        backLabel="Back to Ruleset"
-        onBack={() => navigate(`/rulesets/${rulesetId}`)}
-      />
-    );
-  }
-
-  if (!ruleset || !data || !currentTab) {
-    return <EntityDetailLayout onBack={() => navigate(-1)} canDelete={false} isLoading>{null}</EntityDetailLayout>;
-  }
-
-  return (
-    <CustomizationView
-      rulesetId={rulesetId}
-      entityId={entityId}
-      section={currentTab}
-      tabs={tabs}
-      ruleset={ruleset}
-      data={data}
-      canEdit={canEditEntities}
-      locked={isPlaceholderData}
-    />
-  );
-}
 
 /** What surrounds the editor: the header and where Back goes. */
 function describe(data: CustomizationEntity, rulesetId: string, entityId: string): {
@@ -385,5 +306,84 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
         isLoading={deleteMutation.isPending}
       />
     </EntityDetailLayout>
+  );
+}
+
+export default function CustomizationPage() {
+  const { id: rulesetId = "", entityType, entityId = "", section } = useParams<{
+    id: string;
+    entityType: string;
+    entityId: string;
+    section?: string;
+  }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const validType = isEntityType(entityType) ? entityType : undefined;
+
+  const { copiedFrom } = entityPageState(location.state);
+
+  const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
+  const { data, isLoading: isEntityLoading, isPlaceholderData, error: entityError } = useQuery({
+    ...customizationEntityQuery(rulesetId, validType ?? "feats", entityId),
+    enabled: !!validType && !!entityId,
+    // Right after a copy-on-write, keep showing the entity the copy was made
+    // from until the copy loads, so the page and any unsaved edits stay; the
+    // page is locked meanwhile. A refetch of the source may already return the
+    // copy, as the server resolves an inherited entity to its copy. The
+    // ruleset must match too: an inherited entity keeps its id in every fork.
+    placeholderData: (previous, previousQuery) =>
+      copiedFrom && previous && previousQuery?.queryKey[2] === rulesetId
+        && (previous.entity.id === copiedFrom || previous.entity.id === entityId)
+        ? previous
+        : undefined,
+  });
+  // Load the editors' pickers alongside the entity.
+  const { canEditEntities } = useRulesetPermissions(ruleset);
+  useRulesetSaves(rulesetId, validType === "powers" || validType === "klass_levels");
+  useRulesetFeats(rulesetId, "", validType === "klass_levels" && canEditEntities);
+
+  const tabs = validType ? tabsFor(validType) : [];
+  const currentTab = tabs.find((tab) => tab.key === section)?.key;
+
+  // Normalize the URL to a tab the entity has.
+  useEffect(() => {
+    if (validType && entityId && !currentTab) {
+      navigate(`/rulesets/${rulesetId}/${validType}/${entityId}/customization/${tabsFor(validType)[0].key}`, {
+        replace: true,
+        state: location.state,
+      });
+    }
+  }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
+
+  // A failed refetch keeps showing the data it has (and any unsaved edits).
+  if (!validType || (rulesetError && !ruleset) || (entityError && !data) || (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))) {
+    return (
+      <EntityPageError
+        message={!validType
+          ? `Invalid entity type: ${entityType}`
+          : !ruleset && (rulesetError || !entityError)
+            ? loadFailureMessage("Ruleset", rulesetError)
+            : loadFailureMessage(ENTITY_LABELS[validType], entityError)}
+        backLabel="Back to Ruleset"
+        onBack={() => navigate(`/rulesets/${rulesetId}`)}
+      />
+    );
+  }
+
+  if (!ruleset || !data || !currentTab) {
+    return <EntityDetailLayout onBack={() => navigate(-1)} canDelete={false} isLoading>{null}</EntityDetailLayout>;
+  }
+
+  return (
+    <CustomizationView
+      rulesetId={rulesetId}
+      entityId={entityId}
+      section={currentTab}
+      tabs={tabs}
+      ruleset={ruleset}
+      data={data}
+      canEdit={canEditEntities}
+      locked={isPlaceholderData}
+    />
   );
 }

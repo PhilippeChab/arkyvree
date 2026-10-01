@@ -2,8 +2,8 @@ import { nameRules } from "@/client/src/lib/validation.ts";
 import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import {
-  AptitudesAutocomplete,
   type Aptitude,
+  AptitudesAutocomplete,
 } from "@/client/src/components/customization/index.ts";
 import {
   Autocomplete,
@@ -17,15 +17,46 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/aptitudeLookup.ts";
 import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
 import {
-  SPELL_SCHOOLS,
-  SPELL_SUBSCHOOLS,
-  SPELL_DESCRIPTORS,
   SPELL_COMPONENTS,
+  SPELL_DESCRIPTORS,
   SPELL_RANGE_TYPES,
   SPELL_RESISTANCE_OPTIONS,
+  SPELL_SCHOOLS,
+  SPELL_SUBSCHOOLS,
 } from "@/shared/dnd3.5/spells.ts";
 
 type Save = RulesetSave;
+
+/** A free-text list with suggestions, shown as chips. */
+function TagsField({ form, name, label, options }: {
+  form: UseFormReturn<SpellFormData>;
+  name: "descriptors" | "components";
+  label: string;
+  options: readonly string[];
+}) {
+  return (
+    <Controller
+      name={name}
+      control={form.control}
+      render={({ field }) => (
+        <Autocomplete
+          multiple
+          freeSolo
+          options={options}
+          value={field.value ?? []}
+          onChange={(_, newValue) => field.onChange(newValue)}
+          renderValue={(value, getItemProps) =>
+            value.map((option, index) => {
+              const { key, ...tagProps } = getItemProps({ index });
+              return <Chip key={key} label={option} size="small" {...tagProps} />;
+            })
+          }
+          renderInput={(params) => <TextField {...params} label={label} />}
+        />
+      )}
+    />
+  );
+}
 
 function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
   return (
@@ -137,37 +168,6 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
       </Box>
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
     </>
-  );
-}
-
-/** A free-text list with suggestions, shown as chips. */
-function TagsField({ form, name, label, options }: {
-  form: UseFormReturn<SpellFormData>;
-  name: "descriptors" | "components";
-  label: string;
-  options: readonly string[];
-}) {
-  return (
-    <Controller
-      name={name}
-      control={form.control}
-      render={({ field }) => (
-        <Autocomplete
-          multiple
-          freeSolo
-          options={options}
-          value={field.value ?? []}
-          onChange={(_, newValue) => field.onChange(newValue)}
-          renderValue={(value, getItemProps) =>
-            value.map((option, index) => {
-              const { key, ...tagProps } = getItemProps({ index });
-              return <Chip key={key} label={option} size="small" {...tagProps} />;
-            })
-          }
-          renderInput={(params) => <TextField {...params} label={label} />}
-        />
-      )}
-    />
   );
 }
 

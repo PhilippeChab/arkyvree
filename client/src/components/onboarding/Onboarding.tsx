@@ -9,8 +9,8 @@ import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import {
   HelpOutlined as FaqIcon,
   Map as MapIcon,
-  MenuBook as RulesetIcon,
   Person as PersonIcon,
+  MenuBook as RulesetIcon,
 } from "@mui/icons-material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import {

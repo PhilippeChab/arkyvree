@@ -6,7 +6,7 @@ import { memoizeRequest } from "@/server/database/requestCache.ts";
 import type { ValidationIssue, ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { getBondedRaceStats, type BondedRaceStatBlock } from "./bondedRaceData.ts";
+import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {

@@ -24,6 +24,136 @@ import {
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+function AutoGrantedFeats({ feats, defaultCollapsed }: { feats: FeatsData["autoGrantedFeats"]; defaultCollapsed: boolean }) {
+  const [open, setOpen] = useState(!defaultCollapsed);
+  return (
+    <Box sx={{ mb: 1 }}>
+      <Box
+        {...clickableProps(() => setOpen(!open))}
+        aria-expanded={open}
+        sx={{ display: "flex", alignItems: "center", ...CLICKABLE_SX }}
+      >
+        <Typography variant="subtitle1" sx={{ flex: 1 }}>
+          Auto-Granted Feats ({feats.length})
+        </Typography>
+        {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+      </Box>
+      <Collapse in={open}>
+        <List dense>
+          {feats.map((feat, i) => (
+            <ListItemText key={`${feat.id}-${i}`} primary={feat.name} />
+          ))}
+        </List>
+      </Collapse>
+    </Box>
+  );
+}
+
+function FeatFamilyExpansion({
+  characterId,
+  aptitudeId,
+  klassId,
+  klassLevel,
+  family,
+  editingLevelId,
+  allSelectedFeatPickString,
+  pendingLevelKlassLevelIds,
+  pendingLevelFeatPicks,
+  selectedAptitude,
+  selectedFeats,
+  setValue,
+}: {
+  characterId: string;
+  aptitudeId: string;
+  klassId: string;
+  klassLevel: number;
+  family: string;
+  editingLevelId?: string;
+  allSelectedFeatPickString?: string;
+  pendingLevelKlassLevelIds?: string;
+  pendingLevelFeatPicks?: string;
+  selectedAptitude: string;
+  selectedFeats: Record<string, SelectedFeat[]>;
+  setValue: (key: "selectedFeats", value: Record<string, SelectedFeat[]>) => void;
+}) {
+  const query = useInfiniteQuery({
+    queryKey: queryKeys.characters.levelUp.availableFeatFamily(characterId, aptitudeId, family, klassId, editingLevelId, allSelectedFeatPickString, pendingLevelKlassLevelIds),
+    queryFn: async ({ pageParam }) => {
+      return parseResponse(rpc.api.characters.levels[":characterId"]["available-feats"]["$get"]({
+        param: { characterId },
+        query: {
+          aptitudeId,
+          klassId,
+          level: klassLevel.toString(),
+          limit: "50",
+          page: pageParam.toString(),
+          family,
+          characterLevelId: editingLevelId || undefined,
+          selectedFeatPicks: allSelectedFeatPickString || undefined,
+          pendingLevelKlassLevelIds: pendingLevelKlassLevelIds || undefined,
+          pendingLevelFeatPicks: pendingLevelFeatPicks || undefined,
+        },
+      }));
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    placeholderData: keepPreviousData,
+  });
+
+  const variants = pageItems(query.data);
+  const pages = query.data?.pages ?? [];
+  const previousItemCount = pages.slice(0, -1).reduce((sum, p) => sum + p.items.length, 0);
+
+  if (query.isLoading) {
+    return (
+      <Box sx={{ pl: 6, py: 1 }}>
+        <Skeleton variant="text" width="60%" />
+        <Skeleton variant="text" width="40%" />
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      {variants.map((feat, i) => {
+          const isNew = i >= previousItemCount;
+          return (
+            <Tooltip describeChild key={feat.id} title={!feat.eligible && feat.requirementTree ? feat.requirementTree : feat.description ?? ""} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !feat.eligible && feat.requirementTree ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
+              <Box component="span" sx={{ display: "block", ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}>
+                <ListItemButton
+                  sx={{ pl: 6 }}
+                  disabled={!feat.eligible}
+                  onClick={() => {
+                    setValue("selectedFeats", {
+                      ...selectedFeats,
+                      [selectedAptitude]: [
+                        ...(selectedFeats[selectedAptitude] || []),
+                        { id: feat.id, name: feat.name, description: feat.description ?? undefined, aptitudeModifiers: feat.aptitudeModifiers },
+                      ],
+                    });
+                  }}
+                >
+                  <ListItemText primary={feat.name} />
+                </ListItemButton>
+              </Box>
+            </Tooltip>
+          );
+        })}
+      {query.hasNextPage && (
+        <Box sx={{ pl: 6, py: 0.5 }}>
+          <Button
+            size="small"
+            onClick={() => query.fetchNextPage()}
+            disabled={query.isFetchingNextPage}
+          >
+            <DiceSpinner size="small" loading={query.isFetchingNextPage}>Load More</DiceSpinner>
+          </Button>
+        </Box>
+      )}
+    </>
+  );
+}
+
 export function LevelUpFeatsStep({
   wizard,
   characterId,
@@ -282,135 +412,5 @@ export function LevelUpFeatsStep({
           );
         })()}
     </Box>
-  );
-}
-
-function AutoGrantedFeats({ feats, defaultCollapsed }: { feats: FeatsData["autoGrantedFeats"]; defaultCollapsed: boolean }) {
-  const [open, setOpen] = useState(!defaultCollapsed);
-  return (
-    <Box sx={{ mb: 1 }}>
-      <Box
-        {...clickableProps(() => setOpen(!open))}
-        aria-expanded={open}
-        sx={{ display: "flex", alignItems: "center", ...CLICKABLE_SX }}
-      >
-        <Typography variant="subtitle1" sx={{ flex: 1 }}>
-          Auto-Granted Feats ({feats.length})
-        </Typography>
-        {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-      </Box>
-      <Collapse in={open}>
-        <List dense>
-          {feats.map((feat, i) => (
-            <ListItemText key={`${feat.id}-${i}`} primary={feat.name} />
-          ))}
-        </List>
-      </Collapse>
-    </Box>
-  );
-}
-
-function FeatFamilyExpansion({
-  characterId,
-  aptitudeId,
-  klassId,
-  klassLevel,
-  family,
-  editingLevelId,
-  allSelectedFeatPickString,
-  pendingLevelKlassLevelIds,
-  pendingLevelFeatPicks,
-  selectedAptitude,
-  selectedFeats,
-  setValue,
-}: {
-  characterId: string;
-  aptitudeId: string;
-  klassId: string;
-  klassLevel: number;
-  family: string;
-  editingLevelId?: string;
-  allSelectedFeatPickString?: string;
-  pendingLevelKlassLevelIds?: string;
-  pendingLevelFeatPicks?: string;
-  selectedAptitude: string;
-  selectedFeats: Record<string, SelectedFeat[]>;
-  setValue: (key: "selectedFeats", value: Record<string, SelectedFeat[]>) => void;
-}) {
-  const query = useInfiniteQuery({
-    queryKey: queryKeys.characters.levelUp.availableFeatFamily(characterId, aptitudeId, family, klassId, editingLevelId, allSelectedFeatPickString, pendingLevelKlassLevelIds),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.characters.levels[":characterId"]["available-feats"]["$get"]({
-        param: { characterId },
-        query: {
-          aptitudeId,
-          klassId,
-          level: klassLevel.toString(),
-          limit: "50",
-          page: pageParam.toString(),
-          family,
-          characterLevelId: editingLevelId || undefined,
-          selectedFeatPicks: allSelectedFeatPickString || undefined,
-          pendingLevelKlassLevelIds: pendingLevelKlassLevelIds || undefined,
-          pendingLevelFeatPicks: pendingLevelFeatPicks || undefined,
-        },
-      }));
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    placeholderData: keepPreviousData,
-  });
-
-  const variants = pageItems(query.data);
-  const pages = query.data?.pages ?? [];
-  const previousItemCount = pages.slice(0, -1).reduce((sum, p) => sum + p.items.length, 0);
-
-  if (query.isLoading) {
-    return (
-      <Box sx={{ pl: 6, py: 1 }}>
-        <Skeleton variant="text" width="60%" />
-        <Skeleton variant="text" width="40%" />
-      </Box>
-    );
-  }
-
-  return (
-    <>
-      {variants.map((feat, i) => {
-          const isNew = i >= previousItemCount;
-          return (
-            <Tooltip describeChild key={feat.id} title={!feat.eligible && feat.requirementTree ? feat.requirementTree : feat.description ?? ""} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !feat.eligible && feat.requirementTree ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
-              <Box component="span" sx={{ display: "block", ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}>
-                <ListItemButton
-                  sx={{ pl: 6 }}
-                  disabled={!feat.eligible}
-                  onClick={() => {
-                    setValue("selectedFeats", {
-                      ...selectedFeats,
-                      [selectedAptitude]: [
-                        ...(selectedFeats[selectedAptitude] || []),
-                        { id: feat.id, name: feat.name, description: feat.description ?? undefined, aptitudeModifiers: feat.aptitudeModifiers },
-                      ],
-                    });
-                  }}
-                >
-                  <ListItemText primary={feat.name} />
-                </ListItemButton>
-              </Box>
-            </Tooltip>
-          );
-        })}
-      {query.hasNextPage && (
-        <Box sx={{ pl: 6, py: 0.5 }}>
-          <Button
-            size="small"
-            onClick={() => query.fetchNextPage()}
-            disabled={query.isFetchingNextPage}
-          >
-            <DiceSpinner size="small" loading={query.isFetchingNextPage}>Load More</DiceSpinner>
-          </Button>
-        </Box>
-      )}
-    </>
   );
 }

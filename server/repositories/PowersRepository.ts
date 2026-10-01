@@ -1,12 +1,12 @@
 import { and, asc, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
 import {
-  powersAptitudesInRules,
-  powersInRules,
   klassLevelPowersInRules,
   klassLevelsInRules,
   levelPowersInCharacter,
   levelsInCharacter,
+  powersAptitudesInRules,
+  powersInRules,
   savesInRules,
 } from "@/drizzle/schema.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";

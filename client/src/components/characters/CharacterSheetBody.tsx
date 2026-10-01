@@ -5,6 +5,7 @@ import type { SheetCombat } from "./sections/dnd3.5/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 import { getSections } from "./sectionFactory.ts";
 import {
+  type CharacterData,
   CharacterIdentitySection,
   ClassesSection,
   DiagnosticsSection,
@@ -12,7 +13,6 @@ import {
   FeatsSection,
   ReadOnlyEquipmentSection,
   WeaponsSection,
-  type CharacterData,
 } from "./sections/index.ts";
 import { Stack } from "@mui/material";
 import { BONDED_KIND_SLUGS, BONDED_LABEL_BY_KIND } from "@/shared/dnd3.5/bondedKinds.ts";

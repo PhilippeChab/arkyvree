@@ -1,4 +1,4 @@
-import { pgSchema, index, foreignKey, timestamp, uuid, text, uniqueIndex, check, numeric, json, unique, integer, boolean, primaryKey, pgEnum, smallint, customType } from "drizzle-orm/pg-core"
+import { boolean, check, customType, foreignKey, index, integer, json, numeric, pgEnum, pgSchema, primaryKey, smallint, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 const bytea = customType<{ data: Buffer }>({

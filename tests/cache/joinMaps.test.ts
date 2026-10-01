@@ -11,9 +11,9 @@ import { db } from "@/server/database/index.ts";
 import { type SeedContext } from "@/database/seeds/helpers.ts";
 import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
 import {
+  type CachedRulesetData,
   getOrBuildCowData,
   getOrFetchRulesetData,
-  type CachedRulesetData,
 } from "@/server/cache/rulesetCache.ts";
 import { beforeAll, describe, expect, test } from "bun:test";
 import { getSeedCtx } from "@/tests/helpers.ts";

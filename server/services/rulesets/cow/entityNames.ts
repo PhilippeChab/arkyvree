@@ -7,35 +7,6 @@ import { ENTITY_REPOS } from "./constants.ts";
 import type { CowData } from "./cowData.ts";
 
 /**
- * Pre-create check for entity name uniqueness in the ruleset's composed view.
- * Throws a ConflictError if the name is taken in the fork or by a visible
- * inherited entity. Inherited entities hidden by an override (for example a
- * local copy renamed since) don't block the name. Returns the closest hidden
- * ancestor whose local copy was deleted (a tombstone) — the caller should pass
- * this to `repointTombstoneSnapshot` after `Repo.create` so the snapshot
- * follows the new entity.
- */
-export async function assertEntityNameAvailable(
-  tx: Db,
-  rulesetId: string,
-  cow: CowData,
-  entityType: EntityType,
-  name: string,
-): Promise<{ tombstoneAncestorId: string | null }> {
-  const repo = ENTITY_REPOS[entityType];
-  const own = await repo.findOne(tx, { name, rulesetId } as never);
-  if (own) throw new ConflictError("Name already exists in this ruleset");
-
-  const ancestorIds: string[] = [];
-  for (const ancestorId of cow.sourceChain) {
-    const conflict = await repo.findOne(tx, { name, rulesetId: ancestorId } as never);
-    if (conflict) ancestorIds.push(conflict.id);
-  }
-  const tombstoned = await assertAncestorNamesHidden(tx, rulesetId, cow, entityType, ancestorIds);
-  return { tombstoneAncestorId: ancestorIds.find((id) => tombstoned.has(id)) ?? null };
-}
-
-/**
  * Shared by the single and batched pre-create name checks. Throws a
  * ConflictError if any same-name ancestor is visible in the composed view.
  * Returns the hidden ones whose local copy was deleted, leaving a tombstone
@@ -62,6 +33,35 @@ export async function assertAncestorNamesHidden(
     }
   }
   return tombstoned;
+}
+
+/**
+ * Pre-create check for entity name uniqueness in the ruleset's composed view.
+ * Throws a ConflictError if the name is taken in the fork or by a visible
+ * inherited entity. Inherited entities hidden by an override (for example a
+ * local copy renamed since) don't block the name. Returns the closest hidden
+ * ancestor whose local copy was deleted (a tombstone) — the caller should pass
+ * this to `repointTombstoneSnapshot` after `Repo.create` so the snapshot
+ * follows the new entity.
+ */
+export async function assertEntityNameAvailable(
+  tx: Db,
+  rulesetId: string,
+  cow: CowData,
+  entityType: EntityType,
+  name: string,
+): Promise<{ tombstoneAncestorId: string | null }> {
+  const repo = ENTITY_REPOS[entityType];
+  const own = await repo.findOne(tx, { name, rulesetId } as never);
+  if (own) throw new ConflictError("Name already exists in this ruleset");
+
+  const ancestorIds: string[] = [];
+  for (const ancestorId of cow.sourceChain) {
+    const conflict = await repo.findOne(tx, { name, rulesetId: ancestorId } as never);
+    if (conflict) ancestorIds.push(conflict.id);
+  }
+  const tombstoned = await assertAncestorNamesHidden(tx, rulesetId, cow, entityType, ancestorIds);
+  return { tombstoneAncestorId: ancestorIds.find((id) => tombstoned.has(id)) ?? null };
 }
 
 /**

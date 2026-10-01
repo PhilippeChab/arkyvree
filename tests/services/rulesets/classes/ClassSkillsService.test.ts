@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Abilities, EntitySnapshots, KlassLevels, Klasses, KlassSkills, Skills } from "@/server/repositories/index.ts";
+import { Abilities, EntitySnapshots, Klasses, KlassLevels, KlassSkills, Skills } from "@/server/repositories/index.ts";
 import { ClassSkillsMethods } from "@/server/services/rulesets/classes/ClassSkillsService.ts";
 import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset } from "@/tests/helpers.ts";
 

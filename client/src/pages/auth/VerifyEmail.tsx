@@ -6,8 +6,8 @@ import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Box,
-  Typography,
   Link as MuiLink,
+  Typography,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";

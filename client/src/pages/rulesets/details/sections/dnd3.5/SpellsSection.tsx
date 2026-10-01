@@ -1,8 +1,8 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { AptitudeAutocomplete, type Aptitude } from "@/client/src/components/customization/index.ts";
+import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { AptitudeChipsCell, DescriptionCell, RulesetSectionTable, SectionActions, SpellLevelFilter } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Bolt as PowersIcon } from "@mui/icons-material";
 import {
@@ -14,7 +14,7 @@ import { useRulesetSaves, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { SpellFormFields, type SpellFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { type SpellFormData, SpellFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
 const SPELLS_COLUMNS = [

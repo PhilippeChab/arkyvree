@@ -1,7 +1,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { SkillsHooks, PropertyRecord } from "@/server/rulesets/hooks/SkillsHooks.ts";
+import type { PropertyRecord, SkillsHooks } from "@/server/rulesets/hooks/SkillsHooks.ts";
 import {
   Aptitudes,
   Feats,

@@ -5,12 +5,12 @@ import {
   Archive as ArchiveIcon,
   Extension as ExtensionIcon,
   Lock as LockIcon,
-  MenuBook as RulesetIcon,
   Public as PublicIcon,
   Publish as PublishIcon,
+  MenuBook as RulesetIcon,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { ConfirmDialog, CreateDialog, EditDialog, DescriptionField, NameField } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, CreateDialog, DescriptionField, EditDialog, NameField } from "@/client/src/components/common/index.ts";
 import {
   Box,
   Stack,

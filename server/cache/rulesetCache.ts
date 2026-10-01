@@ -5,12 +5,12 @@ import {
   Aptitudes,
   Feats,
   Items,
+  Klasses,
   KlassLevelFeats,
   KlassLevelPowers,
-  KlassLevelSaves,
   KlassLevels,
+  KlassLevelSaves,
   KlassSkills,
-  Klasses,
   Languages,
   Mechanics,
   Modifiers,
@@ -24,12 +24,12 @@ import {
 } from "@/server/repositories/index.ts";
 import {
   type CowData,
-  mergeSiblingRequirements,
   getOrBuildCowData as getOrBuildCowDataFromCow,
+  type IdResolveMap,
   invalidateAllCowData,
   invalidateCowData,
+  mergeSiblingRequirements,
   resolveOverrides,
-  type IdResolveMap,
 } from "@/server/services/rulesets/cow.ts";
 import type {
   Aptitude,
@@ -107,21 +107,6 @@ const rulesetRawDataCache = new DependentCache<RulesetRawData>();
 
 function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
   return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
-}
-
-/**
- * Fetch entities owned by a single ruleset (no ancestor merging).
- * Pins the entry when the ruleset is system-seeded so bases and extensions
- * stay resident for all forks.
- */
-async function getOrFetchRulesetRawData(
-  rulesetId: string,
-  campaignId?: string,
-): Promise<RulesetRawData> {
-  const cacheKey = buildRawCacheKey(rulesetId, campaignId);
-  return rulesetRawDataCache.getOrFetch(cacheKey, [rulesetId], () =>
-    withCowContext(undefined, () => fetchRulesetRawData(rulesetId, campaignId)),
-  );
 }
 
 async function fetchRulesetRawData(
@@ -254,6 +239,21 @@ async function fetchRulesetRawData(
   // are not campaign-scoped).
   return { data, pinned: !!ruleset?.system };
 
+}
+
+/**
+ * Fetch entities owned by a single ruleset (no ancestor merging).
+ * Pins the entry when the ruleset is system-seeded so bases and extensions
+ * stay resident for all forks.
+ */
+async function getOrFetchRulesetRawData(
+  rulesetId: string,
+  campaignId?: string,
+): Promise<RulesetRawData> {
+  const cacheKey = buildRawCacheKey(rulesetId, campaignId);
+  return rulesetRawDataCache.getOrFetch(cacheKey, [rulesetId], () =>
+    withCowContext(undefined, () => fetchRulesetRawData(rulesetId, campaignId)),
+  );
 }
 
 // ──────────────────────────────────────────────────────────────

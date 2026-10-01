@@ -1,5 +1,9 @@
 import { isRecord } from "@/shared/isRecord.ts";
 
+function isBlank(v: unknown): boolean {
+  return v === undefined || v === null || v === "";
+}
+
 /**
  * Deep equality for plain values, with form-friendly normalization:
  * `undefined`, `null`, and `""` are treated as equivalent. Used by
@@ -22,8 +26,4 @@ export function valuesEqual(a: unknown, b: unknown): boolean {
     if (!valuesEqual(a[k], b[k])) return false;
   }
   return true;
-}
-
-function isBlank(v: unknown): boolean {
-  return v === undefined || v === null || v === "";
 }

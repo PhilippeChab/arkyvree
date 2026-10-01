@@ -4,19 +4,19 @@ import { favoredEnemyFeats } from "@/database/packages/dnd35/content/creatureTyp
 import { feat } from "@/database/packages/dnd35/content/requirements.ts";
 import { weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
 import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
-import { autoCompanionGrantModifiers, toCamelCase, expandTemplateDescription, normalizeName } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, expandTemplateDescription, normalizeName, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   escapeTemplate,
-  quote,
-  truncateDesc,
   featLines,
   importLines,
+  type ImportTable,
   listField,
+  quote,
   REQUIREMENT_IMPORTS,
   stringifyFeatModifier,
-  type ImportTable,
   stringifyProperty,
   stringifyRequirement,
+  truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
 
 // ---------------------------------------------------------------------------
@@ -110,63 +110,12 @@ export function featAptitudeSources(ref: FeatReference): Pick<FeatSeed, "name" |
 }
 
 // ---------------------------------------------------------------------------
-// Generate FeatSeed[] TypeScript file from a FeatReference
+// Helpers
 // ---------------------------------------------------------------------------
 
-/** Where each name the generated feats use comes from, in the order the imports are written. */
-const IMPORTS: ImportTable = [
-  ...REQUIREMENT_IMPORTS,
-  ["@/database/packages/dnd35/content/weapons.ts", ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS", "proficiencyRequirements", "weaponProficiencyFeats"]],
-  ["@/database/packages/dnd35/content/skills.ts", ["SKILL_NAMES"]],
-  ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
-  ["@/shared/utils.ts", ["stripSeparators"]],
-  ["@/database/packages/dnd35/content/wizardSchools.ts", ["wizardSchoolFeats"]],
-  ["@/database/packages/dnd35/content/creatureTypes.ts", ["favoredEnemyFeats"]],
-  ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
-];
-
-/** The generated file's code, and the names it uses: what its imports are written from. */
-type FeatFile = { lines: string[]; uses: Set<string> };
-
-export function generateFeatSeeds(ref: FeatReference): string {
-  const { byType, templates, templateNames } = referenceFeats(ref);
-  const file: FeatFile = { lines: [], uses: new Set() };
-
-  for (const [type, feats] of byType) {
-    file.lines.push(`export const ${type.toUpperCase().replace(/\s+/g, "_")}_FEATS: FeatSeed[] = [`);
-    for (const feat of feats) file.lines.push(...featLines(feat, file.uses));
-    file.lines.push(`];`, "");
-  }
-
-  for (const family of templates) TEMPLATE_EMITTERS[family.type](file, family, templateNames);
-
-  // System feats are only generated for the SRD — other books reuse them
-  if (ref._meta.book === "srd") {
-    file.lines.push(`// The system feats (\`coreSystemFeats\`): no reference lists them.`);
-    emitSystemFeats(file, "feats.ts");
-  }
-  return featFileCode(file);
-}
-
-/** The core rules' favored enemy feats file (favoredEnemy.ts). */
-export function generateFavoredEnemyFeats(): string {
-  const file: FeatFile = { lines: [], uses: new Set() };
-  emitSystemFeats(file, "favoredEnemy.ts");
-  return featFileCode(file);
-}
-
-/** The system feats of the core rules' feat file `fileName`. */
-function emitSystemFeats(file: FeatFile, fileName: string): void {
-  for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
-    file.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
-    for (const used of uses) file.uses.add(used);
-  }
-  file.lines.push("");
-}
-
-/** A feats file's code: its imports, written from the names its code uses, then its code. */
-function featFileCode(file: FeatFile): string {
-  return [`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`, ...importLines(file.uses, IMPORTS), "", ...file.lines].join("\n");
+/** The slug of the feat a `feats.<slug>.possessed` check names. */
+function featSlug(req: RequirementCondition): string {
+  return req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -314,10 +263,61 @@ const TEMPLATE_EMITTERS: Record<TemplateType, (file: FeatFile, family: TemplateF
 };
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Generate FeatSeed[] TypeScript file from a FeatReference
 // ---------------------------------------------------------------------------
 
-/** The slug of the feat a `feats.<slug>.possessed` check names. */
-function featSlug(req: RequirementCondition): string {
-  return req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
+/** Where each name the generated feats use comes from, in the order the imports are written. */
+const IMPORTS: ImportTable = [
+  ...REQUIREMENT_IMPORTS,
+  ["@/database/packages/dnd35/content/weapons.ts", ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS", "proficiencyRequirements", "weaponProficiencyFeats"]],
+  ["@/database/packages/dnd35/content/skills.ts", ["SKILL_NAMES"]],
+  ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
+  ["@/shared/utils.ts", ["stripSeparators"]],
+  ["@/database/packages/dnd35/content/wizardSchools.ts", ["wizardSchoolFeats"]],
+  ["@/database/packages/dnd35/content/creatureTypes.ts", ["favoredEnemyFeats"]],
+  ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
+];
+
+/** The generated file's code, and the names it uses: what its imports are written from. */
+type FeatFile = { lines: string[]; uses: Set<string> };
+
+/** The system feats of the core rules' feat file `fileName`. */
+function emitSystemFeats(file: FeatFile, fileName: string): void {
+  for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
+    file.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
+    for (const used of uses) file.uses.add(used);
+  }
+  file.lines.push("");
+}
+
+/** A feats file's code: its imports, written from the names its code uses, then its code. */
+function featFileCode(file: FeatFile): string {
+  return [`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`, ...importLines(file.uses, IMPORTS), "", ...file.lines].join("\n");
+}
+
+export function generateFeatSeeds(ref: FeatReference): string {
+  const { byType, templates, templateNames } = referenceFeats(ref);
+  const file: FeatFile = { lines: [], uses: new Set() };
+
+  for (const [type, feats] of byType) {
+    file.lines.push(`export const ${type.toUpperCase().replace(/\s+/g, "_")}_FEATS: FeatSeed[] = [`);
+    for (const feat of feats) file.lines.push(...featLines(feat, file.uses));
+    file.lines.push(`];`, "");
+  }
+
+  for (const family of templates) TEMPLATE_EMITTERS[family.type](file, family, templateNames);
+
+  // System feats are only generated for the SRD — other books reuse them
+  if (ref._meta.book === "srd") {
+    file.lines.push(`// The system feats (\`coreSystemFeats\`): no reference lists them.`);
+    emitSystemFeats(file, "feats.ts");
+  }
+  return featFileCode(file);
+}
+
+/** The core rules' favored enemy feats file (favoredEnemy.ts). */
+export function generateFavoredEnemyFeats(): string {
+  const file: FeatFile = { lines: [], uses: new Set() };
+  emitSystemFeats(file, "favoredEnemy.ts");
+  return featFileCode(file);
 }

@@ -1,4 +1,4 @@
-import { and, ne, eq, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, lt, ne, or } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 
 import { sessionsInAccount } from "@/drizzle/schema.ts";

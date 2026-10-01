@@ -7,10 +7,10 @@
 
 import type { DomainDefinition, FeatSeed, ItemDef, ModifierSeed, PowerSeed, RaceDefinition, RequirementEntry, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
 import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, ItemReference, MagicItemCategory, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { ALL_WEAPONS, EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, checkedValue, checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { autoCompanionGrantModifiers, checkedValue, checkOneOf, matchesWithPluralVariants, normalizeDescription, normalizeWs, pluralVariants, REFERENCE_DIR, referenceBooks, stripClassSuffix, stripSeparators } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -285,57 +285,6 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
 }
 
 // ---------------------------------------------------------------------------
-// Domain reference → DomainDefinition[]
-// ---------------------------------------------------------------------------
-
-/** A domain of the domains reference, as its mapping and overrides make it. */
-function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
-  const mapping = ref.mapping?.[entry.name];
-  const override = ref.overrides?.[entry.name];
-  const spellSource = override?.spells ?? entry.spells;
-
-  return {
-    name: override?.name ?? entry.name,
-    description: mapping?.description ?? entry.description,
-    ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
-    spells: spellSource.map((s) => ({ name: s.name, level: s.level }))
-      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
-  };
-}
-
-/**
- * A book's domains (of the master domain reference): those whose spells the book, with the core rules, all has, and
- * for an extension, not all the core rules'. Their spells are named as the spell references name them. Also their
- * feat pools' feats, and how many domains were skipped.
- */
-export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[]; skipped: number } {
-  const masterRef = loadReference(join(REFERENCE_DIR, "domains.json"), "domain");
-  const spellNames = (b: string) => {
-    const path = join(REFERENCE_DIR, b, "spells.json");
-    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
-  };
-  // Spell names by their lowercase: the core rules', and the book's
-  const core = spellNames("srd");
-  const available = new Map([...core, ...book === "srd" ? [] : spellNames(book)].map((name) => [name.toLowerCase(), name]));
-  const inCore = new Set(core.map((name) => name.toLowerCase()));
-
-  // Each domain's seed with its scraped entry, which its mapping (its feat pool) is keyed by
-  const all = masterRef.raw.map((entry) => ({ entry, seed: domainSeed(masterRef, entry) }));
-  const kept = all.filter(({ seed }) =>
-    seed.spells.every((s) => available.has(s.name.toLowerCase()))
-    && (book === "srd" || !seed.spells.every((s) => inCore.has(s.name.toLowerCase()))));
-  for (const { seed } of kept) {
-    for (const s of seed.spells) s.name = available.get(s.name.toLowerCase()) ?? s.name;
-  }
-  const keptEntries = new Set(kept.map(({ entry }) => entry));
-  return {
-    seeds: kept.map(({ seed }) => seed),
-    poolFeats: buildDomainFeatPoolSeeds({ ...masterRef, raw: masterRef.raw.filter((entry) => keptEntries.has(entry)) }),
-    skipped: all.length - kept.length,
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Domain feat pool → FeatSeed[] (e.g. War Domain Weapon feats)
 // ---------------------------------------------------------------------------
 
@@ -392,6 +341,57 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
 }
 
 // ---------------------------------------------------------------------------
+// Domain reference → DomainDefinition[]
+// ---------------------------------------------------------------------------
+
+/** A domain of the domains reference, as its mapping and overrides make it. */
+function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
+  const mapping = ref.mapping?.[entry.name];
+  const override = ref.overrides?.[entry.name];
+  const spellSource = override?.spells ?? entry.spells;
+
+  return {
+    name: override?.name ?? entry.name,
+    description: mapping?.description ?? entry.description,
+    ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
+    spells: spellSource.map((s) => ({ name: s.name, level: s.level }))
+      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
+  };
+}
+
+/**
+ * A book's domains (of the master domain reference): those whose spells the book, with the core rules, all has, and
+ * for an extension, not all the core rules'. Their spells are named as the spell references name them. Also their
+ * feat pools' feats, and how many domains were skipped.
+ */
+export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[]; skipped: number } {
+  const masterRef = loadReference(join(REFERENCE_DIR, "domains.json"), "domain");
+  const spellNames = (b: string) => {
+    const path = join(REFERENCE_DIR, b, "spells.json");
+    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
+  };
+  // Spell names by their lowercase: the core rules', and the book's
+  const core = spellNames("srd");
+  const available = new Map([...core, ...book === "srd" ? [] : spellNames(book)].map((name) => [name.toLowerCase(), name]));
+  const inCore = new Set(core.map((name) => name.toLowerCase()));
+
+  // Each domain's seed with its scraped entry, which its mapping (its feat pool) is keyed by
+  const all = masterRef.raw.map((entry) => ({ entry, seed: domainSeed(masterRef, entry) }));
+  const kept = all.filter(({ seed }) =>
+    seed.spells.every((s) => available.has(s.name.toLowerCase()))
+    && (book === "srd" || !seed.spells.every((s) => inCore.has(s.name.toLowerCase()))));
+  for (const { seed } of kept) {
+    for (const s of seed.spells) s.name = available.get(s.name.toLowerCase()) ?? s.name;
+  }
+  const keptEntries = new Set(kept.map(({ entry }) => entry));
+  return {
+    seeds: kept.map(({ seed }) => seed),
+    poolFeats: buildDomainFeatPoolSeeds({ ...masterRef, raw: masterRef.raw.filter((entry) => keptEntries.has(entry)) }),
+    skipped: all.length - kept.length,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Wizard school reference → WizardSchoolDefinition[]
 // ---------------------------------------------------------------------------
 
@@ -407,6 +407,11 @@ export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchool
 // Race reference → RaceDefinition[]
 // ---------------------------------------------------------------------------
 
+/** The races a race reference's overrides skip, which the seed leaves out. */
+export function skippedRaces(ref: RaceReference): Set<string> {
+  return new Set(ref.raw.filter(({ name }) => ref.overrides?.[name]?.skip).map(({ name }) => name));
+}
+
 /**
  * The races a race reference seeds (those its overrides don't skip), each with its override and its size, checked:
  * the override's, else as scraped. Generation throws a size's problem, and `parser:validate` reports it.
@@ -417,11 +422,6 @@ export function seededRaces(ref: RaceReference) {
     const override = ref.overrides?.[entry.name];
     return { name: entry.name, entry, override, size: checkOneOf(override?.size ?? entry.size, SIZE_OPTIONS, `${entry.name}'s size`) };
   });
-}
-
-/** The races a race reference's overrides skip, which the seed leaves out. */
-export function skippedRaces(ref: RaceReference): Set<string> {
-  return new Set(ref.raw.filter(({ name }) => ref.overrides?.[name]?.skip).map(({ name }) => name));
 }
 
 export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {
@@ -499,97 +499,6 @@ export function loadBonusFeatClassLevels(book: string): Map<string, { classSlug:
     }
   }
   return map;
-}
-
-// ---------------------------------------------------------------------------
-// Aptitude collection
-// ---------------------------------------------------------------------------
-
-/** A book's aptitudes: its feats' (`feats`, and its classes'), its classes' and spell lists', its domains' feat pools. */
-export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[], book: string): string[] {
-  const names = new Set<string>();
-
-  // Collect all feats: standalone feats + class feature feats from reference JSONs
-  const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [...feats];
-  for (const { ref } of classReferences(book)) {
-    allFeats.push(...buildClassFeatSeeds(ref));
-    if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
-    if (ref.mapping.spells) names.add(`${ref.raw.name} Spells`);
-
-    // From detected bonusFeatLists
-    if (ref.detected?.bonusFeatLists) {
-      for (const list of ref.detected.bonusFeatLists) names.add(list.aptitude);
-    }
-  }
-
-  // From feat aptitudes
-  for (const feat of allFeats) {
-    for (const apt of feat.aptitudes) names.add(apt);
-  }
-
-  // From feat modifier targets referencing aptitudes
-  for (const feat of allFeats) {
-    for (const mod of feat.modifiers ?? []) {
-      const slugMatch = mod.target.match(/^aptitudes\.([^.]+)\./);
-      if (!slugMatch) continue;
-      const slug = slugMatch[1];
-      if ([...names].some((n) => stripSeparators(n) === slug)) continue;
-      const featParenMatch = feat.name.match(/^(.+?)\s*\(([^)]+)\)$/);
-      if (featParenMatch) {
-        const candidate = `${featParenMatch[2]} ${featParenMatch[1]}`;
-        if (stripSeparators(candidate) === slug) names.add(candidate);
-        else if (stripSeparators(featParenMatch[1]) === slug) names.add(featParenMatch[1]);
-      }
-    }
-  }
-
-  // Domain aptitudes: the book's domains, and their feat pools'
-  const domains = bookDomainSeeds(book);
-  if (domains.seeds.length > 0) names.add("Cleric Domain");
-  for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
-
-  // Wizard school aptitudes
-  const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
-  if (existsSync(wsRefPath)) {
-    const wsRef = loadReference(wsRefPath, "wizardSchool");
-    for (const school of buildWizardSchoolSeeds(wsRef)) {
-      names.add(`${school.name} Specialist Spells`);
-    }
-  }
-
-  // For extension books: collect aptitudes referenced by this book's spells
-  // so we can keep sibling spell list aptitudes (each extension creates its own copy).
-  const spellAptitudes = new Set<string>();
-  if (book !== "srd") {
-    const spellRefPath = join(REFERENCE_DIR, book, "spells.json");
-    if (existsSync(spellRefPath)) {
-      const spellRef = loadReference(spellRefPath, "spell");
-      const { spells } = buildSpellSeeds(spellRef, book);
-      for (const spell of spells) {
-        for (const apt of spell.aptitudes) spellAptitudes.add(apt);
-      }
-    }
-  }
-
-  // Exclude aptitudes created by other books (class features + spell lists).
-  // For sibling extension spell lists, keep them if this book's spells reference them.
-  for (const other of referenceBooks()) {
-    if (other === book) continue;
-    const isSibling = other !== "srd" && book !== "srd";
-    for (const { ref } of classReferences(other)) {
-      if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
-      const spellApt = ref.mapping.spells ? `${ref.raw.name} Spells` : null;
-      if (spellApt) {
-        if (isSibling && spellAptitudes.has(spellApt)) {
-          names.add(spellApt);
-        } else {
-          names.delete(spellApt);
-        }
-      }
-    }
-  }
-
-  return [...names].sort();
 }
 
 // ---------------------------------------------------------------------------
@@ -876,6 +785,97 @@ export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: 
   spells.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
 
   return { spells };
+}
+
+// ---------------------------------------------------------------------------
+// Aptitude collection
+// ---------------------------------------------------------------------------
+
+/** A book's aptitudes: its feats' (`feats`, and its classes'), its classes' and spell lists', its domains' feat pools. */
+export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[], book: string): string[] {
+  const names = new Set<string>();
+
+  // Collect all feats: standalone feats + class feature feats from reference JSONs
+  const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [...feats];
+  for (const { ref } of classReferences(book)) {
+    allFeats.push(...buildClassFeatSeeds(ref));
+    if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
+    if (ref.mapping.spells) names.add(`${ref.raw.name} Spells`);
+
+    // From detected bonusFeatLists
+    if (ref.detected?.bonusFeatLists) {
+      for (const list of ref.detected.bonusFeatLists) names.add(list.aptitude);
+    }
+  }
+
+  // From feat aptitudes
+  for (const feat of allFeats) {
+    for (const apt of feat.aptitudes) names.add(apt);
+  }
+
+  // From feat modifier targets referencing aptitudes
+  for (const feat of allFeats) {
+    for (const mod of feat.modifiers ?? []) {
+      const slugMatch = mod.target.match(/^aptitudes\.([^.]+)\./);
+      if (!slugMatch) continue;
+      const slug = slugMatch[1];
+      if ([...names].some((n) => stripSeparators(n) === slug)) continue;
+      const featParenMatch = feat.name.match(/^(.+?)\s*\(([^)]+)\)$/);
+      if (featParenMatch) {
+        const candidate = `${featParenMatch[2]} ${featParenMatch[1]}`;
+        if (stripSeparators(candidate) === slug) names.add(candidate);
+        else if (stripSeparators(featParenMatch[1]) === slug) names.add(featParenMatch[1]);
+      }
+    }
+  }
+
+  // Domain aptitudes: the book's domains, and their feat pools'
+  const domains = bookDomainSeeds(book);
+  if (domains.seeds.length > 0) names.add("Cleric Domain");
+  for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
+
+  // Wizard school aptitudes
+  const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
+  if (existsSync(wsRefPath)) {
+    const wsRef = loadReference(wsRefPath, "wizardSchool");
+    for (const school of buildWizardSchoolSeeds(wsRef)) {
+      names.add(`${school.name} Specialist Spells`);
+    }
+  }
+
+  // For extension books: collect aptitudes referenced by this book's spells
+  // so we can keep sibling spell list aptitudes (each extension creates its own copy).
+  const spellAptitudes = new Set<string>();
+  if (book !== "srd") {
+    const spellRefPath = join(REFERENCE_DIR, book, "spells.json");
+    if (existsSync(spellRefPath)) {
+      const spellRef = loadReference(spellRefPath, "spell");
+      const { spells } = buildSpellSeeds(spellRef, book);
+      for (const spell of spells) {
+        for (const apt of spell.aptitudes) spellAptitudes.add(apt);
+      }
+    }
+  }
+
+  // Exclude aptitudes created by other books (class features + spell lists).
+  // For sibling extension spell lists, keep them if this book's spells reference them.
+  for (const other of referenceBooks()) {
+    if (other === book) continue;
+    const isSibling = other !== "srd" && book !== "srd";
+    for (const { ref } of classReferences(other)) {
+      if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
+      const spellApt = ref.mapping.spells ? `${ref.raw.name} Spells` : null;
+      if (spellApt) {
+        if (isSibling && spellAptitudes.has(spellApt)) {
+          names.add(spellApt);
+        } else {
+          names.delete(spellApt);
+        }
+      }
+    }
+  }
+
+  return [...names].sort();
 }
 
 // ---------------------------------------------------------------------------

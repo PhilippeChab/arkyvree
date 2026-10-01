@@ -11,6 +11,9 @@ import {
 
 type Visibility = "Private" | "Public" | "Partial";
 
+const link = (userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") =>
+  PlayerCharactersMethods.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
+
 /** A new user playing in the campaign, with a character of theirs linked with `visibility`. */
 async function joinWithCharacter(campaignId: string, visibility: Visibility) {
   const { user } = await createTestUser("player");
@@ -19,9 +22,6 @@ async function joinWithCharacter(campaignId: string, visibility: Visibility) {
   await link(user.id, campaignId, character.id, visibility);
   return { user, character };
 }
-
-const link = (userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") =>
-  PlayerCharactersMethods.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
 
 const list = (userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) =>
   PlayerCharactersMethods.getCampaignCharacters(makeSession(userId), campaignId, {}, pagination);

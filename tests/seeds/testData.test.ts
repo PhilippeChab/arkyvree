@@ -10,8 +10,8 @@ import {
   languagesInCharacter,
   levelFeatsInCharacter,
   levelPowersInCharacter,
-  levelSkillsInCharacter,
   levelsInCharacter,
+  levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";

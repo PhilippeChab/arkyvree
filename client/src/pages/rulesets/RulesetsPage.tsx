@@ -1,34 +1,34 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   BlankState,
+  CREATED_SORTS,
+  DiceSpinner,
+  type FilterOption,
   InfoPill,
   ListCard,
   ListCardGrid,
   LoadMoreButton,
+  NoMatchesState,
   PageHeader,
   PageTransition,
   SearchBar,
-  DiceSpinner,
-  type FilterOption,
   type SortOption,
-  CREATED_SORTS,
   UPDATED_SORTS,
-  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
-import { usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
+import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
 import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { rulesetDetailQuery, rulesetListQuery, type RulesetListFilters } from "@/client/src/lib/queries.ts";
+import { rulesetDetailQuery, type RulesetListFilters, rulesetListQuery } from "@/client/src/lib/queries.ts";
 import {
-  ContentCopy as ForkIcon,
-  Extension as ExtensionIcon,
-  Lock as LockIcon,
   MenuBook as BookIcon,
+  Extension as ExtensionIcon,
+  ContentCopy as ForkIcon,
+  Lock as LockIcon,
   Public as PublicIcon,
-  Star as StarIcon,
   StarBorder as StarBorderIcon,
+  Star as StarIcon,
 } from "@mui/icons-material";
 import {
   Alert,

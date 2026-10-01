@@ -3,15 +3,15 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
+  ActionMenuItem,
   DetailPageHeader,
   DiceSpinner,
   FaqHelpIcon,
   Modal,
-  PageTransition,
-  SectionTabs,
-  type SectionTab,
   PageError,
-  ActionMenuItem,
+  PageTransition,
+  type SectionTab,
+  SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import {
   ArchiveRulesetDialog,
@@ -34,29 +34,29 @@ import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
-  AccessibilityNew as ClassesIcon,
   FitnessCenter as AbilitiesIcon,
+  Stars as AptitudesIcon,
   Archive as ArchiveIcon,
+  AccessibilityNew as ClassesIcon,
   CompareArrows as CompareArrowsIcon,
-  Bolt as PowersIcon,
-  Construction as ItemsIcon,
-  ContentCopy as ForkIcon,
+  Group as ContributorsIcon,
   Edit as EditIcon,
   Extension as ExtensionIcon,
+  Spoke as FeatsIcon,
+  ContentCopy as ForkIcon,
+  Construction as ItemsIcon,
+  Translate as LanguagesIcon,
   Gavel as MechanicsIcon,
+  Bolt as PowersIcon,
   Lock as PrivateIcon,
   Public as PublicIcon,
-  Star as StarIcon,
-  StarBorder as StarBorderIcon,
-  People as RacesIcon,
-  Psychology as SkillsIcon,
   Publish as PublishIcon,
-  Spoke as FeatsIcon,
-  Unarchive as UnarchiveIcon,
+  People as RacesIcon,
   Shield as SavesIcon,
-  Stars as AptitudesIcon,
-  Translate as LanguagesIcon,
-  Group as ContributorsIcon,
+  Psychology as SkillsIcon,
+  StarBorder as StarBorderIcon,
+  Star as StarIcon,
+  Unarchive as UnarchiveIcon,
 } from "@mui/icons-material";
 import {
   Alert,

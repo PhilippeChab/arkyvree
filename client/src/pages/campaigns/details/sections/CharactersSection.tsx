@@ -4,18 +4,18 @@ import { oneOf } from "@/client/src/lib/oneOf.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import {
   BlankState,
-  faqTooltip,
-  Modal,
-  SearchBar,
-  StyledCard,
   DiceSpinner,
+  faqTooltip,
   LoadMoreButton,
-  ScrollSafeListbox,
-  SectionContent,
+  Modal,
   NoMatchesState,
+  ScrollSafeListbox,
+  SearchBar,
+  SectionContent,
+  StyledCard,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useAttachments, useDebouncedValue, useListboxQuery, usePrefetch, useStaggerAnimation, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAttachments, useDebouncedValue, useListboxQuery, usePrefetch, useSearchParam, useStaggerAnimation } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {

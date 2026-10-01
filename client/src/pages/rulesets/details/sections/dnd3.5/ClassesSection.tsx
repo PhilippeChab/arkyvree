@@ -1,9 +1,9 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import { ClassFormFields, type ClassFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { SearchBar, CreateDialog, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
-import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { AccessibilityNew as ClassesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";

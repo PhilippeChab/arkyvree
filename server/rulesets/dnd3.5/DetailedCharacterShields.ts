@@ -1,5 +1,5 @@
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
-import { ARMOR_CHECK_PENALTY, ITEM_MASTERWORK, SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE, ITEM_SPELL_FAILURE } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { ARMOR_CHECK_PENALTY, ITEM_MASTERWORK, ITEM_SPELL_FAILURE, SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Item, Property } from "@/shared/relations.ts";
 import { deriveSegmentLabels, stripSeparators } from "@/shared/utils.ts";

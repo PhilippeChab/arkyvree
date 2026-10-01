@@ -3,12 +3,12 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
+  type DialogProps,
   DialogTitle,
   Stack,
-  type DialogProps,
 } from "@mui/material";
 import { type ReactNode } from "react";
-import { type UseFormReturn, type FieldValues } from "react-hook-form";
+import { type FieldValues, type UseFormReturn } from "react-hook-form";
 
 import { DiceSpinner } from "@/client/src/components/common/DiceSpinner.tsx";
 import { FormDialog } from "@/client/src/components/common/FormDialog.tsx";

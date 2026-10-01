@@ -3,20 +3,20 @@ import {
   BlankState,
   CLICKABLE_SX,
   clickableProps,
+  CREATED_SORTS,
+  DiceSpinner,
   LoadMoreButton,
+  NoMatchesState,
   PageHeader,
   PageTransition,
   SearchBar,
-  DiceSpinner,
   type SortOption,
-  CREATED_SORTS,
-  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import {
   isNavigableTarget,
+  useListParams,
   useOpenActivityTarget,
   usePageTitle,
-  useListParams,
 } from "@/client/src/hooks/index.ts";
 import {
   formatActivityDate,

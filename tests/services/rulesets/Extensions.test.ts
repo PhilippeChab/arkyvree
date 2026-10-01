@@ -28,6 +28,11 @@ async function seededRuleset(name: string) {
   return (await Rulesets.findOne(db, { name }))!;
 }
 
+async function forkBase(session: Session, values: { private?: boolean } = {}) {
+  const { rulesetId } = await getSeedCtx();
+  return await RulesetsMethods.forkRuleset(session, rulesetId, { name: `Fork ${uniqueId()}`, private: false, ...values });
+}
+
 /** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */
 async function setupFork() {
   const { user, session } = await createTestUser();
@@ -36,11 +41,6 @@ async function setupFork() {
   const extension = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
   const draft = await forkBase(session);
   return { user, session, base, extension, draft };
-}
-
-async function forkBase(session: Session, values: { private?: boolean } = {}) {
-  const { rulesetId } = await getSeedCtx();
-  return await RulesetsMethods.forkRuleset(session, rulesetId, { name: `Fork ${uniqueId()}`, private: false, ...values });
 }
 
 /** A published public extension of the seeded base (a system one when `userId` is null). */

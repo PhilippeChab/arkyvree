@@ -2,8 +2,8 @@ import type { Db } from "@/server/database/index.ts";
 import {
   KlassLevelFeats,
   KlassLevelPowers,
-  KlassLevelSaves,
   KlassLevels,
+  KlassLevelSaves,
   KlassSkills,
   Modifiers,
   Properties,

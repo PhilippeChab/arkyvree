@@ -3,8 +3,8 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
-import { hashEntity, type EntityType, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
-import { CUSTOMIZATION_REPOS, ENTITY_REPOS, ENTITY_TYPE_TO_SOURCE_TYPE, type CustomizationKind, type EntityWithId } from "./constants.ts";
+import { type EntityType, hashEntity, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
+import { CUSTOMIZATION_REPOS, type CustomizationKind, ENTITY_REPOS, ENTITY_TYPE_TO_SOURCE_TYPE, type EntityWithId } from "./constants.ts";
 import { copyEntityCustomizations, copyEntityRelationships } from "./copy.ts";
 import { fetchEntityCustomizations, fetchKlassLevelCustomizations, fetchKlassRelationships } from "./customizations.ts";
 import { buildOverrideMap, buildSourceChain } from "./overrideMap.ts";
@@ -146,6 +146,7 @@ export async function cowCustomizationForMutation(
   customizationId: string,
   customizationIds: Map<string, string> = new Map(),
 ): Promise<{ resolvedEntityId: string; resolvedCustomizationId: string }> {
+  // oxlint-disable-next-line no-use-before-define -- a modifier's requirements COW the modifier through this function
   const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, entityId, customizationIds);
   const resolvedCustomizationId = resolveCustomizationId(entityId, resolvedEntityId, customizationId, customizationIds, kind);
   if (resolvedCustomizationId === customizationId

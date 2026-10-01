@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import { answerInvite, apiResponse, createCharacter, inviteContributor, openContributors, openSharedCharacter, signedInPage } from '@/tests/e2e/helpers.ts';
 
 test.describe('Character contributors', () => {

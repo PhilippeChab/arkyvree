@@ -1,24 +1,24 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   BlankState,
+  CREATED_SORTS,
+  DiceSpinner,
+  type FilterOption,
   ListCard,
   ListCardGrid,
   LoadMoreButton,
+  NAME_SORTS,
+  NoMatchesState,
   PageActionButton,
   PageHeader,
   PageTransition,
   SearchBar,
-  type FilterOption,
   type SortOption,
-  DiceSpinner,
-  CREATED_SORTS,
-  NAME_SORTS,
   UPDATED_SORTS,
-  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
-import { useAttachments, usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
+import { useAttachments, useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { characterDetailQuery, characterListQuery, type CharacterListFilters } from "@/client/src/lib/queries.ts";
+import { characterDetailQuery, type CharacterListFilters, characterListQuery } from "@/client/src/lib/queries.ts";
 import { CreateCharacterDialog } from "@/client/src/pages/characters/components/index.ts";
 import {
   Archive as ArchiveIcon,

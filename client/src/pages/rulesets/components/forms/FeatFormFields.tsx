@@ -1,8 +1,8 @@
 import { nameRules } from "@/client/src/lib/validation.ts";
 import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import {
-  AptitudesAutocomplete,
   type Aptitude,
+  AptitudesAutocomplete,
 } from "@/client/src/components/customization/index.ts";
 import type { UseFormReturn } from "react-hook-form";
 import type { InferRequestType } from "hono/client";

@@ -4,6 +4,57 @@ import { sectionElements } from "@/database/packages/dnd35-from-parser/tools/scr
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
+// Spell name normalization (srd.dndtools.org → dndtools.net conventions)
+// ---------------------------------------------------------------------------
+
+const NAMED_SPELL_PREFIXES: Record<string, string> = {
+  "Grasping Hand": "Bigby's Grasping Hand",
+  "Clenched Fist": "Bigby's Clenched Fist",
+  "Crushing Hand": "Bigby's Crushing Hand",
+  "Interposing Hand": "Bigby's Interposing Hand",
+  "Forceful Hand": "Bigby's Forceful Hand",
+  "Instant Summons": "Drawmij's Instant Summons",
+  "Secret Chest": "Leomund's Secret Chest",
+  "Tiny Hut": "Leomund's Tiny Hut",
+  "Secure Shelter": "Leomund's Secure Shelter",
+  "Trap": "Leomund's Trap",
+  "Acid Arrow": "Melf's Acid Arrow",
+  "Mage's Disjunction": "Mordenkainen's Disjunction",
+  "Faithful Hound": "Mordenkainen's Faithful Hound",
+  "Magnificent Mansion": "Mordenkainen's Magnificent Mansion",
+  "Private Sanctum": "Mordenkainen's Private Sanctum",
+  "Magic Aura": "Nystul's Magic Aura",
+  "Irresistible Dance": "Otto's Irresistible Dance",
+  "Telepathic Bond": "Rary's Telepathic Bond",
+  "Hideous Laughter": "Tasha's Hideous Laughter",
+  "Transformation": "Tenser's Transformation",
+  "Floating Disk": "Tenser's Floating Disk",
+};
+
+function normalizeDomainSpellName(name: string): string {
+  // Normalize Unicode quotes to ASCII
+  let normalized = name.replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-");
+
+  // Strip trailing daggers (e.g. "Animal Trance†")
+  normalized = normalized.replace(/[†*]+$/, "").trim();
+
+  // Named spell prefixes (e.g. "Grasping Hand" → "Bigby's Grasping Hand")
+  if (NAMED_SPELL_PREFIXES[normalized]) return NAMED_SPELL_PREFIXES[normalized];
+
+  // "Greater/Lesser/Mass X" → "X, Greater/Lesser/Mass"
+  const prefixMatch = normalized.match(/^(Greater|Lesser|Mass)\s+(.+)$/i);
+  if (prefixMatch) {
+    const [, prefix, rest] = prefixMatch;
+    return `${rest}, ${prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase()}`;
+  }
+
+  // "Power Word, X" → "Power Word X" (remove comma)
+  normalized = normalized.replace(/^Power Word,\s*/i, "Power Word ");
+
+  return normalized;
+}
+
+// ---------------------------------------------------------------------------
 // Domain HTML Parser — srd.dndtools.org's page of every domain
 //
 //   <a id="air-domain"></a>
@@ -136,55 +187,4 @@ export function parseDomainsHtml(
     },
     raw: domains,
   };
-}
-
-// ---------------------------------------------------------------------------
-// Spell name normalization (srd.dndtools.org → dndtools.net conventions)
-// ---------------------------------------------------------------------------
-
-const NAMED_SPELL_PREFIXES: Record<string, string> = {
-  "Grasping Hand": "Bigby's Grasping Hand",
-  "Clenched Fist": "Bigby's Clenched Fist",
-  "Crushing Hand": "Bigby's Crushing Hand",
-  "Interposing Hand": "Bigby's Interposing Hand",
-  "Forceful Hand": "Bigby's Forceful Hand",
-  "Instant Summons": "Drawmij's Instant Summons",
-  "Secret Chest": "Leomund's Secret Chest",
-  "Tiny Hut": "Leomund's Tiny Hut",
-  "Secure Shelter": "Leomund's Secure Shelter",
-  "Trap": "Leomund's Trap",
-  "Acid Arrow": "Melf's Acid Arrow",
-  "Mage's Disjunction": "Mordenkainen's Disjunction",
-  "Faithful Hound": "Mordenkainen's Faithful Hound",
-  "Magnificent Mansion": "Mordenkainen's Magnificent Mansion",
-  "Private Sanctum": "Mordenkainen's Private Sanctum",
-  "Magic Aura": "Nystul's Magic Aura",
-  "Irresistible Dance": "Otto's Irresistible Dance",
-  "Telepathic Bond": "Rary's Telepathic Bond",
-  "Hideous Laughter": "Tasha's Hideous Laughter",
-  "Transformation": "Tenser's Transformation",
-  "Floating Disk": "Tenser's Floating Disk",
-};
-
-function normalizeDomainSpellName(name: string): string {
-  // Normalize Unicode quotes to ASCII
-  let normalized = name.replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-");
-
-  // Strip trailing daggers (e.g. "Animal Trance†")
-  normalized = normalized.replace(/[†*]+$/, "").trim();
-
-  // Named spell prefixes (e.g. "Grasping Hand" → "Bigby's Grasping Hand")
-  if (NAMED_SPELL_PREFIXES[normalized]) return NAMED_SPELL_PREFIXES[normalized];
-
-  // "Greater/Lesser/Mass X" → "X, Greater/Lesser/Mass"
-  const prefixMatch = normalized.match(/^(Greater|Lesser|Mass)\s+(.+)$/i);
-  if (prefixMatch) {
-    const [, prefix, rest] = prefixMatch;
-    return `${rest}, ${prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase()}`;
-  }
-
-  // "Power Word, X" → "Power Word X" (remove comma)
-  normalized = normalized.replace(/^Power Word,\s*/i, "Power Word ");
-
-  return normalized;
 }

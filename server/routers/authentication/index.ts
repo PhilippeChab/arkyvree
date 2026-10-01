@@ -1,11 +1,11 @@
-import { respond, errorResponse } from "@/server/routers/respond.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
 import { Hono } from "hono";
 import {
   authEmailRateLimit,
   authRateLimit,
   authSessionRateLimit,
-  denyDemoUser,
   deleteSessionCookie,
+  denyDemoUser,
   getSessionCookie,
   sessionMiddleware,
   setSessionCookie,

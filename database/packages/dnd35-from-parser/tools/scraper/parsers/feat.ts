@@ -4,6 +4,28 @@ import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+
+const KNOWN_LABELS = new Set([
+  "prerequisite", "prerequisites", "benefit", "benefits",
+  "normal", "special",
+]);
+
+function isKnownLabel(text: string): boolean {
+  return KNOWN_LABELS.has(text.toLowerCase());
+}
+
+function normalizeFeatType(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes("fighter")) return "fighter";
+  if (lower.includes("metamagic")) return "metamagic";
+  if (lower.includes("item creation")) return "item creation";
+  return lower;
+}
+
+// ---------------------------------------------------------------------------
 // Feat HTML Parser — dndtools.net structure
 //
 // Listing page:
@@ -90,27 +112,5 @@ export function parseFeatDetailHtml(
     ...(sections["normal"] ? { normal: sections["normal"] } : {}),
     ...(sections["special"] ? { special: sections["special"] } : {}),
   };
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-
-const KNOWN_LABELS = new Set([
-  "prerequisite", "prerequisites", "benefit", "benefits",
-  "normal", "special",
-]);
-
-function isKnownLabel(text: string): boolean {
-  return KNOWN_LABELS.has(text.toLowerCase());
-}
-
-function normalizeFeatType(raw: string): string {
-  const lower = raw.toLowerCase();
-  if (lower.includes("fighter")) return "fighter";
-  if (lower.includes("metamagic")) return "metamagic";
-  if (lower.includes("item creation")) return "item creation";
-  return lower;
 }
 

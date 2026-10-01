@@ -11,20 +11,20 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   AccountCircle,
+  MenuBook as BookIcon,
+  RocketLaunch as ChangelogIcon,
   ChevronLeft,
   ChevronRight,
   Dashboard as DashboardIcon,
-  Favorite as SupportIcon,
   HelpOutlined as FaqIcon,
   History as HistoryIcon,
-  RocketLaunch as ChangelogIcon,
-  Notifications as NotificationsIcon,
   Logout,
   Map as MapIcon,
   Menu as MenuIcon,
-  MenuBook as BookIcon,
+  Notifications as NotificationsIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
+  Favorite as SupportIcon,
 } from "@mui/icons-material";
 import {
   AppBar,

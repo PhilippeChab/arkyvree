@@ -1,5 +1,5 @@
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset, type CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {

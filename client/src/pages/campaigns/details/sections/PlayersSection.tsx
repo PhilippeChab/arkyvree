@@ -1,7 +1,7 @@
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
-import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton, SectionContent, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
+import { BlankState, ConfirmDialog, DiceSpinner, LoadMoreButton, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import {
   AddPlayerDialog,
   type CampaignPlayer,
@@ -20,13 +20,13 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Add as AddIcon,
-  Close as RevokeIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  ExitToApp as LeaveIcon,
   AdminPanelSettings as GMIcon,
+  ExitToApp as LeaveIcon,
   HourglassEmpty as PendingIcon,
   Person as PlayerIcon,
+  Close as RevokeIcon,
   PersonOff as UnassignedIcon,
 } from "@mui/icons-material";
 import {
@@ -52,7 +52,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";

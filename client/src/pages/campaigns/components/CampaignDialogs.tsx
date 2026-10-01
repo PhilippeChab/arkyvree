@@ -5,8 +5,8 @@ import {
   BaseRulesetAlert,
   ConfirmDialog,
   CreateDialog,
-  EditDialog,
   DescriptionField,
+  EditDialog,
   NameField,
   RulesetPicker,
   SelectField,
@@ -14,11 +14,11 @@ import {
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import {
-  AdminPanelSettings as GMIcon,
   Edit as EditIcon,
+  AdminPanelSettings as GMIcon,
   ExitToApp as LeaveIcon,
-  Person as PersonIcon,
   PersonAdd as PersonAddIcon,
+  Person as PersonIcon,
   PersonRemove as PersonRemoveIcon,
   Send as SendIcon,
 } from "@mui/icons-material";
@@ -29,7 +29,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { useState, type ElementType } from "react";
+import { type ElementType, useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
 

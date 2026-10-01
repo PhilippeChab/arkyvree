@@ -15,11 +15,11 @@ import {
   WEAPON_CRITICAL_MULTIPLIER,
   WEAPON_CRITICAL_RANGE,
   WEAPON_FAMILY,
+  WEAPON_FINESSABLE,
   WEAPON_MIGHTY,
+  WEAPON_PROFICIENCY,
   WEAPON_RANGE,
   WEAPON_REACH,
-  WEAPON_PROFICIENCY,
-  WEAPON_FINESSABLE,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";

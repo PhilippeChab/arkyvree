@@ -1,4 +1,4 @@
-import { respond, errorResponse } from "@/server/routers/respond.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import CampaignsService from "@/server/services/CampaignsService.ts";

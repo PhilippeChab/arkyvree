@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import { apiResponse, createCampaign, createCharacter, filterList, openActionsMenu, signIn } from '@/tests/e2e/helpers.ts';
 
 test.describe('Campaigns', () => {

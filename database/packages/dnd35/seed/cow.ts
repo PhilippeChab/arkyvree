@@ -56,6 +56,16 @@ async function cowFeat(db: Db, featId: string, rulesetId: string) {
   return copy.id;
 }
 
+/** Adds a power to the spell lists another one is in, at the same levels. */
+async function copySpellLists(db: Db, fromId: string, toId: string) {
+  const links = await db
+    .select({ aptitudeId: powersAptitudesInRules.aptitudeId, level: powersAptitudesInRules.level, aptitude: aptitudesInRules.name })
+    .from(powersAptitudesInRules)
+    .innerJoin(aptitudesInRules, eq(aptitudesInRules.id, powersAptitudesInRules.aptitudeId))
+    .where(eq(powersAptitudesInRules.powerId, fromId));
+  await linkPower(db, toId, links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)));
+}
+
 /**
  * Copies an inherited power into the ruleset, with its customizations and its spell lists ("X Spells" aptitudes):
  * the copy hides the original in the rulesets that extend this one, so it keeps the original's lists.
@@ -71,37 +81,11 @@ async function cowPower(db: Db, powerId: string, rulesetId: string) {
   return copy.id;
 }
 
-/** Adds a power to the spell lists another one is in, at the same levels. */
-async function copySpellLists(db: Db, fromId: string, toId: string) {
-  const links = await db
-    .select({ aptitudeId: powersAptitudesInRules.aptitudeId, level: powersAptitudesInRules.level, aptitude: aptitudesInRules.name })
-    .from(powersAptitudesInRules)
-    .innerJoin(aptitudesInRules, eq(aptitudesInRules.id, powersAptitudesInRules.aptitudeId))
-    .where(eq(powersAptitudesInRules.powerId, fromId));
-  await linkPower(db, toId, links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)));
-}
-
 /** The ruleset's own power named so, copying the inherited one first when it has none. */
 export async function ownPower(db: Db, ctx: SeedContext, name: string): Promise<string | undefined> {
   const inheritedId = ctx.inheritedPowerMap[name];
   if (!ctx.powerMap[name] && inheritedId) ctx.powerMap[name] = await cowPower(db, inheritedId, ctx.rulesetId);
   return ctx.powerMap[name];
-}
-
-/**
- * Copies the inherited feats an extension changes: each is taken in more aptitudes, and more class levels qualify
- * for it (added to its `or` of requirements). Its classes then grant the copy.
- */
-export async function cowFeatsIntoExtension(db: Db, ctx: SeedContext, entries: CowFeatEntry[]) {
-  for (const entry of entries) {
-    const featId = ctx.featMap[entry.feat];
-    if (!featId) continue;
-    const copyId = await cowFeat(db, featId, ctx.rulesetId);
-    ctx.featMap[entry.feat] = copyId;
-    await addClassLevelAlternatives(db, copyId, entry.requirements);
-    await insertAll(db, featsAptitudesInRules, entry.aptitudes.filter((aptitude) => ctx.aptMap[aptitude])
-      .map((aptitude) => ({ featId: copyId, aptitudeId: ctx.aptMap[aptitude] })));
-  }
 }
 
 /**
@@ -133,6 +117,22 @@ async function addClassLevelAlternatives(db: Db, featId: string, classLevels: Co
     entityId: featId, entityType: "feats", level: `${group.level}.${next + i}`,
     target: `classes.${className}.level`, operator: "greater_than_or_equal", value: String(level), valueType: "number",
   })));
+}
+
+/**
+ * Copies the inherited feats an extension changes: each is taken in more aptitudes, and more class levels qualify
+ * for it (added to its `or` of requirements). Its classes then grant the copy.
+ */
+export async function cowFeatsIntoExtension(db: Db, ctx: SeedContext, entries: CowFeatEntry[]) {
+  for (const entry of entries) {
+    const featId = ctx.featMap[entry.feat];
+    if (!featId) continue;
+    const copyId = await cowFeat(db, featId, ctx.rulesetId);
+    ctx.featMap[entry.feat] = copyId;
+    await addClassLevelAlternatives(db, copyId, entry.requirements);
+    await insertAll(db, featsAptitudesInRules, entry.aptitudes.filter((aptitude) => ctx.aptMap[aptitude])
+      .map((aptitude) => ({ featId: copyId, aptitudeId: ctx.aptMap[aptitude] })));
+  }
 }
 
 /**

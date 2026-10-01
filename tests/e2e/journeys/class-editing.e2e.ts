@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import { apiResponse, forkCoreRuleset, selectOption, signIn, uniqueName } from '@/tests/e2e/helpers.ts';
 
 /*

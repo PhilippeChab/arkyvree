@@ -8,8 +8,8 @@ import {
   CharacterLanguages,
   CharacterLevelFeats,
   CharacterLevelPowers,
-  CharacterLevelSkills,
   CharacterLevels,
+  CharacterLevelSkills,
   Characters,
   Modifiers,
   Properties,
@@ -20,19 +20,6 @@ import type { EntityType } from "@/server/services/rulesets/hashing.ts";
 // ──────────────────────────────────────────────────────────────
 // Cascade helpers for modifier deletion
 // ──────────────────────────────────────────────────────────────
-
-export async function deleteModifiersWithCascade(
-  tx: Db,
-  where: { ids: string[] } | { sourceIds: string[]; sourceType: string },
-) {
-  const deleted = await Modifiers.deleteMany(tx, where);
-  if (deleted.length > 0) {
-    const modifierIds = deleted.map((m) => m.id);
-    await deleteRequirementsWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
-    await Activities.deleteByTargets(tx, { targetIds: modifierIds, targetTable: getTableName(modifiersInCustomization) });
-  }
-  return deleted;
-}
 
 export async function deletePropertiesWithCascade(
   tx: Db,
@@ -52,6 +39,19 @@ export async function deleteRequirementsWithCascade(
   const deleted = await Requirements.deleteMany(tx, where);
   if (deleted.length > 0) {
     await Activities.deleteByTargets(tx, { targetIds: deleted.map((r) => r.id), targetTable: getTableName(requirementsInCustomization) });
+  }
+  return deleted;
+}
+
+export async function deleteModifiersWithCascade(
+  tx: Db,
+  where: { ids: string[] } | { sourceIds: string[]; sourceType: string },
+) {
+  const deleted = await Modifiers.deleteMany(tx, where);
+  if (deleted.length > 0) {
+    const modifierIds = deleted.map((m) => m.id);
+    await deleteRequirementsWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
+    await Activities.deleteByTargets(tx, { targetIds: modifierIds, targetTable: getTableName(modifiersInCustomization) });
   }
   return deleted;
 }

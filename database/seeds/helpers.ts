@@ -7,14 +7,14 @@ import {
   inventoryInCharacter,
   itemsInRules,
   klassesInRules,
-  type location,
   klassLevelsInRules,
   languagesInCharacter,
   languagesInRules,
   levelFeatsInCharacter,
   levelPowersInCharacter,
-  levelSkillsInCharacter,
   levelsInCharacter,
+  levelSkillsInCharacter,
+  type location,
   racesInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -77,20 +77,6 @@ export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
   powers?: (Picks<"powerName"> & { aptitude: string })[];
   inventory: Parameters<typeof addInventory>[3];
 };
-
-/** Seeds a character, and the creatures its feats bond it to. */
-export async function seedCharacter(db: Db, ctx: SeedContext, { classes, skills, feats, powers = [], inventory, ...data }: CharacterSeed) {
-  const characterId = await createCharacter(db, ctx, data);
-  const levelIds: string[] = [];
-  for (const { klass, hp } of classes) {
-    levelIds.push(...await addClassLevels(db, ctx, characterId, klass, hp.map((_, i) => i + 1), hp));
-  }
-  await addSkills(db, ctx, levelIds, skills);
-  await addFeats(db, ctx, levelIds, feats);
-  await addPowers(db, ctx, levelIds, powers);
-  await addInventory(db, ctx, characterId, inventory);
-  await reconcileBondedForCharacter(db, characterId);
-}
 
 export async function createCharacter(
   db: Db,
@@ -255,4 +241,18 @@ async function reconcileBondedForCharacter(
     await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
     await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
   });
+}
+
+/** Seeds a character, and the creatures its feats bond it to. */
+export async function seedCharacter(db: Db, ctx: SeedContext, { classes, skills, feats, powers = [], inventory, ...data }: CharacterSeed) {
+  const characterId = await createCharacter(db, ctx, data);
+  const levelIds: string[] = [];
+  for (const { klass, hp } of classes) {
+    levelIds.push(...await addClassLevels(db, ctx, characterId, klass, hp.map((_, i) => i + 1), hp));
+  }
+  await addSkills(db, ctx, levelIds, skills);
+  await addFeats(db, ctx, levelIds, feats);
+  await addPowers(db, ctx, levelIds, powers);
+  await addInventory(db, ctx, characterId, inventory);
+  await reconcileBondedForCharacter(db, characterId);
 }

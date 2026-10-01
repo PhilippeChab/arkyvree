@@ -1,6 +1,6 @@
 import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { parseCost, parseWeight } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
-import { SKILL_MAP, SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SAVE_MAP, SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // Base item template names (sorted longest-first per category)

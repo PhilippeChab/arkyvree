@@ -3,17 +3,17 @@ import {
   BlankState,
   CLICKABLE_SX,
   clickableProps,
+  CREATED_SORTS,
+  DiceSpinner,
+  type FilterOption,
   LoadMoreButton,
+  NoMatchesState,
   PageHeader,
   PageTransition,
   SearchBar,
-  DiceSpinner,
-  type FilterOption,
-  CREATED_SORTS,
-  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
-import { useNotificationActions, usePageTitle, useListParams } from "@/client/src/hooks/index.ts";
+import { useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
 import {
   formatActivityDetails,
   formatNotificationMessage,
@@ -22,8 +22,8 @@ import {
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
-  Notifications as NotificationsIcon,
   Circle as CircleIcon,
+  Notifications as NotificationsIcon,
 } from "@mui/icons-material";
 import {
   Alert,

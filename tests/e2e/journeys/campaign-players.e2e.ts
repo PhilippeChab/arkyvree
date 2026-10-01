@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import type { Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { parseResponse } from 'hono/client';

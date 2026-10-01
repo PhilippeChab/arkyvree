@@ -6,7 +6,7 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills } from "@/server/repositories/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
-import { addFighterLevels, type BUILDS, createSeedCharacter, FIGHTER_LEVELS, levelUp, picks, type LevelPlan } from "@/tests/levelFixtures.ts";
+import { addFighterLevels, type BUILDS, createSeedCharacter, FIGHTER_LEVELS, type LevelPlan, levelUp, picks } from "@/tests/levelFixtures.ts";
 import { getSeedCtx, makeSession, NIL_UUID } from "@/tests/helpers.ts";
 
 const session = makeSession(SEED_USER_ID);

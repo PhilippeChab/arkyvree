@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import { and, eq, type InferInsertModel, type InferSelectModel, isNull, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { JobHelpers } from "graphile-worker";
 import { type charactersInCharacter, klassLevelsInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
@@ -9,19 +9,6 @@ import { db } from "@/server/database/index.ts";
 import { Campaigns, CharacterContributors, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Contributors, Exports, Klasses, KlassLevels, Players, Properties, Rulesets, Users } from "@/server/repositories/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
 import type { Session } from "@/shared/relations.ts";
-
-/** Inserts rows straight into `table` and returns them: test data set up in bulk, which the app writes one at a time. */
-export async function insertRows<T extends PgTable>(table: T, rows: InferInsertModel<T>[]): Promise<InferSelectModel<T>[]> {
-  if (rows.length === 0) return [];
-  return await db.insert(table).values(rows).returning() as InferSelectModel<T>[];
-}
-
-/** A class's level `level`. */
-export async function findKlassLevel(klassId: string, level: number) {
-  return await db.query.klassLevelsInRules.findFirst({
-    where: and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, level), isNull(klassLevelsInRules.deletedAt)),
-  });
-}
 
 /** An id no row has: for "not found" cases. */
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
@@ -45,6 +32,20 @@ export function makeSession(userId: string = SEED_USER_ID): Session {
     deletedAt: null,
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
+}
+
+let seedContext: Promise<SeedContext> | undefined;
+
+/** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
+export function getSeedCtx() {
+  seedContext ??= getSeedContext(db);
+  return seedContext;
+}
+
+/** Inserts rows straight into `table` and returns them: test data set up in bulk, which the app writes one at a time. */
+export async function insertRows<T extends PgTable>(table: T, rows: InferInsertModel<T>[]): Promise<InferSelectModel<T>[]> {
+  if (rows.length === 0) return [];
+  return await db.insert(table).values(rows).returning() as InferSelectModel<T>[];
 }
 
 /** A new user and a session for them. `prefix` starts the username and email. */
@@ -194,6 +195,13 @@ export async function createTestKlassLevel(rulesetId: string) {
   return { klass, klassLevel };
 }
 
+/** A class's level `level`. */
+export async function findKlassLevel(klassId: string, level: number) {
+  return await db.query.klassLevelsInRules.findFirst({
+    where: and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, level), isNull(klassLevelsInRules.deletedAt)),
+  });
+}
+
 type LevelPicks = {
   feats?: { featId: string; aptitudeId: string }[];
   powers?: { powerId: string; aptitudeId: string }[];
@@ -249,11 +257,6 @@ export const silentJobHelpers = {
   logger: { info() {}, warn() {}, error() {}, debug() {} },
 } as unknown as JobHelpers;
 
-/** The PDF jobs queued for `characterId`: task, queue and payload. */
-export async function queuedPdfJobs(characterId: string) {
-  return await queuedJobs("characterId", characterId);
-}
-
 /** The jobs queued whose payload's `key` is `value`: their task, queue and payload. */
 export async function queuedJobs(key: string, value: string) {
   const jobs = await db.execute<{ task: string; queue: string | null; payload: Record<string, unknown> }>(sql`
@@ -266,12 +269,9 @@ export async function queuedJobs(key: string, value: string) {
   return jobs.rows;
 }
 
-let seedContext: Promise<SeedContext> | undefined;
-
-/** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
-export function getSeedCtx() {
-  seedContext ??= getSeedContext(db);
-  return seedContext;
+/** The PDF jobs queued for `characterId`: task, queue and payload. */
+export async function queuedPdfJobs(characterId: string) {
+  return await queuedJobs("characterId", characterId);
 }
 
 /**

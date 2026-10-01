@@ -9,9 +9,9 @@ import type DetailedCharacterIdentity from "@/server/rulesets/universal/Detailed
 import type {
   Aptitude,
   Campaign,
-  Character as CharacterRecord,
   CharacterInventory,
   CharacterLevel,
+  Character as CharacterRecord,
   Feat,
   Item,
   Klass,

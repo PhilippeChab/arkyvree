@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { classReferences, readStoredReference, resolveReference, type ReferenceType, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { classReferences, readStoredReference, type ReferenceType, resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { buildMagicItemSeeds, buildRaceSeeds, seededMagicItems, seededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";

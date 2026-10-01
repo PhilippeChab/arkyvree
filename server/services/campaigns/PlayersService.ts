@@ -5,7 +5,7 @@ import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Invites, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
-import { createInviteInTransaction, sendInviteEmail, type InviteEmailData } from "./InvitesService.ts";
+import { createInviteInTransaction, type InviteEmailData, sendInviteEmail } from "./InvitesService.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 import { getTableName } from "drizzle-orm";
 

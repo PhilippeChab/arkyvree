@@ -1,5 +1,5 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { getOrFetchRulesetData, type CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import { type CachedRulesetData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, Rulesets } from "@/server/repositories/index.ts";
@@ -8,9 +8,9 @@ import {
   assertCowMapsConsistent,
   buildOverrideMap,
   buildSourceChain,
+  type IdResolveMap,
   newIdResolveMap,
   newOverrideMap,
-  type IdResolveMap,
   type OverrideMap,
 } from "./overrideMap.ts";
 
@@ -31,27 +31,6 @@ export interface CowData {
 }
 
 const cowDataCache = new DependentCache<CowData>();
-
-/**
- * Get or build cached COW data for a ruleset: sourceChain + overrideMap + klass level mappings.
- * Cache key includes the ruleset ID and ordered source chain; invalidated on mutations.
- *
- * Always reads via the imported `db` (committed state) — never accepts a tx
- * handle. Letting an in-progress mutation's uncommitted writes populate this
- * shared cache would leak phantom data to every other concurrent reader.
- */
-export async function getOrBuildCowData(
-  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
-): Promise<CowData> {
-  // COW maps are shared infrastructure; never build them through a caller's
-  // active map (notably during nested master/companion character builds).
-  const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];
-  // A request holding old ruleset metadata must not cache its old subscription
-  // chain under the same key used by readers of the newly committed chain.
-  return cowDataCache.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
-    data: await withCowContext(undefined, () => buildCowData(ruleset)),
-  }));
-}
 
 async function buildCowData(
   ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
@@ -143,6 +122,27 @@ async function buildCowData(
     siblingIds: new Set(Array.from(siblingMap.values()).flat()),
   };
   return cowData;
+}
+
+/**
+ * Get or build cached COW data for a ruleset: sourceChain + overrideMap + klass level mappings.
+ * Cache key includes the ruleset ID and ordered source chain; invalidated on mutations.
+ *
+ * Always reads via the imported `db` (committed state) — never accepts a tx
+ * handle. Letting an in-progress mutation's uncommitted writes populate this
+ * shared cache would leak phantom data to every other concurrent reader.
+ */
+export async function getOrBuildCowData(
+  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
+): Promise<CowData> {
+  // COW maps are shared infrastructure; never build them through a caller's
+  // active map (notably during nested master/companion character builds).
+  const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];
+  // A request holding old ruleset metadata must not cache its old subscription
+  // chain under the same key used by readers of the newly committed chain.
+  return cowDataCache.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
+    data: await withCowContext(undefined, () => buildCowData(ruleset)),
+  }));
 }
 
 export function invalidateCowData(rulesetId: string): void {

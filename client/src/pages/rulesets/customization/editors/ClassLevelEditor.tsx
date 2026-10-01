@@ -8,8 +8,8 @@ import {
   allLevelSaves,
   ClassLevelFields,
   featKey,
-  levelFeatLabel,
   type LevelFeat,
+  levelFeatLabel,
   type LevelSave,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";

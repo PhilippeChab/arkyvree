@@ -31,6 +31,100 @@ const VALID_SCHOOLS = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// Legacy: single-page all-spells parser (srd.dndtools.org)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
+
+function parseLevelEntries(text: string): { className: string; level: number }[] {
+  if (!text) return [];
+  return text.split(",").map((part) => {
+    const trimmed = part.trim();
+    const match = trimmed.match(/^(.+?)\s+(\d+)$/);
+    if (!match) return null;
+    return { className: match[1].trim(), level: parseInt(match[2], 10) };
+  }).filter((e): e is { className: string; level: number } => e !== null);
+}
+
+function parseComponents(text: string): string[] {
+  if (!text) return [];
+  return text.split(",").map((c) => c.trim()).filter(Boolean);
+}
+
+/** Parse stat fields from a dndtools.net detail page by walking the HTML structure */
+function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
+  const stats = new Map<string, string>();
+
+  const FIELDS = new Set([
+    "Level", "Components", "Casting Time", "Range", "Target", "Targets",
+    "Target or Area", "Target or Targets", "Effect", "Area", "Duration",
+    "Saving Throw", "Spell Resistance",
+  ]);
+
+  const content = $("#content");
+  if (!content.length) return stats;
+
+  // Find all <strong>/<b> elements that match a known field label
+  const labelElements = content.find("strong, b").toArray();
+
+  for (const labelEl of labelElements) {
+    const rawLabel = $(labelEl).text().trim().replace(/:$/, "");
+    if (!FIELDS.has(rawLabel)) continue;
+
+    // Walk sibling nodes after the label, collecting text until the next
+    // field label or a structural boundary (div, table, h2, h3)
+    const parts: string[] = [];
+    let node = labelEl.nextSibling;
+
+    while (node) {
+      if (node.type === "tag") {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+        const tag = (node as import("domhandler").Element).tagName?.toLowerCase();
+
+        // Stop at structural boundaries — these start the description or a new section
+        if (tag === "div" || tag === "table" || tag === "h2" || tag === "h3") break;
+
+        // Stop at the next field label
+        if (tag === "strong" || tag === "b") {
+          const nextLabel = $(node).text().trim().replace(/:$/, "");
+          if (FIELDS.has(nextLabel)) break;
+        }
+
+        // Skip <br/> — they separate fields but carry no text
+        if (tag !== "br") {
+          const text = $(node).text().trim();
+          if (text) parts.push(text);
+        }
+      } else if (isText(node)) {
+        const text = node.data.trim();
+        if (text) parts.push(text);
+      }
+
+      node = node.nextSibling;
+    }
+
+    const value = normalizeWs(parts.join(" ").replace(/^:\s*/, "").replace(/,\s*$/, ""));
+    if (value) {
+      const normalizedLabel = rawLabel.replace(/^Targets?( or (?:Area|Targets?))?$/, "Target");
+      stats.set(normalizedLabel, value);
+    }
+  }
+
+  return stats;
+}
+
+const STAT_LABEL_PREFIXES = [
+  "Level:", "Components:", "Casting Time:", "Range:", "Target:", "Effect:",
+  "Area:", "Duration:", "Saving Throw:", "Spell Resistance:",
+];
+
+function isStatLabel(text: string): boolean {
+  return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));
+}
+
+// ---------------------------------------------------------------------------
 // Detail page parser (dndtools.net)
 // ---------------------------------------------------------------------------
 
@@ -134,99 +228,5 @@ export function parseSpellDetailHtml(
     spellResistance: stats.get("Spell Resistance") ?? "",
     description,
   };
-}
-
-// ---------------------------------------------------------------------------
-// Legacy: single-page all-spells parser (srd.dndtools.org)
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Shared helpers
-// ---------------------------------------------------------------------------
-
-function parseLevelEntries(text: string): { className: string; level: number }[] {
-  if (!text) return [];
-  return text.split(",").map((part) => {
-    const trimmed = part.trim();
-    const match = trimmed.match(/^(.+?)\s+(\d+)$/);
-    if (!match) return null;
-    return { className: match[1].trim(), level: parseInt(match[2], 10) };
-  }).filter((e): e is { className: string; level: number } => e !== null);
-}
-
-function parseComponents(text: string): string[] {
-  if (!text) return [];
-  return text.split(",").map((c) => c.trim()).filter(Boolean);
-}
-
-/** Parse stat fields from a dndtools.net detail page by walking the HTML structure */
-function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
-  const stats = new Map<string, string>();
-
-  const FIELDS = new Set([
-    "Level", "Components", "Casting Time", "Range", "Target", "Targets",
-    "Target or Area", "Target or Targets", "Effect", "Area", "Duration",
-    "Saving Throw", "Spell Resistance",
-  ]);
-
-  const content = $("#content");
-  if (!content.length) return stats;
-
-  // Find all <strong>/<b> elements that match a known field label
-  const labelElements = content.find("strong, b").toArray();
-
-  for (const labelEl of labelElements) {
-    const rawLabel = $(labelEl).text().trim().replace(/:$/, "");
-    if (!FIELDS.has(rawLabel)) continue;
-
-    // Walk sibling nodes after the label, collecting text until the next
-    // field label or a structural boundary (div, table, h2, h3)
-    const parts: string[] = [];
-    let node = labelEl.nextSibling;
-
-    while (node) {
-      if (node.type === "tag") {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-        const tag = (node as import("domhandler").Element).tagName?.toLowerCase();
-
-        // Stop at structural boundaries — these start the description or a new section
-        if (tag === "div" || tag === "table" || tag === "h2" || tag === "h3") break;
-
-        // Stop at the next field label
-        if (tag === "strong" || tag === "b") {
-          const nextLabel = $(node).text().trim().replace(/:$/, "");
-          if (FIELDS.has(nextLabel)) break;
-        }
-
-        // Skip <br/> — they separate fields but carry no text
-        if (tag !== "br") {
-          const text = $(node).text().trim();
-          if (text) parts.push(text);
-        }
-      } else if (isText(node)) {
-        const text = node.data.trim();
-        if (text) parts.push(text);
-      }
-
-      node = node.nextSibling;
-    }
-
-    const value = normalizeWs(parts.join(" ").replace(/^:\s*/, "").replace(/,\s*$/, ""));
-    if (value) {
-      const normalizedLabel = rawLabel.replace(/^Targets?( or (?:Area|Targets?))?$/, "Target");
-      stats.set(normalizedLabel, value);
-    }
-  }
-
-  return stats;
-}
-
-const STAT_LABEL_PREFIXES = [
-  "Level:", "Components:", "Casting Time:", "Range:", "Target:", "Effect:",
-  "Area:", "Duration:", "Saving Throw:", "Spell Resistance:",
-];
-
-function isStatLabel(text: string): boolean {
-  return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));
 }
 

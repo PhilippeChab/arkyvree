@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import { apiResponse, createCharacter, openActionsMenu, signIn } from '@/tests/e2e/helpers.ts';
 import { addLevels, finishWithoutWarnings, openAddLevelWizard, planLevels, walkFromFeats, walkToFeats } from '@/tests/e2e/levelUpHelpers.ts';
 

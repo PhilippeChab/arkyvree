@@ -1,4 +1,4 @@
-import { type Browser, type BrowserContextOptions, type Page, type Locator, expect } from '@playwright/test';
+import { type Browser, type BrowserContextOptions, expect, type Locator, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { parseResponse } from 'hono/client';
 import { apiOf } from '@/tests/e2e/api.ts';
@@ -267,19 +267,6 @@ export async function fillOtp(scope: Page | Locator, code: string): Promise<void
   }
 }
 
-/** Signs up a new user and verifies their email, leaving them on the dashboard with its onboarding open. */
-export async function signUpAndVerify(page: Page, email: string, password: string) {
-  await page.goto('/sign-up');
-  await page.fill('input[name="emailAddress"]', email);
-  await page.fill('input[name="password"]', password);
-  await page.fill('input[name="passwordConfirmation"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL('/verify-email', { timeout: 10_000 });
-  await fillOtp(page, await getEmailVerificationCode(email));
-  await page.getByRole('button', { name: /^Verify$/ }).click();
-  await page.waitForURL('/dashboard', { timeout: 10_000 });
-}
-
 /**
  * The latest active code a user was sent, read from the test database: the e2e suite has no mailer.
  * `table` is where the flow keeps its codes.
@@ -302,6 +289,19 @@ async function latestCode(table: 'email_verifications' | 'password_resets', emai
 
 /** The code that verifies a user's email address. */
 export const getEmailVerificationCode = (email: string) => latestCode('email_verifications', email);
+
+/** Signs up a new user and verifies their email, leaving them on the dashboard with its onboarding open. */
+export async function signUpAndVerify(page: Page, email: string, password: string) {
+  await page.goto('/sign-up');
+  await page.fill('input[name="emailAddress"]', email);
+  await page.fill('input[name="password"]', password);
+  await page.fill('input[name="passwordConfirmation"]', password);
+  await page.click('button[type="submit"]');
+  await page.waitForURL('/verify-email', { timeout: 10_000 });
+  await fillOtp(page, await getEmailVerificationCode(email));
+  await page.getByRole('button', { name: /^Verify$/ }).click();
+  await page.waitForURL('/dashboard', { timeout: 10_000 });
+}
 
 /** The code that resets a user's password. */
 export const getPasswordResetCode = (email: string) => latestCode('password_resets', email);

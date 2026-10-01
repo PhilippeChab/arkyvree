@@ -4,7 +4,7 @@ import {
   PropertyValueInput,
 } from "@/client/src/components/customization/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, DeleteDialog, EditDialog, DescriptionField, SectionContent } from "@/client/src/components/common/index.ts";
+import { CreateDialog, DeleteDialog, DescriptionField, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";

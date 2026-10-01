@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 import { z } from "zod";
-import { test, expect } from "@/tests/e2e/fixtures.ts";
+import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { signIn, uniqueName, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
 
 for (const operation of ["delete", "revert"] as const) {

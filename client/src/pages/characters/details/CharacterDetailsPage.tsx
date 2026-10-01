@@ -1,6 +1,6 @@
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
-import { ConfirmDialog, DeleteDialog, PageTransition, PageError, ActionMenuItem } from "@/client/src/components/common/index.ts";
+import { ActionMenuItem, ConfirmDialog, DeleteDialog, PageError, PageTransition } from "@/client/src/components/common/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useFormSync } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import { byName, FeatFormFields, type FeatFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { byName, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { Feat } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EditorProps } from "./types.ts";

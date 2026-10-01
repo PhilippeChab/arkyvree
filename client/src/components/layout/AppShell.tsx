@@ -1,5 +1,5 @@
 import { Box, type CSSObject } from "@mui/material";
-import { Suspense, useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode, Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";

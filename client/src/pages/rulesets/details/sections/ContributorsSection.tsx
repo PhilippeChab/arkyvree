@@ -2,9 +2,9 @@ import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { BlankState, ConfirmDialog, DiceSpinner, EditDialog, LoadMoreButton, SelectField } from "@/client/src/components/common/index.ts";
 import {
+  type ContributorRole,
   ContributorsTable,
   InviteContributorDialog,
-  type ContributorRole,
 } from "@/client/src/components/contributors/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -12,10 +12,10 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
+  People as ContributorsIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   ExitToApp as LeaveIcon,
-  People as ContributorsIcon,
 } from "@mui/icons-material";
 import {
   Alert,

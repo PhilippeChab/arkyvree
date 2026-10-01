@@ -132,6 +132,16 @@ export function buildFullCharacterResponse(
   };
 }
 
+export function buildBondedResponse(
+  record: InferSelectModel<typeof charactersInCharacter>,
+  bonded: Dnd35DetailedCharacterBonded,
+) {
+  return {
+    ...buildFullCharacterResponse(record, bonded),
+    feats: bonded.getDetailedCharacterFeats().getFeats(),
+  };
+}
+
 export function buildBondedMap(
   bondedByKind: Partial<Record<string, { record: InferSelectModel<typeof charactersInCharacter>; detailed: unknown }>>,
   transform?: (entry: ReturnType<typeof buildBondedResponse>) => ReturnType<typeof buildBondedResponse>,
@@ -146,14 +156,4 @@ export function buildBondedMap(
     out[kind] = transform ? transform(built) : built;
   }
   return out;
-}
-
-export function buildBondedResponse(
-  record: InferSelectModel<typeof charactersInCharacter>,
-  bonded: Dnd35DetailedCharacterBonded,
-) {
-  return {
-    ...buildFullCharacterResponse(record, bonded),
-    feats: bonded.getDetailedCharacterFeats().getFeats(),
-  };
 }

@@ -1,4 +1,4 @@
-import type { RequirementEntry, Modifier, ModifierSeed, Property } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 
 // References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
 // `mapping` derived from it (items and magic items have only `detected`; spells and wizard schools, neither). The

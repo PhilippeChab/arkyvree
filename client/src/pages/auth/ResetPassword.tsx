@@ -7,8 +7,8 @@ import { confirmPasswordRules, newPasswordRules } from "@/client/src/lib/validat
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Box,
-  Typography,
   Link as MuiLink,
+  Typography,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";

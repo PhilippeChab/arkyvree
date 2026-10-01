@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import {
-  SaveFormFields,
   type SaveFormData,
+  SaveFormFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { saveQuery } from "./entityDetailQueries.ts";

@@ -6,6 +6,7 @@
 
 - Be DRY
 - Reuse existing patterns, naming
+- A file reads bottom-up: a helper sits above the code that uses it, in a file's sections too (oxlint's `no-use-before-define`). Functions that call each other keep one `oxlint-disable-next-line` saying so
 
 **TypeScript & Naming:**
 

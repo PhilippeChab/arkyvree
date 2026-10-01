@@ -5,7 +5,7 @@ import { addClassLevels, addFeats, addPowers, addSkills, SEED_USER_ID } from "@/
 import { abilitiesInRules, featsInRules, klassLevelPowersInRules, levelsInCharacter, powersInRules, skillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
-import { Aptitudes, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Feats, FeatsAptitudes, KlassLevelFeats, KlassLevels, Klasses, KlassSkills, Modifiers, PowersAptitudes, Properties, Races, Rulesets, Skills } from "@/server/repositories/index.ts";
+import { Aptitudes, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Feats, FeatsAptitudes, Klasses, KlassLevelFeats, KlassLevels, KlassSkills, Modifiers, PowersAptitudes, Properties, Races, Rulesets, Skills } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";

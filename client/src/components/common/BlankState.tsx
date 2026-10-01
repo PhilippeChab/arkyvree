@@ -2,7 +2,7 @@ import { SearchOff as SearchOffIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
-import { fadeIn, prefersReducedMotion, DURATION, EASING } from "@/client/src/lib/animations.ts";
+import { DURATION, EASING, fadeIn, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 interface BlankStateProps {
   /** Icon component, sized and tinted here so every empty state looks alike. */

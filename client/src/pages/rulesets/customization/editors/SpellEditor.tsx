@@ -7,8 +7,8 @@ import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.
 import { byName } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   spellAptitude,
-  SpellFormFields,
   type SpellFormData,
+  SpellFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import type { Power } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";

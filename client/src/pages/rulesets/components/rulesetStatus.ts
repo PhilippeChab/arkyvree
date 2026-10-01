@@ -1,7 +1,7 @@
 import {
   Archive as ArchiveIcon,
-  CheckCircle as PublishedIcon,
   EditNote as DraftIcon,
+  CheckCircle as PublishedIcon,
 } from "@mui/icons-material";
 
 /** A ruleset status's icon, color and explanation, for the list's pills and the page's chip. */

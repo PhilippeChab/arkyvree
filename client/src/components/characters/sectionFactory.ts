@@ -2,15 +2,15 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import type { ComponentType } from "react";
 import {
   AbilityScoresSection,
-  CombatAndSavesSection,
   BondedSection,
-  SkillsSection,
-  SpellsSection,
+  CombatAndSavesSection,
   type Dnd35AbilityScoresSectionProps,
   type Dnd35BondedSectionProps,
   type Dnd35CombatAndSavesSectionProps,
   type Dnd35PowersSectionProps,
   type Dnd35SkillsSectionProps,
+  SkillsSection,
+  SpellsSection,
 } from "./sections/dnd3.5/index.ts";
 
 type BaseRules = NonNullable<CharacterDetail["baseRules"]>;

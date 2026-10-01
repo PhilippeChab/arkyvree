@@ -1,10 +1,10 @@
 import {
   BlankState,
-  FaqHelpIcon,
   CreateDialog,
   DeleteDialog,
-  EditDialog,
   DiceSpinner,
+  EditDialog,
+  FaqHelpIcon,
   Modal,
   ROW_ACTIONS_HOVER_SX,
   ROW_ACTIONS_SX,

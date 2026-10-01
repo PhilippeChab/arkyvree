@@ -1,4 +1,4 @@
-import { PageTransition, DiceSpinner, PageError } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, PageError, PageTransition } from "@/client/src/components/common/index.ts";
 import { accessLost } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -7,7 +7,7 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { Download as DownloadIcon } from "@mui/icons-material";
 import { Container, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { useQuery, skipToken } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 export default function SharedCharacterPage() {

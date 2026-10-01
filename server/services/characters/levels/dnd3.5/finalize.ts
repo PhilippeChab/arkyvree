@@ -7,7 +7,7 @@
  */
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { withTransaction, type Db } from "@/server/database/index.ts";
+import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Activities,

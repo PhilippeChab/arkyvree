@@ -1,5 +1,5 @@
 import { Box, Chip, Typography } from "@mui/material";
-import { useMemo, type ElementType } from "react";
+import { type ElementType, useMemo } from "react";
 
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 

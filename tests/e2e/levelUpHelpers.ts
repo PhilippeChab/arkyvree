@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { openActionsMenu } from '@/tests/e2e/helpers.ts';
 
 /** The d&d 3.5 Add Level wizard: opening it, planning its levels and walking its steps. */

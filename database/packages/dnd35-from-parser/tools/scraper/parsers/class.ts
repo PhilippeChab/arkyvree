@@ -5,65 +5,6 @@ import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
-// Class HTML Parser — dndtools.net structure
-//
-// HTML layout:
-//   <h2>Site Tagline</h2>                    ← skip
-//   <h2>Class Name</h2>                      ← second h2
-//   <h3>Hit die</h3> <p>d10</p>
-//   <h3>Starting gold</h3> <p>...</p>
-//   <h3>Skill points</h3> <p>4 + Int</p>
-//   <h3>Class Skills</h3>
-//   <table> (skill rows with links)
-//   <h3>Requirements</h3> (prestige classes)
-//   <h3>Class Features</h3>
-//   <h4>Feature Name (Ex)</h4> <p>description</p>
-//   <h3>Advancement</h3>
-//   <table> (Level/BAB/Fort/Ref/Will/Special)
-//   <h3>Spells for ClassName</h3>
-// ---------------------------------------------------------------------------
-
-export function parseClassHtml(html: string, sourceUrl: string, book: string): ClassReference["raw"] & { _meta: ClassReference["_meta"] } {
-  const $ = cheerio.load(html);
-
-  const name = parseClassName($);
-  const description = parseDescription($);
-  const hitDie = parseHitDie($);
-  const skillPointsPerLevel = parseSkillPoints($);
-  const classSkills = parseClassSkills($);
-  const prerequisites = parsePrerequisites($);
-  const alignment = parseAlignment($);
-  const { progression, hasCantrips } = parseProgression($);
-  const classFeatures = parseClassFeatures($, progression);
-  const spellsKnown = parseSpellsKnownTable($);
-  const bonusSpellAbility = detectBonusSpellAbility($);
-
-  if (alignment && !prerequisites.parsed.alignment) {
-    prerequisites.parsed.alignment = alignment;
-  }
-
-  return {
-    _meta: {
-      type: "class",
-      sourceUrl,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    name,
-    description,
-    hitDie,
-    skillPointsPerLevel,
-    classSkills,
-    prerequisites,
-    progression,
-    classFeatures,
-    ...(spellsKnown.length > 0 ? { spellsKnown } : {}),
-    ...(hasCantrips ? { hasCantrips } : {}),
-    ...(bonusSpellAbility ? { bonusSpellAbility } : {}),
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -132,6 +73,295 @@ function parseDescription($: cheerio.CheerioAPI): string {
   }
 
   return paragraphs.slice(0, 3).join(" ");
+}
+
+// ---------------------------------------------------------------------------
+// Progression table
+// ---------------------------------------------------------------------------
+
+/** Split a Special column value on commas/periods, but not inside parentheses. */
+function splitSpecial(text: string): string[] {
+  const parts: string[] = [];
+  let current = "";
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+
+    if (depth === 0 && ch === ",") {
+      parts.push(current);
+      current = "";
+    } else if (depth === 0 && ch === "." && i + 1 < text.length && /\s/.test(text[i + 1]) && /[A-Za-z]/.test(text[i + 2] ?? "")) {
+      // Split on ". " followed by a letter (sentence boundary)
+      parts.push(current);
+      current = "";
+      i++; // skip the space
+    } else {
+      current += ch;
+    }
+  }
+  if (current) parts.push(current);
+  return parts;
+}
+
+function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference["raw"]["progression"]; hasCantrips?: boolean } {
+  const progression: ClassReference["raw"]["progression"] = [];
+  let hasCantrips: boolean | undefined;
+
+  $("table").each((_, table) => {
+    const tbody = $(table).children("tbody");
+
+    // Find ALL header rows (rows with <th> cells) from the table
+    const headerRows = $(table).find("tr").filter((_, row) => $(row).children("th").length > 0);
+    if (headerRows.length === 0) return;
+
+    // Find the header row that contains Level and BAB columns
+    // This may be the first row (simple) or the second (when first row is spanning groups)
+    let mainHeaderRow: cheerio.Cheerio<AnyNode> | null = null;
+    headerRows.each((_, row) => {
+      if (mainHeaderRow) return;
+      const ths: string[] = [];
+      $(row).children("th").each((_, th) => { ths.push($(th).text().trim().toLowerCase()); });
+      const hasLevel = ths.some((h) => h.includes("level"));
+      const hasBab = ths.some((h) => h.includes("base") || h.includes("attack") || h === "bab");
+      if (hasLevel && hasBab) mainHeaderRow = $(row);
+    });
+
+    if (!mainHeaderRow) return;
+
+    // Data rows are in <tbody> or directly in the table
+    const dataRowContainer = tbody.length > 0 ? tbody : $(table);
+    const directRows = dataRowContainer.children("tr");
+
+    // Build column map including colspan expansion
+    const firstRowHeaders: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    const headerRow = mainHeaderRow as cheerio.Cheerio<import("domhandler").AnyNode>;
+    headerRow.children("th").each((_, th) => {
+      const text = $(th).text().trim().toLowerCase();
+      const colspan = parseInt($(th).attr("colspan") ?? "1", 10);
+      firstRowHeaders.push(text);
+      for (let i = 1; i < colspan; i++) {
+        firstRowHeaders.push(`${text}:${i}`);
+      }
+    });
+
+    // Check for cantrips — either "0th" / "0" in the main header,
+    // or a sub-header row after the main header starting with "0"
+    if (firstRowHeaders.some((h) => h === "0th" || h === "0")) {
+      hasCantrips = true;
+    } else {
+      const nextRow = headerRow.next("tr");
+      if (nextRow.children("th").length > 0) {
+        const subHeaders: string[] = [];
+        nextRow.children("th").each((_, th) => {
+          subHeaders.push($(th).text().trim().toLowerCase());
+        });
+        if (subHeaders.length > 0 && subHeaders[0] === "0") {
+          hasCantrips = true;
+        }
+      }
+    }
+
+    const levelIdx = firstRowHeaders.findIndex((h) => h.includes("level"));
+    const babIdx = firstRowHeaders.findIndex((h) => h.includes("base") || h.includes("attack") || h === "bab");
+    const fortIdx = firstRowHeaders.findIndex((h) => h.includes("fort"));
+    const refIdx = firstRowHeaders.findIndex((h) => h.includes("ref"));
+    const willIdx = firstRowHeaders.findIndex((h) => h.includes("will"));
+    const specialIdx = firstRowHeaders.findIndex((h) => h.includes("special"));
+
+    // Detect spell columns — either explicit "spells per day" header or
+    // numeric ordinal columns (1st, 2nd, ...) after the Special column,
+    // or a spanning header row above with "Spells per Day"
+    let spellStartIdx = firstRowHeaders.findIndex((h) => h.includes("spells per day") || h.includes("spells") || h === "spellcasting");
+    let spellColCount = 0;
+
+    if (spellStartIdx >= 0) {
+      spellColCount = firstRowHeaders.filter((h) => h.startsWith(firstRowHeaders[spellStartIdx])).length;
+    } else {
+      // Check for ordinal columns (0th, 1st, 2nd, ...) after Special
+      const ordinalPattern = /^(\d+)(?:st|nd|rd|th)$/;
+      const afterSpecial = specialIdx >= 0 ? specialIdx + 1 : -1;
+      if (afterSpecial > 0 && afterSpecial < firstRowHeaders.length) {
+        if (ordinalPattern.test(firstRowHeaders[afterSpecial])) {
+          spellStartIdx = afterSpecial;
+          for (let i = afterSpecial; i < firstRowHeaders.length; i++) {
+            if (ordinalPattern.test(firstRowHeaders[i])) spellColCount++;
+            else break;
+          }
+        }
+      }
+    }
+
+    let expectedLevel = 1;
+    directRows.each((_, row) => {
+      const cells: string[] = [];
+      $(row).children("td").each((_, cell) => {
+        $(cell).find("sup").remove();
+        cells.push($(cell).text().trim());
+      });
+      if (cells.length < 5) return;
+
+      const levelText = cells[levelIdx];
+      const levelMatch = levelText.match(/^(\d+)(?:st|nd|rd|th)$/);
+      if (!levelMatch) return;
+      const level = parseInt(levelMatch[1], 10);
+
+      if (level !== expectedLevel) return;
+      expectedLevel++;
+
+      const babText = cells[babIdx];
+      const babMatch = babText.match(/\+?(\d+)/);
+      const bab = babMatch ? parseInt(babMatch[1], 10) : 0;
+
+      const fortSave = parseInt(cells[fortIdx]?.replace(/[^0-9]/g, ""), 10) || 0;
+      const refSave = parseInt(cells[refIdx]?.replace(/[^0-9]/g, ""), 10) || 0;
+      const willSave = parseInt(cells[willIdx]?.replace(/[^0-9]/g, ""), 10) || 0;
+
+      const specialText = specialIdx >= 0 ? cells[specialIdx] : "";
+      const special = specialText
+        ? splitSpecial(specialText)
+            .map((s) => normalizeWs(s.trim().replace(/'(\w+)'/g, " $1")))
+            .filter((s) => s && s.length > 1 && !/^[\u2014\u2013\u2012\u2015\uFFFD'"-]+$/.test(s))
+        : [];
+
+      let spellsPerDay: string | undefined;
+      if (spellStartIdx >= 0 && spellColCount > 0) {
+        const spellValues: string[] = [];
+        for (let i = 0; i < spellColCount; i++) {
+          const val = cells[spellStartIdx + i] ?? "";
+          spellValues.push(val);
+        }
+        const joined = spellValues.join("/");
+        if (joined.includes("+1 level")) {
+          spellsPerDay = joined;
+        } else {
+          spellsPerDay = spellValues.join(",");
+        }
+      }
+
+      progression.push({ level, bab, fortSave, refSave, willSave, special, spellsPerDay });
+    });
+
+    if (progression.length > 0) return false;
+  });
+
+  return { progression, hasCantrips };
+}
+
+// ---------------------------------------------------------------------------
+// Spells Known table
+// ---------------------------------------------------------------------------
+
+function parseSpellsKnownTable($: cheerio.CheerioAPI): string[] {
+  const results: string[] = [];
+
+  $("table").each((_, table) => {
+    const headers: string[] = [];
+    $(table).find("th").each((_, th) => {
+      headers.push($(th).text().trim().toLowerCase());
+    });
+
+    const headerText = headers.join(" ");
+    // Skip progression tables (have BAB/attack columns)
+    if (headerText.includes("base") || headerText.includes("attack") || headerText.includes("bab")) return;
+    // Skip skill tables
+    if (headerText.includes("skill")) return;
+    // Match: explicit "known" label OR a Level + ordinal-only table (no BAB/Fort/etc.)
+    const hasLevel = headers.some((h) => h.includes("level"));
+    const hasOrdinals = headers.some((h) => /^\d+(?:st|nd|rd|th)$/.test(h));
+    const isKnownTable = headerText.includes("known") || (hasLevel && hasOrdinals && !headerText.includes("fort") && !headerText.includes("special"));
+    if (!isKnownTable) return;
+
+    $(table).find("tr").each((_, row) => {
+      const cells: string[] = [];
+      $(row).find("td").each((_, td) => {
+        $(td).find("sup").remove();
+        cells.push($(td).text().trim());
+      });
+      if (cells.length < 2) return;
+
+      const levelMatch = cells[0].match(/^(\d+)(?:st|nd|rd|th)?$/);
+      if (!levelMatch) return;
+
+      const slots = cells.slice(1).map((c) => {
+        const trimmed = c.trim();
+        if (trimmed === "\u2014" || trimmed === "-" || trimmed === "") return "\u2014";
+        if (trimmed.includes("+")) {
+          const sum = trimmed.split("+").reduce((acc, part) => acc + (parseInt(part.trim(), 10) || 0), 0);
+          return String(sum);
+        }
+        const cleaned = trimmed.replace(/[^0-9]/g, "");
+        return cleaned === "" ? "\u2014" : cleaned;
+      });
+      results.push(slots.join(","));
+    });
+
+    if (results.length > 0) return false;
+  });
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Bonus spell ability detection
+// ---------------------------------------------------------------------------
+
+function detectBonusSpellAbility($: cheerio.CheerioAPI): string | undefined {
+  const bodyText = $("body").text();
+  const match = bodyText.match(/bonus spells are based on (Intelligence|Wisdom|Charisma)/i);
+  if (match) return match[1];
+
+  // "receives bonus spells for a high Charisma score" (Warmage, Wu Jen, etc.)
+  const bonusForMatch = bodyText.match(/bonus spells for a high (Intelligence|Wisdom|Charisma)/i);
+  if (bonusForMatch) return bonusForMatch[1];
+
+  const dcMatch = bodyText.match(/saves? (?:for these spells )?(?:have |has )?a DC of 10 \+ .*?\+ .*?(Intelligence|Wisdom|Charisma)/i);
+  if (dcMatch) return dcMatch[1];
+
+  const abilityMatch = bodyText.match(/must have (?:a |an )?(Intelligence|Wisdom|Charisma) score (?:equal to )?(?:at )?least 10/i);
+  if (abilityMatch) return abilityMatch[1];
+
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Shared utilities for dndtools.net HTML structure
+// ---------------------------------------------------------------------------
+
+/** Find a section header (h3 or h4) whose text matches a pattern */
+function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheerio.Cheerio<AnyNode> {
+  // Try h3 first, then h4
+  const h3 = $("h3").filter((_, el) => pattern.test($(el).text().trim())).first();
+  if (h3.length > 0) return h3;
+  return $("h4").filter((_, el) => pattern.test($(el).text().trim())).first();
+}
+
+/** Get the text content after a header, from the next sibling(s) until the next header */
+function getTextAfterHeader(header: cheerio.Cheerio<AnyNode>): string {
+  const parts: string[] = [];
+  for (const el of sectionElements(header, ["h2", "h3", "h4"])) {
+    const text = el.text().trim();
+    if (text) parts.push(text);
+    const tag = tagOf(el);
+    if (tag === "p" || tag === "div") break;
+  }
+  // If no sibling had content, try parent's text after the header
+  if (parts.length === 0) {
+    const parent = header.parent();
+    if (parent.length > 0) {
+      const fullText = parent.text();
+      const headerText = header.text().trim();
+      const idx = fullText.indexOf(headerText);
+      if (idx >= 0) {
+        const after = fullText.substring(idx + headerText.length).trim();
+        const firstLine = after.split("\n")[0].trim();
+        if (firstLine) return firstLine;
+      }
+    }
+  }
+  return parts.join(" ");
 }
 
 // ---------------------------------------------------------------------------
@@ -270,12 +500,6 @@ function parseAlignment($: cheerio.CheerioAPI): string | undefined {
 // ---------------------------------------------------------------------------
 // Prerequisites
 // ---------------------------------------------------------------------------
-
-function parsePrerequisites($: cheerio.CheerioAPI): ClassReference["raw"]["prerequisites"] {
-  const text = extractPrerequisiteText($);
-  const parsed = parsePrerequisiteText(text);
-  return { text, parsed };
-}
 
 function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   // dndtools.net: <h4>Requirements</h4> followed by content
@@ -432,179 +656,10 @@ function parsePrerequisiteText(text: string): ClassReference["raw"]["prerequisit
   return parsed;
 }
 
-// ---------------------------------------------------------------------------
-// Progression table
-// ---------------------------------------------------------------------------
-
-function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference["raw"]["progression"]; hasCantrips?: boolean } {
-  const progression: ClassReference["raw"]["progression"] = [];
-  let hasCantrips: boolean | undefined;
-
-  $("table").each((_, table) => {
-    const tbody = $(table).children("tbody");
-
-    // Find ALL header rows (rows with <th> cells) from the table
-    const headerRows = $(table).find("tr").filter((_, row) => $(row).children("th").length > 0);
-    if (headerRows.length === 0) return;
-
-    // Find the header row that contains Level and BAB columns
-    // This may be the first row (simple) or the second (when first row is spanning groups)
-    let mainHeaderRow: cheerio.Cheerio<AnyNode> | null = null;
-    headerRows.each((_, row) => {
-      if (mainHeaderRow) return;
-      const ths: string[] = [];
-      $(row).children("th").each((_, th) => { ths.push($(th).text().trim().toLowerCase()); });
-      const hasLevel = ths.some((h) => h.includes("level"));
-      const hasBab = ths.some((h) => h.includes("base") || h.includes("attack") || h === "bab");
-      if (hasLevel && hasBab) mainHeaderRow = $(row);
-    });
-
-    if (!mainHeaderRow) return;
-
-    // Data rows are in <tbody> or directly in the table
-    const dataRowContainer = tbody.length > 0 ? tbody : $(table);
-    const directRows = dataRowContainer.children("tr");
-
-    // Build column map including colspan expansion
-    const firstRowHeaders: string[] = [];
-    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-    const headerRow = mainHeaderRow as cheerio.Cheerio<import("domhandler").AnyNode>;
-    headerRow.children("th").each((_, th) => {
-      const text = $(th).text().trim().toLowerCase();
-      const colspan = parseInt($(th).attr("colspan") ?? "1", 10);
-      firstRowHeaders.push(text);
-      for (let i = 1; i < colspan; i++) {
-        firstRowHeaders.push(`${text}:${i}`);
-      }
-    });
-
-    // Check for cantrips — either "0th" / "0" in the main header,
-    // or a sub-header row after the main header starting with "0"
-    if (firstRowHeaders.some((h) => h === "0th" || h === "0")) {
-      hasCantrips = true;
-    } else {
-      const nextRow = headerRow.next("tr");
-      if (nextRow.children("th").length > 0) {
-        const subHeaders: string[] = [];
-        nextRow.children("th").each((_, th) => {
-          subHeaders.push($(th).text().trim().toLowerCase());
-        });
-        if (subHeaders.length > 0 && subHeaders[0] === "0") {
-          hasCantrips = true;
-        }
-      }
-    }
-
-    const levelIdx = firstRowHeaders.findIndex((h) => h.includes("level"));
-    const babIdx = firstRowHeaders.findIndex((h) => h.includes("base") || h.includes("attack") || h === "bab");
-    const fortIdx = firstRowHeaders.findIndex((h) => h.includes("fort"));
-    const refIdx = firstRowHeaders.findIndex((h) => h.includes("ref"));
-    const willIdx = firstRowHeaders.findIndex((h) => h.includes("will"));
-    const specialIdx = firstRowHeaders.findIndex((h) => h.includes("special"));
-
-    // Detect spell columns — either explicit "spells per day" header or
-    // numeric ordinal columns (1st, 2nd, ...) after the Special column,
-    // or a spanning header row above with "Spells per Day"
-    let spellStartIdx = firstRowHeaders.findIndex((h) => h.includes("spells per day") || h.includes("spells") || h === "spellcasting");
-    let spellColCount = 0;
-
-    if (spellStartIdx >= 0) {
-      spellColCount = firstRowHeaders.filter((h) => h.startsWith(firstRowHeaders[spellStartIdx])).length;
-    } else {
-      // Check for ordinal columns (0th, 1st, 2nd, ...) after Special
-      const ordinalPattern = /^(\d+)(?:st|nd|rd|th)$/;
-      const afterSpecial = specialIdx >= 0 ? specialIdx + 1 : -1;
-      if (afterSpecial > 0 && afterSpecial < firstRowHeaders.length) {
-        if (ordinalPattern.test(firstRowHeaders[afterSpecial])) {
-          spellStartIdx = afterSpecial;
-          for (let i = afterSpecial; i < firstRowHeaders.length; i++) {
-            if (ordinalPattern.test(firstRowHeaders[i])) spellColCount++;
-            else break;
-          }
-        }
-      }
-    }
-
-    let expectedLevel = 1;
-    directRows.each((_, row) => {
-      const cells: string[] = [];
-      $(row).children("td").each((_, cell) => {
-        $(cell).find("sup").remove();
-        cells.push($(cell).text().trim());
-      });
-      if (cells.length < 5) return;
-
-      const levelText = cells[levelIdx];
-      const levelMatch = levelText.match(/^(\d+)(?:st|nd|rd|th)$/);
-      if (!levelMatch) return;
-      const level = parseInt(levelMatch[1], 10);
-
-      if (level !== expectedLevel) return;
-      expectedLevel++;
-
-      const babText = cells[babIdx];
-      const babMatch = babText.match(/\+?(\d+)/);
-      const bab = babMatch ? parseInt(babMatch[1], 10) : 0;
-
-      const fortSave = parseInt(cells[fortIdx]?.replace(/[^0-9]/g, ""), 10) || 0;
-      const refSave = parseInt(cells[refIdx]?.replace(/[^0-9]/g, ""), 10) || 0;
-      const willSave = parseInt(cells[willIdx]?.replace(/[^0-9]/g, ""), 10) || 0;
-
-      const specialText = specialIdx >= 0 ? cells[specialIdx] : "";
-      const special = specialText
-        ? splitSpecial(specialText)
-            .map((s) => normalizeWs(s.trim().replace(/'(\w+)'/g, " $1")))
-            .filter((s) => s && s.length > 1 && !/^[\u2014\u2013\u2012\u2015\uFFFD'"-]+$/.test(s))
-        : [];
-
-      let spellsPerDay: string | undefined;
-      if (spellStartIdx >= 0 && spellColCount > 0) {
-        const spellValues: string[] = [];
-        for (let i = 0; i < spellColCount; i++) {
-          const val = cells[spellStartIdx + i] ?? "";
-          spellValues.push(val);
-        }
-        const joined = spellValues.join("/");
-        if (joined.includes("+1 level")) {
-          spellsPerDay = joined;
-        } else {
-          spellsPerDay = spellValues.join(",");
-        }
-      }
-
-      progression.push({ level, bab, fortSave, refSave, willSave, special, spellsPerDay });
-    });
-
-    if (progression.length > 0) return false;
-  });
-
-  return { progression, hasCantrips };
-}
-
-/** Split a Special column value on commas/periods, but not inside parentheses. */
-function splitSpecial(text: string): string[] {
-  const parts: string[] = [];
-  let current = "";
-  let depth = 0;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === "(") depth++;
-    else if (ch === ")") depth = Math.max(0, depth - 1);
-
-    if (depth === 0 && ch === ",") {
-      parts.push(current);
-      current = "";
-    } else if (depth === 0 && ch === "." && i + 1 < text.length && /\s/.test(text[i + 1]) && /[A-Za-z]/.test(text[i + 2] ?? "")) {
-      // Split on ". " followed by a letter (sentence boundary)
-      parts.push(current);
-      current = "";
-      i++; // skip the space
-    } else {
-      current += ch;
-    }
-  }
-  if (current) parts.push(current);
-  return parts;
+function parsePrerequisites($: cheerio.CheerioAPI): ClassReference["raw"]["prerequisites"] {
+  const text = extractPrerequisiteText($);
+  const parsed = parsePrerequisiteText(text);
+  return { text, parsed };
 }
 
 // ---------------------------------------------------------------------------
@@ -637,6 +692,105 @@ const IMPLICIT_FEATURES = [
   "Fast Movement",
   "Flurry of Blows",
 ];
+
+/**
+ * Clean a Special column entry to its base feature name.
+ * "Sneak Attack +1d6" → "Sneak Attack"
+ * "hexblade's curse 2/day" → "hexblade's curse"
+ * "Ignore spell failure 10%" → "Ignore spell failure"
+ * "Slow Fall 20 ft." → "Slow Fall"
+ * "Damage Reduction 3/-" → "Damage Reduction"
+ */
+function cleanSpecialEntry(s: string): string {
+  return s
+    .replace(/\s*\+\d+(?:d\d+)?(?:\/\+\d+(?:d\d+)?)*$/, "") // +1, +1d6, +1/+1d6
+    .replace(/\s*\+?\d+\/day$/i, "")    // 2/day, +1/day
+    .replace(/\s*\d+%$/, "")           // 10%
+    .replace(/\s*\d+\s*(?:ft\.?|feet)$/i, "")  // 20 ft.
+    .replace(/\s*\d+\/[-–]$/, "")      // 3/-
+    .replace(/\s*\d+\/(?:week|round)$/i, "") // 1/week
+    .replace(/\s*\(\d+(?:st|nd|rd|th)\)$/, "") // (1st)
+    .replace(/\s*\(\d+(?:st|nd|rd|th) type\)$/i, "") // (1st type)
+    .replace(/\s*\([^)]*\d+\/day[^)]*\)$/i, "") // (elemental 1/day)
+    .replace(/\s*\((?:black|brown|dire|large|small|tiny|huge|plant|elemental|magic|lawful|adamantine|move action|free action|two|four|radius)[^)]*\)$/i, "") // (black), (magic), (huge elemental), etc.
+    .replace(/\s*(?:any distance)$/i, "") // any distance
+    .replace(/^(?:1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\s+/i, "") // "1st Favored Enemy" → "Favored Enemy"
+    .replace(/\s*\+\d+\s+(?:level of existing .*spellcasting class)$/i, "") // "+1 level of existing..."
+    .replace(/^[^A-Za-z]*/, "") // strip leading non-alpha chars (broken parens, etc.)
+    .replace(/\s*\([^)]*\d[^)]*\)?\s*$/, "") // strip trailing parenthetical containing numbers: (+1), (2d8), (1/day)
+    .replace(/\s*\([^)]*$/, "") // strip any unclosed paren at end
+    .replace(/^([^(]*)\)$/, "$1") // strip orphaned trailing ) only when no opening (
+    .replace(/\d+\/day$/, "") // leftover "2/day" after paren strip
+    .trim()
+    .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
+}
+
+/** Find name and effect column indices from a sub-option table */
+function findSubOptionColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>): { nameCol: number; effectCol: number } {
+  // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
+  const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
+  if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
+
+  // Use the row with the most th cells
+  let bestRow = headerRows.first();
+  let bestCount = bestRow.children("th").length;
+  headerRows.each((_, row) => {
+    const count = $(row).children("th").length;
+    if (count > bestCount) { bestRow = $(row); bestCount = count; }
+  });
+
+  const headers = bestRow.children("th").toArray().map((th) => $(th).text().trim().toLowerCase());
+  const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
+  const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
+  return { nameCol, effectCol };
+}
+
+/** Normalize a feature name for matching — strips plurals, collapses whitespace */
+function normalizeFeatureName(name: string): string {
+  // "Special Abilities" → "special ability"
+  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
+}
+
+/** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */
+function subOptionRows($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>, parentKey: string): { key: string; desc: string }[] {
+  const { nameCol, effectCol } = findSubOptionColumns($, table);
+  if (nameCol < 0) return [];
+  return table.find("tr").toArray().flatMap((row) => {
+    const cells = $(row).find("td").toArray().map((td) => $(td).text().trim());
+    if (cells.length <= nameCol || !cells[nameCol] || $(row).find("td[colspan]").length > 0) return [];
+    const subName = cells[nameCol].replace(/\s*\*$/, "");
+    return [{ key: normalizeFeatureName(`${parentKey}: ${subName}`), desc: effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "" }];
+  });
+}
+
+/** Find the exact key in the known features set that matches this name */
+function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
+  const norm = normalizeFeatureName(name);
+  const lower = name.toLowerCase();
+  // The name, or a plural variant
+  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) => knownFeatures.has(n));
+  if (exact !== undefined) return exact;
+  // A known feature starting with this name
+  // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
+  for (const known of knownFeatures) {
+    if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
+  }
+  // A known feature this name starts with, then a non-alpha suffix
+  // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
+  // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
+  for (const known of knownFeatures) {
+    if (norm.startsWith(known) && norm.length > known.length) {
+      const suffix = norm.substring(known.length);
+      if (/^[^a-z\s]/.test(suffix.trim())) return known; // +1/day, (lance), etc. — but not "Benefits"
+    }
+  }
+  return undefined;
+}
+
+/** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
+function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
+  return findMatchingFeatureKey(name, knownFeatures) !== undefined;
+}
 
 function parseClassFeatures(
   $: cheerio.CheerioAPI,
@@ -844,215 +998,61 @@ function parseClassFeatures(
   return features;
 }
 
-/**
- * Clean a Special column entry to its base feature name.
- * "Sneak Attack +1d6" → "Sneak Attack"
- * "hexblade's curse 2/day" → "hexblade's curse"
- * "Ignore spell failure 10%" → "Ignore spell failure"
- * "Slow Fall 20 ft." → "Slow Fall"
- * "Damage Reduction 3/-" → "Damage Reduction"
- */
-function cleanSpecialEntry(s: string): string {
-  return s
-    .replace(/\s*\+\d+(?:d\d+)?(?:\/\+\d+(?:d\d+)?)*$/, "") // +1, +1d6, +1/+1d6
-    .replace(/\s*\+?\d+\/day$/i, "")    // 2/day, +1/day
-    .replace(/\s*\d+%$/, "")           // 10%
-    .replace(/\s*\d+\s*(?:ft\.?|feet)$/i, "")  // 20 ft.
-    .replace(/\s*\d+\/[-–]$/, "")      // 3/-
-    .replace(/\s*\d+\/(?:week|round)$/i, "") // 1/week
-    .replace(/\s*\(\d+(?:st|nd|rd|th)\)$/, "") // (1st)
-    .replace(/\s*\(\d+(?:st|nd|rd|th) type\)$/i, "") // (1st type)
-    .replace(/\s*\([^)]*\d+\/day[^)]*\)$/i, "") // (elemental 1/day)
-    .replace(/\s*\((?:black|brown|dire|large|small|tiny|huge|plant|elemental|magic|lawful|adamantine|move action|free action|two|four|radius)[^)]*\)$/i, "") // (black), (magic), (huge elemental), etc.
-    .replace(/\s*(?:any distance)$/i, "") // any distance
-    .replace(/^(?:1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\s+/i, "") // "1st Favored Enemy" → "Favored Enemy"
-    .replace(/\s*\+\d+\s+(?:level of existing .*spellcasting class)$/i, "") // "+1 level of existing..."
-    .replace(/^[^A-Za-z]*/, "") // strip leading non-alpha chars (broken parens, etc.)
-    .replace(/\s*\([^)]*\d[^)]*\)?\s*$/, "") // strip trailing parenthetical containing numbers: (+1), (2d8), (1/day)
-    .replace(/\s*\([^)]*$/, "") // strip any unclosed paren at end
-    .replace(/^([^(]*)\)$/, "$1") // strip orphaned trailing ) only when no opening (
-    .replace(/\d+\/day$/, "") // leftover "2/day" after paren strip
-    .trim()
-    .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
-}
+// ---------------------------------------------------------------------------
+// Class HTML Parser — dndtools.net structure
+//
+// HTML layout:
+//   <h2>Site Tagline</h2>                    ← skip
+//   <h2>Class Name</h2>                      ← second h2
+//   <h3>Hit die</h3> <p>d10</p>
+//   <h3>Starting gold</h3> <p>...</p>
+//   <h3>Skill points</h3> <p>4 + Int</p>
+//   <h3>Class Skills</h3>
+//   <table> (skill rows with links)
+//   <h3>Requirements</h3> (prestige classes)
+//   <h3>Class Features</h3>
+//   <h4>Feature Name (Ex)</h4> <p>description</p>
+//   <h3>Advancement</h3>
+//   <table> (Level/BAB/Fort/Ref/Will/Special)
+//   <h3>Spells for ClassName</h3>
+// ---------------------------------------------------------------------------
 
-/** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */
-function subOptionRows($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>, parentKey: string): { key: string; desc: string }[] {
-  const { nameCol, effectCol } = findSubOptionColumns($, table);
-  if (nameCol < 0) return [];
-  return table.find("tr").toArray().flatMap((row) => {
-    const cells = $(row).find("td").toArray().map((td) => $(td).text().trim());
-    if (cells.length <= nameCol || !cells[nameCol] || $(row).find("td[colspan]").length > 0) return [];
-    const subName = cells[nameCol].replace(/\s*\*$/, "");
-    return [{ key: normalizeFeatureName(`${parentKey}: ${subName}`), desc: effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "" }];
-  });
-}
+export function parseClassHtml(html: string, sourceUrl: string, book: string): ClassReference["raw"] & { _meta: ClassReference["_meta"] } {
+  const $ = cheerio.load(html);
 
-/** Find name and effect column indices from a sub-option table */
-function findSubOptionColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>): { nameCol: number; effectCol: number } {
-  // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
-  const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
-  if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
+  const name = parseClassName($);
+  const description = parseDescription($);
+  const hitDie = parseHitDie($);
+  const skillPointsPerLevel = parseSkillPoints($);
+  const classSkills = parseClassSkills($);
+  const prerequisites = parsePrerequisites($);
+  const alignment = parseAlignment($);
+  const { progression, hasCantrips } = parseProgression($);
+  const classFeatures = parseClassFeatures($, progression);
+  const spellsKnown = parseSpellsKnownTable($);
+  const bonusSpellAbility = detectBonusSpellAbility($);
 
-  // Use the row with the most th cells
-  let bestRow = headerRows.first();
-  let bestCount = bestRow.children("th").length;
-  headerRows.each((_, row) => {
-    const count = $(row).children("th").length;
-    if (count > bestCount) { bestRow = $(row); bestCount = count; }
-  });
-
-  const headers = bestRow.children("th").toArray().map((th) => $(th).text().trim().toLowerCase());
-  const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
-  const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
-  return { nameCol, effectCol };
-}
-
-/** Find the exact key in the known features set that matches this name */
-function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
-  const norm = normalizeFeatureName(name);
-  const lower = name.toLowerCase();
-  // The name, or a plural variant
-  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) => knownFeatures.has(n));
-  if (exact !== undefined) return exact;
-  // A known feature starting with this name
-  // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
-  for (const known of knownFeatures) {
-    if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
+  if (alignment && !prerequisites.parsed.alignment) {
+    prerequisites.parsed.alignment = alignment;
   }
-  // A known feature this name starts with, then a non-alpha suffix
-  // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
-  // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
-  for (const known of knownFeatures) {
-    if (norm.startsWith(known) && norm.length > known.length) {
-      const suffix = norm.substring(known.length);
-      if (/^[^a-z\s]/.test(suffix.trim())) return known; // +1/day, (lance), etc. — but not "Benefits"
-    }
-  }
-  return undefined;
-}
 
-/** Normalize a feature name for matching — strips plurals, collapses whitespace */
-function normalizeFeatureName(name: string): string {
-  // "Special Abilities" → "special ability"
-  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
-}
-
-/** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
-function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
-  return findMatchingFeatureKey(name, knownFeatures) !== undefined;
-}
-
-// ---------------------------------------------------------------------------
-// Spells Known table
-// ---------------------------------------------------------------------------
-
-function parseSpellsKnownTable($: cheerio.CheerioAPI): string[] {
-  const results: string[] = [];
-
-  $("table").each((_, table) => {
-    const headers: string[] = [];
-    $(table).find("th").each((_, th) => {
-      headers.push($(th).text().trim().toLowerCase());
-    });
-
-    const headerText = headers.join(" ");
-    // Skip progression tables (have BAB/attack columns)
-    if (headerText.includes("base") || headerText.includes("attack") || headerText.includes("bab")) return;
-    // Skip skill tables
-    if (headerText.includes("skill")) return;
-    // Match: explicit "known" label OR a Level + ordinal-only table (no BAB/Fort/etc.)
-    const hasLevel = headers.some((h) => h.includes("level"));
-    const hasOrdinals = headers.some((h) => /^\d+(?:st|nd|rd|th)$/.test(h));
-    const isKnownTable = headerText.includes("known") || (hasLevel && hasOrdinals && !headerText.includes("fort") && !headerText.includes("special"));
-    if (!isKnownTable) return;
-
-    $(table).find("tr").each((_, row) => {
-      const cells: string[] = [];
-      $(row).find("td").each((_, td) => {
-        $(td).find("sup").remove();
-        cells.push($(td).text().trim());
-      });
-      if (cells.length < 2) return;
-
-      const levelMatch = cells[0].match(/^(\d+)(?:st|nd|rd|th)?$/);
-      if (!levelMatch) return;
-
-      const slots = cells.slice(1).map((c) => {
-        const trimmed = c.trim();
-        if (trimmed === "\u2014" || trimmed === "-" || trimmed === "") return "\u2014";
-        if (trimmed.includes("+")) {
-          const sum = trimmed.split("+").reduce((acc, part) => acc + (parseInt(part.trim(), 10) || 0), 0);
-          return String(sum);
-        }
-        const cleaned = trimmed.replace(/[^0-9]/g, "");
-        return cleaned === "" ? "\u2014" : cleaned;
-      });
-      results.push(slots.join(","));
-    });
-
-    if (results.length > 0) return false;
-  });
-
-  return results;
-}
-
-// ---------------------------------------------------------------------------
-// Bonus spell ability detection
-// ---------------------------------------------------------------------------
-
-function detectBonusSpellAbility($: cheerio.CheerioAPI): string | undefined {
-  const bodyText = $("body").text();
-  const match = bodyText.match(/bonus spells are based on (Intelligence|Wisdom|Charisma)/i);
-  if (match) return match[1];
-
-  // "receives bonus spells for a high Charisma score" (Warmage, Wu Jen, etc.)
-  const bonusForMatch = bodyText.match(/bonus spells for a high (Intelligence|Wisdom|Charisma)/i);
-  if (bonusForMatch) return bonusForMatch[1];
-
-  const dcMatch = bodyText.match(/saves? (?:for these spells )?(?:have |has )?a DC of 10 \+ .*?\+ .*?(Intelligence|Wisdom|Charisma)/i);
-  if (dcMatch) return dcMatch[1];
-
-  const abilityMatch = bodyText.match(/must have (?:a |an )?(Intelligence|Wisdom|Charisma) score (?:equal to )?(?:at )?least 10/i);
-  if (abilityMatch) return abilityMatch[1];
-
-  return undefined;
-}
-
-// ---------------------------------------------------------------------------
-// Shared utilities for dndtools.net HTML structure
-// ---------------------------------------------------------------------------
-
-/** Find a section header (h3 or h4) whose text matches a pattern */
-function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheerio.Cheerio<AnyNode> {
-  // Try h3 first, then h4
-  const h3 = $("h3").filter((_, el) => pattern.test($(el).text().trim())).first();
-  if (h3.length > 0) return h3;
-  return $("h4").filter((_, el) => pattern.test($(el).text().trim())).first();
-}
-
-/** Get the text content after a header, from the next sibling(s) until the next header */
-function getTextAfterHeader(header: cheerio.Cheerio<AnyNode>): string {
-  const parts: string[] = [];
-  for (const el of sectionElements(header, ["h2", "h3", "h4"])) {
-    const text = el.text().trim();
-    if (text) parts.push(text);
-    const tag = tagOf(el);
-    if (tag === "p" || tag === "div") break;
-  }
-  // If no sibling had content, try parent's text after the header
-  if (parts.length === 0) {
-    const parent = header.parent();
-    if (parent.length > 0) {
-      const fullText = parent.text();
-      const headerText = header.text().trim();
-      const idx = fullText.indexOf(headerText);
-      if (idx >= 0) {
-        const after = fullText.substring(idx + headerText.length).trim();
-        const firstLine = after.split("\n")[0].trim();
-        if (firstLine) return firstLine;
-      }
-    }
-  }
-  return parts.join(" ");
+  return {
+    _meta: {
+      type: "class",
+      sourceUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    name,
+    description,
+    hitDie,
+    skillPointsPerLevel,
+    classSkills,
+    prerequisites,
+    progression,
+    classFeatures,
+    ...(spellsKnown.length > 0 ? { spellsKnown } : {}),
+    ...(hasCantrips ? { hasCantrips } : {}),
+    ...(bonusSpellAbility ? { bonusSpellAbility } : {}),
+  };
 }

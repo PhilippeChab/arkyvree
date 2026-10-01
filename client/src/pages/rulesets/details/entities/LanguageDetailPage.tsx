@@ -2,8 +2,8 @@ import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
 import {
-  LanguageFormFields,
   type LanguageFormData,
+  LanguageFormFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { languageQuery } from "./entityDetailQueries.ts";

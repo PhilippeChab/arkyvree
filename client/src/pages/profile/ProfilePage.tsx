@@ -1,5 +1,5 @@
 import type { AuthUser } from "@/client/src/stores/authStore.ts";
-import { AttachmentField, DiceSpinner, PageHeader, PageTransition, EmailField, PasswordField, PageError } from "@/client/src/components/common/index.ts";
+import { AttachmentField, DiceSpinner, EmailField, PageError, PageHeader, PageTransition, PasswordField } from "@/client/src/components/common/index.ts";
 import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
 import { useFormSync, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
@@ -20,7 +20,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface ProfileFormData {

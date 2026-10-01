@@ -4,7 +4,7 @@ import { ContributorsTable, InviteContributorDialog } from "@/client/src/compone
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, Delete as DeleteIcon, ExitToApp as LeaveIcon, People as ContributorsIcon } from "@mui/icons-material";
+import { Add as AddIcon, People as ContributorsIcon, Delete as DeleteIcon, ExitToApp as LeaveIcon } from "@mui/icons-material";
 import {
   Alert,
   Box,

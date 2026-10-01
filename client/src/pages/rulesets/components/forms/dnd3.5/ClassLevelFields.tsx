@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
-import { featKey, levelFeatLabel, type LevelFeat, type LevelSave } from "./classLevelForm.ts";
+import { featKey, type LevelFeat, levelFeatLabel, type LevelSave } from "./classLevelForm.ts";
 
 interface FeatOption extends LevelFeat {
   label: string;

@@ -1,7 +1,7 @@
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import { ExpandLess } from "@mui/icons-material";
 import { IconButton, TableCell, TableRow } from "@mui/material";
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import { groupSkills } from "./skillGroups.ts";
 
 /** Where a skill's row sits: under its group's header, and hidden while that group is collapsed. */

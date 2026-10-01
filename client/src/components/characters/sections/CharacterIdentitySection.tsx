@@ -10,7 +10,7 @@ import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typ
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS, type Alignment, type Gender } from "@/shared/enums.ts";
+import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 interface CharacterIdentityFormData {
   race: string;

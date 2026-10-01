@@ -10,7 +10,7 @@ import { AttachmentsMethods } from "@/server/services/AttachmentsService.ts";
 import { setStorageForTest } from "@/server/storage/s3.ts";
 import { beforeEach, describe, expect, test } from "bun:test";
 import { fakeStorage } from "@/tests/storage.ts";
-import { createTestUser, NIL_UUID, createTestCharacter } from "@/tests/helpers.ts";
+import { createTestCharacter, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
 
 // Replicates the service's HMAC signing so tests can craft tokens with
 // arbitrary `iat` values (e.g. expired) without exposing internals.

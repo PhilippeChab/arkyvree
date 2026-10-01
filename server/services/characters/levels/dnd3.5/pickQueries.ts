@@ -34,9 +34,9 @@ import {
   buildProjectedFeatsFromPicks,
   buildProjectedGivenFeats,
   buildProjectedSkillsFromAllocations,
-  loadFeatCustomizations,
-  getLevelIdsFromOnward,
   type FeatPick,
+  getLevelIdsFromOnward,
+  loadFeatCustomizations,
 } from "./helpers.ts";
 import { annotateRequirements } from "./validation.ts";
 

@@ -7,8 +7,8 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Box,
-  Typography,
   Link as MuiLink,
+  Typography,
 } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";

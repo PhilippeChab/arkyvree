@@ -1,7 +1,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 import type Dnd35DetailedCharacter from "./DetailedCharacter.ts";
-import { getBondedRaceStats, type BondedRaceStatBlock } from "./bondedRaceData.ts";
+import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import { scaledFeats, scaledSkillTotals } from "./bondedScaling.ts";
 
 /**

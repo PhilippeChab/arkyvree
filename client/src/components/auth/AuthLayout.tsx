@@ -1,11 +1,11 @@
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
 import { useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
-import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 // ── Branding panels (rendered once by the layout route) ──

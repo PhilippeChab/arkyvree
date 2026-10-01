@@ -1,4 +1,4 @@
-import { test, expect } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from '@/tests/e2e/fixtures.ts';
 import type { Locator, Page } from '@playwright/test';
 import { apiResponse, createCharacter, selectOption, signIn } from '@/tests/e2e/helpers.ts';
 

@@ -1,12 +1,12 @@
 import { stripSeparators } from "@/shared/utils.ts";
-import type { RequirementEntry, ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
-import { feat, eq, gte, or, eqStr } from "@/database/packages/dnd35/content/requirements.ts";
-import type { AptitudePick, BabType, BonusFeatList, NamedText, SaveType, ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { AptitudePick, BabType, BonusFeatList, ClassReference, NamedText, SaveType } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { findCreatureType } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { anySkillRequirement, BOOK_ABBREV_PATTERN, normalizeWs, SKILL_MAP, skillSlug, lookupWithPluralVariants, matchesWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { anySkillRequirement, BOOK_ABBREV_PATTERN, lookupWithPluralVariants, matchesWithPluralVariants, normalizeWs, SKILL_MAP, skillSlug } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 // ---------------------------------------------------------------------------
 // BAB detection
@@ -61,322 +61,6 @@ function parseHd(hitDie: string): number {
 function parseSkillPoints(text: string): number {
   const match = text.match(/(\d+)/);
   return match ? parseInt(match[1], 10) : 2;
-}
-
-// ---------------------------------------------------------------------------
-// Prerequisite parsing
-// ---------------------------------------------------------------------------
-
-/** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
-function normalizeCraftSubtype(subtype: string): string {
-  const lower = subtype.toLowerCase().trim();
-  const map: Record<string, string> = {
-    leather: "leatherworking", metal: "metalworking", wood: "woodworking",
-    stone: "stoneworking", bone: "bonecarving", gem: "gemcutting",
-    cloth: "weaving", pottery: "pottery", basket: "basketweaving",
-  };
-  return map[lower] ?? subtype;
-}
-
-/** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
-function expandSkillRequirement(name: string, ranks: number): RequirementEntry | null {
-  // "Knowledge (any)" → OR of all Knowledge skills
-  const anySkill = anySkillRequirement(name, ranks);
-  if (anySkill) return anySkill;
-
-  // "Knowledge (arcana, local or psionics)" or "Craft (leather, metal, or woodworking)" → OR of individual skills
-  const multiMatch = name.match(/^(.+?)\s*\(([^)]*(?:,|or)[^)]*)\)$/i);
-  if (multiMatch) {
-    const baseName = multiMatch[1].trim();
-    const options = multiMatch[2].split(/,\s*(?:or\s+)?|\s+or\s+/).map(o => o.trim()).filter(Boolean);
-    if (options.length >= 2) {
-      const slugs = options.map(opt => {
-        // Normalize abbreviated Craft subtypes: "leather" → "leatherworking", "metal" → "metalworking"
-        const normalized = /^craft$/i.test(baseName) ? normalizeCraftSubtype(opt) : opt;
-        const fullName = `${baseName} (${normalized.charAt(0).toUpperCase() + normalized.slice(1)})`;
-        // Try exact SKILL_MAP lookup first, fall back to constructing the slug directly
-        return SKILL_MAP[fullName.toLowerCase()] ?? stripSeparators(fullName);
-      });
-      return or(...slugs.map(s => gte(`skills.${s}.rank`, ranks)));
-    }
-  }
-
-  return null;
-}
-
-function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parsed"]): { requirements: RequirementEntry[]; featNameMap: Record<string, string>; errors: string[]; unresolvedPrereqs: string[] } {
-  const reqs: RequirementEntry[] = [];
-  const featNameMap: Record<string, string> = {};
-  const errors: string[] = [];
-  const unresolvedPrereqs: string[] = [];
-
-  if (parsed.bab) {
-    reqs.push(gte("combat.bab", parsed.bab));
-  }
-
-  // Skills that exist in D&D 3.5 but aren't tracked in this system
-  const NON_TRACKABLE_SKILLS = new Set(["speak language"]);
-
-  if (parsed.skills) {
-    let lastSkillReqIdx = -1;
-    for (let i = 0; i < parsed.skills.length; i++) {
-      const s = parsed.skills[i];
-
-      // Skip skills not tracked in this system (e.g. "Speak Language")
-      const baseName = s.name.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
-      if (NON_TRACKABLE_SKILLS.has(baseName)) continue;
-
-      // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
-      const expanded = expandSkillRequirement(s.name, s.ranks);
-      if (expanded) {
-        reqs.push(expanded);
-        lastSkillReqIdx = reqs.length - 1;
-        continue;
-      }
-
-      // "Diplomacy or Intimidate 1 rank" → single entry with "or" inside
-      if (/\bor\b/i.test(s.name) && !/^or\s+/i.test(s.name)) {
-        const parts = s.name.split(/\s+or\s+/i).map((p) => p.trim()).filter(Boolean);
-        if (parts.length >= 2) {
-          reqs.push(or(...parts.map((p) => gte(`skills.${skillSlug(p)}.rank`, s.ranks))));
-          lastSkillReqIdx = reqs.length - 1;
-          continue;
-        }
-      }
-      // "or Intimidate" as a separate entry → merge with previous skill req as OR
-      if (/^or\s+/i.test(s.name)) {
-        const name = s.name.replace(/^or\s+/i, "");
-        const newTarget = `skills.${skillSlug(name)}.rank`;
-        if (lastSkillReqIdx >= 0) {
-          const prev = reqs[lastSkillReqIdx];
-          // Skip if it resolves to the same path (e.g. Perform subtypes)
-          if (!("chainingOperator" in prev) && prev.target === newTarget) continue;
-          reqs[lastSkillReqIdx] = or(prev, gte(newTarget, s.ranks));
-        } else {
-          reqs.push(gte(newTarget, s.ranks));
-          lastSkillReqIdx = reqs.length - 1;
-        }
-        continue;
-      }
-      reqs.push(gte(`skills.${skillSlug(s.name)}.rank`, s.ranks));
-      lastSkillReqIdx = reqs.length - 1;
-    }
-  }
-
-  if (parsed.feats) {
-    for (const f of parsed.feats) {
-      // Skip scraping artifacts (page references, HTML fragments, etc.)
-      if (/\bpage \d+\b|^[^a-zA-Z]*$/i.test(f)) continue;
-
-      // "any metamagic feat" / "any item creation feat" → grouping wildcard
-      if (/any (?:other )?metamagic feat/i.test(f) && !/item creation/i.test(f)) {
-        reqs.push(eq("feats.metamagic.*.possessed"));
-        continue;
-      }
-      if (/any (?:other )?item creation feat/i.test(f) && !/metamagic/i.test(f)) {
-        reqs.push(eq("feats.itemcreation.*.possessed"));
-        continue;
-      }
-      // "Any [N] metamagic or item creation feats" → OR of both wildcards
-      if (/any\b.*\bmetamagic\b.*\bitem creation\b.*\bfeats?\b/i.test(f)) {
-        reqs.push(or(eq("feats.metamagic.*.possessed"), eq("feats.itemcreation.*.possessed")));
-        continue;
-      }
-      // "any" feats (e.g. "Weapon Focus (any thrown weapon)", "Spell Focus in two schools of magic",
-      //   "Weapon Focus (with deity's favored weapon)")
-      // → prefix wildcard on the feat family slug
-      if (/\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i.test(f)) {
-        const anyReq = expandAnyFeatRequirement(f);
-        if (anyReq) {
-          reqs.push(anyReq);
-        } else {
-          unresolvedPrereqs.push(f);
-        }
-        continue;
-      }
-      const compoundReq = parseCompoundFeatRequirement(f, featNameMap);
-      if (compoundReq) {
-        reqs.push(compoundReq);
-      } else {
-        // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
-        // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
-        const cleaned = f.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "");
-        const slug = stripSeparators(cleaned);
-        featNameMap[slug] = f;
-        reqs.push(eq(feat(cleaned)));
-      }
-    }
-  }
-
-  if (parsed.casterLevel) {
-    for (const cl of parsed.casterLevel) {
-      if (cl.type === "any") {
-        reqs.push(or(
-          gte("spellcasting.arcane", cl.level),
-          gte("spellcasting.divine", cl.level),
-        ));
-      } else {
-        reqs.push(gte(`spellcasting.${cl.type}`, cl.level));
-      }
-    }
-  }
-
-  if (parsed.alignment) {
-    const alignReqs = parseAlignmentRequirement(parsed.alignment);
-    if (alignReqs) reqs.push(alignReqs);
-  }
-
-  if (parsed.saves) {
-    for (const s of parsed.saves) {
-      const saveKey = s.name.toLowerCase();
-      reqs.push(gte(`saves.${saveKey}.base`, s.base));
-    }
-  }
-
-  // Class level requirements: "fighter level 4th", "5 levels of cleric"
-  if (parsed.classLevels) {
-    for (const cl of parsed.classLevels) {
-      const slug = stripSeparators(cl.className);
-      reqs.push(gte(`classes.${slug}.level`, cl.level));
-    }
-  }
-
-  // Parse race, proficiency, and special ability requirements from special entries
-  if (parsed.special) {
-    for (const s of parsed.special) {
-      const raceReq = parseRaceRequirement(s);
-      if (raceReq) { reqs.push(raceReq); continue; }
-
-      const profReq = parseProficiencyRequirement(s, featNameMap);
-      if (profReq) { reqs.push(profReq); continue; }
-
-      const abilityReq = parseSpecialAbilityRequirement(s, featNameMap);
-      if (abilityReq) { reqs.push(abilityReq); continue; }
-
-      // Track mechanical prerequisites that we couldn't parse (sneak attack, rage, etc.)
-      // Discard narrative/RP-only ones (deity worship, organization membership, rituals)
-      if (isMechanicalPrereq(s)) {
-        unresolvedPrereqs.push(s);
-      }
-    }
-  }
-
-  // Validate all requirement paths
-  const validatedReqs: RequirementEntry[] = [];
-  for (const req of reqs) {
-    const invalid = findInvalidRequirementPaths(req);
-    if (invalid.length > 0) {
-      for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
-    } else {
-      validatedReqs.push(req);
-    }
-  }
-
-  return { requirements: validatedReqs, featNameMap, errors, unresolvedPrereqs };
-}
-
-function parseAlignmentRequirement(text: string): RequirementEntry | undefined {
-  const lower = text.toLowerCase().trim().replace(/\.$/, "");
-  const path = "identity.beliefs.alignment";
-
-  if (lower.startsWith("any evil")) {
-    return or(
-      eqStr(path, "Lawful Evil"),
-      eqStr(path, "Neutral Evil"),
-      eqStr(path, "Chaotic Evil"),
-    );
-  }
-  if (lower.startsWith("any good")) {
-    return or(
-      eqStr(path, "Lawful Good"),
-      eqStr(path, "Neutral Good"),
-      eqStr(path, "Chaotic Good"),
-    );
-  }
-  if (lower.startsWith("any lawful")) {
-    return or(
-      eqStr(path, "Lawful Good"),
-      eqStr(path, "Lawful Neutral"),
-      eqStr(path, "Lawful Evil"),
-    );
-  }
-  if (lower.startsWith("any chaotic")) {
-    return or(
-      eqStr(path, "Chaotic Good"),
-      eqStr(path, "Chaotic Neutral"),
-      eqStr(path, "Chaotic Evil"),
-    );
-  }
-  if (lower.startsWith("any non-evil") || lower.startsWith("any nonevil")) {
-    return or(
-      eqStr(path, "Lawful Good"),
-      eqStr(path, "Neutral Good"),
-      eqStr(path, "Chaotic Good"),
-      eqStr(path, "Lawful Neutral"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Chaotic Neutral"),
-    );
-  }
-  if (lower.startsWith("any non-good") || lower.startsWith("any nongood")) {
-    return or(
-      eqStr(path, "Lawful Neutral"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Chaotic Neutral"),
-      eqStr(path, "Lawful Evil"),
-      eqStr(path, "Neutral Evil"),
-      eqStr(path, "Chaotic Evil"),
-    );
-  }
-  if (lower.startsWith("any non-lawful") || lower.startsWith("any nonlawful")) {
-    return or(
-      eqStr(path, "Neutral Good"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Neutral Evil"),
-      eqStr(path, "Chaotic Good"),
-      eqStr(path, "Chaotic Neutral"),
-      eqStr(path, "Chaotic Evil"),
-    );
-  }
-  if (lower.startsWith("any non-chaotic") || lower.startsWith("any nonchaotic")) {
-    return or(
-      eqStr(path, "Lawful Good"),
-      eqStr(path, "Lawful Neutral"),
-      eqStr(path, "Lawful Evil"),
-      eqStr(path, "Neutral Good"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Neutral Evil"),
-    );
-  }
-
-  const alignmentNames = [
-    "lawful good", "neutral good", "chaotic good",
-    "lawful neutral", "true neutral", "chaotic neutral",
-    "lawful evil", "neutral evil", "chaotic evil",
-  ];
-
-  // Comma-separated list of alignments (e.g. "Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil.")
-  if (lower.includes(",")) {
-    const parts = lower.replace(/\.$/, "").split(/,\s*/).map(s => s.replace(/^or\s+/, "").trim()).filter(Boolean);
-    const matched: RequirementEntry[] = [];
-    for (const part of parts) {
-      const normalized = part === "neutral" ? "true neutral" : part;
-      const titleCase = normalized.split(" ").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
-      if (alignmentNames.includes(normalized)) {
-        matched.push(eqStr(path, titleCase));
-      }
-    }
-    if (matched.length > 0) return or(...matched);
-  }
-
-  // Specific alignment
-  for (const name of alignmentNames) {
-    if (lower === name || (name === "true neutral" && lower === "neutral")) {
-      const titleCase = name.split(" ").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
-      return eqStr(path, titleCase);
-    }
-  }
-
-  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -740,332 +424,6 @@ function detectCasterAdvancement(
 }
 
 // ---------------------------------------------------------------------------
-// Aptitude pick detection
-// ---------------------------------------------------------------------------
-
-// Patterns indicating the character makes a selection from a pool
-const CHOICE_PATTERN = /\b(choose|chooses|select|selects|picks?|chosen|drawn from|from the following|from those given|from among)\b/i;
-
-/** Description patterns that indicate gameplay/tactical choices, not character-build picks.
- *  These filter AFTER CHOICE_PATTERN matches — if any match, the feature is skipped.
- *  Keep these narrow: a description can contain both build choices and gameplay language.
- *  Only match when the ENTIRE feature is clearly not a build pick. */
-const NON_PICK_DESCRIPTION: RegExp[] = [
-  // Bonus feat with alternative: "if he already has the feat, he can choose"
-  /already has the feat.{0,20}choose/i,
-  // "roll and choose" / "choose the result" / "choose between the two results" — random table picks
-  /choose (?:the result|between the two)/i,
-  /roll .{0,20}choose/i,
-];
-
-/** Features that match CHOICE_PATTERN but aren't character-build picks.
- *  Add new entries here instead of scattering regex blocks in detectAptitudePicks. */
-const NON_PICK_FEATURES: RegExp[] = [
-  // Scaling abilities that increase in power, not choices
-  /sneak attack|rage|wild shape|summon|damage reduction|save|trap sense|uncanny dodge|flurry|bonus language/i,
-  // Named feats granted as freeFeats
-  /^(Skill Focus|Skill Mastery|Precise Shot|Mettle|Catch Weapon|Evasion|Improved Evasion)\b/i,
-  // Combat/passive abilities whose descriptions incidentally contain choice words
-  /parry|waist|bleed|wound|grapple|intimidat|reckless|combat trap|weapon bond|oath|visage|wings|trackless/i,
-  // Class abilities that aren't character-build picks
-  /bardic knowledge|unarmed strike|lay on hands|turn or rebuke|weaken spirit|sense element|spirit guide|steal spell|justice blade|brilliant blade|animal companion|^mount$/i,
-  // Per-use abilities whose descriptions contain incidental choice words (tactical/gameplay picks)
-  /bloodwalk|arcane fist|fist of energy|spin fate|seal fate|combine songs|glyph of warding|spellpool|enhanced accuracy|student of chaos|thrall|effortless change|shapechanger|reflexive change|infinite variety|favored shape/i,
-  // Elemental/energy abilities that reference a prior one-time class-entry choice
-  /elemental specialty|elemental perfection|energy (?:resistance|immunity)|resistance to energy/i,
-];
-
-// D&D type suffixes embedded in raw class feature names, e.g. "Tattoo (Su or Sp)"
-const TYPE_SUFFIX = /\s*\((?:Ex|Su|Sp|Su or Sp)\)$/i;
-
-function buildFeatureMap<T>(
-  features: ClassReference["raw"]["classFeatures"],
-  valueFn: (cf: ClassReference["raw"]["classFeatures"][number]) => T,
-): Map<string, T> {
-  const map = new Map<string, T>();
-  for (const cf of features) {
-    map.set(cf.name.toLowerCase(), valueFn(cf));
-    const stripped = cf.name.replace(TYPE_SUFFIX, "").toLowerCase();
-    if (stripped !== cf.name.toLowerCase()) {
-      map.set(stripped, valueFn(cf));
-    }
-  }
-  return map;
-}
-
-/**
- * Check if a feature is a scaling ability (e.g. "Dodge bonus +1", "+2", "+3")
- * by looking at raw progression entries. If the raw entries that normalize to
- * the same name have increasing numeric suffixes, it's scaling, not a pool pick.
- */
-function isScalingFeature(normalizedName: string, progression: ClassReference["raw"]["progression"]): boolean {
-  const rawEntries: string[] = [];
-  for (const row of progression) {
-    for (const special of row.special) {
-      if (!special) continue;
-      if (normalizeFeatureName(special) === normalizedName) {
-        rawEntries.push(special);
-      }
-    }
-  }
-  if (rawEntries.length < 2) return false;
-
-  // Check if raw entries have increasing numeric suffixes
-  const numbers = rawEntries.map((e) => {
-    const m = e.match(/\+(\d+)(?:d\d+)?$|\((?:\+)?(\d+)(?:d\d+)?\)$|(\d+)\/[–-]$/);
-    return m ? parseInt(m[1] ?? m[2] ?? m[3], 10) : null;
-  });
-
-  if (numbers.every((n) => n !== null)) {
-    // All entries have numeric suffixes — check if they increase
-    for (let i = 1; i < numbers.length; i++) {
-      if (numbers[i]! <= numbers[i - 1]!) return false;
-    }
-    return true;
-  }
-  return false;
-}
-
-const ORDINAL_PREFIX = /^\d+(st|nd|rd|th)\s+/i;
-function stripOrdinalPrefix(name: string): string {
-  return name.replace(ORDINAL_PREFIX, "");
-}
-
-/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
-function aggregateOrdinalVariants(
-  featureOccurrences: { name: string; levels: number[] }[],
-): { name: string; levels: number[] }[] {
-  const map = new Map<string, { name: string; levels: Set<number> }>();
-  for (const occ of featureOccurrences) {
-    const base = stripOrdinalPrefix(occ.name);
-    const key = base.toLowerCase();
-    const existing = map.get(key);
-    if (existing) {
-      for (const l of occ.levels) existing.levels.add(l);
-      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
-    } else {
-      map.set(key, { name: base, levels: new Set(occ.levels) });
-    }
-  }
-  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
-}
-
-/** Open creature-type pick — selection language near "favored enemy" / "type of creature". */
-function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
-  if (!/favored enemy/i.test(featureName) && !/favored enemy/i.test(desc)) return false;
-  return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
-}
-
-function detectAptitudePicks(
-  raw: ClassReference["raw"],
-  featureOccurrences: { name: string; levels: number[] }[],
-): {
-  aptitudePicks?: AptitudePick[];
-  unresolvedAptitudePicks?: string[];
-} {
-  const classSlug = stripSeparators(raw.name);
-  const picks: AptitudePick[] = [];
-  const unresolved: string[] = [];
-
-  // Build a map of class feature descriptions by lowercase name
-  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);
-
-  const aggregated = aggregateOrdinalVariants(featureOccurrences);
-
-  for (const occ of aggregated) {
-    // Find the description for this feature (try exact, then plural/singular variants)
-    const desc = lookupWithPluralVariants(descMap, occ.name);
-    if (!desc) continue;
-
-    // Detect references to existing SRD aptitudes (e.g. "from the list of fighter bonus feats")
-    // Checked before CHOICE_PATTERN since the phrasing may not match generic choice words
-    const existingAptitude = detectExistingAptitudeReference(desc);
-    if (existingAptitude) {
-      picks.push({ levels: occ.levels, target: existingAptitude });
-      continue;
-    }
-
-    if (isFavoredEnemyOpenPick(occ.name, desc)) {
-      picks.push({ levels: occ.levels, target: "aptitudes.favoredenemy.allowed" });
-      continue;
-    }
-
-    if (!CHOICE_PATTERN.test(desc)) continue;
-
-    // Filter out features that match CHOICE_PATTERN but aren't character-build picks.
-    // This covers scaling abilities, named feat grants, passive combat features, and
-    // class abilities whose descriptions incidentally contain choice words.
-    if (NON_PICK_FEATURES.some((pattern) => pattern.test(occ.name))) continue;
-
-    // Filter out descriptions where the choice word appears in a gameplay/tactical context
-    if (NON_PICK_DESCRIPTION.some((pattern) => pattern.test(desc))) continue;
-
-    // Detect scaling bonuses from raw progression (e.g. "Dodge bonus +1", "+2", "+3")
-    if (isScalingFeature(occ.name, raw.progression)) continue;
-
-    // Single-occurrence: check for "treated as having" pattern (ranger combat style)
-    if (occ.levels.length < 2) {
-      const treatedFeats = parseTreatedAsHavingFeats(desc);
-      if (treatedFeats) {
-        const featureSlug = stripSeparators(occ.name);
-        picks.push({ levels: occ.levels, target: `aptitudes.${classSlug}${featureSlug}.allowed` });
-      } else {
-        unresolved.push(occ.name);
-      }
-      continue;
-    }
-
-    const featureSlug = stripSeparators(occ.name);
-    if (!featureSlug) {
-      unresolved.push(occ.name);
-      continue;
-    }
-    picks.push({
-      levels: occ.levels,
-      target: `aptitudes.${classSlug}${featureSlug}.allowed`,
-    });
-  }
-
-  return {
-    ...(picks.length > 0 ? { aptitudePicks: picks } : {}),
-    ...(unresolved.length > 0 ? { unresolvedAptitudePicks: unresolved } : {}),
-  };
-}
-
-function detectBonusFeatLists(
-  raw: ClassReference["raw"],
-  featureOccurrences: { name: string; levels: number[] }[],
-): { bonusFeatLists?: BonusFeatList[] } {
-  const lists: BonusFeatList[] = [];
-
-  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf);
-
-  for (const occ of featureOccurrences) {
-    const cf = lookupWithPluralVariants(descMap, occ.name);
-    if (!cf) continue;
-
-    const desc = normalizeWs(cf.description);
-
-    // Single-level features: check for "treated as having" pattern (ranger combat style)
-    if (occ.levels.length === 1) {
-      const treatedFeats = parseTreatedAsHavingFeats(desc);
-      if (!treatedFeats) continue;
-      const ordinal = occ.levels[0] === 1 ? "1st" : occ.levels[0] === 2 ? "2nd" : occ.levels[0] === 3 ? "3rd" : `${occ.levels[0]}th`;
-      lists.push({ aptitude: `${raw.name} ${occ.name} (${ordinal})`, feats: treatedFeats, levels: [occ.levels[0]] });
-      continue;
-    }
-
-    // Don't flag features that are pool sub-options (those have "Name: description" patterns)
-    const parsed = parsePoolSubOptions(desc);
-    if (parsed && parsed.options.length >= 2) continue;
-
-    // Try per-level parsing first (e.g. "At 1st level... select X or Y. At 2nd level... select A or B")
-    const perLevel = parsePerLevelBonusFeatList(desc);
-    if (perLevel) {
-      const baseAptitude = `${raw.name} ${occ.name}`;
-      for (const entry of perLevel) {
-        const ordinal = entry.level === 1 ? "1st" : entry.level === 2 ? "2nd" : entry.level === 3 ? "3rd" : `${entry.level}th`;
-        lists.push({ aptitude: `${baseAptitude} (${ordinal})`, feats: entry.feats, levels: [entry.level] });
-      }
-      continue;
-    }
-
-    // Fall back to shared pool parsing ("from the following list: X, Y, Z")
-    const feats = parseBonusFeatList(desc);
-    if (!feats) continue;
-
-    const aptitude = `${raw.name} ${occ.name}`;
-    lists.push({ aptitude, feats });
-  }
-
-  return lists.length > 0 ? { bonusFeatLists: lists } : {};
-}
-
-/** Detect when a class feature references an existing SRD aptitude by name
- *  (e.g. "from the list of fighter bonus feats"). Returns the aptitude target
- *  path or null if no known aptitude is referenced. */
-function detectExistingAptitudeReference(desc: string): string | null {
-  if (/fighter bonus feat|feats available to fighters?\b|bonus feats allowed to a fighter/i.test(desc)) return "aptitudes.fighterbonusfeat.allowed";
-  return null;
-}
-
-/** Distinguish mechanical special prerequisites (sneak attack, rage, spellcasting, etc.)
- *  from narrative/RP-only ones (deity worship, organization membership, rituals).
- *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
-function isMechanicalPrereq(text: string): boolean {
-  return /animal companion|spell-like|psionic/i.test(text);
-}
-
-function detectCasterType(raw: ClassReference["raw"]): { casterType?: "Arcane" | "Divine" } {
-  const text = raw.classFeatures.map((f) => f.description).join(" ");
-  if (/casts?\b.{0,30}\barcane spells/i.test(text) || /arcane spell failure/i.test(text)) return { casterType: "Arcane" };
-  if (/casts?\b.{0,30}\bdivine spells/i.test(text) || /\bdivine focus\b/i.test(text)) return { casterType: "Divine" };
-  return {};
-}
-
-// ---------------------------------------------------------------------------
-// Build full detected section
-// ---------------------------------------------------------------------------
-
-/** Locked-creature-type favored-enemy features — re-routed to the shared variant. */
-function detectLockedFavoredEnemies(
-  raw: ClassReference["raw"],
-  featureOccurrences: { name: string; levels: number[] }[],
-): { lockedFavoredEnemies?: ClassReference["detected"]["lockedFavoredEnemies"] } {
-  const FE_TEMPLATE = /\+2\s+(?:bonus\s+on\s+)?Bluff,\s*Listen,\s*Sense Motive,\s*Spot,?\s*and\s*Survival\s+checks/i;
-  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);
-  const results: NonNullable<ClassReference["detected"]["lockedFavoredEnemies"]> = [];
-
-  for (const occ of featureOccurrences) {
-    const desc = lookupWithPluralVariants(descMap, occ.name);
-    if (!desc) continue;
-    const normalized = normalizeWs(desc);
-
-    if (!FE_TEMPLATE.test(normalized)) continue;
-
-    const nameMatch = occ.name.match(/\(([^)]+)\)/);
-    let lockedType = nameMatch ? findCreatureType(nameMatch[1]) : null;
-    if (!lockedType) lockedType = findCreatureType(normalized);
-    if (!lockedType) continue;
-
-    results.push({ featureName: occ.name, levels: occ.levels, creatureType: lockedType });
-  }
-
-  return results.length > 0 ? { lockedFavoredEnemies: results } : {};
-}
-
-export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {
-  const levels = raw.progression.length;
-  const featureOccurrences = detectFeatureOccurrences(raw.progression);
-  const { requirements, featNameMap, errors, unresolvedPrereqs } = parseRequirements(raw.prerequisites.parsed);
-
-  const spellsPerDay = detectSpellsPerDay(raw.progression);
-  const spellsKnown = detectSpellsKnown(raw);
-  const hasOwnSpells = spellsPerDay !== undefined;
-
-  return {
-    hd: parseHd(raw.hitDie),
-    levels,
-    skillPoints: parseSkillPoints(raw.skillPointsPerLevel),
-    bab: detectBab(raw.progression),
-    saves: detectSaves(raw.progression),
-    casterLevelAdvancement: detectCasterAdvancement(raw.progression),
-    requirements,
-    featNameMap,
-    featureOccurrences,
-    ...detectAptitudePicks(raw, featureOccurrences),
-    ...detectBonusFeatLists(raw, featureOccurrences),
-    ...detectLockedFavoredEnemies(raw, featureOccurrences),
-    ...(spellsPerDay ? { spellsPerDay } : {}),
-    ...(spellsKnown ? { spellsKnown } : {}),
-    ...(hasOwnSpells ? { hasOwnSpells } : {}),
-    ...(hasOwnSpells ? detectCasterType(raw) : {}),
-    ...(errors.length > 0 ? { errors } : {}),
-    ...(unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Pool sub-option extraction
 // ---------------------------------------------------------------------------
 
@@ -1185,6 +543,648 @@ function parseTreatedAsHavingFeats(description: string): string[] | undefined {
     feats.push(m[1]);
   }
   return feats.length >= 2 ? feats : undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Aptitude pick detection
+// ---------------------------------------------------------------------------
+
+// Patterns indicating the character makes a selection from a pool
+const CHOICE_PATTERN = /\b(choose|chooses|select|selects|picks?|chosen|drawn from|from the following|from those given|from among)\b/i;
+
+/** Description patterns that indicate gameplay/tactical choices, not character-build picks.
+ *  These filter AFTER CHOICE_PATTERN matches — if any match, the feature is skipped.
+ *  Keep these narrow: a description can contain both build choices and gameplay language.
+ *  Only match when the ENTIRE feature is clearly not a build pick. */
+const NON_PICK_DESCRIPTION: RegExp[] = [
+  // Bonus feat with alternative: "if he already has the feat, he can choose"
+  /already has the feat.{0,20}choose/i,
+  // "roll and choose" / "choose the result" / "choose between the two results" — random table picks
+  /choose (?:the result|between the two)/i,
+  /roll .{0,20}choose/i,
+];
+
+/** Features that match CHOICE_PATTERN but aren't character-build picks.
+ *  Add new entries here instead of scattering regex blocks in detectAptitudePicks. */
+const NON_PICK_FEATURES: RegExp[] = [
+  // Scaling abilities that increase in power, not choices
+  /sneak attack|rage|wild shape|summon|damage reduction|save|trap sense|uncanny dodge|flurry|bonus language/i,
+  // Named feats granted as freeFeats
+  /^(Skill Focus|Skill Mastery|Precise Shot|Mettle|Catch Weapon|Evasion|Improved Evasion)\b/i,
+  // Combat/passive abilities whose descriptions incidentally contain choice words
+  /parry|waist|bleed|wound|grapple|intimidat|reckless|combat trap|weapon bond|oath|visage|wings|trackless/i,
+  // Class abilities that aren't character-build picks
+  /bardic knowledge|unarmed strike|lay on hands|turn or rebuke|weaken spirit|sense element|spirit guide|steal spell|justice blade|brilliant blade|animal companion|^mount$/i,
+  // Per-use abilities whose descriptions contain incidental choice words (tactical/gameplay picks)
+  /bloodwalk|arcane fist|fist of energy|spin fate|seal fate|combine songs|glyph of warding|spellpool|enhanced accuracy|student of chaos|thrall|effortless change|shapechanger|reflexive change|infinite variety|favored shape/i,
+  // Elemental/energy abilities that reference a prior one-time class-entry choice
+  /elemental specialty|elemental perfection|energy (?:resistance|immunity)|resistance to energy/i,
+];
+
+// D&D type suffixes embedded in raw class feature names, e.g. "Tattoo (Su or Sp)"
+const TYPE_SUFFIX = /\s*\((?:Ex|Su|Sp|Su or Sp)\)$/i;
+
+function buildFeatureMap<T>(
+  features: ClassReference["raw"]["classFeatures"],
+  valueFn: (cf: ClassReference["raw"]["classFeatures"][number]) => T,
+): Map<string, T> {
+  const map = new Map<string, T>();
+  for (const cf of features) {
+    map.set(cf.name.toLowerCase(), valueFn(cf));
+    const stripped = cf.name.replace(TYPE_SUFFIX, "").toLowerCase();
+    if (stripped !== cf.name.toLowerCase()) {
+      map.set(stripped, valueFn(cf));
+    }
+  }
+  return map;
+}
+
+/**
+ * Check if a feature is a scaling ability (e.g. "Dodge bonus +1", "+2", "+3")
+ * by looking at raw progression entries. If the raw entries that normalize to
+ * the same name have increasing numeric suffixes, it's scaling, not a pool pick.
+ */
+function isScalingFeature(normalizedName: string, progression: ClassReference["raw"]["progression"]): boolean {
+  const rawEntries: string[] = [];
+  for (const row of progression) {
+    for (const special of row.special) {
+      if (!special) continue;
+      if (normalizeFeatureName(special) === normalizedName) {
+        rawEntries.push(special);
+      }
+    }
+  }
+  if (rawEntries.length < 2) return false;
+
+  // Check if raw entries have increasing numeric suffixes
+  const numbers = rawEntries.map((e) => {
+    const m = e.match(/\+(\d+)(?:d\d+)?$|\((?:\+)?(\d+)(?:d\d+)?\)$|(\d+)\/[–-]$/);
+    return m ? parseInt(m[1] ?? m[2] ?? m[3], 10) : null;
+  });
+
+  if (numbers.every((n) => n !== null)) {
+    // All entries have numeric suffixes — check if they increase
+    for (let i = 1; i < numbers.length; i++) {
+      if (numbers[i]! <= numbers[i - 1]!) return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+const ORDINAL_PREFIX = /^\d+(st|nd|rd|th)\s+/i;
+function stripOrdinalPrefix(name: string): string {
+  return name.replace(ORDINAL_PREFIX, "");
+}
+
+/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
+function aggregateOrdinalVariants(
+  featureOccurrences: { name: string; levels: number[] }[],
+): { name: string; levels: number[] }[] {
+  const map = new Map<string, { name: string; levels: Set<number> }>();
+  for (const occ of featureOccurrences) {
+    const base = stripOrdinalPrefix(occ.name);
+    const key = base.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      for (const l of occ.levels) existing.levels.add(l);
+      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
+    } else {
+      map.set(key, { name: base, levels: new Set(occ.levels) });
+    }
+  }
+  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
+}
+
+/** Open creature-type pick — selection language near "favored enemy" / "type of creature". */
+function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
+  if (!/favored enemy/i.test(featureName) && !/favored enemy/i.test(desc)) return false;
+  return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
+}
+
+function detectBonusFeatLists(
+  raw: ClassReference["raw"],
+  featureOccurrences: { name: string; levels: number[] }[],
+): { bonusFeatLists?: BonusFeatList[] } {
+  const lists: BonusFeatList[] = [];
+
+  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf);
+
+  for (const occ of featureOccurrences) {
+    const cf = lookupWithPluralVariants(descMap, occ.name);
+    if (!cf) continue;
+
+    const desc = normalizeWs(cf.description);
+
+    // Single-level features: check for "treated as having" pattern (ranger combat style)
+    if (occ.levels.length === 1) {
+      const treatedFeats = parseTreatedAsHavingFeats(desc);
+      if (!treatedFeats) continue;
+      const ordinal = occ.levels[0] === 1 ? "1st" : occ.levels[0] === 2 ? "2nd" : occ.levels[0] === 3 ? "3rd" : `${occ.levels[0]}th`;
+      lists.push({ aptitude: `${raw.name} ${occ.name} (${ordinal})`, feats: treatedFeats, levels: [occ.levels[0]] });
+      continue;
+    }
+
+    // Don't flag features that are pool sub-options (those have "Name: description" patterns)
+    const parsed = parsePoolSubOptions(desc);
+    if (parsed && parsed.options.length >= 2) continue;
+
+    // Try per-level parsing first (e.g. "At 1st level... select X or Y. At 2nd level... select A or B")
+    const perLevel = parsePerLevelBonusFeatList(desc);
+    if (perLevel) {
+      const baseAptitude = `${raw.name} ${occ.name}`;
+      for (const entry of perLevel) {
+        const ordinal = entry.level === 1 ? "1st" : entry.level === 2 ? "2nd" : entry.level === 3 ? "3rd" : `${entry.level}th`;
+        lists.push({ aptitude: `${baseAptitude} (${ordinal})`, feats: entry.feats, levels: [entry.level] });
+      }
+      continue;
+    }
+
+    // Fall back to shared pool parsing ("from the following list: X, Y, Z")
+    const feats = parseBonusFeatList(desc);
+    if (!feats) continue;
+
+    const aptitude = `${raw.name} ${occ.name}`;
+    lists.push({ aptitude, feats });
+  }
+
+  return lists.length > 0 ? { bonusFeatLists: lists } : {};
+}
+
+/** Detect when a class feature references an existing SRD aptitude by name
+ *  (e.g. "from the list of fighter bonus feats"). Returns the aptitude target
+ *  path or null if no known aptitude is referenced. */
+function detectExistingAptitudeReference(desc: string): string | null {
+  if (/fighter bonus feat|feats available to fighters?\b|bonus feats allowed to a fighter/i.test(desc)) return "aptitudes.fighterbonusfeat.allowed";
+  return null;
+}
+
+function detectAptitudePicks(
+  raw: ClassReference["raw"],
+  featureOccurrences: { name: string; levels: number[] }[],
+): {
+  aptitudePicks?: AptitudePick[];
+  unresolvedAptitudePicks?: string[];
+} {
+  const classSlug = stripSeparators(raw.name);
+  const picks: AptitudePick[] = [];
+  const unresolved: string[] = [];
+
+  // Build a map of class feature descriptions by lowercase name
+  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);
+
+  const aggregated = aggregateOrdinalVariants(featureOccurrences);
+
+  for (const occ of aggregated) {
+    // Find the description for this feature (try exact, then plural/singular variants)
+    const desc = lookupWithPluralVariants(descMap, occ.name);
+    if (!desc) continue;
+
+    // Detect references to existing SRD aptitudes (e.g. "from the list of fighter bonus feats")
+    // Checked before CHOICE_PATTERN since the phrasing may not match generic choice words
+    const existingAptitude = detectExistingAptitudeReference(desc);
+    if (existingAptitude) {
+      picks.push({ levels: occ.levels, target: existingAptitude });
+      continue;
+    }
+
+    if (isFavoredEnemyOpenPick(occ.name, desc)) {
+      picks.push({ levels: occ.levels, target: "aptitudes.favoredenemy.allowed" });
+      continue;
+    }
+
+    if (!CHOICE_PATTERN.test(desc)) continue;
+
+    // Filter out features that match CHOICE_PATTERN but aren't character-build picks.
+    // This covers scaling abilities, named feat grants, passive combat features, and
+    // class abilities whose descriptions incidentally contain choice words.
+    if (NON_PICK_FEATURES.some((pattern) => pattern.test(occ.name))) continue;
+
+    // Filter out descriptions where the choice word appears in a gameplay/tactical context
+    if (NON_PICK_DESCRIPTION.some((pattern) => pattern.test(desc))) continue;
+
+    // Detect scaling bonuses from raw progression (e.g. "Dodge bonus +1", "+2", "+3")
+    if (isScalingFeature(occ.name, raw.progression)) continue;
+
+    // Single-occurrence: check for "treated as having" pattern (ranger combat style)
+    if (occ.levels.length < 2) {
+      const treatedFeats = parseTreatedAsHavingFeats(desc);
+      if (treatedFeats) {
+        const featureSlug = stripSeparators(occ.name);
+        picks.push({ levels: occ.levels, target: `aptitudes.${classSlug}${featureSlug}.allowed` });
+      } else {
+        unresolved.push(occ.name);
+      }
+      continue;
+    }
+
+    const featureSlug = stripSeparators(occ.name);
+    if (!featureSlug) {
+      unresolved.push(occ.name);
+      continue;
+    }
+    picks.push({
+      levels: occ.levels,
+      target: `aptitudes.${classSlug}${featureSlug}.allowed`,
+    });
+  }
+
+  return {
+    ...(picks.length > 0 ? { aptitudePicks: picks } : {}),
+    ...(unresolved.length > 0 ? { unresolvedAptitudePicks: unresolved } : {}),
+  };
+}
+
+/** Distinguish mechanical special prerequisites (sneak attack, rage, spellcasting, etc.)
+ *  from narrative/RP-only ones (deity worship, organization membership, rituals).
+ *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
+function isMechanicalPrereq(text: string): boolean {
+  return /animal companion|spell-like|psionic/i.test(text);
+}
+
+function detectCasterType(raw: ClassReference["raw"]): { casterType?: "Arcane" | "Divine" } {
+  const text = raw.classFeatures.map((f) => f.description).join(" ");
+  if (/casts?\b.{0,30}\barcane spells/i.test(text) || /arcane spell failure/i.test(text)) return { casterType: "Arcane" };
+  if (/casts?\b.{0,30}\bdivine spells/i.test(text) || /\bdivine focus\b/i.test(text)) return { casterType: "Divine" };
+  return {};
+}
+
+// ---------------------------------------------------------------------------
+// Prerequisite parsing
+// ---------------------------------------------------------------------------
+
+/** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
+function normalizeCraftSubtype(subtype: string): string {
+  const lower = subtype.toLowerCase().trim();
+  const map: Record<string, string> = {
+    leather: "leatherworking", metal: "metalworking", wood: "woodworking",
+    stone: "stoneworking", bone: "bonecarving", gem: "gemcutting",
+    cloth: "weaving", pottery: "pottery", basket: "basketweaving",
+  };
+  return map[lower] ?? subtype;
+}
+
+/** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
+function expandSkillRequirement(name: string, ranks: number): RequirementEntry | null {
+  // "Knowledge (any)" → OR of all Knowledge skills
+  const anySkill = anySkillRequirement(name, ranks);
+  if (anySkill) return anySkill;
+
+  // "Knowledge (arcana, local or psionics)" or "Craft (leather, metal, or woodworking)" → OR of individual skills
+  const multiMatch = name.match(/^(.+?)\s*\(([^)]*(?:,|or)[^)]*)\)$/i);
+  if (multiMatch) {
+    const baseName = multiMatch[1].trim();
+    const options = multiMatch[2].split(/,\s*(?:or\s+)?|\s+or\s+/).map(o => o.trim()).filter(Boolean);
+    if (options.length >= 2) {
+      const slugs = options.map(opt => {
+        // Normalize abbreviated Craft subtypes: "leather" → "leatherworking", "metal" → "metalworking"
+        const normalized = /^craft$/i.test(baseName) ? normalizeCraftSubtype(opt) : opt;
+        const fullName = `${baseName} (${normalized.charAt(0).toUpperCase() + normalized.slice(1)})`;
+        // Try exact SKILL_MAP lookup first, fall back to constructing the slug directly
+        return SKILL_MAP[fullName.toLowerCase()] ?? stripSeparators(fullName);
+      });
+      return or(...slugs.map(s => gte(`skills.${s}.rank`, ranks)));
+    }
+  }
+
+  return null;
+}
+
+function parseAlignmentRequirement(text: string): RequirementEntry | undefined {
+  const lower = text.toLowerCase().trim().replace(/\.$/, "");
+  const path = "identity.beliefs.alignment";
+
+  if (lower.startsWith("any evil")) {
+    return or(
+      eqStr(path, "Lawful Evil"),
+      eqStr(path, "Neutral Evil"),
+      eqStr(path, "Chaotic Evil"),
+    );
+  }
+  if (lower.startsWith("any good")) {
+    return or(
+      eqStr(path, "Lawful Good"),
+      eqStr(path, "Neutral Good"),
+      eqStr(path, "Chaotic Good"),
+    );
+  }
+  if (lower.startsWith("any lawful")) {
+    return or(
+      eqStr(path, "Lawful Good"),
+      eqStr(path, "Lawful Neutral"),
+      eqStr(path, "Lawful Evil"),
+    );
+  }
+  if (lower.startsWith("any chaotic")) {
+    return or(
+      eqStr(path, "Chaotic Good"),
+      eqStr(path, "Chaotic Neutral"),
+      eqStr(path, "Chaotic Evil"),
+    );
+  }
+  if (lower.startsWith("any non-evil") || lower.startsWith("any nonevil")) {
+    return or(
+      eqStr(path, "Lawful Good"),
+      eqStr(path, "Neutral Good"),
+      eqStr(path, "Chaotic Good"),
+      eqStr(path, "Lawful Neutral"),
+      eqStr(path, "True Neutral"),
+      eqStr(path, "Chaotic Neutral"),
+    );
+  }
+  if (lower.startsWith("any non-good") || lower.startsWith("any nongood")) {
+    return or(
+      eqStr(path, "Lawful Neutral"),
+      eqStr(path, "True Neutral"),
+      eqStr(path, "Chaotic Neutral"),
+      eqStr(path, "Lawful Evil"),
+      eqStr(path, "Neutral Evil"),
+      eqStr(path, "Chaotic Evil"),
+    );
+  }
+  if (lower.startsWith("any non-lawful") || lower.startsWith("any nonlawful")) {
+    return or(
+      eqStr(path, "Neutral Good"),
+      eqStr(path, "True Neutral"),
+      eqStr(path, "Neutral Evil"),
+      eqStr(path, "Chaotic Good"),
+      eqStr(path, "Chaotic Neutral"),
+      eqStr(path, "Chaotic Evil"),
+    );
+  }
+  if (lower.startsWith("any non-chaotic") || lower.startsWith("any nonchaotic")) {
+    return or(
+      eqStr(path, "Lawful Good"),
+      eqStr(path, "Lawful Neutral"),
+      eqStr(path, "Lawful Evil"),
+      eqStr(path, "Neutral Good"),
+      eqStr(path, "True Neutral"),
+      eqStr(path, "Neutral Evil"),
+    );
+  }
+
+  const alignmentNames = [
+    "lawful good", "neutral good", "chaotic good",
+    "lawful neutral", "true neutral", "chaotic neutral",
+    "lawful evil", "neutral evil", "chaotic evil",
+  ];
+
+  // Comma-separated list of alignments (e.g. "Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil.")
+  if (lower.includes(",")) {
+    const parts = lower.replace(/\.$/, "").split(/,\s*/).map(s => s.replace(/^or\s+/, "").trim()).filter(Boolean);
+    const matched: RequirementEntry[] = [];
+    for (const part of parts) {
+      const normalized = part === "neutral" ? "true neutral" : part;
+      const titleCase = normalized.split(" ").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
+      if (alignmentNames.includes(normalized)) {
+        matched.push(eqStr(path, titleCase));
+      }
+    }
+    if (matched.length > 0) return or(...matched);
+  }
+
+  // Specific alignment
+  for (const name of alignmentNames) {
+    if (lower === name || (name === "true neutral" && lower === "neutral")) {
+      const titleCase = name.split(" ").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
+      return eqStr(path, titleCase);
+    }
+  }
+
+  return undefined;
+}
+
+function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parsed"]): { requirements: RequirementEntry[]; featNameMap: Record<string, string>; errors: string[]; unresolvedPrereqs: string[] } {
+  const reqs: RequirementEntry[] = [];
+  const featNameMap: Record<string, string> = {};
+  const errors: string[] = [];
+  const unresolvedPrereqs: string[] = [];
+
+  if (parsed.bab) {
+    reqs.push(gte("combat.bab", parsed.bab));
+  }
+
+  // Skills that exist in D&D 3.5 but aren't tracked in this system
+  const NON_TRACKABLE_SKILLS = new Set(["speak language"]);
+
+  if (parsed.skills) {
+    let lastSkillReqIdx = -1;
+    for (let i = 0; i < parsed.skills.length; i++) {
+      const s = parsed.skills[i];
+
+      // Skip skills not tracked in this system (e.g. "Speak Language")
+      const baseName = s.name.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+      if (NON_TRACKABLE_SKILLS.has(baseName)) continue;
+
+      // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
+      const expanded = expandSkillRequirement(s.name, s.ranks);
+      if (expanded) {
+        reqs.push(expanded);
+        lastSkillReqIdx = reqs.length - 1;
+        continue;
+      }
+
+      // "Diplomacy or Intimidate 1 rank" → single entry with "or" inside
+      if (/\bor\b/i.test(s.name) && !/^or\s+/i.test(s.name)) {
+        const parts = s.name.split(/\s+or\s+/i).map((p) => p.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          reqs.push(or(...parts.map((p) => gte(`skills.${skillSlug(p)}.rank`, s.ranks))));
+          lastSkillReqIdx = reqs.length - 1;
+          continue;
+        }
+      }
+      // "or Intimidate" as a separate entry → merge with previous skill req as OR
+      if (/^or\s+/i.test(s.name)) {
+        const name = s.name.replace(/^or\s+/i, "");
+        const newTarget = `skills.${skillSlug(name)}.rank`;
+        if (lastSkillReqIdx >= 0) {
+          const prev = reqs[lastSkillReqIdx];
+          // Skip if it resolves to the same path (e.g. Perform subtypes)
+          if (!("chainingOperator" in prev) && prev.target === newTarget) continue;
+          reqs[lastSkillReqIdx] = or(prev, gte(newTarget, s.ranks));
+        } else {
+          reqs.push(gte(newTarget, s.ranks));
+          lastSkillReqIdx = reqs.length - 1;
+        }
+        continue;
+      }
+      reqs.push(gte(`skills.${skillSlug(s.name)}.rank`, s.ranks));
+      lastSkillReqIdx = reqs.length - 1;
+    }
+  }
+
+  if (parsed.feats) {
+    for (const f of parsed.feats) {
+      // Skip scraping artifacts (page references, HTML fragments, etc.)
+      if (/\bpage \d+\b|^[^a-zA-Z]*$/i.test(f)) continue;
+
+      // "any metamagic feat" / "any item creation feat" → grouping wildcard
+      if (/any (?:other )?metamagic feat/i.test(f) && !/item creation/i.test(f)) {
+        reqs.push(eq("feats.metamagic.*.possessed"));
+        continue;
+      }
+      if (/any (?:other )?item creation feat/i.test(f) && !/metamagic/i.test(f)) {
+        reqs.push(eq("feats.itemcreation.*.possessed"));
+        continue;
+      }
+      // "Any [N] metamagic or item creation feats" → OR of both wildcards
+      if (/any\b.*\bmetamagic\b.*\bitem creation\b.*\bfeats?\b/i.test(f)) {
+        reqs.push(or(eq("feats.metamagic.*.possessed"), eq("feats.itemcreation.*.possessed")));
+        continue;
+      }
+      // "any" feats (e.g. "Weapon Focus (any thrown weapon)", "Spell Focus in two schools of magic",
+      //   "Weapon Focus (with deity's favored weapon)")
+      // → prefix wildcard on the feat family slug
+      if (/\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i.test(f)) {
+        const anyReq = expandAnyFeatRequirement(f);
+        if (anyReq) {
+          reqs.push(anyReq);
+        } else {
+          unresolvedPrereqs.push(f);
+        }
+        continue;
+      }
+      const compoundReq = parseCompoundFeatRequirement(f, featNameMap);
+      if (compoundReq) {
+        reqs.push(compoundReq);
+      } else {
+        // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
+        // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
+        const cleaned = f.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "");
+        const slug = stripSeparators(cleaned);
+        featNameMap[slug] = f;
+        reqs.push(eq(feat(cleaned)));
+      }
+    }
+  }
+
+  if (parsed.casterLevel) {
+    for (const cl of parsed.casterLevel) {
+      if (cl.type === "any") {
+        reqs.push(or(
+          gte("spellcasting.arcane", cl.level),
+          gte("spellcasting.divine", cl.level),
+        ));
+      } else {
+        reqs.push(gte(`spellcasting.${cl.type}`, cl.level));
+      }
+    }
+  }
+
+  if (parsed.alignment) {
+    const alignReqs = parseAlignmentRequirement(parsed.alignment);
+    if (alignReqs) reqs.push(alignReqs);
+  }
+
+  if (parsed.saves) {
+    for (const s of parsed.saves) {
+      const saveKey = s.name.toLowerCase();
+      reqs.push(gte(`saves.${saveKey}.base`, s.base));
+    }
+  }
+
+  // Class level requirements: "fighter level 4th", "5 levels of cleric"
+  if (parsed.classLevels) {
+    for (const cl of parsed.classLevels) {
+      const slug = stripSeparators(cl.className);
+      reqs.push(gte(`classes.${slug}.level`, cl.level));
+    }
+  }
+
+  // Parse race, proficiency, and special ability requirements from special entries
+  if (parsed.special) {
+    for (const s of parsed.special) {
+      const raceReq = parseRaceRequirement(s);
+      if (raceReq) { reqs.push(raceReq); continue; }
+
+      const profReq = parseProficiencyRequirement(s, featNameMap);
+      if (profReq) { reqs.push(profReq); continue; }
+
+      const abilityReq = parseSpecialAbilityRequirement(s, featNameMap);
+      if (abilityReq) { reqs.push(abilityReq); continue; }
+
+      // Track mechanical prerequisites that we couldn't parse (sneak attack, rage, etc.)
+      // Discard narrative/RP-only ones (deity worship, organization membership, rituals)
+      if (isMechanicalPrereq(s)) {
+        unresolvedPrereqs.push(s);
+      }
+    }
+  }
+
+  // Validate all requirement paths
+  const validatedReqs: RequirementEntry[] = [];
+  for (const req of reqs) {
+    const invalid = findInvalidRequirementPaths(req);
+    if (invalid.length > 0) {
+      for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
+    } else {
+      validatedReqs.push(req);
+    }
+  }
+
+  return { requirements: validatedReqs, featNameMap, errors, unresolvedPrereqs };
+}
+
+// ---------------------------------------------------------------------------
+// Build full detected section
+// ---------------------------------------------------------------------------
+
+/** Locked-creature-type favored-enemy features — re-routed to the shared variant. */
+function detectLockedFavoredEnemies(
+  raw: ClassReference["raw"],
+  featureOccurrences: { name: string; levels: number[] }[],
+): { lockedFavoredEnemies?: ClassReference["detected"]["lockedFavoredEnemies"] } {
+  const FE_TEMPLATE = /\+2\s+(?:bonus\s+on\s+)?Bluff,\s*Listen,\s*Sense Motive,\s*Spot,?\s*and\s*Survival\s+checks/i;
+  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);
+  const results: NonNullable<ClassReference["detected"]["lockedFavoredEnemies"]> = [];
+
+  for (const occ of featureOccurrences) {
+    const desc = lookupWithPluralVariants(descMap, occ.name);
+    if (!desc) continue;
+    const normalized = normalizeWs(desc);
+
+    if (!FE_TEMPLATE.test(normalized)) continue;
+
+    const nameMatch = occ.name.match(/\(([^)]+)\)/);
+    let lockedType = nameMatch ? findCreatureType(nameMatch[1]) : null;
+    if (!lockedType) lockedType = findCreatureType(normalized);
+    if (!lockedType) continue;
+
+    results.push({ featureName: occ.name, levels: occ.levels, creatureType: lockedType });
+  }
+
+  return results.length > 0 ? { lockedFavoredEnemies: results } : {};
+}
+
+export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {
+  const levels = raw.progression.length;
+  const featureOccurrences = detectFeatureOccurrences(raw.progression);
+  const { requirements, featNameMap, errors, unresolvedPrereqs } = parseRequirements(raw.prerequisites.parsed);
+
+  const spellsPerDay = detectSpellsPerDay(raw.progression);
+  const spellsKnown = detectSpellsKnown(raw);
+  const hasOwnSpells = spellsPerDay !== undefined;
+
+  return {
+    hd: parseHd(raw.hitDie),
+    levels,
+    skillPoints: parseSkillPoints(raw.skillPointsPerLevel),
+    bab: detectBab(raw.progression),
+    saves: detectSaves(raw.progression),
+    casterLevelAdvancement: detectCasterAdvancement(raw.progression),
+    requirements,
+    featNameMap,
+    featureOccurrences,
+    ...detectAptitudePicks(raw, featureOccurrences),
+    ...detectBonusFeatLists(raw, featureOccurrences),
+    ...detectLockedFavoredEnemies(raw, featureOccurrences),
+    ...(spellsPerDay ? { spellsPerDay } : {}),
+    ...(spellsKnown ? { spellsKnown } : {}),
+    ...(hasOwnSpells ? { hasOwnSpells } : {}),
+    ...(hasOwnSpells ? detectCasterType(raw) : {}),
+    ...(errors.length > 0 ? { errors } : {}),
+    ...(unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------

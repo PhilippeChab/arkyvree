@@ -1,20 +1,20 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
 import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
-import { parseWeaponsHtml, parseArmorHtml, parseGoodsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
-import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, parseWondrousItemsHtml, parseRingsHtml, parseRodsHtml, parseStaffsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
+import { parseArmorHtml, parseGoodsHtml, parseWeaponsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
+import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, parseRingsHtml, parseRodsHtml, parseStaffsHtml, parseWondrousItemsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
 import { type ReferenceType, resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import type { FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { sanitizeJsonValues, sortKeysDeep, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { toCamelCase, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { fetchHtml, fetchAllPages, configureHttp } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
-import { buildListingUrl, buildRaceListingUrl, getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+import { REFERENCE_DIR, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { configureHttp, fetchAllPages, fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
+import { BASE_URL, buildListingUrl, buildRaceListingUrl, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
 // ---------------------------------------------------------------------------
 // Write helper — only updates scrapedAt when content actually changed
@@ -79,120 +79,8 @@ async function discover(listingUrl: string, section: string, bookSlug?: string) 
 }
 
 // ---------------------------------------------------------------------------
-// CLI
-// ---------------------------------------------------------------------------
-
-async function main() {
-  const args = process.argv.slice(2);
-
-  // Parse global options
-  const noCacheIdx = args.indexOf("--no-cache");
-  const noCache = noCacheIdx >= 0;
-  if (noCache) args.splice(noCacheIdx, 1);
-
-  const delayIdx = args.indexOf("--delay");
-  const delay = delayIdx >= 0 ? parseInt(args[delayIdx + 1], 10) : undefined;
-  if (delayIdx >= 0) args.splice(delayIdx, 2);
-
-  configureHttp({ noCache, ...(delay ? { delay } : {}) });
-
-  if (args.length < 1) {
-    printUsage();
-    process.exit(1);
-  }
-
-  const type = args[0];
-  const urlIdx = args.indexOf("--url");
-  const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
-  const bookIdx = args.indexOf("--book");
-  const book = bookIdx >= 0 ? args[bookIdx + 1] : "srd";
-
-  if (type === "class") {
-    if (url) {
-      await scrapeClass(url, book);
-    } else {
-      await scrapeAllClasses(book);
-    }
-  } else if (type === "feat") {
-    if (url) {
-      await scrapeSingleFeat(url);
-    } else {
-      await scrapeAllFeats(book);
-    }
-  } else if (type === "spell") {
-    if (url) {
-      await scrapeSingleSpell(url);
-    } else {
-      await scrapeAllSpells(book);
-    }
-  } else if (type === "domain") {
-    await scrapeAllDomains();
-  } else if (type === "race") {
-    if (url) {
-      await scrapeSingleRace(url);
-    } else {
-      await scrapeAllRaces(book);
-    }
-  } else if (type === "item") {
-    await scrapeAllItems(book);
-  } else if (type === "magicItem") {
-    await scrapeAllMagicItems(book);
-  } else if (type === "wizardSchool") {
-    console.log(`Skipping wizardSchool — no HTML parser (reference is manually maintained)`);
-  } else {
-    console.error(`Unknown type: ${type}. Supported: class, feat, spell, domain, race, item, magicItem, wizardSchool`);
-    process.exit(1);
-  }
-}
-
-function printUsage() {
-  console.error("Usage: bun scraper/index.ts <type> [options]");
-  console.error("");
-  console.error("  Types:");
-  console.error("    class              Scrape class(es)");
-  console.error("    feat               Scrape feat(s)");
-  console.error("    spell              Scrape spell(s)");
-  console.error("    domain             Scrape domains");
-  console.error("    race               Scrape race(s)");
-  console.error("    item               Scrape items (d20srd.org)");
-  console.error("    magicItem          Scrape magic items (d20srd.org)");
-  console.error("");
-  console.error("  Options:");
-  console.error("    --book <slug>      Source book slug (default: srd)");
-  console.error("    --url <url>        Scrape a single entity by URL");
-  console.error("    --filter <mode>    Domain filter: core|non-core|all (default: core)");
-  console.error("    --no-cache         Disable disk cache");
-  console.error("    --delay <ms>       Delay between requests (default: 200)");
-  console.error("");
-  console.error("  Examples:");
-  console.error("    bun scraper/index.ts class --book srd");
-  console.error("    bun scraper/index.ts class --url https://dndtools.net/classes/.../barbarian/ --book srd");
-  console.error("    bun scraper/index.ts feat --book srd");
-  console.error("    bun scraper/index.ts domain");
-  console.error("    bun scraper/index.ts spell --book srd");
-  console.error("    bun scraper/index.ts race --book srd");
-}
-
-// ---------------------------------------------------------------------------
 // Class scraping
 // ---------------------------------------------------------------------------
-
-async function scrapeAllClasses(book: string) {
-  // dndtools.net doesn't support /classes/{book}/ URLs — use the full listing
-  // and filter by book slug in the class URL path
-  const bookSlug = getBookSlug(book);
-  const listingUrl = `${BASE_URL}/classes/`;
-  console.log(`Discovering classes from ${listingUrl} (filtering for ${bookSlug})...`);
-
-  const classUrls = await discover(listingUrl, "classes", bookSlug);
-
-  console.log(`Found ${classUrls.length} classes`);
-
-  for (const entry of classUrls) {
-    console.log(`\n--- Scraping: ${entry.name} ---`);
-    await scrapeClass(entry.url, book);
-  }
-}
 
 async function scrapeClass(url: string, book: string) {
   console.log(`Fetching ${url}...`);
@@ -232,6 +120,23 @@ async function scrapeClass(url: string, book: string) {
   console.log(`  Saves: fort=${detected.saves.fortitude} ref=${detected.saves.reflex} will=${detected.saves.will}`);
   if (detected.casterLevelAdvancement) {
     console.log(`  Caster advancement: ${detected.casterLevelAdvancement.type} at levels ${detected.casterLevelAdvancement.levels.join(", ")}`);
+  }
+}
+
+async function scrapeAllClasses(book: string) {
+  // dndtools.net doesn't support /classes/{book}/ URLs — use the full listing
+  // and filter by book slug in the class URL path
+  const bookSlug = getBookSlug(book);
+  const listingUrl = `${BASE_URL}/classes/`;
+  console.log(`Discovering classes from ${listingUrl} (filtering for ${bookSlug})...`);
+
+  const classUrls = await discover(listingUrl, "classes", bookSlug);
+
+  console.log(`Found ${classUrls.length} classes`);
+
+  for (const entry of classUrls) {
+    console.log(`\n--- Scraping: ${entry.name} ---`);
+    await scrapeClass(entry.url, book);
   }
 }
 
@@ -557,6 +462,101 @@ async function scrapeAllMagicItems(book: string) {
   }
 
   saveReference(outPath, { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book, scrapedAt: new Date().toISOString() }, raw);
+}
+
+// ---------------------------------------------------------------------------
+// CLI
+// ---------------------------------------------------------------------------
+
+function printUsage() {
+  console.error("Usage: bun scraper/index.ts <type> [options]");
+  console.error("");
+  console.error("  Types:");
+  console.error("    class              Scrape class(es)");
+  console.error("    feat               Scrape feat(s)");
+  console.error("    spell              Scrape spell(s)");
+  console.error("    domain             Scrape domains");
+  console.error("    race               Scrape race(s)");
+  console.error("    item               Scrape items (d20srd.org)");
+  console.error("    magicItem          Scrape magic items (d20srd.org)");
+  console.error("");
+  console.error("  Options:");
+  console.error("    --book <slug>      Source book slug (default: srd)");
+  console.error("    --url <url>        Scrape a single entity by URL");
+  console.error("    --filter <mode>    Domain filter: core|non-core|all (default: core)");
+  console.error("    --no-cache         Disable disk cache");
+  console.error("    --delay <ms>       Delay between requests (default: 200)");
+  console.error("");
+  console.error("  Examples:");
+  console.error("    bun scraper/index.ts class --book srd");
+  console.error("    bun scraper/index.ts class --url https://dndtools.net/classes/.../barbarian/ --book srd");
+  console.error("    bun scraper/index.ts feat --book srd");
+  console.error("    bun scraper/index.ts domain");
+  console.error("    bun scraper/index.ts spell --book srd");
+  console.error("    bun scraper/index.ts race --book srd");
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  // Parse global options
+  const noCacheIdx = args.indexOf("--no-cache");
+  const noCache = noCacheIdx >= 0;
+  if (noCache) args.splice(noCacheIdx, 1);
+
+  const delayIdx = args.indexOf("--delay");
+  const delay = delayIdx >= 0 ? parseInt(args[delayIdx + 1], 10) : undefined;
+  if (delayIdx >= 0) args.splice(delayIdx, 2);
+
+  configureHttp({ noCache, ...(delay ? { delay } : {}) });
+
+  if (args.length < 1) {
+    printUsage();
+    process.exit(1);
+  }
+
+  const type = args[0];
+  const urlIdx = args.indexOf("--url");
+  const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
+  const bookIdx = args.indexOf("--book");
+  const book = bookIdx >= 0 ? args[bookIdx + 1] : "srd";
+
+  if (type === "class") {
+    if (url) {
+      await scrapeClass(url, book);
+    } else {
+      await scrapeAllClasses(book);
+    }
+  } else if (type === "feat") {
+    if (url) {
+      await scrapeSingleFeat(url);
+    } else {
+      await scrapeAllFeats(book);
+    }
+  } else if (type === "spell") {
+    if (url) {
+      await scrapeSingleSpell(url);
+    } else {
+      await scrapeAllSpells(book);
+    }
+  } else if (type === "domain") {
+    await scrapeAllDomains();
+  } else if (type === "race") {
+    if (url) {
+      await scrapeSingleRace(url);
+    } else {
+      await scrapeAllRaces(book);
+    }
+  } else if (type === "item") {
+    await scrapeAllItems(book);
+  } else if (type === "magicItem") {
+    await scrapeAllMagicItems(book);
+  } else if (type === "wizardSchool") {
+    console.log(`Skipping wizardSchool — no HTML parser (reference is manually maintained)`);
+  } else {
+    console.error(`Unknown type: ${type}. Supported: class, feat, spell, domain, race, item, magicItem, wizardSchool`);
+    process.exit(1);
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -16,6 +16,35 @@ interface Logger {
 
 const noopLogger: Logger = { info() {}, warn() {} };
 
+type SweepResult = "swept" | "failed" | "skipped";
+
+async function sweepOne(blobId: string, key: string, logger: Logger): Promise<SweepResult> {
+  return await withTransaction(async (tx) => {
+    const lockedRows = (await tx.execute<{ id: string }>(sql`
+      SELECT id FROM ${blobsInStorage} WHERE id = ${blobId} FOR UPDATE SKIP LOCKED
+    `)) as unknown as { rows: Array<{ id: string }> };
+    if (lockedRows.rows.length === 0) return "skipped";
+
+    const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
+    if (refs.length > 0) return "skipped";
+
+    // S3 call inside the tx (unlike attach() which moves it out) — the
+    // FOR UPDATE lock has to span both the S3 delete and the row delete
+    // so a concurrent attach() can't grab the blob and create a ref
+    // after we've already deleted the S3 object. Sweep is sequential
+    // (graphile-worker single concurrency) so connection-pool impact
+    // is bounded.
+    try {
+      await getStorage().deleteObject(key);
+      await Blobs.delete(tx, { id: blobId });
+      return "swept";
+    } catch (err) {
+      logger.warn(`S3 delete failed for ${key}: ${err instanceof Error ? err.message : err}`);
+      return "failed";
+    }
+  });
+}
+
 export async function sweepPendingBlobs(
   opts: { ttlMs?: number; batchSize?: number; logger?: Logger; now?: Date } = {},
 ): Promise<{ swept: number; failed: number }> {
@@ -79,35 +108,6 @@ export async function sweepPendingBlobs(
     logger.info(`Swept ${swept} blobs, ${failed} failed`);
   }
   return { swept, failed };
-}
-
-type SweepResult = "swept" | "failed" | "skipped";
-
-async function sweepOne(blobId: string, key: string, logger: Logger): Promise<SweepResult> {
-  return await withTransaction(async (tx) => {
-    const lockedRows = (await tx.execute<{ id: string }>(sql`
-      SELECT id FROM ${blobsInStorage} WHERE id = ${blobId} FOR UPDATE SKIP LOCKED
-    `)) as unknown as { rows: Array<{ id: string }> };
-    if (lockedRows.rows.length === 0) return "skipped";
-
-    const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
-    if (refs.length > 0) return "skipped";
-
-    // S3 call inside the tx (unlike attach() which moves it out) — the
-    // FOR UPDATE lock has to span both the S3 delete and the row delete
-    // so a concurrent attach() can't grab the blob and create a ref
-    // after we've already deleted the S3 object. Sweep is sequential
-    // (graphile-worker single concurrency) so connection-pool impact
-    // is bounded.
-    try {
-      await getStorage().deleteObject(key);
-      await Blobs.delete(tx, { id: blobId });
-      return "swept";
-    } catch (err) {
-      logger.warn(`S3 delete failed for ${key}: ${err instanceof Error ? err.message : err}`);
-      return "failed";
-    }
-  });
 }
 
 export const sweepPendingBlobsTask: Task = async (_, helpers) => {

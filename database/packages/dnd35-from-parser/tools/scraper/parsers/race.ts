@@ -30,6 +30,57 @@ const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
 };
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function parseSize(text: string): string {
+  // Try the size names first (case-insensitive)
+  for (const s of SIZE_OPTIONS) {
+    if (text.toLowerCase().includes(s.toLowerCase())) return s;
+  }
+  // Fallback: "RaceSize object (N)" pattern from Django
+  const idMatch = text.match(/\((\d+)\)/);
+  if (idMatch && DNDTOOLS_SIZE_IDS[idMatch[1]]) return DNDTOOLS_SIZE_IDS[idMatch[1]];
+  return text;
+}
+
+function parseSpeed(text: string): number {
+  // "RaceSpeedType object (9) 20" → extract the last number (actual speed)
+  // "20 feet" → 20
+  const numbers = [...text.matchAll(/(\d+)/g)].map((m) => parseInt(m[1], 10));
+  // The actual speed is the last number (after the Django object ID)
+  return numbers.length > 0 ? numbers[numbers.length - 1] : 0;
+}
+
+function parseAbilityValue(text: string): number {
+  // Handle "+2", "−2" (Unicode minus), "-2" (ASCII hyphen), "+0"
+  const normalized = text.replace(/[−–]/g, "-");
+  const match = normalized.match(/([+-]?\d+)/);
+  if (!match) return 0;
+  return parseInt(match[1], 10);
+}
+
+function parseFeatureText(text: string): { name: string; description: string } {
+  // Split on first colon if the prefix is a reasonable name length
+  const colonIdx = text.indexOf(":");
+  if (colonIdx > 0 && colonIdx < 80) {
+    return {
+      name: text.substring(0, colonIdx).trim(),
+      description: text.substring(colonIdx + 1).trim(),
+    };
+  }
+  // Fallback: use first sentence
+  const dotIdx = text.indexOf(".");
+  if (dotIdx > 0 && dotIdx < 80) {
+    return {
+      name: text.substring(0, dotIdx).trim(),
+      description: text.substring(dotIdx + 1).trim(),
+    };
+  }
+  return { name: text.substring(0, 60), description: text };
+}
+
+// ---------------------------------------------------------------------------
 // Detail page parser
 // ---------------------------------------------------------------------------
 
@@ -119,57 +170,6 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
     ...(favoredClass ? { favoredClass } : {}),
     features,
   };
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function parseSize(text: string): string {
-  // Try the size names first (case-insensitive)
-  for (const s of SIZE_OPTIONS) {
-    if (text.toLowerCase().includes(s.toLowerCase())) return s;
-  }
-  // Fallback: "RaceSize object (N)" pattern from Django
-  const idMatch = text.match(/\((\d+)\)/);
-  if (idMatch && DNDTOOLS_SIZE_IDS[idMatch[1]]) return DNDTOOLS_SIZE_IDS[idMatch[1]];
-  return text;
-}
-
-function parseSpeed(text: string): number {
-  // "RaceSpeedType object (9) 20" → extract the last number (actual speed)
-  // "20 feet" → 20
-  const numbers = [...text.matchAll(/(\d+)/g)].map((m) => parseInt(m[1], 10));
-  // The actual speed is the last number (after the Django object ID)
-  return numbers.length > 0 ? numbers[numbers.length - 1] : 0;
-}
-
-function parseAbilityValue(text: string): number {
-  // Handle "+2", "−2" (Unicode minus), "-2" (ASCII hyphen), "+0"
-  const normalized = text.replace(/[−–]/g, "-");
-  const match = normalized.match(/([+-]?\d+)/);
-  if (!match) return 0;
-  return parseInt(match[1], 10);
-}
-
-function parseFeatureText(text: string): { name: string; description: string } {
-  // Split on first colon if the prefix is a reasonable name length
-  const colonIdx = text.indexOf(":");
-  if (colonIdx > 0 && colonIdx < 80) {
-    return {
-      name: text.substring(0, colonIdx).trim(),
-      description: text.substring(colonIdx + 1).trim(),
-    };
-  }
-  // Fallback: use first sentence
-  const dotIdx = text.indexOf(".");
-  if (dotIdx > 0 && dotIdx < 80) {
-    return {
-      name: text.substring(0, dotIdx).trim(),
-      description: text.substring(dotIdx + 1).trim(),
-    };
-  }
-  return { name: text.substring(0, 60), description: text };
 }
 
 

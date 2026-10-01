@@ -7,10 +7,10 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { InferRequestType } from "hono/client";
 import {
-  useMutation,
-  useQuery,
   keepPreviousData,
   skipToken,
+  useMutation,
+  useQuery,
 } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
@@ -595,6 +595,15 @@ export function useAddLevelWizard({
 
   // ── Finalize mutation ────────────────────────────────────────────
 
+  const resetWizard = useCallback(() => {
+    resetPicks();
+    slotCounter.current = 0;
+    setSlotKeys([]);
+    setClassPlan([]);
+    setHpValues([]);
+    setAbilityIncreases({});
+  }, [resetPicks]);
+
   const finalizeMutation = useMutation({
     mutationFn: (json: FinalizeJson) =>
       parseResponse(rpc.api.characters.levels[":characterId"].finalize.$post({ param: { characterId }, json })),
@@ -648,15 +657,6 @@ export function useAddLevelWizard({
     setValidationErrors([]);
     finalize(true);
   }, [finalize, setValidationErrors]);
-
-  const resetWizard = useCallback(() => {
-    resetPicks();
-    slotCounter.current = 0;
-    setSlotKeys([]);
-    setClassPlan([]);
-    setHpValues([]);
-    setAbilityIncreases({});
-  }, [resetPicks]);
 
   const hasProgress = activeStep > 0 || classPlan.some((k) => k !== null);
 
