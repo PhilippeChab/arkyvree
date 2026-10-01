@@ -57,17 +57,13 @@ const FAMILIAR_CLASS_FEATURE_FEATS: FeatSeed[] = [
   },
   {
     name: "Scry on Familiar (Familiar)",
-    description:
-      "The master may scry on the familiar (as if casting the scrying spell) once per day.",
+    description: "The master may scry on the familiar (as if casting the scrying spell) once per day.",
     selectable: false,
     aptitudes: [FAMILIAR_CLASS_FEATURE_APTITUDE],
   },
 ];
 
-const FAMILIAR_RACE_NAMES = [
-  "Bat", "Cat", "Hawk", "Lizard", "Owl",
-  "Rat", "Raven", "Viper", "Toad", "Weasel",
-] as const;
+const FAMILIAR_RACE_NAMES = ["Bat", "Cat", "Hawk", "Lizard", "Owl", "Rat", "Raven", "Viper", "Toad", "Weasel"] as const;
 
 const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => ({
   name: `${race} Familiar`,
@@ -87,57 +83,48 @@ const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => (
 const FAMILIAR_RACES: RaceDefinition[] = [
   {
     name: "Bat",
-    description: "A small, nocturnal flying mammal. Bat familiars grant their masters a +3 bonus on Listen checks (the +3 to Hide in 3.5 SRD applies to the bat itself).",
+    description:
+      "A small, nocturnal flying mammal. Bat familiars grant their masters a +3 bonus on Listen checks (the +3 to Hide in 3.5 SRD applies to the bat itself).",
     size: "Diminutive",
     baseSpeed: 5,
-    modifiers: [
-      { target: "skills.listen.misc", operator: "add", value: "3", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.listen.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Cat",
     description: "A small feline. Cat familiars grant their masters a +3 bonus on Move Silently checks.",
     size: "Tiny",
     baseSpeed: 30,
-    modifiers: [
-      { target: "skills.movesilently.misc", operator: "add", value: "3", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.movesilently.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Hawk",
-    description: "A keen-eyed bird of prey. Hawk familiars grant their masters a +3 bonus on Spot checks in bright light.",
+    description:
+      "A keen-eyed bird of prey. Hawk familiars grant their masters a +3 bonus on Spot checks in bright light.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [
-      { target: "skills.spot.misc", operator: "add", value: "3", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Lizard",
     description: "A small scaled reptile. Lizard familiars grant their masters a +3 bonus on Climb checks.",
     size: "Tiny",
     baseSpeed: 20,
-    modifiers: [
-      { target: "skills.climb.misc", operator: "add", value: "3", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.climb.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Owl",
-    description: "A silent nocturnal hunter. Owl familiars grant their masters a +3 bonus on Spot checks in shadowy areas.",
+    description:
+      "A silent nocturnal hunter. Owl familiars grant their masters a +3 bonus on Spot checks in shadowy areas.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [
-      { target: "skills.spot.misc", operator: "add", value: "3", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Rat",
     description: "A small adaptive rodent. Rat familiars grant their masters a +2 bonus on Fortitude saves.",
     size: "Tiny",
     baseSpeed: 15,
-    modifiers: [
-      { target: "saves.fortitude.misc", operator: "add", value: "2", valueType: "number" },
-    ],
+    modifiers: [{ target: "saves.fortitude.misc", operator: "add", value: "2", valueType: "number" }],
   },
   {
     name: "Raven",
@@ -147,7 +134,8 @@ const FAMILIAR_RACES: RaceDefinition[] = [
   },
   {
     name: "Viper",
-    description: "A venomous tiny serpent (the 3.5 SRD's 'Tiny Viper' familiar option). Viper familiars grant their masters a +3 bonus on Bluff checks.",
+    description:
+      "A venomous tiny serpent (the 3.5 SRD's 'Tiny Viper' familiar option). Viper familiars grant their masters a +3 bonus on Bluff checks.",
     size: "Tiny",
     baseSpeed: 15,
     modifiers: [
@@ -166,9 +154,7 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     description: "A small swift carnivore. Weasel familiars grant their masters a +2 bonus on Reflex saves.",
     size: "Tiny",
     baseSpeed: 20,
-    modifiers: [
-      { target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" },
-    ],
+    modifiers: [{ target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" }],
   },
 ];
 
@@ -182,9 +168,7 @@ const FAMILIAR_CLASS: ClassSeed = {
   kind: "familiar",
   bab: "good",
   saves: { fortitude: "good", reflex: "good", will: "good" },
-  classSkills: [
-    "Balance", "Climb", "Hide", "Listen", "Move Silently", "Spot", "Swim",
-  ],
+  classSkills: ["Balance", "Climb", "Hide", "Listen", "Move Silently", "Spot", "Swim"],
   classFeatureAptitude: FAMILIAR_CLASS_FEATURE_APTITUDE,
   classFeatures: [
     [1, "Alertness"],

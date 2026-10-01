@@ -21,14 +21,10 @@ export const ContributorInvitationEmail = ({
     <Heading style={styles.heading}>Ruleset Contributor Invitation</Heading>
     <Text style={styles.text}>Hi {inviteeName},</Text>
     <Text style={styles.text}>
-      {inviterName} has invited you as <strong>{role}</strong> on{" "}
-      <strong>{rulesetName}</strong>.
+      {inviterName} has invited you as <strong>{role}</strong> on <strong>{rulesetName}</strong>.
     </Text>
     <Section style={styles.buttonContainer}>
-      <Button
-        style={styles.button}
-        href={`${APP_URL}/ruleset-contributor-invite/${contributorId}`}
-      >
+      <Button style={styles.button} href={`${APP_URL}/ruleset-contributor-invite/${contributorId}`}>
         View Invitation
       </Button>
     </Section>

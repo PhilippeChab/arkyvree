@@ -1,11 +1,11 @@
-import type { ClassSectionProps } from "./types.ts";
-import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import {
-  RemoveSkillDialog,
-} from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { Autocomplete, Box, Chip, Paper, Skeleton, TextField, Typography } from "@mui/material";
+
+import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
+import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+
+import type { ClassSectionProps } from "./types.ts";
 
 export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
@@ -27,13 +27,20 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
   } = useClassSkills(rulesetId, classId);
 
   // Get skills that are not already assigned to this class
-  const unassignedSkills = availableSkills.filter(skill =>
-    !classSkills?.some(cs => cs.skillId === skill.id)
-  );
+  const unassignedSkills = availableSkills.filter((skill) => !classSkills?.some((cs) => cs.skillId === skill.id));
 
   return (
     <Box>
-      <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", mb: 2, gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          mb: 2,
+          gap: 2,
+        }}
+      >
         <Typography variant="h6">Class Skills</Typography>
         {canEdit && (
           <Box sx={{ minWidth: { xs: "100%", sm: 300 } }}>
@@ -53,8 +60,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {(option.description?.length ?? 0) > 60
                           ? `${option.description?.substring(0, 60)}...`
-                          : option.description ?? ""
-                        }
+                          : (option.description ?? "")}
                       </Typography>
                     </Box>
                   </Box>
@@ -85,58 +91,48 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
                 listbox: {
                   component: ScrollSafeListbox,
                   onScroll: handleSkillsScroll,
-                }
+                },
               }}
             />
           </Box>
         )}
       </Box>
-      {isLoading
-        ? (
-          <Box>
-            {[...Array(3)].map((_, index) => (
-              <Skeleton
-                key={index}
-                variant="rectangular"
-                height={40}
-                sx={{ mb: 1 }}
+      {isLoading ? (
+        <Box>
+          {[...Array(3)].map((_, index) => (
+            <Skeleton key={index} variant="rectangular" height={40} sx={{ mb: 1 }} />
+          ))}
+        </Box>
+      ) : !classSkills || classSkills.length === 0 ? (
+        <BlankState
+          title="No class skills assigned"
+          description={
+            canEdit
+              ? "Use the search box above to find and add skills to this class."
+              : "This class doesn't have any skills assigned yet."
+          }
+        />
+      ) : (
+        <Paper sx={{ p: 2, boxShadow: 1, borderRadius: 2 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {classSkills.map((classSkill) => (
+              <Chip
+                key={classSkill.skillId}
+                label={classSkill.skillsInRule.name}
+                variant="outlined"
+                color="primary"
+                deleteIcon={canEdit ? <CloseIcon /> : undefined}
+                onDelete={canEdit ? () => handleRemoveSkill(classSkill.skillId) : undefined}
+                sx={{
+                  "& .MuiChip-deleteIcon": {
+                    fontSize: "18px",
+                  },
+                }}
               />
             ))}
           </Box>
-        )
-        : !classSkills || classSkills.length === 0
-        ? (
-          <BlankState
-            title="No class skills assigned"
-            description={canEdit
-              ? "Use the search box above to find and add skills to this class."
-              : "This class doesn't have any skills assigned yet."}
-          />
-        )
-        : (
-          <Paper sx={{ p: 2, boxShadow: 1, borderRadius: 2 }}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {classSkills.map((classSkill) => (
-                <Chip
-                  key={classSkill.skillId}
-                  label={classSkill.skillsInRule.name}
-                  variant="outlined"
-                  color="primary"
-                  deleteIcon={canEdit ? <CloseIcon /> : undefined}
-                  onDelete={canEdit
-                    ? () => handleRemoveSkill(classSkill.skillId)
-                    : undefined
-                  }
-                  sx={{
-                    "& .MuiChip-deleteIcon": {
-                      fontSize: "18px",
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-          </Paper>
-        )}
+        </Paper>
+      )}
       <RemoveSkillDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

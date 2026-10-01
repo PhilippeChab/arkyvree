@@ -1,10 +1,12 @@
-import { capitalize } from "@/shared/utils.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { BlankState } from "@/client/src/components/common/index.ts";
 import { Box, Stack, Typography } from "@mui/material";
-import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
-import { StatField } from "./statHelpers.tsx";
+
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
+import { BlankState } from "@/client/src/components/common/index.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { capitalize } from "@/shared/utils.ts";
+
+import { StatField } from "./statHelpers.tsx";
+import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
 
 function iterativeAttacks(bab: number): string {
   const attacks: string[] = [];
@@ -14,10 +16,7 @@ function iterativeAttacks(bab: number): string {
   return attacks.length > 0 ? attacks.join("/") : formatSigned(bab);
 }
 
-export function CombatAndSavesSection({
-  combat,
-  saves,
-}: Dnd35CombatAndSavesSectionProps) {
+export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSectionProps) {
   const bab = combat?.bab ?? 0;
 
   return (
@@ -73,36 +72,34 @@ export function CombatAndSavesSection({
           <Typography sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}>
             Saving Throws
           </Typography>
-          {Object.keys(saves).length > 0
-            ? (
-              <Stack spacing={3}>
-                {Object.entries(saves).map(([save, saveData]) => {
-                  const total = saveData?.total ?? 0;
-                  const displayName = saveData?.name || capitalize(save);
-                  return (
-                    <Box key={save}>
-                      <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1 }}>
-                        {displayName}: {formatSigned(total)}
+          {Object.keys(saves).length > 0 ? (
+            <Stack spacing={3}>
+              {Object.entries(saves).map(([save, saveData]) => {
+                const total = saveData?.total ?? 0;
+                const displayName = saveData?.name || capitalize(save);
+                return (
+                  <Box key={save}>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1 }}>
+                      {displayName}: {formatSigned(total)}
+                    </Typography>
+                    <Box sx={{ ml: 2, display: "flex", gap: 3 }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        Base: {formatSigned(saveData?.base)}
                       </Typography>
-                      <Box sx={{ ml: 2, display: "flex", gap: 3 }}>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                          Base: {formatSigned(saveData?.base)}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                          Ability: {formatSigned(saveData?.ability)}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                          Misc: {formatSigned(saveData?.misc)}
-                        </Typography>
-                      </Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        Ability: {formatSigned(saveData?.ability)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        Misc: {formatSigned(saveData?.misc)}
+                      </Typography>
                     </Box>
-                  );
-                })}
-              </Stack>
-            )
-            : (
-              <BlankState title="No saving throws available" />
-            )}
+                  </Box>
+                );
+              })}
+            </Stack>
+          ) : (
+            <BlankState title="No saving throws available" />
+          )}
         </Box>
       </Box>
     </SheetSection>

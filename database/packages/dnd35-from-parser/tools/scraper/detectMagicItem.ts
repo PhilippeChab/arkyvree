@@ -1,39 +1,103 @@
-import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { parseCost, parseWeight } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
-import { SKILL_MAP, SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SAVE_MAP, SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 // ---------------------------------------------------------------------------
 // Base item template names (sorted longest-first per category)
 // ---------------------------------------------------------------------------
 
 const BASE_WEAPONS = [
-  "Repeating Heavy Crossbow", "Repeating Light Crossbow", "Gnome Hooked Hammer",
-  "Two-Bladed Sword", "Composite Longbow", "Composite Shortbow", "Dwarven Urgrosh",
-  "Orc Double Axe", "Spiked Gauntlet", "Punching Dagger", "Hand Crossbow",
-  "Heavy Crossbow", "Light Crossbow", "Dwarven Waraxe", "Bastard Sword",
-  "Spiked Chain", "Throwing Axe", "Light Hammer", "Morningstar",
-  "Heavy Flail", "Heavy Mace", "Heavy Pick", "Light Mace", "Light Pick",
-  "Dire Flail", "Battleaxe", "Greatclub", "Greatsword", "Greataxe",
-  "Longsword", "Shortsword", "Warhammer", "Guisarme", "Nunchaku",
-  "Shortspear", "Longspear", "Quarterstaff", "Falchion",
-  "Scimitar", "Halberd", "Ranseur", "Handaxe", "Trident",
-  "Longbow", "Shortbow", "Siangham", "Shuriken",
-  "Gauntlet", "Dagger", "Sickle", "Rapier", "Lance",
-  "Glaive", "Kukri", "Flail", "Spear", "Club", "Whip",
-  "Dart", "Javelin", "Sling", "Scythe", "Kama", "Sap",
-  "Bolas", "Net", "Sai",
+  "Repeating Heavy Crossbow",
+  "Repeating Light Crossbow",
+  "Gnome Hooked Hammer",
+  "Two-Bladed Sword",
+  "Composite Longbow",
+  "Composite Shortbow",
+  "Dwarven Urgrosh",
+  "Orc Double Axe",
+  "Spiked Gauntlet",
+  "Punching Dagger",
+  "Hand Crossbow",
+  "Heavy Crossbow",
+  "Light Crossbow",
+  "Dwarven Waraxe",
+  "Bastard Sword",
+  "Spiked Chain",
+  "Throwing Axe",
+  "Light Hammer",
+  "Morningstar",
+  "Heavy Flail",
+  "Heavy Mace",
+  "Heavy Pick",
+  "Light Mace",
+  "Light Pick",
+  "Dire Flail",
+  "Battleaxe",
+  "Greatclub",
+  "Greatsword",
+  "Greataxe",
+  "Longsword",
+  "Shortsword",
+  "Warhammer",
+  "Guisarme",
+  "Nunchaku",
+  "Shortspear",
+  "Longspear",
+  "Quarterstaff",
+  "Falchion",
+  "Scimitar",
+  "Halberd",
+  "Ranseur",
+  "Handaxe",
+  "Trident",
+  "Longbow",
+  "Shortbow",
+  "Siangham",
+  "Shuriken",
+  "Gauntlet",
+  "Dagger",
+  "Sickle",
+  "Rapier",
+  "Lance",
+  "Glaive",
+  "Kukri",
+  "Flail",
+  "Spear",
+  "Club",
+  "Whip",
+  "Dart",
+  "Javelin",
+  "Sling",
+  "Scythe",
+  "Kama",
+  "Sap",
+  "Bolas",
+  "Net",
+  "Sai",
 ];
 
 const BASE_ARMOR = [
-  "Studded Leather", "Leather Armor", "Padded Armor",
-  "Chain Shirt", "Hide Armor", "Scale Mail", "Chain Mail",
-  "Breastplate", "Splint Mail", "Banded Mail", "Half-Plate", "Full Plate",
+  "Studded Leather",
+  "Leather Armor",
+  "Padded Armor",
+  "Chain Shirt",
+  "Hide Armor",
+  "Scale Mail",
+  "Chain Mail",
+  "Breastplate",
+  "Splint Mail",
+  "Banded Mail",
+  "Half-Plate",
+  "Full Plate",
 ];
 
 const BASE_SHIELDS = [
-  "Light Wooden Shield", "Light Steel Shield",
-  "Heavy Wooden Shield", "Heavy Steel Shield",
-  "Tower Shield", "Buckler",
+  "Light Wooden Shield",
+  "Light Steel Shield",
+  "Heavy Wooden Shield",
+  "Heavy Steel Shield",
+  "Tower Shield",
+  "Buckler",
 ];
 
 /** Common alternative spellings in SRD descriptions → canonical template name, scoped by category */
@@ -251,7 +315,9 @@ function detectModifiers(name: string, description: string): Modifier[] {
     const after = description.indexOf(".", matchIndex + matchLength);
     const sentence = description.slice(before + 1, after === -1 ? undefined : after).toLowerCase();
     // "when worn/placed/donned/held/grasped/carried" = item usage, not a combat condition
-    return /\b(against|while|during|versus|vs\.|if you are|only when|only while|only against|when (?!worn|placed|donned|held|grasped|carried|used|activated))\b/.test(sentence);
+    return /\b(against|while|during|versus|vs\.|if you are|only when|only while|only against|when (?!worn|placed|donned|held|grasped|carried|used|activated))\b/.test(
+      sentence,
+    );
   }
 
   function add(target: string, value: string): void {
@@ -265,7 +331,10 @@ function detectModifiers(name: string, description: string): Modifier[] {
 
   // 1. Ability score bonuses: "+N enhancement bonus to Constitution"
   const abilityNames = "Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma";
-  const enhRegex = new RegExp(`\\+(\\d+)\\s+(?:enhancement\\s+)?bonus to (?:her |his |the wearer's )?(${abilityNames})\\b`, "gi");
+  const enhRegex = new RegExp(
+    `\\+(\\d+)\\s+(?:enhancement\\s+)?bonus to (?:her |his |the wearer's )?(${abilityNames})\\b`,
+    "gi",
+  );
   let match: RegExpExecArray | null;
   while ((match = enhRegex.exec(description)) !== null) {
     if (isConditional(match.index, match[0].length)) continue;
@@ -275,7 +344,8 @@ function detectModifiers(name: string, description: string): Modifier[] {
 
   // 2. Skill bonuses: "+N <type> bonus on/to [all] [his/her/wearer's/your] <SkillName> checks"
   //    Greedy [^.]+ captures multi-skill patterns ("Swim checks and Climb checks") without crossing sentences
-  const skillRegex = /\+(\d+)\s+(?:\w+\s+)?bonus (?:on|to) (?:all\s+)?(?:her |his |its wearer's |the wearer's |your )?([^.]+checks?)/gi;
+  const skillRegex =
+    /\+(\d+)\s+(?:\w+\s+)?bonus (?:on|to) (?:all\s+)?(?:her |his |its wearer's |the wearer's |your )?([^.]+checks?)/gi;
   while ((match = skillRegex.exec(description)) !== null) {
     if (isConditional(match.index, match[0].length)) continue;
     const value = match[1];
@@ -298,7 +368,8 @@ function detectModifiers(name: string, description: string): Modifier[] {
   }
 
   // Individual saves: "+N <type> bonus on Fortitude/Reflex/Will saves"
-  const singleSaveRegex = /\+(\d+)\s+\w+\s+bonus (?:on|to) (?:all\s+)?(fortitude|reflex|will)(?:\s+saving)?\s+(?:saves|throws)/gi;
+  const singleSaveRegex =
+    /\+(\d+)\s+\w+\s+bonus (?:on|to) (?:all\s+)?(fortitude|reflex|will)(?:\s+saving)?\s+(?:saves|throws)/gi;
   while ((match = singleSaveRegex.exec(description)) !== null) {
     if (isConditional(match.index, match[0].length)) continue;
     const slug = SAVE_MAP[match[2].toLowerCase()];
@@ -337,9 +408,7 @@ function parseAllVariantPrices(metadataText: string): Map<string, string> | null
   return variants.size > 1 ? variants : null;
 }
 
-export function buildMagicItemDetected(
-  raw: MagicItemReference["raw"],
-): MagicItemReference["detected"] {
+export function buildMagicItemDetected(raw: MagicItemReference["raw"]): MagicItemReference["detected"] {
   const detected: MagicItemReference["detected"] = {};
 
   for (const entry of raw) {

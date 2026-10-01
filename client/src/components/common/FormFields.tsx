@@ -142,9 +142,11 @@ export function SelectField<T extends FieldValues>({
           size={size}
           margin={margin}
           sx={sx}
-          slotProps={onMenuScroll && {
-            select: { MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } } },
-          }}
+          slotProps={
+            onMenuScroll && {
+              select: { MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } } },
+            }
+          }
         >
           {emptyLabel && <MenuItem value="">{emptyLabel}</MenuItem>}
           {choices.map((choice) => (

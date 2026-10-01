@@ -1,10 +1,9 @@
 import { and, count, eq, gte, isNull, lt, notInArray } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { notificationsInAccount } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class NotificationsRepository extends BaseRepository<typeof notificationsInAccount, NotificationInstance> {
   constructor() {
@@ -23,10 +22,12 @@ class NotificationsRepository extends BaseRepository<typeof notificationsInAccou
   async delete(db: Db, where: { id: string } | { createdBefore: string }) {
     return await db
       .delete(this.table)
-      .where(this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
-      ]));
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
+        ]),
+      );
   }
 
   async findMany(
@@ -86,13 +87,7 @@ class NotificationsRepository extends BaseRepository<typeof notificationsInAccou
     return await db
       .update(this.table)
       .set({ readAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.id, where.id),
-          eq(this.table.recipientId, where.recipientId),
-          isNull(this.table.readAt),
-        ),
-      )
+      .where(and(eq(this.table.id, where.id), eq(this.table.recipientId, where.recipientId), isNull(this.table.readAt)))
       .returning();
   }
 
@@ -118,9 +113,7 @@ class NotificationsRepository extends BaseRepository<typeof notificationsInAccou
         this.where([
           eq(this.table.recipientId, where.recipientId),
           isNull(this.table.readAt),
-          where.excludeTypes && where.excludeTypes.length > 0
-            ? notInArray(this.table.type, where.excludeTypes)
-            : false,
+          where.excludeTypes && where.excludeTypes.length > 0 ? notInArray(this.table.type, where.excludeTypes) : false,
         ]),
       )
       .returning();

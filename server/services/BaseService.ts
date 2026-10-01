@@ -10,10 +10,7 @@ abstract class BaseService<M extends Methods> {
     this._methods = methods;
   }
 
-  async call<T extends keyof M>(
-    name: T,
-    ...args: Parameters<M[T]>
-  ): Promise<Result<Awaited<ReturnType<M[T]>>>> {
+  async call<T extends keyof M>(name: T, ...args: Parameters<M[T]>): Promise<Result<Awaited<ReturnType<M[T]>>>> {
     return (await safePromisify(async () => {
       if (!this._methods[name]) {
         throw new InternalError(`Invalid service method ${name.toString()}.`);

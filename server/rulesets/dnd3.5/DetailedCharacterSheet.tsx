@@ -1,6 +1,8 @@
+import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 import { formatPropertyType, stripSeparators } from "@/shared/utils.ts";
-import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+
 import type DetailedCharacter from "./DetailedCharacter.ts";
 
 // Helper function to format modifiers safely
@@ -569,7 +571,8 @@ const DetailedCharacterSheet = ({
           <Text style={styles.title}>{identityData.physiology.name}</Text>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
             <Text style={styles.subtitle}>
-              {identityData.physiology.race?.name || ""} {Object.values(classData)
+              {identityData.physiology.race?.name || ""}{" "}
+              {Object.values(classData)
                 ?.map((cl) => `${cl.klass.name} (${cl.levels.length})`)
                 .join(" / ") || ""}
             </Text>
@@ -581,13 +584,13 @@ const DetailedCharacterSheet = ({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Details</Text>
           <View style={[styles.row, { justifyContent: "space-between", alignItems: "stretch", gap: 10 }]}>
-            {portraitUrl
-              ? <Image src={portraitUrl} style={styles.portrait} />
-              : (
-                <View style={styles.portraitPlaceholder}>
-                  <Text style={styles.portraitPlaceholderText}>No image</Text>
-                </View>
-              )}
+            {portraitUrl ? (
+              <Image src={portraitUrl} style={styles.portrait} />
+            ) : (
+              <View style={styles.portraitPlaceholder}>
+                <Text style={styles.portraitPlaceholderText}>No image</Text>
+              </View>
+            )}
             <View style={{ width: "22%" }}>
               <View style={styles.headerRow}>
                 <Text style={styles.headerLabel}>Experience:</Text>
@@ -647,29 +650,25 @@ const DetailedCharacterSheet = ({
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Description:</Text>
             </View>
-            {identityData.physiology.description
-              ? (
-                <Text style={{ fontSize: FONT_SIZE.md, marginTop: 2, lineHeight: 1.4 }}>
-                  {identityData.physiology.description}
-                </Text>
-              )
-              : (
-                <Text style={{ fontSize: FONT_SIZE.md, fontStyle: "italic", color: "#888" }}>—</Text>
-              )}
+            {identityData.physiology.description ? (
+              <Text style={{ fontSize: FONT_SIZE.md, marginTop: 2, lineHeight: 1.4 }}>
+                {identityData.physiology.description}
+              </Text>
+            ) : (
+              <Text style={{ fontSize: FONT_SIZE.md, fontStyle: "italic", color: "#888" }}>—</Text>
+            )}
           </View>
           <View style={{ marginTop: 6 }}>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Notes:</Text>
             </View>
-            {identityData.background?.notes
-              ? (
-                <Text style={{ fontSize: FONT_SIZE.md, marginTop: 2, lineHeight: 1.4 }}>
-                  {identityData.background.notes}
-                </Text>
-              )
-              : (
-                <Text style={{ fontSize: FONT_SIZE.md, fontStyle: "italic", color: "#888" }}>—</Text>
-              )}
+            {identityData.background?.notes ? (
+              <Text style={{ fontSize: FONT_SIZE.md, marginTop: 2, lineHeight: 1.4 }}>
+                {identityData.background.notes}
+              </Text>
+            ) : (
+              <Text style={{ fontSize: FONT_SIZE.md, fontStyle: "italic", color: "#888" }}>—</Text>
+            )}
           </View>
         </View>
 
@@ -681,22 +680,22 @@ const DetailedCharacterSheet = ({
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Ability Scores</Text>
                 <View style={[styles.row, { justifyContent: "space-between" }]}>
-                  {([
-                    { label: "STR", key: "strength", name: "Strength" },
-                    { label: "DEX", key: "dexterity", name: "Dexterity" },
-                    { label: "CON", key: "constitution", name: "Constitution" },
-                    { label: "INT", key: "intelligence", name: "Intelligence" },
-                    { label: "WIS", key: "wisdom", name: "Wisdom" },
-                    { label: "CHA", key: "charisma", name: "Charisma" },
-                  ] as const).map(({ label, key, name }) => {
+                  {(
+                    [
+                      { label: "STR", key: "strength", name: "Strength" },
+                      { label: "DEX", key: "dexterity", name: "Dexterity" },
+                      { label: "CON", key: "constitution", name: "Constitution" },
+                      { label: "INT", key: "intelligence", name: "Intelligence" },
+                      { label: "WIS", key: "wisdom", name: "Wisdom" },
+                      { label: "CHA", key: "charisma", name: "Charisma" },
+                    ] as const
+                  ).map(({ label, key, name }) => {
                     const ab = abilityData[key];
                     return (
                       <View key={key} style={styles.abilityBox}>
                         <Text style={styles.abilityName}>{label}</Text>
                         <Text style={styles.abilityScore}>{ab?.total ?? 10}</Text>
-                        <Text style={styles.abilityMod}>
-                          {formatModifier(abilities.getAbilityModifier(name))}
-                        </Text>
+                        <Text style={styles.abilityMod}>{formatModifier(abilities.getAbilityModifier(name))}</Text>
                         <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
                           {`${ab?.base ?? 10} / ${ab?.level ? `+${ab.level}` : "+0"} / ${ab?.misc ? formatModifier(ab.misc) : "+0"}`}
                         </Text>
@@ -713,9 +712,7 @@ const DetailedCharacterSheet = ({
                   {Object.values(savingThrowData).map((save) => (
                     <View key={save.name} style={styles.savingThrowBox}>
                       <Text style={styles.abilityName}>{save.name}</Text>
-                      <Text style={styles.abilityMod}>
-                        {formatModifier(save.total)}
-                      </Text>
+                      <Text style={styles.abilityMod}>{formatModifier(save.total)}</Text>
                       <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
                         {`Base ${formatModifier(save.base)}  |  Abil ${formatModifier(save.ability)}  |  Misc ${formatModifier(save.misc)}`}
                       </Text>
@@ -730,12 +727,7 @@ const DetailedCharacterSheet = ({
               {/* Combat Stats */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Combat Stats</Text>
-                <View
-                  style={[
-                    styles.row,
-                    { flexWrap: "wrap", justifyContent: "space-between" },
-                  ]}
-                >
+                <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>HP</Text>
                     <Text style={styles.statValue}>{combatData.hp.total}</Text>
@@ -758,17 +750,10 @@ const DetailedCharacterSheet = ({
                     {`Arm ${formatModifier(combatData.ac.armor ?? 0)}  Shld ${formatModifier(combatData.ac.shield ?? 0)}  Dex ${formatModifier(combatData.ac.dexterity ?? 0)}  Nat ${formatModifier(combatData.ac.natural ?? 0)}  Defl ${formatModifier(combatData.ac.deflection ?? 0)}  Misc ${formatModifier(combatData.ac.misc ?? 0)}`}
                   </Text>
                 </View>
-                <View
-                  style={[
-                    styles.row,
-                    { flexWrap: "wrap", justifyContent: "space-between" },
-                  ]}
-                >
+                <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>Initiative</Text>
-                    <Text style={styles.statValue}>
-                      {formatModifier(combatData.initiative.total)}
-                    </Text>
+                    <Text style={styles.statValue}>{formatModifier(combatData.initiative.total)}</Text>
                   </View>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>BAB</Text>
@@ -782,15 +767,11 @@ const DetailedCharacterSheet = ({
                   </View>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>Grapple</Text>
-                    <Text style={styles.statValue}>
-                      {formatModifier(combatData.grapple.total)}
-                    </Text>
+                    <Text style={styles.statValue}>{formatModifier(combatData.grapple.total)}</Text>
                   </View>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>Speed</Text>
-                    <Text style={styles.statValue}>
-                      {combatData.speed.total} ft.
-                    </Text>
+                    <Text style={styles.statValue}>{combatData.speed.total} ft.</Text>
                   </View>
                 </View>
               </View>
@@ -815,24 +796,12 @@ const DetailedCharacterSheet = ({
                       Set {Number(setIndex) + 1}
                     </Text>
                     <View style={[styles.tableRow, styles.tableHeader]}>
-                      <Text style={[styles.tableCell, { width: "27%", fontWeight: "bold" }]}>
-                        Weapon
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>
-                        Attack Bonus
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>
-                        Damage
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>
-                        Critical
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "11%", fontWeight: "bold" }]}>
-                        Range
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>
-                        Type
-                      </Text>
+                      <Text style={[styles.tableCell, { width: "27%", fontWeight: "bold" }]}>Weapon</Text>
+                      <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Attack Bonus</Text>
+                      <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Damage</Text>
+                      <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Critical</Text>
+                      <Text style={[styles.tableCell, { width: "11%", fontWeight: "bold" }]}>Range</Text>
+                      <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Type</Text>
                     </View>
                     {weapons.map(({ slotKey, weapon }) => (
                       <View key={slotKey} style={styles.tableRow}>
@@ -842,24 +811,22 @@ const DetailedCharacterSheet = ({
                             {slotKey === "mainhand" ? "Main Hand" : slotKey === "offhand" ? "Off Hand" : "Two Handed"}
                           </Text>
                           {weapon!.proficient === false && (
-                            <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>Not Proficient (-4)</Text>
+                            <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>
+                              Not Proficient (-4)
+                            </Text>
                           )}
                         </View>
                         <Text style={[styles.tableCell, { width: "18%" }]}>
                           {weapon!.tohit.total.map(formatModifier).join("/")}
                         </Text>
-                        <Text style={[styles.tableCell, { width: "18%" }]}>
-                          {weapon!.damage.total}
-                        </Text>
+                        <Text style={[styles.tableCell, { width: "18%" }]}>{weapon!.damage.total}</Text>
                         <Text style={[styles.tableCell, { width: "13%" }]}>
                           {21 - weapon!.damage.critical.range}/x{weapon!.damage.critical.multiplier}
                         </Text>
                         <Text style={[styles.tableCell, { width: "11%" }]}>
                           {weapon!.range ? `${weapon!.range} ft.` : "Melee"}
                         </Text>
-                        <Text style={[styles.tableCell, { width: "13%" }]}>
-                          {weapon!.damage.types.join(", ")}
-                        </Text>
+                        <Text style={[styles.tableCell, { width: "13%" }]}>{weapon!.damage.types.join(", ")}</Text>
                       </View>
                     ))}
                   </View>
@@ -867,7 +834,6 @@ const DetailedCharacterSheet = ({
               })}
           </View>
         </View>
-
       </Page>
 
       {/* Second Page - Skills */}
@@ -875,9 +841,7 @@ const DetailedCharacterSheet = ({
         {/* Header with character name for the second page */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>
-              {identityData.physiology.name || "Unnamed Character"}
-            </Text>
+            <Text style={styles.title}>{identityData.physiology.name || "Unnamed Character"}</Text>
           </View>
         </View>
 
@@ -895,9 +859,7 @@ const DetailedCharacterSheet = ({
           >
             <Text style={{ fontSize: FONT_SIZE.xl, fontWeight: "bold", color: "#333" }}>Skills</Text>
             <View style={{ flexDirection: "row", alignItems: "baseline", gap: 12 }}>
-              <Text style={{ fontSize: FONT_SIZE.sm, color: "#666", fontStyle: "italic" }}>
-                * = Class Skill
-              </Text>
+              <Text style={{ fontSize: FONT_SIZE.sm, color: "#666", fontStyle: "italic" }}>* = Class Skill</Text>
               <Text style={{ fontSize: FONT_SIZE.sm, color: "#333" }}>
                 Skill Points: {detailedCharacter.getDetailedCharacterSkills().getSkillBudget().spent || 0} /{" "}
                 {detailedCharacter.getDetailedCharacterSkills().getSkillBudget().total || 0}
@@ -920,21 +882,11 @@ const DetailedCharacterSheet = ({
             const renderHeader = () => (
               <View style={styles.skillsHeader}>
                 <Text style={[styles.skillHeaderText, { width: "40%" }]}>SKILL</Text>
-                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>
-                  RANK
-                </Text>
-                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>
-                  MOD
-                </Text>
-                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>
-                  MISC
-                </Text>
-                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>
-                  WGT
-                </Text>
-                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>
-                  TOTAL
-                </Text>
+                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>RANK</Text>
+                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>MOD</Text>
+                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>MISC</Text>
+                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>WGT</Text>
+                <Text style={[styles.skillHeaderText, { width: "12%", textAlign: "center" }]}>TOTAL</Text>
               </View>
             );
 
@@ -946,32 +898,27 @@ const DetailedCharacterSheet = ({
                     {column.map((skill, index) => (
                       <View key={index} style={styles.skillItem}>
                         <Text
-                          style={[skill.trained ? styles.skillName : styles.skillNameUntrained, {
-                            width: "40%",
-                          }]}
+                          style={[
+                            skill.trained ? styles.skillName : styles.skillNameUntrained,
+                            {
+                              width: "40%",
+                            },
+                          ]}
                         >
                           {skill.name}
                           {skill.innate ? "*" : ""}
                         </Text>
-                        <Text style={skill.trained ? styles.skillRank : styles.skillRankUntrained}>
-                          {skill.rank}
-                        </Text>
+                        <Text style={skill.trained ? styles.skillRank : styles.skillRankUntrained}>{skill.rank}</Text>
                         <Text style={skill.trained ? styles.skillMod : styles.skillModUntrained}>
                           {formatModifier(skill.ability)}
                         </Text>
-                        <Text
-                          style={skill.trained ? styles.skillOther : styles.skillOtherUntrained}
-                        >
+                        <Text style={skill.trained ? styles.skillOther : styles.skillOtherUntrained}>
                           {skill.misc !== 0 ? formatModifier(skill.misc) : "—"}
                         </Text>
-                        <Text
-                          style={skill.trained ? styles.skillWeight : styles.skillWeightUntrained}
-                        >
+                        <Text style={skill.trained ? styles.skillWeight : styles.skillWeightUntrained}>
                           {skill.weight ? `-${skill.weight}` : "—"}
                         </Text>
-                        <Text
-                          style={skill.trained ? styles.skillBonus : styles.skillBonusUntrained}
-                        >
+                        <Text style={skill.trained ? styles.skillBonus : styles.skillBonusUntrained}>
                           {formatModifier(skill.total)}
                         </Text>
                       </View>
@@ -982,7 +929,6 @@ const DetailedCharacterSheet = ({
             );
           })()}
         </View>
-
       </Page>
 
       {/* Third Page - Feats & Abilities */}
@@ -990,9 +936,7 @@ const DetailedCharacterSheet = ({
         {/* Header with character name for the third page */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>
-              {identityData.physiology.name || "Unnamed Character"}
-            </Text>
+            <Text style={styles.title}>{identityData.physiology.name || "Unnamed Character"}</Text>
           </View>
         </View>
 
@@ -1000,15 +944,16 @@ const DetailedCharacterSheet = ({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Feats & Abilities</Text>
           {(() => {
-            const allFeats = Object.values(classData).flatMap((klass) =>
-              klass.levels.flatMap((level) => level.feats)
-            );
+            const allFeats = Object.values(classData).flatMap((klass) => klass.levels.flatMap((level) => level.feats));
 
-            const groupedFeats = allFeats.reduce((acc, feat) => {
-              if (!acc[feat.name]) acc[feat.name] = [];
-              acc[feat.name].push(feat);
-              return acc;
-            }, {} as Record<string, typeof allFeats>);
+            const groupedFeats = allFeats.reduce(
+              (acc, feat) => {
+                if (!acc[feat.name]) acc[feat.name] = [];
+                acc[feat.name].push(feat);
+                return acc;
+              },
+              {} as Record<string, typeof allFeats>,
+            );
 
             const featEntries: { key: string; label: string; description: string }[] = [];
             for (const [groupIndex, featGroup] of Object.values(groupedFeats).entries()) {
@@ -1043,7 +988,7 @@ const DetailedCharacterSheet = ({
               return <Text style={styles.emptyMessage}>No feats available</Text>;
             }
 
-            const columns: typeof featEntries[] = [[], []];
+            const columns: (typeof featEntries)[] = [[], []];
             const weights = [0, 0];
             for (const entry of featEntries) {
               const weight = entry.label.length + entry.description.length;
@@ -1061,9 +1006,7 @@ const DetailedCharacterSheet = ({
                         key={entry.key}
                         style={{ fontSize: FONT_SIZE.base, marginBottom: 4, color: "#555", lineHeight: 1.4 }}
                       >
-                        <Text style={{ fontWeight: "bold", color: "#000" }}>{entry.label}.</Text>
-                        {" "}
-                        {entry.description}
+                        <Text style={{ fontWeight: "bold", color: "#000" }}>{entry.label}.</Text> {entry.description}
                       </Text>
                     ))}
                   </View>
@@ -1072,7 +1015,6 @@ const DetailedCharacterSheet = ({
             );
           })()}
         </View>
-
       </Page>
 
       {/* Fourth Page - Spells */}
@@ -1116,8 +1058,8 @@ const DetailedCharacterSheet = ({
         const groupMap = new Map<string, SpellGroup>();
 
         for (const klass of Object.values(classData)) {
-          for (const level of (klass.levels || [])) {
-            for (const power of (level.powers || [])) {
+          for (const level of klass.levels || []) {
+            for (const power of level.powers || []) {
               const spellLevel = power.powerLevel ?? level.klassLevel?.level ?? 0;
               const aptitudeName = aptitudeNameById.get(power.aptitudeId) || "Spells";
               const groupKey = `${power.aptitudeId}:${spellLevel}`;
@@ -1125,9 +1067,10 @@ const DetailedCharacterSheet = ({
               const normalizedName = stripSeparators(power.name);
               const powerData = powersData[normalizedName];
 
-              const save = power.saveName && power.saveEffect
-                ? `${power.saveName} ${power.saveEffect}`
-                : power.saveEffect || "None";
+              const save =
+                power.saveName && power.saveEffect
+                  ? `${power.saveName} ${power.saveEffect}`
+                  : power.saveEffect || "None";
 
               const properties = powerData?.properties ?? {};
               const school = properties[SCHOOL_KEY] || "—";
@@ -1137,10 +1080,19 @@ const DetailedCharacterSheet = ({
               const allTags = power.id ? spellTagsData[power.id] : undefined;
               const tags = allTags?.filter((tag: string) => {
                 if (tag.includes("Domain")) return aptitudeName.includes("Cleric") || aptitudeName.includes("Domain");
-                if (tag.includes("Specialist")) return aptitudeName.includes("Wizard") || aptitudeName.includes("Specialist");
+                if (tag.includes("Specialist"))
+                  return aptitudeName.includes("Wizard") || aptitudeName.includes("Specialist");
                 return true;
               });
-              const row: SpellRow = { name: power.name, school, save, dc, description, properties, tags: tags?.length ? tags : undefined };
+              const row: SpellRow = {
+                name: power.name,
+                school,
+                save,
+                dc,
+                description,
+                properties,
+                tags: tags?.length ? tags : undefined,
+              };
 
               const existing = groupMap.get(groupKey);
               if (existing) {
@@ -1153,7 +1105,12 @@ const DetailedCharacterSheet = ({
                   existing.spells.push(row);
                 }
               } else {
-                groupMap.set(groupKey, { aptitudeName, level: spellLevel, uses: getUsesPerDay(aptitudeName, spellLevel), spells: [row] });
+                groupMap.set(groupKey, {
+                  aptitudeName,
+                  level: spellLevel,
+                  uses: getUsesPerDay(aptitudeName, spellLevel),
+                  spells: [row],
+                });
               }
             }
           }
@@ -1170,7 +1127,10 @@ const DetailedCharacterSheet = ({
           const row: SpellRow = {
             name: entry.power.name,
             school: properties[SCHOOL_KEY] || "—",
-            save: entry.saveName && entry.power.saveEffect ? `${entry.saveName} ${entry.power.saveEffect}` : entry.power.saveEffect || "None",
+            save:
+              entry.saveName && entry.power.saveEffect
+                ? `${entry.saveName} ${entry.power.saveEffect}`
+                : entry.power.saveEffect || "None",
             dc: entry.dc,
             description: entry.power.description || "",
             properties,
@@ -1179,7 +1139,12 @@ const DetailedCharacterSheet = ({
           if (existing) {
             existing.spells.push(row);
           } else {
-            groupMap.set(groupKey, { aptitudeName, level: entry.level, uses: getUsesPerDay(aptitudeName, entry.level), spells: [row] });
+            groupMap.set(groupKey, {
+              aptitudeName,
+              level: entry.level,
+              uses: getUsesPerDay(aptitudeName, entry.level),
+              spells: [row],
+            });
           }
         }
 
@@ -1194,9 +1159,7 @@ const DetailedCharacterSheet = ({
           }
         }
 
-        const sorted = [...byAptitude.values()].sort((a, b) =>
-          a.aptitudeName.localeCompare(b.aptitudeName),
-        );
+        const sorted = [...byAptitude.values()].sort((a, b) => a.aptitudeName.localeCompare(b.aptitudeName));
         for (const apt of sorted) {
           apt.levels.sort((a, b) => a.level - b.level);
         }
@@ -1207,9 +1170,7 @@ const DetailedCharacterSheet = ({
           <Page size="A4" style={styles.page}>
             <View style={styles.header}>
               <View style={styles.headerLeft}>
-                <Text style={styles.title}>
-                  {identityData.physiology.name || "Unnamed Character"}
-                </Text>
+                <Text style={styles.title}>{identityData.physiology.name || "Unnamed Character"}</Text>
               </View>
             </View>
 
@@ -1229,9 +1190,9 @@ const DetailedCharacterSheet = ({
                     }
                   }
                 }
-                const legendEntries = SPELL_PROPERTY_ORDER
-                  .filter((key) => presentKeys.has(key))
-                  .map((key) => SPELL_PROPERTY_ABBR[key]);
+                const legendEntries = SPELL_PROPERTY_ORDER.filter((key) => presentKeys.has(key)).map(
+                  (key) => SPELL_PROPERTY_ABBR[key],
+                );
                 if (legendEntries.length === 0) return null;
                 return (
                   <Text style={{ fontSize: FONT_SIZE.sm, color: "#666", fontStyle: "italic", marginBottom: 4 }}>
@@ -1255,25 +1216,25 @@ const DetailedCharacterSheet = ({
 
                   {apt.levels.map((group) => (
                     <View key={group.level} style={{ marginBottom: 3 }}>
-                      <Text style={{ fontSize: FONT_SIZE.md, fontWeight: "bold", marginBottom: 1, marginTop: 2, color: "#555" }}>
+                      <Text
+                        style={{
+                          fontSize: FONT_SIZE.md,
+                          fontWeight: "bold",
+                          marginBottom: 1,
+                          marginTop: 2,
+                          color: "#555",
+                        }}
+                      >
                         {group.level === 0 ? "Cantrips" : `Level ${group.level}`}
                         {group.uses != null ? ` — ${group.uses}/day` : ""}
                       </Text>
 
                       {/* Table header */}
                       <View style={styles.spellTableHeader}>
-                        <Text style={[styles.spellHeaderText, { width: "40%" }]}>
-                          NAME
-                        </Text>
-                        <Text style={[styles.spellHeaderText, { width: "20%" }]}>
-                          SCHOOL
-                        </Text>
-                        <Text style={[styles.spellHeaderText, { width: "30%" }]}>
-                          SAVE
-                        </Text>
-                        <Text style={[styles.spellHeaderText, { width: "10%", textAlign: "center" }]}>
-                          DC
-                        </Text>
+                        <Text style={[styles.spellHeaderText, { width: "40%" }]}>NAME</Text>
+                        <Text style={[styles.spellHeaderText, { width: "20%" }]}>SCHOOL</Text>
+                        <Text style={[styles.spellHeaderText, { width: "30%" }]}>SAVE</Text>
+                        <Text style={[styles.spellHeaderText, { width: "10%", textAlign: "center" }]}>DC</Text>
                       </View>
 
                       {/* Spell rows */}
@@ -1292,18 +1253,22 @@ const DetailedCharacterSheet = ({
                               <Text style={styles.spellName}>
                                 {spell.name}
                                 {spell.tags?.map((tag) => (
-                                  <Text key={tag} style={{ fontSize: FONT_SIZE.xs, fontWeight: "normal", color: tag.includes("Domain") ? "#9c27b0" : "#1976d2" }}> [{tag}]</Text>
+                                  <Text
+                                    key={tag}
+                                    style={{
+                                      fontSize: FONT_SIZE.xs,
+                                      fontWeight: "normal",
+                                      color: tag.includes("Domain") ? "#9c27b0" : "#1976d2",
+                                    }}
+                                  >
+                                    {" "}
+                                    [{tag}]
+                                  </Text>
                                 ))}
                               </Text>
-                              <Text style={styles.spellSchool}>
-                                {spell.school}
-                              </Text>
-                              <Text style={styles.spellSave}>
-                                {spell.save}
-                              </Text>
-                              <Text style={styles.spellDc}>
-                                {spell.dc ?? "—"}
-                              </Text>
+                              <Text style={styles.spellSchool}>{spell.school}</Text>
+                              <Text style={styles.spellSave}>{spell.save}</Text>
+                              <Text style={styles.spellDc}>{spell.dc ?? "—"}</Text>
                             </View>
                             {(detailProps.length > 0 || spell.description) && (
                               <View style={styles.spellDetails}>
@@ -1314,18 +1279,13 @@ const DetailedCharacterSheet = ({
                                         {i > 0 ? " • " : ""}
                                         <Text style={{ fontWeight: "bold", color: "#333" }}>
                                           {SPELL_PROPERTY_ABBR[key]?.short ?? formatPropertyType(key)}
-                                        </Text>
-                                        {" "}
+                                        </Text>{" "}
                                         {value}
                                       </Text>
                                     ))}
                                   </Text>
                                 )}
-                                {spell.description && (
-                                  <Text style={styles.spellDescription}>
-                                    {spell.description}
-                                  </Text>
-                                )}
+                                {spell.description && <Text style={styles.spellDescription}>{spell.description}</Text>}
                               </View>
                             )}
                           </View>
@@ -1341,45 +1301,66 @@ const DetailedCharacterSheet = ({
       })()}
 
       {/* Inventory Page */}
-      {!isBonded && <Page size="A4" style={styles.page}>
-        {/* Header with character name for the fourth page */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>{identityData.physiology.name}</Text>
+      {!isBonded && (
+        <Page size="A4" style={styles.page}>
+          {/* Header with character name for the fourth page */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.title}>{identityData.physiology.name}</Text>
+            </View>
           </View>
-        </View>
 
-        {/* Inventory Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Inventory</Text>
+          {/* Inventory Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Inventory</Text>
 
-          {(() => {
-            const flatItems = inventory.getFlatInventory();
+            {(() => {
+              const flatItems = inventory.getFlatInventory();
 
-            return flatItems.length > 0
-              ? (
+              return flatItems.length > 0 ? (
                 <View style={styles.inventoryTable}>
                   <View style={styles.inventoryTableHeader}>
                     <Text style={[styles.inventoryHeaderText, { width: "26%", paddingHorizontal: 4 }]}>ITEM</Text>
-                    <Text style={[styles.inventoryHeaderText, { width: "6%", paddingHorizontal: 2, textAlign: "center" }]}>QTY</Text>
+                    <Text
+                      style={[styles.inventoryHeaderText, { width: "6%", paddingHorizontal: 2, textAlign: "center" }]}
+                    >
+                      QTY
+                    </Text>
                     <Text style={[styles.inventoryHeaderText, { width: "12%", paddingHorizontal: 2 }]}>SLOT</Text>
-                    <Text style={[styles.inventoryHeaderText, { width: "8%", paddingHorizontal: 2, textAlign: "right" }]}>WT</Text>
-                    <Text style={[styles.inventoryHeaderText, { width: "8%", paddingHorizontal: 2, textAlign: "right" }]}>VALUE</Text>
-                    <Text style={[styles.inventoryHeaderText, { width: "10%", paddingHorizontal: 2, textAlign: "center" }]}>CHARGES</Text>
-                    <Text style={[styles.inventoryHeaderText, { width: "30%", paddingHorizontal: 4 }]}>DESCRIPTION</Text>
+                    <Text
+                      style={[styles.inventoryHeaderText, { width: "8%", paddingHorizontal: 2, textAlign: "right" }]}
+                    >
+                      WT
+                    </Text>
+                    <Text
+                      style={[styles.inventoryHeaderText, { width: "8%", paddingHorizontal: 2, textAlign: "right" }]}
+                    >
+                      VALUE
+                    </Text>
+                    <Text
+                      style={[styles.inventoryHeaderText, { width: "10%", paddingHorizontal: 2, textAlign: "center" }]}
+                    >
+                      CHARGES
+                    </Text>
+                    <Text style={[styles.inventoryHeaderText, { width: "30%", paddingHorizontal: 4 }]}>
+                      DESCRIPTION
+                    </Text>
                   </View>
 
                   {flatItems.map((entry, i) => (
-                    <View key={i} style={[styles.inventoryTableRow, !entry.equipped ? { backgroundColor: "#fafafa" } : {}]}>
+                    <View
+                      key={i}
+                      style={[styles.inventoryTableRow, !entry.equipped ? { backgroundColor: "#fafafa" } : {}]}
+                    >
                       <View style={{ width: "26%", paddingHorizontal: 4 }}>
                         <Text style={{ fontSize: FONT_SIZE.base, fontWeight: entry.equipped ? "bold" : "normal" }}>
                           {entry.item.name}
                         </Text>
-                        {!entry.equipped && (
-                          <Text style={{ fontSize: FONT_SIZE.xs, color: "#888" }}>unequipped</Text>
-                        )}
+                        {!entry.equipped && <Text style={{ fontSize: FONT_SIZE.xs, color: "#888" }}>unequipped</Text>}
                       </View>
-                      <Text style={{ fontSize: FONT_SIZE.base, width: "6%", paddingHorizontal: 2, textAlign: "center" }}>
+                      <Text
+                        style={{ fontSize: FONT_SIZE.base, width: "6%", paddingHorizontal: 2, textAlign: "center" }}
+                      >
                         {entry.quantity}
                       </Text>
                       <Text style={{ fontSize: FONT_SIZE.base, width: "12%", paddingHorizontal: 2 }}>
@@ -1391,7 +1372,9 @@ const DetailedCharacterSheet = ({
                       <Text style={{ fontSize: FONT_SIZE.base, width: "8%", paddingHorizontal: 2, textAlign: "right" }}>
                         {entry.item.costGp ? `${parseFloat(entry.item.costGp)} gp` : "—"}
                       </Text>
-                      <Text style={{ fontSize: FONT_SIZE.base, width: "10%", paddingHorizontal: 2, textAlign: "center" }}>
+                      <Text
+                        style={{ fontSize: FONT_SIZE.base, width: "10%", paddingHorizontal: 2, textAlign: "center" }}
+                      >
                         {entry.totalCharges != null ? `${entry.remainingCharges ?? 0}/${entry.totalCharges}` : "—"}
                       </Text>
                       <Text style={{ fontSize: FONT_SIZE.sm, width: "30%", paddingHorizontal: 4, color: "#555" }}>
@@ -1404,1134 +1387,1142 @@ const DetailedCharacterSheet = ({
                     <Text style={[styles.inventoryFooterText, { width: "44%", paddingHorizontal: 4 }]}>
                       Carried Weight: {combatData.encumbrance.carriedweight} lbs
                     </Text>
-                    <Text style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}>
+                    <Text
+                      style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}
+                    >
                       Light: {combatData.encumbrance.lightload}
                     </Text>
-                    <Text style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}>
+                    <Text
+                      style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}
+                    >
                       Medium: {combatData.encumbrance.mediumload}
                     </Text>
-                    <Text style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}>
+                    <Text
+                      style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, fontWeight: "normal" }]}
+                    >
                       Heavy: {combatData.encumbrance.heavyload}
                     </Text>
                     {combatData.encumbrance.load !== "light" && (
-                      <Text style={[styles.inventoryFooterText, { width: "14%", paddingHorizontal: 2, color: combatData.encumbrance.load === "overloaded" ? "#d32f2f" : combatData.encumbrance.load === "heavy" ? "#ed6c02" : "#0288d1" }]}>
+                      <Text
+                        style={[
+                          styles.inventoryFooterText,
+                          {
+                            width: "14%",
+                            paddingHorizontal: 2,
+                            color:
+                              combatData.encumbrance.load === "overloaded"
+                                ? "#d32f2f"
+                                : combatData.encumbrance.load === "heavy"
+                                  ? "#ed6c02"
+                                  : "#0288d1",
+                          },
+                        ]}
+                      >
                         {combatData.encumbrance.load.charAt(0).toUpperCase() + combatData.encumbrance.load.slice(1)}
                       </Text>
                     )}
                   </View>
                 </View>
-              )
-              : <Text style={styles.emptyMessage}>No items in inventory</Text>;
-          })()}
-        </View>
-
-      </Page>}
+              ) : (
+                <Text style={styles.emptyMessage}>No items in inventory</Text>
+              );
+            })()}
+          </View>
+        </Page>
+      )}
 
       {/* Fifth Page - Diagnostics (dev only) */}
-      {process.env.NODE_ENV !== "production" && <Page size="A4" style={styles.page}>
-        {/* Header with character name for the fifth page */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>{identityData.physiology.name}</Text>
+      {process.env.NODE_ENV !== "production" && (
+        <Page size="A4" style={styles.page}>
+          {/* Header with character name for the fifth page */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.title}>{identityData.physiology.name}</Text>
+            </View>
+            <View style={styles.secondHeaderRight}>
+              <Text style={styles.headerLabel}>System Data</Text>
+            </View>
           </View>
-          <View style={styles.secondHeaderRight}>
-            <Text style={styles.headerLabel}>
-              System Data
-            </Text>
-          </View>
-        </View>
 
-        {/* Requirements System Status */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Requirements System Status</Text>
+          {/* Requirements System Status */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Requirements System Status</Text>
 
-          {(() => {
-            const requirementsData = requirements.getRequirements();
-            const invalidRequirements = requirementsData.invalidRequirements;
-            const unmetRequirementGroups = requirementsData.unmetRequirementGroups;
-            const fulfilledRequirementGroups = requirementsData.fulfilledRequirementGroups;
+            {(() => {
+              const requirementsData = requirements.getRequirements();
+              const invalidRequirements = requirementsData.invalidRequirements;
+              const unmetRequirementGroups = requirementsData.unmetRequirementGroups;
+              const fulfilledRequirementGroups = requirementsData.fulfilledRequirementGroups;
 
-            return (
-              <View>
-                {/* Status Summary */}
-                <View
-                  style={{
-                    marginBottom: 10,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#333" }}>
-                    Total Requirement Groups:{" "}
-                    {fulfilledRequirementGroups.length + unmetRequirementGroups.length}
-                  </Text>
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#008800" }}>
-                    Fulfilled: {fulfilledRequirementGroups.length}
-                  </Text>
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#cc0000" }}>
-                    Unmet: {unmetRequirementGroups.length}
-                  </Text>
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#cc9900" }}>
-                    Invalid: {invalidRequirements.length}
-                  </Text>
-                </View>
-
-                {/* Unmet Requirements Table */}
-                {unmetRequirementGroups.length > 0 && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: FONT_SIZE.lg,
-                        fontWeight: "bold",
-                        marginBottom: 5,
-                      }}
-                    >
-                      Unmet Requirements
+              return (
+                <View>
+                  {/* Status Summary */}
+                  <View
+                    style={{
+                      marginBottom: 10,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#333" }}>
+                      Total Requirement Groups: {fulfilledRequirementGroups.length + unmetRequirementGroups.length}
                     </Text>
-                    <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                      {/* Header Row */}
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          backgroundColor: "#eee",
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#ccc",
-                          paddingVertical: 4,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          LEVEL
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "35%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          TARGET
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          OPERATOR
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          VALUE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "20%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          CHAINING OP
-                        </Text>
-                      </View>
-
-                      {/* Unmet Requirements Data */}
-                      {unmetRequirementGroups.slice(0, 15).flatMap((group, groupIndex) =>
-                        group.map((requirement, reqIndex) => (
-                          <View
-                            key={`${groupIndex}-${reqIndex}`}
-                            style={{
-                              flexDirection: "row",
-                              borderBottomWidth: 0.5,
-                              borderBottomColor: "#eee",
-                              paddingVertical: 3,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {requirement.level}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "35%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {requirement.target || "—"}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {requirement.operator || "—"}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {requirement.value || "—"}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "20%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {requirement.chainingOperator || "—"}
-                            </Text>
-                          </View>
-                        ))
-                      )}
-
-                      {unmetRequirementGroups.flatMap((group) => group).length > 15 && (
-                        <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                          <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                            ... and {unmetRequirementGroups.flatMap((group) =>
-                              group
-                            ).length - 15} more unmet requirements
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#008800" }}>
+                      Fulfilled: {fulfilledRequirementGroups.length}
+                    </Text>
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc0000" }}>
+                      Unmet: {unmetRequirementGroups.length}
+                    </Text>
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc9900" }}>
+                      Invalid: {invalidRequirements.length}
+                    </Text>
                   </View>
-                )}
 
-                {/* Fulfilled Requirements Table */}
-                {fulfilledRequirementGroups.length > 0 && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: FONT_SIZE.lg,
-                        fontWeight: "bold",
-                        marginBottom: 5,
-                      }}
-                    >
-                      Fulfilled Requirements
-                    </Text>
-                    <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                      {/* Header Row */}
-                      <View
+                  {/* Unmet Requirements Table */}
+                  {unmetRequirementGroups.length > 0 && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text
                         style={{
-                          flexDirection: "row",
-                          backgroundColor: "#eee",
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#ccc",
-                          paddingVertical: 4,
+                          fontSize: FONT_SIZE.lg,
+                          fontWeight: "bold",
+                          marginBottom: 5,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          LEVEL
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "35%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          TARGET
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          OPERATOR
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          VALUE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "20%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          CHAINING OP
-                        </Text>
-                      </View>
-
-                      {/* Fulfilled Requirements Data */}
-                      {fulfilledRequirementGroups.slice(0, 15).flatMap((group, groupIndex) =>
-                        group.map((requirement, reqIndex) => (
-                          <View
-                            key={`fulfilled-${groupIndex}-${reqIndex}`}
-                            style={{
-                              flexDirection: "row",
-                              borderBottomWidth: 0.5,
-                              borderBottomColor: "#eee",
-                              paddingVertical: 3,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {requirement.level}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "35%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {requirement.target || "—"}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {requirement.operator || "—"}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {requirement.value || "—"}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "20%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {requirement.chainingOperator || "—"}
-                            </Text>
-                          </View>
-                        ))
-                      )}
-
-                      {fulfilledRequirementGroups.flatMap((group) => group).length > 15 && (
-                        <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                          <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                            ... and {fulfilledRequirementGroups.flatMap((group) =>
-                              group
-                            ).length - 15} more fulfilled requirements
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                )}
-
-                {/* Invalid Requirements Table */}
-                {invalidRequirements.length > 0 && (
-                  <View>
-                    <Text
-                      style={{
-                        fontSize: FONT_SIZE.lg,
-                        fontWeight: "bold",
-                        marginBottom: 5,
-                      }}
-                    >
-                      Invalid Requirements
-                    </Text>
-                    <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                      {/* Header Row */}
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          backgroundColor: "#eee",
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#ccc",
-                          paddingVertical: 4,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "20%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          LEVEL
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "35%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          TARGET
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "45%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          WARNING MESSAGE
-                        </Text>
-                      </View>
-
-                      {/* Invalid Requirements Data */}
-                      {invalidRequirements.map((
-                        invalidItem: { warning: string; requirement: Requirement },
-                        index: number,
-                      ) => (
+                        Unmet Requirements
+                      </Text>
+                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+                        {/* Header Row */}
                         <View
-                          key={index}
                           style={{
                             flexDirection: "row",
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: "#eee",
-                            paddingVertical: 3,
+                            backgroundColor: "#eee",
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#ccc",
+                            paddingVertical: 4,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
-                              width: "20%",
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "15%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {invalidItem.requirement.level}
+                            LEVEL
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "35%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {invalidItem.requirement.target || "—"}
+                            TARGET
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "15%",
+                              paddingHorizontal: 4,
+                              textAlign: "center",
+                            }}
+                          >
+                            OPERATOR
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "15%",
+                              paddingHorizontal: 4,
+                              textAlign: "center",
+                            }}
+                          >
+                            VALUE
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "20%",
+                              paddingHorizontal: 4,
+                              textAlign: "center",
+                            }}
+                          >
+                            CHAINING OP
+                          </Text>
+                        </View>
+
+                        {/* Unmet Requirements Data */}
+                        {unmetRequirementGroups.slice(0, 15).flatMap((group, groupIndex) =>
+                          group.map((requirement, reqIndex) => (
+                            <View
+                              key={`${groupIndex}-${reqIndex}`}
+                              style={{
+                                flexDirection: "row",
+                                borderBottomWidth: 0.5,
+                                borderBottomColor: "#eee",
+                                paddingVertical: 3,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "15%",
+                                  paddingHorizontal: 4,
+                                }}
+                              >
+                                {requirement.level}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "35%",
+                                  paddingHorizontal: 4,
+                                }}
+                              >
+                                {requirement.target || "—"}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "15%",
+                                  paddingHorizontal: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {requirement.operator || "—"}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "15%",
+                                  paddingHorizontal: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {requirement.value || "—"}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "20%",
+                                  paddingHorizontal: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {requirement.chainingOperator || "—"}
+                              </Text>
+                            </View>
+                          )),
+                        )}
+
+                        {unmetRequirementGroups.flatMap((group) => group).length > 15 && (
+                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+                              ... and {unmetRequirementGroups.flatMap((group) => group).length - 15} more unmet
+                              requirements
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Fulfilled Requirements Table */}
+                  {fulfilledRequirementGroups.length > 0 && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text
+                        style={{
+                          fontSize: FONT_SIZE.lg,
+                          fontWeight: "bold",
+                          marginBottom: 5,
+                        }}
+                      >
+                        Fulfilled Requirements
+                      </Text>
+                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+                        {/* Header Row */}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            backgroundColor: "#eee",
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#ccc",
+                            paddingVertical: 4,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "15%",
+                              paddingHorizontal: 4,
+                            }}
+                          >
+                            LEVEL
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "35%",
+                              paddingHorizontal: 4,
+                            }}
+                          >
+                            TARGET
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "15%",
+                              paddingHorizontal: 4,
+                              textAlign: "center",
+                            }}
+                          >
+                            OPERATOR
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "15%",
+                              paddingHorizontal: 4,
+                              textAlign: "center",
+                            }}
+                          >
+                            VALUE
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "20%",
+                              paddingHorizontal: 4,
+                              textAlign: "center",
+                            }}
+                          >
+                            CHAINING OP
+                          </Text>
+                        </View>
+
+                        {/* Fulfilled Requirements Data */}
+                        {fulfilledRequirementGroups.slice(0, 15).flatMap((group, groupIndex) =>
+                          group.map((requirement, reqIndex) => (
+                            <View
+                              key={`fulfilled-${groupIndex}-${reqIndex}`}
+                              style={{
+                                flexDirection: "row",
+                                borderBottomWidth: 0.5,
+                                borderBottomColor: "#eee",
+                                paddingVertical: 3,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "15%",
+                                  paddingHorizontal: 4,
+                                }}
+                              >
+                                {requirement.level}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "35%",
+                                  paddingHorizontal: 4,
+                                }}
+                              >
+                                {requirement.target || "—"}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "15%",
+                                  paddingHorizontal: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {requirement.operator || "—"}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "15%",
+                                  paddingHorizontal: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {requirement.value || "—"}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "20%",
+                                  paddingHorizontal: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {requirement.chainingOperator || "—"}
+                              </Text>
+                            </View>
+                          )),
+                        )}
+
+                        {fulfilledRequirementGroups.flatMap((group) => group).length > 15 && (
+                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+                              ... and {fulfilledRequirementGroups.flatMap((group) => group).length - 15} more fulfilled
+                              requirements
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Invalid Requirements Table */}
+                  {invalidRequirements.length > 0 && (
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: FONT_SIZE.lg,
+                          fontWeight: "bold",
+                          marginBottom: 5,
+                        }}
+                      >
+                        Invalid Requirements
+                      </Text>
+                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+                        {/* Header Row */}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            backgroundColor: "#eee",
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#ccc",
+                            paddingVertical: 4,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "20%",
+                              paddingHorizontal: 4,
+                            }}
+                          >
+                            LEVEL
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
+                              width: "35%",
+                              paddingHorizontal: 4,
+                            }}
+                          >
+                            TARGET
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "45%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {invalidItem.warning}
+                            WARNING MESSAGE
                           </Text>
                         </View>
-                      ))}
+
+                        {/* Invalid Requirements Data */}
+                        {invalidRequirements.map(
+                          (invalidItem: { warning: string; requirement: Requirement }, index: number) => (
+                            <View
+                              key={index}
+                              style={{
+                                flexDirection: "row",
+                                borderBottomWidth: 0.5,
+                                borderBottomColor: "#eee",
+                                paddingVertical: 3,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "20%",
+                                  paddingHorizontal: 4,
+                                }}
+                              >
+                                {invalidItem.requirement.level}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "35%",
+                                  paddingHorizontal: 4,
+                                }}
+                              >
+                                {invalidItem.requirement.target || "—"}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: FONT_SIZE.base,
+                                  width: "45%",
+                                  paddingHorizontal: 4,
+                                }}
+                              >
+                                {invalidItem.warning}
+                              </Text>
+                            </View>
+                          ),
+                        )}
+                      </View>
                     </View>
-                  </View>
-                )}
+                  )}
 
-                {unmetRequirementGroups.length === 0 && fulfilledRequirementGroups.length === 0 &&
-                  invalidRequirements.length === 0 && (
-                  <Text style={styles.emptyMessage}>No requirements found</Text>
-                )}
-              </View>
-            );
-          })()}
-        </View>
-
-        {/* Modifier System Status */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Modifier System Status</Text>
-
-          {(() => {
-            const modifiers = detailedCharacter.getDetailedCharacterModifiers();
-            const skippedModifiers = modifiers.getModifiers().skippedModifiers;
-            const appliedModifiers = modifiers.getModifiers().appliedModifiers;
-            const unappliedModifiers = modifiers.getModifiers().unappliedModifiers;
-            const inactiveModifiers = modifiers.getModifiers().inactiveModifiers;
-            const allModifiers = modifiers.getModifiers().modifiers;
-
-            return (
-              <View>
-                {/* Status Summary */}
-                <View
-                  style={{
-                    marginBottom: 10,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#333" }}>
-                    Total Modifiers: {allModifiers.length}
-                  </Text>
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#008800" }}>
-                    Applied: {appliedModifiers.length}
-                  </Text>
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#cc0000" }}>
-                    Unapplied: {unappliedModifiers.length}
-                  </Text>
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#666699" }}>
-                    Inactive: {inactiveModifiers.length}
-                  </Text>
-                  <Text style={{ fontSize: FONT_SIZE.md, color: "#cc9900" }}>
-                    Skipped: {skippedModifiers.length}
-                  </Text>
+                  {unmetRequirementGroups.length === 0 &&
+                    fulfilledRequirementGroups.length === 0 &&
+                    invalidRequirements.length === 0 && <Text style={styles.emptyMessage}>No requirements found</Text>}
                 </View>
+              );
+            })()}
+          </View>
 
-                {/* Applied Modifiers Table */}
-                {appliedModifiers.length > 0 && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: FONT_SIZE.lg,
-                        fontWeight: "bold",
-                        marginBottom: 5,
-                      }}
-                    >
-                      Applied Modifiers
+          {/* Modifier System Status */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Modifier System Status</Text>
+
+            {(() => {
+              const modifiers = detailedCharacter.getDetailedCharacterModifiers();
+              const skippedModifiers = modifiers.getModifiers().skippedModifiers;
+              const appliedModifiers = modifiers.getModifiers().appliedModifiers;
+              const unappliedModifiers = modifiers.getModifiers().unappliedModifiers;
+              const inactiveModifiers = modifiers.getModifiers().inactiveModifiers;
+              const allModifiers = modifiers.getModifiers().modifiers;
+
+              return (
+                <View>
+                  {/* Status Summary */}
+                  <View
+                    style={{
+                      marginBottom: 10,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#333" }}>
+                      Total Modifiers: {allModifiers.length}
                     </Text>
-                    <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                      {/* Header Row */}
-                      <View
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#008800" }}>Applied: {appliedModifiers.length}</Text>
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc0000" }}>
+                      Unapplied: {unappliedModifiers.length}
+                    </Text>
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#666699" }}>
+                      Inactive: {inactiveModifiers.length}
+                    </Text>
+                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc9900" }}>Skipped: {skippedModifiers.length}</Text>
+                  </View>
+
+                  {/* Applied Modifiers Table */}
+                  {appliedModifiers.length > 0 && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text
                         style={{
-                          flexDirection: "row",
-                          backgroundColor: "#eee",
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#ccc",
-                          paddingVertical: 4,
+                          fontSize: FONT_SIZE.lg,
+                          fontWeight: "bold",
+                          marginBottom: 5,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "20%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          SOURCE TYPE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "35%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          TARGET
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          OPERATOR
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          VALUE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          TYPE
-                        </Text>
-                      </View>
-
-                      {/* Applied Modifiers Data */}
-                      {appliedModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
+                        Applied Modifiers
+                      </Text>
+                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+                        {/* Header Row */}
                         <View
-                          key={index}
                           style={{
                             flexDirection: "row",
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: "#eee",
-                            paddingVertical: 3,
+                            backgroundColor: "#eee",
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#ccc",
+                            paddingVertical: 4,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "20%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {modifier.sourceType}
+                            SOURCE TYPE
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "35%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {modifier.target}
+                            TARGET
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.operator}
+                            OPERATOR
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.value}
+                            VALUE
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.valueType}
+                            TYPE
                           </Text>
                         </View>
-                      ))}
 
-                      {appliedModifiers.length > 10 && (
-                        <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                          <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                            ... and {appliedModifiers.length - 10} more applied modifiers
-                          </Text>
-                        </View>
-                      )}
+                        {/* Applied Modifiers Data */}
+                        {appliedModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
+                          <View
+                            key={index}
+                            style={{
+                              flexDirection: "row",
+                              borderBottomWidth: 0.5,
+                              borderBottomColor: "#eee",
+                              paddingVertical: 3,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "20%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {modifier.sourceType}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "35%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {modifier.target}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.operator}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.value}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.valueType}
+                            </Text>
+                          </View>
+                        ))}
+
+                        {appliedModifiers.length > 10 && (
+                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+                              ... and {appliedModifiers.length - 10} more applied modifiers
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                )}
+                  )}
 
-                {/* Unapplied Modifiers Table */}
-                {unappliedModifiers.length > 0 && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: FONT_SIZE.lg,
-                        fontWeight: "bold",
-                        marginBottom: 5,
-                      }}
-                    >
-                      Unapplied Modifiers (Requirements Not Met)
-                    </Text>
-                    <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                      {/* Header Row */}
-                      <View
+                  {/* Unapplied Modifiers Table */}
+                  {unappliedModifiers.length > 0 && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text
                         style={{
-                          flexDirection: "row",
-                          backgroundColor: "#eee",
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#ccc",
-                          paddingVertical: 4,
+                          fontSize: FONT_SIZE.lg,
+                          fontWeight: "bold",
+                          marginBottom: 5,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "20%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          SOURCE TYPE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "35%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          TARGET
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          OPERATOR
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          VALUE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          TYPE
-                        </Text>
-                      </View>
-
-                      {/* Unapplied Modifiers Data */}
-                      {unappliedModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
+                        Unapplied Modifiers (Requirements Not Met)
+                      </Text>
+                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+                        {/* Header Row */}
                         <View
-                          key={index}
                           style={{
                             flexDirection: "row",
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: "#eee",
-                            paddingVertical: 3,
+                            backgroundColor: "#eee",
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#ccc",
+                            paddingVertical: 4,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "20%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {modifier.sourceType}
+                            SOURCE TYPE
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "35%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {modifier.target}
+                            TARGET
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.operator}
+                            OPERATOR
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.value}
+                            VALUE
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.valueType}
+                            TYPE
                           </Text>
                         </View>
-                      ))}
 
-                      {unappliedModifiers.length > 10 && (
-                        <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                          <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                            ... and {unappliedModifiers.length - 10} more unapplied modifiers
-                          </Text>
-                        </View>
-                      )}
+                        {/* Unapplied Modifiers Data */}
+                        {unappliedModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
+                          <View
+                            key={index}
+                            style={{
+                              flexDirection: "row",
+                              borderBottomWidth: 0.5,
+                              borderBottomColor: "#eee",
+                              paddingVertical: 3,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "20%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {modifier.sourceType}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "35%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {modifier.target}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.operator}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.value}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.valueType}
+                            </Text>
+                          </View>
+                        ))}
+
+                        {unappliedModifiers.length > 10 && (
+                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+                              ... and {unappliedModifiers.length - 10} more unapplied modifiers
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                )}
+                  )}
 
-                {/* Inactive Modifiers Table */}
-                {inactiveModifiers.length > 0 && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: FONT_SIZE.lg,
-                        fontWeight: "bold",
-                        marginBottom: 5,
-                      }}
-                    >
-                      Inactive Modifiers (Target Not Equipped)
-                    </Text>
-                    <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                      {/* Header Row */}
-                      <View
+                  {/* Inactive Modifiers Table */}
+                  {inactiveModifiers.length > 0 && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text
                         style={{
-                          flexDirection: "row",
-                          backgroundColor: "#eee",
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#ccc",
-                          paddingVertical: 4,
+                          fontSize: FONT_SIZE.lg,
+                          fontWeight: "bold",
+                          marginBottom: 5,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "20%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          SOURCE TYPE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "35%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          TARGET
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          OPERATOR
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          VALUE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "15%",
-                            paddingHorizontal: 4,
-                            textAlign: "center",
-                          }}
-                        >
-                          TYPE
-                        </Text>
-                      </View>
-
-                      {/* Inactive Modifiers Data */}
-                      {inactiveModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
+                        Inactive Modifiers (Target Not Equipped)
+                      </Text>
+                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+                        {/* Header Row */}
                         <View
-                          key={index}
                           style={{
                             flexDirection: "row",
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: "#eee",
-                            paddingVertical: 3,
+                            backgroundColor: "#eee",
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#ccc",
+                            paddingVertical: 4,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "20%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {modifier.sourceType}
+                            SOURCE TYPE
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "35%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {modifier.target}
+                            TARGET
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.operator}
+                            OPERATOR
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.value}
+                            VALUE
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "15%",
                               paddingHorizontal: 4,
                               textAlign: "center",
                             }}
                           >
-                            {modifier.valueType}
+                            TYPE
                           </Text>
                         </View>
-                      ))}
 
-                      {inactiveModifiers.length > 10 && (
-                        <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                          <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                            ... and {inactiveModifiers.length - 10} more inactive modifiers
-                          </Text>
-                        </View>
-                      )}
+                        {/* Inactive Modifiers Data */}
+                        {inactiveModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
+                          <View
+                            key={index}
+                            style={{
+                              flexDirection: "row",
+                              borderBottomWidth: 0.5,
+                              borderBottomColor: "#eee",
+                              paddingVertical: 3,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "20%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {modifier.sourceType}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "35%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {modifier.target}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.operator}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.value}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "15%",
+                                paddingHorizontal: 4,
+                                textAlign: "center",
+                              }}
+                            >
+                              {modifier.valueType}
+                            </Text>
+                          </View>
+                        ))}
+
+                        {inactiveModifiers.length > 10 && (
+                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+                              ... and {inactiveModifiers.length - 10} more inactive modifiers
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                )}
+                  )}
 
-                {/* Skipped Modifiers Table */}
-                {skippedModifiers.length > 0 && (
-                  <View>
-                    <Text
-                      style={{
-                        fontSize: FONT_SIZE.lg,
-                        fontWeight: "bold",
-                        marginBottom: 5,
-                      }}
-                    >
-                      Skipped Modifiers
-                    </Text>
-                    <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                      {/* Header Row */}
-                      <View
+                  {/* Skipped Modifiers Table */}
+                  {skippedModifiers.length > 0 && (
+                    <View>
+                      <Text
                         style={{
-                          flexDirection: "row",
-                          backgroundColor: "#eee",
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#ccc",
-                          paddingVertical: 4,
+                          fontSize: FONT_SIZE.lg,
+                          fontWeight: "bold",
+                          marginBottom: 5,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "25%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          SOURCE TYPE
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "35%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          TARGET
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: FONT_SIZE.sm,
-                            fontWeight: "bold",
-                            color: "#333",
-                            width: "40%",
-                            paddingHorizontal: 4,
-                          }}
-                        >
-                          WARNING MESSAGE
-                        </Text>
-                      </View>
-
-                      {/* Skipped Modifiers Data */}
-                      {skippedModifiers.map((
-                        skippedItem: { warning: string; modifier: Modifier },
-                        index: number,
-                      ) => (
+                        Skipped Modifiers
+                      </Text>
+                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+                        {/* Header Row */}
                         <View
-                          key={index}
                           style={{
                             flexDirection: "row",
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: "#eee",
-                            paddingVertical: 3,
+                            backgroundColor: "#eee",
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#ccc",
+                            paddingVertical: 4,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "25%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {skippedItem.modifier.sourceType}
+                            SOURCE TYPE
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "35%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {skippedItem.modifier.target}
+                            TARGET
                           </Text>
                           <Text
                             style={{
-                              fontSize: FONT_SIZE.base,
+                              fontSize: FONT_SIZE.sm,
+                              fontWeight: "bold",
+                              color: "#333",
                               width: "40%",
                               paddingHorizontal: 4,
                             }}
                           >
-                            {skippedItem.warning}
+                            WARNING MESSAGE
                           </Text>
                         </View>
-                      ))}
+
+                        {/* Skipped Modifiers Data */}
+                        {skippedModifiers.map((skippedItem: { warning: string; modifier: Modifier }, index: number) => (
+                          <View
+                            key={index}
+                            style={{
+                              flexDirection: "row",
+                              borderBottomWidth: 0.5,
+                              borderBottomColor: "#eee",
+                              paddingVertical: 3,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "25%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {skippedItem.modifier.sourceType}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "35%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {skippedItem.modifier.target}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: FONT_SIZE.base,
+                                width: "40%",
+                                paddingHorizontal: 4,
+                              }}
+                            >
+                              {skippedItem.warning}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
-                  </View>
-                )}
+                  )}
 
-                {skippedModifiers.length === 0 && appliedModifiers.length === 0 &&
-                  unappliedModifiers.length === 0 && inactiveModifiers.length === 0 && (
-                  <Text style={styles.emptyMessage}>No modifiers found</Text>
-                )}
-              </View>
-            );
-          })()}
-        </View>
-
-      </Page>}
+                  {skippedModifiers.length === 0 &&
+                    appliedModifiers.length === 0 &&
+                    unappliedModifiers.length === 0 &&
+                    inactiveModifiers.length === 0 && <Text style={styles.emptyMessage}>No modifiers found</Text>}
+                </View>
+              );
+            })()}
+          </View>
+        </Page>
+      )}
     </Document>
   );
 };

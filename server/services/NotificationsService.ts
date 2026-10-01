@@ -1,7 +1,7 @@
 import { db, withTransaction } from "@/server/database/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Notifications } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const ACTIONABLE_TYPES = ["createCampaignInvite", "inviteContributor", "inviteCharacterContributor"];
@@ -16,11 +16,7 @@ const NotificationsMethods = {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await Notifications.findMany(
-      db,
-      { recipientId: session.userId, ...where },
-      pagination,
-    );
+    return await Notifications.findMany(db, { recipientId: session.userId, ...where }, pagination);
   },
 
   async getUnreadSummary(session: Session, limit = 10) {

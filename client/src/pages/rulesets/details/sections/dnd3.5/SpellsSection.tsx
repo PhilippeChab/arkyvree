@@ -1,21 +1,26 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { AptitudeAutocomplete, type Aptitude } from "@/client/src/components/customization/index.ts";
-import { AptitudeChipsCell, DescriptionCell, RulesetSectionTable, SectionActions, SpellLevelFilter } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Bolt as PowersIcon } from "@mui/icons-material";
-import {
-  Box,
-} from "@mui/material";
+import { Box } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useRulesetSaves, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
+import { useRulesetSaves, useSearchParam } from "@/client/src/hooks/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type SpellFormData, SpellFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import {
+  AptitudeChipsCell,
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionActions,
+  SpellLevelFilter,
+} from "@/client/src/pages/rulesets/components/index.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { SpellFormFields, type SpellFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -36,12 +41,10 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const parsed = Number(levelParam);
   const selectedLevel: number | "" = levelParam === "" || Number.isNaN(parsed) ? "" : parsed;
 
-  const {
-    createDialogOpen,
-    setCreateDialogOpen,
-    createForm,
-    createDialogProps,
-  } = useRulesetSection<Spell, SpellFormData>({
+  const { createDialogOpen, setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<
+    Spell,
+    SpellFormData
+  >({
     rulesetId: ruleset.id,
     sectionName: "powers",
     label: "Spell",
@@ -77,9 +80,12 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     openEntity(`powers/${spell.id}/customization`);
   };
 
-  const handleRowMouseEnter = useCallback((spell: Spell) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "powers", spell.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (spell: Spell) => {
+      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "powers", spell.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (spell: Spell, columnKey: string) => {
     switch (columnKey) {
@@ -144,12 +150,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Spell"
-        maxWidth="md"
-        fixedHeight
-      >
+      <CreateDialog {...createDialogProps} title="Create New Spell" maxWidth="md" fixedHeight>
         <SpellFormFields form={createForm} rulesetId={ruleset.id} saves={createSaves} />
       </CreateDialog>
     </SectionContent>

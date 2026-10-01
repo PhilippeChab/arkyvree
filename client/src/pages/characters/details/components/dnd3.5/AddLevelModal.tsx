@@ -1,11 +1,13 @@
+import { keepPreviousData } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { keepPreviousData } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
+
 import { addStepContent, addStepLabels, type BaseRules, useAddLevelWizard } from "./levelUp/index.ts";
+import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
 // ── Entry point ──────────────────────────────────────────────────────
 
@@ -16,12 +18,7 @@ interface AddLevelModalProps {
   baseRules: BaseRules;
 }
 
-export function AddLevelModal({
-  open,
-  onClose,
-  characterId,
-  baseRules,
-}: AddLevelModalProps) {
+export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLevelModalProps) {
   const wizard = useAddLevelWizard({
     open,
     onClose,
@@ -60,22 +57,29 @@ export function AddLevelModal({
     isLoading: isLoadingKlasses,
     onScroll: handleKlassListScroll,
   } = useListboxQuery({
-    queryKey: queryKeys.characters.levelUp.availableClasses(characterId, debouncedKlassSearch, wizard.allKlassLevelIds, allAbilityIds, allPendingFeatPicks, pendingSkillAllocations),
+    queryKey: queryKeys.characters.levelUp.availableClasses(
+      characterId,
+      debouncedKlassSearch,
+      wizard.allKlassLevelIds,
+      allAbilityIds,
+      allPendingFeatPicks,
+      pendingSkillAllocations,
+    ),
     queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        "available-classes"
-      ]["$get"]({
-        param: { characterId },
-        query: {
-          limit: "10",
-          page: pageParam.toString(),
-          search: debouncedKlassSearch || undefined,
-          pendingLevelKlassLevelIds: wizard.allKlassLevelIds || undefined,
-          pendingLevelAbilityIds: allAbilityIds || undefined,
-          pendingFeatPicks: allPendingFeatPicks || undefined,
-          pendingSkillAllocations: pendingSkillAllocations || undefined,
-        },
-      }));
+      return parseResponse(
+        rpc.api.characters.levels[":characterId"]["available-classes"]["$get"]({
+          param: { characterId },
+          query: {
+            limit: "10",
+            page: pageParam.toString(),
+            search: debouncedKlassSearch || undefined,
+            pendingLevelKlassLevelIds: wizard.allKlassLevelIds || undefined,
+            pendingLevelAbilityIds: allAbilityIds || undefined,
+            pendingFeatPicks: allPendingFeatPicks || undefined,
+            pendingSkillAllocations: pendingSkillAllocations || undefined,
+          },
+        }),
+      );
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,

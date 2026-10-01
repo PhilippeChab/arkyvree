@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { NotFoundError } from "@/server/errors/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { NIL_UUID } from "@/tests/helpers.ts";

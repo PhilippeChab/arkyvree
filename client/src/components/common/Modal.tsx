@@ -14,11 +14,7 @@ export type ModalProps = DialogProps;
  * The single place in the codebase that imports raw MUI `Dialog` —
  * the lint config bans the direct import everywhere else.
  */
-export function Modal({
-  fullWidth = true,
-  maxWidth = "sm",
-  ...rest
-}: ModalProps) {
+export function Modal({ fullWidth = true, maxWidth = "sm", ...rest }: ModalProps) {
   const isMobile = useIsMobile();
   return <Dialog {...rest} fullWidth={fullWidth} maxWidth={maxWidth} fullScreen={isMobile} />;
 }

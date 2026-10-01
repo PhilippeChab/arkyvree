@@ -4,7 +4,8 @@ import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
 export const CORE_RULESET = {
   name: DND35_RULESET_NAME,
-  description: "The 3.5 System Reference Document is a role-playing game system that allows players to create and control characters in a fantasy world.",
+  description:
+    "The 3.5 System Reference Document is a role-playing game system that allows players to create and control characters in a fantasy world.",
 };
 
 export const ABILITIES = [
@@ -17,6 +18,7 @@ export const ABILITIES = [
 ];
 
 /** The saves, each with the ability it adds. */
+// oxfmt-ignore
 export const SAVES = [
   { name: "Fortitude", description: "Represents physical toughness and resistance to physical threats like poison, disease, and fatigue", ability: "Constitution" },
   { name: "Reflex", description: "Represents agility and the ability to dodge area attacks like fireballs and dragon breath", ability: "Dexterity" },
@@ -24,6 +26,7 @@ export const SAVES = [
 ];
 
 /** The skills, each with its key ability and whether armor weighs on it and it can be used untrained. */
+// oxfmt-ignore
 export const SKILLS = [
   { name: "Appraise", description: "Determine the value of an item.", ability: "Intelligence", impactedByWeight: false, usableWithoutTraining: true },
   { name: "Balance", description: "Keep your balance while walking on a narrow or treacherous surface.", ability: "Dexterity", impactedByWeight: true, usableWithoutTraining: true },
@@ -74,6 +77,7 @@ export const SKILLS = [
   { name: "Use Rope", description: "Tie knots, bind prisoners, and handle rope in many different situations.", ability: "Dexterity", impactedByWeight: false, usableWithoutTraining: true },
 ];
 
+// oxfmt-ignore
 export const LANGUAGES = [
   { name: "Abyssal", type: "Exotic", description: "The language of demons, full of curses and threats." },
   { name: "Aquan", type: "Exotic", description: "The language of the sea" },

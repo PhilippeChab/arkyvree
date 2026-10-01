@@ -1,10 +1,8 @@
-import type { ClassesHooks } from "@/server/rulesets/hooks/ClassesHooks.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import type { ClassesHooks } from "@/server/rulesets/hooks/ClassesHooks.ts";
 
 export class Dnd35ClassesHooks implements ClassesHooks {
-  readClassProperties(
-    properties: { id: string; type: string; value: string }[],
-  ) {
+  readClassProperties(properties: { id: string; type: string; value: string }[]) {
     const bonusSpellProperty = properties.find((p) => p.type === KLASS_BONUS_SPELL_ABILITY_ID);
     const casterTypeProperty = properties.find((p) => p.type === KLASS_CASTER_TYPE);
 

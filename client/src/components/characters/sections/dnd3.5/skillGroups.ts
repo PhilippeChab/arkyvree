@@ -20,7 +20,7 @@ export function groupSkills<S extends { name: string }>(skills: readonly S[]): S
   let lastPrefix: string | null = null;
   for (const skill of skills) {
     const prefix = getSkillGroup(skill.name);
-    const count = prefix === null ? 0 : prefixCounts.get(prefix) ?? 0;
+    const count = prefix === null ? 0 : (prefixCounts.get(prefix) ?? 0);
     const group = count >= 2 ? prefix : null;
     if (group !== null && group !== lastPrefix) {
       rows.push({ type: "group", prefix: group, count });

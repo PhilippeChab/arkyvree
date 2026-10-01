@@ -1,4 +1,4 @@
-import { Document, Page, Text, pdf } from "@react-pdf/renderer";
+import { Document, Page, pdf, Text } from "@react-pdf/renderer";
 
 const document = (
   <Document>

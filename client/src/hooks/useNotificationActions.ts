@@ -1,4 +1,3 @@
-import { isRecord } from "@/shared/isRecord.ts";
 import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +6,8 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { saveBlob } from "@/client/src/lib/download.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError, rpc } from "@/client/src/services/rpc.ts";
+import { isRecord } from "@/shared/isRecord.ts";
+
 import { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 
 type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200>["items"][number];
@@ -57,7 +58,9 @@ const isInviteType = (type: string): type is InviteType => type in INVITES;
 /** A notification's payload: its string fields (ids, names); anything else is left out. */
 const notificationData = (n: NotificationLike): NotificationData =>
   isRecord(n.data)
-    ? Object.fromEntries(Object.entries(n.data).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
+    ? Object.fromEntries(
+        Object.entries(n.data).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+      )
     : {};
 
 /**
@@ -71,8 +74,7 @@ export function useNotificationActions() {
   const navigate = useNavigate();
   const openTarget = useOpenActivityTarget();
 
-  const invalidateNotifications = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+  const invalidateNotifications = () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
   // Best-effort: failing to mark read must not block what the user clicked.
   // Refetch either way to show the current state.
@@ -180,9 +182,12 @@ export function useNotificationActions() {
   const accept = (n: NotificationLike, onAccepted: (path: string) => void = navigate) => {
     if (!isInviteType(n.type)) return;
     const type = n.type;
-    acceptMutation.mutate({ notification: n, type }, {
-      onSuccess: () => onAccepted(INVITES[type].path(notificationData(n))),
-    });
+    acceptMutation.mutate(
+      { notification: n, type },
+      {
+        onSuccess: () => onAccepted(INVITES[type].path(notificationData(n))),
+      },
+    );
   };
 
   const reject = (n: NotificationLike) => {

@@ -1,8 +1,4 @@
-import {
-  FilterList as FilterIcon,
-  Search as SearchIcon,
-  Sort as SortIcon,
-} from "@mui/icons-material";
+import { FilterList as FilterIcon, Search as SearchIcon, Sort as SortIcon } from "@mui/icons-material";
 import {
   Box,
   IconButton,
@@ -15,9 +11,10 @@ import {
   Toolbar,
   Tooltip,
 } from "@mui/material";
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+
+import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 
 export interface FilterOption<T extends string = string> {
   value: T | undefined;
@@ -30,10 +27,7 @@ export interface SortOption<T extends string = string> {
   label: string;
 }
 
-interface SearchBarProps<
-  TFilter extends string = string,
-  TSort extends string = string,
-> {
+interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
@@ -51,10 +45,7 @@ interface SearchBarProps<
   actions?: React.ReactNode;
 }
 
-export function SearchBar<
-  TFilter extends string = string,
-  TSort extends string = string,
->({
+export function SearchBar<TFilter extends string = string, TSort extends string = string>({
   searchValue,
   onSearchChange,
   searchPlaceholder = "Search...",
@@ -90,7 +81,11 @@ export function SearchBar<
   // a sub-route, such as the entity clicked), where the router's location hasn't.
   const { pathname } = useLocation();
   useEffect(() => {
-    if (debouncedInputValue === inputValue && debouncedInputValue !== searchValue && window.location.pathname === pathname) {
+    if (
+      debouncedInputValue === inputValue &&
+      debouncedInputValue !== searchValue &&
+      window.location.pathname === pathname
+    ) {
       onSearchChange(debouncedInputValue);
     }
   }, [debouncedInputValue, inputValue, searchValue, onSearchChange, pathname]);
@@ -125,15 +120,9 @@ export function SearchBar<
   };
 
   return (
-    <Paper
-      elevation={0}
-      sx={{ mb: 3, border: "1px solid", borderColor: "divider", borderRadius: 2 }}
-    >
+    <Paper elevation={0} sx={{ mb: 3, border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
       <Toolbar sx={{ px: 2, py: 1 }}>
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{ alignItems: "center", flexGrow: 1, flexWrap: "wrap", gap: 1 }}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexGrow: 1, flexWrap: "wrap", gap: 1 }}>
           <TextField
             size="small"
             placeholder={searchPlaceholder}
@@ -164,11 +153,7 @@ export function SearchBar<
                   <FilterIcon />
                 </IconButton>
               </Tooltip>
-              <Menu
-                anchorEl={filterAnchorEl}
-                open={Boolean(filterAnchorEl)}
-                onClose={handleFilterClose}
-              >
+              <Menu anchorEl={filterAnchorEl} open={Boolean(filterAnchorEl)} onClose={handleFilterClose}>
                 {filterOptions.map((option) => (
                   <MenuItem
                     key={option.value ?? "all"}
@@ -189,11 +174,7 @@ export function SearchBar<
                   <SortIcon />
                 </IconButton>
               </Tooltip>
-              <Menu
-                anchorEl={sortAnchorEl}
-                open={Boolean(sortAnchorEl)}
-                onClose={handleSortClose}
-              >
+              <Menu anchorEl={sortAnchorEl} open={Boolean(sortAnchorEl)} onClose={handleSortClose}>
                 {sortOptions.map((option) => (
                   <MenuItem
                     key={`${option.field}-${option.direction}`}

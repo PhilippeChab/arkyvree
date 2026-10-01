@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "178",
   weight: "72",
-  description: "Born with fire in his veins, Vex discovered his sorcerous bloodline during a childhood accident that left his family barn in ashes. He now channels his innate power with reckless confidence.",
+  description:
+    "Born with fire in his veins, Vex discovered his sorcerous bloodline during a childhood accident that left his family barn in ashes. He now channels his innate power with reckless confidence.",
   abilities: { Strength: 8, Dexterity: 14, Constitution: 14, Intelligence: 10, Wisdom: 10, Charisma: 18 },
   languages: ["Common"],
   classes: [{ klass: "Sorcerer", hp: [4, 3, 4] }],

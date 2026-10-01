@@ -1,26 +1,17 @@
-import { EASING, fadeInUpSx, prefersReducedMotion, pulse } from "@/client/src/lib/animations.ts";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { Box, Container, Paper, Skeleton, Stack, Typography } from "@mui/material";
 
-function Section({
-  index,
-  children,
-}: {
-  index: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <Paper sx={{ p: { xs: 2, sm: 3 }, ...fadeInUpSx(index) }}>{children}</Paper>
-  );
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { EASING, fadeInUpSx, prefersReducedMotion, pulse } from "@/client/src/lib/animations.ts";
+
+function Section({ index, children }: { index: number; children: React.ReactNode }) {
+  return <Paper sx={{ p: { xs: 2, sm: 3 }, ...fadeInUpSx(index) }}>{children}</Paper>;
 }
 
 export function CharacterDetailSkeleton() {
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
       {/* Themed header with pulsing icon */}
-      <Box
-        sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 4, mb: 2 }}
-      >
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 4, mb: 2 }}>
         <DiceSpinner size="large" />
         <Typography
           variant="body2"
@@ -45,18 +36,9 @@ export function CharacterDetailSkeleton() {
         {/* Identity section */}
         <Section index={1}>
           <Skeleton variant="text" width="30%" height={32} sx={{ mb: 2 }} />
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ flexWrap: "wrap", gap: 2 }}
-          >
+          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", gap: 2 }}>
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton
-                key={i}
-                variant="rounded"
-                width={160}
-                height={40}
-              />
+              <Skeleton key={i} variant="rounded" width={160} height={40} />
             ))}
           </Stack>
         </Section>
@@ -66,11 +48,7 @@ export function CharacterDetailSkeleton() {
           <Skeleton variant="text" width="20%" height={28} sx={{ mb: 2 }} />
           <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", gap: 2 }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton
-                key={i}
-                variant="rounded"
-                sx={{ width: { xs: 70, sm: 90 }, height: { xs: 70, sm: 90 } }}
-              />
+              <Skeleton key={i} variant="rounded" sx={{ width: { xs: 70, sm: 90 }, height: { xs: 70, sm: 90 } }} />
             ))}
           </Stack>
         </Section>

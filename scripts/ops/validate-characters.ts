@@ -1,3 +1,6 @@
+import { eq, isNull, sql } from "drizzle-orm";
+
+import { charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
 /**
  * Validates all active characters:
  *  1. Reference integrity — every FK points to an existing, non-deleted entity
@@ -7,10 +10,8 @@
  * Usage: DATABASE_URL=... bun run scripts/ops/validate-characters.ts
  */
 import { db } from "@/server/database/index.ts";
-import { charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
-import { eq, isNull, sql } from "drizzle-orm";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Helpers
@@ -33,10 +34,7 @@ function uuidArr(ids: string[]): string {
 // Load characters
 // ──────────────────────────────────────────────────────────────
 
-const characters = await db
-  .select()
-  .from(charactersInCharacter)
-  .where(isNull(charactersInCharacter.deletedAt));
+const characters = await db.select().from(charactersInCharacter).where(isNull(charactersInCharacter.deletedAt));
 
 if (characters.length === 0) {
   console.log("No characters to validate.");
@@ -332,13 +330,17 @@ if (abilityPositionIssues.length > 0) {
   if (misaligned.length > 0) {
     console.error(`✗ ability increase on non-bump level: ${misaligned.length} row(s)`);
     for (const row of misaligned) {
-      console.error(`    ${row.charName}: char L${row.position} (${row.klassName} L${row.klassLevel}) has ability "${row.abilityName ?? "<unknown>"}"`);
+      console.error(
+        `    ${row.charName}: char L${row.position} (${row.klassName} L${row.klassLevel}) has ability "${row.abilityName ?? "<unknown>"}"`,
+      );
     }
   }
   if (missing.length > 0) {
     console.error(`✗ ability increase missing on bump level: ${missing.length} row(s)`);
     for (const row of missing) {
-      console.error(`    ${row.charName}: char L${row.position} (${row.klassName} L${row.klassLevel}) has no ability_id`);
+      console.error(
+        `    ${row.charName}: char L${row.position} (${row.klassName} L${row.klassLevel}) has no ability_id`,
+      );
     }
   }
 } else {

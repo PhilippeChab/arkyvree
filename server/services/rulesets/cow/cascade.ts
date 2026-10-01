@@ -8,8 +8,8 @@ import {
   CharacterLanguages,
   CharacterLevelFeats,
   CharacterLevelPowers,
-  CharacterLevelSkills,
   CharacterLevels,
+  CharacterLevelSkills,
   Characters,
   Modifiers,
   Properties,
@@ -21,26 +21,16 @@ import type { EntityType } from "@/server/services/rulesets/hashing.ts";
 // Cascade helpers for modifier deletion
 // ──────────────────────────────────────────────────────────────
 
-export async function deleteModifiersWithCascade(
-  tx: Db,
-  where: { ids: string[] } | { sourceIds: string[]; sourceType: string },
-) {
-  const deleted = await Modifiers.deleteMany(tx, where);
-  if (deleted.length > 0) {
-    const modifierIds = deleted.map((m) => m.id);
-    await deleteRequirementsWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
-    await Activities.deleteByTargets(tx, { targetIds: modifierIds, targetTable: getTableName(modifiersInCustomization) });
-  }
-  return deleted;
-}
-
 export async function deletePropertiesWithCascade(
   tx: Db,
   where: { ids: string[] } | { entityIds: string[]; entityType: string },
 ) {
   const deleted = await Properties.deleteMany(tx, where);
   if (deleted.length > 0) {
-    await Activities.deleteByTargets(tx, { targetIds: deleted.map((p) => p.id), targetTable: getTableName(propertiesInCustomization) });
+    await Activities.deleteByTargets(tx, {
+      targetIds: deleted.map((p) => p.id),
+      targetTable: getTableName(propertiesInCustomization),
+    });
   }
   return deleted;
 }
@@ -51,7 +41,26 @@ export async function deleteRequirementsWithCascade(
 ) {
   const deleted = await Requirements.deleteMany(tx, where);
   if (deleted.length > 0) {
-    await Activities.deleteByTargets(tx, { targetIds: deleted.map((r) => r.id), targetTable: getTableName(requirementsInCustomization) });
+    await Activities.deleteByTargets(tx, {
+      targetIds: deleted.map((r) => r.id),
+      targetTable: getTableName(requirementsInCustomization),
+    });
+  }
+  return deleted;
+}
+
+export async function deleteModifiersWithCascade(
+  tx: Db,
+  where: { ids: string[] } | { sourceIds: string[]; sourceType: string },
+) {
+  const deleted = await Modifiers.deleteMany(tx, where);
+  if (deleted.length > 0) {
+    const modifierIds = deleted.map((m) => m.id);
+    await deleteRequirementsWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
+    await Activities.deleteByTargets(tx, {
+      targetIds: modifierIds,
+      targetTable: getTableName(modifiersInCustomization),
+    });
   }
   return deleted;
 }
@@ -78,14 +87,22 @@ export async function entityHasCharacterPicks(
   rulesetId: string,
 ): Promise<boolean> {
   switch (entityType) {
-    case "feats":     return CharacterLevelFeats.existsByFeatId(tx, { featId: entityId, rulesetId });
-    case "powers":    return CharacterLevelPowers.existsByPowerId(tx, { powerId: entityId, rulesetId });
-    case "skills":    return CharacterLevelSkills.existsBySkillId(tx, { skillId: entityId, rulesetId });
-    case "races":     return Characters.existsByRaceId(tx, { raceId: entityId, rulesetId });
-    case "items":     return CharacterInventory.existsByItemId(tx, { itemId: entityId, rulesetId });
-    case "languages": return CharacterLanguages.existsByLanguageId(tx, { languageId: entityId, rulesetId });
-    case "klasses":   return CharacterLevels.existsByKlassId(tx, { klassId: entityId, rulesetId });
-    case "klass_levels": return CharacterLevels.existsByKlassLevelId(tx, { klassLevelId: entityId, rulesetId });
+    case "feats":
+      return CharacterLevelFeats.existsByFeatId(tx, { featId: entityId, rulesetId });
+    case "powers":
+      return CharacterLevelPowers.existsByPowerId(tx, { powerId: entityId, rulesetId });
+    case "skills":
+      return CharacterLevelSkills.existsBySkillId(tx, { skillId: entityId, rulesetId });
+    case "races":
+      return Characters.existsByRaceId(tx, { raceId: entityId, rulesetId });
+    case "items":
+      return CharacterInventory.existsByItemId(tx, { itemId: entityId, rulesetId });
+    case "languages":
+      return CharacterLanguages.existsByLanguageId(tx, { languageId: entityId, rulesetId });
+    case "klasses":
+      return CharacterLevels.existsByKlassId(tx, { klassId: entityId, rulesetId });
+    case "klass_levels":
+      return CharacterLevels.existsByKlassLevelId(tx, { klassLevelId: entityId, rulesetId });
     case "aptitudes": {
       const [byFeat, byPower] = await Promise.all([
         CharacterLevelFeats.existsByAptitudeId(tx, { aptitudeId: entityId, rulesetId }),

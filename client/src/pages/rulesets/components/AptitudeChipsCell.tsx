@@ -9,7 +9,11 @@ interface AptitudeLink {
 /** A section table's aptitudes column: a chip per aptitude, or a dash. */
 export function AptitudeChipsCell({ links }: { links: AptitudeLink[] | null | undefined }) {
   if (!links?.length) {
-    return <Typography variant="body2" sx={{ color: "text.secondary" }}>—</Typography>;
+    return (
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        —
+      </Typography>
+    );
   }
   return (
     <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>

@@ -1,13 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-
-import { featsAptitudesInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class FeatsAptitudesRepository
-  extends BaseRepository<typeof featsAptitudesInRules, FeatAptitudeInstance> {
+import { featsAptitudesInRules } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRules, FeatAptitudeInstance> {
   constructor() {
     super(featsAptitudesInRules);
   }
@@ -23,9 +21,7 @@ class FeatsAptitudesRepository
 
   // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { featId: string; aptitudeId?: string }) {
-    const conditions = [
-      eq(this.table.featId, where.featId),
-    ];
+    const conditions = [eq(this.table.featId, where.featId)];
 
     if (where.aptitudeId) {
       conditions.push(eq(this.table.aptitudeId, where.aptitudeId));
@@ -39,10 +35,7 @@ class FeatsAptitudesRepository
 
   // Exception to soft-delete: disposable configuration data — intentional removal
   async deleteByAptitudeId(db: Db, where: { aptitudeId: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.aptitudeId, where.aptitudeId))
-      .returning();
+    return await db.delete(this.table).where(eq(this.table.aptitudeId, where.aptitudeId)).returning();
   }
 
   async findDistinctAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
@@ -50,10 +43,7 @@ class FeatsAptitudesRepository
     const rows = await db
       .selectDistinct({ aptitudeId: this.table.aptitudeId })
       .from(this.table)
-      .where(and(
-        inArray(this.table.aptitudeId, where.aptitudeIds),
-        isNull(this.table.deletedAt),
-      ));
+      .where(and(inArray(this.table.aptitudeId, where.aptitudeIds), isNull(this.table.deletedAt)));
     return rows.map((r) => r.aptitudeId);
   }
 

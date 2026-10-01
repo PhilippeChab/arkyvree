@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { toJson } from "@/server/errors/index.ts";
 import { application } from "@/server/routers/application.ts";
 import { api, expectOk, SEED_SESSION_ID } from "@/tests/api.ts";
@@ -75,13 +76,20 @@ for (const method of ["POST", "PUT"] as const) {
 
 test("modifier duplication rejects an invalid operator before a database mutation", async () => {
   const id = "00000000-0000-4000-8000-000000000001";
-  const response = await application.request(`/api/rulesets/${id}/customization/feats/${id}/modifiers/${id}/duplicate`, {
-    method: "POST", headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify({ target: "abilities.strength.misc", value: "2", operator: "invalid" }),
-  });
+  const response = await application.request(
+    `/api/rulesets/${id}/customization/feats/${id}/modifiers/${id}/duplicate`,
+    {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "abilities.strength.misc", value: "2", operator: "invalid" }),
+    },
+  );
   expect(response.status).toBe(400);
 });
 
 test("an unexpected error answers 500 with the standard envelope, keeping its message to the logs", () => {
-  expect(toJson(new Error("connection string with a secret"))).toEqual([{ error: "InternalError", cause: "internal", message: "Internal Server Error" }, 500]);
+  expect(toJson(new Error("connection string with a secret"))).toEqual([
+    { error: "InternalError", cause: "internal", message: "Internal Server Error" },
+    500,
+  ]);
 });

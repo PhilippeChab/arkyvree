@@ -1,5 +1,7 @@
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { ReactNode } from "react";
+
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+
 import { ClassesSection, ItemsSection, SkillsSection, SpellsSection } from "./sections/dnd3.5/index.ts";
 
 type BaseRules = RulesetDetail["baseRules"];

@@ -1,32 +1,12 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
-import type { CampaignDetail } from "@/client/src/lib/queries.ts";
-import { BlankState, ConfirmDialog, SearchBar, DiceSpinner, LoadMoreButton, SectionContent, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
-import {
-  AddPlayerDialog,
-  type CampaignPlayer,
-  EditPlayerDialog,
-  getPlayerSlot,
-  playerDisplay,
-  type PlayerFormData,
-  type PlayerState,
-  RemovePlayerDialog,
-  toPlayerPayload,
-} from "@/client/src/pages/campaigns/components/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import {
   Add as AddIcon,
-  Close as RevokeIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  ExitToApp as LeaveIcon,
   AdminPanelSettings as GMIcon,
+  ExitToApp as LeaveIcon,
   HourglassEmpty as PendingIcon,
   Person as PlayerIcon,
+  Close as RevokeIcon,
   PersonOff as UnassignedIcon,
 } from "@mui/icons-material";
 import {
@@ -45,17 +25,43 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
-import { useState, type ReactNode } from "react";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+
+import {
+  BlankState,
+  ConfirmDialog,
+  DiceSpinner,
+  LoadMoreButton,
+  NoMatchesState,
+  ROW_ACTIONS_HOVER_SX,
+  ROW_ACTIONS_SX,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSearchParam } from "@/client/src/hooks/index.ts";
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { CampaignDetail } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import {
+  AddPlayerDialog,
+  type CampaignPlayer,
+  EditPlayerDialog,
+  getPlayerSlot,
+  playerDisplay,
+  type PlayerFormData,
+  type PlayerState,
+  RemovePlayerDialog,
+  toPlayerPayload,
+} from "@/client/src/pages/campaigns/components/index.ts";
 import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
+import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface PlayersSectionProps {
   campaign: CampaignDetail;
@@ -115,10 +121,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const addMutation = useMutation({
     mutationFn: async (data: PlayerFormData) => {
-      return parseResponse(rpc.api.campaigns[":id"].players.$post({
-        param: { id: campaign.id },
-        json: toPlayerPayload(data),
-      }));
+      return parseResponse(
+        rpc.api.campaigns[":id"].players.$post({
+          param: { id: campaign.id },
+          json: toPlayerPayload(data),
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Player added successfully");
@@ -135,10 +143,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const editMutation = useMutation({
     mutationFn: async ({ playerId, data }: { playerId: string; data: PlayerFormData }) => {
-      return parseResponse(rpc.api.campaigns[":id"].players[":playerId"].$put({
-        param: { id: campaign.id, playerId },
-        json: toPlayerPayload(data),
-      }));
+      return parseResponse(
+        rpc.api.campaigns[":id"].players[":playerId"].$put({
+          param: { id: campaign.id, playerId },
+          json: toPlayerPayload(data),
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Player updated successfully");
@@ -154,9 +164,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const removeMutation = useMutation({
     mutationFn: async (playerId: string) => {
-      return parseResponse(rpc.api.campaigns[":id"].players[":playerId"].$delete({
-        param: { id: campaign.id, playerId },
-      }));
+      return parseResponse(
+        rpc.api.campaigns[":id"].players[":playerId"].$delete({
+          param: { id: campaign.id, playerId },
+        }),
+      );
     },
     onSuccess: () => {
       const removedSelf = selectedPlayer?.userId === currentUserId;
@@ -179,9 +191,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const revokeInviteMutation = useMutation({
     mutationFn: async (inviteId: string) => {
-      return parseResponse(rpc.api.campaigns.invites[":inviteId"].revoke.$post({
-        param: { inviteId },
-      }));
+      return parseResponse(
+        rpc.api.campaigns.invites[":inviteId"].revoke.$post({
+          param: { inviteId },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Invitation revoked successfully");
@@ -241,28 +255,22 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
-        Players
-      </Typography>
+      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Players</Typography>
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search players..."
-        actions={canManagePlayers && !campaign.deletedAt && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            size="medium"
-            onClick={handleAddPlayer}
-          >
-            Add Player
-          </Button>
-        )}
+        actions={
+          canManagePlayers &&
+          !campaign.deletedAt && (
+            <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={handleAddPlayer}>
+              Add Player
+            </Button>
+          )
+        }
       />
       {/* Loading State */}
-      {playersLoading && (
-        <DiceSpinner sx={{ py: 4 }} />
-      )}
+      {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
       {/* Error State */}
       {playersError && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -272,9 +280,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       {/* Table */}
       {!playersLoading && !playersError && (
         <>
-          {players.length > 0
-            ? (
-              <>
+          {players.length > 0 ? (
+            <>
               <TableContainer
                 component={Paper}
                 sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
@@ -282,21 +289,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                 <Table sx={{ width: "100%" }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: "action.hover" }}>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>
-                        Player
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>
-                        Role
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>
-                        Status
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>
-                        Joined
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "10%" }}>
-                        Actions
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Player</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Role</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Joined</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "10%" }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -307,8 +304,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                       const isCurrentUser = player.userId === currentUserId;
                       const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
                       const canEditPlayer =
-                        (!campaign.deletedAt && (canManagePlayers && (!isGameMaster || slot.state !== "assigned") || isCurrentUser))
-                        || canRevokeInvite;
+                        (!campaign.deletedAt &&
+                          ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
+                        canRevokeInvite;
 
                       return (
                         <TableRow
@@ -331,9 +329,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              icon={isGameMaster
-                                ? <GMIcon sx={{ fontSize: 14 }} />
-                                : <PlayerIcon sx={{ fontSize: 14 }} />}
+                              icon={
+                                isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />
+                              }
                               label={player.role}
                               size="small"
                               color={isGameMaster ? "warning" : "primary"}
@@ -342,40 +340,36 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                             />
                           </TableCell>
                           <TableCell>
-                            {displayInfo.statusChip
-                              ? (
-                                <Chip
-                                  icon={displayInfo.statusChip.icon}
-                                  label={displayInfo.statusChip.label}
-                                  size="small"
-                                  color={displayInfo.statusChip.color}
-                                  variant="outlined"
-                                  sx={{ fontWeight: 500 }}
-                                />
-                              )
-                              : (
-                                <Chip
-                                  icon={<PlayerIcon sx={{ fontSize: 14 }} />}
-                                  label="Active"
-                                  size="small"
-                                  color="success"
-                                  variant="outlined"
-                                  sx={{ fontWeight: 500 }}
-                                />
-                              )}
+                            {displayInfo.statusChip ? (
+                              <Chip
+                                icon={displayInfo.statusChip.icon}
+                                label={displayInfo.statusChip.label}
+                                size="small"
+                                color={displayInfo.statusChip.color}
+                                variant="outlined"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            ) : (
+                              <Chip
+                                icon={<PlayerIcon sx={{ fontSize: 14 }} />}
+                                label="Active"
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            )}
                           </TableCell>
                           <TableCell>
-                            {slot.state === "assigned"
-                              ? (
-                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                  {formatDate(player.createdAt)}
-                                </Typography>
-                              )
-                              : (
-                                <Typography variant="body2" sx={{ color: "text.disabled" }}>
-                                  —
-                                </Typography>
-                              )}
+                            {slot.state === "assigned" ? (
+                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                {formatDate(player.createdAt)}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" sx={{ color: "text.disabled" }}>
+                                —
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell>
                             {canEditPlayer && (
@@ -425,9 +419,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                                     }}
                                     sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
                                   >
-                                    {isCurrentUser
-                                      ? <LeaveIcon fontSize="small" />
-                                      : <DeleteIcon fontSize="small" />}
+                                    {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}
                                   </IconButton>
                                 </Tooltip>
                               </Box>
@@ -445,29 +437,23 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                 isFetchingNextPage={isFetchingNextPage}
                 onClick={() => fetchNextPage()}
               />
-              </>
-            )
-            : searchQuery ? (
-              <NoMatchesState search={searchQuery} />
-            ) : (
-              <BlankState
-                icon={PlayerIcon}
-                title="No players in this campaign"
-                description="Add players to start your adventure together"
-                action={
-                  canManagePlayers && !campaign.deletedAt ? (
-                    <Button
-                      variant="outlined"
-                      startIcon={<AddIcon />}
-                      size="large"
-                      onClick={handleAddPlayer}
-                    >
-                      Add Your First Player
-                    </Button>
-                  ) : undefined
-                }
-              />
-            )}
+            </>
+          ) : searchQuery ? (
+            <NoMatchesState search={searchQuery} />
+          ) : (
+            <BlankState
+              icon={PlayerIcon}
+              title="No players in this campaign"
+              description="Add players to start your adventure together"
+              action={
+                canManagePlayers && !campaign.deletedAt ? (
+                  <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
+                    Add Your First Player
+                  </Button>
+                ) : undefined
+              }
+            />
+          )}
         </>
       )}
       {/* Add Player Dialog */}

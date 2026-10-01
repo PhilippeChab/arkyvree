@@ -195,9 +195,7 @@ export function hashEntity(
       levelMap.set(level.id, level.level);
     }
 
-    hashInput.levels = klassRelationships.levels
-      .sort((a, b) => a.level - b.level)
-      .map((l) => ({ level: l.level }));
+    hashInput.levels = klassRelationships.levels.sort((a, b) => a.level - b.level).map((l) => ({ level: l.level }));
 
     // Strip FK IDs from relationship hashing — UUIDs differ across forks
     hashInput.levelSaves = klassRelationships.levelSaves

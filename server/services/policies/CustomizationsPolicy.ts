@@ -12,6 +12,7 @@ import {
   Races,
 } from "@/server/repositories/index.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+
 import BasePolicy from "./BasePolicy.ts";
 
 type CustomizationEntity = Modifier | Requirement | Property;
@@ -20,11 +21,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
   /** Resolve the source within the composed ruleset when a scope is supplied.
    * Never fall back to a global lookup for an entity outside that scope.
    */
-  static async sourceExists(
-    sourceId: string,
-    sourceType: string,
-    rulesetData?: CachedRulesetData,
-  ): Promise<string> {
+  static async sourceExists(sourceId: string, sourceType: string, rulesetData?: CachedRulesetData): Promise<string> {
     let name: string | undefined;
 
     switch (sourceType) {
@@ -61,9 +58,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
           : (await Klasses.findOne(db, { id: sourceId }))?.name;
         break;
       case "modifiers": {
-        const m = rulesetData
-          ? rulesetData.modifiersById.get(sourceId)
-          : await Modifiers.findOne(db, { id: sourceId });
+        const m = rulesetData ? rulesetData.modifiersById.get(sourceId) : await Modifiers.findOne(db, { id: sourceId });
         name = m ? `${m.target} ${m.operator} ${m.value}` : undefined;
         break;
       }
@@ -81,9 +76,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
 
   async canUpdate() {
     const recordId = "sourceId" in this.entity ? this.entity.sourceId : this.entity.entityId;
-    const recordType = "sourceType" in this.entity
-      ? this.entity.sourceType
-      : this.entity.entityType;
+    const recordType = "sourceType" in this.entity ? this.entity.sourceType : this.entity.entityType;
     await CustomizationsPolicy.sourceExists(recordId, recordType);
 
     return true;
@@ -91,9 +84,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
 
   async canDelete() {
     const recordId = "sourceId" in this.entity ? this.entity.sourceId : this.entity.entityId;
-    const recordType = "sourceType" in this.entity
-      ? this.entity.sourceType
-      : this.entity.entityType;
+    const recordType = "sourceType" in this.entity ? this.entity.sourceType : this.entity.entityType;
     await CustomizationsPolicy.sourceExists(recordId, recordType);
 
     return true;

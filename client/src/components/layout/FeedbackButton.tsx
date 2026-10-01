@@ -1,5 +1,6 @@
 import { Feedback } from "@mui/icons-material";
 import { IconButton, Tooltip } from "@mui/material";
+
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 export function FeedbackButton() {

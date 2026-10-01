@@ -1,6 +1,8 @@
 import { Card, type CardProps } from "@mui/material";
 import { type ReactNode } from "react";
+
 import { fadeInUpSx, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 
 interface StyledCardProps extends Omit<CardProps, "children"> {
@@ -22,8 +24,7 @@ export function StyledCard({
   sx,
   ...props
 }: StyledCardProps) {
-  const animationSx =
-    animationIndex != null ? fadeInUpSx(animationIndex, animationOffset) : undefined;
+  const animationSx = animationIndex != null ? fadeInUpSx(animationIndex, animationOffset) : undefined;
   return (
     <Card
       elevation={0}

@@ -1,8 +1,14 @@
-import { itemsInRules } from "@/drizzle/schema.ts";
 import { describe, expect, test } from "bun:test";
+
+import { itemsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Properties } from "@/server/repositories/index.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS, SPELL_SCHOOL, WEAPON_PROFICIENCY } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import {
+  KLASS_LEVEL_BAB,
+  KLASS_LEVEL_SKILL_POINTS,
+  SPELL_SCHOOL,
+  WEAPON_PROFICIENCY,
+} from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { PropertyTypesMethods } from "@/server/services/rulesets/customization/PropertyTypesService.ts";
 import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
@@ -16,12 +22,23 @@ const firstPage = { limit: 50, page: 1 };
 async function setup() {
   const { ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
-  const [sword, shield] = await insertRows(itemsInRules, [{ name: "Sword", rulesetId }, { name: "Shield", rulesetId }]);
+  const [sword, shield] = await insertRows(itemsInRules, [
+    { name: "Sword", rulesetId },
+    { name: "Shield", rulesetId },
+  ]);
   const [feat] = await Feats.create(db, { name: "Test Feat", rulesetId });
-  const itemProperty = (type: string, value: string, item = sword) => ({ entityId: item.id, entityType: "items", type, value });
+  const itemProperty = (type: string, value: string, item = sword) => ({
+    entityId: item.id,
+    entityType: "items",
+    type,
+    value,
+  });
   await Properties.createMany(db, [
-    itemProperty("custom_rarity", "rare"), itemProperty("custom_rarity", "common"), itemProperty("custom_rarity", "rare", shield),
-    itemProperty("custom_material", "steel"), itemProperty("custom_material", "Iron"),
+    itemProperty("custom_rarity", "rare"),
+    itemProperty("custom_rarity", "common"),
+    itemProperty("custom_rarity", "rare", shield),
+    itemProperty("custom_material", "steel"),
+    itemProperty("custom_material", "Iron"),
     itemProperty("custom_origin", "elven"),
     // A custom value of an engine type.
     itemProperty(WEAPON_PROFICIENCY, "Racial"),
@@ -56,7 +73,9 @@ describe("PropertyTypesService", () => {
       { value: WEAPON_PROFICIENCY, entityType: "items", usageCount: 1 },
     ];
     expect(await PropertyTypesMethods.getCustomPropertyTypes(rulesetId)).toMatchObject(custom);
-    expect(await PropertyTypesMethods.getCustomPropertyTypes(rulesetId, "feats")).toMatchObject([{ value: "custom_tier" }]);
+    expect(await PropertyTypesMethods.getCustomPropertyTypes(rulesetId, "feats")).toMatchObject([
+      { value: "custom_tier" },
+    ]);
 
     const all = await PropertyTypesMethods.getPropertyTypes(rulesetId, "items");
     const staticCount = (await PropertyTypesMethods.getStaticPropertyTypes(rulesetId, "items")).length;
@@ -65,7 +84,10 @@ describe("PropertyTypesService", () => {
 
   test("searches engine types by name or description and custom types by name, ignoring case", async () => {
     const { rulesetId } = await setup();
-    const search = async (query: string) => (await PropertyTypesMethods.searchPropertyTypes(rulesetId, query, "items")).map((t) => `${t.value}${t.isStatic ? "" : " (custom)"}`);
+    const search = async (query: string) =>
+      (await PropertyTypesMethods.searchPropertyTypes(rulesetId, query, "items")).map(
+        (t) => `${t.value}${t.isStatic ? "" : " (custom)"}`,
+      );
     expect(await search("CUSTOM_MAT")).toEqual(["custom_material (custom)"]);
     expect(await search("weapon_prof")).toEqual([WEAPON_PROFICIENCY, `${WEAPON_PROFICIENCY} (custom)`]);
     expect(await search("")).toHaveLength((await PropertyTypesMethods.getPropertyTypes(rulesetId, "items")).length);
@@ -75,20 +97,49 @@ describe("PropertyTypesService", () => {
     const { rulesetId } = await setup();
     const { items } = await PropertyTypesMethods.getCompletions(rulesetId, "custom", firstPage);
     expect(items).toEqual([
-      { label: "custom_rarity", value: "custom_rarity", detail: "Used 3 times in items", kind: "custom", entityType: "items" },
-      { label: "custom_material", value: "custom_material", detail: "Used 2 times in items", kind: "custom", entityType: "items" },
-      { label: "custom_origin", value: "custom_origin", detail: "Used 1 time in items", kind: "custom", entityType: "items" },
-      { label: "custom_tier", value: "custom_tier", detail: "Used 1 time in feats", kind: "custom", entityType: "feats" },
+      {
+        label: "custom_rarity",
+        value: "custom_rarity",
+        detail: "Used 3 times in items",
+        kind: "custom",
+        entityType: "items",
+      },
+      {
+        label: "custom_material",
+        value: "custom_material",
+        detail: "Used 2 times in items",
+        kind: "custom",
+        entityType: "items",
+      },
+      {
+        label: "custom_origin",
+        value: "custom_origin",
+        detail: "Used 1 time in items",
+        kind: "custom",
+        entityType: "items",
+      },
+      {
+        label: "custom_tier",
+        value: "custom_tier",
+        detail: "Used 1 time in feats",
+        kind: "custom",
+        entityType: "feats",
+      },
     ]);
 
     const pages = [1, 2].map((page) => PropertyTypesMethods.getCompletions(rulesetId, "custom", { limit: 3, page }));
-    expect(await Promise.all(pages)).toMatchObject([{ items: items.slice(0, 3), nextPage: 2 }, { items: items.slice(3), nextPage: undefined }]);
+    expect(await Promise.all(pages)).toMatchObject([
+      { items: items.slice(0, 3), nextPage: 2 },
+      { items: items.slice(3), nextPage: undefined },
+    ]);
   });
 
   test("completes a type's values: the engine's, then the ruleset's own once each, sorted", async () => {
     const { rulesetId } = await setup();
     const values = async (type: string, query: string) =>
-      (await PropertyTypesMethods.getValueCompletions(rulesetId, type, query, firstPage)).items.map((c) => `${c.value} (${c.kind})`);
+      (await PropertyTypesMethods.getValueCompletions(rulesetId, type, query, firstPage)).items.map(
+        (c) => `${c.value} (${c.kind})`,
+      );
 
     expect(await values("custom_rarity", "")).toEqual(["common (custom)", "rare (custom)"]);
     expect(await values("custom_material", "IRON")).toEqual(["Iron (custom)"]);

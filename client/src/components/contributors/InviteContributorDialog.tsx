@@ -35,10 +35,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
 
   return (
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={isLoading}>
-      <form
-        onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))}
-        noValidate
-      >
+      <form onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))} noValidate>
         <DialogTitle>Invite Contributor</DialogTitle>
         <DialogContent>
           <EmailField
@@ -47,14 +44,16 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
             label="Email address"
             autoFocus
           />
-          {roles && (
-            <SelectField control={form.control} name="role" label="Role" options={roles} margin="normal" />
-          )}
+          {roles && <SelectField control={form.control} name="role" label="Role" options={roles} margin="normal" />}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">Cancel</Button>
+          <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
+            Cancel
+          </Button>
           <Button type="submit" variant="contained" disabled={isLoading}>
-            <DiceSpinner size="small" loading={isLoading}>Invite</DiceSpinner>
+            <DiceSpinner size="small" loading={isLoading}>
+              Invite
+            </DiceSpinner>
           </Button>
         </DialogActions>
       </form>

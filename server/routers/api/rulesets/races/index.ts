@@ -1,11 +1,12 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import { sizeType } from "@/drizzle/schema.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { RacesService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { sizeType } from "@/drizzle/schema.ts";
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { RacesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -55,7 +56,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
         size: z.enum(sizeType.enumValues),
         baseSpeed: z.number(),
       }),
@@ -65,12 +69,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const racesService = RacesService.initialize();
-      const result = await racesService.call(
-        "createRulesetRace",
-        c.var.requestSession,
-        id,
-        body,
-      );
+      const result = await racesService.call("createRulesetRace", c.var.requestSession, id, body);
       return respond(c, result, 200);
     },
   )
@@ -81,7 +80,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
         size: z.enum(sizeType.enumValues),
         baseSpeed: z.number(),
         updatedAt: z.string().optional(),
@@ -92,13 +94,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const racesService = RacesService.initialize();
-      const result = await racesService.call(
-        "updateRulesetRace",
-        c.var.requestSession,
-        id,
-        raceId,
-        body,
-      );
+      const result = await racesService.call("updateRulesetRace", c.var.requestSession, id, raceId, body);
       return respond(c, result, 200);
     },
   )
@@ -109,12 +105,7 @@ export default new Hono<SessionContext>()
       const { id, raceId } = c.req.valid("param");
 
       const racesService = RacesService.initialize();
-      const result = await racesService.call(
-        "deleteRulesetRace",
-        c.var.requestSession,
-        id,
-        raceId,
-      );
+      const result = await racesService.call("deleteRulesetRace", c.var.requestSession, id, raceId);
       return respond(c, result, 200);
     },
   );

@@ -24,9 +24,10 @@ export function PageHeader({ title, subtitle, action, variant = "hero" }: PageHe
         mb: hero ? 4 : 3,
         borderRadius: hero ? 4 : 2,
         color: hero ? "common.white" : undefined,
-        background: (theme) => hero
-          ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-          : `linear-gradient(135deg, ${theme.palette.primary.main}15, ${theme.palette.primary.dark}15)`,
+        background: (theme) =>
+          hero
+            ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+            : `linear-gradient(135deg, ${theme.palette.primary.main}15, ${theme.palette.primary.dark}15)`,
       }}
     >
       <Stack
@@ -35,17 +36,16 @@ export function PageHeader({ title, subtitle, action, variant = "hero" }: PageHe
         sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" } }}
       >
         <Box>
-          <Typography
-            component="h1"
-            sx={{ typography: { xs: "h4", md: "h3" }, fontWeight: hero ? 800 : 700, mb: 1 }}
-          >
+          <Typography component="h1" sx={{ typography: { xs: "h4", md: "h3" }, fontWeight: hero ? 800 : 700, mb: 1 }}>
             {title}
           </Typography>
           {subtitle && (
             <Typography
-              sx={hero
-                ? { typography: "body1", opacity: 0.9 }
-                : { typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}
+              sx={
+                hero
+                  ? { typography: "body1", opacity: 0.9 }
+                  : { typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }
+              }
             >
               {subtitle}
             </Typography>

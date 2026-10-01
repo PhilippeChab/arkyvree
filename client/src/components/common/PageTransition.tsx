@@ -1,4 +1,5 @@
 import { Box, type BoxProps } from "@mui/material";
+
 import { DURATION, EASING, fadeIn, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 export function PageTransition({ children, sx, ...props }: BoxProps) {

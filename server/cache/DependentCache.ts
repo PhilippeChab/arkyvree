@@ -1,5 +1,6 @@
-import MemoryCache, { isCacheEnabled } from "./MemoryCache.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
+
+import MemoryCache, { isCacheEnabled } from "./MemoryCache.ts";
 
 interface Loaded<T> {
   data: T;
@@ -26,15 +27,18 @@ export default class DependentCache<T> {
     // A caller may have read before another request invalidated this entry.
     // Never promote its old repository promises back into a shared cache.
     // Keep deduplication within the fill, including concurrent reads it starts.
-    const promise: Promise<T> = Promise.resolve().then(() => runWithRequestCache(fetcher)).then(({ data, pinned }) => {
-      if (this.pending.get(key)?.promise === promise) {
-        this.cache.set(key, { data, dependencies });
-        if (pinned) this.cache.pin(key);
-      }
-      return data;
-    }).finally(() => {
-      if (this.pending.get(key)?.promise === promise) this.pending.delete(key);
-    });
+    const promise: Promise<T> = Promise.resolve()
+      .then(() => runWithRequestCache(fetcher))
+      .then(({ data, pinned }) => {
+        if (this.pending.get(key)?.promise === promise) {
+          this.cache.set(key, { data, dependencies });
+          if (pinned) this.cache.pin(key);
+        }
+        return data;
+      })
+      .finally(() => {
+        if (this.pending.get(key)?.promise === promise) this.pending.delete(key);
+      });
     this.pending.set(key, { promise, dependencies });
     return promise;
   }
@@ -42,7 +46,7 @@ export default class DependentCache<T> {
   invalidate(dependencyId: string): void {
     // MemoryCache is capped at 200 entries. No unbounded dependency registry,
     // no database lookup, and unrelated cached/in-flight reads stay reusable.
-    this.cache.invalidateWhere(entry => entry.dependencies.has(dependencyId));
+    this.cache.invalidateWhere((entry) => entry.dependencies.has(dependencyId));
     for (const [key, entry] of this.pending) {
       if (entry.dependencies.has(dependencyId)) this.pending.delete(key);
     }

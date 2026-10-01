@@ -1,12 +1,23 @@
 import { afterEach, expect, test } from "bun:test";
+
+import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
+import {
+  getOrBuildCowData,
+  getOrFetchRulesetData,
+  getOrFetchRulesetRawData,
+  getOrFetchTargetPathsAndLabels,
+  invalidateAll,
+  invalidateRuleset,
+} from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
-import { getOrBuildCowData, getOrFetchRulesetData, getOrFetchRulesetRawData, getOrFetchTargetPathsAndLabels, invalidateAll, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(() => { invalidateAll(); setCacheEnabled(true); });
+afterEach(() => {
+  invalidateAll();
+  setCacheEnabled(true);
+});
 
 test("extension COW invalidates the warm subscriber mapping", async () => {
   invalidateAll();
@@ -27,7 +38,7 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   expect(after.idResolveMap.get(source.id)).toBe(copy.id);
   const data = await getOrFetchRulesetData(host.id, after);
   expect(data.featsById.get(copy.id)?.description).toBe("Updated extension feat");
-  expect(data.feats.some(f => f.id === source.id)).toBe(false);
+  expect(data.feats.some((f) => f.id === source.id)).toBe(false);
 });
 
 test("worker cache mode reads changes between builds without web invalidation", async () => {
@@ -41,7 +52,6 @@ test("worker cache mode reads changes between builds without web invalidation", 
   const next = await getOrFetchRulesetData(fork.id, await getOrBuildCowData(fork));
   expect(next.featsById.get(feat.id)?.description).toBe("After");
 });
-
 
 test("disabled caches do not coalesce raw reads across worker jobs", async () => {
   setCacheEnabled(false);
@@ -71,7 +81,10 @@ for (const invalidation of ["ruleset", "all"] as const) {
     const session = makeSession();
     const fork = await createSeededTestRuleset(session.userId);
     const [feat] = await Feats.create(db, { name: "Path race", description: "Before", rulesetId: fork.id });
-    const read = async () => ({ paths: [], segmentLabels: { feat: (await Feats.findOne(db, { id: feat.id }))!.description! } });
+    const read = async () => ({
+      paths: [],
+      segmentLabels: { feat: (await Feats.findOne(db, { id: feat.id }))!.description! },
+    });
     const started = Promise.withResolvers<void>();
     const release = Promise.withResolvers<void>();
     const old = getOrFetchTargetPathsAndLabels(fork.id, "modifier", async () => {

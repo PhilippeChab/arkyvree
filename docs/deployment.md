@@ -128,7 +128,7 @@ One workflow per concern, in `.github/workflows/`:
 
 | Workflow | Runs on | Jobs |
 |---|---|---|
-| `lint.yml` | push to develop, PR, called by Deploy | `Lint`: TypeScript (`tsgo`) and oxlint |
+| `lint.yml` | push to develop, PR, called by Deploy | `Lint`: TypeScript (`tsgo`), oxlint and the formatting (`oxfmt --check`) |
 | `build.yml` | push to develop, PR, called by Deploy | `Build`: the production build and the compiled PDF smoke check |
 | `api-tests.yml` | push to develop, PR, called by Deploy | `API Tests (shard n/3)` on a push, `API Tests (changed)` on a PR |
 | `e2e.yml` | push to develop, PR, called by Deploy | `E2E (shard n/3)` |

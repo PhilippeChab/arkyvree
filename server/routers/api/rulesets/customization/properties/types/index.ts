@@ -1,9 +1,10 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import { limit, page } from "@/server/routers/api/validation.ts";
-import { PropertyTypesService } from "@/server/services/rulesets/index.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import { limit, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { PropertyTypesService } from "@/server/services/rulesets/index.ts";
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -18,7 +19,9 @@ const propertyTypes = new Hono()
     zValidator(
       "query",
       z.object({
-        entityType: z.enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"]).optional(),
+        entityType: z
+          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
+          .optional(),
       }),
     ),
     async (c) => {
@@ -40,7 +43,9 @@ const propertyTypes = new Hono()
       "query",
       z.object({
         query: z.string().min(1),
-        entityType: z.enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"]).optional(),
+        entityType: z
+          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
+          .optional(),
       }),
     ),
     async (c) => {
@@ -62,7 +67,9 @@ const propertyTypes = new Hono()
       "query",
       z.object({
         query: z.string().default(""),
-        entityType: z.enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"]).optional(),
+        entityType: z
+          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
+          .optional(),
         limit,
         page,
       }),
@@ -101,13 +108,10 @@ const propertyTypes = new Hono()
       const { id: rulesetId } = c.req.valid("param");
       const { type, query, limit: limitValue, page: pageValue } = c.req.valid("query");
       const service = PropertyTypesService.initialize();
-      const result = await service.call(
-        "getValueCompletions",
-        rulesetId,
-        type,
-        query,
-        { limit: limitValue, page: pageValue },
-      );
+      const result = await service.call("getValueCompletions", rulesetId, type, query, {
+        limit: limitValue,
+        page: pageValue,
+      });
       return respond(c, result, 200);
     },
   );

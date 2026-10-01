@@ -1,12 +1,12 @@
 import type { ChangedField } from "@/shared/activity.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+
 import { getActivityLabelOverrides } from "./rulesetLabels.ts";
 
 /** An activity's payload: the fields its type records, or none. */
 const payload = (data: unknown): Record<string, unknown> => (isRecord(data) ? data : {});
 
-const isChangedField = (value: unknown): value is ChangedField =>
-  isRecord(value) && typeof value.field === "string";
+const isChangedField = (value: unknown): value is ChangedField => isRecord(value) && typeof value.field === "string";
 
 export function formatActivityType(type: string, data?: unknown): string {
   let formatted = type.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
@@ -64,7 +64,8 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   revokeCampaignInvite: (actor) => `${actor} revoked your campaign invite`,
 
   // Contributor invites
-  inviteContributor: (actor, d) => `${actor} invited you to contribute to ${d.rulesetName || "a ruleset"} as ${d.role || "Editor"}`,
+  inviteContributor: (actor, d) =>
+    `${actor} invited you to contribute to ${d.rulesetName || "a ruleset"} as ${d.role || "Editor"}`,
   acceptContributorInvite: (actor) => `${actor} accepted your contributor invite`,
   rejectContributorInvite: (actor) => `${actor} declined your contributor invite`,
   revokeContributor: (actor) => `${actor} revoked your contributor access`,
@@ -73,8 +74,10 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 
   // Character contributor invites
   inviteCharacterContributor: (actor, d) => `${actor} invited you to edit ${d.characterName || "a character"}`,
-  acceptCharacterContributorInvite: (actor, d) => `${actor} accepted your invite to edit ${d.characterName || "your character"}`,
-  rejectCharacterContributorInvite: (actor, d) => `${actor} declined your invite to edit ${d.characterName || "your character"}`,
+  acceptCharacterContributorInvite: (actor, d) =>
+    `${actor} accepted your invite to edit ${d.characterName || "your character"}`,
+  rejectCharacterContributorInvite: (actor, d) =>
+    `${actor} declined your invite to edit ${d.characterName || "your character"}`,
   revokeCharacterContributor: (actor, d) => `${actor} revoked your access to ${d.characterName || "a character"}`,
   leaveCharacter: (actor, d) => `${actor} stopped contributing to ${d.characterName || "your character"}`,
 

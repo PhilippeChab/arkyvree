@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "185",
   weight: "90",
-  description: "Bjorn is a battle-hardened warrior from the northern tribes. His muscular frame and numerous scars tell of his experiences in combat. He carries his family's ancestral greataxe and wears a bear pelt over his armor.",
+  description:
+    "Bjorn is a battle-hardened warrior from the northern tribes. His muscular frame and numerous scars tell of his experiences in combat. He carries his family's ancestral greataxe and wears a bear pelt over his armor.",
   abilities: { Strength: 18, Dexterity: 14, Constitution: 16, Intelligence: 12, Wisdom: 10, Charisma: 8 },
   languages: ["Common", "Dwarven"],
   classes: [{ klass: "Fighter", hp: [10, 8, 7, 9, 6] }],

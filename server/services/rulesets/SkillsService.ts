@@ -1,12 +1,13 @@
+import { getTableName } from "drizzle-orm";
+
 import { skillsInRules } from "@/drizzle/schema.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Skills } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -14,24 +15,33 @@ import {
   deletePropertiesWithCascade,
   deleteRequirementsWithCascade,
   entityHasCharacterPicks,
-  repointTombstoneSnapshot,
   lockEntityForMutation,
+  repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Property, Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
+import { stripSeparators } from "@/shared/utils.ts";
 
 export const SkillsMethods = {
   async getRulesetSkills(
     rulesetId: string,
-    where: { childOnly?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const result = await Skills.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Skills.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
+        pagination,
+      );
 
       // Flatten per-skill properties from the cache into a single array for
       // enrichWithProperties (which does the entity-type filtering internally).
@@ -63,13 +73,17 @@ export const SkillsMethods = {
     });
   },
 
-  async createRulesetSkill(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-    primaryAbilityId: string;
-    impactedByWeight: boolean;
-    usableWithoutTraining: boolean;
-  }) {
+  async createRulesetSkill(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      primaryAbilityId: string;
+      impactedByWeight: boolean;
+      usableWithoutTraining: boolean;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -77,10 +91,16 @@ export const SkillsMethods = {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         if (stripSeparators(body.name) === "budget") {
-          throw new BadRequestError("\"Budget\" is a reserved skill name");
+          throw new BadRequestError('"Budget" is a reserved skill name');
         }
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "skills", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "skills",
+          body.name,
+        );
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
 
@@ -110,14 +130,19 @@ export const SkillsMethods = {
     return result;
   },
 
-  async updateRulesetSkill(session: Session, rulesetId: string, skillId: string, body: {
-    name: string;
-    description?: string | null;
-    primaryAbilityId: string;
-    impactedByWeight: boolean;
-    usableWithoutTraining: boolean;
-    updatedAt?: string;
-  }) {
+  async updateRulesetSkill(
+    session: Session,
+    rulesetId: string,
+    skillId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      primaryAbilityId: string;
+      impactedByWeight: boolean;
+      usableWithoutTraining: boolean;
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -132,13 +157,20 @@ export const SkillsMethods = {
         }
 
         if (stripSeparators(body.name) === "budget") {
-          throw new BadRequestError("\"Budget\" is a reserved skill name");
+          throw new BadRequestError('"Budget" is a reserved skill name');
         }
 
         let targetId = skill.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "skills", skill.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "skills",
+            skill.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         }
 
@@ -162,7 +194,10 @@ export const SkillsMethods = {
           targetId,
           targetTable: getTableName(skillsInRules),
           type: "updateSkill",
-          data: { entityName: body.name, changedFields: getChangedFields(skill as Record<string, unknown>, body as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(skill as Record<string, unknown>, body as Record<string, unknown>),
+          },
         });
 
         return { ...updatedSkill, impactedByWeight, usableWithoutTraining };
@@ -189,7 +224,14 @@ export const SkillsMethods = {
 
         let targetId = skill.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "skills", skill.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "skills",
+            skill.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "skills", targetId);

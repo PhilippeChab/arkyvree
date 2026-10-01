@@ -1,10 +1,8 @@
 import { useParams } from "react-router-dom";
 
-import {
-  AptitudeFormFields,
-  type AptitudeFormData,
-} from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { type AptitudeFormData, AptitudeFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import { aptitudeQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 

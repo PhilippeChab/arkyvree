@@ -1,10 +1,9 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInRules, EntitySnapshotInstance> {
   constructor() {
@@ -37,39 +36,27 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
 
   async findByTypeAndRuleset(db: Db, where: { rulesetId: string; entityType: string }) {
     return await db.query.entitySnapshotsInRules.findMany({
-      where: and(
-        eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.entityType, where.entityType),
-      ),
+      where: and(eq(this.table.rulesetId, where.rulesetId), eq(this.table.entityType, where.entityType)),
     });
   }
 
   async findBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
     return await db.query.entitySnapshotsInRules.findFirst({
-      where: and(
-        eq(this.table.sourceEntityId, where.sourceEntityId),
-        eq(this.table.rulesetId, where.rulesetId),
-      ),
+      where: and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)),
     });
   }
 
   async findManyBySourcesAndRuleset(db: Db, where: { sourceEntityIds: string[]; rulesetId: string }) {
     if (where.sourceEntityIds.length === 0) return [];
     return await db.query.entitySnapshotsInRules.findMany({
-      where: and(
-        inArray(this.table.sourceEntityId, where.sourceEntityIds),
-        eq(this.table.rulesetId, where.rulesetId),
-      ),
+      where: and(inArray(this.table.sourceEntityId, where.sourceEntityIds), eq(this.table.rulesetId, where.rulesetId)),
     });
   }
 
   async deleteBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
-    return await db.delete(this.table).where(
-      and(
-        eq(this.table.sourceEntityId, where.sourceEntityId),
-        eq(this.table.rulesetId, where.rulesetId),
-      ),
-    );
+    return await db
+      .delete(this.table)
+      .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
   }
 
   withInstance(instance: InferSelectModel<typeof entitySnapshotsInRules>) {

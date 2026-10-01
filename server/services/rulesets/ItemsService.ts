@@ -1,12 +1,14 @@
+import { inArray } from "drizzle-orm";
+import { getTableName } from "drizzle-orm";
+
 import { itemsInRules, type location } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { inArray } from "drizzle-orm";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertAncestorNamesHidden,
   assertEntityNameAvailable,
@@ -18,13 +20,12 @@ import {
   deleteRequirementsWithCascade,
   entityHasCharacterPicks,
   fetchEntityCustomizations,
-  repointTombstoneSnapshot,
   lockEntityForMutation,
+  repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 interface ItemBody {
   name: string;
@@ -47,28 +48,41 @@ function validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
 export const ItemsMethods = {
   async getRulesetItems(
     rulesetId: string,
-    where: { childOnly?: boolean; isTemplate?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      isTemplate?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const result = await Items.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Items.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
+        pagination,
+      );
 
       const sourceIds = [...new Set(result.items.map((i) => i.sourceItemId).filter(Boolean))] as string[];
-      const templateMap = sourceIds.length > 0
-        ? new Map(
-            (await db.query.itemsInRules.findMany({
-              where: inArray(itemsInRules.id, sourceIds),
-              columns: { id: true, name: true },
-            })).map((t) => [t.id, t.name]),
-          )
-        : null;
+      const templateMap =
+        sourceIds.length > 0
+          ? new Map(
+              (
+                await db.query.itemsInRules.findMany({
+                  where: inArray(itemsInRules.id, sourceIds),
+                  columns: { id: true, name: true },
+                })
+              ).map((t) => [t.id, t.name]),
+            )
+          : null;
 
       return {
         ...result,
         items: result.items.map((item) => ({
           ...item,
-          templateName: item.sourceItemId && templateMap ? templateMap.get(item.sourceItemId) ?? null : null,
+          templateName: item.sourceItemId && templateMap ? (templateMap.get(item.sourceItemId) ?? null) : null,
         })),
       };
     });
@@ -88,18 +102,13 @@ export const ItemsMethods = {
       const modifiers = rulesetData.modifiersBySource.get(item.id) ?? [];
       const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
       const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-      const templateProperties = item.sourceItemId
-        ? rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []
-        : [];
+      const templateProperties = item.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
       const templateRequirements = item.sourceItemId
-        ? rulesetData.requirementsByEntity.get(item.sourceItemId) ?? []
+        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
         : [];
 
       const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
-      const properties = [
-        ...templateProperties.filter((p) => !ownPropertyTypes.has(p.type)),
-        ...ownProperties,
-      ];
+      const properties = [...templateProperties.filter((p) => !ownPropertyTypes.has(p.type)), ...ownProperties];
       const requirements = [...templateRequirements, ...ownRequirements];
 
       return { ...item, modifiers, properties, requirements };
@@ -120,7 +129,13 @@ export const ItemsMethods = {
 
         validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "items", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "items",
+          body.name,
+        );
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const slot = hooks.items.resolveSlot(body.type, body.slot);
@@ -168,7 +183,13 @@ export const ItemsMethods = {
           throw new NotFoundError("Source item not found in this ruleset");
         }
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "items", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "items",
+          body.name,
+        );
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const slot = hooks.items.resolveSlot(body.type, body.slot);
@@ -180,7 +201,7 @@ export const ItemsMethods = {
           rulesetId,
           weight: body.weight?.toString(),
           costGp: body.costGp?.toString(),
-          sourceItemId: sourceItem.isTemplate ? sourceItem.id : sourceItem.sourceItemId ?? undefined,
+          sourceItemId: sourceItem.isTemplate ? sourceItem.id : (sourceItem.sourceItemId ?? undefined),
           isTemplate: false,
         });
         const item = rows[0];
@@ -253,7 +274,13 @@ export const ItemsMethods = {
         }
 
         const ancestorConflicts = await Items.findByNamesInRulesets(tx, { rulesetIds: sourceChain, names });
-        const tombstoned = await assertAncestorNamesHidden(tx, rulesetId, rulesetData.cow, "items", ancestorConflicts.map((c) => c.id));
+        const tombstoned = await assertAncestorNamesHidden(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "items",
+          ancestorConflicts.map((c) => c.id),
+        );
 
         // Preserve sourceChain order: when two tombstoned ancestors share a
         // name (e.g. an extension and a parent), the closer one (lower
@@ -264,7 +291,10 @@ export const ItemsMethods = {
         for (const c of ancestorConflicts) {
           if (!tombstoned.has(c.id)) continue;
           const existing = tombstoneByName.get(c.name);
-          if (!existing || (sourceChainOrder.get(c.rulesetId) ?? Infinity) < (sourceChainOrder.get(existing.rulesetId) ?? Infinity)) {
+          if (
+            !existing ||
+            (sourceChainOrder.get(c.rulesetId) ?? Infinity) < (sourceChainOrder.get(existing.rulesetId) ?? Infinity)
+          ) {
             tombstoneByName.set(c.name, c);
           }
         }
@@ -289,7 +319,7 @@ export const ItemsMethods = {
             rulesetId,
             weight: source.weight,
             costGp: source.costGp,
-            sourceItemId: source.isTemplate ? source.id : source.sourceItemId ?? undefined,
+            sourceItemId: source.isTemplate ? source.id : (source.sourceItemId ?? undefined),
             isTemplate: false,
           });
           const item = rows[0];
@@ -311,7 +341,12 @@ export const ItemsMethods = {
         }
 
         if (sourceCust) {
-          await copyEntityCustomizationsToMany(tx, created.map((c) => c.id), "items", sourceCust);
+          await copyEntityCustomizationsToMany(
+            tx,
+            created.map((c) => c.id),
+            "items",
+            sourceCust,
+          );
         }
 
         return created;
@@ -346,15 +381,19 @@ export const ItemsMethods = {
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const slot = hooks.items.resolveSlot(body.type, body.slot);
-        const rows = await Items.update(tx, {
-          name: body.name,
-          description: body.description,
-          type: body.type,
-          slot,
-          weight: body.weight?.toString(),
-          costGp: body.costGp?.toString(),
-          sourceItemId: item.isTemplate ? null : body.sourceItemId,
-        }, { id: targetId, expectedUpdatedAt });
+        const rows = await Items.update(
+          tx,
+          {
+            name: body.name,
+            description: body.description,
+            type: body.type,
+            slot,
+            weight: body.weight?.toString(),
+            costGp: body.costGp?.toString(),
+            sourceItemId: item.isTemplate ? null : body.sourceItemId,
+          },
+          { id: targetId, expectedUpdatedAt },
+        );
         if (expectedUpdatedAt && rows.length === 0) {
           throw new ConflictError(STALE_ENTITY_MESSAGE);
         }

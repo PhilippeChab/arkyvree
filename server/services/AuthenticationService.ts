@@ -1,12 +1,29 @@
+import { timingSafeEqual } from "node:crypto";
+
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { getTableName } from "drizzle-orm";
-import { timingSafeEqual } from "node:crypto";
 
 import { oauthAccountsInAccount, sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { emailService } from "@/server/emails/EmailService.ts";
+import { EmailTemplate } from "@/server/emails/templates.ts";
 import { BadRequestError, ConflictError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
-import { Activities, CharacterContributors, Characters, Contributors, EmailVerifications, Invites, OauthAccounts, PasswordResets, Players, Rulesets, Sessions, StarredRulesets, Users } from "@/server/repositories/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
+import {
+  Activities,
+  CharacterContributors,
+  Characters,
+  Contributors,
+  EmailVerifications,
+  Invites,
+  OauthAccounts,
+  PasswordResets,
+  Players,
+  Rulesets,
+  Sessions,
+  StarredRulesets,
+  Users,
+} from "@/server/repositories/index.ts";
 import type {
   DeleteAccountJson,
   ForgotPasswordJson,
@@ -26,8 +43,6 @@ import { purgeAttachmentsForRecords } from "@/server/services/AttachmentsService
 import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 import { hashPassword, verifyPassword } from "@/shared/utils.ts";
-import { emailService } from "@/server/emails/EmailService.ts";
-import { EmailTemplate } from "@/server/emails/templates.ts";
 
 const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
 

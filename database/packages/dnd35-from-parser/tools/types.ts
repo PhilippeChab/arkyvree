@@ -1,4 +1,4 @@
-import type { RequirementEntry, Modifier, ModifierSeed, Property } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 
 // References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
 // `mapping` derived from it (items and magic items have only `detected`; spells and wizard schools, neither). The
@@ -58,7 +58,14 @@ type DomainFeatPool = {
 };
 
 /** A class's own spell list: its slots per day, its spells known, and the list it inherits. */
-type ClassSpells = { slug: string; perDay: number[][]; known?: number[][]; knowAll?: boolean; noCantrips?: boolean; inheritsFrom?: string };
+type ClassSpells = {
+  slug: string;
+  perDay: number[][];
+  known?: number[][];
+  knowAll?: boolean;
+  noCantrips?: boolean;
+  inheritsFrom?: string;
+};
 
 /** A class feature's fields a mapping derives and an override sets. */
 type ClassFeatureFields = {
@@ -139,10 +146,13 @@ export type FeatReference = {
   overrides?: Overrides<FeatFields>;
 
   /** Merged data per feat: derived from detected and the overrides when the reference is loaded */
-  mapping: Record<string, FeatFields & {
-    /** Template expansion config — purely auto-detected, not overridable */
-    template?: FeatTemplate;
-  }>;
+  mapping: Record<
+    string,
+    FeatFields & {
+      /** Template expansion config — purely auto-detected, not overridable */
+      template?: FeatTemplate;
+    }
+  >;
 };
 
 export type DomainReference = {
@@ -167,11 +177,14 @@ export type DomainReference = {
     featPool?: DomainFeatPool;
   }>;
 
-  mapping: Record<string, {
-    description?: string;
-    modifiers?: Modifier[];
-    featPool?: DomainFeatPool;
-  }>;
+  mapping: Record<
+    string,
+    {
+      description?: string;
+      modifiers?: Modifier[];
+      featPool?: DomainFeatPool;
+    }
+  >;
 };
 
 export type WizardSchoolReference = {
@@ -242,10 +255,13 @@ export type RaceReference = {
     skip?: boolean;
   }>;
 
-  mapping: Record<string, {
-    description?: string;
-    modifiers?: Modifier[];
-  }>;
+  mapping: Record<
+    string,
+    {
+      description?: string;
+      modifiers?: Modifier[];
+    }
+  >;
 };
 
 export type ClassReference = {
@@ -378,8 +394,14 @@ export type ClassReference = {
   };
 };
 
-export type MagicItemCategory = "specificArmor" | "specificShield" | "specificWeapon"
-  | "wondrousItem" | "ring" | "rod" | "staff";
+export type MagicItemCategory =
+  | "specificArmor"
+  | "specificShield"
+  | "specificWeapon"
+  | "wondrousItem"
+  | "ring"
+  | "rod"
+  | "staff";
 
 export type MagicItemReference = {
   _meta: Omit<ScrapedMeta<"magicItem">, "sourceUrl"> & { sourceUrls: Record<string, string> };
@@ -392,18 +414,21 @@ export type MagicItemReference = {
     spellCharges?: { spell: string; charges: number }[];
   }[];
 
-  detected: Record<string, {
-    category: MagicItemCategory;
-    aura?: string;
-    casterLevel?: number;
-    costGp: string;
-    weight: string;
-    itemType: string;
-    slot: string;
-    variant?: string;
-    baseItem?: string;
-    modifiers?: Modifier[];
-  }>;
+  detected: Record<
+    string,
+    {
+      category: MagicItemCategory;
+      aura?: string;
+      casterLevel?: number;
+      costGp: string;
+      weight: string;
+      itemType: string;
+      slot: string;
+      variant?: string;
+      baseItem?: string;
+      modifiers?: Modifier[];
+    }
+  >;
 
   overrides?: Overrides<MagicItemFields & { aura?: string; casterLevel?: number }>;
 };
@@ -423,24 +448,33 @@ export type ItemReference = {
   };
 
   detected: {
-    weapons: Record<string, {
-      generatorName: string | null;
-      proficiency: string;
-      costGp: string;
-      weight: string;
-    }>;
-    armor: Record<string, {
-      generatorName: string | null;
-      type: "Armor" | "Shield";
-      proficiencyCategory: string;
-      costGp: string;
-      weight: string;
-    }>;
-    goods: Record<string, {
-      costGp: string;
-      weight: string;
-      category: string;
-    }>;
+    weapons: Record<
+      string,
+      {
+        generatorName: string | null;
+        proficiency: string;
+        costGp: string;
+        weight: string;
+      }
+    >;
+    armor: Record<
+      string,
+      {
+        generatorName: string | null;
+        type: "Armor" | "Shield";
+        proficiencyCategory: string;
+        costGp: string;
+        weight: string;
+      }
+    >;
+    goods: Record<
+      string,
+      {
+        costGp: string;
+        weight: string;
+        category: string;
+      }
+    >;
     unresolved: string[];
   };
 

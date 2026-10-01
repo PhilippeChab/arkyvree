@@ -25,10 +25,11 @@ export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id
 
 type Direction = "asc" | "desc";
 
-export const dashboardStatsQuery = () => queryOptions({
-  queryKey: queryKeys.dashboard.stats,
-  queryFn: () => parseResponse(rpc.api.dashboard.stats.$get()),
-});
+export const dashboardStatsQuery = () =>
+  queryOptions({
+    queryKey: queryKeys.dashboard.stats,
+    queryFn: () => parseResponse(rpc.api.dashboard.stats.$get()),
+  });
 
 export interface CampaignListFilters {
   view: "active" | "archived";
@@ -37,21 +38,25 @@ export interface CampaignListFilters {
   orderDir: Direction;
 }
 
-export const campaignListQuery = (filters: CampaignListFilters) => infiniteQueryOptions({
-  queryKey: queryKeys.campaigns.list({ ...filters }),
-  queryFn: ({ pageParam }) => parseResponse(rpc.api.campaigns.$get({
-    query: {
-      page: pageParam.toString(),
-      limit: LIST_PAGE_SIZE.toString(),
-      visibility: filters.view,
-      search: filters.search || undefined,
-      orderBy: filters.orderBy,
-      orderDir: filters.orderDir,
-    },
-  })),
-  initialPageParam: 1,
-  getNextPageParam: (lastPage) => lastPage.nextPage,
-});
+export const campaignListQuery = (filters: CampaignListFilters) =>
+  infiniteQueryOptions({
+    queryKey: queryKeys.campaigns.list({ ...filters }),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.campaigns.$get({
+          query: {
+            page: pageParam.toString(),
+            limit: LIST_PAGE_SIZE.toString(),
+            visibility: filters.view,
+            search: filters.search || undefined,
+            orderBy: filters.orderBy,
+            orderDir: filters.orderDir,
+          },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
 
 export interface CharacterListFilters {
   view: "active" | "shared" | "archived";
@@ -60,23 +65,27 @@ export interface CharacterListFilters {
   orderDir: Direction;
 }
 
-export const characterListQuery = (filters: CharacterListFilters) => infiniteQueryOptions({
-  queryKey: queryKeys.characters.list({ ...filters }),
-  queryFn: ({ pageParam }) => parseResponse(rpc.api.characters.$get({
-    query: {
-      page: pageParam.toString(),
-      limit: LIST_PAGE_SIZE.toString(),
-      // "Shared" lists active characters the user contributes to.
-      visibility: filters.view === "archived" ? "archived" : "active",
-      accessRole: filters.view === "shared" ? "contributor" : undefined,
-      search: filters.search || undefined,
-      orderBy: filters.orderBy,
-      orderDir: filters.orderDir,
-    },
-  })),
-  initialPageParam: 1,
-  getNextPageParam: (lastPage) => lastPage.nextPage,
-});
+export const characterListQuery = (filters: CharacterListFilters) =>
+  infiniteQueryOptions({
+    queryKey: queryKeys.characters.list({ ...filters }),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.characters.$get({
+          query: {
+            page: pageParam.toString(),
+            limit: LIST_PAGE_SIZE.toString(),
+            // "Shared" lists active characters the user contributes to.
+            visibility: filters.view === "archived" ? "archived" : "active",
+            accessRole: filters.view === "shared" ? "contributor" : undefined,
+            search: filters.search || undefined,
+            orderBy: filters.orderBy,
+            orderDir: filters.orderDir,
+          },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
 
 export interface RulesetListFilters {
   scope: RulesetListParams["scope"];
@@ -85,48 +94,59 @@ export interface RulesetListFilters {
   orderDir: Direction;
 }
 
-export const rulesetListQuery = (filters: RulesetListFilters) => infiniteQueryOptions({
-  queryKey: queryKeys.rulesets.list({ ...filters }),
-  queryFn: ({ pageParam }) => parseResponse(rpc.api.rulesets.$get({
-    query: {
-      page: pageParam.toString(),
-      limit: LIST_PAGE_SIZE.toString(),
-      scope: filters.scope,
-      search: filters.search || undefined,
-      orderBy: filters.orderBy,
-      orderDir: filters.orderDir,
-    },
-  })),
-  initialPageParam: 1,
-  getNextPageParam: (lastPage) => lastPage.nextPage,
-});
+export const rulesetListQuery = (filters: RulesetListFilters) =>
+  infiniteQueryOptions({
+    queryKey: queryKeys.rulesets.list({ ...filters }),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets.$get({
+          query: {
+            page: pageParam.toString(),
+            limit: LIST_PAGE_SIZE.toString(),
+            scope: filters.scope,
+            search: filters.search || undefined,
+            orderBy: filters.orderBy,
+            orderDir: filters.orderDir,
+          },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
 
 /** A ruleset picker's options: the rulesets in one scope, filtered by what's typed. */
-export const rulesetPickerQuery = (scope: RulesetListParams["scope"], search: string) => infiniteQueryOptions({
-  queryKey: queryKeys.rulesets.list({ scope, search }),
-  queryFn: ({ pageParam }) => parseResponse(rpc.api.rulesets.$get({
-    query: {
-      page: pageParam.toString(),
-      limit: LIST_PAGE_SIZE.toString(),
-      scope,
-      search: search || undefined,
-    },
-  })),
-  initialPageParam: 1,
-  getNextPageParam: (lastPage) => lastPage.nextPage,
-});
+export const rulesetPickerQuery = (scope: RulesetListParams["scope"], search: string) =>
+  infiniteQueryOptions({
+    queryKey: queryKeys.rulesets.list({ scope, search }),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets.$get({
+          query: {
+            page: pageParam.toString(),
+            limit: LIST_PAGE_SIZE.toString(),
+            scope,
+            search: search || undefined,
+          },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
 
-export const rulesetDetailQuery = (id: string) => queryOptions({
-  queryKey: queryKeys.rulesets.detail(id),
-  queryFn: () => parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } })),
-});
+export const rulesetDetailQuery = (id: string) =>
+  queryOptions({
+    queryKey: queryKeys.rulesets.detail(id),
+    queryFn: () => parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } })),
+  });
 
-export const campaignDetailQuery = (id: string) => queryOptions({
-  queryKey: queryKeys.campaigns.detail(id),
-  queryFn: () => parseResponse(rpc.api.campaigns[":id"].$get({ param: { id } })),
-});
+export const campaignDetailQuery = (id: string) =>
+  queryOptions({
+    queryKey: queryKeys.campaigns.detail(id),
+    queryFn: () => parseResponse(rpc.api.campaigns[":id"].$get({ param: { id } })),
+  });
 
-export const characterDetailQuery = (id: string) => queryOptions({
-  queryKey: queryKeys.characters.detail(id),
-  queryFn: () => parseResponse(rpc.api.characters[":id"].$get({ param: { id } })),
-});
+export const characterDetailQuery = (id: string) =>
+  queryOptions({
+    queryKey: queryKeys.characters.detail(id),
+    queryFn: () => parseResponse(rpc.api.characters[":id"].$get({ param: { id } })),
+  });

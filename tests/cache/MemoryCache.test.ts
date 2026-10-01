@@ -1,5 +1,6 @@
-import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { describe, expect, test } from "bun:test";
+
+import MemoryCache from "@/server/cache/MemoryCache.ts";
 
 describe("MemoryCache", () => {
   test("returns undefined for missing keys", () => {

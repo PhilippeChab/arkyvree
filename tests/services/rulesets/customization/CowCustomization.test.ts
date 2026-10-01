@@ -1,11 +1,20 @@
-import { abilitiesInRules } from "@/drizzle/schema.ts";
 /**
  * Customizing an entity a fork inherits copies the entity into the fork and
  * changes the copy: the parent's rows never move.
  */
 import { describe, expect, test } from "bun:test";
+
+import { abilitiesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { EntitySnapshots, Feats, KlassLevels, Klasses, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import {
+  EntitySnapshots,
+  Feats,
+  Klasses,
+  KlassLevels,
+  Modifiers,
+  Properties,
+  Requirements,
+} from "@/server/repositories/index.ts";
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
@@ -26,20 +35,58 @@ async function setup() {
   const { session } = await createTestUser();
   const parent = await createTestRuleset(owner.id, { private: false, status: "Published" });
   const rulesetId = parent.id;
-  await insertRows(abilitiesInRules, ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId })));
+  await insertRows(
+    abilitiesInRules,
+    ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId })),
+  );
 
   const [feat] = await Feats.create(db, { name: "Power Attack", description: "Parent feat", rulesetId });
-  const [modifier] = await Modifiers.create(db, { sourceId: feat.id, sourceType: "feats", target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" });
-  await Requirements.create(db, { ...requirement, entityId: modifier.id, entityType: "modifiers", level: "1", target: "abilities.strength.misc", value: "15" });
+  const [modifier] = await Modifiers.create(db, {
+    sourceId: feat.id,
+    sourceType: "feats",
+    target: "abilities.strength.misc",
+    value: "2",
+    valueType: "number",
+    operator: "add",
+  });
+  await Requirements.create(db, {
+    ...requirement,
+    entityId: modifier.id,
+    entityType: "modifiers",
+    level: "1",
+    target: "abilities.strength.misc",
+    value: "15",
+  });
   await Properties.create(db, { entityId: feat.id, entityType: "feats", type: "tag", value: "combat" });
-  await Requirements.create(db, { ...requirement, entityId: feat.id, entityType: "feats", level: "1", target: "abilities.strength.misc", value: "13" });
+  await Requirements.create(db, {
+    ...requirement,
+    entityId: feat.id,
+    entityType: "feats",
+    level: "1",
+    target: "abilities.strength.misc",
+    value: "13",
+  });
 
   const [klass] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 });
   const [level] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
-  await Modifiers.create(db, { sourceId: level.id, sourceType: "klass_levels", target: "abilities.strength.misc", value: "1", valueType: "number", operator: "add" });
+  await Modifiers.create(db, {
+    sourceId: level.id,
+    sourceType: "klass_levels",
+    target: "abilities.strength.misc",
+    value: "1",
+    valueType: "number",
+    operator: "add",
+  });
 
   const fork = await RulesetsMethods.forkRuleset(session, rulesetId, { name: "Fork", private: false });
-  return { session, parent, fork, feat, klass, owners: { feats: feat.id, klass_levels: level.id, modifiers: modifier.id } };
+  return {
+    session,
+    parent,
+    fork,
+    feat,
+    klass,
+    owners: { feats: feat.id, klass_levels: level.id, modifiers: modifier.id },
+  };
 }
 
 type Row = { id: string };
@@ -53,34 +100,51 @@ type Kind = {
 };
 
 const dexterityBonus = { target: "abilities.dexterity.misc", value: "5", operator: "add" };
-const dexterityAtLeast = { level: "2", target: "abilities.dexterity.misc", value: "10", operator: "greater_than_or_equal" };
+const dexterityAtLeast = {
+  level: "2",
+  target: "abilities.dexterity.misc",
+  value: "10",
+  operator: "greater_than_or_equal",
+};
 
 const KINDS: Record<string, Kind> = {
   modifiers: {
     rowsOf: (sourceType, sourceId) => Modifiers.findManyBySource(db, { sourceIds: [sourceId], sourceType }),
     list: ModifiersMethods.getEntityModifiers,
-    create: (s, rulesetId, type, ownerId) => ModifiersMethods.createEntityModifier(s, rulesetId, type, ownerId, dexterityBonus),
-    update: (s, rulesetId, type, ownerId, id) => ModifiersMethods.updateEntityModifier(s, rulesetId, type, ownerId, id, dexterityBonus),
+    create: (s, rulesetId, type, ownerId) =>
+      ModifiersMethods.createEntityModifier(s, rulesetId, type, ownerId, dexterityBonus),
+    update: (s, rulesetId, type, ownerId, id) =>
+      ModifiersMethods.updateEntityModifier(s, rulesetId, type, ownerId, id, dexterityBonus),
     remove: ModifiersMethods.deleteEntityModifier,
   },
   properties: {
     rowsOf: (entityType, entityId) => Properties.findManyByEntity(db, { entityIds: [entityId], entityType }),
     list: PropertiesMethods.getEntityProperties,
-    create: (s, rulesetId, type, ownerId) => PropertiesMethods.createEntityProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
-    update: (s, rulesetId, type, ownerId, id) => PropertiesMethods.updateEntityProperty(s, rulesetId, type, ownerId, id, { type: "tag", value: "changed" }),
+    create: (s, rulesetId, type, ownerId) =>
+      PropertiesMethods.createEntityProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
+    update: (s, rulesetId, type, ownerId, id) =>
+      PropertiesMethods.updateEntityProperty(s, rulesetId, type, ownerId, id, { type: "tag", value: "changed" }),
     remove: PropertiesMethods.deleteEntityProperty,
   },
   requirements: {
     rowsOf: (entityType, entityId) => Requirements.findManyByEntity(db, { entityIds: [entityId], entityType }),
     list: RequirementsMethods.getEntityRequirements,
-    create: (s, rulesetId, type, ownerId) => RequirementsMethods.createEntityRequirement(s, rulesetId, type, ownerId, dexterityAtLeast),
-    update: (s, rulesetId, type, ownerId, id) => RequirementsMethods.updateEntityRequirement(s, rulesetId, type, ownerId, id, { ...dexterityAtLeast, level: "1" }),
+    create: (s, rulesetId, type, ownerId) =>
+      RequirementsMethods.createEntityRequirement(s, rulesetId, type, ownerId, dexterityAtLeast),
+    update: (s, rulesetId, type, ownerId, id) =>
+      RequirementsMethods.updateEntityRequirement(s, rulesetId, type, ownerId, id, { ...dexterityAtLeast, level: "1" }),
     remove: RequirementsMethods.deleteEntityRequirement,
   },
 };
 
 // A class level is copied with its whole class, and a modifier with the entity it modifies.
-const CASES = [["feats", "modifiers"], ["feats", "properties"], ["feats", "requirements"], ["klass_levels", "modifiers"], ["modifiers", "requirements"]] as const;
+const CASES = [
+  ["feats", "modifiers"],
+  ["feats", "properties"],
+  ["feats", "requirements"],
+  ["klass_levels", "modifiers"],
+  ["modifiers", "requirements"],
+] as const;
 
 describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
   const kind = KINDS[kindName];
@@ -98,7 +162,10 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
 
     expect(created.resolvedEntityId).not.toBe(ownerId);
     expect((await kind.rowsOf(ownerType, created.resolvedEntityId)).map((r) => r.id)).toContain(created.id);
-    const copied = ownerType === "klass_levels" ? { entityType: "klasses", sourceEntityId: klass.id } : { entityType: "feats", sourceEntityId: feat.id };
+    const copied =
+      ownerType === "klass_levels"
+        ? { entityType: "klasses", sourceEntityId: klass.id }
+        : { entityType: "feats", sourceEntityId: feat.id };
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toMatchObject([copied]);
     expect(await kind.rowsOf(ownerType, ownerId)).toEqual(parentRows);
   });
@@ -129,14 +196,20 @@ describe.each(["modifiers", "properties", "requirements"])("the %s of a feat the
     const parentRows = await kind.rowsOf("feats", feat.id);
     // The URL keeps the source's id after an edit copied the feat.
     await FeatsMethods.updateRulesetFeat(session, fork.id, feat.id, { name: feat.name, description: "Copied" });
-    const copyId = (await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: feat.id, rulesetId: fork.id }))!.forkedEntityId;
+    const copyId = (await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: feat.id, rulesetId: fork.id }))!
+      .forkedEntityId;
     const [copied] = await kind.rowsOf("feats", copyId);
 
     expect((await kind.list(fork.id, "feats", feat.id)).map((r) => r.id)).toEqual([copied.id]);
-    expect(await kind.update(session, fork.id, "feats", feat.id, copied.id)).toMatchObject({ id: copied.id, resolvedEntityId: copyId });
+    expect(await kind.update(session, fork.id, "feats", feat.id, copied.id)).toMatchObject({
+      id: copied.id,
+      resolvedEntityId: copyId,
+    });
     const created = await kind.create(session, fork.id, "feats", feat.id);
     expect(created.resolvedEntityId).toBe(copyId);
-    expect(await kind.remove(session, fork.id, "feats", feat.id, copied.id)).toMatchObject({ resolvedEntityId: copyId });
+    expect(await kind.remove(session, fork.id, "feats", feat.id, copied.id)).toMatchObject({
+      resolvedEntityId: copyId,
+    });
 
     expect((await kind.rowsOf("feats", copyId)).map((r) => r.id)).toEqual([created.id]);
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toHaveLength(1);
@@ -147,7 +220,8 @@ describe.each(["modifiers", "properties", "requirements"])("the %s of a feat the
 describe("customizing an inherited feat", () => {
   test("lists it among the fork's changes until it's reverted", async () => {
     const { session, fork, feat, owners } = await setup();
-    const featChanges = async () => (await RulesetsMethods.getChanges(session, fork.id)).filter((c) => c.entityType === "feats");
+    const featChanges = async () =>
+      (await RulesetsMethods.getChanges(session, fork.id)).filter((c) => c.entityType === "feats");
     expect(await featChanges()).toEqual([]);
 
     await ModifiersMethods.updateEntityModifier(session, fork.id, "feats", feat.id, owners.modifiers, dexterityBonus);
@@ -161,12 +235,19 @@ describe("customizing an inherited feat", () => {
   test("copies nothing when the ruleset owns the feat", async () => {
     const { user, session } = await createTestUser();
     const ruleset = await createTestRuleset(user.id);
-    await insertRows(abilitiesInRules, ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })));
+    await insertRows(
+      abilitiesInRules,
+      ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
+    );
     const [feat] = await Feats.create(db, { name: "Owned Feat", rulesetId: ruleset.id });
     const modifier = await ModifiersMethods.createEntityModifier(session, ruleset.id, "feats", feat.id, dexterityBonus);
 
-    expect(await ModifiersMethods.updateEntityModifier(session, ruleset.id, "feats", feat.id, modifier.id, { ...dexterityBonus, value: "3" }))
-      .toMatchObject({ id: modifier.id, resolvedEntityId: feat.id });
+    expect(
+      await ModifiersMethods.updateEntityModifier(session, ruleset.id, "feats", feat.id, modifier.id, {
+        ...dexterityBonus,
+        value: "3",
+      }),
+    ).toMatchObject({ id: modifier.id, resolvedEntityId: feat.id });
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: ruleset.id })).toEqual([]);
   });
 });

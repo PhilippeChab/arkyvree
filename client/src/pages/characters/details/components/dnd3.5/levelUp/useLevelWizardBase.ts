@@ -1,8 +1,10 @@
-import { useDebouncedValue, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+
+import { useDebouncedValue, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+
 import type { AptitudePool, LevelUpFormData } from "./levelUpTypes.ts";
 
 const EMPTY_PICKS: LevelUpFormData = {

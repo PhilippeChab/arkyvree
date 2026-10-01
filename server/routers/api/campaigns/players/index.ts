@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
-import { limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { sanitizeEmail } from "@/shared/utils.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
+import { limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
+import { sanitizeEmail } from "@/shared/utils.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -50,13 +51,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { role, email } = c.req.valid("json");
       const campaignPlayersService = CampaignPlayersService.initialize();
-      const result = await campaignPlayersService.call(
-        "addCampaignPlayer",
-        c.var.requestSession,
-        id,
-        role,
-        email,
-      );
+      const result = await campaignPlayersService.call("addCampaignPlayer", c.var.requestSession, id, role, email);
       return respond(c, result, 200);
     },
   )
@@ -97,12 +92,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, playerId } = c.req.valid("param");
       const campaignPlayersService = CampaignPlayersService.initialize();
-      const result = await campaignPlayersService.call(
-        "removeCampaignPlayer",
-        c.var.requestSession,
-        id,
-        playerId,
-      );
+      const result = await campaignPlayersService.call("removeCampaignPlayer", c.var.requestSession, id, playerId);
       return respond(c, result, 200);
     },
   );

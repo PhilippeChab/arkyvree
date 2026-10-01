@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
@@ -11,7 +12,14 @@ describe("rulesets abilities", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
     const list = await expectOk(abilities.$get({ param: { id }, query: { limit: "100" } }));
-    expect(list.items.map((a) => a.name).sort()).toEqual(["Charisma", "Constitution", "Dexterity", "Intelligence", "Strength", "Wisdom"]);
+    expect(list.items.map((a) => a.name).sort()).toEqual([
+      "Charisma",
+      "Constitution",
+      "Dexterity",
+      "Intelligence",
+      "Strength",
+      "Wisdom",
+    ]);
 
     const strength = await expectOk(abilities[":abilityId"].$get({ param: { id, abilityId: abilityMap["Strength"] } }));
     expect(strength).toMatchObject({ id: abilityMap["Strength"], name: "Strength" });

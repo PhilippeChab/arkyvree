@@ -1,72 +1,62 @@
-import { errorResponse } from "@/server/routers/respond.ts";
-import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
 import { pdf } from "@react-pdf/renderer";
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { zValidator } from "@/server/middlewares/index.ts";
+import { errorResponse } from "@/server/routers/respond.ts";
+import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
+import CharactersService from "@/server/services/CharactersService.ts";
+
 const shared = new Hono()
   // Get shared character data (public, no auth)
-  .get(
-    "/characters/:shareToken",
-    zValidator("param", z.object({ shareToken: z.string().uuid() })),
-    async (c) => {
+  .get("/characters/:shareToken", zValidator("param", z.object({ shareToken: z.string().uuid() })), async (c) => {
+    const { shareToken } = c.req.valid("param");
+
+    const result = await CharactersService.initialize().call("getSharedCharacter", shareToken);
+    const success = result[0];
+
+    if (!success) return errorResponse(c, result[2]);
+
+    const { character, detailedCharacter, bondedByKind, portraitUrl } = result[1];
+    const response = buildFullCharacterResponse(character, detailedCharacter);
+    return c.json(
+      {
+        ...redactPrivateNotes(response, undefined),
+        bonded: buildBondedMap(bondedByKind, (entry) => redactPrivateNotes(entry, undefined)),
+        portraitUrl,
+      },
+      200,
+    );
+  })
+  // Generate PDF for shared character (public, no auth)
+  .get("/characters/:shareToken/pdf", zValidator("param", z.object({ shareToken: z.string().uuid() })), async (c) => {
+    try {
       const { shareToken } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call(
-        "getSharedCharacter",
-        shareToken,
-      );
+      const result = await CharactersService.initialize().call("generateSharedPdf", shareToken);
       const success = result[0];
 
       if (!success) return errorResponse(c, result[2]);
 
-      const { character, detailedCharacter, bondedByKind, portraitUrl } = result[1];
-      const response = buildFullCharacterResponse(character, detailedCharacter);
-      return c.json({
-        ...redactPrivateNotes(response, undefined),
-        bonded: buildBondedMap(bondedByKind, entry => redactPrivateNotes(entry, undefined)),
-        portraitUrl,
-      }, 200);
-    },
-  )
-  // Generate PDF for shared character (public, no auth)
-  .get(
-    "/characters/:shareToken/pdf",
-    zValidator("param", z.object({ shareToken: z.string().uuid() })),
-    async (c) => {
-      try {
-        const { shareToken } = c.req.valid("param");
+      const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } = result[1];
 
-        const result = await CharactersService.initialize().call(
-          "generateSharedPdf",
-          shareToken,
-        );
-        const success = result[0];
+      const pdfBlob = await pdf(
+        <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,
+      ).toBlob();
 
-        if (!success) return errorResponse(c, result[2]);
+      const arrayBuffer = await pdfBlob.arrayBuffer();
 
-        const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } = result[1];
-
-        const pdfBlob = await pdf(
-          <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,
-        ).toBlob();
-
-        const arrayBuffer = await pdfBlob.arrayBuffer();
-
-        return new Response(arrayBuffer, {
-          headers: {
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `inline; filename="shared-character.pdf"`,
-          },
-        });
-      } catch (error) {
-        console.error("[api] Error generating shared PDF:", error);
-        return c.json({ error: "Failed to generate PDF" }, 500);
-      }
-    },
-  );
+      return new Response(arrayBuffer, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="shared-character.pdf"`,
+        },
+      });
+    } catch (error) {
+      console.error("[api] Error generating shared PDF:", error);
+      return c.json({ error: "Failed to generate PDF" }, 500);
+    }
+  });
 
 export default shared;

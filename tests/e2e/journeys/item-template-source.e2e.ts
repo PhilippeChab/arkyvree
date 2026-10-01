@@ -1,11 +1,15 @@
 import type { InferResponseType } from "hono/client";
+
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { test, expect } from "@/tests/e2e/fixtures.ts";
+import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { forkCoreRuleset, signIn, uniqueName } from "@/tests/e2e/helpers.ts";
 
 type Templates = InferResponseType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"], 200>;
 type EditedItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$put"], 200>;
-type DuplicatedItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["duplicate"]["$post"], 200>;
+type DuplicatedItem = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["duplicate"]["$post"],
+  200
+>;
 
 for (const width of [375, 1280]) {
   test.describe(`Item template editor at ${width}px`, () => {
@@ -25,9 +29,9 @@ for (const width of [375, 1280]) {
       await expect(page.locator('input[name="name"]')).toHaveValue("Heavy Mace");
       await expect(page.getByText("Weapon Template", { exact: true })).toHaveCount(0);
       await page.locator('textarea[name="description"]').fill("Homebrew heavy mace template");
-      const saved = page.waitForResponse((response) =>
-        response.url().includes(`/api/rulesets/${forkId}/items/`)
-        && response.request().method() === "PUT",
+      const saved = page.waitForResponse(
+        (response) =>
+          response.url().includes(`/api/rulesets/${forkId}/items/`) && response.request().method() === "PUT",
       );
       await page.getByRole("button", { name: "Save", exact: true }).click();
       const saveResponse = await saved;

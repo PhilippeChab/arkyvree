@@ -2,11 +2,10 @@ import { type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 
+import { db } from "@/server/database/index.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 import { Sessions, Users } from "@/server/repositories/index.ts";
 import type { Session, User } from "@/shared/relations.ts";
-
-import { db } from "@/server/database/index.ts";
 
 export const SESSION_COOKIE_NAME = "session-id";
 const SESSION_CONTEXT_KEY = "requestSession";
@@ -20,6 +19,10 @@ export type SessionContext = {
     requestUser: User;
   };
 };
+
+export function getSessionCookie(c: Context) {
+  return getCookie(c, SESSION_COOKIE_NAME);
+}
 
 export default createMiddleware<SessionContext>(async (c, next) => {
   const sessionId = getSessionCookie(c);
@@ -40,10 +43,6 @@ export default createMiddleware<SessionContext>(async (c, next) => {
 
   await next();
 });
-
-export function getSessionCookie(c: Context) {
-  return getCookie(c, SESSION_COOKIE_NAME);
-}
 
 const isProduction = process.env.NODE_ENV === "production";
 

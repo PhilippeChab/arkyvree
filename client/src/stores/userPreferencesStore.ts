@@ -1,6 +1,7 @@
-import { isRecord } from "@/shared/isRecord.ts";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+import { isRecord } from "@/shared/isRecord.ts";
 
 const WARNING_KEYS = ["abilityDecrease"] as const;
 export type WarningKey = (typeof WARNING_KEYS)[number];
@@ -21,10 +22,11 @@ interface UserPreferencesState {
   suppressWarningForSession: (key: WarningKey) => void;
 }
 
-const updateWarning = (key: WarningKey, patch: Partial<WarningPreference>) =>
-(state: UserPreferencesState): Pick<UserPreferencesState, "warnings"> => ({
-  warnings: { ...state.warnings, [key]: { ...state.warnings[key], ...patch } },
-});
+const updateWarning =
+  (key: WarningKey, patch: Partial<WarningPreference>) =>
+  (state: UserPreferencesState): Pick<UserPreferencesState, "warnings"> => ({
+    warnings: { ...state.warnings, [key]: { ...state.warnings[key], ...patch } },
+  });
 
 export const useUserPreferencesStore = create<UserPreferencesState>()(
   persist(
@@ -51,7 +53,8 @@ export const useUserPreferencesStore = create<UserPreferencesState>()(
         const warnings = { ...current.warnings };
         for (const key of WARNING_KEYS) {
           const entry = saved[key];
-          const enabled = isRecord(entry) && typeof entry.enabled === "boolean" ? entry.enabled : current.warnings[key].enabled;
+          const enabled =
+            isRecord(entry) && typeof entry.enabled === "boolean" ? entry.enabled : current.warnings[key].enabled;
           warnings[key] = { ...current.warnings[key], enabled };
         }
         return { ...current, warnings };

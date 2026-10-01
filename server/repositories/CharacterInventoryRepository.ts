@@ -1,13 +1,11 @@
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
-
-import { charactersInCharacter, inventoryInCharacter, itemsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class CharacterInventoryRepository
-  extends BaseRepository<typeof inventoryInCharacter, CharacterInventoryInstance> {
+import { charactersInCharacter, inventoryInCharacter, itemsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class CharacterInventoryRepository extends BaseRepository<typeof inventoryInCharacter, CharacterInventoryInstance> {
   constructor() {
     super(inventoryInCharacter);
   }
@@ -24,11 +22,13 @@ class CharacterInventoryRepository
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.characterId, where.characterId),
-        this.idMatches(this.table.itemId, where.itemId),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.characterId, where.characterId),
+          this.idMatches(this.table.itemId, where.itemId),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
@@ -36,12 +36,7 @@ class CharacterInventoryRepository
   async delete(db: Db, where: { characterId: string; itemId: string }) {
     return await db
       .delete(this.table)
-      .where(
-        and(
-          eq(this.table.characterId, where.characterId),
-          this.idMatches(this.table.itemId, where.itemId),
-        ),
-      );
+      .where(and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)));
   }
 
   async existsByItemId(db: Db, where: { itemId: string; rulesetId: string }) {
@@ -49,14 +44,17 @@ class CharacterInventoryRepository
       .select({ id: this.table.itemId })
       .from(this.table)
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, and(
-        eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-        or(
-          eq(rulesetsInRules.id, where.rulesetId),
-          sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+      .innerJoin(
+        rulesetsInRules,
+        and(
+          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
+          or(
+            eq(rulesetsInRules.id, where.rulesetId),
+            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+          ),
         ),
-      ))
+      )
       .where(and(this.idMatches(this.table.itemId, where.itemId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
@@ -67,16 +65,20 @@ class CharacterInventoryRepository
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowItemIds: string[] },
   ) {
-    const itemCondition = where.shadowItemIds.length > 0
-      ? or(eq(itemsInRules.rulesetId, where.extensionRulesetId), inArray(itemsInRules.id, where.shadowItemIds))
-      : eq(itemsInRules.rulesetId, where.extensionRulesetId);
+    const itemCondition =
+      where.shadowItemIds.length > 0
+        ? or(eq(itemsInRules.rulesetId, where.extensionRulesetId), inArray(itemsInRules.id, where.shadowItemIds))
+        : eq(itemsInRules.rulesetId, where.extensionRulesetId);
     const rows = await db
       .select({ id: this.table.itemId })
       .from(this.table)
-      .innerJoin(charactersInCharacter, and(
-        eq(charactersInCharacter.id, this.table.characterId),
-        eq(charactersInCharacter.rulesetId, where.hostRulesetId),
-      ))
+      .innerJoin(
+        charactersInCharacter,
+        and(
+          eq(charactersInCharacter.id, this.table.characterId),
+          eq(charactersInCharacter.rulesetId, where.hostRulesetId),
+        ),
+      )
       .innerJoin(itemsInRules, eq(itemsInRules.id, this.table.itemId))
       .where(and(isNull(this.table.deletedAt), itemCondition))
       .limit(1);
@@ -85,10 +87,7 @@ class CharacterInventoryRepository
 
   async findOne(db: Db, where: { characterId: string; itemId: string }) {
     return await db.query.inventoryInCharacter.findFirst({
-      where: and(
-        eq(this.table.characterId, where.characterId),
-        this.idMatches(this.table.itemId, where.itemId),
-      ),
+      where: and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)),
     });
   }
 

@@ -1,4 +1,3 @@
-import type { Db } from "@/server/database/index.ts";
 import type { BookContent } from "@/database/packages/dnd35/content/types.ts";
 import { seedAptitudes } from "@/database/packages/dnd35/seed/aptitudes.ts";
 import { seedClass } from "@/database/packages/dnd35/seed/classes.ts";
@@ -8,6 +7,7 @@ import { cowFeatsIntoExtension, cowSpellsIntoExtension } from "@/database/packag
 import { seedDomains } from "@/database/packages/dnd35/seed/domains.ts";
 import { seedFeats } from "@/database/packages/dnd35/seed/feats.ts";
 import { seedPowers } from "@/database/packages/dnd35/seed/powers.ts";
+import type { Db } from "@/server/database/index.ts";
 
 /**
  * Seeds an extension of the core rules. Its content names the core's rows as a fork does: it adds only the
@@ -16,7 +16,11 @@ import { seedPowers } from "@/database/packages/dnd35/seed/powers.ts";
 export async function seedExtension(db: Db, ruleset: { name: string; description: string }, book: BookContent) {
   const ctx = await extensionContext(db, await loadSeedContext(db, await coreRulesetId(db, ruleset.name)), ruleset);
 
-  await seedAptitudes(db, ctx, book.aptitudes.filter((name) => !ctx.aptMap[name]));
+  await seedAptitudes(
+    db,
+    ctx,
+    book.aptitudes.filter((name) => !ctx.aptMap[name]),
+  );
   await seedFeats(db, ctx, book.standaloneFeats);
   await seedFeats(db, ctx, book.classFeats);
   await cowFeatsIntoExtension(db, ctx, book.cowFeats);

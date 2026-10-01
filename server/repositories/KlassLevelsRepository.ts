@@ -1,10 +1,9 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules, KlassLevelInstance> {
   constructor() {

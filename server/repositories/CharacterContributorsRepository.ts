@@ -5,32 +5,37 @@ import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
-class CharacterContributorsRepository extends BaseRepository<typeof contributorsInCharacter, CharacterContributorInstance> {
+class CharacterContributorsRepository extends BaseRepository<
+  typeof contributorsInCharacter,
+  CharacterContributorInstance
+> {
   constructor() {
     super(contributorsInCharacter);
   }
 
-  async create(db: Db, values: {
-    characterId: string;
-    email: string;
-    role: "Admin" | "Editor" | "Viewer";
-    invitedBy: string;
-    userId?: string;
-  }) {
-    return await db.insert(this.table).values({
-      characterId: values.characterId,
-      email: values.email,
-      role: values.role,
-      invitedBy: values.invitedBy,
-      userId: values.userId,
-    }).returning();
+  async create(
+    db: Db,
+    values: {
+      characterId: string;
+      email: string;
+      role: "Admin" | "Editor" | "Viewer";
+      invitedBy: string;
+      userId?: string;
+    },
+  ) {
+    return await db
+      .insert(this.table)
+      .values({
+        characterId: values.characterId,
+        email: values.email,
+        role: values.role,
+        invitedBy: values.invitedBy,
+        userId: values.userId,
+      })
+      .returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof contributorsInCharacter>>,
-    where: { id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInCharacter>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
@@ -67,9 +72,9 @@ class CharacterContributorsRepository extends BaseRepository<typeof contributors
 
     const searchCondition = search
       ? or(
-        this.search(search, [this.table.email]) || undefined,
-        this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined,
-      )
+          this.search(search, [this.table.email]) || undefined,
+          this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined,
+        )
       : undefined;
 
     const rows = await db
@@ -104,7 +109,10 @@ class CharacterContributorsRepository extends BaseRepository<typeof contributors
     return this.paginated(items, pagination);
   }
 
-  async findActiveRole(db: Db, where: { userId: string; characterId: string }): Promise<"Admin" | "Editor" | "Viewer" | null> {
+  async findActiveRole(
+    db: Db,
+    where: { userId: string; characterId: string },
+  ): Promise<"Admin" | "Editor" | "Viewer" | null> {
     const contributor = await db.query.contributorsInCharacter.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),

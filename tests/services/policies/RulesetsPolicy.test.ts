@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
@@ -15,9 +16,21 @@ const ACTORS: Actor[] = ["owner", "Admin", "Editor", "Viewer", "stranger"];
 function rulesetOf(overrides: Partial<Ruleset> = {}): Ruleset {
   const now = new Date().toISOString();
   return {
-    id: "ruleset-id", name: "Test Ruleset", description: "", private: true, baseRules: "Dungeons & Dragons: 3.5",
-    status: "Draft", kind: "ruleset", userId: OWNER, system: false, rulesetId: "base-id",
-    createdAt: now, updatedAt: now, deletedAt: null, ancestorRulesetIds: ["base-id"], extensionRulesetIds: [],
+    id: "ruleset-id",
+    name: "Test Ruleset",
+    description: "",
+    private: true,
+    baseRules: "Dungeons & Dragons: 3.5",
+    status: "Draft",
+    kind: "ruleset",
+    userId: OWNER,
+    system: false,
+    rulesetId: "base-id",
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    ancestorRulesetIds: ["base-id"],
+    extensionRulesetIds: [],
     ...overrides,
   };
 }
@@ -29,7 +42,12 @@ function policyOf(actor: Actor, overrides: Partial<Ruleset> = {}) {
 }
 
 /** Which actors may act; everyone else gets `error`. */
-function expectOnly(allowed: Actor[], check: (policy: RulesetsPolicy) => unknown, error: typeof ForbiddenError, overrides: Partial<Ruleset> = {}) {
+function expectOnly(
+  allowed: Actor[],
+  check: (policy: RulesetsPolicy) => unknown,
+  error: typeof ForbiddenError,
+  overrides: Partial<Ruleset> = {},
+) {
   for (const actor of ACTORS) {
     const run = () => check(policyOf(actor, overrides));
     if (allowed.includes(actor)) expect(run()).toBe(true);
@@ -70,10 +88,14 @@ describe("RulesetsPolicy", () => {
 
   test("canFork: published base rulesets only", () => {
     expect(policyOf("stranger", { userId: null, rulesetId: null, status: "Published" }).canFork()).toBe(true);
-    expect(() => policyOf("stranger", { userId: null, rulesetId: null }).canFork()).toThrow("Can only fork published rulesets");
+    expect(() => policyOf("stranger", { userId: null, rulesetId: null }).canFork()).toThrow(
+      "Can only fork published rulesets",
+    );
     // A system extension, or a user fork: no fork of a fork.
     for (const userId of [null, OWNER]) {
-      expect(() => policyOf("stranger", { userId, status: "Published" }).canFork()).toThrow("Cannot fork a non-base ruleset");
+      expect(() => policyOf("stranger", { userId, status: "Published" }).canFork()).toThrow(
+        "Cannot fork a non-base ruleset",
+      );
     }
   });
 
@@ -81,8 +103,12 @@ describe("RulesetsPolicy", () => {
     expectOnly(["owner"], (p) => p.canSubscribeExtension(), ForbiddenError);
     expect(() => policyOf("owner", { userId: null }).canSubscribeExtension()).toThrow(ForbiddenError);
     expect(() => policyOf("owner", { status: "Archived" }).canSubscribeExtension()).toThrow(UnprocessableEntityError);
-    expect(() => policyOf("owner", { rulesetId: null }).canSubscribeExtension()).toThrow("Only forked rulesets can subscribe to extensions");
-    expect(() => policyOf("owner", { kind: "extension" }).canSubscribeExtension()).toThrow("Extensions cannot subscribe to other extensions");
+    expect(() => policyOf("owner", { rulesetId: null }).canSubscribeExtension()).toThrow(
+      "Only forked rulesets can subscribe to extensions",
+    );
+    expect(() => policyOf("owner", { kind: "extension" }).canSubscribeExtension()).toThrow(
+      "Extensions cannot subscribe to other extensions",
+    );
 
     expect(policyOf("owner").canUnsubscribeExtension()).toBe(true);
     expect(() => policyOf("owner").canUnsubscribeExtension({ inUse: true })).toThrow(ConflictError);
@@ -116,7 +142,9 @@ describe("RulesetsPolicy", () => {
 
     test("refuses extensions and archived rulesets", async () => {
       for (const overrides of [{ kind: "extension" as const }, { status: "Archived" as const }]) {
-        await expect(policyOf("owner", overrides).canCreateCharacter(db)).rejects.toThrow("Choose an active playable ruleset");
+        await expect(policyOf("owner", overrides).canCreateCharacter(db)).rejects.toThrow(
+          "Choose an active playable ruleset",
+        );
       }
     });
 

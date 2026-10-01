@@ -1,16 +1,17 @@
+import { getTableName } from "drizzle-orm";
+
 import { invitesInCampaign } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
+import { emailService } from "@/server/emails";
+import { EmailTemplate } from "@/server/emails/templates.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Campaigns, Invites, Notifications, Players, Users } from "@/server/repositories/index.ts";
-import { emailService } from "@/server/emails";
-import { EmailTemplate } from "@/server/emails/templates.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Player, Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export type InviteEmailData = {
   invite: { id: string };
@@ -21,12 +22,7 @@ export type InviteEmailData = {
 };
 
 /** Core invite creation logic — must be called within a transaction. */
-export async function createInviteInTransaction(
-  tx: Db,
-  session: Session,
-  player: Player,
-  email: string,
-) {
+export async function createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
   const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
   if (!campaign) {
     throw new NotFoundError("Campaign not found");
@@ -159,11 +155,7 @@ export const CampaignInvitesMethods = {
     return await Invites.findManyForCampaign(db, { campaignId, ...where }, pagination);
   },
 
-  async createCampaignInvite(
-    session: Session,
-    player: Player,
-    email: string,
-  ) {
+  async createCampaignInvite(session: Session, player: Player, email: string) {
     const emailData = await withTransaction(async (tx) => {
       return await createInviteInTransaction(tx, session, player, email);
     });

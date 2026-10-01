@@ -1,4 +1,5 @@
 import { Box, Link, Typography } from "@mui/material";
+
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 export function Footer() {
@@ -18,9 +19,7 @@ export function Footer() {
         color: "text.secondary",
       }}
     >
-      <Typography variant="caption">
-        © {new Date().getFullYear()} Arkyvree
-      </Typography>
+      <Typography variant="caption">© {new Date().getFullYear()} Arkyvree</Typography>
       <Link
         href={externalLinks.source}
         target="_blank"

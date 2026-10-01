@@ -1,36 +1,37 @@
-import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
 import {
   Archive as ArchiveIcon,
   Extension as ExtensionIcon,
   Lock as LockIcon,
-  MenuBook as RulesetIcon,
   Public as PublicIcon,
   Publish as PublishIcon,
+  MenuBook as RulesetIcon,
 } from "@mui/icons-material";
-import { useEffect, useState } from "react";
-import { ConfirmDialog, CreateDialog, EditDialog, DescriptionField, NameField } from "@/client/src/components/common/index.ts";
-import {
-  Box,
-  Stack,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
+import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
+import { useEffect, useState } from "react";
 import { type UseFormReturn } from "react-hook-form";
 
-export type EditRulesetFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["$put"]
->["json"];
+import {
+  ConfirmDialog,
+  CreateDialog,
+  DescriptionField,
+  EditDialog,
+  NameField,
+} from "@/client/src/components/common/index.ts";
+import { nameRules } from "@/client/src/lib/validation.ts";
+import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type ForkRulesetFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["fork"]["$post"]
->["json"];
+export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];
+
+export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
 
 /** Public / Private choice; the selected option can't be toggled off. */
-function PrivacyToggle({ value, onChange, disabled }: {
+function PrivacyToggle({
+  value,
+  onChange,
+  disabled,
+}: {
   value: boolean;
   onChange: (isPrivate: boolean) => void;
   disabled: boolean;
@@ -65,7 +66,11 @@ function PrivacyToggle({ value, onChange, disabled }: {
 }
 
 /** Ruleset / Extension choice made when publishing; the selected option can't be toggled off. */
-function RulesetKindToggle({ value, onChange, disabled }: {
+function RulesetKindToggle({
+  value,
+  onChange,
+  disabled,
+}: {
   value: PublishKind;
   onChange: (kind: PublishKind) => void;
   disabled: boolean;
@@ -137,11 +142,7 @@ export function EditRulesetDialog({
         autoFocus
         disabled={isLoading}
       />
-      <DescriptionField
-        {...form.register("description")}
-        disabled={isLoading}
-        rows={4}
-      />
+      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
       {!isPublic && (
         <PrivacyToggle
           value={form.watch("private") ?? false}
@@ -168,13 +169,7 @@ interface ForkRulesetDialogProps {
   isLoading: boolean;
 }
 
-export function ForkRulesetDialog({
-  open,
-  onClose,
-  form,
-  onSubmit,
-  isLoading,
-}: ForkRulesetDialogProps) {
+export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: ForkRulesetDialogProps) {
   return (
     <CreateDialog
       open={open}
@@ -192,11 +187,7 @@ export function ForkRulesetDialog({
         autoFocus
         disabled={isLoading}
       />
-      <DescriptionField
-        {...form.register("description")}
-        disabled={isLoading}
-        rows={4}
-      />
+      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
       <PrivacyToggle
         value={form.watch("private") ?? false}
         onChange={(isPrivate) => form.setValue("private", isPrivate, { shouldDirty: true })}
@@ -296,7 +287,12 @@ export function UnsubscribeExtensionDialog({
       onConfirm={onConfirm}
       isLoading={isLoading}
       title="Unsubscribe from Extension"
-      message={<>Are you sure you want to unsubscribe from <strong>{extensionName}</strong>? You will lose all associated data from this extension.</>}
+      message={
+        <>
+          Are you sure you want to unsubscribe from <strong>{extensionName}</strong>? You will lose all associated data
+          from this extension.
+        </>
+      }
       confirmLabel="Unsubscribe"
       confirmColor="error"
       confirmIcon={<ExtensionIcon />}

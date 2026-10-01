@@ -1,33 +1,24 @@
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import {
-  ModifierForm,
-  TargetPathBreadcrumbs,
-} from "@/client/src/components/customization/index.ts";
-import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import {
-  CreateDialog,
-  DeleteDialog,
-  EditDialog,
-  SectionContent,
-} from "@/client/src/components/common/index.ts";
-import {
-  useRulesetPermissions,
-  useRulesetSection,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
-import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
-import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Tune as ModifiersIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
-import type { InferRequestType, InferResponseType } from "hono/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { InferRequestType, InferResponseType } from "hono/client";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
+import { ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
+import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
@@ -38,7 +29,10 @@ const MODIFIERS_COLUMNS = [
   { key: "createdAt", label: "Created", width: "20%" },
 ];
 
-type ModifiersArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"], 200>;
+type ModifiersArray = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"],
+  200
+>;
 type Modifier = ModifiersArray[number];
 
 type ModifierFormData = InferRequestType<
@@ -91,36 +85,44 @@ export function ModifiersSection({
     sectionName: `customization-${entityType}-${entityId}-modifiers`,
     label: "Modifier",
     data: externalData,
-    queryFn: !externalData ? async () => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[
-        ":entityType"
-      ][":entityId"].modifiers.$get({
-        param: entityParam,
-      }));
-    } : undefined,
+    queryFn: !externalData
+      ? async () => {
+          return parseResponse(
+            rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$get({
+              param: entityParam,
+            }),
+          );
+        }
+      : undefined,
     queryKeysToInvalidate,
     createFn: async (data: ModifierFormData) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
-        ":entityType"
-      ][":entityId"].modifiers.$post({
-        param: entityParam,
-        json: data,
-      })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$post({
+            param: entityParam,
+            json: data,
+          }),
+        ),
+      );
     },
     updateFn: async (modifierId: string, data: ModifierFormData) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
-        ":entityType"
-      ][":entityId"].modifiers[":modifierId"].$put({
-        param: { ...entityParam, modifierId },
-        json: data,
-      })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].$put({
+            param: { ...entityParam, modifierId },
+            json: data,
+          }),
+        ),
+      );
     },
     deleteFn: async (modifierId: string) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
-        ":entityType"
-      ][":entityId"].modifiers[":modifierId"].$delete({
-        param: { ...entityParam, modifierId },
-      })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].$delete({
+            param: { ...entityParam, modifierId },
+          }),
+        ),
+      );
     },
     ...followCopies,
   });
@@ -145,11 +147,14 @@ export function ModifiersSection({
   };
 
   const handleDuplicateModifier = (modifier: Modifier) => {
-    createForm.reset({
-      target: modifier.target,
-      value: modifier.value,
-      operator: modifier.operator,
-    }, { keepDefaultValues: true });
+    createForm.reset(
+      {
+        target: modifier.target,
+        value: modifier.value,
+        operator: modifier.operator,
+      },
+      { keepDefaultValues: true },
+    );
     setDuplicateSourceId(modifier.id);
     setCreateDialogOpen(true);
   };
@@ -159,20 +164,19 @@ export function ModifiersSection({
 
   const duplicateMutation = useMutation({
     mutationFn: async ({ sourceId, data }: { sourceId: string; data: ModifierFormData }) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[
-        ":entityType"
-      ][":entityId"].modifiers[":modifierId"].duplicate.$post({
-        param: { ...entityParam, modifierId: sourceId },
-        json: data,
-      })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].duplicate.$post({
+            param: { ...entityParam, modifierId: sourceId },
+            json: data,
+          }),
+        ),
+      );
     },
     onSuccess: (data) => {
       snackbar.success("Modifier created successfully");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.section(
-          ruleset.id,
-          `customization-${entityType}-${entityId}-modifiers`,
-        ),
+        queryKey: queryKeys.rulesets.section(ruleset.id, `customization-${entityType}-${entityId}-modifiers`),
       });
       for (const queryKey of queryKeysToInvalidate ?? []) {
         queryClient.invalidateQueries({ queryKey });
@@ -189,39 +193,31 @@ export function ModifiersSection({
   });
 
   const handleRowClick = (modifier: Modifier) => {
-    navigate(
-      `/rulesets/${ruleset.id}/modifiers/${modifier.id}/customization/requirements`,
-    );
+    navigate(`/rulesets/${ruleset.id}/modifiers/${modifier.id}/customization/requirements`);
   };
 
-  const handleRowMouseEnter = useCallback((modifier: Modifier) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "modifiers", modifier.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (modifier: Modifier) => {
+      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "modifiers", modifier.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (modifier: Modifier, columnKey: string) => {
     switch (columnKey) {
       case "target":
-        return (
-          <TargetPathBreadcrumbs
-            target={modifier.target}
-            targetLabels={modifier.targetLabels}
-          />
-        );
+        return <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />;
       case "value": {
         const templatePath = extractTemplatePath(modifier.value);
         if (templatePath) {
-          return (
-            <TargetPathBreadcrumbs target={templatePath} targetLabels={modifier.targetLabels} />
-          );
+          return <TargetPathBreadcrumbs target={templatePath} targetLabels={modifier.targetLabels} />;
         }
         return <Typography variant="body2">{modifier.valueLabel || modifier.value}</Typography>;
       }
       case "operator":
         return (
           <Chip
-            label={
-              MODIFIER_OPERATOR_LABELS[modifier.operator] || modifier.operator
-            }
+            label={MODIFIER_OPERATOR_LABELS[modifier.operator] || modifier.operator}
             size="small"
             color="secondary"
             variant="outlined"
@@ -285,9 +281,7 @@ export function ModifiersSection({
         onClose={() => setEditDialogOpen(false)}
         title="Edit Modifier"
         form={editForm}
-        onSubmit={(data) =>
-          selectedModifier && updateMutation.mutate({ id: selectedModifier.id, data })
-        }
+        onSubmit={(data) => selectedModifier && updateMutation.mutate({ id: selectedModifier.id, data })}
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >

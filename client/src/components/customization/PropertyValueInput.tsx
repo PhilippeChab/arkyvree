@@ -1,6 +1,8 @@
+import { TextField } from "@mui/material";
+
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { TextField } from "@mui/material";
+
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 
 interface PropertyValueInputProps {
@@ -50,10 +52,13 @@ export function PropertyValueInput({
       fullWidth={fullWidth}
       queryKey={(search) => queryKeys.rulesets.propertyValueCompletions(rulesetId, propertyType, search)}
       fetchPage={(search, page) =>
-        parseResponse(rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
-          param: { id: rulesetId },
-          query: { type: propertyType, query: search, limit: "10", page: page.toString() },
-        }))}
+        parseResponse(
+          rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
+            param: { id: rulesetId },
+            query: { type: propertyType, query: search, limit: "10", page: page.toString() },
+          }),
+        )
+      }
       enabled={!!rulesetId}
       loadingText="Loading values..."
       noOptionsText="No values found"

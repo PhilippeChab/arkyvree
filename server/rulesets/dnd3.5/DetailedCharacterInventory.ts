@@ -3,17 +3,26 @@ import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedChara
 import type DetailedCharacterShields from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
 import type DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
 import { getInventorySlot } from "@/server/rulesets/properties/index.ts";
-import { type CharacterInventory, type Item, type Modifier, type Property, type Requirement } from "@/shared/relations.ts";
+import {
+  type CharacterInventory,
+  type Item,
+  type Modifier,
+  type Property,
+  type Requirement,
+} from "@/shared/relations.ts";
 
 type InventorySlotData = {
   properties: Record<string, string>;
 } | null;
 
-type WeaponSetInventory = Record<string, {
-  mainhand: InventorySlotData;
-  offhand: InventorySlotData;
-  twohanded: InventorySlotData;
-}>;
+type WeaponSetInventory = Record<
+  string,
+  {
+    mainhand: InventorySlotData;
+    offhand: InventorySlotData;
+    twohanded: InventorySlotData;
+  }
+>;
 
 export type DetailedCharacterComprehensiveInventory = Record<string, InventorySlotData> & {
   weaponsets: WeaponSetInventory;
@@ -41,9 +50,7 @@ export default class DetailedCharacterInventory {
     private readonly characterShields: DetailedCharacterShields,
   ) {}
 
-  initialize(
-    inventory: RawInventoryEntry[],
-  ) {
+  initialize(inventory: RawInventoryEntry[]) {
     this.rawItems = inventory;
     for (const entry of inventory) {
       if (!entry.equipped) {
@@ -94,12 +101,7 @@ export default class DetailedCharacterInventory {
           entry.item.id,
         );
 
-        this.characterWeapons.registerWeapon(
-          setIndex,
-          entry.location as string,
-          entry.item,
-          entry.item.properties,
-        );
+        this.characterWeapons.registerWeapon(setIndex, entry.location as string, entry.item, entry.item.properties);
       } else if (isArmor) {
         this.characterArmors.registerArmor(entry.item, entry.item.properties);
       } else if (isShield) {
@@ -114,10 +116,7 @@ export default class DetailedCharacterInventory {
 
     const set0Mainhand = this.characterCombat.getCombat().weaponsets["0"]?.mainhand;
     if (set0Mainhand?.name === "Unarmed Strike" && set0Mainhand.itemId === null) {
-      this.characterWeapons.registerWeapon(
-        0, "Main Hand",
-        { name: "Unarmed Strike" } as unknown as Item,
-      );
+      this.characterWeapons.registerWeapon(0, "Main Hand", { name: "Unarmed Strike" } as unknown as Item);
     }
   }
 

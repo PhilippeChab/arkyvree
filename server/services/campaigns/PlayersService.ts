@@ -1,3 +1,5 @@
+import { getTableName } from "drizzle-orm";
+
 import { invitesInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
@@ -5,9 +7,9 @@ import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Invites, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
-import { createInviteInTransaction, sendInviteEmail, type InviteEmailData } from "./InvitesService.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
+
+import { createInviteInTransaction, type InviteEmailData, sendInviteEmail } from "./InvitesService.ts";
 
 export const CampaignPlayersMethods = {
   async getCampaignPlayers(
@@ -21,11 +23,7 @@ export const CampaignPlayersMethods = {
       throw new NotFoundError("Campaign not found");
     }
 
-    const player = await Players.findOne(
-      db,
-      { userId: session.userId, campaignId },
-      Visibility.All,
-    );
+    const player = await Players.findOne(db, { userId: session.userId, campaignId }, Visibility.All);
     if (!player) throw new ForbiddenError("You are not a member of this campaign");
 
     return await Players.findManyForCampaign(db, { campaignId, ...where }, pagination, Visibility.All);
@@ -186,7 +184,10 @@ export const CampaignPlayersMethods = {
 
       await Activities.deleteByTarget(tx, { targetId: removedPlayer.id, targetTable: getTableName(playersInCampaign) });
       if (deletedInvites.length > 0) {
-        await Activities.deleteByTargets(tx, { targetIds: deletedInvites.map((i) => i.id), targetTable: getTableName(invitesInCampaign) });
+        await Activities.deleteByTargets(tx, {
+          targetIds: deletedInvites.map((i) => i.id),
+          targetTable: getTableName(invitesInCampaign),
+        });
       }
 
       await Activities.create(tx, {

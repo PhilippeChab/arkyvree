@@ -2,11 +2,9 @@ import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
-import {
-  SkillFormFields,
-  type SkillFormData,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { type SkillFormData, SkillFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import { skillQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
@@ -39,9 +37,7 @@ export default function SkillDetailPage() {
         const primaryAbilityName = abilities.find((a) => a.id === skill.primaryAbilityId)?.name;
         return (
           <>
-            {primaryAbilityName && (
-              <Chip label={primaryAbilityName} color="secondary" sx={{ fontWeight: 600 }} />
-            )}
+            {primaryAbilityName && <Chip label={primaryAbilityName} color="secondary" sx={{ fontWeight: 600 }} />}
             {!skill.usableWithoutTraining && <Chip label="Trained Only" color="warning" />}
             {skill.impactedByWeight && <Chip label="Weight Penalty" color="info" variant="outlined" />}
           </>

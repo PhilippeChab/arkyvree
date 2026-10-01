@@ -1,6 +1,7 @@
 import { Autocomplete, TextField } from "@mui/material";
 import type { Ref, UIEventHandler } from "react";
 import type { FieldError } from "react-hook-form";
+
 import { AnimatedAlert } from "./AnimatedAlert.tsx";
 import { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 

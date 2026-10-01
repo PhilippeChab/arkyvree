@@ -1,8 +1,4 @@
-import type {
-  baseRules,
-  role,
-  rulesetStatus,
-} from "@/drizzle/schema.ts";
+import type { baseRules, role, rulesetStatus } from "@/drizzle/schema.ts";
 import { alignment, gender, location, sizeType } from "@/drizzle/schema.ts";
 
 export type Alignment = (typeof alignment.enumValues)[number];

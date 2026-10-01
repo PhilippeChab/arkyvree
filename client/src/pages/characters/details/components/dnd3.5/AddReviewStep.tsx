@@ -1,7 +1,8 @@
-import type { AddReviewStepProps } from "./levelUpFactory.ts";
-import { LevelReview, ReviewGroup } from "./LevelReview.tsx";
-import { attributeName } from "./attributeName.ts";
 import { Typography } from "@mui/material";
+
+import { attributeName } from "./attributeName.ts";
+import { LevelReview, ReviewGroup } from "./LevelReview.tsx";
+import type { AddReviewStepProps } from "./levelUpFactory.ts";
 
 export function AddReviewStep({ wizard }: AddReviewStepProps) {
   const { classPlan, hpValues, abilityIncreases, attributeData } = wizard;
@@ -11,12 +12,14 @@ export function AddReviewStep({ wizard }: AddReviewStepProps) {
     <LevelReview wizard={wizard}>
       <ReviewGroup title="Class Advancement">
         {/* HP is kept per planned level; empty slots don't count. */}
-        {classPlan.filter((klass) => klass !== null).map((klass, i) => (
-          <Typography key={i} variant="body1">
-            <strong>{klass.name}</strong> Level {klass.nextLevel}
-            {hpValues[i] != null && <> — HP: +{hpValues[i]}</>}
-          </Typography>
-        ))}
+        {classPlan
+          .filter((klass) => klass !== null)
+          .map((klass, i) => (
+            <Typography key={i} variant="body1">
+              <strong>{klass.name}</strong> Level {klass.nextLevel}
+              {hpValues[i] != null && <> — HP: +{hpValues[i]}</>}
+            </Typography>
+          ))}
       </ReviewGroup>
       {increases.length > 0 && (
         <ReviewGroup title="Attribute Increases">

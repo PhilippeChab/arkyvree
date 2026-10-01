@@ -12,10 +12,30 @@ export default async function seed(db: Db) {
   // integration tests reference them as session/user identifiers. The e2e
   // run's journeys create users of their own (tests/e2e/fixtures.ts).
   const seeded: Array<{ id: string; email: string; username: string; sessionId: string }> = [
-    { id: "00000000-0000-4000-8000-000000000456", email: "localuser@example.com", username: "LocalUser", sessionId: "00000000-0000-4000-8000-000000000123" },
-    { id: "10000000-0000-4000-8000-000000000789", email: "testuser1@example.com", username: "TestUser1", sessionId: "10000000-0000-4000-8000-000000000789" },
-    { id: "10000000-0000-4000-8000-000000000999", email: "testuser2@example.com", username: "TestUser2", sessionId: "10000000-0000-4000-8000-000000000999" },
-    { id: "10000000-0000-4000-8000-000000000888", email: "testuser3@example.com", username: "TestUser3", sessionId: "10000000-0000-4000-8000-000000000888" },
+    {
+      id: "00000000-0000-4000-8000-000000000456",
+      email: "localuser@example.com",
+      username: "LocalUser",
+      sessionId: "00000000-0000-4000-8000-000000000123",
+    },
+    {
+      id: "10000000-0000-4000-8000-000000000789",
+      email: "testuser1@example.com",
+      username: "TestUser1",
+      sessionId: "10000000-0000-4000-8000-000000000789",
+    },
+    {
+      id: "10000000-0000-4000-8000-000000000999",
+      email: "testuser2@example.com",
+      username: "TestUser2",
+      sessionId: "10000000-0000-4000-8000-000000000999",
+    },
+    {
+      id: "10000000-0000-4000-8000-000000000888",
+      email: "testuser3@example.com",
+      username: "TestUser3",
+      sessionId: "10000000-0000-4000-8000-000000000888",
+    },
   ];
 
   // The first entry (LocalUser) keeps the original onboarding-not-set state so
@@ -32,7 +52,5 @@ export default async function seed(db: Db) {
     })),
   );
 
-  await db.insert(sessionsInAccount).values(
-    seeded.map((u) => ({ id: u.sessionId, userId: u.id, expiresAt })),
-  );
+  await db.insert(sessionsInAccount).values(seeded.map((u) => ({ id: u.sessionId, userId: u.id, expiresAt })));
 }

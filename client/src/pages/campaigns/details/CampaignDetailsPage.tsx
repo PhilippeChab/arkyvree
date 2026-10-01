@@ -1,48 +1,40 @@
-import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import {
-  EditCampaignDialog,
-  type EditCampaignFormData,
-} from "@/client/src/pages/campaigns/components/index.ts";
+  Archive as ArchiveIcon,
+  Person as CharactersIcon,
+  DeleteForever as DeleteForeverIcon,
+  Edit as EditIcon,
+  Group as PlayersIcon,
+  Unarchive as UnarchiveIcon,
+} from "@mui/icons-material";
+import { Alert, Box, Chip, Container, Menu, Typography } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+
 import {
+  ActionMenuItem,
   ConfirmDialog,
   DeleteDialog,
   DetailPageHeader,
   DiceSpinner,
-  PageTransition,
-  SectionTabs,
-  type SectionTab,
   PageError,
-  ActionMenuItem,
+  PageTransition,
+  type SectionTab,
+  SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
-import {
-  Archive as ArchiveIcon,
-  DeleteForever as DeleteForeverIcon,
-  Edit as EditIcon,
-  Group as PlayersIcon,
-  Person as CharactersIcon,
-  Unarchive as UnarchiveIcon,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Chip,
-  Container,
-  Menu,
-  Typography,
-} from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { EditCampaignDialog, type EditCampaignFormData } from "@/client/src/pages/campaigns/components/index.ts";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
-import { CharactersSection, PlayersSection } from "./sections/index.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
+
 import type { CampaignSection } from "./sectionQueries.ts";
+import { CharactersSection, PlayersSection } from "./sections/index.ts";
 
 type TabSection = CampaignSection;
 
@@ -56,8 +48,7 @@ const SECTION_COMPONENTS = {
   players: PlayersSection,
 } as const;
 
-const isTabSection = (section: string | undefined): section is TabSection =>
-  TABS.some((tab) => tab.key === section);
+const isTabSection = (section: string | undefined): section is TabSection => TABS.some((tab) => tab.key === section);
 
 export default function CampaignDetailsPage() {
   const { id = "", section } = useParams<{ id: string; section?: string }>();
@@ -143,7 +134,11 @@ export default function CampaignDetailsPage() {
   if (!campaign || accessLost(error)) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError message={loadFailureMessage("Campaign", error)} backLabel="Back to Campaigns" onBack={() => navigate("/campaigns")} />
+        <PageError
+          message={loadFailureMessage("Campaign", error)}
+          backLabel="Back to Campaigns"
+          onBack={() => navigate("/campaigns")}
+        />
       </Container>
     );
   }
@@ -160,24 +155,20 @@ export default function CampaignDetailsPage() {
           title={`⚔️ ${campaign.name}`}
           onBack={() => navigate("/campaigns")}
           onMenuOpen={canEdit ? (e) => setAnchorEl(e.currentTarget) : undefined}
-          chips={(
+          chips={
             <>
-              <Chip
-                label={formatCount(campaign.currentPlayers, "player")}
-                color="primary"
-                sx={{ fontWeight: 600 }}
-              />
+              <Chip label={formatCount(campaign.currentPlayers, "player")} color="primary" sx={{ fontWeight: 600 }} />
               <Chip label={campaign.rulesetName} color="secondary" sx={{ fontWeight: 600 }} />
             </>
-          )}
+          }
           description={campaign.description || "Manage your campaign players, characters, and invitations"}
         />
 
         {campaign.deletedAt && (
           <Alert severity="info" sx={{ mb: 3 }}>
             <Typography variant="body2">
-              <strong>This campaign is archived and read-only.</strong>{" "}
-              You can view all content but cannot make changes.
+              <strong>This campaign is archived and read-only.</strong> You can view all content but cannot make
+              changes.
             </Typography>
           </Alert>
         )}
@@ -206,46 +197,44 @@ export default function CampaignDetailsPage() {
           onClose={() => setAnchorEl(null)}
           slotProps={{ paper: { sx: { minWidth: 200 } } }}
         >
-          {campaign.deletedAt ? (
-            [
-              <ActionMenuItem
-                key="unarchive"
-                icon={UnarchiveIcon}
-                label="Unarchive"
-                intent="positive"
-                onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
-              />,
-              <ActionMenuItem
-                key="hard-delete"
-                icon={DeleteForeverIcon}
-                label="Delete permanently"
-                intent="destructive"
-                onClick={closeMenuAnd(() => setHardDeleteDialogOpen(true))}
-              />,
-            ]
-          ) : (
-            [
-              <ActionMenuItem
-                key="edit"
-                icon={EditIcon}
-                label="Edit"
-                onClick={closeMenuAnd(() => {
-                  editForm.reset({
-                    name: campaign.name,
-                    description: campaign.description ?? "",
-                  });
-                  setEditDialogOpen(true);
-                })}
-              />,
-              <ActionMenuItem
-                key="archive"
-                icon={ArchiveIcon}
-                label="Archive"
-                intent="caution"
-                onClick={closeMenuAnd(() => setArchiveDialogOpen(true))}
-              />,
-            ]
-          )}
+          {campaign.deletedAt
+            ? [
+                <ActionMenuItem
+                  key="unarchive"
+                  icon={UnarchiveIcon}
+                  label="Unarchive"
+                  intent="positive"
+                  onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
+                />,
+                <ActionMenuItem
+                  key="hard-delete"
+                  icon={DeleteForeverIcon}
+                  label="Delete permanently"
+                  intent="destructive"
+                  onClick={closeMenuAnd(() => setHardDeleteDialogOpen(true))}
+                />,
+              ]
+            : [
+                <ActionMenuItem
+                  key="edit"
+                  icon={EditIcon}
+                  label="Edit"
+                  onClick={closeMenuAnd(() => {
+                    editForm.reset({
+                      name: campaign.name,
+                      description: campaign.description ?? "",
+                    });
+                    setEditDialogOpen(true);
+                  })}
+                />,
+                <ActionMenuItem
+                  key="archive"
+                  icon={ArchiveIcon}
+                  label="Archive"
+                  intent="caution"
+                  onClick={closeMenuAnd(() => setArchiveDialogOpen(true))}
+                />,
+              ]}
         </Menu>
 
         <EditCampaignDialog

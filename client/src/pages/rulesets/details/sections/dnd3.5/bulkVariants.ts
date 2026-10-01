@@ -1,5 +1,6 @@
-import type { rpc } from "@/client/src/services/rpc.ts";
 import type { InferRequestType } from "hono/client";
+
+import type { rpc } from "@/client/src/services/rpc.ts";
 
 type VariantsRequest = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["variants"]["$post"]>;
 

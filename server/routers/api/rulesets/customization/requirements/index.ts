@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { requirementOperator, chainingOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { RequirementsService } from "@/server/services/rulesets/index.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { chainingOperator, requirementOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { RequirementsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -21,12 +22,7 @@ export default new Hono<SessionContext>()
       const { id, entityType, entityId } = c.req.valid("param");
 
       const requirementsService = RequirementsService.initialize();
-      const result = await requirementsService.call(
-        "getEntityRequirements",
-        id,
-        entityType,
-        entityId,
-      );
+      const result = await requirementsService.call("getEntityRequirements", id, entityType, entityId);
       return respond(c, result, 200);
     },
   )

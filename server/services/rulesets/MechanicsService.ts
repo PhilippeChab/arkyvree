@@ -1,24 +1,39 @@
+import { getTableName } from "drizzle-orm";
+
 import { mechanicsInRules } from "@/drizzle/schema.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Mechanics } from "@/server/repositories/index.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import { assertEntityNameAvailable, cowEntity, repointTombstoneSnapshot, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import BaseService from "@/server/services/BaseService.ts";
+import {
+  assertEntityNameAvailable,
+  cowEntity,
+  repointTombstoneSnapshot,
+  withRulesetScope,
+} from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const MechanicsMethods = {
   async getRulesetMechanics(
     rulesetId: string,
-    where: { childOnly?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      return await Mechanics.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      return await Mechanics.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
+        pagination,
+      );
     });
   },
 
@@ -33,15 +48,25 @@ export const MechanicsMethods = {
     });
   },
 
-  async createRulesetMechanic(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-  }) {
+  async createRulesetMechanic(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "mechanics", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "mechanics",
+          body.name,
+        );
 
         const rows = await Mechanics.create(tx, { ...body, rulesetId });
         const mechanic = rows[0];
@@ -65,11 +90,16 @@ export const MechanicsMethods = {
     return result;
   },
 
-  async updateRulesetMechanic(session: Session, rulesetId: string, mechanicId: string, body: {
-    name: string;
-    description?: string | null;
-    updatedAt?: string;
-  }) {
+  async updateRulesetMechanic(
+    session: Session,
+    rulesetId: string,
+    mechanicId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -86,7 +116,14 @@ export const MechanicsMethods = {
         let targetId = mechanic.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "mechanics", mechanic.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "mechanics",
+            mechanic.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         }
 
@@ -102,7 +139,10 @@ export const MechanicsMethods = {
           targetId,
           targetTable: getTableName(mechanicsInRules),
           type: "updateMechanic",
-          data: { entityName: body.name, changedFields: getChangedFields(mechanic as Record<string, unknown>, body as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(mechanic as Record<string, unknown>, body as Record<string, unknown>),
+          },
         });
 
         return updatedMechanic;
@@ -129,7 +169,14 @@ export const MechanicsMethods = {
 
         let targetId = mechanic.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "mechanics", mechanic.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "mechanics",
+            mechanic.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         }
 

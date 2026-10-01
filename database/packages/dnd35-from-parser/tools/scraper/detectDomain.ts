@@ -1,9 +1,15 @@
-import { stripSeparators } from "@/shared/utils.ts";
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import {
+  SKILL_MAP as BASE_SKILL_MAP,
+  detectModifiersOf,
+  type ModifierDetection,
+  modifierMapping,
+  validateModifiers,
+} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SKILL_MAP as BASE_SKILL_MAP, detectModifiersOf, modifierMapping, validateModifiers, type ModifierDetection } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 // ---------------------------------------------------------------------------
 // Skill name → slug mapping (extends base with paren-stripped variants)
@@ -30,16 +36,14 @@ const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge")
 // Detect domain modifiers from description text
 // ---------------------------------------------------------------------------
 
-export function buildDomainDetected(raw: DomainReference["raw"]): DomainReference["detected"] {
-  return detectModifiersOf(raw, (entry) => detectDomainModifiers(entry.description));
-}
-
 export function buildDomainMapping(
   raw: DomainReference["raw"],
   detected: DomainReference["detected"],
   overrides: NonNullable<DomainReference["overrides"]>,
 ): DomainReference["mapping"] {
-  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) => (override?.featPool ? { featPool: override.featPool } : {}));
+  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) =>
+    override?.featPool ? { featPool: override.featPool } : {},
+  );
 }
 
 function detectDomainModifiers(description: string): ModifierDetection<Modifier> {
@@ -85,4 +89,8 @@ function detectDomainModifiers(description: string): ModifierDetection<Modifier>
   errors.push(...validationErrors);
 
   return { modifiers: validated, errors, unresolvedModifiers };
+}
+
+export function buildDomainDetected(raw: DomainReference["raw"]): DomainReference["detected"] {
+  return detectModifiersOf(raw, (entry) => detectDomainModifiers(entry.description));
 }

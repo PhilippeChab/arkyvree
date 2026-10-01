@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { SavesService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { SavesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -26,7 +27,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
 
       const savesService = SavesService.initialize();
-      const result = await savesService.call("getRulesetSaves", id, { search, childOnly, orderBy, orderDir }, { limit, page });
+      const result = await savesService.call(
+        "getRulesetSaves",
+        id,
+        { search, childOnly, orderBy, orderDir },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )
@@ -48,7 +54,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
         abilityId: z.string().uuid(),
       }),
     ),
@@ -68,7 +77,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
         abilityId: z.string().uuid(),
         updatedAt: z.string().optional(),
       }),
@@ -78,13 +90,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const savesService = SavesService.initialize();
-      const result = await savesService.call(
-        "updateRulesetSave",
-        c.var.requestSession,
-        id,
-        saveId,
-        body,
-      );
+      const result = await savesService.call("updateRulesetSave", c.var.requestSession, id, saveId, body);
       return respond(c, result, 200);
     },
   )
@@ -95,12 +101,7 @@ export default new Hono<SessionContext>()
       const { id, saveId } = c.req.valid("param");
 
       const savesService = SavesService.initialize();
-      const result = await savesService.call(
-        "deleteRulesetSave",
-        c.var.requestSession,
-        id,
-        saveId,
-      );
+      const result = await savesService.call("deleteRulesetSave", c.var.requestSession, id, saveId);
       return respond(c, result, 200);
     },
   );

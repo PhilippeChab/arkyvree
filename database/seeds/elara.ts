@@ -10,7 +10,8 @@ export default {
   gender: "Female",
   height: "170",
   weight: "48",
-  description: "A studious elven wizard from the Celestial Academy, Elara weaves arcane formulae with mathematical precision. Her spellbook is filled with meticulous notes and elegant diagrams.",
+  description:
+    "A studious elven wizard from the Celestial Academy, Elara weaves arcane formulae with mathematical precision. Her spellbook is filled with meticulous notes and elegant diagrams.",
   abilities: { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 12, Charisma: 10 },
   languages: ["Common", "Elven", "Draconic", "Sylvan"],
   classes: [{ klass: "Wizard", hp: [4, 3, 3] }],
@@ -67,7 +68,5 @@ export default {
     { levelIndex: 2, powerName: "Scorching Ray", aptitude: "Wizard Spells" },
     { levelIndex: 2, powerName: "Web", aptitude: "Wizard Spells" },
   ],
-  inventory: [
-    { name: "Quarterstaff", quantity: 1, equipped: true, location: "Two Handed", weaponSet: 0 },
-  ],
+  inventory: [{ name: "Quarterstaff", quantity: 1, equipped: true, location: "Two Handed", weaponSet: 0 }],
 } satisfies CharacterSeed;

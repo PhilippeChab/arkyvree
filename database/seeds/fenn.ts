@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "178",
   weight: "72",
-  description: "A half-elven ranger who patrols the borderlands between civilization and the deep forest. Fenn inherited his mother's keen elven senses and his father's stubborn human resolve. He tracks goblins and worse through the wilderness, protecting scattered hamlets that have no other guardian.",
+  description:
+    "A half-elven ranger who patrols the borderlands between civilization and the deep forest. Fenn inherited his mother's keen elven senses and his father's stubborn human resolve. He tracks goblins and worse through the wilderness, protecting scattered hamlets that have no other guardian.",
   abilities: { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 12, Wisdom: 14, Charisma: 10 },
   languages: ["Common", "Elven", "Goblin"],
   classes: [{ klass: "Ranger", hp: [8, 7, 6] }],

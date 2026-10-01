@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
@@ -23,7 +24,9 @@ describe("rulesets customization properties", () => {
     expect((await expectOk(properties.$get({ param }))).map((p) => p.id)).toEqual([created.id]);
 
     const propertyParam = { ...param, property_id: created.id };
-    const updated = await expectOk(property.$put({ param: propertyParam, json: { value: "extraordinary ability", type: "special" } }));
+    const updated = await expectOk(
+      property.$put({ param: propertyParam, json: { value: "extraordinary ability", type: "special" } }),
+    );
     expect(updated).toMatchObject({ value: "extraordinary ability", type: "special" });
 
     await expectOk(property.$delete({ param: propertyParam }));
@@ -33,19 +36,26 @@ describe("rulesets customization properties", () => {
   test.each(CUSTOMIZABLE_ENTITY_TYPES)("adds a property to %s", async (entityType) => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = await createEntity(id, entityType);
-    const created = await expectOk(properties.$post({ param: { id, entityType, entityId }, json: { value: "masterwork", type: "quality" } }));
+    const created = await expectOk(
+      properties.$post({ param: { id, entityType, entityId }, json: { value: "masterwork", type: "quality" } }),
+    );
     expect(created).toMatchObject({ entityType, entityId });
   });
 
   test("requires a session", async () => {
     const { id, entityId } = await setup();
-    const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$get({ param: { id, entityType: "feats", entityId } });
+    const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$get({
+      param: { id, entityType: "feats", entityId },
+    });
     expect(response.status).toBe(401);
   });
 
   test("rejects a property without a value", async () => {
     const { id, entityId } = await setup();
-    const response = await properties.$post({ param: { id, entityType: "feats", entityId }, json: { type: "special" } as never });
+    const response = await properties.$post({
+      param: { id, entityType: "feats", entityId },
+      json: { type: "special" } as never,
+    });
     expect(response.status).toBe(400);
   });
 

@@ -54,9 +54,7 @@ export function DetailPageHeader({
           {titleAdornment}
         </Box>
         {chips && (
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
-            {chips}
-          </Box>
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>{chips}</Box>
         )}
         <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
           {description}

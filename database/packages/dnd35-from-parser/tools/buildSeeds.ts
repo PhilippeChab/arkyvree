@@ -5,18 +5,56 @@
  * This is the single source of truth for "reference JSON → seed object" conversion.
  */
 
-import type { DomainDefinition, FeatSeed, ItemDef, ModifierSeed, PowerSeed, RaceDefinition, RequirementEntry, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
-import type { AptitudePick, BonusFeatList, ClassReference, DomainReference, ItemReference, MagicItemCategory, MagicItemReference, RaceReference, SpellReference, WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { ALL_WEAPONS, SIMPLE_WEAPONS, MARTIAL_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
-import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
-import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { autoCompanionGrantModifiers, stripSeparators, stripClassSuffix, normalizeDescription, normalizeWs, matchesWithPluralVariants, pluralVariants, checkedValue, checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
-import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
+
 import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
+import {
+  autoCompanionGrantModifiers,
+  checkedValue,
+  checkOneOf,
+  matchesWithPluralVariants,
+  normalizeDescription,
+  normalizeWs,
+  pluralVariants,
+  REFERENCE_DIR,
+  referenceBooks,
+  stripClassSuffix,
+  stripSeparators,
+} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type {
+  AptitudePick,
+  BonusFeatList,
+  ClassReference,
+  DomainReference,
+  ItemReference,
+  MagicItemCategory,
+  MagicItemReference,
+  RaceReference,
+  SpellReference,
+  WizardSchoolReference,
+} from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type {
+  DomainDefinition,
+  FeatSeed,
+  ItemDef,
+  ModifierSeed,
+  PowerSeed,
+  RaceDefinition,
+  RequirementEntry,
+  WizardSchoolDefinition,
+} from "@/database/packages/dnd35/content/types.ts";
+import {
+  ALL_WEAPONS,
+  EXOTIC_WEAPONS,
+  MARTIAL_WEAPONS,
+  SIMPLE_WEAPONS,
+} from "@/database/packages/dnd35/content/weapons.ts";
+import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
+import { SIZE_OPTIONS } from "@/shared/enums.ts";
 
 // ---------------------------------------------------------------------------
 // Existing feat lookup — set of known feat names
@@ -81,7 +119,7 @@ function expandPerLevelAptitudePicks(
 
     // Replace with per-level picks for covered levels
     for (const list of perLevelLists) {
-      if (!list.levels!.some(l => overlapping.includes(l))) continue;
+      if (!list.levels!.some((l) => overlapping.includes(l))) continue;
       const aptSlug = stripSeparators(list.aptitude);
       result.push({ levels: list.levels!, target: `aptitudes.${aptSlug}.allowed` });
     }
@@ -143,7 +181,11 @@ export function insertOrdinalInName(name: string, ordinal: string): string {
 
 /** Build a map from pool parent variant names (lowercase) → mapping seedName.
  *  Used to resolve occurrences like "Special Ability" to "Special Abilities (Rogue)". */
-export function buildPoolParentNameMap(mf: ClassReference["mapping"]["features"], className: string, classFeatureAptitude: string): Map<string, string> {
+export function buildPoolParentNameMap(
+  mf: ClassReference["mapping"]["features"],
+  className: string,
+  classFeatureAptitude: string,
+): Map<string, string> {
   const nameMap = new Map<string, string>();
   // Collect unique aptitude groups
   const seen = new Set<string>();
@@ -191,7 +233,10 @@ export function classSpells(ref: ClassReference) {
 export function classAptitudePicks(ref: ClassReference) {
   const { overrides } = ref;
   const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists);
+  const aptitudePicks = expandPerLevelAptitudePicks(
+    mergedPicks,
+    overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists,
+  );
   const aptitudeMinLevel = new Map<string, number>();
   for (const pick of aptitudePicks ?? []) {
     const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
@@ -239,10 +284,14 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
           description,
           selectable: false,
           aptitudes,
-          ...feature.modifiers?.length
-            ? { modifiers: feature.modifiers.map((m) => (m.target === perLevelModifier.target ? { ...m, target: expansion.newTarget } : m)) }
-            : {},
-          ...minLevel > 1 ? { requirements: levelRequirement(minLevel) } : {},
+          ...(feature.modifiers?.length
+            ? {
+                modifiers: feature.modifiers.map((m) =>
+                  m.target === perLevelModifier.target ? { ...m, target: expansion.newTarget } : m,
+                ),
+              }
+            : {}),
+          ...(minLevel > 1 ? { requirements: levelRequirement(minLevel) } : {}),
         });
       }
       continue;
@@ -251,21 +300,30 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const modifiers: ModifierSeed[] = [
       ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
       ...autoCompanionGrantModifiers(name, feature.description ?? ""),
-      ...lockedType ? [{ target: feat(`Favored Enemy: ${lockedType}`), operator: "set", value: "true", valueType: "boolean" }] : [],
+      ...(lockedType
+        ? [{ target: feat(`Favored Enemy: ${lockedType}`), operator: "set", value: "true", valueType: "boolean" }]
+        : []),
     ];
     // A pick in a pool of the class's own (not its class features) opens at the pool's first pick.
-    const poolLevel = feature.aptitude && feature.aptitude !== mapping.classFeatureAptitude ? aptitudeMinLevel.get(stripSeparators(feature.aptitude)) : undefined;
+    const poolLevel =
+      feature.aptitude && feature.aptitude !== mapping.classFeatureAptitude
+        ? aptitudeMinLevel.get(stripSeparators(feature.aptitude))
+        : undefined;
     const isAutoGranted = feature.level != null && !feature.aptitude;
     const family = lockedType ? "Favored Enemy" : detectClassFeatFamily(name);
     feats.push({
       name,
       description,
-      ...feature.stackable || lockedType ? { stackable: true } : {},
-      ...feature.selectable ? { selectable: true } : feature.selectable === false || isAutoGranted || lockedType ? { selectable: false } : {},
+      ...(feature.stackable || lockedType ? { stackable: true } : {}),
+      ...(feature.selectable
+        ? { selectable: true }
+        : feature.selectable === false || isAutoGranted || lockedType
+          ? { selectable: false }
+          : {}),
       aptitudes,
-      ...modifiers.length > 0 ? { modifiers } : {},
-      ...poolLevel != null && poolLevel > 1 ? { requirements: levelRequirement(poolLevel) } : {},
-      ...family ? { properties: [{ type: "FEAT_FAMILY", value: family }] } : {},
+      ...(modifiers.length > 0 ? { modifiers } : {}),
+      ...(poolLevel != null && poolLevel > 1 ? { requirements: levelRequirement(poolLevel) } : {}),
+      ...(family ? { properties: [{ type: "FEAT_FAMILY", value: family }] } : {}),
     });
   }
 
@@ -276,63 +334,17 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
       name: `Advance ${ref.raw.name} Spellcasting`,
       description: `Your effective ${classSlug} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${classSlug}.`,
       stackable: true,
-      aptitudes: [casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level", "Bonus Caster Level"],
-      modifiers: [{ target: `classes.${classSlug}.bonuscasterlevel`, operator: "add", value: "1", valueType: "number" }],
+      aptitudes: [
+        casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level",
+        "Bonus Caster Level",
+      ],
+      modifiers: [
+        { target: `classes.${classSlug}.bonuscasterlevel`, operator: "add", value: "1", valueType: "number" },
+      ],
       requirements: levelRequirement(1),
     });
   }
   return feats;
-}
-
-// ---------------------------------------------------------------------------
-// Domain reference → DomainDefinition[]
-// ---------------------------------------------------------------------------
-
-/** A domain of the domains reference, as its mapping and overrides make it. */
-function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
-  const mapping = ref.mapping?.[entry.name];
-  const override = ref.overrides?.[entry.name];
-  const spellSource = override?.spells ?? entry.spells;
-
-  return {
-    name: override?.name ?? entry.name,
-    description: mapping?.description ?? entry.description,
-    ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
-    spells: spellSource.map((s) => ({ name: s.name, level: s.level }))
-      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
-  };
-}
-
-/**
- * A book's domains (of the master domain reference): those whose spells the book, with the core rules, all has, and
- * for an extension, not all the core rules'. Their spells are named as the spell references name them. Also their
- * feat pools' feats, and how many domains were skipped.
- */
-export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[]; skipped: number } {
-  const masterRef = loadReference(join(REFERENCE_DIR, "domains.json"), "domain");
-  const spellNames = (b: string) => {
-    const path = join(REFERENCE_DIR, b, "spells.json");
-    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
-  };
-  // Spell names by their lowercase: the core rules', and the book's
-  const core = spellNames("srd");
-  const available = new Map([...core, ...book === "srd" ? [] : spellNames(book)].map((name) => [name.toLowerCase(), name]));
-  const inCore = new Set(core.map((name) => name.toLowerCase()));
-
-  // Each domain's seed with its scraped entry, which its mapping (its feat pool) is keyed by
-  const all = masterRef.raw.map((entry) => ({ entry, seed: domainSeed(masterRef, entry) }));
-  const kept = all.filter(({ seed }) =>
-    seed.spells.every((s) => available.has(s.name.toLowerCase()))
-    && (book === "srd" || !seed.spells.every((s) => inCore.has(s.name.toLowerCase()))));
-  for (const { seed } of kept) {
-    for (const s of seed.spells) s.name = available.get(s.name.toLowerCase()) ?? s.name;
-  }
-  const keptEntries = new Set(kept.map(({ entry }) => entry));
-  return {
-    seeds: kept.map(({ seed }) => seed),
-    poolFeats: buildDomainFeatPoolSeeds({ ...masterRef, raw: masterRef.raw.filter((entry) => keptEntries.has(entry)) }),
-    skipped: all.length - kept.length,
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -342,10 +354,14 @@ export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; pool
 function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | string[]): string[] {
   if (Array.isArray(items)) return items;
   switch (items) {
-    case "martial": return MARTIAL_WEAPONS;
-    case "simple": return SIMPLE_WEAPONS;
-    case "exotic": return EXOTIC_WEAPONS;
-    case "all": return ALL_WEAPONS;
+    case "martial":
+      return MARTIAL_WEAPONS;
+    case "simple":
+      return SIMPLE_WEAPONS;
+    case "exotic":
+      return EXOTIC_WEAPONS;
+    case "all":
+      return ALL_WEAPONS;
   }
 }
 
@@ -392,6 +408,62 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
 }
 
 // ---------------------------------------------------------------------------
+// Domain reference → DomainDefinition[]
+// ---------------------------------------------------------------------------
+
+/** A domain of the domains reference, as its mapping and overrides make it. */
+function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
+  const mapping = ref.mapping?.[entry.name];
+  const override = ref.overrides?.[entry.name];
+  const spellSource = override?.spells ?? entry.spells;
+
+  return {
+    name: override?.name ?? entry.name,
+    description: mapping?.description ?? entry.description,
+    ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
+    spells: spellSource
+      .map((s) => ({ name: s.name, level: s.level }))
+      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
+  };
+}
+
+/**
+ * A book's domains (of the master domain reference): those whose spells the book, with the core rules, all has, and
+ * for an extension, not all the core rules'. Their spells are named as the spell references name them. Also their
+ * feat pools' feats, and how many domains were skipped.
+ */
+export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[]; skipped: number } {
+  const masterRef = loadReference(join(REFERENCE_DIR, "domains.json"), "domain");
+  const spellNames = (b: string) => {
+    const path = join(REFERENCE_DIR, b, "spells.json");
+    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
+  };
+  // Spell names by their lowercase: the core rules', and the book's
+  const core = spellNames("srd");
+  const available = new Map(
+    [...core, ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
+  );
+  const inCore = new Set(core.map((name) => name.toLowerCase()));
+
+  // Each domain's seed with its scraped entry, which its mapping (its feat pool) is keyed by
+  const all = masterRef.raw.map((entry) => ({ entry, seed: domainSeed(masterRef, entry) }));
+  const kept = all.filter(
+    ({ seed }) =>
+      seed.spells.every((s) => available.has(s.name.toLowerCase())) &&
+      (book === "srd" || !seed.spells.every((s) => inCore.has(s.name.toLowerCase()))),
+  );
+  for (const { seed } of kept) {
+    for (const s of seed.spells) s.name = available.get(s.name.toLowerCase()) ?? s.name;
+  }
+  const keptEntries = new Set(kept.map(({ entry }) => entry));
+  return {
+    seeds: kept.map(({ seed }) => seed),
+    poolFeats: buildDomainFeatPoolSeeds({ ...masterRef, raw: masterRef.raw.filter((entry) => keptEntries.has(entry)) }),
+    skipped: all.length - kept.length,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Wizard school reference → WizardSchoolDefinition[]
 // ---------------------------------------------------------------------------
 
@@ -407,21 +479,28 @@ export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchool
 // Race reference → RaceDefinition[]
 // ---------------------------------------------------------------------------
 
+/** The races a race reference's overrides skip, which the seed leaves out. */
+export function skippedRaces(ref: RaceReference): Set<string> {
+  return new Set(ref.raw.filter(({ name }) => ref.overrides?.[name]?.skip).map(({ name }) => name));
+}
+
 /**
  * The races a race reference seeds (those its overrides don't skip), each with its override and its size, checked:
  * the override's, else as scraped. Generation throws a size's problem, and `parser:validate` reports it.
  */
 export function seededRaces(ref: RaceReference) {
   const skipped = skippedRaces(ref);
-  return ref.raw.filter(({ name }) => !skipped.has(name)).map((entry) => {
-    const override = ref.overrides?.[entry.name];
-    return { name: entry.name, entry, override, size: checkOneOf(override?.size ?? entry.size, SIZE_OPTIONS, `${entry.name}'s size`) };
-  });
-}
-
-/** The races a race reference's overrides skip, which the seed leaves out. */
-export function skippedRaces(ref: RaceReference): Set<string> {
-  return new Set(ref.raw.filter(({ name }) => ref.overrides?.[name]?.skip).map(({ name }) => name));
+  return ref.raw
+    .filter(({ name }) => !skipped.has(name))
+    .map((entry) => {
+      const override = ref.overrides?.[entry.name];
+      return {
+        name: entry.name,
+        entry,
+        override,
+        size: checkOneOf(override?.size ?? entry.size, SIZE_OPTIONS, `${entry.name}'s size`),
+      };
+    });
 }
 
 export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {
@@ -499,6 +578,333 @@ export function loadBonusFeatClassLevels(book: string): Map<string, { classSlug:
     }
   }
   return map;
+}
+
+// ---------------------------------------------------------------------------
+// Spell reference → PowerSeed[] (grouped by level)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build class name → aptitude name mappings by scanning all class reference files.
+ * Any class with a `mapping.spells` config gets an entry: "ClassName" → "ClassName Spells".
+ * Also includes legacy abbreviations for the SRD single-page parser.
+ */
+function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Record<string, string[]> } {
+  const classMap: Record<string, string> = {
+    // Legacy SRD abbreviations (single-page parser uses these)
+    "Sor/Wiz": "Wizard Spells",
+    Wiz: "Wizard Spells",
+    Sor: "Sorcerer Spells",
+    Clr: "Cleric Spells",
+    Brd: "Bard Spells",
+    Drd: "Druid Spells",
+    Pal: "Paladin Spells",
+    Rgr: "Ranger Spells",
+  };
+
+  const dualMap: Record<string, string[]> = {
+    "Sor/Wiz": ["Wizard Spells", "Sorcerer Spells"],
+    "sorcerer/wizard": ["Wizard Spells", "Sorcerer Spells"],
+  };
+
+  // Auto-discover from class references (scoped to book if provided)
+  if (existsSync(REFERENCE_DIR)) {
+    for (const book of referenceBooks()) {
+      // Discover casting classes
+      for (const { ref } of classReferences(book)) {
+        if (ref.mapping?.spells && ref.raw?.name) {
+          const aptName = `${ref.raw.name} Spells`;
+          classMap[ref.raw.name] = aptName;
+          classMap[ref.raw.name.toLowerCase()] = aptName;
+        }
+      }
+
+      // Note: domain entries (Air, Fire, Courage, etc.) are NOT mapped here.
+      // Domain spell linking is handled separately by seed-domains.ts, which
+      // links spells to domain aptitudes by name. Adding them here would cause
+      // duplicate links and broken class-level requirements.
+    }
+  }
+
+  return { classMap, dualMap };
+}
+
+let _classSpellMaps: ReturnType<typeof buildClassSpellMaps> | undefined;
+function getClassSpellMaps() {
+  if (!_classSpellMaps) _classSpellMaps = buildClassSpellMaps();
+  return _classSpellMaps;
+}
+
+/** Class name → aptitude name (auto-discovered from class references) */
+function getClassAbbrevMap(): Record<string, string> {
+  return getClassSpellMaps().classMap;
+}
+
+/** Combined class entries that map to multiple aptitudes */
+function getDualClassMap(): Record<string, string[]> {
+  return getClassSpellMaps().dualMap;
+}
+
+const COMPONENT_MAP: Record<string, string> = {
+  V: "Verbal",
+  S: "Somatic",
+  M: "Material",
+  F: "Focus",
+  DF: "Divine Focus",
+  XP: "XP Cost",
+};
+
+function simplifyRange(range: string): string {
+  // Strip leaked "Area/Effect/Target:" labels from upstream parser glitches
+  // (e.g. "Touch Area/Effect/Target: Animal touched" → "Touch")
+  const stripped = range.replace(/\s+(Area|Effect|Target)\/.*$/i, "").trim();
+  if (stripped.startsWith("Close")) return "Close";
+  if (stripped.startsWith("Medium")) return "Medium";
+  if (stripped.startsWith("Long")) return "Long";
+  return stripped;
+}
+
+const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(
+  [
+    "Calling",
+    "Charm",
+    "Compulsion",
+    "Creation",
+    "Figment",
+    "Glamer",
+    "Healing",
+    "Pattern",
+    "Phantasm",
+    "Polymorph",
+    "Scrying",
+    "Shadow",
+    "Summoning",
+    "Teleportation",
+  ].map((s) => [s.toLowerCase(), s]),
+);
+
+function normalizeSubschool(value: string): string {
+  // "divination (scrying)" → "Scrying"; "teleportation" → "Teleportation"
+  const parenMatch = value.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    const inner = parenMatch[1].trim().toLowerCase();
+    if (SUBSCHOOL_CANON[inner]) return SUBSCHOOL_CANON[inner];
+  }
+  const lower = value.trim().toLowerCase();
+  return SUBSCHOOL_CANON[lower] ?? value;
+}
+
+function normalizeDescriptor(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  // Only normalize all-lowercase scrapes (e.g. "good"); leave mixed-case
+  // compounds like "Fire or Cold" or "Mind-Affecting" untouched.
+  if (trimmed !== trimmed.toLowerCase()) return trimmed;
+  return trimmed
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("-");
+}
+
+function normalizeSpellResistance(value: string): string {
+  // Lowercase the canonical "(harmless)" / "(harmless, object)" parenthetical
+  return value.replace(/\(Harmless/g, "(harmless");
+}
+
+/** Compound component forms used in manual seeds: "M/DF" → "Material/Divine Focus" */
+const COMPOUND_COMPONENT_MAP: Record<string, string> = {
+  "M/DF": "Material/Divine Focus",
+  "F/DF": "Focus/Divine Focus",
+};
+
+function expandComponents(components: string[]): string[] {
+  const result: string[] = [];
+  for (const comp of components) {
+    const compound = COMPOUND_COMPONENT_MAP[comp.trim()];
+    if (compound) {
+      if (!result.includes(compound)) result.push(compound);
+      continue;
+    }
+    const mapped = COMPONENT_MAP[comp.trim()];
+    if (mapped && !result.includes(mapped)) result.push(mapped);
+  }
+  return result;
+}
+
+/** Collapse whitespace/newlines and normalize spell stat text */
+function normalizeSpellText(text: string): string {
+  return normalizeWs(sanitizeText(text)).replace(/(\d+)\s*\/\s*/g, "$1/"); // "1 round/ level" → "1 round/level"
+}
+
+export type SpellSeedWithLevel = PowerSeed & { level: number };
+
+export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: SpellSeedWithLevel[] } {
+  // Build name lookup (case-insensitive) for base spell resolution
+  const rawByName = new Map<string, SpellReference["raw"][number]>();
+  for (const entry of ref.raw) {
+    rawByName.set(entry.name.toLowerCase(), entry);
+  }
+
+  /**
+   * Resolve a "functions like" base spell reference to a raw entry.
+   * Handles patterns: "interposing hand" → "Bigby's Interposing Hand",
+   * "mass cure light wounds" → "Cure Light Wounds, Mass", etc.
+   */
+  function resolveBaseSpell(refText: string): SpellReference["raw"][number] | undefined {
+    const lower = refText.toLowerCase();
+    // Direct match
+    if (rawByName.has(lower)) return rawByName.get(lower);
+    // "mass X" → "X, Mass"
+    const massMatch = lower.match(/^(greater|lesser|mass)\s+(.+)$/);
+    if (massMatch) {
+      const reordered = `${massMatch[2]}, ${massMatch[1]}`;
+      if (rawByName.has(reordered)) return rawByName.get(reordered);
+    }
+    // Partial match: "interposing hand" should match "Bigby's Interposing Hand"
+    for (const [name, entry] of rawByName) {
+      if (name.endsWith(lower) || name.endsWith(` ${lower}`)) return entry;
+    }
+    return undefined;
+  }
+
+  const spells: SpellSeedWithLevel[] = [];
+
+  for (const rawEntry of ref.raw) {
+    // Resolve missing fields from base spell (SRD "functions like X" pattern).
+    // Follows the chain: e.g. Mass Charm Monster → Charm Monster → Charm Person.
+    let entry = rawEntry;
+    const hasMissing =
+      !entry.range ||
+      !entry.duration ||
+      entry.components.length === 0 ||
+      !entry.savingThrow ||
+      !entry.spellResistance ||
+      !entry.castingTime;
+    if (hasMissing) {
+      // Walk the "functions like" chain up to 3 levels deep
+      let current: SpellReference["raw"][number] | undefined = entry;
+      const visited = new Set<string>([entry.name]);
+      for (let depth = 0; depth < 3 && current; depth++) {
+        const baseMatch = current.description.match(
+          /(?:functions? like|works like|functions? similarly to|[Ss]imilar to)\s+(.+?)(?:,|\.| except| but)/i,
+        );
+        if (!baseMatch) break;
+        const baseRef = baseMatch[1].trim().replace(/^a /i, "").replace(/\.$/, "");
+        const base = resolveBaseSpell(baseRef);
+        if (!base || visited.has(base.name)) break;
+        visited.add(base.name);
+
+        entry = {
+          ...entry,
+          castingTime: entry.castingTime || base.castingTime,
+          range: entry.range || base.range,
+          duration: entry.duration || base.duration,
+          components: entry.components.length > 0 ? entry.components : base.components,
+          // Only inherit target/area/effect if this spell has none at all
+          ...(!entry.target && !entry.effect && !entry.area
+            ? {
+                target: base.target,
+                effect: base.effect,
+                area: base.area,
+              }
+            : {}),
+          // Only inherit savingThrow/spellResistance if truly empty (not scraped)
+          savingThrow: entry.savingThrow || base.savingThrow,
+          spellResistance: entry.spellResistance || base.spellResistance,
+        };
+        // Continue walking if still missing fields
+        const stillMissing =
+          !entry.range ||
+          !entry.duration ||
+          entry.components.length === 0 ||
+          !entry.savingThrow ||
+          !entry.spellResistance ||
+          !entry.castingTime;
+        if (!stillMissing) break;
+        current = base;
+      }
+    }
+
+    // Determine aptitudes and per-aptitude level for each class
+    const aptitudes = new Set<string>();
+    const aptitudeLevels: Record<string, number> = {};
+    let minLevel = 99;
+
+    const classAbbrevMap = getClassAbbrevMap();
+    const dualClassMap = getDualClassMap();
+    for (const le of entry.levelEntries) {
+      const dual = dualClassMap[le.className];
+      if (dual) {
+        for (const a of dual) {
+          aptitudes.add(a);
+          aptitudeLevels[a] = aptitudeLevels[a] !== undefined ? Math.min(aptitudeLevels[a], le.level) : le.level;
+        }
+        minLevel = Math.min(minLevel, le.level);
+      } else {
+        const apt = classAbbrevMap[le.className];
+        if (apt) {
+          aptitudes.add(apt);
+          aptitudeLevels[apt] = aptitudeLevels[apt] !== undefined ? Math.min(aptitudeLevels[apt], le.level) : le.level;
+          minLevel = Math.min(minLevel, le.level);
+        }
+      }
+    }
+
+    // Fallback: if no mapped entries found, use the lowest level from any entry
+    if (minLevel === 99) {
+      for (const le of entry.levelEntries) {
+        minLevel = Math.min(minLevel, le.level);
+      }
+    }
+    if (minLevel === 99) minLevel = 0;
+
+    // Build properties
+    const properties: { type: string; value: string }[] = [];
+    properties.push({ type: "SPELL_SCHOOL", value: entry.school });
+    if (entry.subschool) properties.push({ type: "SPELL_SUBSCHOOL", value: normalizeSubschool(entry.subschool) });
+    for (const desc of entry.descriptors) {
+      properties.push({ type: "SPELL_DESCRIPTOR", value: normalizeDescriptor(desc) });
+    }
+    properties.push({
+      type: "SPELL_CASTING_TIME",
+      value: normalizeSpellText(entry.castingTime || "1 standard action"),
+    });
+    const rangeValue = simplifyRange(normalizeSpellText(entry.range));
+    if (rangeValue) properties.push({ type: "SPELL_RANGE_TYPE", value: rangeValue });
+    const targetValue = entry.target ? normalizeSpellText(entry.target) : undefined;
+    if (targetValue) properties.push({ type: "SPELL_TARGET", value: targetValue });
+    if (entry.area) properties.push({ type: "SPELL_AREA_OF_EFFECT", value: normalizeSpellText(entry.area) });
+    const effectValue = entry.effect ? normalizeSpellText(entry.effect) : undefined;
+    if (effectValue && effectValue !== targetValue) properties.push({ type: "SPELL_TARGET", value: effectValue });
+    properties.push({ type: "SPELL_DURATION", value: normalizeSpellText(entry.duration) });
+    properties.push({
+      type: "SPELL_RESISTANCE",
+      value: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
+    });
+    for (const compName of expandComponents(entry.components)) {
+      properties.push({ type: "SPELL_COMPONENT", value: compName });
+    }
+
+    const savingThrow = normalizeSpellText(entry.savingThrow || "None");
+    // Only include aptitudeLevels when not all aptitudes share the same level
+    const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
+    const seed: SpellSeedWithLevel = {
+      name: entry.name,
+      description: normalizeDescription(ref.overrides?.[entry.name]?.description ?? entry.description),
+      aptitudes: [...aptitudes].sort(),
+      ...(hasVaryingLevels ? { aptitudeLevels } : {}),
+      savingThrow,
+      properties,
+      level: minLevel,
+    };
+
+    spells.push(seed);
+  }
+
+  // Sort by level, then name
+  spells.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+
+  return { spells };
 }
 
 // ---------------------------------------------------------------------------
@@ -593,292 +999,6 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
 }
 
 // ---------------------------------------------------------------------------
-// Spell reference → PowerSeed[] (grouped by level)
-// ---------------------------------------------------------------------------
-
-/**
- * Build class name → aptitude name mappings by scanning all class reference files.
- * Any class with a `mapping.spells` config gets an entry: "ClassName" → "ClassName Spells".
- * Also includes legacy abbreviations for the SRD single-page parser.
- */
-function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Record<string, string[]> } {
-  const classMap: Record<string, string> = {
-    // Legacy SRD abbreviations (single-page parser uses these)
-    "Sor/Wiz": "Wizard Spells",
-    "Wiz": "Wizard Spells",
-    "Sor": "Sorcerer Spells",
-    "Clr": "Cleric Spells",
-    "Brd": "Bard Spells",
-    "Drd": "Druid Spells",
-    "Pal": "Paladin Spells",
-    "Rgr": "Ranger Spells",
-  };
-
-  const dualMap: Record<string, string[]> = {
-    "Sor/Wiz": ["Wizard Spells", "Sorcerer Spells"],
-    "sorcerer/wizard": ["Wizard Spells", "Sorcerer Spells"],
-  };
-
-  // Auto-discover from class references (scoped to book if provided)
-  if (existsSync(REFERENCE_DIR)) {
-    for (const book of referenceBooks()) {
-      // Discover casting classes
-      for (const { ref } of classReferences(book)) {
-        if (ref.mapping?.spells && ref.raw?.name) {
-          const aptName = `${ref.raw.name} Spells`;
-          classMap[ref.raw.name] = aptName;
-          classMap[ref.raw.name.toLowerCase()] = aptName;
-        }
-      }
-
-      // Note: domain entries (Air, Fire, Courage, etc.) are NOT mapped here.
-      // Domain spell linking is handled separately by seed-domains.ts, which
-      // links spells to domain aptitudes by name. Adding them here would cause
-      // duplicate links and broken class-level requirements.
-    }
-  }
-
-  return { classMap, dualMap };
-}
-
-let _classSpellMaps: ReturnType<typeof buildClassSpellMaps> | undefined;
-function getClassSpellMaps() {
-  if (!_classSpellMaps) _classSpellMaps = buildClassSpellMaps();
-  return _classSpellMaps;
-}
-
-/** Class name → aptitude name (auto-discovered from class references) */
-function getClassAbbrevMap(): Record<string, string> { return getClassSpellMaps().classMap; }
-
-/** Combined class entries that map to multiple aptitudes */
-function getDualClassMap(): Record<string, string[]> { return getClassSpellMaps().dualMap; }
-
-const COMPONENT_MAP: Record<string, string> = {
-  "V": "Verbal",
-  "S": "Somatic",
-  "M": "Material",
-  "F": "Focus",
-  "DF": "Divine Focus",
-  "XP": "XP Cost",
-};
-
-function simplifyRange(range: string): string {
-  // Strip leaked "Area/Effect/Target:" labels from upstream parser glitches
-  // (e.g. "Touch Area/Effect/Target: Animal touched" → "Touch")
-  const stripped = range.replace(/\s+(Area|Effect|Target)\/.*$/i, "").trim();
-  if (stripped.startsWith("Close")) return "Close";
-  if (stripped.startsWith("Medium")) return "Medium";
-  if (stripped.startsWith("Long")) return "Long";
-  return stripped;
-}
-
-const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(
-  ["Calling", "Charm", "Compulsion", "Creation", "Figment", "Glamer", "Healing", "Pattern", "Phantasm", "Polymorph", "Scrying", "Shadow", "Summoning", "Teleportation"]
-    .map((s) => [s.toLowerCase(), s]),
-);
-
-function normalizeSubschool(value: string): string {
-  // "divination (scrying)" → "Scrying"; "teleportation" → "Teleportation"
-  const parenMatch = value.match(/\(([^)]+)\)/);
-  if (parenMatch) {
-    const inner = parenMatch[1].trim().toLowerCase();
-    if (SUBSCHOOL_CANON[inner]) return SUBSCHOOL_CANON[inner];
-  }
-  const lower = value.trim().toLowerCase();
-  return SUBSCHOOL_CANON[lower] ?? value;
-}
-
-function normalizeDescriptor(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return trimmed;
-  // Only normalize all-lowercase scrapes (e.g. "good"); leave mixed-case
-  // compounds like "Fire or Cold" or "Mind-Affecting" untouched.
-  if (trimmed !== trimmed.toLowerCase()) return trimmed;
-  return trimmed.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("-");
-}
-
-function normalizeSpellResistance(value: string): string {
-  // Lowercase the canonical "(harmless)" / "(harmless, object)" parenthetical
-  return value.replace(/\(Harmless/g, "(harmless");
-}
-
-/** Compound component forms used in manual seeds: "M/DF" → "Material/Divine Focus" */
-const COMPOUND_COMPONENT_MAP: Record<string, string> = {
-  "M/DF": "Material/Divine Focus",
-  "F/DF": "Focus/Divine Focus",
-};
-
-function expandComponents(components: string[]): string[] {
-  const result: string[] = [];
-  for (const comp of components) {
-    const compound = COMPOUND_COMPONENT_MAP[comp.trim()];
-    if (compound) {
-      if (!result.includes(compound)) result.push(compound);
-      continue;
-    }
-    const mapped = COMPONENT_MAP[comp.trim()];
-    if (mapped && !result.includes(mapped)) result.push(mapped);
-  }
-  return result;
-}
-
-/** Collapse whitespace/newlines and normalize spell stat text */
-function normalizeSpellText(text: string): string {
-  return normalizeWs(sanitizeText(text)).replace(/(\d+)\s*\/\s*/g, "$1/"); // "1 round/ level" → "1 round/level"
-}
-
-export type SpellSeedWithLevel = PowerSeed & { level: number };
-
-export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: SpellSeedWithLevel[] } {
-  // Build name lookup (case-insensitive) for base spell resolution
-  const rawByName = new Map<string, SpellReference["raw"][number]>();
-  for (const entry of ref.raw) {
-    rawByName.set(entry.name.toLowerCase(), entry);
-  }
-
-  /**
-   * Resolve a "functions like" base spell reference to a raw entry.
-   * Handles patterns: "interposing hand" → "Bigby's Interposing Hand",
-   * "mass cure light wounds" → "Cure Light Wounds, Mass", etc.
-   */
-  function resolveBaseSpell(refText: string): SpellReference["raw"][number] | undefined {
-    const lower = refText.toLowerCase();
-    // Direct match
-    if (rawByName.has(lower)) return rawByName.get(lower);
-    // "mass X" → "X, Mass"
-    const massMatch = lower.match(/^(greater|lesser|mass)\s+(.+)$/);
-    if (massMatch) {
-      const reordered = `${massMatch[2]}, ${massMatch[1]}`;
-      if (rawByName.has(reordered)) return rawByName.get(reordered);
-    }
-    // Partial match: "interposing hand" should match "Bigby's Interposing Hand"
-    for (const [name, entry] of rawByName) {
-      if (name.endsWith(lower) || name.endsWith(` ${lower}`)) return entry;
-    }
-    return undefined;
-  }
-
-  const spells: SpellSeedWithLevel[] = [];
-
-  for (const rawEntry of ref.raw) {
-    // Resolve missing fields from base spell (SRD "functions like X" pattern).
-    // Follows the chain: e.g. Mass Charm Monster → Charm Monster → Charm Person.
-    let entry = rawEntry;
-    const hasMissing = !entry.range || !entry.duration || entry.components.length === 0
-      || !entry.savingThrow || !entry.spellResistance || !entry.castingTime;
-    if (hasMissing) {
-      // Walk the "functions like" chain up to 3 levels deep
-      let current: SpellReference["raw"][number] | undefined = entry;
-      const visited = new Set<string>([entry.name]);
-      for (let depth = 0; depth < 3 && current; depth++) {
-        const baseMatch = current.description.match(/(?:functions? like|works like|functions? similarly to|[Ss]imilar to)\s+(.+?)(?:,|\.| except| but)/i);
-        if (!baseMatch) break;
-        const baseRef = baseMatch[1].trim().replace(/^a /i, "").replace(/\.$/, "");
-        const base = resolveBaseSpell(baseRef);
-        if (!base || visited.has(base.name)) break;
-        visited.add(base.name);
-
-        entry = {
-          ...entry,
-          castingTime: entry.castingTime || base.castingTime,
-          range: entry.range || base.range,
-          duration: entry.duration || base.duration,
-          components: entry.components.length > 0 ? entry.components : base.components,
-          // Only inherit target/area/effect if this spell has none at all
-          ...(!entry.target && !entry.effect && !entry.area ? {
-            target: base.target,
-            effect: base.effect,
-            area: base.area,
-          } : {}),
-          // Only inherit savingThrow/spellResistance if truly empty (not scraped)
-          savingThrow: entry.savingThrow || base.savingThrow,
-          spellResistance: entry.spellResistance || base.spellResistance,
-        };
-        // Continue walking if still missing fields
-        const stillMissing = !entry.range || !entry.duration || entry.components.length === 0
-          || !entry.savingThrow || !entry.spellResistance || !entry.castingTime;
-        if (!stillMissing) break;
-        current = base;
-      }
-    }
-
-    // Determine aptitudes and per-aptitude level for each class
-    const aptitudes = new Set<string>();
-    const aptitudeLevels: Record<string, number> = {};
-    let minLevel = 99;
-
-    const classAbbrevMap = getClassAbbrevMap();
-    const dualClassMap = getDualClassMap();
-    for (const le of entry.levelEntries) {
-      const dual = dualClassMap[le.className];
-      if (dual) {
-        for (const a of dual) {
-          aptitudes.add(a);
-          aptitudeLevels[a] = aptitudeLevels[a] !== undefined ? Math.min(aptitudeLevels[a], le.level) : le.level;
-        }
-        minLevel = Math.min(minLevel, le.level);
-      } else {
-        const apt = classAbbrevMap[le.className];
-        if (apt) {
-          aptitudes.add(apt);
-          aptitudeLevels[apt] = aptitudeLevels[apt] !== undefined ? Math.min(aptitudeLevels[apt], le.level) : le.level;
-          minLevel = Math.min(minLevel, le.level);
-        }
-      }
-    }
-
-    // Fallback: if no mapped entries found, use the lowest level from any entry
-    if (minLevel === 99) {
-      for (const le of entry.levelEntries) {
-        minLevel = Math.min(minLevel, le.level);
-      }
-    }
-    if (minLevel === 99) minLevel = 0;
-
-    // Build properties
-    const properties: { type: string; value: string }[] = [];
-    properties.push({ type: "SPELL_SCHOOL", value: entry.school });
-    if (entry.subschool) properties.push({ type: "SPELL_SUBSCHOOL", value: normalizeSubschool(entry.subschool) });
-    for (const desc of entry.descriptors) {
-      properties.push({ type: "SPELL_DESCRIPTOR", value: normalizeDescriptor(desc) });
-    }
-    properties.push({ type: "SPELL_CASTING_TIME", value: normalizeSpellText(entry.castingTime || "1 standard action") });
-    const rangeValue = simplifyRange(normalizeSpellText(entry.range));
-    if (rangeValue) properties.push({ type: "SPELL_RANGE_TYPE", value: rangeValue });
-    const targetValue = entry.target ? normalizeSpellText(entry.target) : undefined;
-    if (targetValue) properties.push({ type: "SPELL_TARGET", value: targetValue });
-    if (entry.area) properties.push({ type: "SPELL_AREA_OF_EFFECT", value: normalizeSpellText(entry.area) });
-    const effectValue = entry.effect ? normalizeSpellText(entry.effect) : undefined;
-    if (effectValue && effectValue !== targetValue) properties.push({ type: "SPELL_TARGET", value: effectValue });
-    properties.push({ type: "SPELL_DURATION", value: normalizeSpellText(entry.duration) });
-    properties.push({ type: "SPELL_RESISTANCE", value: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")) });
-    for (const compName of expandComponents(entry.components)) {
-      properties.push({ type: "SPELL_COMPONENT", value: compName });
-    }
-
-    const savingThrow = normalizeSpellText(entry.savingThrow || "None");
-    // Only include aptitudeLevels when not all aptitudes share the same level
-    const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
-    const seed: SpellSeedWithLevel = {
-      name: entry.name,
-      description: normalizeDescription(ref.overrides?.[entry.name]?.description ?? entry.description),
-      aptitudes: [...aptitudes].sort(),
-      ...(hasVaryingLevels ? { aptitudeLevels } : {}),
-      savingThrow,
-      properties,
-      level: minLevel,
-    };
-
-    spells.push(seed);
-  }
-
-  // Sort by level, then name
-  spells.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
-
-  return { spells };
-}
-
-// ---------------------------------------------------------------------------
 // Item reference → ItemDef[]
 // ---------------------------------------------------------------------------
 
@@ -919,7 +1039,8 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
     // Find the raw entry for category info
     const rawWeapon = ref.raw.weapons.find((w) => w.name === srdName);
     const category = rawWeapon?.category?.replace(/ Weapons?$/, "").toLowerCase() ?? "";
-    const description = item.description ?? `A ${category ? `${category} ` : ""}${det.proficiency.toLowerCase()} weapon.`;
+    const description =
+      item.description ?? `A ${category ? `${category} ` : ""}${det.proficiency.toLowerCase()} weapon.`;
 
     const seed: ItemDef = {
       name: det.generatorName,
@@ -1032,13 +1153,13 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     const weight = ovr?.weight ?? det.weight;
     // Find the raw entry for description
     const rawEntry = ref.raw.find((r) => r.name === name);
-    const baseItemRaw = ovr?.baseItem !== undefined ? ovr.baseItem
-      : det.baseItem ?? detectBaseItem(name, rawEntry?.description ?? "", det.category);
+    const baseItemRaw =
+      ovr?.baseItem !== undefined
+        ? ovr.baseItem
+        : (det.baseItem ?? detectBaseItem(name, rawEntry?.description ?? "", det.category));
     const sourceItem = baseItemRaw ?? undefined;
 
-    const description = normalizeDescription(
-      ovr?.description ?? rawEntry?.description ?? "",
-    );
+    const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");
 
     const aura = ovr?.aura ?? det.aura;
     const casterLevel = ovr?.casterLevel ?? det.casterLevel;
@@ -1053,7 +1174,10 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     let itemName = name;
     if (categoryWord) {
       // Normalize plural category in name: "Metamagic Rods" → "Metamagic Rod"
-      itemName = itemName.replace(/\bRods\b/g, "Rod").replace(/\bRings\b/g, "Ring").replace(/\bStaffs\b/g, "Staff");
+      itemName = itemName
+        .replace(/\bRods\b/g, "Rod")
+        .replace(/\bRings\b/g, "Ring")
+        .replace(/\bStaffs\b/g, "Staff");
       if (!new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName)) {
         itemName = `${categoryWord} of ${itemName}`;
       }

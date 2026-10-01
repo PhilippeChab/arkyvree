@@ -1,4 +1,5 @@
 import { BlankState } from "@/client/src/components/common/index.ts";
+
 import type { EncumbranceData, EquipmentRow } from "./equipment.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { SheetSection } from "./SheetSection.tsx";

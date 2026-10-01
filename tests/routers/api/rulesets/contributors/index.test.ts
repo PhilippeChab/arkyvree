@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
 import { createTestRuleset } from "@/tests/helpers.ts";
@@ -7,10 +8,12 @@ import { createTestRuleset } from "@/tests/helpers.ts";
 async function setup() {
   const ruleset = await createTestRuleset(SEED_USER_ID);
   const other = await createSignedInUser("contributor");
-  const invite = await expectOk(api.api.rulesets[":id"].contributors.$post({
-    param: { id: ruleset.id },
-    json: { email: other.user.emailAddress, role: "Editor" },
-  }));
+  const invite = await expectOk(
+    api.api.rulesets[":id"].contributors.$post({
+      param: { id: ruleset.id },
+      json: { email: other.user.emailAddress, role: "Editor" },
+    }),
+  );
   return { id: ruleset.id, other, invite };
 }
 
@@ -24,8 +27,13 @@ describe("rulesets contributors", () => {
 
     const invites = other.api.api.rulesets.contributors.invites;
     expect((await expectOk(invites.me.$get())).map((i) => i.rulesetId)).toEqual([id]);
-    expect(await expectOk(invites[":id"].$get({ param: { id: invite.id } }))).toMatchObject({ id: invite.id, rulesetId: id });
-    expect(await expectOk(invites[":id"].accept.$post({ param: { id: invite.id } }))).toMatchObject({ status: "Active" });
+    expect(await expectOk(invites[":id"].$get({ param: { id: invite.id } }))).toMatchObject({
+      id: invite.id,
+      rulesetId: id,
+    });
+    expect(await expectOk(invites[":id"].accept.$post({ param: { id: invite.id } }))).toMatchObject({
+      status: "Active",
+    });
 
     const contributor = api.api.rulesets[":id"].contributors[":contributorId"];
     const param = { id, contributorId: invite.id };
@@ -35,7 +43,9 @@ describe("rulesets contributors", () => {
 
   test("rejects an invite", async () => {
     const { other, invite } = await setup();
-    const rejected = await expectOk(other.api.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id: invite.id } }));
+    const rejected = await expectOk(
+      other.api.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id: invite.id } }),
+    );
     expect(rejected.status).toBe("Rejected");
   });
 
@@ -51,7 +61,9 @@ describe("rulesets contributors", () => {
     const { id } = await setup();
     const { api: outsider } = await createSignedInUser("outsider");
     const contributors = outsider.api.rulesets[":id"].contributors;
-    expect((await contributors.$post({ param: { id }, json: { email: "someone@example.com", role: "Editor" } })).status).toBe(403);
+    expect(
+      (await contributors.$post({ param: { id }, json: { email: "someone@example.com", role: "Editor" } })).status,
+    ).toBe(403);
     expect((await contributors.$get({ param: { id }, query: {} })).status).toBe(403);
   });
 

@@ -1,46 +1,50 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import {
+  MenuBook as BookIcon,
+  Extension as ExtensionIcon,
+  ContentCopy as ForkIcon,
+  Lock as LockIcon,
+  Public as PublicIcon,
+  StarBorder as StarBorderIcon,
+  Star as StarIcon,
+} from "@mui/icons-material";
+import { Alert, Container, IconButton, Stack, Typography } from "@mui/material";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+
 import {
   BlankState,
+  CREATED_SORTS,
+  DiceSpinner,
+  type FilterOption,
   InfoPill,
   ListCard,
   ListCardGrid,
   LoadMoreButton,
+  NoMatchesState,
   PageHeader,
   PageTransition,
   SearchBar,
-  DiceSpinner,
-  type FilterOption,
   type SortOption,
-  CREATED_SORTS,
   UPDATED_SORTS,
-  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
-import { usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
+import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { rulesetDetailQuery, type RulesetListFilters, rulesetListQuery } from "@/client/src/lib/queries.ts";
+import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
 import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
-import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { rulesetDetailQuery, rulesetListQuery, type RulesetListFilters } from "@/client/src/lib/queries.ts";
-import {
-  ContentCopy as ForkIcon,
-  Extension as ExtensionIcon,
-  Lock as LockIcon,
-  MenuBook as BookIcon,
-  Public as PublicIcon,
-  Star as StarIcon,
-  StarBorder as StarBorderIcon,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Container,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 
-const SCOPES = ["base", "extensions", "systems", "community", "forked", "campaignAccessible", "starred", "archived"] as const;
+const SCOPES = [
+  "base",
+  "extensions",
+  "systems",
+  "community",
+  "forked",
+  "campaignAccessible",
+  "starred",
+  "archived",
+] as const;
 type FilterScope = (typeof SCOPES)[number];
 type SortField = RulesetListFilters["orderBy"];
 
@@ -66,14 +70,7 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
   const listQuery = rulesetListQuery(filters);
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...listQuery,
     staleTime: 10 * 60 * 1000,
     placeholderData: keepPreviousData,
@@ -82,9 +79,7 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
   const rulesets = pageItems(data);
 
   if (isLoading) {
-    return (
-      <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
-    );
+    return <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;
   }
 
   if (error) {
@@ -95,11 +90,7 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
     return filters.search ? (
       <NoMatchesState search={filters.search} />
     ) : (
-      <BlankState
-        icon={BookIcon}
-        title="No rulesets found"
-        description="Try another filter, or fork a base ruleset"
-      />
+      <BlankState icon={BookIcon} title="No rulesets found" description="Try another filter, or fork a base ruleset" />
     );
   }
 
@@ -126,35 +117,39 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
               avatar={<BookIcon sx={{ fontSize: 18 }} />}
               title={ruleset.name}
               description={ruleset.description}
-              corner={ruleset.isStarrable && (
-                <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
-                  {ruleset.starCount > 0 && (
-                    <Typography variant="caption" sx={{ color: "warning.main", fontWeight: 600, lineHeight: 1 }}>
-                      {ruleset.starCount}
-                    </Typography>
-                  )}
-                  <IconButton
-                    size="small"
-                    aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleStar(ruleset.id, ruleset.isStarred);
-                    }}
-                    sx={{
-                      color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                      "&:hover": { color: "warning.main" },
-                    }}
-                  >
-                    {ruleset.isStarred ? <StarIcon /> : <StarBorderIcon />}
-                  </IconButton>
-                </Stack>
-              )}
-              pills={(
+              corner={
+                ruleset.isStarrable && (
+                  <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
+                    {ruleset.starCount > 0 && (
+                      <Typography variant="caption" sx={{ color: "warning.main", fontWeight: 600, lineHeight: 1 }}>
+                        {ruleset.starCount}
+                      </Typography>
+                    )}
+                    <IconButton
+                      size="small"
+                      aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleStar(ruleset.id, ruleset.isStarred);
+                      }}
+                      sx={{
+                        color: ruleset.isStarred ? "warning.main" : "action.disabled",
+                        "&:hover": { color: "warning.main" },
+                      }}
+                    >
+                      {ruleset.isStarred ? <StarIcon /> : <StarBorderIcon />}
+                    </IconButton>
+                  </Stack>
+                )
+              }
+              pills={
                 <>
                   <InfoPill icon={status.icon} label={ruleset.status} color={status.color} tooltip={status.tooltip} />
-                  {ruleset.private
-                    ? <InfoPill icon={LockIcon} label="Private" color="warning" tooltip="Private ruleset" />
-                    : <InfoPill icon={PublicIcon} label="Public" color="success" tooltip="Public ruleset" />}
+                  {ruleset.private ? (
+                    <InfoPill icon={LockIcon} label="Private" color="warning" tooltip="Private ruleset" />
+                  ) : (
+                    <InfoPill icon={PublicIcon} label="Public" color="success" tooltip="Public ruleset" />
+                  )}
                   {ruleset.kind === "extension" ? (
                     <InfoPill
                       icon={ExtensionIcon}
@@ -162,11 +157,18 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
                       color="secondary"
                       tooltip={ruleset.userId ? "Extension" : "Official Extension"}
                     />
-                  ) : ruleset.rulesetId && (
-                    <InfoPill icon={ForkIcon} label="Fork" color="info" tooltip={`Forked from ${ruleset.rulesetName}`} />
+                  ) : (
+                    ruleset.rulesetId && (
+                      <InfoPill
+                        icon={ForkIcon}
+                        label="Fork"
+                        color="info"
+                        tooltip={`Forked from ${ruleset.rulesetName}`}
+                      />
+                    )
                   )}
                 </>
-              )}
+              }
             />
           );
         })}

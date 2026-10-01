@@ -1,30 +1,4 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import {
-  BlankState,
-  CLICKABLE_SX,
-  clickableProps,
-  LoadMoreButton,
-  PageHeader,
-  PageTransition,
-  SearchBar,
-  DiceSpinner,
-  type FilterOption,
-  CREATED_SORTS,
-  NoMatchesState,
-} from "@/client/src/components/common/index.ts";
-import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
-import { useNotificationActions, usePageTitle, useListParams } from "@/client/src/hooks/index.ts";
-import {
-  formatActivityDetails,
-  formatNotificationMessage,
-  formatRelativeTime,
-} from "@/client/src/lib/activityFormatters.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  Notifications as NotificationsIcon,
-  Circle as CircleIcon,
-} from "@mui/icons-material";
+import { Circle as CircleIcon, Notifications as NotificationsIcon } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -42,6 +16,30 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
+import {
+  BlankState,
+  CLICKABLE_SX,
+  clickableProps,
+  CREATED_SORTS,
+  DiceSpinner,
+  type FilterOption,
+  LoadMoreButton,
+  NoMatchesState,
+  PageHeader,
+  PageTransition,
+  SearchBar,
+} from "@/client/src/components/common/index.ts";
+import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
+import { useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
+import {
+  formatActivityDetails,
+  formatNotificationMessage,
+  formatRelativeTime,
+} from "@/client/src/lib/activityFormatters.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: undefined, label: "All" },
   { value: "unread", label: "Unread" },
@@ -52,31 +50,27 @@ const PAGE_SIZE = 10;
 export default function NotificationsPage() {
   usePageTitle("Notifications");
   const actions = useNotificationActions();
-  const { searchParams, updateSearchParams, search, orderDir, searchBarProps } = useListParams(
-    ["createdAt"],
-    { orderBy: "createdAt", orderDir: "desc" },
-  );
+  const { searchParams, updateSearchParams, search, orderDir, searchBarProps } = useListParams(["createdAt"], {
+    orderBy: "createdAt",
+    orderDir: "desc",
+  });
 
   const unreadOnly = searchParams.get("filter") === "unread";
 
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: queryKeys.notifications.list({ search, orderDir, unreadOnly }),
-    queryFn: ({ pageParam }) => parseResponse(rpc.api.notifications.$get({
-      query: {
-        page: pageParam.toString(),
-        limit: PAGE_SIZE.toString(),
-        search: search || undefined,
-        orderDir,
-        unreadOnly: unreadOnly ? "true" : undefined,
-      },
-    })),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.notifications.$get({
+          query: {
+            page: pageParam.toString(),
+            limit: PAGE_SIZE.toString(),
+            search: search || undefined,
+            orderDir,
+            unreadOnly: unreadOnly ? "true" : undefined,
+          },
+        }),
+      ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     placeholderData: keepPreviousData,
@@ -90,7 +84,7 @@ export default function NotificationsPage() {
         <PageHeader
           title="Notifications"
           subtitle="Updates from your campaigns and rulesets"
-          action={(
+          action={
             <Button
               variant="outlined"
               size="large"
@@ -107,7 +101,7 @@ export default function NotificationsPage() {
             >
               Mark all as read
             </Button>
-          )}
+          }
         />
 
         <SearchBar
@@ -130,9 +124,15 @@ export default function NotificationsPage() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Notification</strong></TableCell>
-                    <TableCell><strong>When</strong></TableCell>
-                    <TableCell><strong>Actions</strong></TableCell>
+                    <TableCell>
+                      <strong>Notification</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>When</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Actions</strong>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -151,10 +151,19 @@ export default function NotificationsPage() {
                         }}
                       >
                         <TableCell>
-                          <Tooltip describeChild title={formatActivityDetails(notification.data) ?? ""} arrow enterDelay={300} slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}>
+                          <Tooltip
+                            describeChild
+                            title={formatActivityDetails(notification.data) ?? ""}
+                            arrow
+                            enterDelay={300}
+                            slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                          >
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                               {isUnread && (
-                                <CircleIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
+                                <CircleIcon
+                                  titleAccess="Unread"
+                                  sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }}
+                                />
                               )}
                               <Typography variant="body2">
                                 {formatNotificationMessage(notification.type, notification.data)}

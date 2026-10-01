@@ -1,10 +1,9 @@
 import { and, count, eq, isNull, not, sql } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { campaignsInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
 
 class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, CampaignInstance> {
   constructor() {
@@ -15,11 +14,7 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, Cam
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof campaignsInCampaign>>,
-    where: { id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof campaignsInCampaign>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
@@ -50,10 +45,7 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, Cam
 
   async findOne(db: Db, where: { id: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
     return await db.query.campaignsInCampaign.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        this.visibility(visibility),
-      ]),
+      where: this.where([eq(this.table.id, where.id), this.visibility(visibility)]),
     });
   }
 
@@ -72,10 +64,7 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, Cam
       .from(campaignsInCampaign)
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
       .innerJoin(rulesetsInRules, eq(campaignsInCampaign.rulesetId, rulesetsInRules.id))
-      .where(and(
-        eq(campaignsInCampaign.id, where.id),
-        not(isNull(playersInCampaign.userId)),
-      ))
+      .where(and(eq(campaignsInCampaign.id, where.id), not(isNull(playersInCampaign.userId))))
       .groupBy(
         campaignsInCampaign.id,
         campaignsInCampaign.name,
@@ -124,11 +113,7 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, Cam
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
       .innerJoin(rulesetsInRules, eq(campaignsInCampaign.rulesetId, rulesetsInRules.id))
       .leftJoin(playerCountSubquery, eq(campaignsInCampaign.id, playerCountSubquery.campaignId))
-      .where(this.where([
-        eq(playersInCampaign.userId, where.userId),
-        this.visibility(visibility),
-        searchCondition,
-      ]))
+      .where(this.where([eq(playersInCampaign.userId, where.userId), this.visibility(visibility), searchCondition]))
       .groupBy(
         campaignsInCampaign.id,
         campaignsInCampaign.name,
@@ -150,11 +135,13 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, Cam
       .select({ count: count() })
       .from(campaignsInCampaign)
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .where(and(
-        eq(playersInCampaign.userId, where.userId),
-        isNull(campaignsInCampaign.deletedAt),
-        isNull(playersInCampaign.deletedAt),
-      ));
+      .where(
+        and(
+          eq(playersInCampaign.userId, where.userId),
+          isNull(campaignsInCampaign.deletedAt),
+          isNull(playersInCampaign.deletedAt),
+        ),
+      );
 
     return result.count;
   }

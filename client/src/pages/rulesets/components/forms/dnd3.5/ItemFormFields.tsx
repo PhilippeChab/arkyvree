@@ -1,11 +1,13 @@
-import { nameRules } from "@/client/src/lib/validation.ts";
-import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { MenuItem, TextField } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormReturn } from "react-hook-form";
+
+import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { nameRules } from "@/client/src/lib/validation.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
+
 import { DECIMAL_PATTERN, isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
 
 interface TemplateSelectorProps {
@@ -37,7 +39,9 @@ function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorP
     >
       <MenuItem value="">None</MenuItem>
       {templates?.map((t) => (
-        <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+        <MenuItem key={t.id} value={t.id}>
+          {t.name}
+        </MenuItem>
       ))}
     </TextField>
   );
@@ -66,13 +70,8 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
 
   return (
     <>
-      <NameField
-        {...form.register("name", nameRules)}
-        error={form.formState.errors.name}
-      />
-      <DescriptionField
-        {...form.register("description")}
-      />
+      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
+      <DescriptionField {...form.register("description")} />
       <TextField
         {...form.register("costGp", { pattern: DECIMAL_PATTERN })}
         label="Cost (gp)"
@@ -81,7 +80,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
         error={!!form.formState.errors.costGp}
         helperText={form.formState.errors.costGp?.message}
         slotProps={{
-          htmlInput: { inputMode: "decimal" }
+          htmlInput: { inputMode: "decimal" },
         }}
       />
       <TextField
@@ -92,7 +91,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
         error={!!form.formState.errors.weight}
         helperText={form.formState.errors.weight?.message}
         slotProps={{
-          htmlInput: { inputMode: "decimal" }
+          htmlInput: { inputMode: "decimal" },
         }}
       />
       <TextField
@@ -106,26 +105,23 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
       >
         <MenuItem value="">None</MenuItem>
         {ITEM_TYPE_OPTIONS.map((opt) => (
-          <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+          <MenuItem key={opt} value={opt}>
+            {opt}
+          </MenuItem>
         ))}
       </TextField>
-      {isTemplateType(itemType)
-        ? !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType} disabled={lockType} />
-        : (
-          <TextField
-            {...form.register("slot")}
-            label="Slot"
-            fullWidth
-            select
-            value={slot || ""}
-            disabled={lockType}
-          >
-            <MenuItem value="">None</MenuItem>
-            {SLOT_OPTIONS.map((slot) => (
-              <MenuItem key={slot} value={slot}>{slot}</MenuItem>
-            ))}
-          </TextField>
-        )}
+      {isTemplateType(itemType) ? (
+        !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType} disabled={lockType} />
+      ) : (
+        <TextField {...form.register("slot")} label="Slot" fullWidth select value={slot || ""} disabled={lockType}>
+          <MenuItem value="">None</MenuItem>
+          {SLOT_OPTIONS.map((slot) => (
+            <MenuItem key={slot} value={slot}>
+              {slot}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
     </>
   );
 }

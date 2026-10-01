@@ -1,24 +1,28 @@
 import { and, getTableName, inArray, isNull } from "drizzle-orm";
+
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Activities, Campaigns, CharacterContributors, CharacterLevels, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
+import {
+  Activities,
+  Campaigns,
+  CharacterContributors,
+  CharacterLevels,
+  Characters,
+  PlayerCharacters,
+  Players,
+} from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import { enqueueCharacterPdf, findExportableCharacter, loadBondedByKind } from "@/server/services/CharactersService.ts";
 import { withRulesetScopes } from "@/server/services/rulesets/cow.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 
 type VisibilityType = "Private" | "Public" | "Partial";
 
 export const PlayerCharactersMethods = {
-  async linkCharacter(
-    session: Session,
-    campaignId: string,
-    characterId: string,
-    visibility: VisibilityType,
-  ) {
+  async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
       if (!campaign) {
@@ -121,11 +125,7 @@ export const PlayerCharactersMethods = {
     where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
   ) {
-    const member = await Players.findOne(
-      db,
-      { userId: session.userId, campaignId },
-      Visibility.All,
-    );
+    const member = await Players.findOne(db, { userId: session.userId, campaignId }, Visibility.All);
     if (!member) throw new ForbiddenError("You are not a member of this campaign");
 
     const isGM = member.role === "Game Master";
@@ -170,73 +170,74 @@ export const PlayerCharactersMethods = {
 
     // Resolve race / klass names via each character's composed ruleset cache
     // so COW'd or renamed entities render their post-COW names.
-    return await withRulesetScopes(db, characters.map((c) => c.rulesetId), async (rulesetDataByRulesetId) => {
+    return await withRulesetScopes(
+      db,
+      characters.map((c) => c.rulesetId),
+      async (rulesetDataByRulesetId) => {
+        // Group levels by character and class
+        const levelsByCharacter = new Map<string, Map<string, number>>();
+        for (const level of levels) {
+          const char = characters.find((c) => c.id === level.characterId);
+          if (!char) continue;
+          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
+          if (!rulesetData) continue;
+          const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
+          if (!klassLevel) continue;
+          const klass = rulesetData.klassesById.get(klassLevel.klassId);
+          const klassName = klass?.name || "Unknown";
+          let bucket = levelsByCharacter.get(level.characterId);
+          if (!bucket) {
+            bucket = new Map();
+            levelsByCharacter.set(level.characterId, bucket);
+          }
+          const currentLevel = bucket.get(klassName) || 0;
+          if (klassLevel.level > currentLevel) {
+            bucket.set(klassName, klassLevel.level);
+          }
+        }
 
-    // Group levels by character and class
-    const levelsByCharacter = new Map<string, Map<string, number>>();
-    for (const level of levels) {
-      const char = characters.find((c) => c.id === level.characterId);
-      if (!char) continue;
-      const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-      if (!rulesetData) continue;
-      const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
-      if (!klassLevel) continue;
-      const klass = rulesetData.klassesById.get(klassLevel.klassId);
-      const klassName = klass?.name || "Unknown";
-      let bucket = levelsByCharacter.get(level.characterId);
-      if (!bucket) {
-        bucket = new Map();
-        levelsByCharacter.set(level.characterId, bucket);
-      }
-      const currentLevel = bucket.get(klassName) || 0;
-      if (klassLevel.level > currentLevel) {
-        bucket.set(klassName, klassLevel.level);
-      }
-    }
+        // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
+        const characterMap = new Map(characters.map((c) => [c.id, c]));
+        const orderedCharacters = characterIds
+          .map((id) => characterMap.get(id))
+          .filter((char): char is NonNullable<typeof char> => char !== undefined);
 
-    // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
-    const characterMap = new Map(characters.map((c) => [c.id, c]));
-    const orderedCharacters = characterIds
-      .map((id) => characterMap.get(id))
-      .filter((char): char is NonNullable<typeof char> => char !== undefined);
+        // Map to final format, limiting data for Partial visibility characters
+        const enrichedCharacters = orderedCharacters.map((char) => {
+          const meta = characterMeta.get(char.id);
+          const isOwn = meta?.playerId === member.id;
+          const isPartial = !isGM && !isOwn && meta?.visibility === "Partial";
 
-    // Map to final format, limiting data for Partial visibility characters
-    const enrichedCharacters = orderedCharacters.map((char) => {
-      const meta = characterMeta.get(char.id);
-      const isOwn = meta?.playerId === member.id;
-      const isPartial = !isGM && !isOwn && meta?.visibility === "Partial";
+          const classLevels = Array.from(levelsByCharacter.get(char.id)?.entries() || []).map(([klass, level]) => ({
+            klass,
+            level,
+          }));
+          const totalLevel = classLevels.reduce((sum, lvl) => sum + lvl.level, 0);
+          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
+          const race = rulesetData?.racesById.get(char.raceId);
 
-      const classLevels = Array.from(levelsByCharacter.get(char.id)?.entries() || [])
-        .map(([klass, level]) => ({ klass, level }));
-      const totalLevel = classLevels.reduce((sum, lvl) => sum + lvl.level, 0);
-      const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-      const race = rulesetData?.racesById.get(char.raceId);
+          return {
+            id: char.id,
+            name: char.name,
+            description: isPartial ? null : char.description,
+            race: race?.name ?? "Unknown",
+            levels: isPartial ? [] : classLevels,
+            totalLevel,
+            visibility: meta?.visibility ?? "Private",
+            isOwn,
+          };
+        });
 
-      return {
-        id: char.id,
-        name: char.name,
-        description: isPartial ? null : char.description,
-        race: race?.name ?? "Unknown",
-        levels: isPartial ? [] : classLevels,
-        totalLevel,
-        visibility: meta?.visibility ?? "Private",
-        isOwn,
-      };
-    });
-
-    return {
-      items: enrichedCharacters,
-      page: paginationMeta.page,
-      nextPage: paginationMeta.nextPage,
-    };
-    });
+        return {
+          items: enrichedCharacters,
+          page: paginationMeta.page,
+          nextPage: paginationMeta.nextPage,
+        };
+      },
+    );
   },
 
-  async getCampaignCharacter(
-    session: Session,
-    campaignId: string,
-    characterId: string,
-  ) {
+  async getCampaignCharacter(session: Session, campaignId: string, characterId: string) {
     // Verify the requesting user is a campaign member
     const member = await Players.findOne(db, { userId: session.userId, campaignId });
     if (!member) throw new ForbiddenError("You are not a member of this campaign");
@@ -272,9 +273,7 @@ export const PlayerCharactersMethods = {
     const detailedCharacter = rulesetModule.createDetailedCharacter(character);
     await detailedCharacter.build();
 
-    const bondedByKind = isPartial
-      ? {}
-      : await loadBondedByKind(rulesetModule, character.id);
+    const bondedByKind = isPartial ? {} : await loadBondedByKind(rulesetModule, character.id);
 
     return {
       visibility: link.visibility as VisibilityType,
@@ -289,11 +288,7 @@ export const PlayerCharactersMethods = {
     };
   },
 
-  async enqueueCampaignCharacterPdf(
-    session: Session,
-    campaignId: string,
-    characterId: string,
-  ) {
+  async enqueueCampaignCharacterPdf(session: Session, campaignId: string, characterId: string) {
     // Not found for every refusal, as for the character's own export.
     const character = await findExportableCharacter(session.userId, characterId, campaignId);
     if (!character) throw new NotFoundError("Character not found in this campaign");

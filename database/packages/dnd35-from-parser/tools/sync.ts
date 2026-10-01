@@ -1,7 +1,9 @@
-import { join, basename } from "node:path";
+import { basename, join } from "node:path";
+
 import { $ } from "bun";
+
+import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
 /**
  * Re-scrapes all existing reference JSON files (keeping their overrides),
@@ -15,63 +17,6 @@ import { getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/too
 const BASE_DIR = join(import.meta.dirname!, "../");
 const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");
 const GENERATOR = join(BASE_DIR, "tools/generator/index.ts");
-
-async function main() {
-  const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
-
-  let refs = discoverRefs();
-  if (refs.length === 0) {
-    console.log("No reference files found.");
-    return;
-  }
-
-  if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
-  if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
-  if (nameFilter) refs = refs.filter((r) => basename(r.path, ".json").toLowerCase() === nameFilter);
-
-  // Domain refs are handled separately — they use a master reference
-  const regularRefs = refs.filter((r) => r.type !== "domain");
-
-  console.log(`Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`);
-
-  // What failed: the sync then exits with an error, so a script running it stops
-  const failed: string[] = [];
-
-  // Phase 1: Re-scrape all regular refs (keeps their overrides)
-  console.log("=== Scraping ===");
-  for (const ref of regularRefs) {
-    const name = basename(ref.path, ".json");
-    process.stdout.write(`  ${name}... `);
-
-    const args = buildScrapeArgs(ref);
-    if (!args) {
-      console.log("SKIP (no URL)");
-      continue;
-    }
-
-    if (await run(SCRAPER, args)) console.log("ok");
-    else failed.push(name);
-  }
-
-  // Phase 1b: Re-scrape the domains reference, which every book shares: only when the generator then regenerates
-  // every book's domains (no book or name filter; see generateAll)
-  if (!bookFilter && !nameFilter && (!typeFilter || typeFilter === "domain")) {
-    process.stdout.write("  domains (master)... ");
-    if (await run(SCRAPER, ["domain"])) console.log("ok");
-    else failed.push("domains");
-  }
-
-  // Phase 2: Regenerate everything in scope, domains included
-  console.log("\n=== Generating ===");
-  if (!(await run(GENERATOR, process.argv.slice(2)))) failed.push("generation");
-
-  if (failed.length > 0) {
-    console.log(`\nFailed: ${failed.join(", ")}.`);
-    process.exitCode = 1;
-    return;
-  }
-  console.log(`\nDone. Synced ${refs.length} references.`);
-}
 
 /** Runs a tool (`script` with `args`), printing FAILED and its errors when it fails: whether it succeeded. */
 async function run(script: string, args: string[]): Promise<boolean> {
@@ -88,7 +33,13 @@ async function run(script: string, args: string[]): Promise<boolean> {
  * Constructs dndtools.net URLs from book + type + name, regardless of
  * what the stored sourceUrl says (it may point to the old dead site).
  */
-function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: string; filter?: string }): string[] | null {
+function buildScrapeArgs(ref: {
+  path: string;
+  type: string;
+  url?: string;
+  book: string;
+  filter?: string;
+}): string[] | null {
   const name = basename(ref.path, ".json");
 
   // wizardSchool has no parser — skip
@@ -142,6 +93,65 @@ function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: 
   }
 
   return args;
+}
+
+async function main() {
+  const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
+
+  let refs = discoverRefs();
+  if (refs.length === 0) {
+    console.log("No reference files found.");
+    return;
+  }
+
+  if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
+  if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
+  if (nameFilter) refs = refs.filter((r) => basename(r.path, ".json").toLowerCase() === nameFilter);
+
+  // Domain refs are handled separately — they use a master reference
+  const regularRefs = refs.filter((r) => r.type !== "domain");
+
+  console.log(
+    `Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`,
+  );
+
+  // What failed: the sync then exits with an error, so a script running it stops
+  const failed: string[] = [];
+
+  // Phase 1: Re-scrape all regular refs (keeps their overrides)
+  console.log("=== Scraping ===");
+  for (const ref of regularRefs) {
+    const name = basename(ref.path, ".json");
+    process.stdout.write(`  ${name}... `);
+
+    const args = buildScrapeArgs(ref);
+    if (!args) {
+      console.log("SKIP (no URL)");
+      continue;
+    }
+
+    if (await run(SCRAPER, args)) console.log("ok");
+    else failed.push(name);
+  }
+
+  // Phase 1b: Re-scrape the domains reference, which every book shares: only when the generator then regenerates
+  // every book's domains (no book or name filter; see generateAll)
+  if (!bookFilter && !nameFilter && (!typeFilter || typeFilter === "domain")) {
+    process.stdout.write("  domains (master)... ");
+    if (await run(SCRAPER, ["domain"])) console.log("ok");
+    else failed.push("domains");
+  }
+
+  // Phase 2: Regenerate everything in scope, domains included
+  console.log("\n=== Generating ===");
+  if (!(await run(GENERATOR, process.argv.slice(2)))) failed.push("generation");
+
+  if (failed.length > 0) {
+    console.log(`\nFailed: ${failed.join(", ")}.`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log(`\nDone. Synced ${refs.length} references.`);
 }
 
 main().catch((err) => {

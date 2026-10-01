@@ -1,5 +1,10 @@
 import type React from "react";
 import type { ComponentType } from "react";
+
+import { AddAttributeStep } from "./AddAttributeStep.tsx";
+import { AddClassPlanStep } from "./AddClassPlanStep.tsx";
+import { AddHpStep } from "./AddHpStep.tsx";
+import { AddReviewStep } from "./AddReviewStep.tsx";
 import type {
   AptitudePool,
   AttributesData,
@@ -15,10 +20,6 @@ import type {
   SelectedKlass,
   SkillsData,
 } from "./levelUp/index.ts";
-import { AddAttributeStep } from "./AddAttributeStep.tsx";
-import { AddClassPlanStep } from "./AddClassPlanStep.tsx";
-import { AddHpStep } from "./AddHpStep.tsx";
-import { AddReviewStep } from "./AddReviewStep.tsx";
 import { LevelUpAttributeStep } from "./LevelUpAttributeStep.tsx";
 import { LevelUpFeatsStep } from "./LevelUpFeatsStep.tsx";
 import { LevelUpHpStep } from "./LevelUpHpStep.tsx";
@@ -75,10 +76,7 @@ interface FeatPickerState {
   featSearch: string;
   setFeatSearch: (search: string) => void;
   handleFeatsScroll: (event: React.UIEvent<HTMLElement>) => void;
-  setValue: (
-    key: "selectedFeats",
-    value: Record<string, SelectedFeat[]>,
-  ) => void;
+  setValue: (key: "selectedFeats", value: Record<string, SelectedFeat[]>) => void;
   handleDeleteFeat: (featId: string, aptitudeId: string) => void;
 }
 
@@ -205,10 +203,7 @@ interface PowerPickerState {
   isLoadingAvailablePowers: boolean;
   isFetchingNextPowersPage: boolean;
   powerSearch: string;
-  setValue: (
-    key: "selectedPowers",
-    value: LevelUpFormData["selectedPowers"],
-  ) => void;
+  setValue: (key: "selectedPowers", value: LevelUpFormData["selectedPowers"]) => void;
   handleDeletePower: (powerId: string, aptitudeId: string) => void;
   setPowerSearch: (search: string) => void;
   handlePowersScroll: (event: React.UIEvent<HTMLElement>) => void;

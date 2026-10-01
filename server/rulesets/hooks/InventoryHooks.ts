@@ -1,5 +1,5 @@
-import type { Db } from "@/server/database/index.ts";
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { Db } from "@/server/database/index.ts";
 
 export interface InventoryHooks {
   validateWeaponSize(

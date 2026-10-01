@@ -1,13 +1,14 @@
-import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
 export type Level = LevelsArray[number];
@@ -31,15 +32,20 @@ export function useClassLevels(rulesetId: string, classId: string) {
   });
 
   // Query
-  const { data: levels, isLoading } = useQuery({ ...classLevelsQuery(rulesetId, classId), enabled: !!rulesetId && !!classId });
+  const { data: levels, isLoading } = useQuery({
+    ...classLevelsQuery(rulesetId, classId),
+    enabled: !!rulesetId && !!classId,
+  });
 
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: CreateLevelFormData) => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$post({
-        param: { id: rulesetId, classId },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].classes[":classId"].levels.$post({
+          param: { id: rulesetId, classId },
+          json: data,
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Level created successfully");
@@ -55,9 +61,7 @@ export function useClassLevels(rulesetId: string, classId: string) {
   });
 
   // Compute highest level for defaults
-  const highestLevel = levels
-    ?.slice()
-    .sort((a, b) => b.level - a.level)[0] ?? null;
+  const highestLevel = levels?.slice().sort((a, b) => b.level - a.level)[0] ?? null;
 
   // Handlers
   const handleCreate = () => {
@@ -125,14 +129,16 @@ export function useClassSkills(rulesetId: string, classId: string) {
   } = useListboxQuery({
     queryKey: queryKeys.rulesets.sectionSearch(rulesetId, "skills", debouncedSkillSearch),
     queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets[":id"].skills.$get({
-        param: { id: rulesetId },
-        query: {
-          limit: "20",
-          page: pageParam.toString(),
-          search: debouncedSkillSearch || undefined,
-        },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].skills.$get({
+          param: { id: rulesetId },
+          query: {
+            limit: "20",
+            page: pageParam.toString(),
+            search: debouncedSkillSearch || undefined,
+          },
+        }),
+      );
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -142,10 +148,12 @@ export function useClassSkills(rulesetId: string, classId: string) {
   // Add skill mutation
   const addSkillMutation = useMutation({
     mutationFn: async (skillId: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
-        param: { id: rulesetId, classId },
-        json: { skillId },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
+          param: { id: rulesetId, classId },
+          json: { skillId },
+        }),
+      );
     },
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -154,27 +162,22 @@ export function useClassSkills(rulesetId: string, classId: string) {
       });
 
       // Snapshot the previous value
-      const previousClassSkills = queryClient.getQueryData(
-        classSkillsKey,
-      );
+      const previousClassSkills = queryClient.getQueryData(classSkillsKey);
 
       // Find the skill being added
       const skill = availableSkills.find((s) => s.id === skillId);
 
       if (skill) {
         // Optimistically update to the new value
-        queryClient.setQueryData(
-          classSkillsKey,
-          (old) => {
-            if (!old) return [];
-            // A stand-in row until the refetch brings the real one.
-            const now = new Date().toISOString();
-            return [
-              ...old,
-              { skillId, klassId: classId, skillsInRule: skill, createdAt: now, updatedAt: now, deletedAt: null },
-            ];
-          },
-        );
+        queryClient.setQueryData(classSkillsKey, (old) => {
+          if (!old) return [];
+          // A stand-in row until the refetch brings the real one.
+          const now = new Date().toISOString();
+          return [
+            ...old,
+            { skillId, klassId: classId, skillsInRule: skill, createdAt: now, updatedAt: now, deletedAt: null },
+          ];
+        });
       }
 
       // Return a context object with the snapshotted value
@@ -186,10 +189,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to add skill to class");
       // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(
-        classSkillsKey,
-        context?.previousClassSkills,
-      );
+      queryClient.setQueryData(classSkillsKey, context?.previousClassSkills);
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
@@ -202,11 +202,11 @@ export function useClassSkills(rulesetId: string, classId: string) {
   // Remove skill mutation
   const removeSkillMutation = useMutation({
     mutationFn: async (skillId: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete(
-        {
+      return parseResponse(
+        rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete({
           param: { id: rulesetId, classId, skillId },
-        },
-      ));
+        }),
+      );
     },
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -215,18 +215,13 @@ export function useClassSkills(rulesetId: string, classId: string) {
       });
 
       // Snapshot the previous value
-      const previousClassSkills = queryClient.getQueryData(
-        classSkillsKey,
-      );
+      const previousClassSkills = queryClient.getQueryData(classSkillsKey);
 
       // Optimistically remove the skill
-      queryClient.setQueryData(
-        classSkillsKey,
-        (old) => {
-          if (!old) return [];
-          return old.filter((cs) => cs.skillId !== skillId);
-        },
-      );
+      queryClient.setQueryData(classSkillsKey, (old) => {
+        if (!old) return [];
+        return old.filter((cs) => cs.skillId !== skillId);
+      });
 
       // Return a context object with the snapshotted value
       return { previousClassSkills };
@@ -237,10 +232,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to remove skill from class");
       // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(
-        classSkillsKey,
-        context?.previousClassSkills,
-      );
+      queryClient.setQueryData(classSkillsKey, context?.previousClassSkills);
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data

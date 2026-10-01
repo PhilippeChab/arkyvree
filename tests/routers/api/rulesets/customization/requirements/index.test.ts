@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
@@ -21,7 +22,13 @@ describe("rulesets customization requirements", () => {
     expect(await expectOk(requirements.$get({ param }))).toEqual([]);
 
     const created = await expectOk(requirements.$post({ param, json: charisma13 }));
-    expect(created).toMatchObject({ ...charisma13, valueType: "number", chainingOperator: null, entityType: "feats", entityId });
+    expect(created).toMatchObject({
+      ...charisma13,
+      valueType: "number",
+      chainingOperator: null,
+      entityType: "feats",
+      entityId,
+    });
     expect((await expectOk(requirements.$get({ param }))).map((r) => r.id)).toEqual([created.id]);
 
     const requirementParam = { ...param, requirement_id: created.id };
@@ -34,8 +41,20 @@ describe("rulesets customization requirements", () => {
 
   test("creates a chaining requirement without a target", async () => {
     const { id, entityId } = await setup();
-    const created = await expectOk(requirements.$post({ param: { id, entityType: "feats", entityId }, json: { level: "1", chainingOperator: "and" } }));
-    expect(created).toMatchObject({ level: "1", chainingOperator: "and", target: null, value: null, valueType: null, operator: null });
+    const created = await expectOk(
+      requirements.$post({
+        param: { id, entityType: "feats", entityId },
+        json: { level: "1", chainingOperator: "and" },
+      }),
+    );
+    expect(created).toMatchObject({
+      level: "1",
+      chainingOperator: "and",
+      target: null,
+      value: null,
+      valueType: null,
+      operator: null,
+    });
   });
 
   test.each(CUSTOMIZABLE_ENTITY_TYPES)("adds a requirement to %s", async (entityType) => {
@@ -47,24 +66,33 @@ describe("rulesets customization requirements", () => {
 
   test("adds a requirement to a modifier", async () => {
     const { id, entityId } = await setup();
-    const modifier = await expectOk(customization.modifiers.$post({
-      param: { id, entityType: "feats", entityId },
-      json: { target: "abilities.strength.misc", value: "2", operator: "add" },
-    }));
-    const created = await expectOk(requirements.$post({ param: { id, entityType: "modifiers", entityId: modifier.id }, json: charisma13 }));
+    const modifier = await expectOk(
+      customization.modifiers.$post({
+        param: { id, entityType: "feats", entityId },
+        json: { target: "abilities.strength.misc", value: "2", operator: "add" },
+      }),
+    );
+    const created = await expectOk(
+      requirements.$post({ param: { id, entityType: "modifiers", entityId: modifier.id }, json: charisma13 }),
+    );
     expect(created).toMatchObject({ entityType: "modifiers", entityId: modifier.id });
   });
 
   test("requires a session", async () => {
     const { id, entityId } = await setup();
-    const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$get({ param: { id, entityType: "feats", entityId } });
+    const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$get({
+      param: { id, entityType: "feats", entityId },
+    });
     expect(response.status).toBe(401);
   });
 
   test("rejects a requirement without a level", async () => {
     const { id, entityId } = await setup();
     const { level: _level, ...withoutLevel } = charisma13;
-    const response = await requirements.$post({ param: { id, entityType: "feats", entityId }, json: withoutLevel as never });
+    const response = await requirements.$post({
+      param: { id, entityType: "feats", entityId },
+      json: withoutLevel as never,
+    });
     expect(response.status).toBe(400);
   });
 

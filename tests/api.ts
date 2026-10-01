@@ -1,4 +1,4 @@
-import { DetailedError, parseResponse, type ClientResponse } from "hono/client";
+import { type ClientResponse, DetailedError, parseResponse } from "hono/client";
 import { testClient } from "hono/testing";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";

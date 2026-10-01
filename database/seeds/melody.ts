@@ -10,7 +10,8 @@ export default {
   gender: "Female",
   height: "168",
   weight: "58",
-  description: "A half-elven bard whose honeyed voice can charm a dragon or rally an army. Melody travels from court to tavern, collecting stories and songs — and occasionally picking up secrets she shouldn't know.",
+  description:
+    "A half-elven bard whose honeyed voice can charm a dragon or rally an army. Melody travels from court to tavern, collecting stories and songs — and occasionally picking up secrets she shouldn't know.",
   abilities: { Strength: 10, Dexterity: 14, Constitution: 12, Intelligence: 14, Wisdom: 10, Charisma: 16 },
   languages: ["Common", "Elven", "Sylvan"],
   classes: [{ klass: "Bard", hp: [5, 4, 6] }],

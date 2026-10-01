@@ -19,6 +19,7 @@ export interface WeaponDefinition {
 // Each entry is the canonical definition for a base weapon type.
 // All properties are derived from selecting a weapon type name.
 
+// oxfmt-ignore
 const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   // ── Simple ──
   "Gauntlet": { proficiency: "Simple", family: "Close", baseDamage: "1d3", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Tiny", finessable: true },

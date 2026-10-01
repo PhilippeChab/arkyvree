@@ -80,9 +80,20 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
 ];
 
 const ANIMAL_COMPANION_RACE_NAMES = [
-  "Badger", "Camel", "Dire Rat", "Dog", "Riding Dog", "Eagle",
-  "Hawk", "Horse, Light", "Horse, Heavy",
-  "Owl", "Pony", "Snake, Small Viper", "Snake, Medium Viper", "Wolf",
+  "Badger",
+  "Camel",
+  "Dire Rat",
+  "Dog",
+  "Riding Dog",
+  "Eagle",
+  "Hawk",
+  "Horse, Light",
+  "Horse, Heavy",
+  "Owl",
+  "Pony",
+  "Snake, Small Viper",
+  "Snake, Medium Viper",
+  "Wolf",
 ] as const;
 
 const ANIMAL_COMPANION_RACE_PICK_FEATS: FeatSeed[] = ANIMAL_COMPANION_RACE_NAMES.map((race) => ({
@@ -145,18 +156,14 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A keen-eyed bird of prey. Swift and powerful in flight.",
     size: "Small",
     baseSpeed: 10,
-    modifiers: [
-      { target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" }],
   },
   {
     name: "Hawk",
     description: "A small bird of prey with sharp talons and unmatched eyesight in daylight.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [
-      { target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" }],
   },
   {
     name: "Horse, Light",
@@ -175,9 +182,7 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A nocturnal raptor whose silent flight surprises prey.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [
-      { target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" },
-    ],
+    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" }],
   },
   {
     name: "Pony",
@@ -218,9 +223,7 @@ const ANIMAL_COMPANION_CLASS: ClassSeed = {
   kind: "animalcompanion",
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
-  classSkills: [
-    "Listen", "Spot", "Survival", "Swim",
-  ],
+  classSkills: ["Listen", "Spot", "Survival", "Swim"],
   classFeatureAptitude: ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE,
   classFeatures: [
     [1, "Link (Animal Companion)"],

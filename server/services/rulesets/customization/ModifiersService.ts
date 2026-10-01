@@ -1,16 +1,25 @@
+import { getTableName } from "drizzle-orm";
+
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
+import {
+  copyEntityCustomizations,
+  cowCustomizationForMutation,
+  cowEntityForCustomization,
+  deleteModifiersWithCascade,
+  fetchEntityCustomizations,
+  withRulesetScope,
+} from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { copyEntityCustomizations, cowCustomizationForMutation, cowEntityForCustomization, deleteModifiersWithCascade, fetchEntityCustomizations, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
+
 import TargetPathsService from "./TargetPathsService.ts";
 
 export const ModifiersMethods = {
@@ -35,12 +44,7 @@ export const ModifiersMethods = {
     });
   },
 
-  async getEntityModifier(
-    rulesetId: string,
-    entityType: string,
-    entityId: string,
-    modifierId: string,
-  ) {
+  async getEntityModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
 
@@ -48,16 +52,22 @@ export const ModifiersMethods = {
       const modifier = rulesetData.modifiersById.get(modifierId);
       if (!modifier) throw new NotFoundError("Modifier not found");
 
-      const sourceName = modifier.sourceId === effectiveEntityId && modifier.sourceType === entityType
-        ? parentName
-        : await CustomizationsPolicy.sourceExists(modifier.sourceId, modifier.sourceType, rulesetData);
+      const sourceName =
+        modifier.sourceId === effectiveEntityId && modifier.sourceType === entityType
+          ? parentName
+          : await CustomizationsPolicy.sourceExists(modifier.sourceId, modifier.sourceType, rulesetData);
 
       const requirements = rulesetData.requirementsByEntity.get(modifierId) ?? [];
       const modifierRequirements = requirements.filter((r) => r.entityType === "modifiers");
       const pathsResult = await TargetPathsService.initialize().call("getTargetPathsWithLabels", rulesetId, "modifier");
       const { segmentLabels } = pathsResult[0] ? pathsResult[1] : { segmentLabels: {} };
 
-      return { ...modifier, sourceName, requirements: modifierRequirements, targetLabels: pickTargetLabels([modifier.target, modifier.value], segmentLabels) };
+      return {
+        ...modifier,
+        sourceName,
+        requirements: modifierRequirements,
+        targetLabels: pickTargetLabels([modifier.target, modifier.value], segmentLabels),
+      };
     });
   },
 
@@ -74,7 +84,6 @@ export const ModifiersMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -126,14 +135,17 @@ export const ModifiersMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
         const sourceModifier = rulesetData.modifiersById.get(sourceModifierId);
-        if (!sourceModifier || sourceModifier.sourceId !== effectiveEntityId || sourceModifier.sourceType !== entityType) {
+        if (
+          !sourceModifier ||
+          sourceModifier.sourceId !== effectiveEntityId ||
+          sourceModifier.sourceType !== entityType
+        ) {
           throw new NotFoundError("Source modifier not found for this entity");
         }
 
@@ -190,7 +202,6 @@ export const ModifiersMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -206,7 +217,12 @@ export const ModifiersMethods = {
 
         // COW the owning entity if this modifier is inherited
         const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
-          tx, rulesetId, entityType, effectiveEntityId, "modifier", modifierId,
+          tx,
+          rulesetId,
+          entityType,
+          effectiveEntityId,
+          "modifier",
+          modifierId,
         );
 
         const pathsService = TargetPathsService.initialize();
@@ -215,12 +231,16 @@ export const ModifiersMethods = {
         const inferredValueType = valueTypeResult[1];
 
         const expectedUpdatedAt = resolvedModifierId === modifierId ? body.updatedAt : undefined;
-        const rows = await Modifiers.update(tx, {
-          target: body.target,
-          value: body.value,
-          valueType: inferredValueType,
-          operator: body.operator,
-        }, { id: resolvedModifierId, expectedUpdatedAt });
+        const rows = await Modifiers.update(
+          tx,
+          {
+            target: body.target,
+            value: body.value,
+            valueType: inferredValueType,
+            operator: body.operator,
+          },
+          { id: resolvedModifierId, expectedUpdatedAt },
+        );
         if (expectedUpdatedAt && rows.length === 0) {
           throw new ConflictError(STALE_ENTITY_MESSAGE);
         }
@@ -251,7 +271,6 @@ export const ModifiersMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -266,7 +285,12 @@ export const ModifiersMethods = {
         await customizationPolicy.canDelete();
 
         const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
-          tx, rulesetId, entityType, effectiveEntityId, "modifier", modifierId,
+          tx,
+          rulesetId,
+          entityType,
+          effectiveEntityId,
+          "modifier",
+          modifierId,
         );
 
         const rows = await deleteModifiersWithCascade(tx, { ids: [resolvedModifierId] });
@@ -278,7 +302,14 @@ export const ModifiersMethods = {
           targetId: deletedModifier.id,
           targetTable: getTableName(modifiersInCustomization),
           type: "deleteModifier",
-          data: { rulesetId, entityName, entityType, target: modifier.target, value: modifier.value, operator: modifier.operator },
+          data: {
+            rulesetId,
+            entityName,
+            entityType,
+            target: modifier.target,
+            value: modifier.value,
+            operator: modifier.operator,
+          },
         });
 
         return { ...deletedModifier, resolvedEntityId };

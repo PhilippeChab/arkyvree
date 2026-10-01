@@ -17,11 +17,19 @@ export function wizardSchoolFeats(schools: WizardSchoolDefinition[]): FeatSeed[]
       description: s.description,
       aptitudes: [SPECIALIZATION],
       requirements: requirements(),
-      modifiers: [{ target: "aptitudes.prohibitedschool.allowed", operator: "add", value: String(s.prohibitedSchoolCount), valueType: "number" }],
+      modifiers: [
+        {
+          target: "aptitudes.prohibitedschool.allowed",
+          operator: "add",
+          value: String(s.prohibitedSchoolCount),
+          valueType: "number",
+        },
+      ],
     })),
     {
       name: "Generalist",
-      description: "A generalist wizard does not specialize in any school of magic. They have no prohibited schools and gain no bonus spell slots, but can freely learn spells from all schools.",
+      description:
+        "A generalist wizard does not specialize in any school of magic. They have no prohibited schools and gain no bonus spell slots, but can freely learn spells from all schools.",
       aptitudes: [SPECIALIZATION],
       requirements: requirements(),
     },

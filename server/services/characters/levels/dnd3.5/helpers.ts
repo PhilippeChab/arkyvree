@@ -20,9 +20,7 @@ export function getLevelIdsFromOnward(
   characterLevels: { id: string; createdAt: string }[],
   characterLevelId: string,
 ): string[] {
-  const sorted = [...characterLevels].sort((a, b) =>
-    a.createdAt.localeCompare(b.createdAt),
-  );
+  const sorted = [...characterLevels].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const index = sorted.findIndex((l) => l.id === characterLevelId);
   if (index === -1) return [];
   return sorted.slice(index).map((l) => l.id);
@@ -70,9 +68,7 @@ export function buildProjectedFeatsFromPicks(
   // treats all picks as pending). Without this, projection doubles up and
   // applies modifiers twice. Legitimate multi-pool picks of the same feat
   // (different aptitudeIds) are preserved.
-  const uniquePicks = [...new Map(
-    selectedFeatPicks.map((p) => [`${p.featId}:${p.aptitudeId}`, p]),
-  ).values()];
+  const uniquePicks = [...new Map(selectedFeatPicks.map((p) => [`${p.featId}:${p.aptitudeId}`, p])).values()];
   const uniqueFeatIds = [...new Set(uniquePicks.map((p) => p.featId))];
   const customizations = loadFeatCustomizations(rulesetData, uniqueFeatIds);
 
@@ -127,11 +123,7 @@ export function buildProjectedAutoGrantedFeats<T extends { id: string }>(
     }));
 }
 
-export function buildProjectedCharacterLevel(
-  characterId: string,
-  klassLevelId: string,
-  abilityId?: string | null,
-) {
+export function buildProjectedCharacterLevel(characterId: string, klassLevelId: string, abilityId?: string | null) {
   return {
     id: crypto.randomUUID(),
     characterId,
@@ -157,11 +149,7 @@ export function buildPendingCharacterLevels(
 }
 
 /** Maps validated selections to projected skill/feat/power data for character building. */
-export function buildProjectedSelections<
-  S extends { id: string },
-  F extends { id: string },
-  P extends { id: string },
->(
+export function buildProjectedSelections<S extends { id: string }, F extends { id: string }, P extends { id: string }>(
   klassLevelId: string,
   characterLevelId: string,
   skills: Record<string, number>,
@@ -196,8 +184,7 @@ export function buildProjectedSelections<
       klassLevelId,
       characterLevelId,
       aptitudeId: v.powerToAptitude.get(power.id)!,
-      powerLevel:
-        v.powerLevelMap.get(`${power.id}:${v.powerToAptitude.get(power.id)}`) ?? null,
+      powerLevel: v.powerLevelMap.get(`${power.id}:${v.powerToAptitude.get(power.id)}`) ?? null,
       saveName: null,
     })),
   };

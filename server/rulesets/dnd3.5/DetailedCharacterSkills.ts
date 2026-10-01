@@ -1,12 +1,12 @@
-import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
-import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
 import type { ValidationIssue } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import { SIZE_HIDE_MOD } from "@/server/rulesets/constants.ts";
+import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
+import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
+import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
+import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { deriveSegmentLabels, stripSeparators } from "@/shared/utils.ts";
-import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },
@@ -39,10 +39,7 @@ export default class DetailedCharacterSkills {
     return deriveSegmentLabels(NAVIGATABLE_PATHS);
   }
 
-  static generateTargetPaths(
-    skills: Skill[],
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(skills: Skill[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const skill of skills) {
@@ -62,14 +59,7 @@ export default class DetailedCharacterSkills {
                 : ["add", "subtract", "multiply", "divide", "set"]
               : subPath.type === "boolean"
                 ? ["equal", "not_equal"]
-                : [
-                    "equal",
-                    "not_equal",
-                    "greater_than",
-                    "less_than",
-                    "greater_than_or_equal",
-                    "less_than_or_equal",
-                  ],
+                : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
         });
       }
     }
@@ -83,14 +73,7 @@ export default class DetailedCharacterSkills {
       operators:
         kind === "modifier"
           ? ["add", "subtract", "multiply", "divide", "set"]
-          : [
-              "equal",
-              "not_equal",
-              "greater_than",
-              "less_than",
-              "greater_than_or_equal",
-              "less_than_or_equal",
-            ],
+          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
     });
 
     return paths;
@@ -98,10 +81,7 @@ export default class DetailedCharacterSkills {
 
   private readonly skillBudget = { total: 0, available: 0, spent: 0, perlevel: 0 };
   private readonly innateSkillIds: Set<string> = new Set<string>();
-  private readonly rankBySkillId: Map<string, number> = new Map<
-    string,
-    number
-  >();
+  private readonly rankBySkillId: Map<string, number> = new Map<string, number>();
   private readonly detailedCharacterSkills: DetailedCharacterComprehensiveSkills =
     {} as DetailedCharacterComprehensiveSkills;
   private readonly weightAffectedSkills: Set<string> = new Set<string>();
@@ -121,17 +101,12 @@ export default class DetailedCharacterSkills {
     private readonly characterClasses: DetailedCharacterClasses,
   ) {}
 
-  setArmorSources(
-    armors: { getArmors(): ArmorsData },
-    shields: { getShields(): ShieldsData },
-  ) {
+  setArmorSources(armors: { getArmors(): ArmorsData }, shields: { getShields(): ShieldsData }) {
     this.characterArmors = armors;
     this.characterShields = shields;
   }
 
-  setEncumbranceSource(encumbrance: {
-    getEncumbrance(): { checkpenalty: number };
-  }) {
+  setEncumbranceSource(encumbrance: { getEncumbrance(): { checkpenalty: number } }) {
     this.characterEncumbrance = encumbrance;
   }
 
@@ -139,10 +114,7 @@ export default class DetailedCharacterSkills {
     rulesetSkills: Skill[],
     rulesetAbilities: RulesetAbility[],
     raceSize: string,
-    skillProperties?: Map<
-      string,
-      { impactedByWeight: boolean; usableWithoutTraining: boolean }
-    >,
+    skillProperties?: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>,
   ) {
     this.raceSize = raceSize;
     const classes = this.characterClasses.getClasses();
@@ -162,10 +134,9 @@ export default class DetailedCharacterSkills {
     // Collect all class skill IDs + mark subtypes as innate
     // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
     const allKlassSkillNames = new Set<string>();
-    const allKlassSkillIds = Object.values(classes)
-      .flatMap((klass) =>
-        klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
-      );
+    const allKlassSkillIds = Object.values(classes).flatMap((klass) =>
+      klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
+    );
     for (const skillId of allKlassSkillIds) {
       this.innateSkillIds.add(skillId as string);
       const name = skillNameById.get(skillId as string);
@@ -196,20 +167,15 @@ export default class DetailedCharacterSkills {
     for (const klass of Object.values(classes)) {
       const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.skillId));
       const klassSkillNames = new Set(
-        klass.klassSkills
-          .map((ks) => skillNameById.get(ks.skillId as string))
-          .filter((n): n is string => !!n),
+        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId as string)).filter((n): n is string => !!n),
       );
 
       for (const level of klass.levels) {
         for (const skill of level.skills) {
           const isClassSkillById = klassSkillIds.has(skill.id as string);
-          const isClassSkillByName =
-            !isClassSkillById && hasClassSkillPrefix(skill.name, klassSkillNames);
+          const isClassSkillByName = !isClassSkillById && hasClassSkillPrefix(skill.name, klassSkillNames);
           const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
-          const ranksGained = isClassSkillForKlass
-            ? skill.rank
-            : skill.rank / 2;
+          const ranksGained = isClassSkillForKlass ? skill.rank : skill.rank / 2;
           const current = this.rankBySkillId.get(skill.id as string) ?? 0;
           this.rankBySkillId.set(skill.id as string, current + ranksGained);
         }
@@ -229,9 +195,7 @@ export default class DetailedCharacterSkills {
       const invested = this.rankBySkillId.get(skill.id) ?? 0;
       const rank = invested;
       const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
-      const ability = abilityName
-        ? this.characterAbilities.getAbilityModifier(abilityName)
-        : 0;
+      const ability = abilityName ? this.characterAbilities.getAbilityModifier(abilityName) : 0;
       const weight = 0;
       const misc = 0;
       const size = skill.name === "Hide" ? (SIZE_HIDE_MOD[this.raceSize] ?? 0) : 0;
@@ -317,9 +281,7 @@ export default class DetailedCharacterSkills {
   // ── Update methods ──────────────────────────────────────────────
 
   refreshAbilityModifiers() {
-    for (const [skillName, skill] of Object.entries(
-      this.detailedCharacterSkills,
-    )) {
+    for (const [skillName, skill] of Object.entries(this.detailedCharacterSkills)) {
       const abilityName = this.skillAbilityNames.get(skillName);
       if (abilityName) {
         skill.ability = this.characterAbilities.getAbilityModifier(abilityName);
@@ -346,7 +308,7 @@ export default class DetailedCharacterSkills {
 
   updateSkillPointTotals() {
     const skillPointAbilityName = this.skillPointAbilityId
-      ? this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null
+      ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
       : null;
 
     const abilityMod = skillPointAbilityName
@@ -356,24 +318,30 @@ export default class DetailedCharacterSkills {
     const classes = this.characterClasses.getClasses();
 
     // Compute spent from actual skill ranks
-    const spent = Object.values(classes).reduce((acc, klass) =>
-      acc + klass.levels.reduce((acc, level) =>
-        acc + level.skills.reduce((acc, skill) => acc + skill.rank, 0), 0), 0);
+    const spent = Object.values(classes).reduce(
+      (acc, klass) =>
+        acc + klass.levels.reduce((acc, level) => acc + level.skills.reduce((acc, skill) => acc + skill.rank, 0), 0),
+      0,
+    );
 
     const allLevels = Object.values(classes).flatMap((klass) => klass.levels);
-    const firstCharacterLevelId = allLevels.length > 0
-      ? allLevels.reduce((earliest, level) =>
-          level.characterLevel.createdAt < earliest.characterLevel.createdAt ? level : earliest,
-        ).characterLevel.id
-      : null;
+    const firstCharacterLevelId =
+      allLevels.length > 0
+        ? allLevels.reduce((earliest, level) =>
+            level.characterLevel.createdAt < earliest.characterLevel.createdAt ? level : earliest,
+          ).characterLevel.id
+        : null;
 
     const total = Object.values(classes).reduce((acc, klass) => {
-      return acc + klass.levels.reduce((acc, level) => {
-        const isFirstCharacterLevel = level.characterLevel.id === firstCharacterLevelId;
-        const multiplier = isFirstCharacterLevel ? 4 : 1;
-        const skillPoints = this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0;
-        return acc + Math.max(1, (skillPoints + abilityMod + this.skillBudget.perlevel) * multiplier);
-      }, 0);
+      return (
+        acc +
+        klass.levels.reduce((acc, level) => {
+          const isFirstCharacterLevel = level.characterLevel.id === firstCharacterLevelId;
+          const multiplier = isFirstCharacterLevel ? 4 : 1;
+          const skillPoints = this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0;
+          return acc + Math.max(1, (skillPoints + abilityMod + this.skillBudget.perlevel) * multiplier);
+        }, 0)
+      );
     }, 0);
 
     this.skillBudget.total = total;
@@ -387,27 +355,21 @@ export default class DetailedCharacterSkills {
     let armorPenalty = 0;
 
     if (this.characterArmors) {
-      const uniqueArmors = new Set(
-        Object.values(this.characterArmors.getArmors()),
-      );
+      const uniqueArmors = new Set(Object.values(this.characterArmors.getArmors()));
       for (const armor of uniqueArmors) {
         armorPenalty += armor.checkpenalty;
       }
     }
 
     if (this.characterShields) {
-      const uniqueShields = new Set(
-        Object.values(this.characterShields.getShields()),
-      );
+      const uniqueShields = new Set(Object.values(this.characterShields.getShields()));
       for (const shield of uniqueShields) {
         armorPenalty += shield.checkpenalty;
       }
     }
 
     // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
-    const encumbrancePenalty = this.characterEncumbrance
-      ? this.characterEncumbrance.getEncumbrance().checkpenalty
-      : 0;
+    const encumbrancePenalty = this.characterEncumbrance ? this.characterEncumbrance.getEncumbrance().checkpenalty : 0;
     const effectivePenalty = Math.min(armorPenalty, encumbrancePenalty);
     const weight = Math.abs(effectivePenalty);
 

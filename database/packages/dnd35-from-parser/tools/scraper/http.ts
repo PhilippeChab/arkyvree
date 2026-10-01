@@ -1,6 +1,7 @@
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createHash } from "node:crypto";
+
 import { sanitizeHtml } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 
 // ---------------------------------------------------------------------------
@@ -89,7 +90,9 @@ export async function fetchHtml(url: string): Promise<string> {
 
       if (response.status === 429 || response.status >= 500) {
         const backoff = Math.pow(2, attempt) * 500;
-        console.warn(`HTTP ${response.status} for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`);
+        console.warn(
+          `HTTP ${response.status} for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`,
+        );
         await new Promise((resolve) => setTimeout(resolve, backoff));
         continue;
       }

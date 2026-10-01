@@ -1,27 +1,31 @@
-import type { RulesetItem } from "@/client/src/lib/queries.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import { SearchBar, CreateDialog, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { ItemFormFields, type ItemFormInternal, toItemForm, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { Construction as ItemsIcon } from "@mui/icons-material";
-import {
-  Chip,
-  Typography,
-} from "@mui/material";
+import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { BulkVariantsDialog } from "./BulkVariantsDialog.tsx";
-import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSearchParam } from "@/client/src/hooks/index.ts";
+import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { RulesetItem } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import {
+  ItemFormFields,
+  type ItemFormInternal,
+  toItemForm,
+  toItemPayload,
+} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useOpenEntity, useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
+import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
+import { BulkVariantsDialog } from "./BulkVariantsDialog.tsx";
 
 type Item = RulesetItem;
 
@@ -39,22 +43,22 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
+  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
 
-  const {
-    createDialogOpen,
-    setCreateDialogOpen,
-    createForm,
-    createMutation,
-    handleCreate,
-  } = useRulesetSection<Item, ItemFormInternal>({
+  const { createDialogOpen, setCreateDialogOpen, createForm, createMutation, handleCreate } = useRulesetSection<
+    Item,
+    ItemFormInternal
+  >({
     rulesetId: ruleset.id,
     sectionName: "items",
     label: "Item",
     createFn: async (data) => {
-      return parseResponse(rpc.api.rulesets[":id"].items.$post({
-        param: { id: ruleset.id },
-        json: toItemPayload(data),
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].items.$post({
+          param: { id: ruleset.id },
+          json: toItemPayload(data),
+        }),
+      );
     },
     onCreateSuccess: (created) => openEntity(`items/${created.id}/customization`),
   });
@@ -78,16 +82,17 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(`items/${item.id}/customization`);
   };
 
-  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
-
   const handleDuplicate = (item: Item) => {
-    createForm.reset({
-      ...toItemForm(item),
-      name: `${item.name} (Copy)`,
-      // The copy is based on the source: on the template itself, or on the source's own template.
-      sourceItemId: item.isTemplate ? item.id : item.sourceItemId ?? undefined,
-      isTemplate: false,
-    }, { keepDefaultValues: true });
+    createForm.reset(
+      {
+        ...toItemForm(item),
+        name: `${item.name} (Copy)`,
+        // The copy is based on the source: on the template itself, or on the source's own template.
+        sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? undefined),
+        isTemplate: false,
+      },
+      { keepDefaultValues: true },
+    );
     setDuplicateSourceId(item.id);
     setCreateDialogOpen(true);
   };
@@ -98,10 +103,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const duplicateMutation = useMutation({
     mutationFn: async ({ sourceId, data }: { sourceId: string; data: ItemFormInternal }) => {
-      return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
-        param: { id: ruleset.id, itemId: sourceId },
-        json: toItemPayload(data),
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
+          param: { id: ruleset.id, itemId: sourceId },
+          json: toItemPayload(data),
+        }),
+      );
     },
     onSuccess: (created) => {
       snackbar.success("Item created successfully");
@@ -119,10 +126,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const bulkMutation = useMutation({
     mutationFn: async ({ itemId, variants }: { itemId: string; variants: VariantRow[] }) => {
-      return parseResponse(rpc.api.rulesets[":id"].items[":itemId"].variants.$post({
-        param: { id: ruleset.id, itemId },
-        json: { variants },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].items[":itemId"].variants.$post({
+          param: { id: ruleset.id, itemId },
+          json: { variants },
+        }),
+      );
     },
     onSuccess: (data) => {
       const count = data.length;
@@ -135,9 +144,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     },
   });
 
-  const handleRowMouseEnter = useCallback((item: Item) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "items", item.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (item: Item) => {
+      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "items", item.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (item: Item, columnKey: string) => {
     switch (columnKey) {
@@ -145,9 +157,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         return item.name;
       case "template":
         if (item.isTemplate) return <Chip label="Template" size="small" color="info" />;
-        if (item.templateName) return (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>{item.templateName}</Typography>
-        );
+        if (item.templateName)
+          return (
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              {item.templateName}
+            </Typography>
+          );
         return null;
       case "type":
         return (
@@ -156,17 +171,11 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           </Typography>
         );
       case "cost":
-        return (
-          <Typography variant="body2">
-            {formatCost(item.costGp) ?? "—"}
-          </Typography>
-        );
+        return <Typography variant="body2">{formatCost(item.costGp) ?? "—"}</Typography>;
       case "weight":
         return <Typography variant="body2">{formatWeight(item.weight) ?? "—"}</Typography>;
       case "description":
-        return (
-          <DescriptionCell text={item.description} />
-        );
+        return <DescriptionCell text={item.description} />;
       default:
         return null;
     }

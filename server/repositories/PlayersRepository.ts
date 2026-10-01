@@ -1,10 +1,9 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
 
 class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerInstance> {
   constructor() {
@@ -15,11 +14,7 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerI
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof playersInCampaign>>,
-    where: { id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof playersInCampaign>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
@@ -29,9 +24,7 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerI
 
   // Hard delete — used when intentionally removing a player from a campaign
   async delete(db: Db, where: { id: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.id, where.id));
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 
   async archiveAllForUser(db: Db, where: { userId: string }) {
@@ -82,20 +75,17 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerI
     // subquery referencing `this.table` would miss.
     const searchCondition = search
       ? inArray(
-        this.table.userId,
-        db.select({ id: usersInAccount.id })
-          .from(usersInAccount)
-          .where(this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined),
-      )
+          this.table.userId,
+          db
+            .select({ id: usersInAccount.id })
+            .from(usersInAccount)
+            .where(this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined),
+        )
       : false;
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.playersInCampaign.findMany({
-        where: this.where([
-          eq(this.table.campaignId, where.campaignId),
-          this.visibility(visibility),
-          searchCondition,
-        ]),
+        where: this.where([eq(this.table.campaignId, where.campaignId), this.visibility(visibility), searchCondition]),
         with: {
           usersInAccount: {
             columns: {

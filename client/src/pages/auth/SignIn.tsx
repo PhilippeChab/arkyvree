@@ -1,24 +1,19 @@
-import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
-import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
-import { emailRules } from "@/client/src/lib/validation.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import {
-  Box,
-  Typography,
-  Link as MuiLink,
-} from "@mui/material";
+import { Box, Link as MuiLink, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-type SignInFormData = InferRequestType<
-  (typeof rpc.auth)["sign-in"]["$post"]
->["json"];
+import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
+import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
+import { emailRules } from "@/client/src/lib/validation.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
+type SignInFormData = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["json"];
 
 export default function SignIn() {
   usePageTitle("Sign In");
@@ -58,10 +53,7 @@ export default function SignIn() {
   return (
     <AuthPage error={error} title="Sign In">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <EmailField
-          {...register("emailAddress", emailRules)}
-          error={errors.emailAddress}
-        />
+        <EmailField {...register("emailAddress", emailRules)} error={errors.emailAddress} />
 
         <PasswordField
           {...register("password", { required: "Password is required" })}
@@ -86,7 +78,11 @@ export default function SignIn() {
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2">
           Don't have an account?{" "}
-          <MuiLink component={Link} to={redirect ? `/sign-up?redirect=${encodeURIComponent(redirect)}` : "/sign-up"} underline="hover">
+          <MuiLink
+            component={Link}
+            to={redirect ? `/sign-up?redirect=${encodeURIComponent(redirect)}` : "/sign-up"}
+            underline="hover"
+          >
             Sign up
           </MuiLink>
         </Typography>

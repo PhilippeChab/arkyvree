@@ -5,8 +5,10 @@ import { Modal, type ModalProps } from "@/client/src/components/common/Modal.tsx
 import { useDirtyForm } from "@/client/src/hooks/index.ts";
 import { valuesEqual } from "@/client/src/lib/valuesEqual.ts";
 
-export interface FormDialogProps<TFormValues extends FieldValues = FieldValues>
-  extends Omit<ModalProps, "onClose" | "children"> {
+export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> extends Omit<
+  ModalProps,
+  "onClose" | "children"
+> {
   /**
    * The React Hook Form instance bound to the dialog. While the form is
    * dirty, backdrop click and Escape are ignored so users don't lose work.

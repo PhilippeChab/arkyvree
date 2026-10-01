@@ -1,9 +1,10 @@
-import { respond, errorResponse } from "@/server/routers/respond.ts";
-import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
-import NotificationsService from "@/server/services/NotificationsService.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
+import NotificationsService from "@/server/services/NotificationsService.ts";
 
 const notifications = new Hono()
   .use(sessionMiddleware)
@@ -35,30 +36,16 @@ const notifications = new Hono()
     },
   )
   .get("/unread", async (c) => {
-    const result = await NotificationsService.initialize().call(
-      "getUnreadSummary",
-      c.var.requestSession,
-    );
+    const result = await NotificationsService.initialize().call("getUnreadSummary", c.var.requestSession);
     return respond(c, result, 200);
   })
-  .post(
-    "/:id/read",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const result = await NotificationsService.initialize().call(
-        "markRead",
-        c.var.requestSession,
-        id,
-      );
-      return respond(c, result, 200);
-    },
-  )
+  .post("/:id/read", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
+    const result = await NotificationsService.initialize().call("markRead", c.var.requestSession, id);
+    return respond(c, result, 200);
+  })
   .post("/read-all", async (c) => {
-    const result = await NotificationsService.initialize().call(
-      "markAllRead",
-      c.var.requestSession,
-    );
+    const result = await NotificationsService.initialize().call("markAllRead", c.var.requestSession);
     const success = result[0];
     if (!success) return errorResponse(c, result[2]);
     return c.json({ success: true }, 200);

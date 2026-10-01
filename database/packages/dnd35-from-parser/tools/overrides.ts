@@ -1,4 +1,5 @@
 import { basename } from "node:path";
+
 import { readStoredReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
@@ -40,11 +41,13 @@ function collectClassOverrides(data: StoredReference<"class">, book: string, fil
   const overrides = data.overrides;
   if (!overrides) return entries;
 
-  const keys = Object.keys(overrides).filter(k => {
+  const keys = Object.keys(overrides).filter((k) => {
     if (k === "reviewed" || k === "description") return false;
     // For features, check if any feature has non-description overrides
     if (k === "features") {
-      return Object.values(overrides.features ?? {}).some((feat) => Object.keys(feat).some((fk) => fk !== "description"));
+      return Object.values(overrides.features ?? {}).some((feat) =>
+        Object.keys(feat).some((fk) => fk !== "description"),
+      );
     }
     return true;
   });
@@ -65,34 +68,46 @@ function main() {
   const { bookFilter, typeFilter, nameFilter, keyFilter } = parseCliArgs();
 
   let refs = discoverRefs();
-  if (bookFilter) refs = refs.filter(r => r.book === bookFilter);
-  if (typeFilter) refs = refs.filter(r => r.type === typeFilter);
-  if (nameFilter) refs = refs.filter(r => basename(r.path, ".json").toLowerCase() === nameFilter);
+  if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
+  if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
+  if (nameFilter) refs = refs.filter((r) => basename(r.path, ".json").toLowerCase() === nameFilter);
 
   const allEntries: OverrideEntry[] = [];
 
   for (const ref of refs) {
     if (ref.type === "feat") {
       const { raw, overrides } = readStoredReference(ref.path, "feat");
-      allEntries.push(...collectEntryOverrides(overrides, { book: ref.book, refType: "feat", refName: "feats" }, (name) => raw.find((r) => r.name === name)?.prerequisiteText));
+      allEntries.push(
+        ...collectEntryOverrides(
+          overrides,
+          { book: ref.book, refType: "feat", refName: "feats" },
+          (name) => raw.find((r) => r.name === name)?.prerequisiteText,
+        ),
+      );
     } else if (ref.type === "domain") {
-      allEntries.push(...collectEntryOverrides(readStoredReference(ref.path, "domain").overrides, { book: ref.book, refType: "domain", refName: "domains" }));
+      allEntries.push(
+        ...collectEntryOverrides(readStoredReference(ref.path, "domain").overrides, {
+          book: ref.book,
+          refType: "domain",
+          refName: "domains",
+        }),
+      );
     } else if (ref.type === "class") {
       allEntries.push(...collectClassOverrides(readStoredReference(ref.path, "class"), ref.book, basename(ref.path)));
     }
   }
 
   // Filter by override key
-  const filtered = keyFilter
-    ? allEntries.filter(e => e.keys.includes(keyFilter))
-    : allEntries;
+  const filtered = keyFilter ? allEntries.filter((e) => e.keys.includes(keyFilter)) : allEntries;
 
   const filterDesc = [
     typeFilter && `type=${typeFilter}`,
     keyFilter && `key=${keyFilter}`,
     bookFilter && `book=${bookFilter}`,
     nameFilter && `name=${nameFilter}`,
-  ].filter(Boolean).join(", ");
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   if (filtered.length === 0) {
     console.log(`No overrides found.${filterDesc ? ` (${filterDesc})` : ""}`);
@@ -107,7 +122,7 @@ function main() {
     byBook.set(entry.book, list);
   }
 
-  const validKeys = new Set(allEntries.flatMap(e => e.keys));
+  const validKeys = new Set(allEntries.flatMap((e) => e.keys));
 
   console.log(`Found ${filtered.length} overrides.${filterDesc ? ` (${filterDesc})` : ""}`);
   console.log(`Valid --key values: ${[...validKeys].sort().join(", ")}\n`);

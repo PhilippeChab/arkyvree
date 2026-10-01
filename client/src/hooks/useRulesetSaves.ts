@@ -12,12 +12,14 @@ export function useRulesetSaves(rulesetId: string | undefined, enabled = true) {
     queryKey: queryKeys.rulesets.saves(rulesetId ?? ""),
     queryFn: rulesetId
       ? async () => {
-        const page = await parseResponse(rpc.api.rulesets[":id"].saves.$get({
-          param: { id: rulesetId },
-          query: { page: "1", limit: "100" },
-        }));
-        return page.items;
-      }
+          const page = await parseResponse(
+            rpc.api.rulesets[":id"].saves.$get({
+              param: { id: rulesetId },
+              query: { page: "1", limit: "100" },
+            }),
+          );
+          return page.items;
+        }
       : skipToken,
     enabled,
   });

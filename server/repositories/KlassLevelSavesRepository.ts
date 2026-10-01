@@ -1,13 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-
-import { klassLevelSavesInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class KlassLevelSavesRepository
-  extends BaseRepository<typeof klassLevelSavesInRules, KlassLevelSaveInstance> {
+import { klassLevelSavesInRules } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInRules, KlassLevelSaveInstance> {
   constructor() {
     super(klassLevelSavesInRules);
   }
@@ -19,36 +17,24 @@ class KlassLevelSavesRepository
 
   // Exception to soft-delete: disposable configuration data
   async deleteByKlassLevelId(db: Db, where: { klassLevelId: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.klassLevelId, where.klassLevelId))
-      .returning();
+    return await db.delete(this.table).where(eq(this.table.klassLevelId, where.klassLevelId)).returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
   async deleteBySaveId(db: Db, where: { saveId: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.saveId, where.saveId))
-      .returning();
+    return await db.delete(this.table).where(eq(this.table.saveId, where.saveId)).returning();
   }
 
   async existsBySaveId(db: Db, where: { saveId: string }) {
     const result = await db.query.klassLevelSavesInRules.findFirst({
-      where: and(
-        eq(this.table.saveId, where.saveId),
-        isNull(this.table.deletedAt),
-      ),
+      where: and(eq(this.table.saveId, where.saveId), isNull(this.table.deletedAt)),
     });
     return !!result;
   }
 
   async findMany(db: Db, where: { klassLevelIds: string[] }) {
     return await db.query.klassLevelSavesInRules.findMany({
-      where: and(
-        inArray(this.table.klassLevelId, where.klassLevelIds),
-        isNull(this.table.deletedAt),
-      ),
+      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
     });
   }
 

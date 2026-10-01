@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 const CLIMB = "climb";

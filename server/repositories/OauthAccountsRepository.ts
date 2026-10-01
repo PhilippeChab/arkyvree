@@ -21,7 +21,9 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
     return await db.query.oauthAccountsInAccount.findFirst({
       where: this.where([
         "id" in where && !("provider" in where) && eq(this.table.id, where.id),
-        "providerAccountId" in where && eq(this.table.provider, where.provider) && eq(this.table.providerAccountId, where.providerAccountId),
+        "providerAccountId" in where &&
+          eq(this.table.provider, where.provider) &&
+          eq(this.table.providerAccountId, where.providerAccountId),
         "userId" in where && eq(this.table.userId, where.userId) && eq(this.table.provider, where.provider),
         isNull(this.table.deletedAt),
       ]),

@@ -1,30 +1,3 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import {
-  BlankState,
-  CLICKABLE_SX,
-  clickableProps,
-  LoadMoreButton,
-  PageHeader,
-  PageTransition,
-  SearchBar,
-  DiceSpinner,
-  type SortOption,
-  CREATED_SORTS,
-  NoMatchesState,
-} from "@/client/src/components/common/index.ts";
-import {
-  isNavigableTarget,
-  useOpenActivityTarget,
-  usePageTitle,
-  useListParams,
-} from "@/client/src/hooks/index.ts";
-import {
-  formatActivityDate,
-  formatActivityDetails,
-  formatActivityType,
-} from "@/client/src/lib/activityFormatters.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { History as HistoryIcon } from "@mui/icons-material";
 import {
   Alert,
@@ -42,6 +15,25 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
+import {
+  BlankState,
+  CLICKABLE_SX,
+  clickableProps,
+  CREATED_SORTS,
+  DiceSpinner,
+  LoadMoreButton,
+  NoMatchesState,
+  PageHeader,
+  PageTransition,
+  SearchBar,
+  type SortOption,
+} from "@/client/src/components/common/index.ts";
+import { isNavigableTarget, useListParams, useOpenActivityTarget, usePageTitle } from "@/client/src/hooks/index.ts";
+import { formatActivityDate, formatActivityDetails, formatActivityType } from "@/client/src/lib/activityFormatters.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 type SortField = "createdAt" | "type";
 
 const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
@@ -55,29 +47,25 @@ const PAGE_SIZE = 10;
 export default function ActivitiesPage() {
   usePageTitle("Activities");
   const openTarget = useOpenActivityTarget();
-  const { search, orderBy, orderDir, searchBarProps } = useListParams(
-    ["createdAt", "type"],
-    { orderBy: "createdAt", orderDir: "desc" },
-  );
+  const { search, orderBy, orderDir, searchBarProps } = useListParams(["createdAt", "type"], {
+    orderBy: "createdAt",
+    orderDir: "desc",
+  });
 
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: queryKeys.activities.list({ search, orderBy, orderDir }),
-    queryFn: ({ pageParam }) => parseResponse(rpc.api.activities.$get({
-      query: {
-        page: pageParam.toString(),
-        limit: PAGE_SIZE.toString(),
-        search: search || undefined,
-        orderBy,
-        orderDir,
-      },
-    })),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.activities.$get({
+          query: {
+            page: pageParam.toString(),
+            limit: PAGE_SIZE.toString(),
+            search: search || undefined,
+            orderBy,
+            orderDir,
+          },
+        }),
+      ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     placeholderData: keepPreviousData,
@@ -106,8 +94,12 @@ export default function ActivitiesPage() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Action</strong></TableCell>
-                    <TableCell><strong>Date</strong></TableCell>
+                    <TableCell>
+                      <strong>Action</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Date</strong>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -123,7 +115,13 @@ export default function ActivitiesPage() {
                         }}
                       >
                         <TableCell>
-                          <Tooltip describeChild title={formatActivityDetails(activity.data) ?? ""} arrow enterDelay={300} slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}>
+                          <Tooltip
+                            describeChild
+                            title={formatActivityDetails(activity.data) ?? ""}
+                            arrow
+                            enterDelay={300}
+                            slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                          >
                             <Chip
                               label={formatActivityType(activity.type, activity.data)}
                               size="small"

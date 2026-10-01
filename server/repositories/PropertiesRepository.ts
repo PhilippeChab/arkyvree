@@ -1,13 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-
-import { propertiesInCustomization } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class PropertiesRepository
-  extends BaseRepository<typeof propertiesInCustomization, PropertyInstance> {
+import { propertiesInCustomization } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class PropertiesRepository extends BaseRepository<typeof propertiesInCustomization, PropertyInstance> {
   constructor() {
     super(propertiesInCustomization);
   }
@@ -29,25 +27,27 @@ class PropertiesRepository
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { id: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.id, where.id))
-      .returning();
+    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
   /** `types` limits the delete to those property types, e.g. the ones a save regenerates. */
-  async deleteMany(db: Db, where: { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] }) {
+  async deleteMany(
+    db: Db,
+    where: { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] },
+  ) {
     return await db
       .delete(this.table)
       .where(
@@ -74,11 +74,13 @@ class PropertiesRepository
 
   async findManyByEntity(
     db: Db,
-    where: { entityIds: string[]; entityType: string } | {
-      entityIds: string[];
-      entityType: string;
-      type: string;
-    },
+    where:
+      | { entityIds: string[]; entityType: string }
+      | {
+          entityIds: string[];
+          entityType: string;
+          type: string;
+        },
   ) {
     return await db.query.propertiesInCustomization.findMany({
       where: this.where([
@@ -93,10 +95,7 @@ class PropertiesRepository
   async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
     if (where.entityIds.length === 0) return [];
     return await db.query.propertiesInCustomization.findMany({
-      where: and(
-        inArray(this.table.entityId, where.entityIds),
-        isNull(this.table.deletedAt),
-      ),
+      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
     });
   }
 

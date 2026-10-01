@@ -1,5 +1,3 @@
-import { capitalize } from "@/shared/utils.ts";
-import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import {
   Box,
   Chip,
@@ -14,6 +12,10 @@ import {
 } from "@mui/material";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+
+import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { capitalize } from "@/shared/utils.ts";
+
 import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./equipment.ts";
 
 const headerSx = { fontWeight: 600 };
@@ -32,7 +34,12 @@ interface EquipmentTableProps<T extends EquipmentTableRow> {
 }
 
 /** A character's inventory: slot, quantity, weight, value, and the carried load under it. */
-export function EquipmentTable<T extends EquipmentTableRow>({ rows, encumbrance, rulesetId, renderActions }: EquipmentTableProps<T>) {
+export function EquipmentTable<T extends EquipmentTableRow>({
+  rows,
+  encumbrance,
+  rulesetId,
+  renderActions,
+}: EquipmentTableProps<T>) {
   return (
     <>
       <TableContainer sx={{ overflowX: "auto" }}>
@@ -40,12 +47,24 @@ export function EquipmentTable<T extends EquipmentTableRow>({ rows, encumbrance,
           <TableHead>
             <TableRow>
               <TableCell sx={headerSx}>Item</TableCell>
-              <TableCell align="center" sx={headerSx}>Slot</TableCell>
-              <TableCell align="center" sx={headerSx}>Quantity</TableCell>
-              <TableCell align="center" sx={headerSx}>Weight</TableCell>
-              <TableCell align="center" sx={headerSx}>Value</TableCell>
+              <TableCell align="center" sx={headerSx}>
+                Slot
+              </TableCell>
+              <TableCell align="center" sx={headerSx}>
+                Quantity
+              </TableCell>
+              <TableCell align="center" sx={headerSx}>
+                Weight
+              </TableCell>
+              <TableCell align="center" sx={headerSx}>
+                Value
+              </TableCell>
               <TableCell sx={headerSx}>Description</TableCell>
-              {renderActions && <TableCell align="center" sx={headerSx}>Actions</TableCell>}
+              {renderActions && (
+                <TableCell align="center" sx={headerSx}>
+                  Actions
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -74,8 +93,12 @@ export function EquipmentTable<T extends EquipmentTableRow>({ rows, encumbrance,
                   <Typography variant="body2">{formatSlotDisplay(entry)}</Typography>
                 </TableCell>
                 <TableCell align="center">{entry.quantity || 1}</TableCell>
-                <TableCell align="center" sx={noWrap}>{formatWeight(entry.weight) ?? "—"}</TableCell>
-                <TableCell align="center" sx={noWrap}>{formatCost(entry.costGp) ?? "—"}</TableCell>
+                <TableCell align="center" sx={noWrap}>
+                  {formatWeight(entry.weight) ?? "—"}
+                </TableCell>
+                <TableCell align="center" sx={noWrap}>
+                  {formatCost(entry.costGp) ?? "—"}
+                </TableCell>
                 <TableCell sx={{ fontSize: "0.875rem", minWidth: 220 }}>{entry.description || "—"}</TableCell>
                 {renderActions && <TableCell align="center">{renderActions(entry)}</TableCell>}
               </TableRow>
@@ -85,7 +108,18 @@ export function EquipmentTable<T extends EquipmentTableRow>({ rows, encumbrance,
       </TableContainer>
       {encumbrance && (
         // Each figure wraps as a whole on narrow screens.
-        <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center", columnGap: 2, rowGap: 0.5, whiteSpace: "nowrap" }}>
+        <Box
+          sx={{
+            mt: 2,
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            columnGap: 2,
+            rowGap: 0.5,
+            whiteSpace: "nowrap",
+          }}
+        >
           <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
             Carried Weight: {encumbrance.carriedweight ?? 0} lbs
           </Typography>
@@ -102,11 +136,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({ rows, encumbrance,
             <Chip
               label={capitalize(encumbrance.load)}
               size="small"
-              color={
-                encumbrance.load === "overloaded" ? "error"
-                  : encumbrance.load === "heavy" ? "warning"
-                  : "info"
-              }
+              color={encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info"}
             />
           )}
         </Box>

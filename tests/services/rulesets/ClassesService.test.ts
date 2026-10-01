@@ -1,21 +1,52 @@
 import { describe, expect, test } from "bun:test";
+
 import { eq } from "drizzle-orm";
-import { abilitiesInRules, klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
+
+import {
+  abilitiesInRules,
+  klassLevelFeatsInRules,
+  klassLevelPowersInRules,
+  klassLevelSavesInRules,
+  klassSkillsInRules,
+} from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Aptitudes, Feats, KlassLevels, KlassSkills, Modifiers, Powers, Properties, Requirements, Saves, Skills } from "@/server/repositories/index.ts";
+import {
+  Aptitudes,
+  Feats,
+  KlassLevels,
+  KlassSkills,
+  Modifiers,
+  Powers,
+  Properties,
+  Requirements,
+  Saves,
+  Skills,
+} from "@/server/repositories/index.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
-import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
+import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
+import {
+  addCharacterLevel,
+  createTestCharacter,
+  createTestRuleset,
+  createTestUserAndRuleset,
+  insertRows,
+} from "@/tests/helpers.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("ClassesService", () => {
   test("stores a class's hit die, a d8 unless one is given", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const warrior = await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Warrior", description: "A mighty warrior", hd: 12 });
+    const warrior = await ClassesMethods.createRulesetKlass(session, ruleset.id, {
+      name: "Warrior",
+      description: "A mighty warrior",
+      hd: 12,
+    });
     expect(warrior).toMatchObject({ name: "Warrior", description: "A mighty warrior", hd: 12 });
-    expect((await ClassesMethods.updateRulesetKlass(session, ruleset.id, warrior.id, { name: "Warrior", hd: 10 })).hd).toBe(10);
+    expect(
+      (await ClassesMethods.updateRulesetKlass(session, ruleset.id, warrior.id, { name: "Warrior", hd: 10 })).hd,
+    ).toBe(10);
 
     expect((await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Mage" })).hd).toBe(8);
     // 0 is no hit die: the default applies.
@@ -25,12 +56,25 @@ describe("ClassesService", () => {
   test("exposes the ability a class's bonus spells come from", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const fighter = await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Fighter" });
-    expect(await ClassesMethods.getRulesetKlass(ruleset.id, fighter.id)).toMatchObject({ bonusSpellAbilityId: null, bonusSpellPropertyId: null });
+    expect(await ClassesMethods.getRulesetKlass(ruleset.id, fighter.id)).toMatchObject({
+      bonusSpellAbilityId: null,
+      bonusSpellPropertyId: null,
+    });
 
     const wizard = await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Wizard", hd: 4 });
-    const [intelligence] = await insertRows(abilitiesInRules, [{ name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id }]);
-    const [property] = await Properties.create(db, { entityId: wizard.id, entityType: "klasses", type: KLASS_BONUS_SPELL_ABILITY_ID, value: intelligence.id });
-    expect(await ClassesMethods.getRulesetKlass(ruleset.id, wizard.id)).toMatchObject({ bonusSpellAbilityId: intelligence.id, bonusSpellPropertyId: property.id });
+    const [intelligence] = await insertRows(abilitiesInRules, [
+      { name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id },
+    ]);
+    const [property] = await Properties.create(db, {
+      entityId: wizard.id,
+      entityType: "klasses",
+      type: KLASS_BONUS_SPELL_ABILITY_ID,
+      value: intelligence.id,
+    });
+    expect(await ClassesMethods.getRulesetKlass(ruleset.id, wizard.id)).toMatchObject({
+      bonusSpellAbilityId: intelligence.id,
+      bonusSpellPropertyId: property.id,
+    });
   });
 
   test("deletes a class's levels with their feats, powers, saves and modifiers, and its class skills", async () => {
@@ -46,19 +90,34 @@ describe("ClassesService", () => {
     const klass = await ClassesMethods.createRulesetKlass(session, rulesetId, { name: "Doomed Class" });
     await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
     const level = await ClassLevelsMethods.createClassLevel(session, rulesetId, klass.id, {
-      level: 1, bab: 1, skills: 4,
+      level: 1,
+      bab: 1,
+      skills: 4,
       feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
       saves: [{ saveId: save.id, base: 2 }],
     });
     await insertRows(klassLevelPowersInRules, [{ klassLevelId: level.id, powerId: power.id, aptitudeId: aptitude.id }]);
-    await Modifiers.create(db, { sourceId: level.id, sourceType: "klass_levels", target: "abilities.strength", value: "1", valueType: "number", operator: "add" });
+    await Modifiers.create(db, {
+      sourceId: level.id,
+      sourceType: "klass_levels",
+      target: "abilities.strength",
+      value: "1",
+      valueType: "number",
+      operator: "add",
+    });
 
     await ClassesMethods.deleteRulesetKlass(session, rulesetId, klass.id);
 
     expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
-    expect(await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.klassLevelId, level.id))).toEqual([]);
-    expect(await db.select().from(klassLevelPowersInRules).where(eq(klassLevelPowersInRules.klassLevelId, level.id))).toEqual([]);
-    expect(await db.select().from(klassLevelSavesInRules).where(eq(klassLevelSavesInRules.klassLevelId, level.id))).toEqual([]);
+    expect(
+      await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.klassLevelId, level.id)),
+    ).toEqual([]);
+    expect(
+      await db.select().from(klassLevelPowersInRules).where(eq(klassLevelPowersInRules.klassLevelId, level.id)),
+    ).toEqual([]);
+    expect(
+      await db.select().from(klassLevelSavesInRules).where(eq(klassLevelSavesInRules.klassLevelId, level.id)),
+    ).toEqual([]);
     expect(await db.select().from(klassSkillsInRules).where(eq(klassSkillsInRules.klassId, klass.id))).toEqual([]);
     expect(await Modifiers.findManyBySource(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
   });
@@ -66,18 +125,43 @@ describe("ClassesService", () => {
   test("copies an inherited class into a fork with its levels, their modifiers and those modifiers' requirements", async () => {
     const { user, session, ruleset: parent } = await createTestUserAndRuleset();
     const klass = await ClassesMethods.createRulesetKlass(session, parent.id, { name: "Cleric" });
-    const level = await ClassLevelsMethods.createClassLevel(session, parent.id, klass.id, { level: 1, bab: 0, skills: 2 });
-    const [modifier] = await Modifiers.create(db, { sourceId: level.id, sourceType: "klass_levels", target: "saves.fortitude.misc", value: "1", valueType: "number", operator: "add" });
-    const [requirement] = await Requirements.create(db, { entityId: modifier.id, entityType: "modifiers", level: "1", chainingOperator: "and" });
+    const level = await ClassLevelsMethods.createClassLevel(session, parent.id, klass.id, {
+      level: 1,
+      bab: 0,
+      skills: 2,
+    });
+    const [modifier] = await Modifiers.create(db, {
+      sourceId: level.id,
+      sourceType: "klass_levels",
+      target: "saves.fortitude.misc",
+      value: "1",
+      valueType: "number",
+      operator: "add",
+    });
+    const [requirement] = await Requirements.create(db, {
+      entityId: modifier.id,
+      entityType: "modifiers",
+      level: "1",
+      chainingOperator: "and",
+    });
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-    const copy = await ClassesMethods.updateRulesetKlass(session, fork.id, klass.id, { name: "Cleric", description: "Forked" });
+    const copy = await ClassesMethods.updateRulesetKlass(session, fork.id, klass.id, {
+      name: "Cleric",
+      description: "Forked",
+    });
 
     const [copiedLevel] = await KlassLevels.findManyByKlass(db, { klassId: copy.id });
     expect(copiedLevel).toMatchObject({ level: 1 });
-    const [copiedModifier] = await Modifiers.findManyBySource(db, { sourceIds: [copiedLevel.id], sourceType: "klass_levels" });
+    const [copiedModifier] = await Modifiers.findManyBySource(db, {
+      sourceIds: [copiedLevel.id],
+      sourceType: "klass_levels",
+    });
     expect(copiedModifier).toMatchObject({ target: "saves.fortitude.misc", value: "1" });
-    const copiedRequirements = await Requirements.findManyByEntity(db, { entityIds: [copiedModifier.id], entityType: "modifiers" });
+    const copiedRequirements = await Requirements.findManyByEntity(db, {
+      entityIds: [copiedModifier.id],
+      entityType: "modifiers",
+    });
     expect(copiedRequirements).toMatchObject([{ chainingOperator: "and" }]);
     expect(copiedRequirements[0].id).not.toBe(requirement.id);
   });
@@ -85,7 +169,11 @@ describe("ClassesService", () => {
   test("refuses to delete a class a character has a level in", async () => {
     const { user, session, ruleset } = await createTestUserAndRuleset();
     const klass = await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Taken Class" });
-    const level = await ClassLevelsMethods.createClassLevel(session, ruleset.id, klass.id, { level: 1, bab: 1, skills: 2 });
+    const level = await ClassLevelsMethods.createClassLevel(session, ruleset.id, klass.id, {
+      level: 1,
+      bab: 1,
+      skills: 2,
+    });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, level.id);
 

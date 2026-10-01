@@ -3,22 +3,24 @@ import { and, eq, isNotNull, isNull, like, lt } from "drizzle-orm";
 
 import { usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { hashPassword } from "@/shared/utils.ts";
-
 import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
+import { hashPassword } from "@/shared/utils.ts";
 
 class UsersRepository extends BaseRepository<typeof usersInAccount, UserInstance> {
   constructor() {
     super(usersInAccount);
   }
 
-  async create(db: Db, values: {
-    username?: string;
-    emailAddress: string;
-    password?: string;
-    expiresAt?: string;
-    emailVerifiedAt?: string;
-  }) {
+  async create(
+    db: Db,
+    values: {
+      username?: string;
+      emailAddress: string;
+      password?: string;
+      expiresAt?: string;
+      emailVerifiedAt?: string;
+    },
+  ) {
     const passwordDigest = values.password ? await hashPassword(values.password) : undefined;
 
     return await db
@@ -36,34 +38,25 @@ class UsersRepository extends BaseRepository<typeof usersInAccount, UserInstance
     const rows = await db
       .select({ id: this.table.id })
       .from(this.table)
-      .where(and(
-        isNotNull(this.table.expiresAt),
-        like(this.table.emailAddress, "%@demo.invalid"),
-        lt(this.table.expiresAt, where.expiredDemosBefore),
-      ));
+      .where(
+        and(
+          isNotNull(this.table.expiresAt),
+          like(this.table.emailAddress, "%@demo.invalid"),
+          lt(this.table.expiresAt, where.expiredDemosBefore),
+        ),
+      );
     return rows.map((r) => r.id);
   }
 
   async delete(db: Db, where: { id: string } | { expiredDemosBefore: string }) {
-    const isDemo = and(
-      isNotNull(this.table.expiresAt),
-      like(this.table.emailAddress, "%@demo.invalid"),
-    );
+    const isDemo = and(isNotNull(this.table.expiresAt), like(this.table.emailAddress, "%@demo.invalid"));
     if ("id" in where) {
-      return await db
-        .delete(this.table)
-        .where(and(eq(this.table.id, where.id), isDemo));
+      return await db.delete(this.table).where(and(eq(this.table.id, where.id), isDemo));
     }
-    return await db
-      .delete(this.table)
-      .where(and(isDemo, lt(this.table.expiresAt, where.expiredDemosBefore)));
+    return await db.delete(this.table).where(and(isDemo, lt(this.table.expiresAt, where.expiredDemosBefore)));
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof usersInAccount>>,
-    where: { id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof usersInAccount>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })

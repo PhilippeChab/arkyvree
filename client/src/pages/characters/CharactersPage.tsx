@@ -1,39 +1,31 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { Archive as ArchiveIcon, Group as GroupIcon, Shield as ShieldIcon } from "@mui/icons-material";
+import { Alert, Button, Chip, Container } from "@mui/material";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   BlankState,
+  CREATED_SORTS,
+  DiceSpinner,
+  type FilterOption,
   ListCard,
   ListCardGrid,
   LoadMoreButton,
+  NAME_SORTS,
+  NoMatchesState,
   PageActionButton,
   PageHeader,
   PageTransition,
   SearchBar,
-  type FilterOption,
   type SortOption,
-  DiceSpinner,
-  CREATED_SORTS,
-  NAME_SORTS,
   UPDATED_SORTS,
-  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
-import { useAttachments, usePageTitle, useStaggerAnimation, useListParams } from "@/client/src/hooks/index.ts";
+import { useAttachments, useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { characterDetailQuery, characterListQuery, type CharacterListFilters } from "@/client/src/lib/queries.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { characterDetailQuery, type CharacterListFilters, characterListQuery } from "@/client/src/lib/queries.ts";
 import { CreateCharacterDialog } from "@/client/src/pages/characters/components/index.ts";
-import {
-  Archive as ArchiveIcon,
-  Group as GroupIcon,
-  Shield as ShieldIcon,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Button,
-  Chip,
-  Container,
-} from "@mui/material";
-import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 type CharacterView = CharacterListFilters["view"];
 type SortField = CharacterListFilters["orderBy"];
@@ -61,14 +53,10 @@ export default function CharactersPage() {
   const listQuery = characterListQuery({ view, search, orderBy, orderDir });
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    ...listQuery,
+    placeholderData: keepPreviousData,
+  });
 
   const characters = useMemo(() => pageItems(data), [data]);
 
@@ -81,7 +69,9 @@ export default function CharactersPage() {
 
   const prefetchCharacter = (id: string) => void queryClient.prefetchQuery(characterDetailQuery(id));
 
-  const createButton = (label: string) => <PageActionButton onClick={() => setCreateModalOpen(true)}>{label}</PageActionButton>;
+  const createButton = (label: string) => (
+    <PageActionButton onClick={() => setCreateModalOpen(true)}>{label}</PageActionButton>
+  );
 
   const viewActiveButton = (
     <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
@@ -127,7 +117,7 @@ export default function CharactersPage() {
                   avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
                   title={character.name}
                   description={character.description}
-                  pills={(
+                  pills={
                     <>
                       {character.accessRole === "contributor" && (
                         <Chip label="Shared" size="small" color="info" variant="outlined" />
@@ -147,7 +137,7 @@ export default function CharactersPage() {
                         />
                       ))}
                     </>
-                  )}
+                  }
                 />
               ))}
             </ListCardGrid>
@@ -187,10 +177,7 @@ export default function CharactersPage() {
           />
         )}
 
-        <CreateCharacterDialog
-          open={createModalOpen}
-          onClose={() => setCreateModalOpen(false)}
-        />
+        <CreateCharacterDialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
       </Container>
     </PageTransition>
   );

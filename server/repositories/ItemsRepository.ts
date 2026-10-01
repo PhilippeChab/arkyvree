@@ -1,10 +1,9 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> {
   constructor() {
@@ -23,11 +22,13 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> 
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
@@ -35,7 +36,10 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> 
     return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
-  async findOne(db: Db, where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string }) {
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
     return await db.query.itemsInRules.findFirst({
       where: this.where([
         "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
@@ -56,8 +60,25 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> 
   async findManyByRulesetId(
     db: Db,
     where:
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; isTemplate?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" }
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; campaignId: string; isTemplate?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          isTemplate?: boolean;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        }
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          campaignId: string;
+          isTemplate?: boolean;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
@@ -66,9 +87,7 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> 
 
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
-    const templateFilter = where.isTemplate !== undefined
-      ? eq(this.table.isTemplate, where.isTemplate)
-      : false;
+    const templateFilter = where.isTemplate !== undefined ? eq(this.table.isTemplate, where.isTemplate) : false;
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.itemsInRules.findMany({
@@ -108,10 +127,7 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> 
 
   async findCopies(db: Db, where: { sourceItemId: string }) {
     return await db.query.itemsInRules.findMany({
-      where: this.where([
-        eq(this.table.sourceItemId, where.sourceItemId),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.where([eq(this.table.sourceItemId, where.sourceItemId), isNull(this.table.deletedAt)]),
     });
   }
 

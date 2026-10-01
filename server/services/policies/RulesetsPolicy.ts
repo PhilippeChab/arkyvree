@@ -1,8 +1,10 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
+
 import { campaignsInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
+
 import BasePolicy from "./BasePolicy.ts";
 
 export type ContributorRole = "Admin" | "Editor" | "Viewer" | null;
@@ -260,16 +262,15 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
     const [campaignAccess] = await tx
       .select({ one: sql`1` })
       .from(playersInCampaign)
-      .innerJoin(
-        campaignsInCampaign,
-        eq(playersInCampaign.campaignId, campaignsInCampaign.id),
+      .innerJoin(campaignsInCampaign, eq(playersInCampaign.campaignId, campaignsInCampaign.id))
+      .where(
+        and(
+          eq(playersInCampaign.userId, this.session.userId),
+          isNull(playersInCampaign.deletedAt),
+          isNull(campaignsInCampaign.deletedAt),
+          eq(campaignsInCampaign.rulesetId, this.entity.id),
+        ),
       )
-      .where(and(
-        eq(playersInCampaign.userId, this.session.userId),
-        isNull(playersInCampaign.deletedAt),
-        isNull(campaignsInCampaign.deletedAt),
-        eq(campaignsInCampaign.rulesetId, this.entity.id),
-      ))
       .limit(1);
 
     if (!campaignAccess) {

@@ -1,62 +1,27 @@
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
-  DetailPageHeader,
-  DiceSpinner,
-  FaqHelpIcon,
-  Modal,
-  PageTransition,
-  SectionTabs,
-  type SectionTab,
-  PageError,
-  ActionMenuItem,
-} from "@/client/src/components/common/index.ts";
-import {
-  ArchiveRulesetDialog,
-  EditRulesetDialog,
-  ForkRulesetDialog,
-  OverridesDialog,
-  PublishRulesetDialog,
-  RulesetLicenseNotice,
-  SubscribeExtensionDialog,
-  UnsubscribeExtensionDialog,
-} from "@/client/src/pages/rulesets/details/components/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
-import {
-  useRulesetOperations,
-  useRulesetPermissions,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
-import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  AccessibilityNew as ClassesIcon,
   FitnessCenter as AbilitiesIcon,
+  Stars as AptitudesIcon,
   Archive as ArchiveIcon,
+  AccessibilityNew as ClassesIcon,
   CompareArrows as CompareArrowsIcon,
-  Bolt as PowersIcon,
-  Construction as ItemsIcon,
-  ContentCopy as ForkIcon,
+  Group as ContributorsIcon,
   Edit as EditIcon,
   Extension as ExtensionIcon,
+  Spoke as FeatsIcon,
+  ContentCopy as ForkIcon,
+  Construction as ItemsIcon,
+  Translate as LanguagesIcon,
   Gavel as MechanicsIcon,
+  Bolt as PowersIcon,
   Lock as PrivateIcon,
   Public as PublicIcon,
-  Star as StarIcon,
-  StarBorder as StarBorderIcon,
-  People as RacesIcon,
-  Psychology as SkillsIcon,
   Publish as PublishIcon,
-  Spoke as FeatsIcon,
-  Unarchive as UnarchiveIcon,
+  People as RacesIcon,
   Shield as SavesIcon,
-  Stars as AptitudesIcon,
-  Translate as LanguagesIcon,
-  Group as ContributorsIcon,
+  Psychology as SkillsIcon,
+  StarBorder as StarBorderIcon,
+  Star as StarIcon,
+  Unarchive as UnarchiveIcon,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -78,6 +43,42 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+
+import {
+  ActionMenuItem,
+  DetailPageHeader,
+  DiceSpinner,
+  FaqHelpIcon,
+  Modal,
+  PageError,
+  PageTransition,
+  type SectionTab,
+  SectionTabs,
+} from "@/client/src/components/common/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  ArchiveRulesetDialog,
+  EditRulesetDialog,
+  ForkRulesetDialog,
+  OverridesDialog,
+  PublishRulesetDialog,
+  RulesetLicenseNotice,
+  SubscribeExtensionDialog,
+  UnsubscribeExtensionDialog,
+} from "@/client/src/pages/rulesets/details/components/index.ts";
+import { useRulesetOperations, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+
+import { getSections, type RulesetSectionProps } from "./sectionFactory.ts";
+import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 import {
   AbilitiesSection,
   AptitudesSection,
@@ -88,8 +89,6 @@ import {
   RacesSection,
   SavesSection,
 } from "./sections/index.ts";
-import { getSections, type RulesetSectionProps } from "./sectionFactory.ts";
-import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 
 function HelpLabel({ label, help }: { label: string; help: string }) {
   return (
@@ -110,9 +109,11 @@ function getStatusChip(status: RulesetDetail["status"]) {
         size="medium"
         color={color}
         variant="filled"
-        sx={status === "Archived"
-          ? { fontWeight: 600, bgcolor: "grey.400", color: "grey.700", "& .MuiChip-icon": { color: "grey.600" } }
-          : { fontWeight: 600 }}
+        sx={
+          status === "Archived"
+            ? { fontWeight: 600, bgcolor: "grey.400", color: "grey.700", "& .MuiChip-icon": { color: "grey.600" } }
+            : { fontWeight: 600 }
+        }
       />
     </Tooltip>
   );
@@ -180,17 +181,23 @@ export default function RulesetDetailsPage() {
   const [overridesDialogOpen, setOverridesDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const childOnly = searchParams.has("childOnly") ? searchParams.get("childOnly") === "true" : isExtension;
-  const setChildOnly = useCallback((value: boolean) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (value) {
-        next.set("childOnly", "true");
-      } else {
-        next.set("childOnly", "false");
-      }
-      return next;
-    }, { replace: true });
-  }, [setSearchParams]);
+  const setChildOnly = useCallback(
+    (value: boolean) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value) {
+            next.set("childOnly", "true");
+          } else {
+            next.set("childOnly", "false");
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const closeMenuAnd = (then: () => void) => () => {
     setAnchorEl(null);
@@ -203,7 +210,12 @@ export default function RulesetDetailsPage() {
   const { isOwner, isContributor, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
   const showContributorsMenu = (isOwner || isContributor) && ruleset?.status !== "Archived";
-  const hasMenuItems = isOwner || canEditRuleset || (!!ruleset && ruleset.status === "Published" && !isExtension) || isFork || showContributorsMenu;
+  const hasMenuItems =
+    isOwner ||
+    canEditRuleset ||
+    (!!ruleset && ruleset.status === "Published" && !isExtension) ||
+    isFork ||
+    showContributorsMenu;
 
   const baseRules = ruleset?.baseRules;
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
@@ -217,11 +229,31 @@ export default function RulesetDetailsPage() {
       { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
       { key: "powers", label: sections.labels.powers, icon: PowersIcon, component: sections.PowersSection },
       { key: "items", label: "Items", icon: ItemsIcon, component: sections.ItemsSection },
-      { key: "aptitudes", label: <HelpLabel label="Aptitudes" help="Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities)." />, icon: AptitudesIcon, component: AptitudesSection },
+      {
+        key: "aptitudes",
+        label: (
+          <HelpLabel
+            label="Aptitudes"
+            help="Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities)."
+          />
+        ),
+        icon: AptitudesIcon,
+        component: AptitudesSection,
+      },
       { key: "classes", label: "Classes", icon: ClassesIcon, component: sections.ClassesSection },
       { key: "saves", label: "Saves", icon: SavesIcon, component: SavesSection },
       { key: "abilities", label: "Abilities", icon: AbilitiesIcon, component: AbilitiesSection },
-      { key: "mechanics", label: <HelpLabel label="Mechanics" help="Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table." />, icon: MechanicsIcon, component: MechanicsSection },
+      {
+        key: "mechanics",
+        label: (
+          <HelpLabel
+            label="Mechanics"
+            help="Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table."
+          />
+        ),
+        icon: MechanicsIcon,
+        component: MechanicsSection,
+      },
     ];
   }, [baseRules]);
 
@@ -246,7 +278,11 @@ export default function RulesetDetailsPage() {
   if (!ruleset) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" onBack={() => navigate("/rulesets")} />
+        <PageError
+          message={loadFailureMessage("Ruleset", error)}
+          backLabel="Back to Rulesets"
+          onBack={() => navigate("/rulesets")}
+        />
       </Container>
     );
   }
@@ -256,104 +292,110 @@ export default function RulesetDetailsPage() {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <DetailPageHeader
           title={ruleset.name}
-          titleAdornment={ruleset.isStarrable && (
-            <IconButton
-              onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
-              size="small"
-              aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
-              sx={{
-                flexShrink: 0,
-                p: 0,
-                color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                "&:hover": { color: "warning.main", backgroundColor: "transparent" },
-              }}
-            >
-              {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
-            </IconButton>
-          )}
+          titleAdornment={
+            ruleset.isStarrable && (
+              <IconButton
+                onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
+                size="small"
+                aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
+                sx={{
+                  flexShrink: 0,
+                  p: 0,
+                  color: ruleset.isStarred ? "warning.main" : "action.disabled",
+                  "&:hover": { color: "warning.main", backgroundColor: "transparent" },
+                }}
+              >
+                {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
+              </IconButton>
+            )
+          }
           onBack={() => navigate("/rulesets")}
           onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
-          chips={(
+          chips={
             <>
-          {getStatusChip(ruleset.status)}
-          <Chip
-            icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
-            label={ruleset.private ? "Private" : "Public"}
-            size="medium"
-            color={ruleset.private ? "warning" : "success"}
-            variant="filled"
-            sx={{ fontWeight: 600 }}
-          />
-          {isExtension && (
-            <Chip
-              icon={<ExtensionIcon />}
-              label="Extension"
-              size="medium"
-              color="secondary"
-              variant="filled"
-              sx={{ fontWeight: 600 }}
-            />
-          )}
-          {ruleset.rulesetId && ruleset.rulesetName && (
-            <Chip
-              icon={<ForkIcon />}
-              label={`Forked from ${ruleset.rulesetName}`}
-              size="medium"
-              color="info"
-              variant="outlined"
-              component={RouterLink}
-              to={`/rulesets/${ruleset.rulesetId}`}
-              clickable
-              sx={{ fontWeight: 500 }}
-              onMouseEnter={prefetchParent}
-              onFocus={prefetchParent}
-            />
-          )}
-          {subscribedExtensions && subscribedExtensions.length > 0 && (
-            <>
+              {getStatusChip(ruleset.status)}
               <Chip
-                icon={<ExtensionIcon />}
-                label={formatCount(subscribedExtensions.length, "extension")}
+                icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
+                label={ruleset.private ? "Private" : "Public"}
                 size="medium"
-                color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
-                variant="outlined"
-                clickable
-                onClick={(e) => setExtensionsAnchor(e.currentTarget)}
-                sx={{ fontWeight: 500 }}
+                color={ruleset.private ? "warning" : "success"}
+                variant="filled"
+                sx={{ fontWeight: 600 }}
               />
-              <Popover
-                open={Boolean(extensionsAnchor)}
-                anchorEl={extensionsAnchor}
-                onClose={() => setExtensionsAnchor(null)}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-                transformOrigin={{ vertical: "top", horizontal: "center" }}
-              >
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5, maxWidth: 360 }}>
-                  {subscribedExtensions.map((ext) => (
-                    <Chip
-                      key={ext.extensionId}
-                      icon={<ExtensionIcon />}
-                      label={ext.extensionName}
-                      size="medium"
-                      color={ext.updateAvailable ? "warning" : "default"}
-                      variant="outlined"
-                      component={RouterLink}
-                      to={`/rulesets/${ext.extensionId}`}
-                      clickable
-                      sx={{ fontWeight: 500, justifyContent: "flex-start" }}
-                      onDelete={isOwner ? (e: React.MouseEvent) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
-                      } : undefined}
-                    />
-                  ))}
-                </Box>
-              </Popover>
+              {isExtension && (
+                <Chip
+                  icon={<ExtensionIcon />}
+                  label="Extension"
+                  size="medium"
+                  color="secondary"
+                  variant="filled"
+                  sx={{ fontWeight: 600 }}
+                />
+              )}
+              {ruleset.rulesetId && ruleset.rulesetName && (
+                <Chip
+                  icon={<ForkIcon />}
+                  label={`Forked from ${ruleset.rulesetName}`}
+                  size="medium"
+                  color="info"
+                  variant="outlined"
+                  component={RouterLink}
+                  to={`/rulesets/${ruleset.rulesetId}`}
+                  clickable
+                  sx={{ fontWeight: 500 }}
+                  onMouseEnter={prefetchParent}
+                  onFocus={prefetchParent}
+                />
+              )}
+              {subscribedExtensions && subscribedExtensions.length > 0 && (
+                <>
+                  <Chip
+                    icon={<ExtensionIcon />}
+                    label={formatCount(subscribedExtensions.length, "extension")}
+                    size="medium"
+                    color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
+                    variant="outlined"
+                    clickable
+                    onClick={(e) => setExtensionsAnchor(e.currentTarget)}
+                    sx={{ fontWeight: 500 }}
+                  />
+                  <Popover
+                    open={Boolean(extensionsAnchor)}
+                    anchorEl={extensionsAnchor}
+                    onClose={() => setExtensionsAnchor(null)}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                    transformOrigin={{ vertical: "top", horizontal: "center" }}
+                  >
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5, maxWidth: 360 }}>
+                      {subscribedExtensions.map((ext) => (
+                        <Chip
+                          key={ext.extensionId}
+                          icon={<ExtensionIcon />}
+                          label={ext.extensionName}
+                          size="medium"
+                          color={ext.updateAvailable ? "warning" : "default"}
+                          variant="outlined"
+                          component={RouterLink}
+                          to={`/rulesets/${ext.extensionId}`}
+                          clickable
+                          sx={{ fontWeight: 500, justifyContent: "flex-start" }}
+                          onDelete={
+                            isOwner
+                              ? (e: React.MouseEvent) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Box>
+                  </Popover>
+                </>
+              )}
             </>
-          )}
-            </>
-          )}
+          }
           description={ruleset.description || "Explore the complete rules and content for this game system"}
         >
           {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
@@ -365,8 +407,7 @@ export default function RulesetDetailsPage() {
         {ruleset.status === "Archived" && (
           <Alert severity="info" sx={{ mb: 3 }}>
             <Typography variant="body2">
-              <strong>This ruleset is archived and read-only.</strong>{" "}
-              You can view all content but cannot make changes.
+              <strong>This ruleset is archived and read-only.</strong> You can view all content but cannot make changes.
               {isOwner && " Unarchive it to edit it again."}
             </Typography>
           </Alert>
@@ -383,7 +424,12 @@ export default function RulesetDetailsPage() {
 
         <Box role="tabpanel" sx={{ py: 3 }}>
           {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
-          <currentTab.component key={ruleset.id} ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={setChildOnly} />
+          <currentTab.component
+            key={ruleset.id}
+            ruleset={ruleset}
+            childOnly={childOnly}
+            onChildOnlyChange={setChildOnly}
+          />
         </Box>
 
         <Menu
@@ -408,14 +454,18 @@ export default function RulesetDetailsPage() {
               onClick={closeMenuAnd(() => setOverridesDialogOpen(true))}
             />
           )}
-          {isOwner && ruleset.rulesetId && ruleset.status !== "Archived" && !ruleset.isUsedAsExtension && !isExtension && (
-            <ActionMenuItem
-              icon={ExtensionIcon}
-              label="Subscribe"
-              description="Add content from a sourcebook"
-              onClick={closeMenuAnd(() => handleSubscribe(ruleset))}
-            />
-          )}
+          {isOwner &&
+            ruleset.rulesetId &&
+            ruleset.status !== "Archived" &&
+            !ruleset.isUsedAsExtension &&
+            !isExtension && (
+              <ActionMenuItem
+                icon={ExtensionIcon}
+                label="Subscribe"
+                description="Add content from a sourcebook"
+                onClick={closeMenuAnd(() => handleSubscribe(ruleset))}
+              />
+            )}
           {showContributorsMenu && (
             <ActionMenuItem
               icon={ContributorsIcon}
@@ -424,41 +474,49 @@ export default function RulesetDetailsPage() {
               onClick={closeMenuAnd(() => setContributorsDialogOpen(true))}
             />
           )}
-          {isOwner && ruleset.rulesetId && ruleset.status !== "Archived" && [
-            <Divider key="sync-divider" />,
-            <MenuItem
-              key="faq-link"
-              component="a"
-              href={externalLinks.help}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setAnchorEl(null)}
-              sx={{ justifyContent: "center" }}
-            >
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Learn more in Help Center
-              </Typography>
-            </MenuItem>,
-          ]}
-          {canEditRuleset && ruleset.status !== "Archived" && [
-            <ActionMenuItem key="edit" icon={EditIcon} label="Edit" onClick={closeMenuAnd(() => handleEdit(ruleset))} />,
-            canPublish && ruleset.status === "Draft" && (
+          {isOwner &&
+            ruleset.rulesetId &&
+            ruleset.status !== "Archived" && [
+              <Divider key="sync-divider" />,
+              <MenuItem
+                key="faq-link"
+                component="a"
+                href={externalLinks.help}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setAnchorEl(null)}
+                sx={{ justifyContent: "center" }}
+              >
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  Learn more in Help Center
+                </Typography>
+              </MenuItem>,
+            ]}
+          {canEditRuleset &&
+            ruleset.status !== "Archived" && [
               <ActionMenuItem
-                key="publish"
-                icon={PublishIcon}
-                label="Publish"
-                intent="positive"
-                onClick={closeMenuAnd(() => handlePublish(ruleset))}
-              />
-            ),
-            <ActionMenuItem
-              key="archive"
-              icon={ArchiveIcon}
-              label="Archive"
-              intent="caution"
-              onClick={closeMenuAnd(() => handleArchive(ruleset))}
-            />,
-          ]}
+                key="edit"
+                icon={EditIcon}
+                label="Edit"
+                onClick={closeMenuAnd(() => handleEdit(ruleset))}
+              />,
+              canPublish && ruleset.status === "Draft" && (
+                <ActionMenuItem
+                  key="publish"
+                  icon={PublishIcon}
+                  label="Publish"
+                  intent="positive"
+                  onClick={closeMenuAnd(() => handlePublish(ruleset))}
+                />
+              ),
+              <ActionMenuItem
+                key="archive"
+                icon={ArchiveIcon}
+                label="Archive"
+                intent="caution"
+                onClick={closeMenuAnd(() => handleArchive(ruleset))}
+              />,
+            ]}
           {isOwner && ruleset.status === "Archived" && (
             <ActionMenuItem
               icon={UnarchiveIcon}
@@ -480,7 +538,11 @@ export default function RulesetDetailsPage() {
           }}
           isLoading={updateMutation.isPending}
           isPublic={selectedRuleset ? !selectedRuleset.private : false}
-          canBeExtension={!!selectedRuleset?.rulesetId && selectedRuleset.userId !== null && selectedRuleset.extensionRulesetIds.length === 0}
+          canBeExtension={
+            !!selectedRuleset?.rulesetId &&
+            selectedRuleset.userId !== null &&
+            selectedRuleset.extensionRulesetIds.length === 0
+          }
         />
 
         <ArchiveRulesetDialog
@@ -505,7 +567,11 @@ export default function RulesetDetailsPage() {
             }
           }}
           isLoading={publishMutation.isPending}
-          canBeExtension={!!selectedRuleset?.rulesetId && selectedRuleset.userId !== null && selectedRuleset.extensionRulesetIds.length === 0}
+          canBeExtension={
+            !!selectedRuleset?.rulesetId &&
+            selectedRuleset.userId !== null &&
+            selectedRuleset.extensionRulesetIds.length === 0
+          }
           initialKind={selectedRuleset?.kind ?? "ruleset"}
         />
 
@@ -546,11 +612,7 @@ export default function RulesetDetailsPage() {
           </>
         )}
 
-        <Modal
-          open={contributorsDialogOpen}
-          onClose={() => setContributorsDialogOpen(false)}
-          maxWidth="md"
-        >
+        <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)} maxWidth="md">
           <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ContributorsIcon /> Contributors
           </DialogTitle>
@@ -558,7 +620,9 @@ export default function RulesetDetailsPage() {
             <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setContributorsDialogOpen(false)} variant="outlined" color="inherit">Close</Button>
+            <Button onClick={() => setContributorsDialogOpen(false)} variant="outlined" color="inherit">
+              Close
+            </Button>
           </DialogActions>
         </Modal>
       </Container>

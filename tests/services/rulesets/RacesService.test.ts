@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { ConflictError } from "@/server/errors/index.ts";
 import { RacesMethods } from "@/server/services/rulesets/RacesService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
@@ -12,7 +13,11 @@ describe("RacesService", () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const created = await RacesMethods.createRulesetRace(session, ruleset.id, elf);
     expect(created).toMatchObject(elf);
-    const updated = await RacesMethods.updateRulesetRace(session, ruleset.id, created.id, { ...elf, size: "Large", baseSpeed: 40 });
+    const updated = await RacesMethods.updateRulesetRace(session, ruleset.id, created.id, {
+      ...elf,
+      size: "Large",
+      baseSpeed: 40,
+    });
     expect(updated).toMatchObject({ size: "Large", baseSpeed: 40 });
   });
 

@@ -1,18 +1,11 @@
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import {
-  DURATION,
-  EASING,
-  fadeInUp,
-  prefersReducedMotion,
-} from "@/client/src/lib/animations.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import {
   HelpOutlined as FaqIcon,
   Map as MapIcon,
-  MenuBook as RulesetIcon,
   Person as PersonIcon,
+  MenuBook as RulesetIcon,
 } from "@mui/icons-material";
 import type { SvgIconComponent } from "@mui/icons-material";
+import { HelpOutlined as HelpIcon } from "@mui/icons-material";
 import {
   Backdrop,
   Box,
@@ -26,10 +19,13 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { Modal } from "@/client/src/components/common/index.ts";
-import { HelpOutlined as HelpIcon } from "@mui/icons-material";
 import type { Instance } from "@popperjs/core";
 import { useEffect, useRef, useState } from "react";
+
+import { Modal } from "@/client/src/components/common/index.ts";
+import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 const SIDEBAR_TRANSITION_MS = 380;
 
@@ -47,8 +43,7 @@ const steps: OnboardingStep[] = [
     icon: null,
     logo: true,
     title: "Welcome to Arkyvree",
-    description:
-      "A programmable ruleset engine for tabletop RPGs. Build characters and run campaigns on top.",
+    description: "A programmable ruleset engine for tabletop RPGs. Build characters and run campaigns on top.",
     mode: "dialog",
   },
   {
@@ -63,22 +58,19 @@ const steps: OnboardingStep[] = [
   {
     icon: PersonIcon,
     title: "Characters",
-    description:
-      "Create characters using any ruleset — build sheets with stats, feats, equipment, and more.",
+    description: "Create characters using any ruleset — build sheets with stats, feats, equipment, and more.",
     mode: "popper",
   },
   {
     icon: MapIcon,
     title: "Campaigns",
-    description:
-      "Organize your games — create campaigns, invite players, and manage characters together.",
+    description: "Organize your games — create campaigns, invite players, and manage characters together.",
     mode: "popper",
   },
   {
     icon: FaqIcon,
     title: "Learn More",
-    description:
-      "Want to dive deeper? The {faq} covers rulesets, forking, the customization system, and more.",
+    description: "Want to dive deeper? The {faq} covers rulesets, forking, the customization system, and more.",
     mode: "dialog",
   },
 ];
@@ -101,7 +93,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
 
   const step = steps[activeStep];
   const isLastStep = activeStep === steps.length - 1;
-  const effectiveMode = (isMobile || !anchorEl) ? "dialog" : "popper";
+  const effectiveMode = isMobile || !anchorEl ? "dialog" : "popper";
 
   // Delay popper visibility until sidebar expansion transition completes
   const popperRef = useRef<Instance>(null);
@@ -183,9 +175,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         }}
       >
         {/* Icon circle */}
-        <Box
-          sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", mb: 3 }}
-        >
+        <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", mb: 3 }}>
           <Box
             sx={{
               position: "absolute",
@@ -339,9 +329,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
     return (
       <Modal open onClose={onClose} aria-labelledby="onboarding-step-title">
         {gradientBar}
-        <DialogContent sx={{ p: 0 }}>
-          {stepContent}
-        </DialogContent>
+        <DialogContent sx={{ p: 0 }}>{stepContent}</DialogContent>
         {stepperDots}
         {navButtons}
       </Modal>

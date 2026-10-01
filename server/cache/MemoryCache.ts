@@ -42,7 +42,8 @@ export default class MemoryCache<T> {
       this.maxSize = options.maxSize ?? DEFAULT_MAX_SIZE;
     }
 
-    const interval = typeof options === "number" ? DEFAULT_SWEEP_INTERVAL_MS : (options.sweepInterval ?? DEFAULT_SWEEP_INTERVAL_MS);
+    const interval =
+      typeof options === "number" ? DEFAULT_SWEEP_INTERVAL_MS : (options.sweepInterval ?? DEFAULT_SWEEP_INTERVAL_MS);
     this.sweepTimer = setInterval(() => this.sweep(), interval);
     // Don't keep the process alive just for cache sweeping
     if (typeof this.sweepTimer === "object" && "unref" in this.sweepTimer) {

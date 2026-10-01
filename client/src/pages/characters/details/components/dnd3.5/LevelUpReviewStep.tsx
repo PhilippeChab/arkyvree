@@ -1,7 +1,8 @@
-import type { LevelUpReviewStepProps } from "./levelUpFactory.ts";
-import { LevelReview, ReviewGroup } from "./LevelReview.tsx";
-import { attributeName } from "./attributeName.ts";
 import { Alert, Typography } from "@mui/material";
+
+import { attributeName } from "./attributeName.ts";
+import { LevelReview, ReviewGroup } from "./LevelReview.tsx";
+import type { LevelUpReviewStepProps } from "./levelUpFactory.ts";
 
 export function LevelUpReviewStep({ wizard }: LevelUpReviewStepProps) {
   const { selectedClass, selectedHP, selectedAttribute, attributeData } = wizard;

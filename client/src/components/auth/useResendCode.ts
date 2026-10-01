@@ -1,5 +1,6 @@
-import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { useState } from "react";
+
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 
 /**
  * A verification-code page's error, and resending its code: `notice` confirms a

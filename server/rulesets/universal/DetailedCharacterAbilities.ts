@@ -25,10 +25,7 @@ export default class DetailedCharacterAbilities {
     return deriveSegmentLabels(NAVIGATABLE_PATHS);
   }
 
-  static generateTargetPaths(
-    abilities: RulesetAbility[],
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(abilities: RulesetAbility[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const ability of abilities) {
@@ -41,14 +38,10 @@ export default class DetailedCharacterAbilities {
           category: "abilities",
           description: subPath.description,
           valueType: subPath.type,
-          operators: kind === "modifier" ? ["add", "subtract", "multiply", "divide", "set"] : [
-            "equal",
-            "not_equal",
-            "greater_than",
-            "less_than",
-            "greater_than_or_equal",
-            "less_than_or_equal",
-          ],
+          operators:
+            kind === "modifier"
+              ? ["add", "subtract", "multiply", "divide", "set"]
+              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
         });
       }
     }
@@ -59,14 +52,10 @@ export default class DetailedCharacterAbilities {
       description: "Misc bonus applied to every ability",
       groupDescription: kind === "requirement" ? "Any ability" : "All abilities",
       valueType: "number",
-      operators: kind === "modifier" ? ["add", "subtract", "multiply", "divide", "set"] : [
-        "equal",
-        "not_equal",
-        "greater_than",
-        "less_than",
-        "greater_than_or_equal",
-        "less_than_or_equal",
-      ],
+      operators:
+        kind === "modifier"
+          ? ["add", "subtract", "multiply", "divide", "set"]
+          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
     });
 
     return paths;
@@ -78,10 +67,7 @@ export default class DetailedCharacterAbilities {
   // Map abilityId -> normalized ability name for level-up lookups
   private readonly abilityIdToName: Map<string, string> = new Map();
 
-  initialize(
-    characterAbilities: { abilityId: string; name: string; score: number }[],
-    levels: CharacterLevel[],
-  ) {
+  initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
     // Initialize abilities from the character's ability scores
     for (const { abilityId, name, score } of characterAbilities) {
       const normalizedName = stripSeparators(name);
@@ -113,14 +99,17 @@ export default class DetailedCharacterAbilities {
   }
 
   getAbilitiesWithIds() {
-    const result: Record<string, {
-      abilityId: string;
-      base: number;
-      level: number;
-      misc: number;
-      total: number;
-      modifier: number;
-    }> = {};
+    const result: Record<
+      string,
+      {
+        abilityId: string;
+        base: number;
+        level: number;
+        misc: number;
+        total: number;
+        modifier: number;
+      }
+    > = {};
 
     for (const [abilityId, normalizedName] of this.abilityIdToName.entries()) {
       const ability = this.detailedCharacterAbilities[normalizedName];

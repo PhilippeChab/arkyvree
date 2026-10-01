@@ -1,147 +1,31 @@
-import { nameRules } from "@/client/src/lib/validation.ts";
-import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
-import type { RulesetSave } from "@/client/src/hooks/index.ts";
-import {
-  AptitudesAutocomplete,
-  type Aptitude,
-} from "@/client/src/components/customization/index.ts";
-import {
-  Autocomplete,
-  Box,
-  Chip,
-  MenuItem,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Autocomplete, Box, Chip, MenuItem, TextField, Typography } from "@mui/material";
 import { Controller, type UseFormReturn } from "react-hook-form";
+
+import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
+import type { RulesetSave } from "@/client/src/hooks/index.ts";
+import { nameRules } from "@/client/src/lib/validation.ts";
 import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/aptitudeLookup.ts";
-import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
 import {
-  SPELL_SCHOOLS,
-  SPELL_SUBSCHOOLS,
-  SPELL_DESCRIPTORS,
   SPELL_COMPONENTS,
+  SPELL_DESCRIPTORS,
   SPELL_RANGE_TYPES,
   SPELL_RESISTANCE_OPTIONS,
+  SPELL_SCHOOLS,
+  SPELL_SUBSCHOOLS,
 } from "@/shared/dnd3.5/spells.ts";
+
+import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
 
 type Save = RulesetSave;
 
-function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
-  return (
-    <>
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <Controller
-          name="school"
-          control={form.control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              value={field.value ?? ""}
-              label="School"
-              fullWidth
-              select
-            >
-              <MenuItem value="">None</MenuItem>
-              {SPELL_SCHOOLS.map((s) => (
-                <MenuItem key={s} value={s}>{s}</MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-        <Controller
-          name="subschool"
-          control={form.control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              value={field.value ?? ""}
-              label="Subschool"
-              fullWidth
-              select
-            >
-              <MenuItem value="">None</MenuItem>
-              {SPELL_SUBSCHOOLS.map((s) => (
-                <MenuItem key={s} value={s}>{s}</MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-      </Box>
-      <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <TextField
-          {...form.register("castingTime")}
-          label="Casting Time"
-          fullWidth
-          placeholder='e.g., "1 standard action"'
-        />
-        <Controller
-          name="rangeType"
-          control={form.control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              value={field.value ?? ""}
-              label="Range"
-              fullWidth
-              select
-            >
-              <MenuItem value="">None</MenuItem>
-              {SPELL_RANGE_TYPES.map((r) => (
-                <MenuItem key={r} value={r}>{r}</MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-      </Box>
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <TextField
-          {...form.register("target")}
-          label="Target"
-          fullWidth
-          placeholder='e.g., "One creature"'
-        />
-        <TextField
-          {...form.register("areaOfEffect")}
-          label="Area of Effect"
-          fullWidth
-          placeholder='e.g., "20-ft. radius"'
-        />
-      </Box>
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <TextField
-          {...form.register("duration")}
-          label="Duration"
-          fullWidth
-          placeholder='e.g., "1 round/level"'
-        />
-        <Controller
-          name="spellResistance"
-          control={form.control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              value={field.value ?? ""}
-              label="Spell Resistance"
-              fullWidth
-              select
-            >
-              <MenuItem value="">None</MenuItem>
-              {SPELL_RESISTANCE_OPTIONS.map((sr) => (
-                <MenuItem key={sr} value={sr}>{sr}</MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-      </Box>
-      <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
-    </>
-  );
-}
-
 /** A free-text list with suggestions, shown as chips. */
-function TagsField({ form, name, label, options }: {
+function TagsField({
+  form,
+  name,
+  label,
+  options,
+}: {
   form: UseFormReturn<SpellFormData>;
   name: "descriptors" | "components";
   label: string;
@@ -171,6 +55,93 @@ function TagsField({ form, name, label, options }: {
   );
 }
 
+function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
+  return (
+    <>
+      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+        <Controller
+          name="school"
+          control={form.control}
+          render={({ field }) => (
+            <TextField {...field} value={field.value ?? ""} label="School" fullWidth select>
+              <MenuItem value="">None</MenuItem>
+              {SPELL_SCHOOLS.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        />
+        <Controller
+          name="subschool"
+          control={form.control}
+          render={({ field }) => (
+            <TextField {...field} value={field.value ?? ""} label="Subschool" fullWidth select>
+              <MenuItem value="">None</MenuItem>
+              {SPELL_SUBSCHOOLS.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        />
+      </Box>
+      <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
+      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+        <TextField
+          {...form.register("castingTime")}
+          label="Casting Time"
+          fullWidth
+          placeholder='e.g., "1 standard action"'
+        />
+        <Controller
+          name="rangeType"
+          control={form.control}
+          render={({ field }) => (
+            <TextField {...field} value={field.value ?? ""} label="Range" fullWidth select>
+              <MenuItem value="">None</MenuItem>
+              {SPELL_RANGE_TYPES.map((r) => (
+                <MenuItem key={r} value={r}>
+                  {r}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        />
+      </Box>
+      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+        <TextField {...form.register("target")} label="Target" fullWidth placeholder='e.g., "One creature"' />
+        <TextField
+          {...form.register("areaOfEffect")}
+          label="Area of Effect"
+          fullWidth
+          placeholder='e.g., "20-ft. radius"'
+        />
+      </Box>
+      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+        <TextField {...form.register("duration")} label="Duration" fullWidth placeholder='e.g., "1 round/level"' />
+        <Controller
+          name="spellResistance"
+          control={form.control}
+          render={({ field }) => (
+            <TextField {...field} value={field.value ?? ""} label="Spell Resistance" fullWidth select>
+              <MenuItem value="">None</MenuItem>
+              {SPELL_RESISTANCE_OPTIONS.map((sr) => (
+                <MenuItem key={sr} value={sr}>
+                  {sr}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        />
+      </Box>
+      <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
+    </>
+  );
+}
+
 interface SpellFormFieldsProps {
   form: UseFormReturn<SpellFormData>;
   rulesetId: string;
@@ -180,13 +151,7 @@ interface SpellFormFieldsProps {
   knownAptitudes?: Aptitude[];
 }
 
-export function SpellFormFields({
-  form,
-  rulesetId,
-  saves,
-  hideProperties,
-  knownAptitudes = [],
-}: SpellFormFieldsProps) {
+export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownAptitudes = [] }: SpellFormFieldsProps) {
   // Aptitudes and their levels live in the form, sorted by aptitude name.
   const aptitudes = useAptitudeLookup(knownAptitudes);
   const selected = form.watch("aptitudes") ?? [];
@@ -196,13 +161,8 @@ export function SpellFormFields({
 
   return (
     <>
-      <NameField
-        {...form.register("name", nameRules)}
-        error={form.formState.errors.name}
-      />
-      <DescriptionField
-        {...form.register("description")}
-      />
+      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
+      <DescriptionField {...form.register("description")} />
       <SelectField
         control={form.control}
         name="saveId"
@@ -227,23 +187,27 @@ export function SpellFormFields({
       />
       {selectedAptitudes.length > 0 && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>Aptitude Settings</Typography>
+          <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
+            Aptitude Settings
+          </Typography>
           {selectedAptitudes.map((apt) => {
             return (
               <Box key={apt.id} sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-                <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>{apt.name}</Typography>
+                <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
+                  {apt.name}
+                </Typography>
                 <TextField
-                label="Level"
-                type="number"
-                size="small"
-                slotProps={{ htmlInput: { min: 0, max: 9 } }}
-                value={levelOf(apt.id) ?? ""}
-                onChange={(e) => {
-                  const level = e.target.value === "" ? undefined : parseInt(e.target.value);
-                  setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));
-                }}
-                sx={{ width: 80 }}
-              />
+                  label="Level"
+                  type="number"
+                  size="small"
+                  slotProps={{ htmlInput: { min: 0, max: 9 } }}
+                  value={levelOf(apt.id) ?? ""}
+                  onChange={(e) => {
+                    const level = e.target.value === "" ? undefined : parseInt(e.target.value);
+                    setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));
+                  }}
+                  sx={{ width: 80 }}
+                />
               </Box>
             );
           })}

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";
 
@@ -11,9 +12,18 @@ describe("dashboard", () => {
     expect(before).toMatchObject({ totalCharacters: 0, totalCampaigns: 0 });
     expect(before.totalRulesets).toBeGreaterThan(0);
 
-    await expectOk(api.api.rulesets[":id"].fork.$post({ param: { id: rulesetId }, json: { name: "Dashboard Fork", description: "", private: true } }));
+    await expectOk(
+      api.api.rulesets[":id"].fork.$post({
+        param: { id: rulesetId },
+        json: { name: "Dashboard Fork", description: "", private: true },
+      }),
+    );
     await expectOk(api.api.campaigns.$post({ json: { name: "Dashboard Campaign", rulesetId } }));
-    expect(await expectOk(api.api.dashboard.stats.$get())).toEqual({ totalRulesets: before.totalRulesets + 1, totalCharacters: 0, totalCampaigns: 1 });
+    expect(await expectOk(api.api.dashboard.stats.$get())).toEqual({
+      totalRulesets: before.totalRulesets + 1,
+      totalCharacters: 0,
+      totalCampaigns: 1,
+    });
   });
 
   test("requires a session", async () => {

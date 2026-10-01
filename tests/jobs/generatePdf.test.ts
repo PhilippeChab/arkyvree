@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
@@ -10,7 +11,11 @@ import { createTestCharacter, createTestUser, silentJobHelpers } from "@/tests/h
 
 /** A seeded character of the seed user's, by name. */
 async function seeded(name: string) {
-  const { items } = await Characters.findMany(db, { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly }, { limit: 100, page: 1 });
+  const { items } = await Characters.findMany(
+    db,
+    { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
+    { limit: 100, page: 1 },
+  );
   return items.find((character) => character.name === name)!;
 }
 
@@ -22,46 +27,80 @@ async function notificationsOf(userId: string, type: string) {
 
 describe("generatePdf", () => {
   // A fighter and a spellcaster, whose sheet has spell pages.
-  test.each(["Bjorn Ironhand", "Elara Starweaver"])("stores %s's sheet as an export, and tells the player it's ready", async (name) => {
-    const character = await seeded(name);
-    await generatePdfTask({ userId: SEED_USER_ID, characterId: character.id, characterName: `${name}: Draft/1` }, silentJobHelpers);
+  test.each(["Bjorn Ironhand", "Elara Starweaver"])(
+    "stores %s's sheet as an export, and tells the player it's ready",
+    async (name) => {
+      const character = await seeded(name);
+      await generatePdfTask(
+        { userId: SEED_USER_ID, characterId: character.id, characterName: `${name}: Draft/1` },
+        silentJobHelpers,
+      );
 
-    const [ready] = await notificationsOf(SEED_USER_ID, "pdfReady");
-    expect(ready).toMatchObject({ targetTable: "exports", data: { characterId: character.id } });
-    const pdf = await Exports.findOne(db, { id: ready.targetId, userId: SEED_USER_ID });
-    // A file name keeps no path separator or colon.
-    expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}_ Draft_1-sheet.pdf` });
-    expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
-    expect(new Date(pdf!.expiresAt).getTime()).toBeGreaterThan(Date.now());
-  }, 30_000);
+      const [ready] = await notificationsOf(SEED_USER_ID, "pdfReady");
+      expect(ready).toMatchObject({ targetTable: "exports", data: { characterId: character.id } });
+      const pdf = await Exports.findOne(db, { id: ready.targetId, userId: SEED_USER_ID });
+      // A file name keeps no path separator or colon.
+      expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}_ Draft_1-sheet.pdf` });
+      expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
+      expect(new Date(pdf!.expiresAt).getTime()).toBeGreaterThan(Date.now());
+    },
+    30_000,
+  );
 
   // Rules changes can leave a character's customizations pointing at what no longer exists.
   test("stores the sheet of a character whose customizations can't all apply, which lists them", async () => {
     const { user } = await createTestUser();
     const character = await createTestCharacter(user.id);
     const modifier = async (target: string) =>
-      (await Modifiers.create(db, { sourceId: character.id, sourceType: "characters", target, value: "1", valueType: "number", operator: "add" }))[0];
+      (
+        await Modifiers.create(db, {
+          sourceId: character.id,
+          sourceType: "characters",
+          target,
+          value: "1",
+          valueType: "number",
+          operator: "add",
+        })
+      )[0];
     const requirement = (entityId: string, target: string, value: string) =>
-      Requirements.create(db, { entityId, entityType: "modifiers", level: "1", target, value, valueType: "number", operator: "greater_than_or_equal" });
+      Requirements.create(db, {
+        entityId,
+        entityType: "modifiers",
+        level: "1",
+        target,
+        value,
+        valueType: "number",
+        operator: "greater_than_or_equal",
+      });
 
     // A weapon's own attack bonus, with no such weapon wielded; an ability the rules don't have
     await modifier("combat.tohit.misc");
     await modifier("abilities.luck.misc");
     await requirement((await modifier("abilities.strength.misc")).id, "abilities.luck.total", "10");
     // More unmet requirements than the sheet lists
-    for (let i = 0; i < 16; i++) await requirement((await modifier("skills.climb.misc")).id, "skills.climb.total", "40");
+    for (let i = 0; i < 16; i++)
+      await requirement((await modifier("skills.climb.misc")).id, "skills.climb.total", "40");
 
     const module = await RulesetFactory.fromRulesetId(character.rulesetId);
     const { detailedCharacter } = await module.createDetailedCharacterWithSheet(character, "pc");
     if (!(detailedCharacter instanceof Dnd35DetailedCharacter)) throw new Error("Not a D&D 3.5 character");
     const { inactiveModifiers, skippedModifiers } = detailedCharacter.getDetailedCharacterModifiers().getModifiers();
-    const { invalidRequirements, unmetRequirementGroups } = detailedCharacter.getDetailedCharacterRequirements().getRequirements();
+    const { invalidRequirements, unmetRequirementGroups } = detailedCharacter
+      .getDetailedCharacterRequirements()
+      .getRequirements();
     expect(inactiveModifiers.map((m) => m.target)).toEqual(["combat.tohit.misc"]);
-    expect(skippedModifiers.map(({ modifier: m, warning }) => [m.target, warning])).toEqual([["abilities.luck.misc", "Element not found: luck"]]);
-    expect(invalidRequirements.map(({ requirement: r, warning }) => [r.target, warning])).toEqual([["abilities.luck.total", "Element not found: luck"]]);
+    expect(skippedModifiers.map(({ modifier: m, warning }) => [m.target, warning])).toEqual([
+      ["abilities.luck.misc", "Element not found: luck"],
+    ]);
+    expect(invalidRequirements.map(({ requirement: r, warning }) => [r.target, warning])).toEqual([
+      ["abilities.luck.total", "Element not found: luck"],
+    ]);
     expect(unmetRequirementGroups).toHaveLength(16);
 
-    await generatePdfTask({ userId: user.id, characterId: character.id, characterName: character.name }, silentJobHelpers);
+    await generatePdfTask(
+      { userId: user.id, characterId: character.id, characterName: character.name },
+      silentJobHelpers,
+    );
     const [ready] = await notificationsOf(user.id, "pdfReady");
     const pdf = await Exports.findOne(db, { id: ready.targetId, userId: user.id });
     expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
@@ -71,9 +110,14 @@ describe("generatePdf", () => {
     const { user } = await createTestUser();
     const { user: other } = await createTestUser();
     const character = await createTestCharacter(other.id);
-    await generatePdfTask({ userId: user.id, characterId: character.id, characterName: character.name }, silentJobHelpers);
+    await generatePdfTask(
+      { userId: user.id, characterId: character.id, characterName: character.name },
+      silentJobHelpers,
+    );
 
-    expect(await notificationsOf(user.id, "pdfFailed")).toMatchObject([{ targetId: character.id, data: { characterName: character.name } }]);
+    expect(await notificationsOf(user.id, "pdfFailed")).toMatchObject([
+      { targetId: character.id, data: { characterName: character.name } },
+    ]);
     expect(await notificationsOf(user.id, "pdfReady")).toEqual([]);
   });
 });

@@ -1,11 +1,11 @@
-import { respond, errorResponse } from "@/server/routers/respond.ts";
 import { Hono } from "hono";
+
 import {
   authEmailRateLimit,
   authRateLimit,
   authSessionRateLimit,
-  denyDemoUser,
   deleteSessionCookie,
+  denyDemoUser,
   getSessionCookie,
   sessionMiddleware,
   setSessionCookie,
@@ -26,6 +26,7 @@ import {
   VerifyEmailChangeJson,
   VerifyEmailJson,
 } from "@/server/routers/authentication/validation.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
 import { AuthenticationService } from "@/server/services/index.ts";
 
 export default new Hono()
@@ -49,15 +50,21 @@ export default new Hono()
     setSessionCookie(c, session.id);
     return c.json(user, 200);
   })
-  .post("/resend-verification", authRateLimit, authEmailRateLimit, zValidator("json", ResendVerificationJson), async (c) => {
-    const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call("resendVerification", body);
-    const success = result[0];
+  .post(
+    "/resend-verification",
+    authRateLimit,
+    authEmailRateLimit,
+    zValidator("json", ResendVerificationJson),
+    async (c) => {
+      const body = c.req.valid("json");
+      const result = await AuthenticationService.initialize().call("resendVerification", body);
+      const success = result[0];
 
-    if (!success) return errorResponse(c, result[2]);
+      if (!success) return errorResponse(c, result[2]);
 
-    return c.json({ success: true }, 200);
-  })
+      return c.json({ success: true }, 200);
+    },
+  )
   .post("/forgot-password", authRateLimit, authEmailRateLimit, zValidator("json", ForgotPasswordJson), async (c) => {
     const body = c.req.valid("json");
     const result = await AuthenticationService.initialize().call("forgotPassword", body);
@@ -106,70 +113,40 @@ export default new Hono()
   })
   .put("/profile", denyDemoUser, zValidator("json", UpdateProfileJson), async (c) => {
     const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call(
-      "updateProfile",
-      c.var.requestSession,
-      body,
-    );
+    const result = await AuthenticationService.initialize().call("updateProfile", c.var.requestSession, body);
     return respond(c, result, 200);
   })
   .put("/password", denyDemoUser, zValidator("json", UpdatePasswordJson), async (c) => {
     const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call(
-      "updatePassword",
-      c.var.requestSession,
-      body,
-    );
+    const result = await AuthenticationService.initialize().call("updatePassword", c.var.requestSession, body);
     return respond(c, result, 200);
   })
   .post("/set-password", denyDemoUser, zValidator("json", SetPasswordJson), async (c) => {
     const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call(
-      "setPassword",
-      c.var.requestSession,
-      body,
-    );
+    const result = await AuthenticationService.initialize().call("setPassword", c.var.requestSession, body);
     return respond(c, result, 200);
   })
   .get("/linked-accounts", async (c) => {
-    const result = await AuthenticationService.initialize().call(
-      "getLinkedAccounts",
-      c.var.requestSession,
-    );
+    const result = await AuthenticationService.initialize().call("getLinkedAccounts", c.var.requestSession);
     return respond(c, result, 200);
   })
   .post("/link-google", denyDemoUser, zValidator("json", GoogleSignInJson), async (c) => {
     const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call(
-      "linkGoogleAccount",
-      c.var.requestSession,
-      body,
-    );
+    const result = await AuthenticationService.initialize().call("linkGoogleAccount", c.var.requestSession, body);
     return respond(c, result, 200);
   })
   .post("/unlink-oauth", denyDemoUser, zValidator("json", UnlinkOauthJson), async (c) => {
     const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call(
-      "unlinkOauthAccount",
-      c.var.requestSession,
-      body,
-    );
+    const result = await AuthenticationService.initialize().call("unlinkOauthAccount", c.var.requestSession, body);
     return respond(c, result, 200);
   })
   .post("/verify-email-change", denyDemoUser, zValidator("json", VerifyEmailChangeJson), async (c) => {
     const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call(
-      "verifyEmailChange",
-      c.var.requestSession,
-      body,
-    );
+    const result = await AuthenticationService.initialize().call("verifyEmailChange", c.var.requestSession, body);
     return respond(c, result, 200);
   })
   .post("/cancel-email-change", denyDemoUser, async (c) => {
-    const result = await AuthenticationService.initialize().call(
-      "cancelEmailChange",
-      c.var.requestSession,
-    );
+    const result = await AuthenticationService.initialize().call("cancelEmailChange", c.var.requestSession);
     const success = result[0];
 
     if (!success) return errorResponse(c, result[2]);
@@ -177,10 +154,7 @@ export default new Hono()
     return c.json({ success: true }, 200);
   })
   .post("/resend-email-change", denyDemoUser, async (c) => {
-    const result = await AuthenticationService.initialize().call(
-      "resendEmailChange",
-      c.var.requestSession,
-    );
+    const result = await AuthenticationService.initialize().call("resendEmailChange", c.var.requestSession);
     const success = result[0];
 
     if (!success) return errorResponse(c, result[2]);
@@ -189,11 +163,7 @@ export default new Hono()
   })
   .post("/delete-account", denyDemoUser, zValidator("json", DeleteAccountJson), async (c) => {
     const body = c.req.valid("json");
-    const result = await AuthenticationService.initialize().call(
-      "deleteAccount",
-      c.var.requestSession,
-      body,
-    );
+    const result = await AuthenticationService.initialize().call("deleteAccount", c.var.requestSession, body);
     const success = result[0];
 
     if (!success) return errorResponse(c, result[2]);
@@ -202,10 +172,7 @@ export default new Hono()
     return c.json({ success: true }, 200);
   })
   .post("/complete-onboarding", async (c) => {
-    const result = await AuthenticationService.initialize().call(
-      "completeOnboarding",
-      c.var.requestSession,
-    );
+    const result = await AuthenticationService.initialize().call("completeOnboarding", c.var.requestSession);
     const success = result[0];
 
     if (!success) return errorResponse(c, result[2]);

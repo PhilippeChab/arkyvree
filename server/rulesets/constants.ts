@@ -10,36 +10,36 @@ export const CONSTANTS = {
 // D&D 3.5 PHB Table 9-1: Carrying Capacity by Strength score (index = Str score, value = heavy load in lbs)
 // Index 0 is unused (no Str 0), indices 1–29 map to Str 1–29
 export const CARRYING_CAPACITY: number[] = [
-  0,     // 0 (unused)
-  10,    // 1
-  20,    // 2
-  30,    // 3
-  40,    // 4
-  50,    // 5
-  60,    // 6
-  70,    // 7
-  80,    // 8
-  90,    // 9
-  100,   // 10
-  115,   // 11
-  130,   // 12
-  150,   // 13
-  175,   // 14
-  200,   // 15
-  230,   // 16
-  260,   // 17
-  300,   // 18
-  350,   // 19
-  400,   // 20
-  460,   // 21
-  520,   // 22
-  600,   // 23
-  700,   // 24
-  800,   // 25
-  920,   // 26
-  1040,  // 27
-  1200,  // 28
-  1400,  // 29
+  0, // 0 (unused)
+  10, // 1
+  20, // 2
+  30, // 3
+  40, // 4
+  50, // 5
+  60, // 6
+  70, // 7
+  80, // 8
+  90, // 9
+  100, // 10
+  115, // 11
+  130, // 12
+  150, // 13
+  175, // 14
+  200, // 15
+  230, // 16
+  260, // 17
+  300, // 18
+  350, // 19
+  400, // 20
+  460, // 21
+  520, // 22
+  600, // 23
+  700, // 24
+  800, // 25
+  920, // 26
+  1040, // 27
+  1200, // 28
+  1400, // 29
 ];
 
 // Multiplier applied to carrying capacity based on creature size
@@ -57,22 +57,54 @@ export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
 
 // Weapon damage size step (Medium = 0; +1 step = bigger damage die).
 export const SIZE_STEPS: Record<string, number> = {
-  Fine: -4, Diminutive: -3, Tiny: -2, Small: -1, Medium: 0, Large: 1, Huge: 2, Gargantuan: 3, Colossal: 4,
+  Fine: -4,
+  Diminutive: -3,
+  Tiny: -2,
+  Small: -1,
+  Medium: 0,
+  Large: 1,
+  Huge: 2,
+  Gargantuan: 3,
+  Colossal: 4,
 };
 
 // Size modifier applied to grapple checks (opposite direction to AC/attack).
 export const SIZE_GRAPPLE_MOD: Record<string, number> = {
-  Fine: -16, Diminutive: -12, Tiny: -8, Small: -4, Medium: 0, Large: 4, Huge: 8, Gargantuan: 12, Colossal: 16,
+  Fine: -16,
+  Diminutive: -12,
+  Tiny: -8,
+  Small: -4,
+  Medium: 0,
+  Large: 4,
+  Huge: 8,
+  Gargantuan: 12,
+  Colossal: 16,
 };
 
 // Size modifier applied to AC and to-hit (same magnitude, same direction).
 export const SIZE_AC_ATTACK_MOD: Record<string, number> = {
-  Fine: 8, Diminutive: 4, Tiny: 2, Small: 1, Medium: 0, Large: -1, Huge: -2, Gargantuan: -4, Colossal: -8,
+  Fine: 8,
+  Diminutive: 4,
+  Tiny: 2,
+  Small: 1,
+  Medium: 0,
+  Large: -1,
+  Huge: -2,
+  Gargantuan: -4,
+  Colossal: -8,
 };
 
 // Size modifier applied to the Hide skill (opposite direction to AC/attack).
 export const SIZE_HIDE_MOD: Record<string, number> = {
-  Fine: 16, Diminutive: 12, Tiny: 8, Small: 4, Medium: 0, Large: -4, Huge: -8, Gargantuan: -12, Colossal: -16,
+  Fine: 16,
+  Diminutive: 12,
+  Tiny: 8,
+  Small: 4,
+  Medium: 0,
+  Large: -4,
+  Huge: -8,
+  Gargantuan: -12,
+  Colossal: -16,
 };
 
 // Max Dex bonus and check penalty by load category

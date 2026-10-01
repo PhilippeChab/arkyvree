@@ -3,7 +3,6 @@ import { useRef } from "react";
 
 import { VERIFICATION_CODE_LENGTH } from "@/client/src/lib/verificationCode.ts";
 
-
 interface VerificationCodeInputProps {
   digits: string[];
   onChange: (digits: string[]) => void;
@@ -50,7 +49,9 @@ export function VerificationCodeInput({ digits, onChange }: VerificationCodeInpu
       {digits.map((digit, index) => (
         <TextField
           key={index}
-          inputRef={(el) => { inputRefs.current[index] = el; }}
+          inputRef={(el) => {
+            inputRefs.current[index] = el;
+          }}
           value={digit}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}

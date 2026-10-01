@@ -1,17 +1,20 @@
-import { AuthPage, AuthSubmitButton, ResendCodeLink, useResendCode, VerificationCodeInput } from "@/client/src/components/auth/index.ts";
-import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
-import { PasswordField } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { confirmPasswordRules, newPasswordRules } from "@/client/src/lib/validation.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import {
-  Box,
-  Typography,
-  Link as MuiLink,
-} from "@mui/material";
+import { Box, Link as MuiLink, Typography } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+
+import {
+  AuthPage,
+  AuthSubmitButton,
+  ResendCodeLink,
+  useResendCode,
+  VerificationCodeInput,
+} from "@/client/src/components/auth/index.ts";
+import { PasswordField } from "@/client/src/components/common/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { confirmPasswordRules, newPasswordRules } from "@/client/src/lib/validation.ts";
+import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface ResetPasswordFormData {
   digits: string[];
@@ -33,7 +36,9 @@ export default function ResetPassword() {
   const { errors } = form.formState;
   const digits = form.watch("digits");
 
-  const { error, setError, handleResend, notice } = useResendCode(() => forgotPassword(pendingPasswordResetEmail ?? ""));
+  const { error, setError, handleResend, notice } = useResendCode(() =>
+    forgotPassword(pendingPasswordResetEmail ?? ""),
+  );
 
   if (!pendingPasswordResetEmail) {
     return <Navigate to="/forgot-password" replace />;
@@ -42,7 +47,12 @@ export default function ResetPassword() {
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
       setError(null);
-      await resetPassword(pendingPasswordResetEmail, data.digits.join(""), data.newPassword, data.newPasswordConfirmation);
+      await resetPassword(
+        pendingPasswordResetEmail,
+        data.digits.join(""),
+        data.newPassword,
+        data.newPasswordConfirmation,
+      );
       navigate("/sign-in");
     } catch (error) {
       setError(errorMessage(error, "Failed to reset password"));
@@ -56,7 +66,11 @@ export default function ResetPassword() {
       error={error}
       notice={notice}
       title="Reset Password"
-      subtitle={<>We sent an 8-digit code to <strong>{pendingPasswordResetEmail}</strong></>}
+      subtitle={
+        <>
+          We sent an 8-digit code to <strong>{pendingPasswordResetEmail}</strong>
+        </>
+      }
     >
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <VerificationCodeInput
@@ -78,7 +92,9 @@ export default function ResetPassword() {
           autoComplete="new-password"
         />
 
-        <AuthSubmitButton loading={isLoading} disabled={!isComplete}>Reset Password</AuthSubmitButton>
+        <AuthSubmitButton loading={isLoading} disabled={!isComplete}>
+          Reset Password
+        </AuthSubmitButton>
       </form>
       <Box sx={{ textAlign: "center" }}>
         <ResendCodeLink onResend={handleResend} disabled={isLoading} />

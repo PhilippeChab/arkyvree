@@ -1,13 +1,16 @@
-import { and, eq, isNull, inArray, not, or } from "drizzle-orm";
-
-import { campaignsInCampaign, charactersInCharacter, playerCharactersInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
+import { and, eq, inArray, isNull, not, or } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class PlayerCharactersRepository
-  extends BaseRepository<typeof playerCharactersInCampaign, PlayerCharacterInstance> {
+import {
+  campaignsInCampaign,
+  charactersInCharacter,
+  playerCharactersInCampaign,
+  playersInCampaign,
+} from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class PlayerCharactersRepository extends BaseRepository<typeof playerCharactersInCampaign, PlayerCharacterInstance> {
   constructor() {
     super(playerCharactersInCampaign);
   }
@@ -24,19 +27,19 @@ class PlayerCharactersRepository
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(
-        eq(this.table.playerId, where.playerId),
-        eq(this.table.characterId, where.characterId),
-        isNull(this.table.deletedAt),
-      ))
+      .where(
+        and(
+          eq(this.table.playerId, where.playerId),
+          eq(this.table.characterId, where.characterId),
+          isNull(this.table.deletedAt),
+        ),
+      )
       .returning();
   }
 
   // Hard delete — used when intentionally removing a player from a campaign
   async deleteByPlayerId(db: Db, where: { playerId: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.playerId, where.playerId));
+    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
   }
 
   async findOne(
@@ -50,12 +53,14 @@ class PlayerCharactersRepository
       where: this.where([
         "playerId" in where && eq(this.table.playerId, where.playerId),
         "characterId" in where && eq(this.table.characterId, where.characterId),
-        "campaignId" in where && inArray(
-          this.table.playerId,
-          db.select({ id: playersInCampaign.id })
-            .from(playersInCampaign)
-            .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
-        ),
+        "campaignId" in where &&
+          inArray(
+            this.table.playerId,
+            db
+              .select({ id: playersInCampaign.id })
+              .from(playersInCampaign)
+              .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
+          ),
         isNull(this.table.deletedAt),
       ]),
     });
@@ -73,12 +78,14 @@ class PlayerCharactersRepository
       .from(this.table)
       .innerJoin(playersInCampaign, eq(playersInCampaign.id, this.table.playerId))
       .innerJoin(campaignsInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .where(and(
-        eq(this.table.characterId, where.characterId),
-        isNull(this.table.deletedAt),
-        isNull(playersInCampaign.deletedAt),
-        isNull(campaignsInCampaign.deletedAt),
-      ))
+      .where(
+        and(
+          eq(this.table.characterId, where.characterId),
+          isNull(this.table.deletedAt),
+          isNull(playersInCampaign.deletedAt),
+          isNull(campaignsInCampaign.deletedAt),
+        ),
+      )
       .limit(1);
     return rows.length > 0;
   }
@@ -98,19 +105,17 @@ class PlayerCharactersRepository
     // referencing `this.table` would miss.
     const searchCondition = search
       ? inArray(
-        this.table.characterId,
-        db.select({ id: charactersInCharacter.id })
-          .from(charactersInCharacter)
-          .where(this.search(search, [charactersInCharacter.name, charactersInCharacter.description]) || undefined),
-      )
+          this.table.characterId,
+          db
+            .select({ id: charactersInCharacter.id })
+            .from(charactersInCharacter)
+            .where(this.search(search, [charactersInCharacter.name, charactersInCharacter.description]) || undefined),
+        )
       : false;
 
     // When visibilityPlayerId is set, only return Private chars for that player
     const visibilityCondition = where.visibilityPlayerId
-      ? or(
-        eq(this.table.playerId, where.visibilityPlayerId),
-        not(eq(this.table.visibility, "Private")),
-      )!
+      ? or(eq(this.table.playerId, where.visibilityPlayerId), not(eq(this.table.visibility, "Private")))!
       : false;
 
     return this.withPagination(pagination, async ({ limit, offset }) => {
@@ -138,7 +143,6 @@ class PlayerCharactersRepository
   }
 }
 
-class PlayerCharacterInstance
-  extends Instance<InferSelectModel<typeof playerCharactersInCampaign>> {}
+class PlayerCharacterInstance extends Instance<InferSelectModel<typeof playerCharactersInCampaign>> {}
 
 export default PlayerCharactersRepository;

@@ -1,9 +1,10 @@
-import * as relations from "@/drizzle/relations.ts";
-import * as schema from "@/drizzle/schema.ts";
-import { applyPackages } from "@/database/packages/runner.ts";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
+
+import { applyPackages } from "@/database/packages/runner.ts";
+import * as relations from "@/drizzle/relations.ts";
+import * as schema from "@/drizzle/schema.ts";
 
 const connectionString = process.env.DATABASE_URL;
 

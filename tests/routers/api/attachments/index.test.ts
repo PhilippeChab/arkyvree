@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createTestUser, NIL_UUID } from "@/tests/helpers.ts";
@@ -18,7 +19,10 @@ describe("attachments", () => {
 
     const attached = await expectOk(attachments[":signedId"].attach.$post({ param: { signedId: presigned.signedId } }));
     expect(attached).toMatchObject({ attachment: { name: "avatar" }, blob: { filename: "me.png" } });
-    expect(await expectOk(attachments.$get({ query: avatar }))).toMatchObject({ id: attached.attachment.id, url: expect.stringContaining("me.png") });
+    expect(await expectOk(attachments.$get({ query: avatar }))).toMatchObject({
+      id: attached.attachment.id,
+      url: expect.stringContaining("me.png"),
+    });
 
     await expectOk(attachments[":id"].$delete({ param: { id: attached.attachment.id } }));
     expect(await expectOk(attachments.$get({ query: avatar }))).toBeNull();

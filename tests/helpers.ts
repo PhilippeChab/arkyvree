@@ -1,27 +1,36 @@
-import { and, eq, isNull, sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import { and, eq, type InferInsertModel, type InferSelectModel, isNull, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { JobHelpers } from "graphile-worker";
-import { type charactersInCharacter, klassLevelsInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+
 import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
 import { getSeedContext, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
+import {
+  type charactersInCharacter,
+  klassLevelsInRules,
+  rulesetExtensionsInRules,
+  type rulesetsInRules,
+} from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import { Campaigns, CharacterContributors, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Contributors, Exports, Klasses, KlassLevels, Players, Properties, Rulesets, Users } from "@/server/repositories/index.ts";
+import {
+  Campaigns,
+  CharacterContributors,
+  CharacterLevelFeats,
+  CharacterLevelPowers,
+  CharacterLevels,
+  CharacterLevelSkills,
+  Characters,
+  Contributors,
+  Exports,
+  Klasses,
+  KlassLevels,
+  Players,
+  Properties,
+  Rulesets,
+  Users,
+} from "@/server/repositories/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
 import type { Session } from "@/shared/relations.ts";
-
-/** Inserts rows straight into `table` and returns them: test data set up in bulk, which the app writes one at a time. */
-export async function insertRows<T extends PgTable>(table: T, rows: InferInsertModel<T>[]): Promise<InferSelectModel<T>[]> {
-  if (rows.length === 0) return [];
-  return await db.insert(table).values(rows).returning() as InferSelectModel<T>[];
-}
-
-/** A class's level `level`. */
-export async function findKlassLevel(klassId: string, level: number) {
-  return await db.query.klassLevelsInRules.findFirst({
-    where: and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, level), isNull(klassLevelsInRules.deletedAt)),
-  });
-}
 
 /** An id no row has: for "not found" cases. */
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
@@ -45,6 +54,23 @@ export function makeSession(userId: string = SEED_USER_ID): Session {
     deletedAt: null,
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
+}
+
+let seedContext: Promise<SeedContext> | undefined;
+
+/** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
+export function getSeedCtx() {
+  seedContext ??= getSeedContext(db);
+  return seedContext;
+}
+
+/** Inserts rows straight into `table` and returns them: test data set up in bulk, which the app writes one at a time. */
+export async function insertRows<T extends PgTable>(
+  table: T,
+  rows: InferInsertModel<T>[],
+): Promise<InferSelectModel<T>[]> {
+  if (rows.length === 0) return [];
+  return (await db.insert(table).values(rows).returning()) as InferSelectModel<T>[];
 }
 
 /** A new user and a session for them. `prefix` starts the username and email. */
@@ -113,11 +139,14 @@ export async function createSeededTestRuleset(
     entityType: "rulesets",
   });
   if (sourceProperties.length > 0) {
-    await Properties.createMany(db, sourceProperties.map((p) => ({
-      ...p,
-      id: undefined,
-      entityId: ruleset.id,
-    })));
+    await Properties.createMany(
+      db,
+      sourceProperties.map((p) => ({
+        ...p,
+        id: undefined,
+        entityId: ruleset.id,
+      })),
+    );
   }
 
   return ruleset;
@@ -169,7 +198,10 @@ export async function createTestCampaign(userId: string, rulesetId?: string) {
  * the database: no abilities, levels or activity. Create one through
  * `CharactersMethods.createCharacter` when the test needs those.
  */
-export async function createTestCharacter(userId: string, values: Partial<InferInsertModel<typeof charactersInCharacter>> = {}) {
+export async function createTestCharacter(
+  userId: string,
+  values: Partial<InferInsertModel<typeof charactersInCharacter>> = {},
+) {
   const ctx = await getSeedCtx();
   const [character] = await Characters.create(db, {
     userId,
@@ -194,6 +226,17 @@ export async function createTestKlassLevel(rulesetId: string) {
   return { klass, klassLevel };
 }
 
+/** A class's level `level`. */
+export async function findKlassLevel(klassId: string, level: number) {
+  return await db.query.klassLevelsInRules.findFirst({
+    where: and(
+      eq(klassLevelsInRules.klassId, klassId),
+      eq(klassLevelsInRules.level, level),
+      isNull(klassLevelsInRules.deletedAt),
+    ),
+  });
+}
+
 type LevelPicks = {
   feats?: { featId: string; aptitudeId: string }[];
   powers?: { powerId: string; aptitudeId: string }[];
@@ -204,9 +247,18 @@ type LevelPicks = {
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
   const characterLevelId = level.id;
-  await CharacterLevelFeats.create(db, (picks.feats ?? []).map((pick) => ({ ...pick, characterLevelId })));
-  await CharacterLevelPowers.create(db, (picks.powers ?? []).map((pick) => ({ ...pick, characterLevelId })));
-  await CharacterLevelSkills.create(db, (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })));
+  await CharacterLevelFeats.create(
+    db,
+    (picks.feats ?? []).map((pick) => ({ ...pick, characterLevelId })),
+  );
+  await CharacterLevelPowers.create(
+    db,
+    (picks.powers ?? []).map((pick) => ({ ...pick, characterLevelId })),
+  );
+  await CharacterLevelSkills.create(
+    db,
+    (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })),
+  );
   return level;
 }
 
@@ -219,14 +271,26 @@ export async function addRulesetContributor(
   invitedBy: string,
   role: "Admin" | "Editor" | "Viewer" = "Editor",
 ) {
-  const [invite] = await Contributors.create(db, { rulesetId, userId: user.id, email: user.emailAddress, role, invitedBy });
+  const [invite] = await Contributors.create(db, {
+    rulesetId,
+    userId: user.id,
+    email: user.emailAddress,
+    role,
+    invitedBy,
+  });
   const [contributor] = await Contributors.update(db, { status: "Active" }, { id: invite.id });
   return contributor;
 }
 
 /** Makes `user` an active contributor of a character, as if they accepted an invite from `invitedBy`. */
 export async function addCharacterContributor(characterId: string, user: Contributor, invitedBy: string) {
-  const [invite] = await CharacterContributors.create(db, { characterId, userId: user.id, email: user.emailAddress, role: "Editor", invitedBy });
+  const [invite] = await CharacterContributors.create(db, {
+    characterId,
+    userId: user.id,
+    email: user.emailAddress,
+    role: "Editor",
+    invitedBy,
+  });
   const [contributor] = await CharacterContributors.update(db, { status: "Active" }, { id: invite.id });
   return contributor;
 }
@@ -249,11 +313,6 @@ export const silentJobHelpers = {
   logger: { info() {}, warn() {}, error() {}, debug() {} },
 } as unknown as JobHelpers;
 
-/** The PDF jobs queued for `characterId`: task, queue and payload. */
-export async function queuedPdfJobs(characterId: string) {
-  return await queuedJobs("characterId", characterId);
-}
-
 /** The jobs queued whose payload's `key` is `value`: their task, queue and payload. */
 export async function queuedJobs(key: string, value: string) {
   const jobs = await db.execute<{ task: string; queue: string | null; payload: Record<string, unknown> }>(sql`
@@ -266,12 +325,9 @@ export async function queuedJobs(key: string, value: string) {
   return jobs.rows;
 }
 
-let seedContext: Promise<SeedContext> | undefined;
-
-/** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
-export function getSeedCtx() {
-  seedContext ??= getSeedContext(db);
-  return seedContext;
+/** The PDF jobs queued for `characterId`: task, queue and payload. */
+export async function queuedPdfJobs(characterId: string) {
+  return await queuedJobs("characterId", characterId);
 }
 
 /**

@@ -1,8 +1,9 @@
-import { useMutation, type QueryKey } from "@tanstack/react-query";
+import { type QueryKey, useMutation } from "@tanstack/react-query";
 import type { FieldValues } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import type { FormSync } from "@/client/src/hooks/index.ts";
+
 import type { EditorProps } from "./types.ts";
 
 interface EditorSaveOptions<TForm, TSaved> {

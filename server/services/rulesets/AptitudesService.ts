@@ -1,10 +1,12 @@
+import { getTableName } from "drizzle-orm";
+
 import { aptitudesInRules } from "@/drizzle/schema.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Aptitudes } from "@/server/repositories/index.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -12,18 +14,23 @@ import {
   deletePropertiesWithCascade,
   deleteRequirementsWithCascade,
   entityHasCharacterPicks,
-  repointTombstoneSnapshot,
   lockEntityForMutation,
+  repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const AptitudesMethods = {
   async getRulesetAptitudes(
     rulesetId: string,
-    where: { childOnly?: boolean; scope?: "feats" | "spells"; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      scope?: "feats" | "spells";
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -32,10 +39,12 @@ export const AptitudesMethods = {
       // DB level so pagination counts are accurate. idResolveMap is the right
       // source: includes aptitude name-grouping losers, sibling losers, and
       // overridden source IDs — all things that shouldn't appear in the list.
-      const excludeIds = sourceChain.length > 0 && !where.childOnly
-        ? [...idResolveMap.keys()]
-        : undefined;
-      return await Aptitudes.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, excludeIds, ...where }, pagination);
+      const excludeIds = sourceChain.length > 0 && !where.childOnly ? [...idResolveMap.keys()] : undefined;
+      return await Aptitudes.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, excludeIds, ...where },
+        pagination,
+      );
     });
   },
 
@@ -50,15 +59,25 @@ export const AptitudesMethods = {
     });
   },
 
-  async createRulesetAptitude(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-  }) {
+  async createRulesetAptitude(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "aptitudes", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "aptitudes",
+          body.name,
+        );
 
         const rows = await Aptitudes.create(tx, {
           ...body,
@@ -85,11 +104,16 @@ export const AptitudesMethods = {
     return result;
   },
 
-  async updateRulesetAptitude(session: Session, rulesetId: string, aptitudeId: string, body: {
-    name: string;
-    description?: string | null;
-    updatedAt?: string;
-  }) {
+  async updateRulesetAptitude(
+    session: Session,
+    rulesetId: string,
+    aptitudeId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -106,7 +130,14 @@ export const AptitudesMethods = {
         let targetId = aptitude.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "aptitudes", aptitude.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "aptitudes",
+            aptitude.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         }
 
@@ -122,7 +153,10 @@ export const AptitudesMethods = {
           targetId,
           targetTable: getTableName(aptitudesInRules),
           type: "updateAptitude",
-          data: { entityName: body.name, changedFields: getChangedFields(aptitude as Record<string, unknown>, body as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(aptitude as Record<string, unknown>, body as Record<string, unknown>),
+          },
         });
 
         return updatedAptitude;
@@ -149,7 +183,14 @@ export const AptitudesMethods = {
 
         let targetId = aptitude.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "aptitudes", aptitude.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "aptitudes",
+            aptitude.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "aptitudes", targetId);

@@ -1,19 +1,36 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import { location } from "@/drizzle/schema.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { ItemsService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { location } from "@/drizzle/schema.ts";
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { ItemsService } from "@/server/services/rulesets/index.ts";
+
 const itemBodySchema = z.object({
   name: z.string().min(1),
-  description: z.string().optional().transform(v => v || null),
-  costGp: z.number().min(0).nullable().optional().transform((v) => v ?? undefined),
-  weight: z.number().min(0).nullable().optional().transform((v) => v ?? undefined),
+  description: z
+    .string()
+    .optional()
+    .transform((v) => v || null),
+  costGp: z
+    .number()
+    .min(0)
+    .nullable()
+    .optional()
+    .transform((v) => v ?? undefined),
+  weight: z
+    .number()
+    .min(0)
+    .nullable()
+    .optional()
+    .transform((v) => v ?? undefined),
   type: z.string().nullable().optional(),
-  slot: z.union([z.enum(location.enumValues), z.literal("")]).optional().transform((v) => v || undefined),
+  slot: z
+    .union([z.enum(location.enumValues), z.literal("")])
+    .optional()
+    .transform((v) => v || undefined),
   sourceItemId: z.string().uuid().optional(),
   isTemplate: z.boolean().optional(),
   updatedAt: z.string().optional(),
@@ -32,9 +49,10 @@ export default new Hono<SessionContext>()
         childOnly: z.coerce.boolean().optional(),
         orderBy: entityOrderBy,
         orderDir: orderDirAsc,
-        isTemplate: z.enum(["true", "false"]).optional().transform((v) =>
-          v === "true" ? true : v === "false" ? false : undefined
-        ),
+        isTemplate: z
+          .enum(["true", "false"])
+          .optional()
+          .transform((v) => (v === "true" ? true : v === "false" ? false : undefined)),
       }),
     ),
     async (c) => {
@@ -42,7 +60,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, orderBy, orderDir, isTemplate } = c.req.valid("query");
 
       const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("getRulesetItems", id, { search, childOnly, orderBy, orderDir, isTemplate }, { limit, page });
+      const result = await itemsService.call(
+        "getRulesetItems",
+        id,
+        { search, childOnly, orderBy, orderDir, isTemplate },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )
@@ -107,12 +130,18 @@ export default new Hono<SessionContext>()
     zValidator(
       "json",
       z.object({
-        variants: z.array(
-          z.object({
-            name: z.string().min(1),
-            description: z.string().optional().transform((v) => v || null),
-          }),
-        ).min(1).max(50),
+        variants: z
+          .array(
+            z.object({
+              name: z.string().min(1),
+              description: z
+                .string()
+                .optional()
+                .transform((v) => v || null),
+            }),
+          )
+          .min(1)
+          .max(50),
       }),
     ),
     async (c) => {
@@ -133,13 +162,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const itemsService = ItemsService.initialize();
-      const result = await itemsService.call(
-        "updateRulesetItem",
-        c.var.requestSession,
-        id,
-        itemId,
-        body,
-      );
+      const result = await itemsService.call("updateRulesetItem", c.var.requestSession, id, itemId, body);
       return respond(c, result, 200);
     },
   )

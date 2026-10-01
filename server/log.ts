@@ -1,5 +1,6 @@
-import { logs, SeverityNumber } from "@opentelemetry/api-logs";
 import { writeSync } from "node:fs";
+
+import { logs, SeverityNumber } from "@opentelemetry/api-logs";
 
 // Replace console.* with synchronous writes to stdout/stderr so logs are never
 // lost to Bun's stdout pipe buffering (the default block-buffered mode when
@@ -7,8 +8,7 @@ import { writeSync } from "node:fs";
 // line as an OTel log record so they land in Better Stack's logs table when
 // OTEL_EXPORTER_OTLP_ENDPOINT is set (no-op otherwise).
 
-const fmt = (args: unknown[]) =>
-  args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+const fmt = (args: unknown[]) => args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
 
 // requestLogger / slow-query lines embed ANSI color codes for terminal
 // readability. Strip them before sending to OTel so Better Stack's logs table

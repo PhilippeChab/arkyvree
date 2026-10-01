@@ -2,7 +2,7 @@ import type { Task } from "graphile-worker";
 import nodemailer, { type Transporter } from "nodemailer";
 import { Resend } from "resend";
 
-import { renderEmail, type EmailJobPayload } from "@/server/emails/templates.ts";
+import { type EmailJobPayload, renderEmail } from "@/server/emails/templates.ts";
 
 type SendEmailPayload = {
   to: string[];

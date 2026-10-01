@@ -58,8 +58,7 @@ export class ConflictError extends BaseError {
   }
 }
 
-export const STALE_ENTITY_MESSAGE =
-  "This was modified by someone else. Please refresh and try again.";
+export const STALE_ENTITY_MESSAGE = "This was modified by someone else. Please refresh and try again.";
 
 export class UnprocessableEntityError extends BaseError {
   constructor(message = "Unprocessable entity", options?: ErrorOptions) {
@@ -106,9 +105,10 @@ export function toJson(error: Error): [ErrorJson, Code] {
     Sentry.captureException(error);
   }
 
-  const errorJson: ErrorJson = isDev || baseError.code !== 500
-    ? { error: baseError.name, cause: (baseError.cause || "") as string, message: baseError.message }
-    : { error: "InternalError", cause: "internal", message: "Internal Server Error" };
+  const errorJson: ErrorJson =
+    isDev || baseError.code !== 500
+      ? { error: baseError.name, cause: (baseError.cause || "") as string, message: baseError.message }
+      : { error: "InternalError", cause: "internal", message: "Internal Server Error" };
 
   if ("issues" in baseError && Array.isArray(baseError.issues)) {
     errorJson.issues = baseError.issues;

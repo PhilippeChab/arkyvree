@@ -6,24 +6,6 @@ import { quote, stringifyProperty } from "@/database/packages/dnd35-from-parser/
 // Produces one file per spell level (cantrips.ts, level1.ts, ..., level9.ts)
 // ---------------------------------------------------------------------------
 
-export function generateSpellFiles(spells: SpellSeedWithLevel[]): Map<string, string> {
-  const byLevel = new Map<number, SpellSeedWithLevel[]>();
-  for (const spell of spells) {
-    const existing = byLevel.get(spell.level) ?? [];
-    existing.push(spell);
-    byLevel.set(spell.level, existing);
-  }
-
-  const files = new Map<string, string>();
-  for (const [level, levelSpells] of [...byLevel.entries()].sort((a, b) => a[0] - b[0])) {
-    const filename = level === 0 ? "cantrips.ts" : `level${level}.ts`;
-    const constName = level === 0 ? "CANTRIPS" : `LEVEL_${level}_SPELLS`;
-    files.set(filename, generateLevelFile(constName, levelSpells));
-  }
-
-  return files;
-}
-
 function generateLevelFile(constName: string, spells: SpellSeedWithLevel[]): string {
   const lines: string[] = [];
   lines.push(`import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";`);
@@ -62,4 +44,22 @@ function generateLevelFile(constName: string, spells: SpellSeedWithLevel[]): str
   lines.push(``);
 
   return lines.join("\n");
+}
+
+export function generateSpellFiles(spells: SpellSeedWithLevel[]): Map<string, string> {
+  const byLevel = new Map<number, SpellSeedWithLevel[]>();
+  for (const spell of spells) {
+    const existing = byLevel.get(spell.level) ?? [];
+    existing.push(spell);
+    byLevel.set(spell.level, existing);
+  }
+
+  const files = new Map<string, string>();
+  for (const [level, levelSpells] of [...byLevel.entries()].sort((a, b) => a[0] - b[0])) {
+    const filename = level === 0 ? "cantrips.ts" : `level${level}.ts`;
+    const constName = level === 0 ? "CANTRIPS" : `LEVEL_${level}_SPELLS`;
+    files.set(filename, generateLevelFile(constName, levelSpells));
+  }
+
+  return files;
 }

@@ -1,21 +1,25 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import type { Db } from "@/server/database/index.ts";
+import AbstractDetailedCharacter, {
+  type DataLoader,
+  type ValidationIssue,
+} from "@/server/rulesets/AbstractDetailedCharacter.ts";
+import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
+import { FEAT_FAMILY, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { Holders, PreloadedCharacterData, PreloadedRulesetData } from "@/server/rulesets/types.ts";
-import AbstractDetailedCharacter, { type DataLoader, type ValidationIssue } from "@/server/rulesets/AbstractDetailedCharacter.ts";
+import type { FeatWithPMR, InventoryEntry, KlassLevelWithPMR, PowerWithPMR } from "@/server/rulesets/types.ts";
+import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import DetailedCharacterBonds from "@/server/rulesets/universal/DetailedCharacterBonds.ts";
-import { Dnd35LevelsHooks } from "./hooks/LevelsHooks.ts";
 import DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
-import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
 import DetailedCharacterFeatGroupings from "@/server/rulesets/universal/DetailedCharacterFeatGroupings.ts";
-import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
-import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
-import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
-import DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
-import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
-import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
+import DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
 import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
+import DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
+import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
+import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
+import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
+import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import type {
   Character,
   CharacterLevel,
@@ -26,28 +30,17 @@ import type {
   Property,
   Requirement,
 } from "@/shared/relations.ts";
-import type {
-  FeatWithPMR,
-  InventoryEntry,
-  KlassLevelWithPMR,
-  PowerWithPMR,
-} from "@/server/rulesets/types.ts";
+
 import DetailedCharacterArmors from "./DetailedCharacterArmors.ts";
 import DetailedCharacterCombat from "./DetailedCharacterCombat.ts";
+import DetailedCharacterDataLoader, { type Dnd35LoadedCharacterData } from "./DetailedCharacterDataLoader.ts";
 import DetailedCharacterEncumbrance from "./DetailedCharacterEncumbrance.ts";
 import DetailedCharacterInventory from "./DetailedCharacterInventory.ts";
 import DetailedCharacterShields from "./DetailedCharacterShields.ts";
-import {
-  FEAT_FAMILY,
-  SPELL_DESCRIPTOR,
-  SPELL_SCHOOL,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
-import DetailedCharacterWeapons from "./DetailedCharacterWeapons.ts";
-import TargetPaths from "./TargetPaths.ts";
 import DetailedCharacterSpellcasting from "./DetailedCharacterSpellcasting.ts";
-import DetailedCharacterDataLoader, {
-  type Dnd35LoadedCharacterData,
-} from "./DetailedCharacterDataLoader.ts";
+import DetailedCharacterWeapons from "./DetailedCharacterWeapons.ts";
+import { Dnd35LevelsHooks } from "./hooks/LevelsHooks.ts";
+import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
 
 export default class DetailedCharacter extends AbstractDetailedCharacter {
@@ -78,10 +71,9 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterClasses = new DetailedCharacterClasses();
     this.detailedCharacterAbilities = new DetailedCharacterAbilities();
     this.detailedCharacterFeats = new DetailedCharacterFeats();
-    this.detailedCharacterFeatGroupings = new DetailedCharacterFeatGroupings(
-      this.detailedCharacterFeats,
-      [FEAT_FAMILY],
-    );
+    this.detailedCharacterFeatGroupings = new DetailedCharacterFeatGroupings(this.detailedCharacterFeats, [
+      FEAT_FAMILY,
+    ]);
     this.detailedCharacterPowers = new DetailedCharacterPowers();
     this.detailedCharacterPowerGroupings = new DetailedCharacterPowerGroupings(
       this.detailedCharacterPowers,
@@ -93,12 +85,8 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.detailedCharacterClasses,
     );
     this.targetPaths = new TargetPaths();
-    this.detailedCharacterModifiers = new DetailedCharacterModifiers(
-      this.targetPaths,
-    );
-    this.detailedCharacterRequirements = new DetailedCharacterRequirements(
-      this.targetPaths,
-    );
+    this.detailedCharacterModifiers = new DetailedCharacterModifiers(this.targetPaths);
+    this.detailedCharacterRequirements = new DetailedCharacterRequirements(this.targetPaths);
 
     // Identity (universal)
     this.detailedCharacterIdentity = new DetailedCharacterIdentity(
@@ -121,18 +109,10 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.detailedCharacterAbilities,
       this.detailedCharacterClasses,
     );
-    this.detailedCharacterWeapons = new DetailedCharacterWeapons(
-      this.detailedCharacterCombat,
-    );
-    this.detailedCharacterArmors = new DetailedCharacterArmors(
-      this.detailedCharacterCombat,
-    );
-    this.detailedCharacterShields = new DetailedCharacterShields(
-      this.detailedCharacterCombat,
-    );
-    this.detailedCharacterEncumbrance = new DetailedCharacterEncumbrance(
-      this.detailedCharacterAbilities,
-    );
+    this.detailedCharacterWeapons = new DetailedCharacterWeapons(this.detailedCharacterCombat);
+    this.detailedCharacterArmors = new DetailedCharacterArmors(this.detailedCharacterCombat);
+    this.detailedCharacterShields = new DetailedCharacterShields(this.detailedCharacterCombat);
+    this.detailedCharacterEncumbrance = new DetailedCharacterEncumbrance(this.detailedCharacterAbilities);
 
     // Wire cross-dependencies
     this.detailedCharacterCombat.setArmorsData(this.detailedCharacterArmors.getArmors());
@@ -177,17 +157,27 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected normalizeData(): void {
     this.detailedCharacterClasses.initialize(
-      this.klasses, this.klassSkills, this.klassLevels, this.characterLevels,
-      this.feats, this.skills, this.powers, this.rulesetKlasses,
+      this.klasses,
+      this.klassSkills,
+      this.klassLevels,
+      this.characterLevels,
+      this.feats,
+      this.skills,
+      this.powers,
+      this.rulesetKlasses,
     );
     this.detailedCharacterAbilities.initialize(this.characterAbilityScores, this.characterLevels);
     this.detailedCharacterIdentity.initialize(this.character, this.race, this.languages);
     this.detailedCharacterSkills.setSkillPointDependencies(
-      this.rulesetAbilities, this.skillPointAbilityId, this.klassLevelProperties,
+      this.rulesetAbilities,
+      this.skillPointAbilityId,
+      this.klassLevelProperties,
     );
     this.detailedCharacterAptitudes.initialize(
-      this.rulesetAptitudes, this.klassLevelFeatCountsByAptitudeId,
-      this.klassLevelPowerCountsByAptitudeId, this.leveledAptitudeIds,
+      this.rulesetAptitudes,
+      this.klassLevelFeatCountsByAptitudeId,
+      this.klassLevelPowerCountsByAptitudeId,
+      this.leveledAptitudeIds,
     );
     this.detailedCharacterFeats.initialize(this.rulesetFeats, this.feats);
     for (const feat of this.feats) {
@@ -196,7 +186,12 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       }
     }
     this.detailedCharacterFeats.injectGroupings(this.detailedCharacterFeatGroupings.getFeatGroupings());
-    this.detailedCharacterSkills.initialize(this.rulesetSkills, this.rulesetAbilities, this.race.size, this.skillProperties);
+    this.detailedCharacterSkills.initialize(
+      this.rulesetSkills,
+      this.rulesetAbilities,
+      this.race.size,
+      this.skillProperties,
+    );
     this.detailedCharacterSavingThrows.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
     this.detailedCharacterCombat.initialize(this.race, this.klassLevelProperties);
     this.detailedCharacterInventory.initialize(this.inventory);
@@ -280,14 +275,21 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.updateTotals();
 
     this.detailedCharacterSpellcasting.fetchBonusCasterLevelData(
-      rulesetData, this.klassLevels, this.feats, this.characterLevels, this.rulesetKlasses,
+      rulesetData,
+      this.klassLevels,
+      this.feats,
+      this.characterLevels,
+      this.rulesetKlasses,
     );
     this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(this.holders!, this.feats);
     this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
     this.detailedCharacterSpellcasting.computeSpellcasting(this.holders!, this.klassCasterTypeMap);
     this.detailedCharacterSpellcasting.fetchAptitudePowerData(rulesetData, this.powers);
     this.detailedCharacterSpellcasting.enrichAllKnownPowers(
-      this.powers, this.klassLevels, this.rulesetAptitudes, this.klassBonusSpellAbilityMap,
+      this.powers,
+      this.klassLevels,
+      this.rulesetAptitudes,
+      this.klassBonusSpellAbilityMap,
     );
     this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.rulesetAptitudes);
   }
@@ -313,7 +315,10 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     if (available > 0) {
       budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
     } else if (available < 0) {
-      budget.push({ category: "skills", message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})` });
+      budget.push({
+        category: "skills",
+        message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
+      });
     }
     const characterLevel = this.detailedCharacterIdentity.getIdentity().meta.level;
     const ranks = this.detailedCharacterSkills.getValidationIssues(characterLevel);
@@ -397,7 +402,14 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     const powerById = new Map<string, PowerWithAptitudes>();
     for (const power of this.rulesetPowers) powerById.set(power.id, power);
 
-    const results: { power: PowerWithAptitudes; aptitudeId: string; level: number; properties: Property[]; dc: number | null; saveName: string | null }[] = [];
+    const results: {
+      power: PowerWithAptitudes;
+      aptitudeId: string;
+      level: number;
+      properties: Property[];
+      dc: number | null;
+      saveName: string | null;
+    }[] = [];
     for (const virtual of this.powers) {
       if (!virtual.virtual) continue;
       const fullPower = powerById.get(virtual.id);
@@ -484,8 +496,12 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     }
 
     this.diagnosticsIndex = {
-      featsById, powersById, klassLevelsById, rulesetKlassesById,
-      inventoryByItemId, modifierOwner,
+      featsById,
+      powersById,
+      klassLevelsById,
+      rulesetKlassesById,
+      inventoryByItemId,
+      modifierOwner,
     };
     return this.diagnosticsIndex;
   }
@@ -518,18 +534,14 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         const kl = idx.klassLevelsById.get(entityId);
         if (kl) {
           const klass = idx.rulesetKlassesById.get(kl.klassId);
-          return klass
-            ? `${klass.name} Level ${kl.level}`
-            : `Level ${kl.level}`;
+          return klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
         }
         const attribution = this.detailedCharacterSpellcasting.getBonusKlassLevelAttribution().get(entityId);
         if (attribution) return attribution;
         const bonusKl = this.detailedCharacterSpellcasting.getBonusKlassLevels().find((k) => k.id === entityId);
         if (bonusKl) {
           const klass = idx.rulesetKlassesById.get(bonusKl.klassId);
-          return klass
-            ? `${klass.name} Level ${bonusKl.level} (bonus)`
-            : `Level ${bonusKl.level} (bonus)`;
+          return klass ? `${klass.name} Level ${bonusKl.level} (bonus)` : `Level ${bonusKl.level} (bonus)`;
         }
         break;
       }
@@ -537,12 +549,9 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return undefined;
   }
 
-  resolveModifierSourceName(
-    modifier: Modifier,
-  ): { name: string; type: string } | undefined {
+  resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined {
     const name = this.resolveEntityName(modifier.sourceId, modifier.sourceType);
     if (name) return { name, type: modifier.sourceType };
     return this.getDiagnosticsIndex().modifierOwner.get(modifier.id);
   }
-
 }

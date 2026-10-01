@@ -1,13 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-
-import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class RequirementsRepository
-  extends BaseRepository<typeof requirementsInCustomization, RequirementInstance> {
+import { requirementsInCustomization } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class RequirementsRepository extends BaseRepository<typeof requirementsInCustomization, RequirementInstance> {
   constructor() {
     super(requirementsInCustomization);
   }
@@ -29,20 +27,19 @@ class RequirementsRepository
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { id: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.id, where.id))
-      .returning();
+    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
@@ -83,10 +80,7 @@ class RequirementsRepository
   async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
     if (where.entityIds.length === 0) return [];
     return await db.query.requirementsInCustomization.findMany({
-      where: and(
-        inArray(this.table.entityId, where.entityIds),
-        isNull(this.table.deletedAt),
-      ),
+      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
     });
   }
 

@@ -15,10 +15,11 @@ export function useAptitudeLookup(known: Aptitude[]) {
   const byId = new Map([...seen, ...known.map((a) => [a.id, a] as const)]);
   return {
     resolve: (ids: string[]) => ids.flatMap((id) => byId.get(id) ?? []),
-    remember: (aptitudes: Aptitude[]) => setSeen((prev) => {
-      const next = new Map(prev);
-      for (const aptitude of aptitudes) next.set(aptitude.id, aptitude);
-      return next;
-    }),
+    remember: (aptitudes: Aptitude[]) =>
+      setSeen((prev) => {
+        const next = new Map(prev);
+        for (const aptitude of aptitudes) next.set(aptitude.id, aptitude);
+        return next;
+      }),
   };
 }

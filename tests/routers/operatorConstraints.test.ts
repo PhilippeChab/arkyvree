@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
+
 import { sql } from "drizzle-orm";
 import { getTableConfig, PgDialect } from "drizzle-orm/pg-core";
+
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
@@ -8,8 +10,7 @@ import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@
 // Inspect PostgreSQL's normalized text constants only in this drift test.
 // Application code never parses generated schema SQL or queries the catalog.
 function operatorValues(definition: string): string[] {
-  return [...definition.matchAll(/'((?:[^']|'')*)'::text/g)]
-    .map(match => match[1].replaceAll("''", "'"));
+  return [...definition.matchAll(/'((?:[^']|'')*)'::text/g)].map((match) => match[1].replaceAll("''", "'"));
 }
 
 const dialect = new PgDialect();
@@ -20,7 +21,7 @@ for (const [table, constraintName, operators] of [
 ] as const) {
   test(`${constraintName} matches application operators and the generated schema`, async () => {
     const config = getTableConfig(table);
-    const constraint = config.checks.find(check => check.name === constraintName)!;
+    const constraint = config.checks.find((check) => check.name === constraintName)!;
     const expression = dialect.sqlToQuery(constraint.value);
     expect(operatorValues(expression.sql)).toEqual([...operators]);
     const live = await db.execute<{ definition: string }>(sql`

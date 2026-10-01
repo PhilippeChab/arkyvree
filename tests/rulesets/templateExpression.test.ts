@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { evaluateTemplateExpression } from "@/server/rulesets/universal/templateExpression.ts";
+
 import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
+import { evaluateTemplateExpression } from "@/server/rulesets/universal/templateExpression.ts";
 
 // Minimal stub holders + traverser that knows a small fixed path tree.
 const tree: Record<string, number | string> = {
@@ -17,9 +18,20 @@ const tree: Record<string, number | string> = {
 const traverser: TargetPathsTraverser = {
   traversePathInit(path: string): TraversePathResult[] {
     if (!(path in tree)) {
-      return [{ holder: null, object: null, data: null, key: path, resolvedPath: null, error: `Path "${path}" not found` }];
+      return [
+        { holder: null, object: null, data: null, key: path, resolvedPath: null, error: `Path "${path}" not found` },
+      ];
     }
-    return [{ holder: null, object: null, data: tree[path], key: path, resolvedPath: path, error: undefined as unknown as string }];
+    return [
+      {
+        holder: null,
+        object: null,
+        data: tree[path],
+        key: path,
+        resolvedPath: path,
+        error: undefined as unknown as string,
+      },
+    ];
   },
 } as unknown as TargetPathsTraverser;
 const holders = {} as Holders;

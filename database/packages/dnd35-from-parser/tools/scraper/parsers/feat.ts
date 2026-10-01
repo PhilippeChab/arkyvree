@@ -1,7 +1,26 @@
 import * as cheerio from "cheerio";
+
 import { pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benefits", "normal", "special"]);
+
+function isKnownLabel(text: string): boolean {
+  return KNOWN_LABELS.has(text.toLowerCase());
+}
+
+function normalizeFeatType(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes("fighter")) return "fighter";
+  if (lower.includes("metamagic")) return "metamagic";
+  if (lower.includes("item creation")) return "item creation";
+  return lower;
+}
 
 // ---------------------------------------------------------------------------
 // Feat HTML Parser — dndtools.net structure
@@ -21,9 +40,7 @@ import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.
 /**
  * Parse a single feat detail page.
  */
-export function parseFeatDetailHtml(
-  html: string,
-): FeatReference["raw"][number] | null {
+export function parseFeatDetailHtml(html: string): FeatReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
   const name = pageTitle($);
@@ -38,7 +55,11 @@ export function parseFeatDetailHtml(
     featType = normalizeFeatType(categoryMatch[2].trim());
   } else {
     // Fallback: look for bracket text near the top
-    const bracketMatch = $("h2").first().parent().text().match(/\[([^\]]+)\]/);
+    const bracketMatch = $("h2")
+      .first()
+      .parent()
+      .text()
+      .match(/\[([^\]]+)\]/);
     if (bracketMatch) {
       featType = normalizeFeatType(bracketMatch[1].trim());
     }
@@ -91,26 +112,3 @@ export function parseFeatDetailHtml(
     ...(sections["special"] ? { special: sections["special"] } : {}),
   };
 }
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-
-const KNOWN_LABELS = new Set([
-  "prerequisite", "prerequisites", "benefit", "benefits",
-  "normal", "special",
-]);
-
-function isKnownLabel(text: string): boolean {
-  return KNOWN_LABELS.has(text.toLowerCase());
-}
-
-function normalizeFeatType(raw: string): string {
-  const lower = raw.toLowerCase();
-  if (lower.includes("fighter")) return "fighter";
-  if (lower.includes("metamagic")) return "metamagic";
-  if (lower.includes("item creation")) return "item creation";
-  return lower;
-}
-

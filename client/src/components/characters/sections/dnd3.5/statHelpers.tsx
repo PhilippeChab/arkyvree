@@ -3,10 +3,7 @@ import { Box, Typography } from "@mui/material";
 export function StatField({ label, value }: { label: string; value: string | number }) {
   return (
     <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-      <Typography
-        variant="body2"
-        sx={{ fontWeight: 500, color: "text.secondary", whiteSpace: "nowrap" }}
-      >
+      <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", whiteSpace: "nowrap" }}>
         {label}:
       </Typography>
       <Typography

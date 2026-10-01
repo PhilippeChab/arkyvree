@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Klasses, KlassLevels, Modifiers, Powers, Races } from "@/server/repositories/index.ts";
@@ -9,12 +10,27 @@ import { createTestUserAndRuleset, makeSession, NIL_UUID } from "@/tests/helpers
 
 const now = new Date().toISOString();
 const modifierOn = (sourceId: string, sourceType: string): Modifier => ({
-  id: "modifier-id", sourceId, sourceType, target: "combat.bab", value: "1", valueType: "number", operator: "add",
-  createdAt: now, updatedAt: now, deletedAt: null,
+  id: "modifier-id",
+  sourceId,
+  sourceType,
+  target: "combat.bab",
+  value: "1",
+  valueType: "number",
+  operator: "add",
+  createdAt: now,
+  updatedAt: now,
+  deletedAt: null,
 });
 const propertyOn = (entityId: string, entityType: string): Property => ({
-  id: "property-id", entityId, entityType, type: "WEAPON_PROFICIENCY", value: "Longsword", description: null,
-  createdAt: now, updatedAt: now, deletedAt: null,
+  id: "property-id",
+  entityId,
+  entityType,
+  type: "WEAPON_PROFICIENCY",
+  value: "Longsword",
+  description: null,
+  createdAt: now,
+  updatedAt: now,
+  deletedAt: null,
 });
 
 describe("CustomizationsPolicy", () => {
@@ -27,7 +43,14 @@ describe("CustomizationsPolicy", () => {
     const [race] = await Races.create(db, { rulesetId, name: "Test Race", size: "Medium", baseSpeed: 30 });
     const [klass] = await Klasses.create(db, { rulesetId, name: "Test Class", hd: 10 });
     const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
-    const [modifier] = await Modifiers.create(db, { sourceId: feat.id, sourceType: "feats", target: "combat.bab", value: "1", valueType: "number", operator: "add" });
+    const [modifier] = await Modifiers.create(db, {
+      sourceId: feat.id,
+      sourceType: "feats",
+      target: "combat.bab",
+      value: "1",
+      valueType: "number",
+      operator: "add",
+    });
 
     const names = await Promise.all([
       CustomizationsPolicy.sourceExists(feat.id, "feats"),
@@ -38,14 +61,24 @@ describe("CustomizationsPolicy", () => {
       CustomizationsPolicy.sourceExists(klassLevel.id, "klass_levels"),
       CustomizationsPolicy.sourceExists(modifier.id, "modifiers"),
     ]);
-    expect(names).toEqual(["Test Feat", "Test Item", "Test Power", "Test Race", "Test Class", "Level 1", "combat.bab add 1"]);
+    expect(names).toEqual([
+      "Test Feat",
+      "Test Item",
+      "Test Power",
+      "Test Race",
+      "Test Class",
+      "Level 1",
+      "combat.bab add 1",
+    ]);
   });
 
   test("sourceExists refuses a missing entity or an unsupported type", async () => {
     for (const type of ["feats", "items", "powers", "races", "klasses", "klass_levels", "modifiers", "characters"]) {
       await expect(CustomizationsPolicy.sourceExists(NIL_UUID, type)).rejects.toThrow(NotFoundError);
     }
-    await expect(CustomizationsPolicy.sourceExists(NIL_UUID, "invalid_type")).rejects.toThrow("invalid_type not supported");
+    await expect(CustomizationsPolicy.sourceExists(NIL_UUID, "invalid_type")).rejects.toThrow(
+      "invalid_type not supported",
+    );
   });
 
   test("sourceExists never looks outside the ruleset it's scoped to", async () => {

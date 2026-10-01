@@ -1,38 +1,35 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { BlankState, ConfirmDialog, DiceSpinner, EditDialog, LoadMoreButton, SelectField } from "@/client/src/components/common/index.ts";
-import {
-  ContributorsTable,
-  InviteContributorDialog,
-  type ContributorRole,
-} from "@/client/src/components/contributors/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
+  People as ContributorsIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   ExitToApp as LeaveIcon,
-  People as ContributorsIcon,
 } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Button,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { Alert, Box, Button, IconButton, Tooltip } from "@mui/material";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
+import {
+  BlankState,
+  ConfirmDialog,
+  DiceSpinner,
+  EditDialog,
+  LoadMoreButton,
+  SelectField,
+} from "@/client/src/components/common/index.ts";
+import {
+  type ContributorRole,
+  ContributorsTable,
+  InviteContributorDialog,
+} from "@/client/src/components/contributors/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type ContributorInvite = InferRequestType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$post"]>["json"];
 type Contributor = InferResponseType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$get"], 200>["items"][number];
@@ -70,10 +67,13 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: contributorsKey,
-    queryFn: ({ pageParam }) => parseResponse(rpc.api.rulesets[":id"].contributors.$get({
-      param: { id: ruleset.id },
-      query: { page: pageParam.toString(), limit: "10" },
-    })),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].contributors.$get({
+          param: { id: ruleset.id },
+          query: { page: pageParam.toString(), limit: "10" },
+        }),
+      ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     placeholderData: keepPreviousData,
@@ -132,9 +132,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   });
 
   if (isLoading) {
-    return (
-      <DiceSpinner sx={{ py: 4 }} />
-    );
+    return <DiceSpinner sx={{ py: 4 }} />;
   }
 
   if (error) {
@@ -159,11 +157,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
             </Button>
           )}
           {canInvite && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setInviteDialogOpen(true)}
-            >
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
               Invite
             </Button>
           )}
@@ -173,12 +167,16 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
         <BlankState
           icon={ContributorsIcon}
           title="No contributors yet"
-          description={canInvite ? "Invite collaborators to help build this ruleset" : "This ruleset has no contributors"}
-          action={canInvite ? (
-            <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
-              Invite a Contributor
-            </Button>
-          ) : undefined}
+          description={
+            canInvite ? "Invite collaborators to help build this ruleset" : "This ruleset has no contributors"
+          }
+          action={
+            canInvite ? (
+              <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
+                Invite a Contributor
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <>
@@ -186,34 +184,38 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
             owner={owner}
             contributors={contributors}
             showRoles
-            renderActions={canManageContributors ? (contributor) => {
-              // Only the owner can change or remove an Admin.
-              const outranks = isOwner || contributor.role !== "Admin";
-              return (
-                <>
-                  {canEditRoles && outranks && contributor.status === "Active" && (
-                    <Tooltip title="Edit role">
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          roleForm.reset({ role: contributor.role });
-                          setRoleTargetId(contributor.id);
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  {outranks && (
-                    <Tooltip title="Remove">
-                      <IconButton size="small" color="error" onClick={() => setRemoveTarget(contributor)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </>
-              );
-            } : undefined}
+            renderActions={
+              canManageContributors
+                ? (contributor) => {
+                    // Only the owner can change or remove an Admin.
+                    const outranks = isOwner || contributor.role !== "Admin";
+                    return (
+                      <>
+                        {canEditRoles && outranks && contributor.status === "Active" && (
+                          <Tooltip title="Edit role">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                roleForm.reset({ role: contributor.role });
+                                setRoleTargetId(contributor.id);
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {outranks && (
+                          <Tooltip title="Remove">
+                            <IconButton size="small" color="error" onClick={() => setRemoveTarget(contributor)}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </>
+                    );
+                  }
+                : undefined
+            }
           />
           <LoadMoreButton
             hasNextPage={hasNextPage}
@@ -249,7 +251,12 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
           onConfirm={() => revokeMutation.mutate(removeTarget.id)}
           isLoading={revokeMutation.isPending}
           title="Remove Contributor"
-          message={<>Are you sure you want to remove <strong>{removeTarget.user?.username || removeTarget.email}</strong> as a contributor?</>}
+          message={
+            <>
+              Are you sure you want to remove <strong>{removeTarget.user?.username || removeTarget.email}</strong> as a
+              contributor?
+            </>
+          }
           confirmLabel="Remove"
           confirmColor="error"
           maxWidth="xs"

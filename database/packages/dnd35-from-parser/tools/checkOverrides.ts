@@ -1,5 +1,8 @@
 import { classSpells } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { generateClassSeed, generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/generators/class.ts";
+import {
+  generateClassSeed,
+  generateFeatSeeds,
+} from "@/database/packages/dnd35-from-parser/tools/generator/generators/class.ts";
 import { resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
@@ -8,7 +11,8 @@ type ClassOverrides = NonNullable<StoredReference<"class">["overrides"]>;
 
 /** Two values alike: nothing, null and an empty list all mean nothing. */
 function alike(a: unknown, b: unknown) {
-  const normal = (value: unknown) => (value === null || (Array.isArray(value) && value.length === 0) ? undefined : sortKeysDeep(value));
+  const normal = (value: unknown) =>
+    value === null || (Array.isArray(value) && value.length === 0) ? undefined : sortKeysDeep(value);
   return JSON.stringify(normal(a)) === JSON.stringify(normal(b));
 }
 
@@ -32,9 +36,14 @@ function generated(ref: ClassReference): string | Error {
  * - `ignored`: overrides the generator never applies. Spells, when none were detected (or `noSpells` removed them),
  *   `noSpells` itself then, and an alignment where the page gives one.
  */
-export function checkClassOverrides(stored: StoredReference<"class">): { refusal?: string; redundant: string[]; ignored: string[] } {
+export function checkClassOverrides(stored: StoredReference<"class">): {
+  refusal?: string;
+  redundant: string[];
+  ignored: string[];
+} {
   const overrides = stored.overrides ?? {};
-  const resolve = (rest: ClassOverrides) => resolveReference("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
+  const resolve = (rest: ClassOverrides) =>
+    resolveReference("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
   const withAll = resolve(overrides);
   const output = generated(withAll);
   if (output instanceof Error) return { refusal: output.message, redundant: [], ignored: [] };
@@ -53,22 +62,41 @@ export function checkClassOverrides(stored: StoredReference<"class">): { refusal
     redundant: [
       ...Object.keys(rest).filter((key) => {
         const ref = without((copy) => Reflect.deleteProperty(copy, key));
-        const derived = [ref.mapping, ref.detected, ref.raw].map((part) => Reflect.get(part, key)).find((value) => value !== undefined);
+        const derived = [ref.mapping, ref.detected, ref.raw]
+          .map((part) => Reflect.get(part, key))
+          .find((value) => value !== undefined);
         return redundant(ref, alike(Reflect.get(withAll.overrides ?? {}, key), derived));
       }),
-      ...withAll.mapping.spells ? Object.keys(spellFields).filter((key) => {
-        const ref = without((copy) => copy.spells && Reflect.deleteProperty(copy.spells, key));
-        return redundant(ref, alike(Reflect.get(classSpells(withAll) ?? {}, key), Reflect.get(classSpells(ref) ?? {}, key)));
-      }).map((key) => `spells.${key}`) : [],
-      ...Object.entries(features).flatMap(([name, fields]) => Object.keys(fields).filter((key) => {
-        const ref = without((copy) => copy.features?.[name] && Reflect.deleteProperty(copy.features[name], key));
-        return redundant(ref, alike(Reflect.get(withAll.mapping.features[name] ?? {}, key), Reflect.get(ref.mapping.features[name] ?? {}, key)));
-      }).map((key) => `features.${name}.${key}`)),
+      ...(withAll.mapping.spells
+        ? Object.keys(spellFields)
+            .filter((key) => {
+              const ref = without((copy) => copy.spells && Reflect.deleteProperty(copy.spells, key));
+              return redundant(
+                ref,
+                alike(Reflect.get(classSpells(withAll) ?? {}, key), Reflect.get(classSpells(ref) ?? {}, key)),
+              );
+            })
+            .map((key) => `spells.${key}`)
+        : []),
+      ...Object.entries(features).flatMap(([name, fields]) =>
+        Object.keys(fields)
+          .filter((key) => {
+            const ref = without((copy) => copy.features?.[name] && Reflect.deleteProperty(copy.features[name], key));
+            return redundant(
+              ref,
+              alike(
+                Reflect.get(withAll.mapping.features[name] ?? {}, key),
+                Reflect.get(ref.mapping.features[name] ?? {}, key),
+              ),
+            );
+          })
+          .map((key) => `features.${name}.${key}`),
+      ),
     ],
     ignored: [
-      ...Object.keys(spells).length > 0 && !withAll.mapping.spells ? ["spells"] : [],
-      ...overrides.noSpells && !detectedSpells ? ["noSpells"] : [],
-      ...overrides.alignment && stored.raw.prerequisites.parsed.alignment ? ["alignment"] : [],
+      ...(Object.keys(spells).length > 0 && !withAll.mapping.spells ? ["spells"] : []),
+      ...(overrides.noSpells && !detectedSpells ? ["noSpells"] : []),
+      ...(overrides.alignment && stored.raw.prerequisites.parsed.alignment ? ["alignment"] : []),
     ],
   };
 }

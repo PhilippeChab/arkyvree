@@ -1,24 +1,24 @@
 import { db } from "@/server/database/index.ts";
 import {
   Activities,
+  Aptitudes,
   CharacterContributors,
   Contributors,
   Feats,
-  Powers,
-  Skills,
-  Races,
-  Klasses,
-  Items,
-  Saves,
-  Languages,
-  Aptitudes,
-  KlassLevels,
-  Players,
-  PlayerCharacters,
   Invites,
+  Items,
+  Klasses,
+  KlassLevels,
+  Languages,
   Modifiers,
-  Requirements,
+  PlayerCharacters,
+  Players,
+  Powers,
   Properties,
+  Races,
+  Requirements,
+  Saves,
+  Skills,
 } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -96,7 +96,11 @@ export const ActivitiesMethods = {
     );
   },
 
-  async resolveActivityUrl(session: Session, targetTable: string, targetId: string): Promise<string | null | { noAccess: true; entityType: "ruleset" | "character" }> {
+  async resolveActivityUrl(
+    session: Session,
+    targetTable: string,
+    targetId: string,
+  ): Promise<string | null | { noAccess: true; entityType: "ruleset" | "character" }> {
     // Top-level entities — no lookup needed
     switch (targetTable) {
       case "rulesets":
@@ -145,7 +149,7 @@ export const ActivitiesMethods = {
     // targetId is the characterId; a character is linked to one campaign at a time.
     if (targetTable === "player_characters") {
       const link = await PlayerCharacters.findOne(db, { characterId: targetId });
-      const player = link && await Players.findOne(db, { id: link.playerId });
+      const player = link && (await Players.findOne(db, { id: link.playerId }));
       if (!player) return null;
       return `/campaigns/${player.campaignId}/characters/${targetId}`;
     }

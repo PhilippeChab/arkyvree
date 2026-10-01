@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
@@ -17,11 +18,16 @@ describe("campaigns", () => {
     const created = await createCampaign("Router Campaign");
     expect(created).toMatchObject({ name: "Router Campaign", description: "A test campaign", rulesetId });
 
-    expect(await expectOk(campaign.$get({ param: { id: created.id } }))).toMatchObject({ id: created.id, name: "Router Campaign" });
+    expect(await expectOk(campaign.$get({ param: { id: created.id } }))).toMatchObject({
+      id: created.id,
+      name: "Router Campaign",
+    });
     const list = await expectOk(campaigns.$get({ query: { search: "Router Campaign" } }));
     expect(list.items.map((c) => c.id)).toEqual([created.id]);
 
-    const updated = await expectOk(campaign.$put({ param: { id: created.id }, json: { name: "Renamed Campaign", description: "Updated" } }));
+    const updated = await expectOk(
+      campaign.$put({ param: { id: created.id }, json: { name: "Renamed Campaign", description: "Updated" } }),
+    );
     expect(updated).toMatchObject({ name: "Renamed Campaign", description: "Updated" });
   });
 

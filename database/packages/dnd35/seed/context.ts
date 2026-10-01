@@ -1,8 +1,18 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { abilitiesInRules, aptitudesInRules, featsInRules, powersInRules, rulesetExtensionsInRules, rulesetsInRules, savesInRules, skillsInRules } from "@/drizzle/schema.ts";
+
+import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+import {
+  abilitiesInRules,
+  aptitudesInRules,
+  featsInRules,
+  powersInRules,
+  rulesetExtensionsInRules,
+  rulesetsInRules,
+  savesInRules,
+  skillsInRules,
+} from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
 type Ids = Record<string, string>;
 
@@ -26,38 +36,68 @@ export type SeedContext = {
 };
 
 /** Ids by name. */
-export const idsByName = (rows: { id: string; name: string }[]): Ids => Object.fromEntries(rows.map((row) => [row.name, row.id]));
+export const idsByName = (rows: { id: string; name: string }[]): Ids =>
+  Object.fromEntries(rows.map((row) => [row.name, row.id]));
 
 /** Creates a published system ruleset, the core rules or an extension of `baseId`, and returns its id. */
 export async function createSystemRuleset(db: Db, ruleset: { name: string; description: string }, baseId?: string) {
   const baseRules: BaseRules = "Dungeons & Dragons: 3.5";
-  const [{ id }] = await db.insert(rulesetsInRules).values({
-    ...ruleset,
-    status: "Published",
-    baseRules,
-    system: true,
-    ...baseId ? { kind: "extension" as const, rulesetId: baseId, ancestorRulesetIds: [baseId] } : { kind: "ruleset" as const },
-  }).returning({ id: rulesetsInRules.id });
+  const [{ id }] = await db
+    .insert(rulesetsInRules)
+    .values({
+      ...ruleset,
+      status: "Published",
+      baseRules,
+      system: true,
+      ...(baseId
+        ? { kind: "extension" as const, rulesetId: baseId, ancestorRulesetIds: [baseId] }
+        : { kind: "ruleset" as const }),
+    })
+    .returning({ id: rulesetsInRules.id });
   if (baseId) await db.insert(rulesetExtensionsInRules).values({ rulesetId: baseId, extensionId: id });
   return id;
 }
 
 /** The seeded core rules' id, which `user` (what needs them) can't do without. */
 export async function coreRulesetId(db: Db, user: string): Promise<string> {
-  const [core] = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules).where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
+  const [core] = await db
+    .select({ id: rulesetsInRules.id })
+    .from(rulesetsInRules)
+    .where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
   if (!core) throw new Error(`${user} needs ${DND35_RULESET_NAME}, which isn't seeded`);
   return core.id;
 }
 
 /** The context of a ruleset about to be seeded. */
-export const newSeedContext = (rulesetId: string): SeedContext =>
-  ({ rulesetId, abilityMap: {}, saveMap: {}, skillMap: {}, aptMap: {}, featMap: {}, powerMap: {}, inheritedPowerMap: {} });
+export const newSeedContext = (rulesetId: string): SeedContext => ({
+  rulesetId,
+  abilityMap: {},
+  saveMap: {},
+  skillMap: {},
+  aptMap: {},
+  featMap: {},
+  powerMap: {},
+  inheritedPowerMap: {},
+});
 
 /** The context of a seeded ruleset: the ids of its unarchived rows. */
 export async function loadSeedContext(db: Db, rulesetId: string): Promise<SeedContext> {
   // One after the other: a transaction runs one query at a time.
-  const names = async (table: typeof abilitiesInRules | typeof savesInRules | typeof skillsInRules | typeof aptitudesInRules | typeof featsInRules | typeof powersInRules) =>
-    idsByName(await db.select({ id: table.id, name: table.name }).from(table).where(and(eq(table.rulesetId, rulesetId), isNull(table.deletedAt))));
+  const names = async (
+    table:
+      | typeof abilitiesInRules
+      | typeof savesInRules
+      | typeof skillsInRules
+      | typeof aptitudesInRules
+      | typeof featsInRules
+      | typeof powersInRules,
+  ) =>
+    idsByName(
+      await db
+        .select({ id: table.id, name: table.name })
+        .from(table)
+        .where(and(eq(table.rulesetId, rulesetId), isNull(table.deletedAt))),
+    );
   return {
     rulesetId,
     abilityMap: await names(abilitiesInRules),
@@ -75,9 +115,18 @@ export async function loadSeedContext(db: Db, rulesetId: string): Promise<SeedCo
  * the base's as they are), and has no powers of its own yet, its base's (and those its base inherits) being the ones
  * it copies before changing them (`inheritedPowerMap`).
  */
-export async function extensionContext(db: Db, base: SeedContext, ruleset: { name: string; description: string }): Promise<SeedContext> {
+export async function extensionContext(
+  db: Db,
+  base: SeedContext,
+  ruleset: { name: string; description: string },
+): Promise<SeedContext> {
   const { powerMap, inheritedPowerMap, ...names } = structuredClone(base);
-  return { ...names, rulesetId: await createSystemRuleset(db, ruleset, base.rulesetId), powerMap: {}, inheritedPowerMap: { ...inheritedPowerMap, ...powerMap } };
+  return {
+    ...names,
+    rulesetId: await createSystemRuleset(db, ruleset, base.rulesetId),
+    powerMap: {},
+    inheritedPowerMap: { ...inheritedPowerMap, ...powerMap },
+  };
 }
 
 /** The id of a row the content names, or an error that says which. */

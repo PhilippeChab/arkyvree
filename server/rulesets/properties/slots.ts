@@ -1,8 +1,6 @@
 import { location, sizeType } from "@/drizzle/schema.ts";
 
-export const SIZE_ORDER: Record<string, number> = Object.fromEntries(
-  sizeType.enumValues.map((size, i) => [size, i]),
-);
+export const SIZE_ORDER: Record<string, number> = Object.fromEntries(sizeType.enumValues.map((size, i) => [size, i]));
 
 const WEAPON_LOCATION_MAP = {
   "Main Hand": "mainhand",
@@ -12,32 +10,24 @@ const WEAPON_LOCATION_MAP = {
 
 type WeaponLocation = keyof typeof WEAPON_LOCATION_MAP;
 
-const isWeaponLocation = (loc: string): loc is WeaponLocation =>
-  loc in WEAPON_LOCATION_MAP;
+const isWeaponLocation = (loc: string): loc is WeaponLocation => loc in WEAPON_LOCATION_MAP;
 
 export type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[WeaponLocation];
 
-type EquipmentSlot = Lowercase<
-  Exclude<(typeof location.enumValues)[number], WeaponLocation>
->;
+type EquipmentSlot = Lowercase<Exclude<(typeof location.enumValues)[number], WeaponLocation>>;
 
 export type InventorySlot = EquipmentSlot | WeaponSetSlot;
 
 const LOCATION_TO_SLOT: Record<string, InventorySlot> = Object.fromEntries(
   location.enumValues.map((loc) => [
     loc,
-    isWeaponLocation(loc)
-      ? WEAPON_LOCATION_MAP[loc]
-      : loc.toLowerCase() as EquipmentSlot,
+    isWeaponLocation(loc) ? WEAPON_LOCATION_MAP[loc] : (loc.toLowerCase() as EquipmentSlot),
   ]),
 );
 
 export const WEAPON_SET_SLOTS: WeaponSetSlot[] = Object.values(WEAPON_LOCATION_MAP);
 
-export function getInventorySlot(
-  type: string | null,
-  location: string | null,
-): InventorySlot | null {
+export function getInventorySlot(type: string | null, location: string | null): InventorySlot | null {
   if (type === "Armor") return "torso";
   if (type === "Shield") return "offhand";
 

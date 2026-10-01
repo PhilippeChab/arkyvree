@@ -1,15 +1,12 @@
 import type { Db } from "@/server/database/index.ts";
-import type { ClassLevelsHooks } from "@/server/rulesets/hooks/ClassLevelsHooks.ts";
-import type { PropertyRecord } from "@/server/rulesets/hooks/SkillsHooks.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import type { ClassLevelsHooks } from "@/server/rulesets/hooks/ClassLevelsHooks.ts";
+import type { PropertyRecord } from "@/server/rulesets/hooks/SkillsHooks.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
-  buildProperties(
-    levelId: string,
-    body: { bab: number; skills: number },
-  ): PropertyRecord[] {
+  buildProperties(levelId: string, body: { bab: number; skills: number }): PropertyRecord[] {
     const { bab, skills } = body;
 
     return [
@@ -59,15 +56,17 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
   }
 
   async syncProperties(tx: Db, levelId: string, body: { bab: number; skills: number }): Promise<void> {
-    await Properties.deleteMany(tx, { entityIds: [levelId], entityType: "klass_levels", types: [KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS] });
+    await Properties.deleteMany(tx, {
+      entityIds: [levelId],
+      entityType: "klass_levels",
+      types: [KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS],
+    });
 
     const records = this.buildProperties(levelId, body);
     await Properties.createMany(tx, records);
   }
 
-  readCurrentValues(
-    properties: { type: string; value: string }[],
-  ): { bab: number; skills: number } {
+  readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number } {
     let bab = 0;
     let skills = 0;
     for (const prop of properties) {

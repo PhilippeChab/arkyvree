@@ -1,7 +1,7 @@
 import { db as globalDb } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest } from "@/server/database/requestCache.ts";
-import { currentCowContext } from "@/server/services/rulesets/cowContext.ts";
 import type { IdResolveMap } from "@/server/services/rulesets/cow.ts";
+import { currentCowContext } from "@/server/services/rulesets/cowContext.ts";
 
 // Inlined to avoid an initialization-time cycle with cow.ts (which imports
 // this file). Remaps FK references on each row through the override map so
@@ -14,10 +14,7 @@ import type { IdResolveMap } from "@/server/services/rulesets/cow.ts";
 // (`canonicalizeIdFields`) already handles the by-id findOne case: a pre-COW
 // id in WHERE gets remapped to post-COW before the query, so the fetched
 // row naturally has id = post-COW.
-function resolveRowOverrides<T extends Record<string, unknown>>(
-  rows: T[],
-  overrideMap: IdResolveMap,
-): T[] {
+function resolveRowOverrides<T extends Record<string, unknown>>(rows: T[], overrideMap: IdResolveMap): T[] {
   if (overrideMap.size === 0) return rows;
   return rows.map((row) => {
     const resolved = { ...row } as Record<string, unknown>;
@@ -40,10 +37,7 @@ function resolveRowOverrides<T extends Record<string, unknown>>(
 // Fields whose name starts with `exclude` are left alone — exclusion lists
 // (e.g. `excludeIds`) carry pre-COW loser ids intentionally, and canonicalizing
 // them to post-COW winners defeats the purpose of the exclusion.
-function canonicalizeIdFields(
-  obj: Record<string, unknown>,
-  overrideMap: IdResolveMap,
-): Record<string, unknown> {
+function canonicalizeIdFields(obj: Record<string, unknown>, overrideMap: IdResolveMap): Record<string, unknown> {
   let out: Record<string, unknown> | null = null;
   for (const [key, value] of Object.entries(obj)) {
     if (key.startsWith("exclude")) continue;
@@ -58,7 +52,10 @@ function canonicalizeIdFields(
       const mappedArr = (value as unknown[]).map((v) => {
         if (typeof v === "string") {
           const m = overrideMap.get(v);
-          if (m !== undefined && m !== v) { arrChanged = true; return m; }
+          if (m !== undefined && m !== v) {
+            arrChanged = true;
+            return m;
+          }
         }
         return v;
       });
@@ -108,26 +105,23 @@ function getCowId(idResolveMap: IdResolveMap): string {
 }
 import AbilitiesRepository from "@/server/repositories/AbilitiesRepository.ts";
 import ActivitiesRepository from "@/server/repositories/ActivitiesRepository.ts";
+import AptitudesRepository from "@/server/repositories/AptitudesRepository.ts";
 import AttachmentsRepository from "@/server/repositories/AttachmentsRepository.ts";
 import BlobsRepository from "@/server/repositories/BlobsRepository.ts";
-import NotificationsRepository from "@/server/repositories/NotificationsRepository.ts";
-import OauthAccountsRepository from "@/server/repositories/OauthAccountsRepository.ts";
-import AptitudesRepository from "@/server/repositories/AptitudesRepository.ts";
 import CampaignsRepository from "@/server/repositories/CampaignsRepository.ts";
-import ContributorsRepository from "@/server/repositories/ContributorsRepository.ts";
-import CharacterContributorsRepository from "@/server/repositories/CharacterContributorsRepository.ts";
 import CharacterAbilitiesRepository from "@/server/repositories/CharacterAbilitiesRepository.ts";
+import CharacterContributorsRepository from "@/server/repositories/CharacterContributorsRepository.ts";
 import CharacterInventoryRepository from "@/server/repositories/CharacterInventoryRepository.ts";
 import CharacterLanguagesRepository from "@/server/repositories/CharacterLanguagesRepository.ts";
 import CharacterLevelFeatsRepository from "@/server/repositories/CharacterLevelFeatsRepository.ts";
-import CharacterLevelSkillsRepository from "@/server/repositories/CharacterLevelSkillsRepository.ts";
 import CharacterLevelPowersRepository from "@/server/repositories/CharacterLevelPowersRepository.ts";
+import CharacterLevelSkillsRepository from "@/server/repositories/CharacterLevelSkillsRepository.ts";
 import CharacterLevelsRepository from "@/server/repositories/CharacterLevelsRepository.ts";
 import CharactersRepository from "@/server/repositories/CharactersRepository.ts";
+import ContributorsRepository from "@/server/repositories/ContributorsRepository.ts";
 import EmailVerificationsRepository from "@/server/repositories/EmailVerificationsRepository.ts";
 import EntitySnapshotsRepository from "@/server/repositories/EntitySnapshotsRepository.ts";
 import ExportsRepository from "@/server/repositories/ExportsRepository.ts";
-import PasswordResetsRepository from "@/server/repositories/PasswordResetsRepository.ts";
 import FeatsAptitudesRepository from "@/server/repositories/FeatsAptitudesRepository.ts";
 import FeatsRepository from "@/server/repositories/FeatsRepository.ts";
 import InvitesRepository from "@/server/repositories/InvitesRepository.ts";
@@ -141,8 +135,13 @@ import KlassSkillsRepository from "@/server/repositories/KlassSkillsRepository.t
 import LanguagesRepository from "@/server/repositories/LanguagesRepository.ts";
 import MechanicsRepository from "@/server/repositories/MechanicsRepository.ts";
 import ModifiersRepository from "@/server/repositories/ModifiersRepository.ts";
+import NotificationsRepository from "@/server/repositories/NotificationsRepository.ts";
+import OauthAccountsRepository from "@/server/repositories/OauthAccountsRepository.ts";
+import PasswordResetsRepository from "@/server/repositories/PasswordResetsRepository.ts";
 import PlayerCharactersRepository from "@/server/repositories/PlayerCharactersRepository.ts";
 import PlayersRepository from "@/server/repositories/PlayersRepository.ts";
+import PowersAptitudesRepository from "@/server/repositories/PowersAptitudesRepository.ts";
+import PowersRepository from "@/server/repositories/PowersRepository.ts";
 import PropertiesRepository from "@/server/repositories/PropertiesRepository.ts";
 import RacesRepository from "@/server/repositories/RacesRepository.ts";
 import RequirementsRepository from "@/server/repositories/RequirementsRepository.ts";
@@ -151,11 +150,8 @@ import RulesetsRepository from "@/server/repositories/RulesetsRepository.ts";
 import SavesRepository from "@/server/repositories/SavesRepository.ts";
 import SessionsRepository from "@/server/repositories/SessionsRepository.ts";
 import SkillsRepository from "@/server/repositories/SkillsRepository.ts";
-import PowersRepository from "@/server/repositories/PowersRepository.ts";
-import PowersAptitudesRepository from "@/server/repositories/PowersAptitudesRepository.ts";
 import StarredRulesetsRepository from "@/server/repositories/StarredRulesetsRepository.ts";
 import UsersRepository from "@/server/repositories/UsersRepository.ts";
-
 
 /**
  * Wrap a repository in a Proxy that:
@@ -208,13 +204,28 @@ function withRequestCache<T extends object>(name: string, repo: T, opts?: { skip
   // names below) so the Proxy clears the request cache on call. When adding a
   // new repo method, prefer renaming to an existing prefix (e.g. `update*`)
   // over adding more entries here — the one-offs below are grandfathered in.
-  const explicitWriteNames = new Set(["publish", "markRead", "markReadByTarget", "markAllRead", "backfillUserId", "claim"]);
+  const explicitWriteNames = new Set([
+    "publish",
+    "markRead",
+    "markReadByTarget",
+    "markAllRead",
+    "backfillUserId",
+    "claim",
+  ]);
   const isWriteMethod = (prop: string) =>
-    prop.startsWith("create") || prop.startsWith("update") || prop.startsWith("archive")
-    || prop.startsWith("unarchive") || prop.startsWith("restore") || prop.startsWith("delete")
-    || prop.startsWith("save") || prop.startsWith("upsert") || prop.startsWith("insert")
-    || prop.startsWith("link") || prop.startsWith("unlink") || prop.startsWith("orphan")
-    || explicitWriteNames.has(prop);
+    prop.startsWith("create") ||
+    prop.startsWith("update") ||
+    prop.startsWith("archive") ||
+    prop.startsWith("unarchive") ||
+    prop.startsWith("restore") ||
+    prop.startsWith("delete") ||
+    prop.startsWith("save") ||
+    prop.startsWith("upsert") ||
+    prop.startsWith("insert") ||
+    prop.startsWith("link") ||
+    prop.startsWith("unlink") ||
+    prop.startsWith("orphan") ||
+    explicitWriteNames.has(prop);
   return new Proxy(repo, {
     get(target, prop, receiver) {
       const value = Reflect.get(target, prop, receiver);
@@ -254,9 +265,7 @@ function withRequestCache<T extends object>(name: string, repo: T, opts?: { skip
           if (cow && cow.idResolveMap.size > 0) {
             key = `${key}|cow:${getCowId(cow.idResolveMap)}`;
           }
-          return memoizeRequest(key, () =>
-            applyResolution(value.apply(target, effectiveArgs) as Promise<unknown>),
-          );
+          return memoizeRequest(key, () => applyResolution(value.apply(target, effectiveArgs) as Promise<unknown>));
         };
       }
 

@@ -28,11 +28,15 @@ export function LoadMoreButton({
         size={size}
         onClick={onClick}
         disabled={isFetchingNextPage}
-        sx={size === "large"
-          ? { px: 4, py: 1.5, borderRadius: 2, fontWeight: 600, borderWidth: 2, "&:hover": { borderWidth: 2 } }
-          : undefined}
+        sx={
+          size === "large"
+            ? { px: 4, py: 1.5, borderRadius: 2, fontWeight: 600, borderWidth: 2, "&:hover": { borderWidth: 2 } }
+            : undefined
+        }
       >
-        <DiceSpinner size="small" loading={isFetchingNextPage}>{label}</DiceSpinner>
+        <DiceSpinner size="small" loading={isFetchingNextPage}>
+          {label}
+        </DiceSpinner>
       </Button>
     </Box>
   );

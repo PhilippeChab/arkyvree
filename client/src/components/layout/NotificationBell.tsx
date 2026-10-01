@@ -1,26 +1,21 @@
-import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
-import { useNotificationActions } from "@/client/src/hooks/index.ts";
-import { formatActivityDetails, formatNotificationMessage, formatRelativeTime } from "@/client/src/lib/activityFormatters.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
-import {
-  Badge,
-  Box,
-  Button,
-  Divider,
-  IconButton,
-  Menu,
-  MenuItem,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
+import { useNotificationActions } from "@/client/src/hooks/index.ts";
+import {
+  formatActivityDetails,
+  formatNotificationMessage,
+  formatRelativeTime,
+} from "@/client/src/lib/activityFormatters.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const bellShake = keyframes`
   0%, 100% { transform: rotate(0deg); }
@@ -36,9 +31,7 @@ type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.
 function NotificationSummary({ notification }: { notification: UnreadNotification }) {
   return (
     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 1, width: "100%" }}>
-      <Typography variant="body2">
-        {formatNotificationMessage(notification.type, notification.data)}
-      </Typography>
+      <Typography variant="body2">{formatNotificationMessage(notification.type, notification.data)}</Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>
         {formatRelativeTime(notification.createdAt)}
       </Typography>
@@ -110,7 +103,10 @@ export function NotificationBell() {
           </Box>
         ) : (
           [
-            <Box key="header" sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box
+              key="header"
+              sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            >
               <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
                 Notifications
               </Typography>
@@ -135,7 +131,8 @@ export function NotificationBell() {
                   />
                 </Box>
               ) : (
-                <Tooltip describeChild
+                <Tooltip
+                  describeChild
                   key={notification.id}
                   title={formatActivityDetails(notification.data) ?? ""}
                   arrow

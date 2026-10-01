@@ -1,12 +1,20 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { buildDetected, buildInitialMapping, buildOccurrenceMap } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass.ts";
-import { buildDomainDetected, buildDomainMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectDomain.ts";
+
+import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import {
+  buildDetected,
+  buildInitialMapping,
+  buildOccurrenceMap,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass.ts";
+import {
+  buildDomainDetected,
+  buildDomainMapping,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/detectDomain.ts";
 import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import { buildItemDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
 import { buildMagicItemDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { buildRaceDetected, buildRaceMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
-import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type {
   ClassReference,
@@ -37,12 +45,16 @@ export type ReferenceByType = {
 };
 export type ReferenceType = keyof ReferenceByType;
 /** A reference as it's stored. */
-export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<ReferenceByType[T], "_meta" | "raw" | "overrides">;
+export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<
+  ReferenceByType[T],
+  "_meta" | "raw" | "overrides"
+>;
 
 /** A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one). */
 function resolveClass({ _meta, raw, overrides }: StoredReference<"class">): ClassReference {
   const scraped = structuredClone(raw);
-  if (overrides?.alignment && !scraped.prerequisites.parsed.alignment) scraped.prerequisites.parsed.alignment = overrides.alignment;
+  if (overrides?.alignment && !scraped.prerequisites.parsed.alignment)
+    scraped.prerequisites.parsed.alignment = overrides.alignment;
   const detected = buildDetected(scraped);
   const mapping = buildInitialMapping(scraped, detected);
   if (overrides?.noSpells) {
@@ -63,19 +75,43 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
   feat: ({ _meta, raw, overrides }) => {
     const feats = sanitizeJsonValues(raw);
     const detected = buildFeatDetected(feats);
-    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: buildFeatMapping(feats, detected, overrides ?? {}, _meta.book) }) };
+    return {
+      _meta,
+      raw,
+      ...sanitizeJsonValues({
+        overrides,
+        detected,
+        mapping: buildFeatMapping(feats, detected, overrides ?? {}, _meta.book),
+      }),
+    };
   },
   domain: ({ _meta, raw, overrides }) => {
     const detected = buildDomainDetected(raw);
-    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: buildDomainMapping(raw, detected, overrides ?? {}) }) };
+    return {
+      _meta,
+      raw,
+      ...sanitizeJsonValues({ overrides, detected, mapping: buildDomainMapping(raw, detected, overrides ?? {}) }),
+    };
   },
   race: ({ _meta, raw, overrides }) => {
     const races = sanitizeJsonValues(raw);
     const detected = buildRaceDetected(races);
-    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: buildRaceMapping(races, detected, overrides ?? {}) }) };
+    return {
+      _meta,
+      raw,
+      ...sanitizeJsonValues({ overrides, detected, mapping: buildRaceMapping(races, detected, overrides ?? {}) }),
+    };
   },
-  item: ({ _meta, raw, overrides }) => ({ _meta, raw, ...sanitizeJsonValues({ overrides, detected: buildItemDetected(raw, overrides?.nameMap) }) }),
-  magicItem: ({ _meta, raw, overrides }) => ({ _meta, raw, ...sanitizeJsonValues({ overrides, detected: buildMagicItemDetected(raw) }) }),
+  item: ({ _meta, raw, overrides }) => ({
+    _meta,
+    raw,
+    ...sanitizeJsonValues({ overrides, detected: buildItemDetected(raw, overrides?.nameMap) }),
+  }),
+  magicItem: ({ _meta, raw, overrides }) => ({
+    _meta,
+    raw,
+    ...sanitizeJsonValues({ overrides, detected: buildMagicItemDetected(raw) }),
+  }),
   // Nothing to derive: the reference is as stored
   spell: (stored) => stored,
   wizardSchool: (stored) => stored,
@@ -100,7 +136,8 @@ export function readStoredReference<T extends ReferenceType>(path: string, type:
   const stored: StoredReference<T> = JSON.parse(readFileSync(path, "utf-8"));
   if (stored._meta.type !== type) throw new Error(`${path} is a ${stored._meta.type} reference, not a ${type} one`);
   const extra = Object.keys(stored).filter((key) => !STORED_KEYS.has(key));
-  if (extra.length > 0) throw new Error(`${path} stores ${extra.join(", ")}: a reference stores _meta, raw and overrides only`);
+  if (extra.length > 0)
+    throw new Error(`${path} stores ${extra.join(", ")}: a reference stores _meta, raw and overrides only`);
   return stored;
 }
 
@@ -114,7 +151,14 @@ function deepFreeze<T>(value: T): T {
 }
 
 const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
-  class: new Map(), feat: new Map(), spell: new Map(), domain: new Map(), race: new Map(), item: new Map(), magicItem: new Map(), wizardSchool: new Map(),
+  class: new Map(),
+  feat: new Map(),
+  spell: new Map(),
+  domain: new Map(),
+  race: new Map(),
+  item: new Map(),
+  magicItem: new Map(),
+  wizardSchool: new Map(),
 };
 
 /**
@@ -136,7 +180,10 @@ export function loadReference<T extends ReferenceType>(path: string, type: T): R
 export function classReferences(book: string): { file: string; ref: ClassReference }[] {
   const dir = join(REFERENCE_DIR, book, "classes");
   if (!existsSync(dir)) return [];
-  return readdirSync(dir).filter((file) => file.endsWith(".json")).sort().map((file) => ({ file, ref: loadReference(join(dir, file), "class") }));
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".json"))
+    .sort()
+    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }));
 }
 
 /** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */

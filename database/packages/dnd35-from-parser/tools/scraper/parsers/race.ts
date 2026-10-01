@@ -1,7 +1,13 @@
 import * as cheerio from "cheerio";
-import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { frameHeading, pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+
+import {
+  frameHeading,
+  pageTitle,
+  sectionElements,
+  tagOf,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 /** A race page's frame also heads its listing "Races". */
@@ -25,101 +31,16 @@ const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelli
 
 /** dndtools' Django ids of the sizes, for its "RaceSize object (N)" rendering: the site's keys, not ours. */
 const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
-  "1": "Fine", "2": "Diminutive", "3": "Tiny", "4": "Small",
-  "5": "Medium", "6": "Large", "7": "Huge", "8": "Gargantuan", "9": "Colossal",
+  "1": "Fine",
+  "2": "Diminutive",
+  "3": "Tiny",
+  "4": "Small",
+  "5": "Medium",
+  "6": "Large",
+  "7": "Huge",
+  "8": "Gargantuan",
+  "9": "Colossal",
 };
-
-// ---------------------------------------------------------------------------
-// Detail page parser
-// ---------------------------------------------------------------------------
-
-/**
- * Parse a single race detail page.
- */
-export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] | null {
-  const $ = cheerio.load(html);
-
-  const name = pageTitle($, RACE_FRAME_HEADING);
-  if (!name) return null;
-
-  // Parse attributes table
-  let size = "";
-  let baseSpeed = 0;
-  const abilityAdjustments: { ability: string; value: number }[] = [];
-  let favoredClass: string | undefined;
-
-  $("table tr").each((_, row) => {
-    const cells = $(row).find("td, th");
-    if (cells.length < 2) return;
-
-    const label = $(cells[0]).text().trim().replace(/:$/, "");
-    const valueCell = $(cells[1]);
-    const valueText = valueCell.text().trim();
-
-    if (/^Size$/i.test(label)) {
-      size = parseSize(valueText);
-    } else if (/base speed/i.test(label)) {
-      baseSpeed = parseSpeed(valueText);
-    } else if (ABILITY_NAMES.has(label)) {
-      const value = parseAbilityValue(valueText);
-      if (value !== 0) {
-        abilityAdjustments.push({ ability: label, value });
-      }
-    } else if (/^favored class/i.test(label)) {
-      const link = valueCell.find("a").first();
-      const fc = link.length > 0 ? link.text().trim() : valueText;
-      if (fc && !/^any$/i.test(fc)) favoredClass = fc;
-    }
-  });
-
-  // Parse description
-  const descParts: string[] = [];
-  const descHeader = $("h3").filter((_, el) =>
-    /^Description/i.test($(el).text().trim()),
-  ).first();
-
-  if (descHeader.length > 0) {
-    for (const el of sectionElements(descHeader)) {
-      const tag = tagOf(el);
-      if (tag === "p" || tag === "div") {
-        const text = el.text().trim();
-        if (text) descParts.push(text);
-      }
-    }
-  }
-  const description = normalizeWs(descParts.join(" "));
-
-  // Parse racial traits
-  const features: NamedText[] = [];
-  const traitsHeader = $("h3").filter((_, el) =>
-    /^Racial Traits/i.test($(el).text().trim()),
-  ).first();
-
-  if (traitsHeader.length > 0) {
-    for (const el of sectionElements(traitsHeader)) {
-      const tag = tagOf(el);
-      if (tag === "ul" || tag === "ol") {
-        el.find("li").each((_, li) => {
-          const text = normalizeWs($(li).text());
-          if (text) features.push(parseFeatureText(text));
-        });
-      } else if (tag === "p") {
-        const text = normalizeWs(el.text());
-        if (text) features.push(parseFeatureText(text));
-      }
-    }
-  }
-
-  return {
-    name,
-    description,
-    size,
-    baseSpeed,
-    abilityAdjustments,
-    ...(favoredClass ? { favoredClass } : {}),
-    features,
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -172,4 +93,94 @@ function parseFeatureText(text: string): { name: string; description: string } {
   return { name: text.substring(0, 60), description: text };
 }
 
+// ---------------------------------------------------------------------------
+// Detail page parser
+// ---------------------------------------------------------------------------
 
+/**
+ * Parse a single race detail page.
+ */
+export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] | null {
+  const $ = cheerio.load(html);
+
+  const name = pageTitle($, RACE_FRAME_HEADING);
+  if (!name) return null;
+
+  // Parse attributes table
+  let size = "";
+  let baseSpeed = 0;
+  const abilityAdjustments: { ability: string; value: number }[] = [];
+  let favoredClass: string | undefined;
+
+  $("table tr").each((_, row) => {
+    const cells = $(row).find("td, th");
+    if (cells.length < 2) return;
+
+    const label = $(cells[0]).text().trim().replace(/:$/, "");
+    const valueCell = $(cells[1]);
+    const valueText = valueCell.text().trim();
+
+    if (/^Size$/i.test(label)) {
+      size = parseSize(valueText);
+    } else if (/base speed/i.test(label)) {
+      baseSpeed = parseSpeed(valueText);
+    } else if (ABILITY_NAMES.has(label)) {
+      const value = parseAbilityValue(valueText);
+      if (value !== 0) {
+        abilityAdjustments.push({ ability: label, value });
+      }
+    } else if (/^favored class/i.test(label)) {
+      const link = valueCell.find("a").first();
+      const fc = link.length > 0 ? link.text().trim() : valueText;
+      if (fc && !/^any$/i.test(fc)) favoredClass = fc;
+    }
+  });
+
+  // Parse description
+  const descParts: string[] = [];
+  const descHeader = $("h3")
+    .filter((_, el) => /^Description/i.test($(el).text().trim()))
+    .first();
+
+  if (descHeader.length > 0) {
+    for (const el of sectionElements(descHeader)) {
+      const tag = tagOf(el);
+      if (tag === "p" || tag === "div") {
+        const text = el.text().trim();
+        if (text) descParts.push(text);
+      }
+    }
+  }
+  const description = normalizeWs(descParts.join(" "));
+
+  // Parse racial traits
+  const features: NamedText[] = [];
+  const traitsHeader = $("h3")
+    .filter((_, el) => /^Racial Traits/i.test($(el).text().trim()))
+    .first();
+
+  if (traitsHeader.length > 0) {
+    for (const el of sectionElements(traitsHeader)) {
+      const tag = tagOf(el);
+      if (tag === "ul" || tag === "ol") {
+        el.find("li").each((_, li) => {
+          const text = normalizeWs($(li).text());
+          if (text) features.push(parseFeatureText(text));
+        });
+      } else if (tag === "p") {
+        const text = normalizeWs(el.text());
+        if (text) features.push(parseFeatureText(text));
+      }
+    }
+  }
+
+  return {
+    name,
+    description,
+    size,
+    baseSpeed,
+    abilityAdjustments,
+    ...(favoredClass ? { favoredClass } : {}),
+    features,
+  };
+}

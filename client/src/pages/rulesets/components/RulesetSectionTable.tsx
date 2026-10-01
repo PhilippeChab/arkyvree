@@ -1,21 +1,35 @@
 import {
+  ContentCopy as ContentCopyIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  LibraryAdd as LibraryAddIcon,
+} from "@mui/icons-material";
+import {
   Box,
+  IconButton,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Skeleton,
-  IconButton,
   Tooltip,
 } from "@mui/material";
-import { Edit as EditIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon, LibraryAdd as LibraryAddIcon } from "@mui/icons-material";
-import { BlankState, CLICKABLE_SX, clickableProps, NoMatchesState, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
+import { type ElementType, type ReactNode, useMemo, useRef } from "react";
+
+import {
+  BlankState,
+  CLICKABLE_SX,
+  clickableProps,
+  NoMatchesState,
+  ROW_ACTIONS_HOVER_SX,
+  ROW_ACTIONS_SX,
+} from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
-import { type ElementType, type ReactNode, useMemo, useRef } from "react";
+
 import { TABLE_CONTAINER_LOADING_STYLE, TABLE_CONTAINER_STYLE, TABLE_STYLE } from "./tableStyles.ts";
 
 interface Column {
@@ -66,19 +80,16 @@ export function RulesetSectionTable<T extends { id: string }>({
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isMobile = useIsMobile();
   const visibleColumns = useMemo(
-    () => isMobile ? columns.filter((c) => !c.hideOnMobile) : columns,
+    () => (isMobile ? columns.filter((c) => !c.hideOnMobile) : columns),
     [columns, isMobile],
   );
 
-  const showInlineActions = (canEdit && onEdit) || (canDelete && onDelete) || (canEdit && onDuplicate) || (canEdit && onCreateVariants);
+  const showInlineActions =
+    (canEdit && onEdit) || (canDelete && onDelete) || (canEdit && onDuplicate) || (canEdit && onCreateVariants);
 
   if (isLoading) {
     return (
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={TABLE_CONTAINER_LOADING_STYLE}
-      >
+      <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_LOADING_STYLE}>
         <Table sx={TABLE_STYLE}>
           <TableHead>
             <TableRow>
@@ -106,17 +117,15 @@ export function RulesetSectionTable<T extends { id: string }>({
   }
 
   if (!data || data.length === 0) {
-    return search
-      ? <NoMatchesState search={search} />
-      : <BlankState icon={emptyIcon} title={emptyTitle} description={emptyDescription} />;
+    return search ? (
+      <NoMatchesState search={search} />
+    ) : (
+      <BlankState icon={emptyIcon} title={emptyTitle} description={emptyDescription} />
+    );
   }
 
   return (
-    <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={TABLE_CONTAINER_STYLE}
-    >
+    <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_STYLE}>
       <Table sx={TABLE_STYLE}>
         <TableHead>
           <TableRow>
@@ -133,10 +142,14 @@ export function RulesetSectionTable<T extends { id: string }>({
               key={item.id}
               hover
               {...(onRowClick && clickableProps(() => onRowClick(item)))}
-              onMouseEnter={onRowMouseEnter ? () => {
-                clearTimeout(hoverTimer.current);
-                hoverTimer.current = setTimeout(() => onRowMouseEnter(item), 150);
-              } : undefined}
+              onMouseEnter={
+                onRowMouseEnter
+                  ? () => {
+                      clearTimeout(hoverTimer.current);
+                      hoverTimer.current = setTimeout(() => onRowMouseEnter(item), 150);
+                    }
+                  : undefined
+              }
               onMouseLeave={onRowMouseEnter ? () => clearTimeout(hoverTimer.current) : undefined}
               onFocus={onRowMouseEnter ? () => onRowMouseEnter(item) : undefined}
               sx={{
@@ -153,14 +166,17 @@ export function RulesetSectionTable<T extends { id: string }>({
                 >
                   {index === visibleColumns.length - 1 && showInlineActions ? (
                     <>
-                      <Box sx={{
-                        pr: [
-                          canEdit && onEdit,
-                          canEdit && onDuplicate,
-                          canEdit && onCreateVariants,
-                          canDelete && onDelete,
-                        ].filter(Boolean).length * 5,
-                      }}>
+                      <Box
+                        sx={{
+                          pr:
+                            [
+                              canEdit && onEdit,
+                              canEdit && onDuplicate,
+                              canEdit && onCreateVariants,
+                              canDelete && onDelete,
+                            ].filter(Boolean).length * 5,
+                        }}
+                      >
                         {renderCell(item, column.key)}
                       </Box>
                       <Box

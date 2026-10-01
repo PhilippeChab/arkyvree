@@ -1,10 +1,9 @@
 import { and, eq, gte, inArray, isNull, lt } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { activitiesInAccount } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount, ActivityInstance> {
   constructor() {
@@ -18,10 +17,12 @@ class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount, Ac
   async delete(db: Db, where: { id: string } | { createdBefore: string }) {
     return await db
       .delete(this.table)
-      .where(this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
-      ]));
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
+        ]),
+      );
   }
 
   // Exception to soft-delete: clean up activities for hard-deleted entities

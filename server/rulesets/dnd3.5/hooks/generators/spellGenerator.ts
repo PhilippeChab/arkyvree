@@ -1,12 +1,5 @@
 import type { Db } from "@/server/database/index.ts";
-import {
-  Aptitudes,
-  Feats,
-  FeatsAptitudes,
-  Modifiers,
-  Properties,
-  Requirements,
-} from "@/server/repositories/index.ts";
+import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import {
   FEAT_FAMILY,
   SPELL_AREA_OF_EFFECT,
@@ -37,8 +30,16 @@ export interface SpellFields {
 
 /** The property types `generateSpellProperties` writes. */
 export const SPELL_FIELD_PROPERTY_TYPES = [
-  SPELL_SCHOOL, SPELL_SUBSCHOOL, SPELL_CASTING_TIME, SPELL_RANGE_TYPE, SPELL_TARGET,
-  SPELL_AREA_OF_EFFECT, SPELL_DURATION, SPELL_RESISTANCE, SPELL_DESCRIPTOR, SPELL_COMPONENT,
+  SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
+  SPELL_CASTING_TIME,
+  SPELL_RANGE_TYPE,
+  SPELL_TARGET,
+  SPELL_AREA_OF_EFFECT,
+  SPELL_DURATION,
+  SPELL_RESISTANCE,
+  SPELL_DESCRIPTOR,
+  SPELL_COMPONENT,
 ] as const;
 
 export async function generateSpellProperties(tx: Db, powerId: string, fields: SpellFields) {
@@ -101,14 +102,16 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
 
   await FeatsAptitudes.create(tx, { featId: spellFocus.id, aptitudeId: generalAptitude.id });
 
-  await Modifiers.createMany(tx, [{
-    sourceId: spellFocus.id,
-    sourceType: "feats",
-    target: `powers.groups.${strippedSchool}.*.dc.misc`,
-    operator: "add",
-    value: "1",
-    valueType: "number",
-  }]);
+  await Modifiers.createMany(tx, [
+    {
+      sourceId: spellFocus.id,
+      sourceType: "feats",
+      target: `powers.groups.${strippedSchool}.*.dc.misc`,
+      operator: "add",
+      value: "1",
+      valueType: "number",
+    },
+  ]);
 
   await Properties.createMany(tx, [
     { entityId: spellFocus.id, entityType: "feats", type: FEAT_FAMILY, value: "Spell Focus" },
@@ -123,26 +126,30 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
 
   await FeatsAptitudes.create(tx, { featId: greaterSpellFocus.id, aptitudeId: generalAptitude.id });
 
-  await Modifiers.createMany(tx, [{
-    sourceId: greaterSpellFocus.id,
-    sourceType: "feats",
-    target: `powers.groups.${strippedSchool}.*.dc.misc`,
-    operator: "add",
-    value: "1",
-    valueType: "number",
-  }]);
+  await Modifiers.createMany(tx, [
+    {
+      sourceId: greaterSpellFocus.id,
+      sourceType: "feats",
+      target: `powers.groups.${strippedSchool}.*.dc.misc`,
+      operator: "add",
+      value: "1",
+      valueType: "number",
+    },
+  ]);
 
   await Properties.createMany(tx, [
     { entityId: greaterSpellFocus.id, entityType: "feats", type: FEAT_FAMILY, value: "Greater Spell Focus" },
   ]);
 
-  await Requirements.createMany(tx, [{
-    entityId: greaterSpellFocus.id,
-    entityType: "feats",
-    level: "1",
-    target: `feats.spellfocus${strippedSchool}.possessed`,
-    operator: "equal",
-    value: "true",
-    valueType: "boolean",
-  }]);
+  await Requirements.createMany(tx, [
+    {
+      entityId: greaterSpellFocus.id,
+      entityType: "feats",
+      level: "1",
+      target: `feats.spellfocus${strippedSchool}.possessed`,
+      operator: "equal",
+      value: "true",
+      valueType: "boolean",
+    },
+  ]);
 }

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
@@ -6,8 +7,15 @@ import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 async function userWithActivities() {
   const { rulesetId } = await getSeedCtx();
   const { api } = await createSignedInUser("activity");
-  const fork = await expectOk(api.api.rulesets[":id"].fork.$post({ param: { id: rulesetId }, json: { name: "Activity Fork", description: "", private: true } }));
-  const aptitude = await expectOk(api.api.rulesets[":id"].aptitudes.$post({ param: { id: fork.id }, json: { name: "Activity Aptitude" } }));
+  const fork = await expectOk(
+    api.api.rulesets[":id"].fork.$post({
+      param: { id: rulesetId },
+      json: { name: "Activity Fork", description: "", private: true },
+    }),
+  );
+  const aptitude = await expectOk(
+    api.api.rulesets[":id"].aptitudes.$post({ param: { id: fork.id }, json: { name: "Activity Aptitude" } }),
+  );
   return { activities: api.api.activities, fork, aptitude };
 }
 
@@ -35,7 +43,9 @@ describe("activities", () => {
   test("resolves an activity's target to a page", async () => {
     const { activities, fork, aptitude } = await userWithActivities();
     const resolve = activities.resolve[":targetTable"][":targetId"];
-    expect(await expectOk(resolve.$get({ param: { targetTable: "aptitudes", targetId: aptitude.id } }))).toEqual({ url: `/rulesets/${fork.id}/aptitudes/${aptitude.id}` });
+    expect(await expectOk(resolve.$get({ param: { targetTable: "aptitudes", targetId: aptitude.id } }))).toEqual({
+      url: `/rulesets/${fork.id}/aptitudes/${aptitude.id}`,
+    });
     expect((await resolve.$get({ param: { targetTable: "aptitudes", targetId: NIL_UUID } })).status).toBe(404);
   });
 

@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { AptitudesService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { AptitudesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -27,7 +28,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, scope, orderBy, orderDir } = c.req.valid("query");
 
       const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call("getRulesetAptitudes", id, { search, childOnly, scope, orderBy, orderDir }, { limit, page });
+      const result = await aptitudesService.call(
+        "getRulesetAptitudes",
+        id,
+        { search, childOnly, scope, orderBy, orderDir },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )
@@ -57,12 +63,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call(
-        "createRulesetAptitude",
-        c.var.requestSession,
-        id,
-        body,
-      );
+      const result = await aptitudesService.call("createRulesetAptitude", c.var.requestSession, id, body);
       return respond(c, result, 200);
     },
   )
@@ -82,13 +83,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call(
-        "updateRulesetAptitude",
-        c.var.requestSession,
-        id,
-        aptitudeId,
-        body,
-      );
+      const result = await aptitudesService.call("updateRulesetAptitude", c.var.requestSession, id, aptitudeId, body);
       return respond(c, result, 200);
     },
   )
@@ -99,12 +94,7 @@ export default new Hono<SessionContext>()
       const { id, aptitudeId } = c.req.valid("param");
 
       const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call(
-        "deleteRulesetAptitude",
-        c.var.requestSession,
-        id,
-        aptitudeId,
-      );
+      const result = await aptitudesService.call("deleteRulesetAptitude", c.var.requestSession, id, aptitudeId);
       return respond(c, result, 200);
     },
   );

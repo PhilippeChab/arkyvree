@@ -1,26 +1,19 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { location } from "@/drizzle/schema.ts";
-import { CharacterInventoryService } from "@/server/services/characters/index.ts";
 import { Hono } from "hono";
 import { z } from "zod";
 
-const inventory = new Hono<SessionContext>()
-  .get(
-    "/:characterId",
-    zValidator("param", z.object({ characterId: z.string().uuid() })),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
-      const result = await CharacterInventoryService.initialize().call(
-        "getInventory",
-        c.var.requestSession,
-        characterId,
-      );
+import { location } from "@/drizzle/schema.ts";
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { CharacterInventoryService } from "@/server/services/characters/index.ts";
 
-      return respond(c, result, 200);
-    },
-  )
+const inventory = new Hono<SessionContext>()
+  .get("/:characterId", zValidator("param", z.object({ characterId: z.string().uuid() })), async (c) => {
+    const { characterId } = c.req.valid("param");
+    const result = await CharacterInventoryService.initialize().call("getInventory", c.var.requestSession, characterId);
+
+    return respond(c, result, 200);
+  })
   .post(
     "/:characterId",
     zValidator("param", z.object({ characterId: z.string().uuid() })),
@@ -60,10 +53,7 @@ const inventory = new Hono<SessionContext>()
   )
   .put(
     "/:characterId/:itemId",
-    zValidator(
-      "param",
-      z.object({ characterId: z.string().uuid(), itemId: z.string().uuid() }),
-    ),
+    zValidator("param", z.object({ characterId: z.string().uuid(), itemId: z.string().uuid() })),
     zValidator(
       "json",
       z.object({
@@ -101,10 +91,7 @@ const inventory = new Hono<SessionContext>()
   )
   .delete(
     "/:characterId/:itemId",
-    zValidator(
-      "param",
-      z.object({ characterId: z.string().uuid(), itemId: z.string().uuid() }),
-    ),
+    zValidator("param", z.object({ characterId: z.string().uuid(), itemId: z.string().uuid() })),
     async (c) => {
       const { characterId, itemId } = c.req.valid("param");
       const result = await CharacterInventoryService.initialize().call(

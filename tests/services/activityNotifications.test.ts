@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { Aptitudes, Characters, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignInvitesMethods } from "@/server/services/campaigns/InvitesService.ts";
@@ -7,7 +8,13 @@ import { ContributorsMethods } from "@/server/services/rulesets/ContributorsServ
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { collectingNotified } from "@/server/ws.ts";
-import { addRulesetContributor, createTestCampaign, createTestCharacter, createTestRuleset, createTestUser } from "@/tests/helpers.ts";
+import {
+  addRulesetContributor,
+  createTestCampaign,
+  createTestCharacter,
+  createTestRuleset,
+  createTestUser,
+} from "@/tests/helpers.ts";
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
 
@@ -37,7 +44,10 @@ describe("activity notifications", () => {
       const [rejected] = await CampaignInvitesMethods.getUserInvites(rejecting.user.id);
       await CampaignInvitesMethods.rejectCampaignInvite(rejecting.session, rejected.id);
 
-      expect(await inbox(gm)).toEqual([note("acceptCampaignInvite", accepting), note("rejectCampaignInvite", rejecting)]);
+      expect(await inbox(gm)).toEqual([
+        note("acceptCampaignInvite", accepting),
+        note("rejectCampaignInvite", rejecting),
+      ]);
     });
 
     test("go to nobody for an email without an account, the actor least of all", async () => {
@@ -51,30 +61,38 @@ describe("activity notifications", () => {
 
   // Rulesets and characters take contributors alike: the owner hears of the answers, the contributor of the rest.
   describe.each([
-    ["ruleset", {
-      create: async (owner: User) => (await createTestRuleset(owner.user.id)).id,
-      invite: (owner: User, rulesetId: string, invitee: User) => ContributorsMethods.inviteContributor(owner.session, rulesetId, invitee.user.emailAddress, "Editor"),
-      accept: ContributorsMethods.acceptContributorInvite,
-      reject: ContributorsMethods.rejectContributorInvite,
-      revoke: ContributorsMethods.revokeContributor,
-      leave: ContributorsMethods.leaveRuleset,
-      archive: (id: string) => Rulesets.archive(db, { id }),
-      prefix: "",
-      noun: "ContributorInvite",
-      left: "leaveRuleset",
-    }],
-    ["character", {
-      create: async (owner: User) => (await createTestCharacter(owner.user.id)).id,
-      invite: (owner: User, characterId: string, invitee: User) => CharacterContributorsMethods.inviteContributor(owner.session, characterId, invitee.user.emailAddress),
-      accept: CharacterContributorsMethods.acceptContributorInvite,
-      reject: CharacterContributorsMethods.rejectContributorInvite,
-      revoke: CharacterContributorsMethods.revokeContributor,
-      leave: CharacterContributorsMethods.leaveCharacter,
-      archive: (id: string) => Characters.archive(db, { id }),
-      prefix: "Character",
-      noun: "CharacterContributorInvite",
-      left: "leaveCharacter",
-    }],
+    [
+      "ruleset",
+      {
+        create: async (owner: User) => (await createTestRuleset(owner.user.id)).id,
+        invite: (owner: User, rulesetId: string, invitee: User) =>
+          ContributorsMethods.inviteContributor(owner.session, rulesetId, invitee.user.emailAddress, "Editor"),
+        accept: ContributorsMethods.acceptContributorInvite,
+        reject: ContributorsMethods.rejectContributorInvite,
+        revoke: ContributorsMethods.revokeContributor,
+        leave: ContributorsMethods.leaveRuleset,
+        archive: (id: string) => Rulesets.archive(db, { id }),
+        prefix: "",
+        noun: "ContributorInvite",
+        left: "leaveRuleset",
+      },
+    ],
+    [
+      "character",
+      {
+        create: async (owner: User) => (await createTestCharacter(owner.user.id)).id,
+        invite: (owner: User, characterId: string, invitee: User) =>
+          CharacterContributorsMethods.inviteContributor(owner.session, characterId, invitee.user.emailAddress),
+        accept: CharacterContributorsMethods.acceptContributorInvite,
+        reject: CharacterContributorsMethods.rejectContributorInvite,
+        revoke: CharacterContributorsMethods.revokeContributor,
+        leave: CharacterContributorsMethods.leaveCharacter,
+        archive: (id: string) => Characters.archive(db, { id }),
+        prefix: "Character",
+        noun: "CharacterContributorInvite",
+        left: "leaveCharacter",
+      },
+    ],
   ])("of %s contributors", (_, kind) => {
     const invite = `invite${kind.prefix}Contributor`;
     const revoke = `revoke${kind.prefix}Contributor`;
@@ -98,17 +116,22 @@ describe("activity notifications", () => {
     });
 
     // The owner used to be looked up among unarchived rows only, and went unnotified once theirs was archived.
-    test.each(["rejects", "leaves"] as const)("go to the owner when a contributor %s, even after archiving", async (answer) => {
-      const [owner, contributor] = await users(2);
-      const id = await kind.create(owner);
-      const { id: contributorId } = await kind.invite(owner, id, contributor);
-      if (answer === "leaves") await kind.accept(contributor.session, contributorId);
-      await kind.archive(id);
-      if (answer === "rejects") await kind.reject(contributor.session, contributorId);
-      else await kind.leave(contributor.session, id);
+    test.each(["rejects", "leaves"] as const)(
+      "go to the owner when a contributor %s, even after archiving",
+      async (answer) => {
+        const [owner, contributor] = await users(2);
+        const id = await kind.create(owner);
+        const { id: contributorId } = await kind.invite(owner, id, contributor);
+        if (answer === "leaves") await kind.accept(contributor.session, contributorId);
+        await kind.archive(id);
+        if (answer === "rejects") await kind.reject(contributor.session, contributorId);
+        else await kind.leave(contributor.session, id);
 
-      expect(await inbox(owner)).toContain(note(answer === "rejects" ? `reject${kind.noun}` : kind.left, contributor));
-    });
+        expect(await inbox(owner)).toContain(
+          note(answer === "rejects" ? `reject${kind.noun}` : kind.left, contributor),
+        );
+      },
+    );
   });
 
   test("of a ruleset contributor's role change go to them", async () => {
@@ -124,8 +147,15 @@ describe("activity notifications", () => {
     const ruleset = await createTestRuleset(owner.user.id);
     for (const contributor of [author, other]) await addRulesetContributor(ruleset.id, contributor.user, owner.user.id);
     const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
-    const feat = await FeatsMethods.createRulesetFeat(author.session, ruleset.id, { name: "Notified Feat", description: "", aptitudeIds: [aptitude.id] });
-    await PropertiesMethods.createEntityProperty(author.session, ruleset.id, "feats", feat.id, { type: "NOTE", value: "A note" });
+    const feat = await FeatsMethods.createRulesetFeat(author.session, ruleset.id, {
+      name: "Notified Feat",
+      description: "",
+      aptitudeIds: [aptitude.id],
+    });
+    await PropertiesMethods.createEntityProperty(author.session, ruleset.id, "feats", feat.id, {
+      type: "NOTE",
+      value: "A note",
+    });
     await FeatsMethods.deleteRulesetFeat(author.session, ruleset.id, feat.id);
 
     const changes = [note("createFeat", author), note("createProperty", author), note("deleteFeat", author)];
@@ -138,7 +168,11 @@ describe("activity notifications", () => {
     const [owner] = await users(1);
     const ruleset = await createTestRuleset(owner.user.id);
     const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
-    await FeatsMethods.createRulesetFeat(owner.session, ruleset.id, { name: "Unnoticed Feat", description: "", aptitudeIds: [aptitude.id] });
+    await FeatsMethods.createRulesetFeat(owner.session, ruleset.id, {
+      name: "Unnoticed Feat",
+      description: "",
+      aptitudeIds: [aptitude.id],
+    });
     expect(await inbox(owner)).toEqual([]);
   });
 });
@@ -165,6 +199,6 @@ describe("the users a request notified", () => {
   test("aren't collected outside a request: another request's are its own", async () => {
     const { invite } = await setup();
     await invite();
-    expect([...await collectingNotified(async () => {})]).toEqual([]);
+    expect([...(await collectingNotified(async () => {}))]).toEqual([]);
   });
 });

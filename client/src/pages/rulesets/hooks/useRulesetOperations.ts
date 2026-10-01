@@ -1,22 +1,23 @@
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import type { RulesetListItem } from "@/client/src/lib/queries.ts";
-import type {
-  EditRulesetFormData,
-  ForkRulesetFormData,
-} from "@/client/src/pages/rulesets/details/components/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import type { RulesetListItem } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import type { EditRulesetFormData, ForkRulesetFormData } from "@/client/src/pages/rulesets/details/components/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
 
 type Ruleset = RulesetListItem;
 /** Published as a base ruleset or as an extension. */
-export type PublishKind = NonNullable<InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"]>;
+export type PublishKind = NonNullable<
+  InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"]
+>;
 
 export function useRulesetOperations() {
   const queryClient = useQueryClient();
@@ -30,16 +31,21 @@ export function useRulesetOperations() {
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [subscribeDialogOpen, setSubscribeDialogOpen] = useState(false);
   const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
-  const [unsubscribeTarget, setUnsubscribeTarget] = useState<{ rulesetId: string; extensionId: string; extensionName: string } | null>(null);
+  const [unsubscribeTarget, setUnsubscribeTarget] = useState<{
+    rulesetId: string;
+    extensionId: string;
+    extensionName: string;
+  } | null>(null);
 
   // Selected item state
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | null>(null);
 
   /** Refetches a ruleset and the lists that show it. */
-  const refreshRuleset = (id: string) => Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(id) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists }),
-  ]);
+  const refreshRuleset = (id: string) =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(id) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists }),
+    ]);
 
   // Forms
   const editForm = useForm<EditRulesetFormData>();
@@ -48,10 +54,12 @@ export function useRulesetOperations() {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, updatedAt }: { id: string; data: EditRulesetFormData; updatedAt?: string }) => {
-      return parseResponse(rpc.api.rulesets[":id"].$put({
-        param: { id },
-        json: { ...data, updatedAt },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].$put({
+          param: { id },
+          json: { ...data, updatedAt },
+        }),
+      );
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset updated successfully");
@@ -67,10 +75,12 @@ export function useRulesetOperations() {
   // Fork mutation
   const forkMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ForkRulesetFormData }) => {
-      return parseResponse(rpc.api.rulesets[":id"].fork.$post({
-        param: { id },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].fork.$post({
+          param: { id },
+          json: data,
+        }),
+      );
     },
     onSuccess: (data) => {
       snackbar.success("Ruleset forked successfully");
@@ -89,9 +99,11 @@ export function useRulesetOperations() {
   // Archive mutation
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].archive.$post({
-        param: { id },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].archive.$post({
+          param: { id },
+        }),
+      );
     },
     onSuccess: (_, id) => {
       snackbar.success("Ruleset archived successfully");
@@ -106,9 +118,11 @@ export function useRulesetOperations() {
   // Unarchive mutation
   const unarchiveMutation = useMutation({
     mutationFn: async (id: string) => {
-      return parseResponse(rpc.api.rulesets[":id"].unarchive.$post({
-        param: { id },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].unarchive.$post({
+          param: { id },
+        }),
+      );
     },
     onSuccess: (_, id) => {
       snackbar.success("Ruleset unarchived successfully");
@@ -124,10 +138,12 @@ export function useRulesetOperations() {
   // Publish mutation
   const publishMutation = useMutation({
     mutationFn: async ({ id, kind }: { id: string; kind?: PublishKind }) => {
-      return parseResponse(rpc.api.rulesets[":id"].publish.$post({
-        param: { id },
-        json: { kind },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].publish.$post({
+          param: { id },
+          json: { kind },
+        }),
+      );
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset published successfully");
@@ -142,13 +158,17 @@ export function useRulesetOperations() {
   // Subscribe extension mutation
   const subscribeMutation = useMutation({
     mutationFn: async ({ id, extensionIds }: { id: string; extensionIds: string[] }) => {
-      return parseResponse(rpc.api.rulesets[":id"].subscribe.$post({
-        param: { id },
-        json: { extensionIds },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].subscribe.$post({
+          param: { id },
+          json: { extensionIds },
+        }),
+      );
     },
     onSuccess: (_, { id, extensionIds }) => {
-      snackbar.success(`Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")} successfully`);
+      snackbar.success(
+        `Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")} successfully`,
+      );
       setSubscribeDialogOpen(false);
       void refreshRuleset(id);
     },
@@ -160,10 +180,12 @@ export function useRulesetOperations() {
   // Unsubscribe extension mutation
   const unsubscribeMutation = useMutation({
     mutationFn: async ({ id, extensionId }: { id: string; extensionId: string }) => {
-      return parseResponse(rpc.api.rulesets[":id"].unsubscribe.$post({
-        param: { id },
-        json: { extensionId },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].unsubscribe.$post({
+          param: { id },
+          json: { extensionId },
+        }),
+      );
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Unsubscribed from extension successfully");

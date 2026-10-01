@@ -25,10 +25,12 @@ class PasswordResetsRepository extends BaseRepository<typeof passwordResetsInAcc
   async delete(db: Db, where: { id: string } | { expiresBefore: string }) {
     return await db
       .delete(this.table)
-      .where(this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
-      ]));
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
+        ]),
+      );
   }
 
   async archiveAllForUser(db: Db, where: { userId: string }) {

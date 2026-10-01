@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { sweepPendingBlobs } from "@/server/jobs/sweepPendingBlobs.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
@@ -13,12 +14,23 @@ describe("sweepPendingBlobs", () => {
 
   beforeEach(() => {
     deleted = [];
-    setStorageForTest(fakeStorage({ async deleteObject(key) { deleted.push(key); } }));
+    setStorageForTest(
+      fakeStorage({
+        async deleteObject(key) {
+          deleted.push(key);
+        },
+      }),
+    );
   });
 
   /** A blob no attachment references, uploaded `ageMs` ago. */
   async function createPendingBlob(filename: string, ageMs = 0) {
-    const [blob] = await Blobs.create(db, { key: `blobs/${crypto.randomUUID()}/${filename}`, filename, contentType: "image/png", byteSize: 100 });
+    const [blob] = await Blobs.create(db, {
+      key: `blobs/${crypto.randomUUID()}/${filename}`,
+      filename,
+      contentType: "image/png",
+      byteSize: 100,
+    });
     if (ageMs) await Blobs.update(db, { createdAt: new Date(Date.now() - ageMs).toISOString() }, { id: blob.id });
     return blob;
   }
@@ -57,7 +69,13 @@ describe("sweepPendingBlobs", () => {
   });
 
   test("keeps the row when the S3 delete fails, so the next sweep retries", async () => {
-    setStorageForTest(fakeStorage({ async deleteObject() { throw new Error("simulated S3 failure"); } }));
+    setStorageForTest(
+      fakeStorage({
+        async deleteObject() {
+          throw new Error("simulated S3 failure");
+        },
+      }),
+    );
     const blob = await createPendingBlob("doomed.png", 2 * DAY);
 
     expect(await sweepPendingBlobs({ ttlMs: DAY })).toMatchObject({ swept: 0, failed: 1 });

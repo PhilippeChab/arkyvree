@@ -22,10 +22,7 @@ export const CampaignInvitationEmail = ({
       {inviterName} has invited you to join <strong>{campaignName}</strong>.
     </Text>
     <Section style={styles.buttonContainer}>
-      <Button
-        style={styles.button}
-        href={`${APP_URL}/campaign-invite/${inviteId}`}
-      >
+      <Button style={styles.button} href={`${APP_URL}/campaign-invite/${inviteId}`}>
         View Invitation
       </Button>
     </Section>

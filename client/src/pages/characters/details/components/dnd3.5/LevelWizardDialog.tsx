@@ -1,5 +1,3 @@
-import { AnimatedAlert, DiceSpinner, Modal, ValidationIssueList } from "@/client/src/components/common/index.ts";
-import { useIsMobile } from "@/client/src/hooks/index.ts";
 import {
   Box,
   Button,
@@ -13,6 +11,10 @@ import {
   Typography,
 } from "@mui/material";
 import type { ReactNode } from "react";
+
+import { AnimatedAlert, DiceSpinner, Modal, ValidationIssueList } from "@/client/src/components/common/index.ts";
+import { useIsMobile } from "@/client/src/hooks/index.ts";
+
 import type { LevelWizard } from "./levelUp/index.ts";
 
 /** The part of a level wizard the dialog drives: steps, cancel, validation and navigation. */
@@ -74,19 +76,14 @@ export function LevelWizardDialog({
       }}
     >
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent
-        sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}
-      >
+      <DialogContent sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {/* Cancel confirm */}
         <AnimatedAlert
           in={wizard.showCancelConfirm}
           severity="warning"
           action={
             <Stack direction="row" spacing={1}>
-              <Button
-                size="small"
-                onClick={() => wizard.setShowCancelConfirm(false)}
-              >
+              <Button size="small" onClick={() => wizard.setShowCancelConfirm(false)}>
                 Keep editing
               </Button>
               <Button
@@ -164,17 +161,17 @@ export function LevelWizardDialog({
         </Stepper>
 
         {/* Step content */}
-        <Box
-          sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", minHeight: 0 }}
-        >
-          {children}
-        </Box>
+        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", minHeight: 0 }}>{children}</Box>
       </DialogContent>
       <DialogActions sx={{ flexShrink: 0 }}>
-        <Button onClick={wizard.handleCancel} disabled={isSaving} variant="outlined" color="inherit">Cancel</Button>
+        <Button onClick={wizard.handleCancel} disabled={isSaving} variant="outlined" color="inherit">
+          Cancel
+        </Button>
         <Box sx={{ flex: "1 1 auto" }} />
         {wizard.activeStep !== 0 && (
-          <Button onClick={wizard.handleBack} disabled={isSaving}>Back</Button>
+          <Button onClick={wizard.handleBack} disabled={isSaving}>
+            Back
+          </Button>
         )}
         <Button onClick={wizard.handleNext} disabled={wizard.isNextDisabled || isSaving}>
           <DiceSpinner size="small" loading={isSaving}>

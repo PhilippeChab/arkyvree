@@ -26,13 +26,19 @@ export function lockableScroll(el: HTMLElement): void {
     configurable: true,
   });
 
-  el.addEventListener("scroll", () => {
-    userScrollTop = desc.get!.call(el) as number;
-  }, { passive: true });
+  el.addEventListener(
+    "scroll",
+    () => {
+      userScrollTop = desc.get!.call(el) as number;
+    },
+    { passive: true },
+  );
 
   scrollLocks.set(el, () => {
     locked = true;
-    setTimeout(() => { locked = false; }, 500);
+    setTimeout(() => {
+      locked = false;
+    }, 500);
   });
 }
 
@@ -51,8 +57,9 @@ export function createListboxScrollHandler(lists: InfiniteList | InfiniteList[])
   return (event: React.UIEvent<HTMLElement>) => {
     const target = event.currentTarget;
     if (target.scrollHeight - target.scrollTop > target.clientHeight + 50) return;
-    const pending = (Array.isArray(lists) ? lists : [lists])
-      .filter((list) => list.hasNextPage && !list.isFetchingNextPage);
+    const pending = (Array.isArray(lists) ? lists : [lists]).filter(
+      (list) => list.hasNextPage && !list.isFetchingNextPage,
+    );
     if (pending.length === 0) return;
     scrollLocks.get(target)?.();
     for (const list of pending) list.fetchNextPage();

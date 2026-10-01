@@ -1,19 +1,26 @@
 import { afterEach, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { db } from "@/server/database/index.ts";
-import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
 import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
 import { invalidateAll, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import { cowEntity } from "@/server/services/rulesets/cow.ts";
+import { db } from "@/server/database/index.ts";
+import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/levelFixtures.ts";
+import { cowEntity } from "@/server/services/rulesets/cow.ts";
 import { createSeededTestRuleset } from "@/tests/helpers.ts";
+import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/levelFixtures.ts";
 
-afterEach(() => { invalidateAll(); setCacheEnabled(true); });
+afterEach(() => {
+  invalidateAll();
+  setCacheEnabled(true);
+});
 
 test("worker familiar HP matches web after customizing an inherited master feat", async () => {
-  const { masterId, bonded: { id: familiarId } } = await createWizardWithFamiliar("Cat Familiar", picking(WIZARD_1, "General", ["Toughness"]));
+  const {
+    masterId,
+    bonded: { id: familiarId },
+  } = await createWizardWithFamiliar("Cat Familiar", picking(WIZARD_1, "General", ["Toughness"]));
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   await Characters.update(db, { rulesetId: fork.id }, { id: masterId });
   await Characters.update(db, { rulesetId: fork.id }, { id: familiarId });

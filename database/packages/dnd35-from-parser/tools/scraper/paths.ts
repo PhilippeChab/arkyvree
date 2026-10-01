@@ -1,11 +1,11 @@
-import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import { stripSeparators } from "@/shared/utils.ts";
-import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
+import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
-import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
+import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
+import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 // ---------------------------------------------------------------------------
 // Path validation — reuses actual server components to stay in sync
@@ -13,9 +13,15 @@ import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedChara
 
 const ABILITY_NAMES = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
-const stubAbilities = ABILITY_NAMES.map((name) => ({ name })) as Parameters<typeof DetailedCharacterAbilities.generateTargetPaths>[0];
-const stubSaves = SAVE_NAMES.map((name) => ({ name })) as Parameters<typeof DetailedCharacterSavingThrows.generateTargetPaths>[0];
-const stubSkills = SKILL_NAMES.map((name) => ({ name })) as Parameters<typeof DetailedCharacterSkills.generateTargetPaths>[0];
+const stubAbilities = ABILITY_NAMES.map((name) => ({ name })) as Parameters<
+  typeof DetailedCharacterAbilities.generateTargetPaths
+>[0];
+const stubSaves = SAVE_NAMES.map((name) => ({ name })) as Parameters<
+  typeof DetailedCharacterSavingThrows.generateTargetPaths
+>[0];
+const stubSkills = SKILL_NAMES.map((name) => ({ name })) as Parameters<
+  typeof DetailedCharacterSkills.generateTargetPaths
+>[0];
 
 function buildValidPaths(kind: "modifier" | "requirement"): Set<string> {
   return new Set(
@@ -35,10 +41,10 @@ const VALID_REQUIREMENT_PATHS = buildValidPaths("requirement");
 // Base slugs for skill groups with subtypes (e.g. "knowledge", "craft", "perform", "profession").
 // Paths like "skills.knowledge.rank" are valid — the runtime resolves them as an OR across all subtypes.
 const SKILL_GROUP_SLUGS = new Set([
-  ...SKILL_NAMES
-    .filter((n) => /\(/.test(n))
-    .map((n) => stripSeparators(n.replace(/\s*\([^)]*\)/, ""))),
-  "craft", "perform", "profession",
+  ...SKILL_NAMES.filter((n) => /\(/.test(n)).map((n) => stripSeparators(n.replace(/\s*\([^)]*\)/, ""))),
+  "craft",
+  "perform",
+  "profession",
 ]);
 
 export function isValidModifierPath(path: string): boolean {

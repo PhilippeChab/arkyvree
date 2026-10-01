@@ -1,9 +1,4 @@
-import type { InferRequestType } from "hono/client";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { CompareArrows as CompareArrowsIcon, Restore as RestoreIcon } from "@mui/icons-material";
-import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import {
   Box,
   Button,
@@ -22,13 +17,16 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { InferRequestType } from "hono/client";
 import type { InferResponseType } from "hono/client";
 import { Link } from "react-router-dom";
 
-type ChangesResponse = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["changes"]["$get"],
-  200
->;
+import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
+type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
 
 type Change = ChangesResponse[number];
 
@@ -66,21 +64,18 @@ interface OverridesDialogProps {
   canEdit?: boolean;
 }
 
-export function OverridesDialog({
-  open,
-  onClose,
-  rulesetId,
-  canEdit = false,
-}: OverridesDialogProps) {
+export function OverridesDialog({ open, onClose, rulesetId, canEdit = false }: OverridesDialogProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
   const { data: changes, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.changes(rulesetId),
     queryFn: async () => {
-      return parseResponse(rpc.api.rulesets[":id"].changes.$get({
-        param: { id: rulesetId },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].changes.$get({
+          param: { id: rulesetId },
+        }),
+      );
     },
     enabled: open,
     placeholderData: (prev) => prev,
@@ -88,10 +83,12 @@ export function OverridesDialog({
 
   const revertMutation = useMutation({
     mutationFn: async ({ entityType, sourceEntityId }: { entityType: string; sourceEntityId: string }) => {
-      return parseResponse(restoreApi.$post({
-        // The changes list types entityType as a string; every entity it lists can be restored.
-        param: { id: rulesetId, entityType: entityType as RestorableType, entityId: sourceEntityId },
-      }));
+      return parseResponse(
+        restoreApi.$post({
+          // The changes list types entityType as a string; every entity it lists can be restored.
+          param: { id: rulesetId, entityType: entityType as RestorableType, entityId: sourceEntityId },
+        }),
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(rulesetId) });
@@ -119,9 +116,7 @@ export function OverridesDialog({
         Local changes
       </DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
-        {isLoading && (
-          <DiceSpinner sx={{ py: 4 }} />
-        )}
+        {isLoading && <DiceSpinner sx={{ py: 4 }} />}
         <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={250} unmountOnExit>
           <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
             No local changes
@@ -140,11 +135,8 @@ export function OverridesDialog({
                 <List dense disablePadding>
                   {items.map((change) => {
                     const key = change.status === "deleted" ? change.sourceEntityId : change.entityId;
-                    const chipColor = change.status === "modified"
-                      ? "info"
-                      : change.status === "deleted"
-                      ? "error"
-                      : "success";
+                    const chipColor =
+                      change.status === "modified" ? "info" : change.status === "deleted" ? "error" : "success";
                     const url = getEntityUrl(rulesetId, change);
                     const showRevert = canEdit && change.status !== "added";
                     const rowContent = (
@@ -172,10 +164,12 @@ export function OverridesDialog({
                           <Tooltip title="Revert to parent version">
                             <IconButton
                               size="small"
-                              onClick={() => revertMutation.mutate({
-                                entityType: change.entityType,
-                                sourceEntityId: change.sourceEntityId,
-                              })}
+                              onClick={() =>
+                                revertMutation.mutate({
+                                  entityType: change.entityType,
+                                  sourceEntityId: change.sourceEntityId,
+                                })
+                              }
                               disabled={revertMutation.isPending}
                               sx={{ flexShrink: 0, ml: 0.5 }}
                             >
@@ -193,7 +187,9 @@ export function OverridesDialog({
         </Collapse>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} variant="outlined" color="inherit">Close</Button>
+        <Button onClick={onClose} variant="outlined" color="inherit">
+          Close
+        </Button>
       </DialogActions>
     </Modal>
   );

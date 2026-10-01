@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
+
 import { Hono, type MiddlewareHandler } from "hono";
+
 import { toJson } from "@/server/errors/index.ts";
 import { rateLimit } from "@/server/middlewares/rateLimit.ts";
 
@@ -15,7 +17,11 @@ function behind(limiter: MiddlewareHandler) {
 }
 
 const from = (ip: string, init: RequestInit = {}) => ({ ...init, headers: { ...init.headers, "x-forwarded-for": ip } });
-const withEmail = (emailAddress: unknown) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ emailAddress }) });
+const withEmail = (emailAddress: unknown) => ({
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ emailAddress }),
+});
 
 describe("rateLimit", () => {
   test("is off in the tests, whose requests share an IP", async () => {

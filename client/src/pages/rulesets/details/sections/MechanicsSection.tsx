@@ -1,21 +1,18 @@
+import { Gavel as MechanicsIcon } from "@mui/icons-material";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
+import { useCallback } from "react";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type MechanicFormData, MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { mechanicQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
-import { MechanicFormFields, type MechanicFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Gavel as MechanicsIcon } from "@mui/icons-material";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
-import { useCallback } from "react";
 import { mechanicsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const MECHANICS_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
@@ -31,19 +28,17 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
-  const {
-    createForm,
-    handleCreate,
-    createDialogProps,
-  } = useRulesetSection<Mechanic, MechanicFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Mechanic, MechanicFormData>({
     rulesetId: ruleset.id,
     sectionName: "mechanics",
     label: "Mechanic",
     createFn: async (data) => {
-      return parseResponse(rpc.api.rulesets[":id"].mechanics.$post({
-        param: { id: ruleset.id },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].mechanics.$post({
+          param: { id: ruleset.id },
+          json: data,
+        }),
+      );
     },
     onCreateSuccess: (created) => openEntity(`mechanics/${created.id}`),
   });
@@ -59,18 +54,19 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`mechanics/${mechanic.id}`);
   };
 
-  const handleRowMouseEnter = useCallback((mechanic: Mechanic) => {
-    void queryClient.prefetchQuery(mechanicQuery(ruleset.id, mechanic.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (mechanic: Mechanic) => {
+      void queryClient.prefetchQuery(mechanicQuery(ruleset.id, mechanic.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (mechanic: Mechanic, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return mechanic.name;
       case "description":
-        return (
-          <DescriptionCell text={mechanic.description} />
-        );
+        return <DescriptionCell text={mechanic.description} />;
       default:
         return null;
     }
@@ -112,11 +108,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Mechanic"
-        maxWidth="md"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Mechanic" maxWidth="md">
         <MechanicFormFields form={createForm} />
       </CreateDialog>
     </SectionContent>

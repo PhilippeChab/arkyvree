@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import { useLatest } from "@/client/src/hooks/index.ts";
 
 interface WsMessage {
@@ -29,6 +30,25 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
     let pingTimer: ReturnType<typeof setInterval> | null = null;
     let pongTimer: ReturnType<typeof setTimeout> | null = null;
     let disposed = false;
+
+    function cleanup() {
+      if (pingTimer) {
+        clearInterval(pingTimer);
+        pingTimer = null;
+      }
+      if (pongTimer) {
+        clearTimeout(pongTimer);
+        pongTimer = null;
+      }
+    }
+
+    function scheduleReconnect() {
+      if (disposed) return;
+      const delay = Math.min(RECONNECT_BASE_MS * 2 ** reconnectAttempt, RECONNECT_MAX_MS);
+      reconnectAttempt++;
+      // oxlint-disable-next-line no-use-before-define -- connect and scheduleReconnect call each other
+      reconnectTimer = setTimeout(connect, delay);
+    }
 
     function connect() {
       if (disposed) return;
@@ -74,24 +94,6 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
       ws.onerror = () => {
         // onclose will fire after onerror
       };
-    }
-
-    function cleanup() {
-      if (pingTimer) {
-        clearInterval(pingTimer);
-        pingTimer = null;
-      }
-      if (pongTimer) {
-        clearTimeout(pongTimer);
-        pongTimer = null;
-      }
-    }
-
-    function scheduleReconnect() {
-      if (disposed) return;
-      const delay = Math.min(RECONNECT_BASE_MS * 2 ** reconnectAttempt, RECONNECT_MAX_MS);
-      reconnectAttempt++;
-      reconnectTimer = setTimeout(connect, delay);
     }
 
     connect();

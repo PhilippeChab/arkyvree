@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { NotFoundError } from "@/server/errors/index.ts";
 import { TargetPathsMethods } from "@/server/services/rulesets/customization/TargetPathsService.ts";
 import { createTestRuleset, createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
@@ -12,22 +13,43 @@ async function seedPaths(kind: Kind, entityType?: EntityType) {
   return await TargetPathsMethods.getTargetPathsWithLabels(rulesetId, kind, entityType);
 }
 
-const isAptitudeGrant = (p: { category: string; path: string }) => p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
+const isAptitudeGrant = (p: { category: string; path: string }) =>
+  p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
 
 // Completing and validating a path through the API are covered in the customization target router test.
 describe("TargetPathsService", () => {
   test("lists paths in every category, with a readable label for each segment", async () => {
     const { paths, segmentLabels } = await seedPaths("modifier");
-    expect([...new Set(paths.map((p) => p.category))]).toEqual(expect.arrayContaining(["abilities", "skills", "saves", "combat", "identity", "aptitudes"]));
-    expect(paths[0]).toEqual(expect.objectContaining({ path: expect.any(String), description: expect.any(String), valueType: expect.any(String), operators: expect.any(Array) }));
+    expect([...new Set(paths.map((p) => p.category))]).toEqual(
+      expect.arrayContaining(["abilities", "skills", "saves", "combat", "identity", "aptitudes"]),
+    );
+    expect(paths[0]).toEqual(
+      expect.objectContaining({
+        path: expect.any(String),
+        description: expect.any(String),
+        valueType: expect.any(String),
+        operators: expect.any(Array),
+      }),
+    );
 
-    const unlabelled = paths.flatMap((p) => p.path.split(".")).filter((segment) => segment !== "*" && !/^\d+$/.test(segment) && !(segment in segmentLabels));
+    const unlabelled = paths
+      .flatMap((p) => p.path.split("."))
+      .filter((segment) => segment !== "*" && !/^\d+$/.test(segment) && !(segment in segmentLabels));
     expect([...new Set(unlabelled)]).toEqual([]);
     expect(segmentLabels).toMatchObject({
-      abilities: "Abilities", saves: "Saving Throws", powers: "Spells", classes: "Classes",
-      ac: "Armor Class", hp: "Hit Points", bab: "Base Attack Bonus", xp: "Experience Points",
-      checkpenalty: "Check Penalty", spellfailure: "Spell Failure", maxdex: "Maximum Dexterity",
-      strength: "Strength", "*": "All",
+      abilities: "Abilities",
+      saves: "Saving Throws",
+      powers: "Spells",
+      classes: "Classes",
+      ac: "Armor Class",
+      hp: "Hit Points",
+      bab: "Base Attack Bonus",
+      xp: "Experience Points",
+      checkpenalty: "Check Penalty",
+      spellfailure: "Spell Failure",
+      maxdex: "Maximum Dexterity",
+      strength: "Strength",
+      "*": "All",
       // A class's spells read as the class.
       wizard: "Wizard",
     });
@@ -37,7 +59,9 @@ describe("TargetPathsService", () => {
 
   test("writes descriptions for people: capitalized, without property type codes", async () => {
     const { paths } = await seedPaths("modifier");
-    expect(paths.filter((p) => p.category === "combat" && p.description[0] !== p.description[0].toUpperCase())).toEqual([]);
+    expect(paths.filter((p) => p.category === "combat" && p.description[0] !== p.description[0].toUpperCase())).toEqual(
+      [],
+    );
     const propertyPaths = paths.filter((p) => p.path.includes(".properties."));
     expect(propertyPaths.length).toBeGreaterThan(0);
     expect(propertyPaths.filter((p) => /[A-Z]{2,}_[A-Z]/.test(p.description))).toEqual([]);
@@ -48,7 +72,9 @@ describe("TargetPathsService", () => {
     expect(modifierWildcards.length).toBeGreaterThan(0);
     expect(modifierWildcards.filter((p) => /\bany\b/i.test(p.description))).toEqual([]);
 
-    const featWildcards = (await seedPaths("requirement")).paths.filter((p) => p.category === "feats" && p.path.includes(".*"));
+    const featWildcards = (await seedPaths("requirement")).paths.filter(
+      (p) => p.category === "feats" && p.path.includes(".*"),
+    );
     expect(featWildcards.length).toBeGreaterThan(0);
     expect(featWildcards.filter((p) => !p.description.startsWith("Any "))).toEqual([]);
   });
@@ -95,9 +121,28 @@ describe("TargetPathsService", () => {
   });
 
   describe("completing a path", () => {
-    const complete = async (partialPath: string, kind: Kind, { search, limit = 50, page = 1, flat = false }: { search?: string; limit?: number; page?: number; flat?: boolean } = {}) => {
+    const complete = async (
+      partialPath: string,
+      kind: Kind,
+      {
+        search,
+        limit = 50,
+        page = 1,
+        flat = false,
+      }: { search?: string; limit?: number; page?: number; flat?: boolean } = {},
+    ) => {
       const { rulesetId } = await getSeedCtx();
-      return await TargetPathsMethods.getCompletions(rulesetId, partialPath, partialPath.length, kind, undefined, search, limit, page, flat);
+      return await TargetPathsMethods.getCompletions(
+        rulesetId,
+        partialPath,
+        partialPath.length,
+        kind,
+        undefined,
+        search,
+        limit,
+        page,
+        flat,
+      );
     };
     const pathsOf = (result: Awaited<ReturnType<typeof complete>>) => result.items.map((item) => item.path);
 
@@ -108,19 +153,25 @@ describe("TargetPathsService", () => {
       expect(byLabel).toContain("skills.knowledgearcana.misc");
       expect(byLabel).toEqual([...byLabel].sort());
 
-      const [first, second] = [await complete("", "modifier", { search: "strength", flat: true, limit: 3 }), await complete("", "modifier", { search: "strength", flat: true, limit: 3, page: 2 })];
+      const [first, second] = [
+        await complete("", "modifier", { search: "strength", flat: true, limit: 3 }),
+        await complete("", "modifier", { search: "strength", flat: true, limit: 3, page: 2 }),
+      ];
       expect([first.nextPage, second.nextPage]).toEqual([2, 3]);
       expect([...pathsOf(first), ...pathsOf(second)].every((path) => path?.includes("strength"))).toBe(true);
       expect(pathsOf(second).filter((path) => pathsOf(first).includes(path))).toEqual([]);
     });
 
     test("describe a wildcard as all of a kind when modifying, and any when requiring", async () => {
-      const wildcard = async (kind: Kind) => (await complete("abilities.", kind)).items.find((item) => item.label === "*")?.detail;
+      const wildcard = async (kind: Kind) =>
+        (await complete("abilities.", kind)).items.find((item) => item.label === "*")?.detail;
       expect([await wildcard("modifier"), await wildcard("requirement")]).toEqual(["All abilities", "Any ability"]);
     });
 
     test("offer a leaf's siblings when the path goes a dot past it", async () => {
-      expect((await complete("abilities.strength.misc.", "modifier")).items.map((item) => item.insertText)).toEqual(["misc"]);
+      expect((await complete("abilities.strength.misc.", "modifier")).items.map((item) => item.insertText)).toEqual([
+        "misc",
+      ]);
     });
 
     test("complete a segment partly typed: its groups first, described, then its leaves", async () => {
@@ -134,21 +185,32 @@ describe("TargetPathsService", () => {
 
     test("complete a leaf partly typed with its path, and what it holds", async () => {
       expect((await complete("abilities.strength.mi", "modifier")).items).toMatchObject([
-        { label: "misc", kind: "property", path: "abilities.strength.misc", valueType: expect.any(String), operators: expect.any(Array) },
+        {
+          label: "misc",
+          kind: "property",
+          path: "abilities.strength.misc",
+          valueType: expect.any(String),
+          operators: expect.any(Array),
+        },
       ]);
     });
 
     test("describe an item's stat by its kind, whatever the item", async () => {
-      expect((await complete("items.weapons.club.tohit.st", "modifier")).items).toMatchObject([{ label: "strength", detail: "Str/Dex bonus to attack" }]);
+      expect((await complete("items.weapons.club.tohit.st", "modifier")).items).toMatchObject([
+        { label: "strength", detail: "Str/Dex bonus to attack" },
+      ]);
     });
 
     test("describe each weapon by its name", async () => {
-      expect((await complete("items.weapons.", "modifier", { limit: 1 })).items).toMatchObject([{ label: "bastardsword", detail: "Bastard Sword weapon stats" }]);
+      expect((await complete("items.weapons.", "modifier", { limit: 1 })).items).toMatchObject([
+        { label: "bastardsword", detail: "Bastard Sword weapon stats" },
+      ]);
     });
   });
 
   describe("validating a path", () => {
-    const validate = async (path: string, kind: Kind = "modifier") => TargetPathsMethods.validatePath((await getSeedCtx()).rulesetId, path, kind);
+    const validate = async (path: string, kind: Kind = "modifier") =>
+      TargetPathsMethods.validatePath((await getSeedCtx()).rulesetId, path, kind);
 
     test("accepts a full path", async () => {
       expect(await validate("abilities.strength.misc")).toMatchObject({ isValid: true, errors: [], suggestions: [] });
@@ -159,7 +221,10 @@ describe("TargetPathsService", () => {
       expect((await validate("")).errors[0]).toMatchObject({ code: "INVALID_CATEGORY", severity: "error" });
       const result = await validate("abil.something");
       expect(result.isValid).toBe(false);
-      expect(result.errors[0]).toMatchObject({ code: "INVALID_CATEGORY", message: expect.stringContaining("Unknown category 'abil'") });
+      expect(result.errors[0]).toMatchObject({
+        code: "INVALID_CATEGORY",
+        message: expect.stringContaining("Unknown category 'abil'"),
+      });
       expect(result.suggestions).toEqual(["abilities"]);
     });
 

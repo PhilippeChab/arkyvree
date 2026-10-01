@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import CharactersPolicy from "@/server/services/policies/CharactersPolicy.ts";
-import { createTestUser, createTestCharacter } from "@/tests/helpers.ts";
+import { createTestCharacter, createTestUser } from "@/tests/helpers.ts";
 
 /** A character of a new user's, with that user's session and a stranger's. */
 async function setup() {
@@ -35,7 +36,11 @@ describe("CharactersPolicy", () => {
     expect(await new CharactersPolicy(owner, archived).canHardDelete()).toBe(true);
 
     const [campaign] = await Campaigns.create(db, { name: "Active Campaign", rulesetId: character.rulesetId });
-    const [player] = await Players.create(db, { campaignId: campaign.id, userId: owner.userId, role: "Player Character" });
+    const [player] = await Players.create(db, {
+      campaignId: campaign.id,
+      userId: owner.userId,
+      role: "Player Character",
+    });
     await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
     await expect(new CharactersPolicy(owner, archived).canHardDelete()).rejects.toThrow(ConflictError);
 

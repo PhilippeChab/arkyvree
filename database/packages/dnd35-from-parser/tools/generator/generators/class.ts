@@ -1,19 +1,172 @@
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
-import { buildClassFeatSeeds, buildPoolParentNameMap, classAptitudePicks, classSpells, insertOrdinalInName, loadExistingFeats } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { stripClassSuffix, extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
-  toConstName,
-  quote,
-  truncateDesc,
-  MAX_CLASS_DESC,
+  buildClassFeatSeeds,
+  buildPoolParentNameMap,
+  classAptitudePicks,
+  classSpells,
+  insertOrdinalInName,
+  loadExistingFeats,
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import {
   formatStringArray,
   listField,
+  MAX_CLASS_DESC,
+  quote,
   requirementImports,
-  stringifyRequirement,
   stringifyFeatModifier,
   stringifyProperty,
+  stringifyRequirement,
+  toConstName,
+  truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import { extractGrantedFeatNames, stripClassSuffix } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+
+// ---------------------------------------------------------------------------
+// Generate FeatSeed[] TypeScript file
+// ---------------------------------------------------------------------------
+
+/** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */
+function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<string>): string {
+  const parts = [
+    `name: ${quote(feat.name)}`,
+    `description: ${quote(feat.description)}`,
+    ...(feat.stackable ? ["stackable: true"] : []),
+    ...(feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : []),
+    `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : quote(a))).join(", ")}]`,
+    ...(feat.modifiers?.length
+      ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`]
+      : []),
+    ...(feat.requirements?.length
+      ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`]
+      : []),
+    ...(feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : []),
+  ];
+  return `  { ${parts.join(", ")} },`;
+}
+
+/** A class's feats file: its own feats (`buildClassFeatSeeds`). */
+export function generateFeatSeeds(ref: ClassReference): string {
+  const aptitude = ref.mapping.classFeatureAptitude;
+  const uses = new Set<string>();
+  const feats = buildClassFeatSeeds(ref).map((feat) => stringifyFeat(feat, aptitude, uses));
+  return [
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...requirementImports(uses),
+    "",
+    `const APT = ${quote(aptitude)};`,
+    "",
+    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
+    ...feats,
+    `];`,
+    "",
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Build classFeatures array from mapping + detected
+// ---------------------------------------------------------------------------
+
+function findMappedName(rawName: string, features: ClassReference["mapping"]["features"]): string | undefined {
+  if (!features) return undefined;
+  // Exact match
+  if (features[rawName]) return features[rawName].seedName;
+
+  // Case-insensitive match
+  const lower = rawName.toLowerCase();
+  for (const [key, val] of Object.entries(features)) {
+    if (key.toLowerCase() === lower) return val.seedName;
+  }
+
+  return undefined;
+}
+
+/** A class's features and the existing feats it grants, a feature split per level named as `perLevelPicks` splits its pick. */
+function buildClassFeatures(
+  ref: ClassReference,
+  perLevelPicks: ReturnType<typeof classAptitudePicks>["perLevel"],
+): {
+  classFeatures: [number, string][];
+  autoFreeFeats: [number, string, string][];
+} {
+  const features: [number, string][] = [];
+  const autoFreeFeats: [number, string, string][] = [];
+  const { detected, mapping } = ref;
+  const features_ = ref.mapping.features;
+  const poolParentNames = buildPoolParentNameMap(features_, ref.raw.name, mapping.classFeatureAptitude);
+  const existingFeats = loadExistingFeats(ref._meta.book);
+  /**
+   * The existing feat a feature named `name` grants: that feat (with or without the class's suffix), or one its
+   * description says it gains as a bonus feat.
+   */
+  const existingFeatGranted = (name: string, description: string | undefined) => {
+    const baseName = stripClassSuffix(name, ref.raw.name);
+    if (baseName && existingFeats.has(baseName)) return baseName;
+    if (existingFeats.has(name)) return name;
+    return description ? extractGrantedFeatNames(description).find((n) => existingFeats.has(n)) : undefined;
+  };
+
+  // Build per-level feat name map for multi-occurrence aptitude expansions
+  const perLevelFeatNames = new Map<string, Map<number, string>>();
+  for (const [key, feat] of Object.entries(features_)) {
+    if (!feat.modifiers) continue;
+    for (const mod of feat.modifiers) {
+      if (perLevelPicks.has(mod.target)) {
+        const baseName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
+        const levelMap = new Map<number, string>();
+        for (const exp of perLevelPicks.get(mod.target)!) {
+          const perLevelName = insertOrdinalInName(baseName, exp.ordinal);
+          for (const level of exp.levels) levelMap.set(level, perLevelName);
+        }
+        perLevelFeatNames.set(key.toLowerCase(), levelMap);
+      }
+    }
+  }
+
+  for (const occ of detected.featureOccurrences) {
+    const mappingKey = mapping.occurrenceMap?.[occ.name];
+    const feature = mappingKey ? features_[mappingKey] : undefined;
+    if (feature?.skip) continue;
+
+    const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
+    const name = mappedName ?? poolParentNames.get(occ.name.toLowerCase()) ?? occ.name;
+
+    const freeFeatName = existingFeatGranted(name, feature?.description);
+    if (freeFeatName && mapping.classFeatureAptitude) {
+      for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, mapping.classFeatureAptitude]);
+    } else {
+      // Check for per-level split names
+      const resolvedKey = mappingKey?.toLowerCase() ?? occ.name.toLowerCase();
+      const levelMap = perLevelFeatNames.get(resolvedKey);
+      for (const level of occ.levels) {
+        features.push([level, levelMap?.get(level) ?? name]);
+      }
+    }
+  }
+
+  // Add mapping features that have a level but no matching occurrence
+  // (e.g. "Weapon and Armor Proficiency" — not in progression table, only in class features text)
+  const coveredKeys = new Set<string>();
+  for (const occ of detected.featureOccurrences) {
+    const key = mapping.occurrenceMap?.[occ.name] ?? occ.name;
+    coveredKeys.add(key.toLowerCase());
+  }
+  for (const [key, feat] of Object.entries(features_)) {
+    if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
+    if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
+    const name = feat.seedName ?? key;
+    const freeFeatName = existingFeatGranted(name, feat.description);
+    if (freeFeatName && mapping.classFeatureAptitude) {
+      autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
+    } else {
+      features.push([feat.level, name]);
+    }
+  }
+
+  features.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
+  autoFreeFeats.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
+  return { classFeatures: features, autoFreeFeats };
+}
 
 // ---------------------------------------------------------------------------
 // Generate ClassSeed TypeScript file
@@ -42,10 +195,18 @@ export function generateClassSeed(ref: ClassReference): string {
   lines.push(`  description: ${quote(truncateDesc(overrides.description ?? raw.description, MAX_CLASS_DESC))},`);
   lines.push(`  hd: ${detected.hd}, levels: ${detected.levels}, skillPoints: ${detected.skillPoints},`);
   lines.push(`  bab: ${quote(bab)},`);
-  lines.push(`  saves: { fortitude: ${quote(saves.fortitude)}, reflex: ${quote(saves.reflex)}, will: ${quote(saves.will)} },`);
+  lines.push(
+    `  saves: { fortitude: ${quote(saves.fortitude)}, reflex: ${quote(saves.reflex)}, will: ${quote(saves.will)} },`,
+  );
   lines.push(`  classSkills: ${formatStringArray(classSkills, 1)},`);
 
-  lines.push(...listField("requirements", requirements.map((req) => stringifyRequirement(req, uses, 2)), "  "));
+  lines.push(
+    ...listField(
+      "requirements",
+      requirements.map((req) => stringifyRequirement(req, uses, 2)),
+      "  ",
+    ),
+  );
 
   // Caster level advancement
   const cla = detected.casterLevelAdvancement;
@@ -122,7 +283,9 @@ export function generateClassSeed(ref: ClassReference): string {
   if (overrides.modifiers && overrides.modifiers.length > 0) {
     lines.push(`  modifiers: [`);
     for (const m of overrides.modifiers) {
-      lines.push(`    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)} },`);
+      lines.push(
+        `    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)} },`,
+      );
     }
     lines.push(`  ],`);
   }
@@ -165,7 +328,7 @@ export function generateClassSeed(ref: ClassReference): string {
   // Flag unresolved items as TODO comments
   // Convention: if the key exists in the overrides (even empty []), it's been reviewed — no TODO
   const todos: string[] = [];
-  if (!("requirements" in (overrides)) && detected.unresolvedPrereqs?.length) {
+  if (!("requirements" in overrides) && detected.unresolvedPrereqs?.length) {
     for (const p of detected.unresolvedPrereqs) todos.push(p);
   }
   if (!("aptitudePicks" in overrides) && detected.unresolvedAptitudePicks?.length) {
@@ -182,148 +345,10 @@ export function generateClassSeed(ref: ClassReference): string {
   }
 
   lines.push("");
-  return [`import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`, ...requirementImports(uses), "", ...lines].join("\n");
-}
-
-// ---------------------------------------------------------------------------
-// Generate FeatSeed[] TypeScript file
-// ---------------------------------------------------------------------------
-
-/** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */
-function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<string>): string {
-  const parts = [
-    `name: ${quote(feat.name)}`,
-    `description: ${quote(feat.description)}`,
-    ...feat.stackable ? ["stackable: true"] : [],
-    ...feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : [],
-    `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : quote(a))).join(", ")}]`,
-    ...feat.modifiers?.length ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`] : [],
-    ...feat.requirements?.length ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`] : [],
-    ...feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : [],
-  ];
-  return `  { ${parts.join(", ")} },`;
-}
-
-/** A class's feats file: its own feats (`buildClassFeatSeeds`). */
-export function generateFeatSeeds(ref: ClassReference): string {
-  const aptitude = ref.mapping.classFeatureAptitude;
-  const uses = new Set<string>();
-  const feats = buildClassFeatSeeds(ref).map((feat) => stringifyFeat(feat, aptitude, uses));
   return [
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    `import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`,
     ...requirementImports(uses),
     "",
-    `const APT = ${quote(aptitude)};`,
-    "",
-    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
-    ...feats,
-    `];`,
-    "",
+    ...lines,
   ].join("\n");
 }
-
-// ---------------------------------------------------------------------------
-// Build classFeatures array from mapping + detected
-// ---------------------------------------------------------------------------
-
-/** A class's features and the existing feats it grants, a feature split per level named as `perLevelPicks` splits its pick. */
-function buildClassFeatures(ref: ClassReference, perLevelPicks: ReturnType<typeof classAptitudePicks>["perLevel"]): {
-  classFeatures: [number, string][];
-  autoFreeFeats: [number, string, string][];
-} {
-  const features: [number, string][] = [];
-  const autoFreeFeats: [number, string, string][] = [];
-  const { detected, mapping } = ref;
-  const features_ = ref.mapping.features;
-  const poolParentNames = buildPoolParentNameMap(features_, ref.raw.name, mapping.classFeatureAptitude);
-  const existingFeats = loadExistingFeats(ref._meta.book);
-  /**
-   * The existing feat a feature named `name` grants: that feat (with or without the class's suffix), or one its
-   * description says it gains as a bonus feat.
-   */
-  const existingFeatGranted = (name: string, description: string | undefined) => {
-    const baseName = stripClassSuffix(name, ref.raw.name);
-    if (baseName && existingFeats.has(baseName)) return baseName;
-    if (existingFeats.has(name)) return name;
-    return description ? extractGrantedFeatNames(description).find((n) => existingFeats.has(n)) : undefined;
-  };
-
-  // Build per-level feat name map for multi-occurrence aptitude expansions
-  const perLevelFeatNames = new Map<string, Map<number, string>>();
-  for (const [key, feat] of Object.entries(features_)) {
-    if (!feat.modifiers) continue;
-    for (const mod of feat.modifiers) {
-      if (perLevelPicks.has(mod.target)) {
-        const baseName = feat.seedName ?? (feat.aptitude ? `${key} (${feat.aptitude})` : key);
-        const levelMap = new Map<number, string>();
-        for (const exp of perLevelPicks.get(mod.target)!) {
-          const perLevelName = insertOrdinalInName(baseName, exp.ordinal);
-          for (const level of exp.levels) levelMap.set(level, perLevelName);
-        }
-        perLevelFeatNames.set(key.toLowerCase(), levelMap);
-      }
-    }
-  }
-
-  for (const occ of detected.featureOccurrences) {
-    const mappingKey = mapping.occurrenceMap?.[occ.name];
-    const feature = mappingKey ? features_[mappingKey] : undefined;
-    if (feature?.skip) continue;
-
-    const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
-    const name = mappedName ?? (poolParentNames.get(occ.name.toLowerCase()) ?? occ.name);
-
-    const freeFeatName = existingFeatGranted(name, feature?.description);
-    if (freeFeatName && mapping.classFeatureAptitude) {
-      for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, mapping.classFeatureAptitude]);
-    } else {
-      // Check for per-level split names
-      const resolvedKey = mappingKey?.toLowerCase() ?? occ.name.toLowerCase();
-      const levelMap = perLevelFeatNames.get(resolvedKey);
-      for (const level of occ.levels) {
-        features.push([level, levelMap?.get(level) ?? name]);
-      }
-    }
-  }
-
-  // Add mapping features that have a level but no matching occurrence
-  // (e.g. "Weapon and Armor Proficiency" — not in progression table, only in class features text)
-  const coveredKeys = new Set<string>();
-  for (const occ of detected.featureOccurrences) {
-    const key = mapping.occurrenceMap?.[occ.name] ?? occ.name;
-    coveredKeys.add(key.toLowerCase());
-  }
-  for (const [key, feat] of Object.entries(features_)) {
-    if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
-    if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
-    const name = feat.seedName ?? key;
-    const freeFeatName = existingFeatGranted(name, feat.description);
-    if (freeFeatName && mapping.classFeatureAptitude) {
-      autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
-    } else {
-      features.push([feat.level, name]);
-    }
-  }
-
-  features.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
-  autoFreeFeats.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
-  return { classFeatures: features, autoFreeFeats };
-}
-
-function findMappedName(
-  rawName: string,
-  features: ClassReference["mapping"]["features"],
-): string | undefined {
-  if (!features) return undefined;
-  // Exact match
-  if (features[rawName]) return features[rawName].seedName;
-
-  // Case-insensitive match
-  const lower = rawName.toLowerCase();
-  for (const [key, val] of Object.entries(features)) {
-    if (key.toLowerCase() === lower) return val.seedName;
-  }
-
-  return undefined;
-}
-

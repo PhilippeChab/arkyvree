@@ -1,5 +1,5 @@
-import { db, type Db } from "@/server/database/index.ts";
 import type { CachedCowData, CachedRulesetData } from "@/server/cache/index.ts";
+import { db, type Db } from "@/server/database/index.ts";
 import {
   Campaigns,
   CharacterAbilities,
@@ -15,9 +15,15 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import {
-  refreshEntityData,
-  resolveOverrides,
-} from "@/server/services/rulesets/cow.ts";
+  KLASS_BONUS_SPELL_ABILITY_ID,
+  KLASS_CASTER_TYPE,
+  KLASS_LEVEL_BAB,
+  KLASS_LEVEL_SKILL_POINTS,
+  RULESET_SKILL_POINT_ABILITY_ID,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+} from "@/server/rulesets/dnd3.5/properties/index.ts";
+import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type {
   FeatWithPMR,
   InventoryEntry,
@@ -28,15 +34,7 @@ import type {
   PreloadedRulesetData,
   RaceWithPMR,
 } from "@/server/rulesets/types.ts";
-import {
-  KLASS_BONUS_SPELL_ABILITY_ID,
-  KLASS_CASTER_TYPE,
-  KLASS_LEVEL_BAB,
-  KLASS_LEVEL_SKILL_POINTS,
-  RULESET_SKILL_POINT_ABILITY_ID,
-  SKILL_IMPACTED_BY_WEIGHT,
-  SKILL_USABLE_WITHOUT_TRAINING,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { refreshEntityData, resolveOverrides } from "@/server/services/rulesets/cow.ts";
 import type {
   Campaign,
   Character,
@@ -48,7 +46,6 @@ import type {
   Requirement,
   Ruleset,
 } from "@/shared/relations.ts";
-import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 
 // PMR types re-exported for the two files that reach in for them
 // (`DetailedCharacter.ts`, `DetailedCharacterSpellcasting.ts`).
@@ -64,9 +61,7 @@ interface SharedCharacterData {
   campaign: Campaign | undefined;
   cowData: CachedCowData;
   rulesetData: CachedRulesetData;
-  characterAbilityRecords: Awaited<
-    ReturnType<typeof CharacterAbilities.findMany>
-  >;
+  characterAbilityRecords: Awaited<ReturnType<typeof CharacterAbilities.findMany>>;
   race: Race;
   characterLanguages: Awaited<ReturnType<typeof CharacterLanguages.findMany>>;
   inventory: Awaited<ReturnType<typeof CharacterInventoryRepository.findMany>>;
@@ -85,10 +80,7 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}
 
-  async loadSharedData(
-    database: Db = db,
-    preloaded: PreloadedRulesetData,
-  ): Promise<SharedCharacterData> {
+  async loadSharedData(database: Db = db, preloaded: PreloadedRulesetData): Promise<SharedCharacterData> {
     const { ruleset, cowData, rulesetData } = preloaded;
 
     // Character's race — read from the composed ruleset cache.
@@ -103,13 +95,9 @@ export default class DetailedCharacterDataLoader {
     const playerCharacter = await PlayerCharacters.findOne(database, {
       characterId: this.character.id,
     });
-    const player = playerCharacter
-      ? await Players.findOne(database, { id: playerCharacter.playerId })
-      : undefined;
+    const player = playerCharacter ? await Players.findOne(database, { id: playerCharacter.playerId }) : undefined;
 
-    const campaign = player
-      ? await Campaigns.findOne(database, { id: player.campaignId })
-      : undefined;
+    const campaign = player ? await Campaigns.findOne(database, { id: player.campaignId }) : undefined;
     const characterAbilityRecords = await CharacterAbilities.findMany(database, {
       characterId: this.character.id,
     });
@@ -165,10 +153,7 @@ export default class DetailedCharacterDataLoader {
     const overrideMap = cowData.idResolveMap;
     const resolveId = (id: string) => overrideMap.get(id) ?? id;
 
-    const validRulesetIds = new Set([
-      this.character.rulesetId,
-      ...cowData.sourceChain,
-    ]);
+    const validRulesetIds = new Set([this.character.rulesetId, ...cowData.sourceChain]);
 
     // Apply cached ruleset data
     const {
@@ -204,18 +189,12 @@ export default class DetailedCharacterDataLoader {
     const skillPointAbilityProp = (rulesetData.propertiesByEntityType.get("rulesets") ?? []).find(
       (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
     );
-    const skillPointAbilityId = skillPointAbilityProp?.value
-      ? resolveId(skillPointAbilityProp.value)
-      : null;
+    const skillPointAbilityId = skillPointAbilityProp?.value ? resolveId(skillPointAbilityProp.value) : null;
 
     // Resolve character ability scores
     const resolvedAbilityRecords =
-      overrideMap.size > 0
-        ? resolveOverrides(characterAbilityRecords, overrideMap)
-        : characterAbilityRecords;
-    const abilityLookup = new Map(
-      rulesetAbilities.map((a) => [a.id, a.name]),
-    );
+      overrideMap.size > 0 ? resolveOverrides(characterAbilityRecords, overrideMap) : characterAbilityRecords;
+    const abilityLookup = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
     const characterAbilityScores = resolvedAbilityRecords.map((ca) => ({
       abilityId: ca.abilityId,
       name: abilityLookup.get(ca.abilityId) ?? "Unknown",
@@ -224,12 +203,8 @@ export default class DetailedCharacterDataLoader {
 
     // Process character levels
     const resolvedCharacterLevels =
-      overrideMap.size > 0
-        ? resolveOverrides(rawCharacterLevels, overrideMap)
-        : rawCharacterLevels;
-    const excludeIds = projectedData?.excludeCharacterLevelIds
-      ? new Set(projectedData.excludeCharacterLevelIds)
-      : null;
+      overrideMap.size > 0 ? resolveOverrides(rawCharacterLevels, overrideMap) : rawCharacterLevels;
+    const excludeIds = projectedData?.excludeCharacterLevelIds ? new Set(projectedData.excludeCharacterLevelIds) : null;
     const characterLevels = excludeIds
       ? resolvedCharacterLevels.filter((l) => !excludeIds.has(l.id))
       : resolvedCharacterLevels;
@@ -250,9 +225,7 @@ export default class DetailedCharacterDataLoader {
     // Derive IDs for Round 4. languagesById is wrapped by cowResolvingMap —
     // stored pre-COW language ids auto-resolve on lookup.
     const characterLanguageIds = characterLanguages.map((l) => l.languageId);
-    const equippedItemIds = resolvedInventory
-      .filter((inv) => inv.equipped)
-      .map((inv) => inv.itemsInRule.id);
+    const equippedItemIds = resolvedInventory.filter((inv) => inv.equipped).map((inv) => inv.itemsInRule.id);
 
     // ── Round 4: character-scoped queries (5); ruleset-scoped lookups resolve from cache ──
     const rawRealSkills = await Skills.findManyByCharacterLevelIds(database, {
@@ -293,40 +266,27 @@ export default class DetailedCharacterDataLoader {
     const klassIds = klassLevelsRaw.map((level) => level.klassId);
 
     // Process skills
-    const realSkills =
-      overrideMap.size > 0
-        ? resolveOverrides(rawRealSkills, overrideMap)
-        : rawRealSkills;
-    const skills = projectedData?.skills
-      ? [...realSkills, ...projectedData.skills]
-      : realSkills;
+    const realSkills = overrideMap.size > 0 ? resolveOverrides(rawRealSkills, overrideMap) : rawRealSkills;
+    const skills = projectedData?.skills ? [...realSkills, ...projectedData.skills] : realSkills;
 
     // Process feats (dedup, merge picked+given)
-    const resolvedPickedFeats =
-      overrideMap.size > 0
-        ? resolveOverrides(rawPickedFeats, overrideMap)
-        : rawPickedFeats;
-    const resolvedGivenFeats =
-      overrideMap.size > 0
-        ? resolveOverrides(rawGivenFeats, overrideMap)
-        : rawGivenFeats;
-    const pickedFeats = refreshEntityData(
-      resolvedPickedFeats,
-      rulesetFeats,
-      ["name", "description", "stackable", "selectable"],
-    );
-    const givenFeats = refreshEntityData(
-      resolvedGivenFeats,
-      rulesetFeats,
-      ["name", "description", "stackable", "selectable"],
-    );
-    const allGivenFeats = projectedData?.givenFeats
-      ? [...givenFeats, ...projectedData.givenFeats]
-      : givenFeats;
+    const resolvedPickedFeats = overrideMap.size > 0 ? resolveOverrides(rawPickedFeats, overrideMap) : rawPickedFeats;
+    const resolvedGivenFeats = overrideMap.size > 0 ? resolveOverrides(rawGivenFeats, overrideMap) : rawGivenFeats;
+    const pickedFeats = refreshEntityData(resolvedPickedFeats, rulesetFeats, [
+      "name",
+      "description",
+      "stackable",
+      "selectable",
+    ]);
+    const givenFeats = refreshEntityData(resolvedGivenFeats, rulesetFeats, [
+      "name",
+      "description",
+      "stackable",
+      "selectable",
+    ]);
+    const allGivenFeats = projectedData?.givenFeats ? [...givenFeats, ...projectedData.givenFeats] : givenFeats;
 
-    const pickedFeatIds = new Set(
-      pickedFeats.filter((f) => !f.stackable).map((f) => f.id),
-    );
+    const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.stackable).map((f) => f.id));
     const seenGivenFeatIds = new Set<string>();
     const dedupedGivenFeats = allGivenFeats.filter((feat) => {
       if (!feat.stackable) {
@@ -349,40 +309,22 @@ export default class DetailedCharacterDataLoader {
     );
 
     const realFeats = [...pickedFeats, ...dedupedGivenFeats];
-    const allFeats = projectedData?.feats
-      ? [...realFeats, ...projectedData.feats]
-      : realFeats;
+    const allFeats = projectedData?.feats ? [...realFeats, ...projectedData.feats] : realFeats;
 
     // Apply feat modifiers in character-level order so later selections win
     // for `set` targets (e.g. bonded.familiar.race). SQL joins don't preserve
     // pick order, and an edited earlier level is appended in projectedData.
-    const levelCreatedAt = new Map(
-      allCharacterLevels.map((level) => [level.id, Date.parse(level.createdAt)]),
-    );
-    allFeats.sort((a, b) =>
-      (levelCreatedAt.get(a.characterLevelId) ?? 0) -
-      (levelCreatedAt.get(b.characterLevelId) ?? 0),
+    const levelCreatedAt = new Map(allCharacterLevels.map((level) => [level.id, Date.parse(level.createdAt)]));
+    allFeats.sort(
+      (a, b) => (levelCreatedAt.get(a.characterLevelId) ?? 0) - (levelCreatedAt.get(b.characterLevelId) ?? 0),
     );
 
     // Process powers
     const resolvedPickedPowers =
-      overrideMap.size > 0
-        ? resolveOverrides(rawPickedPowers, overrideMap)
-        : rawPickedPowers;
-    const resolvedGivenPowers =
-      overrideMap.size > 0
-        ? resolveOverrides(rawGivenPowers, overrideMap)
-        : rawGivenPowers;
-    const pickedPowers = refreshEntityData(
-      resolvedPickedPowers,
-      rulesetPowers,
-      ["name", "description"],
-    );
-    const givenPowers = refreshEntityData(
-      resolvedGivenPowers,
-      rulesetPowers,
-      ["name", "description"],
-    );
+      overrideMap.size > 0 ? resolveOverrides(rawPickedPowers, overrideMap) : rawPickedPowers;
+    const resolvedGivenPowers = overrideMap.size > 0 ? resolveOverrides(rawGivenPowers, overrideMap) : rawGivenPowers;
+    const pickedPowers = refreshEntityData(resolvedPickedPowers, rulesetPowers, ["name", "description"]);
+    const givenPowers = refreshEntityData(resolvedGivenPowers, rulesetPowers, ["name", "description"]);
 
     const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
       (acc, power) => {
@@ -423,13 +365,7 @@ export default class DetailedCharacterDataLoader {
     // Flat modifier list scoped to this character — used by resolvePossessedFeatIds /
     // resolvePossessedPowers (which scan for "set feats/powers.<slug>.possessed/known"
     // targets). Built by O(entities) map lookups, not an O(all ruleset mods) filter.
-    const rulesetScopedModifierSources = [
-      race.id,
-      ...equippedItemIds,
-      ...klassLevelIds,
-      ...featIds,
-      ...powerIds,
-    ];
+    const rulesetScopedModifierSources = [race.id, ...equippedItemIds, ...klassLevelIds, ...featIds, ...powerIds];
     const baseModifiers: Modifier[] = [];
     for (const id of rulesetScopedModifierSources) {
       const group = rulesetData.modifiersBySource.get(id);
@@ -458,11 +394,12 @@ export default class DetailedCharacterDataLoader {
     // those on virtually possessed feats/powers, since the unified `feats`
     // and `powers` arrays below pull from `rulesetData.modifiersBySource`).
     // Only character-direct modifiers can have requirements the cache misses.
-    const extraModifierRequirements = characterSourcedModifiers.length > 0
-      ? await Requirements.findManyByEntityIds(database, {
-          entityIds: characterSourcedModifiers.map((m) => m.id),
-        })
-      : [];
+    const extraModifierRequirements =
+      characterSourcedModifiers.length > 0
+        ? await Requirements.findManyByEntityIds(database, {
+            entityIds: characterSourcedModifiers.map((m) => m.id),
+          })
+        : [];
 
     // ── Per-load augmentation indices (everything else is pre-indexed on rulesetData) ──
     const groupPush = <V>(map: Map<string, V[]>, key: string, val: V): void => {
@@ -503,9 +440,7 @@ export default class DetailedCharacterDataLoader {
       const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
       const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
       const templateProperties = item.sourceItemId
-        ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter(
-            (p) => !ownPropertyTypes.has(p.type),
-          )
+        ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter((p) => !ownPropertyTypes.has(p.type))
         : [];
       const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
       const templateRequirements = item.sourceItemId
@@ -516,9 +451,7 @@ export default class DetailedCharacterDataLoader {
         item: {
           ...item,
           properties: [...templateProperties, ...ownProperties],
-          modifiers: inv.equipped
-            ? (rulesetData.modifiersBySource.get(item.id) ?? [])
-            : [],
+          modifiers: inv.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
           requirements: [...templateRequirements, ...ownRequirements],
         },
       };
@@ -712,12 +645,7 @@ export default class DetailedCharacterDataLoader {
     const ids: string[] = [];
     const seen = new Set<string>();
     for (const mod of modifiers) {
-      if (
-        mod.operator !== "set" ||
-        mod.valueType !== "boolean" ||
-        mod.value !== "true"
-      )
-        continue;
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
       const parts = mod.target.split(".");
       if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
       const featId = featIdBySlug.get(parts[1]);
@@ -757,4 +685,3 @@ export default class DetailedCharacterDataLoader {
     return results;
   }
 }
-

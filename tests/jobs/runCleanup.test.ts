@@ -9,11 +9,7 @@ import { silentJobHelpers } from "@/tests/helpers.ts";
 describe("runCleanup", () => {
   test("hard-deletes demo users whose expires_at has passed", async () => {
     const expired = await AuthenticationMethods.startDemo();
-    await Users.update(
-      db,
-      { expiresAt: new Date(Date.now() - 1000).toISOString() },
-      { id: expired.user.id },
-    );
+    await Users.update(db, { expiresAt: new Date(Date.now() - 1000).toISOString() }, { id: expired.user.id });
 
     const fresh = await AuthenticationMethods.startDemo();
 

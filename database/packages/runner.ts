@@ -1,12 +1,15 @@
 import { eq } from "drizzle-orm";
-import { contentPackagesInRules } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
+
 import { registry } from "@/database/packages/registry.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
+import { contentPackagesInRules } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
 
 /** A package's updates in version order, checked to follow its seeds without a gap. */
 function updatesOf(pkg: ContentPackage) {
-  const versions = Object.keys(pkg.updates ?? {}).map(Number).sort((a, b) => a - b);
+  const versions = Object.keys(pkg.updates ?? {})
+    .map(Number)
+    .sort((a, b) => a - b);
   for (const [i, version] of versions.entries()) {
     if (version !== pkg.seedsVersion + i + 1) {
       throw new Error(`${pkg.name}: update v${version} doesn't follow v${pkg.seedsVersion + i}`);
@@ -49,17 +52,22 @@ export function planPackages(packages: ContentPackage[], applied: Map<string, nu
 /** Installs the packages missing from the database, and brings the others up to date, or applies none (`planPackages`). */
 export async function applyPackages(db: Db, packages: ContentPackage[] = registry) {
   const applied = new Map(
-    (await db.select({ name: contentPackagesInRules.name, version: contentPackagesInRules.version }).from(contentPackagesInRules))
-      .map((row) => [row.name, row.version]),
+    (
+      await db
+        .select({ name: contentPackagesInRules.name, version: contentPackagesInRules.version })
+        .from(contentPackagesInRules)
+    ).map((row) => [row.name, row.version]),
   );
 
   const { plans, problems } = planPackages(packages, applied);
   if (problems.size > 0) {
-    throw new Error([
-      "No package applied:",
-      ...[...problems.values()].flat().map((line) => `  - ${line}`),
-      "A database below a package's seeds needs those updates back (from git history) until it has them, or a reset if it's a development one.",
-    ].join("\n"));
+    throw new Error(
+      [
+        "No package applied:",
+        ...[...problems.values()].flat().map((line) => `  - ${line}`),
+        "A database below a package's seeds needs those updates back (from git history) until it has them, or a reset if it's a development one.",
+      ].join("\n"),
+    );
   }
 
   for (const { pkg, updates, version } of plans) {
@@ -70,7 +78,11 @@ export async function applyPackages(db: Db, packages: ContentPackage[] = registr
       continue;
     }
 
-    console.log(from === undefined ? `  Installing ${pkg.name} v${version}...` : `  Updating ${pkg.name} v${from} → v${version}...`);
+    console.log(
+      from === undefined
+        ? `  Installing ${pkg.name} v${version}...`
+        : `  Updating ${pkg.name} v${from} → v${version}...`,
+    );
     await db.transaction(async (tx) => {
       if (from === undefined) {
         for (const seed of pkg.seeds) await seed(tx);
@@ -80,7 +92,10 @@ export async function applyPackages(db: Db, packages: ContentPackage[] = registr
       if (from === undefined) {
         await tx.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
       } else {
-        await tx.update(contentPackagesInRules).set({ version, appliedAt: new Date() }).where(eq(contentPackagesInRules.name, pkg.name));
+        await tx
+          .update(contentPackagesInRules)
+          .set({ version, appliedAt: new Date() })
+          .where(eq(contentPackagesInRules.name, pkg.name));
       }
     });
 

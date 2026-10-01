@@ -1,20 +1,32 @@
-import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { GoldDivider, PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
-import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
-import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
 import {
   HelpOutlined as FaqIcon,
   Map as MapIcon,
-  MenuBook as RulesetIcon,
   Person as PersonIcon,
+  MenuBook as RulesetIcon,
 } from "@mui/icons-material";
-import { Alert, Box, Card, CardActionArea, CardContent, Container, Link, Paper, type Theme, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  Container,
+  Link,
+  Paper,
+  type Theme,
+  Typography,
+} from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { DiceSpinner, GoldDivider, PageTransition } from "@/client/src/components/common/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { fadeInUpSx } from "@/client/src/lib/animations.ts";
+import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
+import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
+import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
 
 const textShadow = "0px 2px 4px rgba(0,0,0,0.3)";
 

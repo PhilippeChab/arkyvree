@@ -1,17 +1,26 @@
-import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import type { ClassSectionProps } from "./types.ts";
-import { DescriptionCell, RulesetSectionTable, SpellLevelFilter } from "@/client/src/pages/rulesets/components/index.ts";
-import { SearchBar, LoadMoreButton } from "@/client/src/components/common/index.ts";
-import { type rpc } from "@/client/src/services/rpc.ts";
 import { Bolt as SpellListIcon } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
-import { classSpellListQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-type SpellListPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"], 200>;
+import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import {
+  DescriptionCell,
+  RulesetSectionTable,
+  SpellLevelFilter,
+} from "@/client/src/pages/rulesets/components/index.ts";
+import { classSpellListQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
+
+import type { ClassSectionProps } from "./types.ts";
+
+type SpellListPaginated = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"],
+  200
+>;
 type Spell = SpellListPaginated["items"][number];
 
 const COLUMNS = [
@@ -40,9 +49,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
       case "name":
         return spell.name;
       case "description":
-        return (
-          <DescriptionCell text={spell.description} />
-        );
+        return <DescriptionCell text={spell.description} />;
       default:
         return null;
     }

@@ -1,9 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+
+import { sql } from "drizzle-orm";
 import { upgradeWebSocket, websocket } from "hono/bun";
 import type { WSContext } from "hono/ws";
 import { Client as PgClient } from "pg";
-
-import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
 
@@ -88,12 +88,41 @@ function clearHeartbeat() {
   }
 }
 
+export async function stopBroadcastListener(): Promise<void> {
+  shuttingDownListener = true;
+  clearHeartbeat();
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  if (listenClient) {
+    await listenClient.end();
+    listenClient = null;
+  }
+}
+
+const notifiedThisRequest = new AsyncLocalStorage<Set<string>>();
+
+/** Runs a request, collecting the users its notifications go to (`noteNotified`), to push to once it's answered. */
+export async function collectingNotified(run: () => Promise<void>) {
+  const notified = new Set<string>();
+  await notifiedThisRequest.run(notified, run);
+  return notified;
+}
+
+/** Records users the current request notified. Outside a request (the worker), whoever notifies pushes itself. */
+export function noteNotified(userIds: Iterable<string>) {
+  const notified = notifiedThisRequest.getStore();
+  if (notified) for (const userId of userIds) notified.add(userId);
+}
+
 function scheduleReconnect() {
   if (shuttingDownListener || reconnectTimer) return;
   const delay = Math.min(1000 * 2 ** currentAttempt, 30_000);
   console.warn(`[ws] Listen client disconnected — reconnecting in ${delay}ms`);
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
+    // oxlint-disable-next-line no-use-before-define -- connectListener and scheduleReconnect call each other
     connectListener();
   }, delay);
 }
@@ -168,32 +197,4 @@ export async function startBroadcastListener(): Promise<void> {
   shuttingDownListener = false;
   currentAttempt = 0;
   await connectListener();
-}
-
-export async function stopBroadcastListener(): Promise<void> {
-  shuttingDownListener = true;
-  clearHeartbeat();
-  if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
-  }
-  if (listenClient) {
-    await listenClient.end();
-    listenClient = null;
-  }
-}
-
-const notifiedThisRequest = new AsyncLocalStorage<Set<string>>();
-
-/** Runs a request, collecting the users its notifications go to (`noteNotified`), to push to once it's answered. */
-export async function collectingNotified(run: () => Promise<void>) {
-  const notified = new Set<string>();
-  await notifiedThisRequest.run(notified, run);
-  return notified;
-}
-
-/** Records users the current request notified. Outside a request (the worker), whoever notifies pushes itself. */
-export function noteNotified(userIds: Iterable<string>) {
-  const notified = notifiedThisRequest.getStore();
-  if (notified) for (const userId of userIds) notified.add(userId);
 }

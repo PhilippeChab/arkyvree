@@ -1,15 +1,15 @@
 import { afterEach, expect, test } from "bun:test";
+
+import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-
-import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
 import { TargetPathsMethods } from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
 
@@ -19,8 +19,13 @@ async function overlap(read: () => Promise<unknown>, mutate: () => Promise<unkno
   const ready = Promise.withResolvers<void>();
   const release = Promise.withResolvers<void>();
   const old = runWithRequestCache(async () => {
-    try { await read(); ready.resolve(); }
-    catch (error) { ready.reject(error); throw error; }
+    try {
+      await read();
+      ready.resolve();
+    } catch (error) {
+      ready.reject(error);
+      throw error;
+    }
     await release.promise;
     await read();
   });
@@ -44,16 +49,17 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     invalidateAll();
     await overlap(
       () => TargetPathsMethods.getTargetPathsWithLabels(host.id, "requirement"),
-      () => action === "subscribe"
-        ? RulesetsMethods.subscribeExtension(session, host.id, [extension.id])
-        : RulesetsMethods.unsubscribeExtension(session, host.id, extension.id),
+      () =>
+        action === "subscribe"
+          ? RulesetsMethods.subscribeExtension(session, host.id, [extension.id])
+          : RulesetsMethods.unsubscribeExtension(session, host.id, extension.id),
     );
     await runWithRequestCache(async () => {
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
         expect(rulesetData.featsById.has(feat.id)).toBe(action === "subscribe");
       });
       const paths = await TargetPathsMethods.getTargetPathsWithLabels(host.id, "requirement");
-      expect(paths.paths.some(path => path.path === "feats.extensionmarker.possessed")).toBe(action === "subscribe");
+      expect(paths.paths.some((path) => path.path === "feats.extensionmarker.possessed")).toBe(action === "subscribe");
     });
   });
 }
@@ -65,23 +71,30 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     const seed = await getSeedCtx();
     const [local] = await Feats.create(db, { rulesetId: fork.id, name: "Before Marker", description: "before" });
     invalidateAll();
-    const read = () => scenario === "paths"
-      ? TargetPathsMethods.getTargetPathsWithLabels(fork.id, "requirement")
-      : withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData);
+    const read = () =>
+      scenario === "paths"
+        ? TargetPathsMethods.getTargetPathsWithLabels(fork.id, "requirement")
+        : withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData);
     let copyId: string | undefined;
     await overlap(read, async () => {
       if (scenario === "cow") {
-        const copy = await PropertiesMethods.createEntityProperty(session, fork.id, "feats", seed.featMap.Toughness, { type: "QA", value: "1" });
+        const copy = await PropertiesMethods.createEntityProperty(session, fork.id, "feats", seed.featMap.Toughness, {
+          type: "QA",
+          value: "1",
+        });
         copyId = copy.resolvedEntityId;
       } else {
-        await FeatsMethods.updateRulesetFeat(session, fork.id, local.id, { name: "After Marker", description: "after" });
+        await FeatsMethods.updateRulesetFeat(session, fork.id, local.id, {
+          name: "After Marker",
+          description: "after",
+        });
       }
     });
     await runWithRequestCache(async () => {
       if (scenario === "paths") {
         const result = await TargetPathsMethods.getTargetPathsWithLabels(fork.id, "requirement");
-        expect(result.paths.some(path => path.path === "feats.aftermarker.possessed")).toBe(true);
-        expect(result.paths.some(path => path.path === "feats.beforemarker.possessed")).toBe(false);
+        expect(result.paths.some((path) => path.path === "feats.aftermarker.possessed")).toBe(true);
+        expect(result.paths.some((path) => path.path === "feats.beforemarker.possessed")).toBe(false);
       } else {
         await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
           if (scenario === "cow") {

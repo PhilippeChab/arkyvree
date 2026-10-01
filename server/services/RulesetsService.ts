@@ -1,3 +1,7 @@
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { getTableName } from "drizzle-orm";
+import { unionAll } from "drizzle-orm/pg-core";
+
 import {
   abilitiesInRules,
   aptitudesInRules,
@@ -15,10 +19,15 @@ import {
 } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { unionAll } from "drizzle-orm/pg-core";
-import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  InternalError,
+  NotFoundError,
+  STALE_ENTITY_MESSAGE,
+  UnprocessableEntityError,
+} from "@/server/errors/index.ts";
 import {
   Abilities,
   Activities,
@@ -27,8 +36,8 @@ import {
   CharacterLanguages,
   CharacterLevelFeats,
   CharacterLevelPowers,
-  CharacterLevelSkills,
   CharacterLevels,
+  CharacterLevelSkills,
   Characters,
   Contributors,
   EntitySnapshots,
@@ -53,9 +62,9 @@ import {
   Skills,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { assertCanBeExtension, getRulesetPolicy, isStarrable } from "@/server/services/rulesets/helpers.ts";
 import {
   buildSourceChain,
   deleteModifiersWithCascade,
@@ -66,8 +75,8 @@ import {
   NAME_FALLBACK_ENTITY_TYPES,
 } from "@/server/services/rulesets/cow.ts";
 import { type EntityType } from "@/server/services/rulesets/hashing.ts";
+import { assertCanBeExtension, getRulesetPolicy, isStarrable } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 const ENTITY_REPOS = {
   abilities: Abilities,
@@ -102,11 +111,7 @@ const ENTITY_TABLES = {
 // COW shadow whose source entity belongs to the extension. Unsubscribe deletes
 // those shadows, so a shadow pick would be silently orphaned without this
 // check.
-async function isExtensionInUseByHost(
-  tx: Db,
-  hostRulesetId: string,
-  extensionId: string,
-): Promise<boolean> {
+async function isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId: string): Promise<boolean> {
   // Group snapshots by entity type, then resolve each type's source entities
   // in one batched query (avoids N+1 over snapshot count). Build a per-type
   // list of host-owned shadow IDs whose source entity belongs to the extension.
@@ -120,7 +125,10 @@ async function isExtensionInUseByHost(
 
   const shadowIdsByType: Partial<Record<EntityType, string[]>> = {};
   for (const [type, ids] of Object.entries(sourceIdsByType) as [EntityType, string[]][]) {
-    const sources = await ENTITY_REPOS[type].findMany(tx, { ids } as never) as Array<{ id: string; rulesetId: string }>;
+    const sources = (await ENTITY_REPOS[type].findMany(tx, { ids } as never)) as Array<{
+      id: string;
+      rulesetId: string;
+    }>;
     const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
     const forked = snapshots
       .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
@@ -130,33 +138,51 @@ async function isExtensionInUseByHost(
   const shadow = (type: EntityType) => shadowIdsByType[type] ?? [];
 
   return (
-    await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowFeatIds: shadow("feats"),
-    })
-    || await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowAptitudeIds: shadow("aptitudes"),
-    })
-    || await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowSkillIds: shadow("skills"),
-    })
-    || await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowPowerIds: shadow("powers"),
-    })
-    || await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowAptitudeIds: shadow("aptitudes"),
-    })
-    || await CharacterLevels.existsByKlassPickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowKlassIds: shadow("klasses"),
-    })
-    || await Characters.existsByRaceFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowRaceIds: shadow("races"),
-    })
-    || await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowLanguageIds: shadow("languages"),
-    })
-    || await CharacterInventory.existsByItemPickFromExtension(tx, {
-      hostRulesetId, extensionRulesetId: extensionId, shadowItemIds: shadow("items"),
-    })
+    (await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowFeatIds: shadow("feats"),
+    })) ||
+    (await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowAptitudeIds: shadow("aptitudes"),
+    })) ||
+    (await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowSkillIds: shadow("skills"),
+    })) ||
+    (await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowPowerIds: shadow("powers"),
+    })) ||
+    (await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowAptitudeIds: shadow("aptitudes"),
+    })) ||
+    (await CharacterLevels.existsByKlassPickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowKlassIds: shadow("klasses"),
+    })) ||
+    (await Characters.existsByRaceFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowRaceIds: shadow("races"),
+    })) ||
+    (await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowLanguageIds: shadow("languages"),
+    })) ||
+    (await CharacterInventory.existsByItemPickFromExtension(tx, {
+      hostRulesetId,
+      extensionRulesetId: extensionId,
+      shadowItemIds: shadow("items"),
+    }))
   );
 }
 
@@ -231,9 +257,7 @@ async function assertExtensionsNameCompatible(
 
   const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
 
-  const typesToCheck = (Object.keys(ENTITY_TABLES) as EntityType[]).filter(
-    (t) => t !== "aptitudes",
-  );
+  const typesToCheck = (Object.keys(ENTITY_TABLES) as EntityType[]).filter((t) => t !== "aptitudes");
 
   const subqueries = typesToCheck.map((entityType) => {
     const table = ENTITY_TABLES[entityType];
@@ -244,17 +268,22 @@ async function assertExtensionsNameCompatible(
         rulesetId: table.rulesetId,
       })
       .from(table)
-      .leftJoin(entitySnapshotsInRules, and(
-        eq(entitySnapshotsInRules.forkedEntityId, table.id),
-        eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
-        eq(entitySnapshotsInRules.entityType, entityType),
-      ))
-      .where(and(
-        inArray(table.rulesetId, rulesetIds),
-        isNull(entitySnapshotsInRules.id),
-        isNull(table.deletedAt),
-        isNull(table.campaignId),
-      ));
+      .leftJoin(
+        entitySnapshotsInRules,
+        and(
+          eq(entitySnapshotsInRules.forkedEntityId, table.id),
+          eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
+          eq(entitySnapshotsInRules.entityType, entityType),
+        ),
+      )
+      .where(
+        and(
+          inArray(table.rulesetId, rulesetIds),
+          isNull(entitySnapshotsInRules.id),
+          isNull(table.deletedAt),
+          isNull(table.campaignId),
+        ),
+      );
   });
 
   const [first, second, ...rest] = subqueries;
@@ -294,9 +323,7 @@ async function assertExtensionsNameCompatible(
       if (isPairableType) {
         const involvesHost = ownerIds.has(hostId);
         if (!involvesHost) continue;
-        throw new ConflictError(
-          `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset`,
-        );
+        throw new ConflictError(`Cannot subscribe: ${entityType} "${name}" already exists in this ruleset`);
       }
       throw new ConflictError(
         `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
@@ -306,12 +333,29 @@ async function assertExtensionsNameCompatible(
 }
 
 export const RulesetsMethods = {
-  async getAllRulesets(session: Session, where: {
-    scope?: "base" | "forked" | "community" | "createdByMe" | "createdByMePrivate" | "archived" | "published" | "starred" | "campaignAccessible" | "myDrafts" | "extensions" | "systems" | "contributedTo";
-    search?: string;
-    orderBy?: "createdAt" | "updatedAt";
-    orderDir?: "asc" | "desc";
-  }, pagination: { limit: number; page: number }) {
+  async getAllRulesets(
+    session: Session,
+    where: {
+      scope?:
+        | "base"
+        | "forked"
+        | "community"
+        | "createdByMe"
+        | "createdByMePrivate"
+        | "archived"
+        | "published"
+        | "starred"
+        | "campaignAccessible"
+        | "myDrafts"
+        | "extensions"
+        | "systems"
+        | "contributedTo";
+      search?: string;
+      orderBy?: "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
     const rulesets = await Rulesets.findMany(db, session, where, pagination);
 
     // Batch-check starred status + star counts
@@ -323,12 +367,11 @@ export const RulesetsMethods = {
     const starredSet = new Set(starred.map((s) => s.rulesetId));
 
     // Batch-fetch parent rulesets for forked rulesets
-    const parentRulesetIds = [...new Set(
-      rulesets.items.map((r) => r.rulesetId).filter((id): id is string => id !== null),
-    )];
-    const parentRulesets = parentRulesetIds.length > 0
-      ? await Rulesets.findManyByIds(db, { ids: parentRulesetIds })
-      : [];
+    const parentRulesetIds = [
+      ...new Set(rulesets.items.map((r) => r.rulesetId).filter((id): id is string => id !== null)),
+    ];
+    const parentRulesets =
+      parentRulesetIds.length > 0 ? await Rulesets.findManyByIds(db, { ids: parentRulesetIds }) : [];
     const parentNameMap = new Map(parentRulesets.map((r) => [r.id, r.name]));
 
     const items = rulesets.items.map((ruleset) => ({
@@ -360,9 +403,7 @@ export const RulesetsMethods = {
       Rulesets.hasSubscribers(db, id),
     ]);
 
-    const parent = ruleset.rulesetId
-      ? await Rulesets.findOne(db, { id: ruleset.rulesetId })
-      : undefined;
+    const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;
 
     return {
       ...ruleset,
@@ -395,16 +436,18 @@ export const RulesetsMethods = {
       const ancestorRulesetIds = [id];
 
       // 4. Create the new forked ruleset
-      const newRuleset = (await Rulesets.create(tx, {
-        name: body.name,
-        description: body.description || ruleset.description,
-        userId: session.userId,
-        rulesetId: id,
-        ancestorRulesetIds,
-        extensionRulesetIds: ruleset.extensionRulesetIds,
-        baseRules: ruleset.baseRules,
-        private: body.private,
-      }))[0];
+      const newRuleset = (
+        await Rulesets.create(tx, {
+          name: body.name,
+          description: body.description || ruleset.description,
+          userId: session.userId,
+          rulesetId: id,
+          ancestorRulesetIds,
+          extensionRulesetIds: ruleset.extensionRulesetIds,
+          baseRules: ruleset.baseRules,
+          private: body.private,
+        })
+      )[0];
 
       // Copy extension metadata rows
       if (ruleset.extensionRulesetIds.length > 0) {
@@ -419,11 +462,14 @@ export const RulesetsMethods = {
         entityType: "rulesets",
       });
       if (sourceRulesetProperties.length > 0) {
-        await Properties.createMany(tx, sourceRulesetProperties.map((p) => ({
-          ...p,
-          id: undefined,
-          entityId: newRuleset.id,
-        })));
+        await Properties.createMany(
+          tx,
+          sourceRulesetProperties.map((p) => ({
+            ...p,
+            id: undefined,
+            entityId: newRuleset.id,
+          })),
+        );
       }
 
       // 4. Seed template items if source ruleset didn't have any (pre-migration rulesets)
@@ -524,10 +570,26 @@ export const RulesetsMethods = {
       // they're add-ons layered onto rulesets that already have the basics.
       if (targetKind !== "extension") {
         const sourceChain = buildSourceChain(ruleset);
-        const races = await Races.findManyByRulesetId(tx, { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" }, { limit: 1, page: 1 });
-        const klasses = await Klasses.findManyByRulesetId(tx, { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" }, { limit: 1, page: 1 });
-        const skills = await Skills.findManyByRulesetId(tx, { rulesetId: id, ancestorRulesetIds: sourceChain }, { limit: 1, page: 1 });
-        const feats = await Feats.findManyByRulesetId(tx, { rulesetId: id, ancestorRulesetIds: sourceChain }, { limit: 1, page: 1 });
+        const races = await Races.findManyByRulesetId(
+          tx,
+          { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" },
+          { limit: 1, page: 1 },
+        );
+        const klasses = await Klasses.findManyByRulesetId(
+          tx,
+          { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" },
+          { limit: 1, page: 1 },
+        );
+        const skills = await Skills.findManyByRulesetId(
+          tx,
+          { rulesetId: id, ancestorRulesetIds: sourceChain },
+          { limit: 1, page: 1 },
+        );
+        const feats = await Feats.findManyByRulesetId(
+          tx,
+          { rulesetId: id, ancestorRulesetIds: sourceChain },
+          { limit: 1, page: 1 },
+        );
 
         const missing: string[] = [];
         if (races.items.length === 0) missing.push("race");
@@ -536,9 +598,7 @@ export const RulesetsMethods = {
         if (feats.items.length === 0) missing.push("feat");
 
         if (missing.length > 0) {
-          throw new UnprocessableEntityError(
-            `Ruleset requires at least one of each: ${missing.join(", ")}`,
-          );
+          throw new UnprocessableEntityError(`Ruleset requires at least one of each: ${missing.join(", ")}`);
         }
       }
 
@@ -627,11 +687,7 @@ export const RulesetsMethods = {
     return result;
   },
 
-  async subscribeExtension(
-    session: Session,
-    id: string,
-    extensionIds: string[],
-  ) {
+  async subscribeExtension(session: Session, id: string, extensionIds: string[]) {
     const result = await withTransaction(async (tx) => {
       // 1. Validate ruleset
       const childRuleset = await Rulesets.findOne(tx, { id });
@@ -683,12 +739,7 @@ export const RulesetsMethods = {
         newExtensionIds.push(extensionId);
       }
 
-      await assertExtensionsNameCompatible(
-        tx,
-        id,
-        newExtensionIds,
-        childRuleset.extensionRulesetIds,
-      );
+      await assertExtensionsNameCompatible(tx, id, newExtensionIds, childRuleset.extensionRulesetIds);
 
       // 3. Append all to extensionRulesetIds
       await Rulesets.update(
@@ -718,11 +769,7 @@ export const RulesetsMethods = {
     return result;
   },
 
-  async unsubscribeExtension(
-    session: Session,
-    id: string,
-    extensionId: string,
-  ) {
+  async unsubscribeExtension(session: Session, id: string, extensionId: string) {
     const result = await withTransaction(async (tx) => {
       // 1. Validate
       const ruleset = await Rulesets.findOne(tx, { id });
@@ -811,8 +858,8 @@ export const RulesetsMethods = {
 
     type ChangeRow =
       | { entityType: string; status: "modified"; sourceEntityId: string; entityId: string; name: string }
-      | { entityType: string; status: "deleted";  sourceEntityId: string;                    name: string }
-      | { entityType: string; status: "added";                            entityId: string; name: string };
+      | { entityType: string; status: "deleted"; sourceEntityId: string; name: string }
+      | { entityType: string; status: "added"; entityId: string; name: string };
 
     const changes: ChangeRow[] = [];
 
@@ -908,7 +955,8 @@ export const RulesetsMethods = {
       // before the cascade hard-deletes (RESTRICT FK). Klass_levels and dependent
       // character_levels are wiped via FK CASCADE on the parent klass row.
       if (entityType === "items") {
-        await tx.update(itemsInRules)
+        await tx
+          .update(itemsInRules)
           .set({ sourceItemId: entityId })
           .where(eq(itemsInRules.sourceItemId, snapshot.forkedEntityId));
       }
@@ -941,7 +989,6 @@ export const RulesetsMethods = {
       updateAvailable: ext.extensionUpdatedAt > ext.updatedAt,
     }));
   },
-
 } as const;
 
 class RulesetsService extends BaseService<typeof RulesetsMethods> {

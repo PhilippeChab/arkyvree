@@ -1,7 +1,59 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
+
 import { sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+
+// ---------------------------------------------------------------------------
+// Spell name normalization (srd.dndtools.org → dndtools.net conventions)
+// ---------------------------------------------------------------------------
+
+const NAMED_SPELL_PREFIXES: Record<string, string> = {
+  "Grasping Hand": "Bigby's Grasping Hand",
+  "Clenched Fist": "Bigby's Clenched Fist",
+  "Crushing Hand": "Bigby's Crushing Hand",
+  "Interposing Hand": "Bigby's Interposing Hand",
+  "Forceful Hand": "Bigby's Forceful Hand",
+  "Instant Summons": "Drawmij's Instant Summons",
+  "Secret Chest": "Leomund's Secret Chest",
+  "Tiny Hut": "Leomund's Tiny Hut",
+  "Secure Shelter": "Leomund's Secure Shelter",
+  Trap: "Leomund's Trap",
+  "Acid Arrow": "Melf's Acid Arrow",
+  "Mage's Disjunction": "Mordenkainen's Disjunction",
+  "Faithful Hound": "Mordenkainen's Faithful Hound",
+  "Magnificent Mansion": "Mordenkainen's Magnificent Mansion",
+  "Private Sanctum": "Mordenkainen's Private Sanctum",
+  "Magic Aura": "Nystul's Magic Aura",
+  "Irresistible Dance": "Otto's Irresistible Dance",
+  "Telepathic Bond": "Rary's Telepathic Bond",
+  "Hideous Laughter": "Tasha's Hideous Laughter",
+  Transformation: "Tenser's Transformation",
+  "Floating Disk": "Tenser's Floating Disk",
+};
+
+function normalizeDomainSpellName(name: string): string {
+  // Normalize Unicode quotes to ASCII
+  let normalized = name.replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-");
+
+  // Strip trailing daggers (e.g. "Animal Trance†")
+  normalized = normalized.replace(/[†*]+$/, "").trim();
+
+  // Named spell prefixes (e.g. "Grasping Hand" → "Bigby's Grasping Hand")
+  if (NAMED_SPELL_PREFIXES[normalized]) return NAMED_SPELL_PREFIXES[normalized];
+
+  // "Greater/Lesser/Mass X" → "X, Greater/Lesser/Mass"
+  const prefixMatch = normalized.match(/^(Greater|Lesser|Mass)\s+(.+)$/i);
+  if (prefixMatch) {
+    const [, prefix, rest] = prefixMatch;
+    return `${rest}, ${prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase()}`;
+  }
+
+  // "Power Word, X" → "Power Word X" (remove comma)
+  normalized = normalized.replace(/^Power Word,\s*/i, "Power Word ");
+
+  return normalized;
+}
 
 // ---------------------------------------------------------------------------
 // Domain HTML Parser — srd.dndtools.org's page of every domain
@@ -14,9 +66,28 @@ import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.
 // ---------------------------------------------------------------------------
 
 const CORE_DOMAINS = new Set([
-  "Air", "Animal", "Chaos", "Death", "Destruction", "Earth", "Evil", "Fire",
-  "Good", "Healing", "Knowledge", "Law", "Luck", "Magic", "Plant", "Protection",
-  "Strength", "Sun", "Travel", "Trickery", "War", "Water",
+  "Air",
+  "Animal",
+  "Chaos",
+  "Death",
+  "Destruction",
+  "Earth",
+  "Evil",
+  "Fire",
+  "Good",
+  "Healing",
+  "Knowledge",
+  "Law",
+  "Luck",
+  "Magic",
+  "Plant",
+  "Protection",
+  "Strength",
+  "Sun",
+  "Travel",
+  "Trickery",
+  "War",
+  "Water",
 ]);
 
 export type DomainRaw = {
@@ -30,7 +101,10 @@ export function parseDomainsHtml(
   sourceUrl: string,
   book: string,
   filter: "core" | "non-core" | "all" = "core",
-): { _meta: { type: "domain"; sourceUrl: string; book: string; filter: "core" | "non-core" | "all"; scrapedAt: string }; raw: DomainRaw[] } {
+): {
+  _meta: { type: "domain"; sourceUrl: string; book: string; filter: "core" | "non-core" | "all"; scrapedAt: string };
+  raw: DomainRaw[];
+} {
   const $ = cheerio.load(html);
   const domains: DomainRaw[] = [];
 
@@ -47,9 +121,10 @@ export function parseDomainsHtml(
 
     const rawName = nameMatch ? nameMatch[1] : titleText;
     const suffix = nameMatch?.[2] ?? "";
-    const baseName = rawName.split(/\s+/).map((w) =>
-      w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-    ).join(" ");
+    const baseName = rawName
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
     const name = suffix ? `${baseName} ${suffix}` : baseName;
 
     // Up to the next domain: its heading, or the anchor before it
@@ -62,7 +137,10 @@ export function parseDomainsHtml(
     const grantedParts: string[] = [];
     let seenSpellHeader = false;
     for (const sib of siblings) {
-      if (sib.is("h6")) { seenSpellHeader = true; continue; }
+      if (sib.is("h6")) {
+        seenSpellHeader = true;
+        continue;
+      }
       if (seenSpellHeader) continue;
       if (sib.is("p")) {
         let text = sib.text().trim();
@@ -95,10 +173,10 @@ export function parseDomainsHtml(
         const singleCellMatch = firstText.match(/^(\d+)\s+(.+?)[*:]*$/);
         if (singleCellMatch) {
           const level = parseInt(singleCellMatch[1], 10);
-          const spellName = singleCellMatch[2].trim()
-            .replace(/\s+[MFX]+(\s+[MFX]+)*$/, "");
+          const spellName = singleCellMatch[2].trim().replace(/\s+[MFX]+(\s+[MFX]+)*$/, "");
 
-          if (level >= 1 && level <= 9 && spellName) addSpell(level, spellName, firstTd.find("a[href]").first().attr("href"));
+          if (level >= 1 && level <= 9 && spellName)
+            addSpell(level, spellName, firstTd.find("a[href]").first().attr("href"));
           return;
         }
 
@@ -117,10 +195,7 @@ export function parseDomainsHtml(
     }
 
     const isCore = CORE_DOMAINS.has(name);
-    const include =
-      filter === "all" ? true :
-      filter === "core" ? isCore :
-      !isCore;
+    const include = filter === "all" ? true : filter === "core" ? isCore : !isCore;
     if (spells.length > 0 && include) {
       domains.push({ name, description, spells });
     }
@@ -136,55 +211,4 @@ export function parseDomainsHtml(
     },
     raw: domains,
   };
-}
-
-// ---------------------------------------------------------------------------
-// Spell name normalization (srd.dndtools.org → dndtools.net conventions)
-// ---------------------------------------------------------------------------
-
-const NAMED_SPELL_PREFIXES: Record<string, string> = {
-  "Grasping Hand": "Bigby's Grasping Hand",
-  "Clenched Fist": "Bigby's Clenched Fist",
-  "Crushing Hand": "Bigby's Crushing Hand",
-  "Interposing Hand": "Bigby's Interposing Hand",
-  "Forceful Hand": "Bigby's Forceful Hand",
-  "Instant Summons": "Drawmij's Instant Summons",
-  "Secret Chest": "Leomund's Secret Chest",
-  "Tiny Hut": "Leomund's Tiny Hut",
-  "Secure Shelter": "Leomund's Secure Shelter",
-  "Trap": "Leomund's Trap",
-  "Acid Arrow": "Melf's Acid Arrow",
-  "Mage's Disjunction": "Mordenkainen's Disjunction",
-  "Faithful Hound": "Mordenkainen's Faithful Hound",
-  "Magnificent Mansion": "Mordenkainen's Magnificent Mansion",
-  "Private Sanctum": "Mordenkainen's Private Sanctum",
-  "Magic Aura": "Nystul's Magic Aura",
-  "Irresistible Dance": "Otto's Irresistible Dance",
-  "Telepathic Bond": "Rary's Telepathic Bond",
-  "Hideous Laughter": "Tasha's Hideous Laughter",
-  "Transformation": "Tenser's Transformation",
-  "Floating Disk": "Tenser's Floating Disk",
-};
-
-function normalizeDomainSpellName(name: string): string {
-  // Normalize Unicode quotes to ASCII
-  let normalized = name.replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-");
-
-  // Strip trailing daggers (e.g. "Animal Trance†")
-  normalized = normalized.replace(/[†*]+$/, "").trim();
-
-  // Named spell prefixes (e.g. "Grasping Hand" → "Bigby's Grasping Hand")
-  if (NAMED_SPELL_PREFIXES[normalized]) return NAMED_SPELL_PREFIXES[normalized];
-
-  // "Greater/Lesser/Mass X" → "X, Greater/Lesser/Mass"
-  const prefixMatch = normalized.match(/^(Greater|Lesser|Mass)\s+(.+)$/i);
-  if (prefixMatch) {
-    const [, prefix, rest] = prefixMatch;
-    return `${rest}, ${prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase()}`;
-  }
-
-  // "Power Word, X" → "Power Word X" (remove comma)
-  normalized = normalized.replace(/^Power Word,\s*/i, "Power Word ");
-
-  return normalized;
 }

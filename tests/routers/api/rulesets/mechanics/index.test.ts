@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
@@ -10,7 +11,9 @@ describe("rulesets mechanics", () => {
   test("creates, reads, lists, updates and deletes a mechanic", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const created = await expectOk(mechanics.$post({ param: { id }, json: { name: "Test Mechanic", description: "A test mechanic" } }));
+    const created = await expectOk(
+      mechanics.$post({ param: { id }, json: { name: "Test Mechanic", description: "A test mechanic" } }),
+    );
     expect(created).toMatchObject({ name: "Test Mechanic", description: "A test mechanic" });
     const param = { id, mechanicId: created.id };
 
@@ -18,7 +21,9 @@ describe("rulesets mechanics", () => {
     const list = await expectOk(mechanics.$get({ param: { id }, query: { search: "Test Mechanic" } }));
     expect(list.items.map((m) => m.id)).toContain(created.id);
 
-    const updated = await expectOk(mechanic.$put({ param, json: { name: "Renamed Mechanic", description: "Updated" } }));
+    const updated = await expectOk(
+      mechanic.$put({ param, json: { name: "Renamed Mechanic", description: "Updated" } }),
+    );
     expect(updated).toMatchObject({ name: "Renamed Mechanic", description: "Updated" });
 
     await expectOk(mechanic.$delete({ param }));

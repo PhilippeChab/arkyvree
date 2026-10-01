@@ -14,7 +14,9 @@ interface SlotParams {
 /** Refetches the slot's attachment once it changed. */
 const refreshSlot = (queryClient: QueryClient, slot: SlotParams) => {
   if (slot.recordId) {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.attachments.slot(slot.recordType, slot.recordId, slot.name) });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.attachments.slot(slot.recordType, slot.recordId, slot.name),
+    });
   }
 };
 
@@ -29,16 +31,18 @@ export function useDirectUpload(slot: SlotParams) {
         throw new Error(`File exceeds ${MAX_UPLOAD_BYTES / 1024 / 1024}MB limit`);
       }
 
-      const { signedId, presignedUrl, headers } = await parseResponse(rpc.api.attachments["direct-uploads"].$post({
-        json: {
-          recordType: slot.recordType,
-          recordId: slot.recordId,
-          name: slot.name,
-          filename: file.name,
-          contentType: file.type,
-          byteSize: file.size,
-        },
-      }));
+      const { signedId, presignedUrl, headers } = await parseResponse(
+        rpc.api.attachments["direct-uploads"].$post({
+          json: {
+            recordType: slot.recordType,
+            recordId: slot.recordId,
+            name: slot.name,
+            filename: file.name,
+            contentType: file.type,
+            byteSize: file.size,
+          },
+        }),
+      );
 
       // Straight to storage, outside the API client: check the status here.
 

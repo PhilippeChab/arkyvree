@@ -44,17 +44,16 @@ export default class DetailedCharacterEncumbrance {
     return deriveSegmentLabels(NAVIGATABLE_PATHS, SEGMENT_LABELS);
   }
 
-  static generateTargetPaths(
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
     return NAVIGATABLE_PATHS.map((path) => ({
       path: `combat.encumbrance.${path.path}`,
       category: "combat",
       description: path.description,
       valueType: path.type,
-      operators: kind === "modifier"
-        ? ["add", "subtract", "multiply", "divide", "set"]
-        : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+      operators:
+        kind === "modifier"
+          ? ["add", "subtract", "multiply", "divide", "set"]
+          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
     }));
   }
 
@@ -70,9 +69,7 @@ export default class DetailedCharacterEncumbrance {
 
   private raceSize = "Medium";
 
-  constructor(
-    private readonly characterAbilities: DetailedCharacterAbilities,
-  ) {}
+  constructor(private readonly characterAbilities: DetailedCharacterAbilities) {}
 
   initialize(inventory: RawInventoryEntry[], raceSize: string): void {
     this.raceSize = raceSize;
@@ -98,12 +95,9 @@ export default class DetailedCharacterEncumbrance {
     const sizeMultiplier = SIZE_CARRY_MULTIPLIERS[this.raceSize] ?? 1;
 
     this.encumbrance.heavyload = Math.floor(heavyLoad * sizeMultiplier);
-    this.encumbrance.mediumload = Math.floor(this.encumbrance.heavyload * 2 / 3);
+    this.encumbrance.mediumload = Math.floor((this.encumbrance.heavyload * 2) / 3);
     this.encumbrance.lightload = Math.floor(this.encumbrance.heavyload / 3);
-    this.encumbrance.load = this.getLoadCategory(
-      this.encumbrance.carriedweight,
-      this.encumbrance.heavyload,
-    );
+    this.encumbrance.load = this.getLoadCategory(this.encumbrance.carriedweight, this.encumbrance.heavyload);
 
     const penalties = ENCUMBRANCE_PENALTIES[this.encumbrance.load];
     this.encumbrance.maxdex = penalties.maxdex;
@@ -114,7 +108,7 @@ export default class DetailedCharacterEncumbrance {
     if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
       return ENCUMBERED_SPEED[baseSpeed];
     }
-    return Math.floor(baseSpeed * 2 / 3);
+    return Math.floor((baseSpeed * 2) / 3);
   }
 
   private getCarryingCapacity(str: number): number {
@@ -123,7 +117,7 @@ export default class DetailedCharacterEncumbrance {
 
     // For Str 30+: each +10 multiplies by ×4 (PHB formula)
     const remainder = str % 10;
-    const baseStr = (remainder === 0) ? 10 : 20 + remainder;
+    const baseStr = remainder === 0 ? 10 : 20 + remainder;
     const multiplier = Math.pow(4, Math.floor((str - baseStr) / 10));
     return CARRYING_CAPACITY[baseStr] * multiplier;
   }
@@ -131,7 +125,7 @@ export default class DetailedCharacterEncumbrance {
   private getLoadCategory(weight: number, heavyLoad: number): LoadCategory {
     if (heavyLoad <= 0) return weight > 0 ? "overloaded" : "light";
     const lightLoad = Math.floor(heavyLoad / 3);
-    const mediumLoad = Math.floor(heavyLoad * 2 / 3);
+    const mediumLoad = Math.floor((heavyLoad * 2) / 3);
     if (weight <= lightLoad) return "light";
     if (weight <= mediumLoad) return "medium";
     if (weight <= heavyLoad) return "heavy";

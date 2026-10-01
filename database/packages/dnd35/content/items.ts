@@ -1,7 +1,7 @@
-import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
-import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
 import { eq, feat } from "@/database/packages/dnd35/content/requirements.ts";
 import type { Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
+import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
 
 // Builders the generated items are written with: their proficiency requirements and their weapon, armor or shield properties.
 

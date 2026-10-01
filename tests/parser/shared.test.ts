@@ -1,19 +1,29 @@
 import { describe, expect, test } from "bun:test";
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+
+import {
+  anySkillRequirement,
+  checkedValue,
+  checkOneOf,
+  detectModifiersOf,
+  modifierMapping,
+  skillSlug,
+} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import { stripSeparators } from "@/shared/utils.ts";
-import { anySkillRequirement, checkedValue, checkOneOf, detectModifiersOf, modifierMapping, skillSlug } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 const STRENGTH: Modifier = { target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" };
 const DEXTERITY: Modifier = { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" };
 
 describe("Detected modifiers", () => {
   test("are each entry's, with its errors and unresolved text only when it has some", () => {
-    const detected = detectModifiersOf([{ name: "Strong" }, { name: "Garbled" }], ({ name }) => name === "Strong"
-      ? { modifiers: [STRENGTH], errors: [], unresolvedModifiers: [] }
-      : { modifiers: [], errors: ["invalid path: x"], unresolvedModifiers: ["+2 on something"] });
+    const detected = detectModifiersOf([{ name: "Strong" }, { name: "Garbled" }], ({ name }) =>
+      name === "Strong"
+        ? { modifiers: [STRENGTH], errors: [], unresolvedModifiers: [] }
+        : { modifiers: [], errors: ["invalid path: x"], unresolvedModifiers: ["+2 on something"] },
+    );
     expect(detected).toEqual({
       Strong: { modifiers: [STRENGTH] },
       Garbled: { modifiers: [], errors: ["invalid path: x"], unresolvedModifiers: ["+2 on something"] },
@@ -24,7 +34,12 @@ describe("Detected modifiers", () => {
 describe("A modifier mapping", () => {
   test("takes an entry's description and modifiers from its override, else from what's scraped and detected", () => {
     const raw = ["Detected", "None", "Overridden", "Cleared"].map((name) => ({ name, description: `${name} text` }));
-    const detected = { Detected: { modifiers: [STRENGTH] }, None: { modifiers: [] }, Overridden: { modifiers: [STRENGTH] }, Cleared: { modifiers: [STRENGTH] } };
+    const detected = {
+      Detected: { modifiers: [STRENGTH] },
+      None: { modifiers: [] },
+      Overridden: { modifiers: [STRENGTH] },
+      Cleared: { modifiers: [STRENGTH] },
+    };
     const overrides: Record<string, { description?: string; modifiers?: Modifier[]; skip?: boolean } | undefined> = {
       Overridden: { description: "Corrected", modifiers: [DEXTERITY], skip: true },
       Cleared: { modifiers: [] },
@@ -49,7 +64,9 @@ describe("A skill's slug", () => {
 describe("An any-skill requirement", () => {
   test("is the ranks in any skill the name covers", () => {
     const knowledge = SKILL_NAMES.filter((s) => s.startsWith("Knowledge"));
-    expect(anySkillRequirement("Knowledge (any)", 8)).toEqual(or(...knowledge.map((s) => gte(`skills.${stripSeparators(s)}.rank`, 8))));
+    expect(anySkillRequirement("Knowledge (any)", 8)).toEqual(
+      or(...knowledge.map((s) => gte(`skills.${stripSeparators(s)}.rank`, 8))),
+    );
     expect(anySkillRequirement("Tumble (any)", 4)).toEqual(gte("skills.tumble.rank", 4));
   });
 

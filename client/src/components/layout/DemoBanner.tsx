@@ -1,9 +1,9 @@
-import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { Box, Button, Typography } from "@mui/material";
 import { Science as ScienceIcon } from "@mui/icons-material";
+import { Box, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import { useDemoTimeRemaining } from "@/client/src/hooks/index.ts";
+import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
 
 export function DemoBanner() {
   const navigate = useNavigate();
@@ -13,16 +13,15 @@ export function DemoBanner() {
 
   const goToSignUp = () => navigate("/sign-up");
 
-  const label = urgency === "expired"
-    ? "Demo expired"
-    : urgency === "critical"
-      ? `Demo ends in ${minutes}:${seconds.toString().padStart(2, "0")}`
-      : `Demo mode — ${hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`} left`;
+  const label =
+    urgency === "expired"
+      ? "Demo expired"
+      : urgency === "critical"
+        ? `Demo ends in ${minutes}:${seconds.toString().padStart(2, "0")}`
+        : `Demo mode — ${hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`} left`;
 
   return (
-    <Box
-      sx={{ position: "sticky", top: 0, zIndex: 1, display: "flex", justifyContent: "center", pt: 1.5, px: 2 }}
-    >
+    <Box sx={{ position: "sticky", top: 0, zIndex: 1, display: "flex", justifyContent: "center", pt: 1.5, px: 2 }}>
       <Box
         sx={{
           display: "flex",
@@ -37,9 +36,7 @@ export function DemoBanner() {
           borderColor: (theme) => brandGoldTint(theme.palette.mode === "dark", 0.3),
           backdropFilter: "blur(12px)",
           boxShadow: (theme) =>
-            theme.palette.mode === "dark"
-              ? "0 2px 12px rgba(0,0,0,0.3)"
-              : "0 2px 12px rgba(0,0,0,0.08)",
+            theme.palette.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.08)",
         }}
       >
         <ScienceIcon sx={{ fontSize: 18, color: "warning.main" }} />
@@ -47,8 +44,7 @@ export function DemoBanner() {
           variant="body2"
           sx={{
             fontWeight: 500,
-            color: (theme) =>
-              theme.palette.mode === "dark" ? "warning.light" : "warning.dark",
+            color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),
           }}
         >
           {label}
@@ -64,11 +60,12 @@ export function DemoBanner() {
             fontSize: "0.75rem",
             fontWeight: 600,
             borderRadius: 4,
-            color: (theme) =>
-              theme.palette.mode === "dark" ? "warning.light" : "warning.dark",
-            bgcolor: (theme) => brandGoldTint(theme.palette.mode === "dark", theme.palette.mode === "dark" ? 0.15 : 0.12),
+            color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),
+            bgcolor: (theme) =>
+              brandGoldTint(theme.palette.mode === "dark", theme.palette.mode === "dark" ? 0.15 : 0.12),
             "&:hover": {
-              bgcolor: (theme) => brandGoldTint(theme.palette.mode === "dark", theme.palette.mode === "dark" ? 0.25 : 0.2),
+              bgcolor: (theme) =>
+                brandGoldTint(theme.palette.mode === "dark", theme.palette.mode === "dark" ? 0.25 : 0.2),
             },
           }}
         >

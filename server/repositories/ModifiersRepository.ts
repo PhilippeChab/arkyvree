@@ -1,13 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-
-import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class ModifiersRepository
-  extends BaseRepository<typeof modifiersInCustomization, ModifierInstance> {
+import { modifiersInCustomization } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class ModifiersRepository extends BaseRepository<typeof modifiersInCustomization, ModifierInstance> {
   constructor() {
     super(modifiersInCustomization);
   }
@@ -29,11 +27,13 @@ class ModifiersRepository
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
@@ -70,10 +70,7 @@ class ModifiersRepository
   async findManyBySourceIds(db: Db, where: { sourceIds: string[] }) {
     if (where.sourceIds.length === 0) return [];
     return await db.query.modifiersInCustomization.findMany({
-      where: and(
-        inArray(this.table.sourceId, where.sourceIds),
-        isNull(this.table.deletedAt),
-      ),
+      where: and(inArray(this.table.sourceId, where.sourceIds), isNull(this.table.deletedAt)),
     });
   }
 

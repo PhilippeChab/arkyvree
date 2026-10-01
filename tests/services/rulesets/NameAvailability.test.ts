@@ -1,5 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
+
 import { and, eq, isNull } from "drizzle-orm";
+
 import { aptitudesInRules, featsInRules, itemsInRules } from "@/drizzle/schema.ts";
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
@@ -16,8 +18,13 @@ async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const baseId = fork.ancestorRulesetIds[0];
-  const general = (await db.query.aptitudesInRules.findFirst({ where: and(eq(aptitudesInRules.rulesetId, baseId), eq(aptitudesInRules.name, "General")) }))!;
-  const baseFeat = async (name: string) => (await db.query.featsInRules.findFirst({ where: and(eq(featsInRules.rulesetId, baseId), eq(featsInRules.name, name)) }))!;
+  const general = (await db.query.aptitudesInRules.findFirst({
+    where: and(eq(aptitudesInRules.rulesetId, baseId), eq(aptitudesInRules.name, "General")),
+  }))!;
+  const baseFeat = async (name: string) =>
+    (await db.query.featsInRules.findFirst({
+      where: and(eq(featsInRules.rulesetId, baseId), eq(featsInRules.name, name)),
+    }))!;
   return { session, fork, baseId, general, baseFeat };
 }
 
@@ -29,7 +36,10 @@ test("creating a feat with a renamed override's original name keeps the override
   const source = await baseFeat("Alertness");
   const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, source.id, { name: "Alertness (Local)" });
 
-  const created = await FeatsMethods.createRulesetFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] });
+  const created = await FeatsMethods.createRulesetFeat(session, fork.id, {
+    name: "Alertness",
+    aptitudeIds: [general.id],
+  });
 
   const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: source.id, rulesetId: fork.id });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);
@@ -43,11 +53,20 @@ test("creating a feat with a renamed override's original name keeps the override
 test("bulk item variants with a renamed override's original name keep the override", async () => {
   const { session, fork, baseId } = await setup();
   const source = (await db.query.itemsInRules.findFirst({
-    where: and(eq(itemsInRules.rulesetId, baseId), eq(itemsInRules.isTemplate, false), isNull(itemsInRules.sourceItemId), eq(itemsInRules.type, "Other")),
+    where: and(
+      eq(itemsInRules.rulesetId, baseId),
+      eq(itemsInRules.isTemplate, false),
+      isNull(itemsInRules.sourceItemId),
+      eq(itemsInRules.type, "Other"),
+    ),
   }))!;
   const renamed = await ItemsMethods.updateRulesetItem(session, fork.id, source.id, {
-    name: `${source.name} (Local)`, description: source.description, type: source.type, slot: source.slot ?? undefined,
-    weight: Number(source.weight), costGp: Number(source.costGp),
+    name: `${source.name} (Local)`,
+    description: source.description,
+    type: source.type,
+    slot: source.slot ?? undefined,
+    weight: Number(source.weight),
+    costGp: Number(source.costGp),
   });
 
   const [created] = await ItemsMethods.bulkCreateVariants(session, fork.id, renamed.id, [{ name: source.name }]);
@@ -65,20 +84,35 @@ test("the original name of a renamed extension copy is available", async () => {
   const source = await baseFeat("Toughness");
   const extension = await createSeededTestRuleset(session.userId);
   const extensionCopy = await cowEntity(db, "feats", source.id, extension.id, [baseId], []);
-  await Rulesets.update(db, { kind: "extension", status: "Published", private: false, userId: null }, { id: extension.id });
+  await Rulesets.update(
+    db,
+    { kind: "extension", status: "Published", private: false, userId: null },
+    { id: extension.id },
+  );
   await RulesetsMethods.subscribeExtension(session, fork.id, [extension.id]);
-  const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, extensionCopy.id, { name: "Toughness (Local)" });
+  const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, extensionCopy.id, {
+    name: "Toughness (Local)",
+  });
 
-  const created = await FeatsMethods.createRulesetFeat(session, fork.id, { name: "Toughness", aptitudeIds: [general.id] });
+  const created = await FeatsMethods.createRulesetFeat(session, fork.id, {
+    name: "Toughness",
+    aptitudeIds: [general.id],
+  });
 
-  const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: extensionCopy.id, rulesetId: fork.id });
+  const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, {
+    sourceEntityId: extensionCopy.id,
+    rulesetId: fork.id,
+  });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);
-  expect(await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.featsById.get(source.id)?.name)).toBe("Toughness (Local)");
+  expect(
+    await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.featsById.get(source.id)?.name),
+  ).toBe("Toughness (Local)");
   expect(created.name).toBe("Toughness");
 });
 
 test("a visible inherited feat still blocks its name", async () => {
   const { session, fork, general } = await setup();
-  await expect(FeatsMethods.createRulesetFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] }))
-    .rejects.toThrow("Name already exists in the source chain");
+  await expect(
+    FeatsMethods.createRulesetFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] }),
+  ).rejects.toThrow("Name already exists in the source chain");
 });

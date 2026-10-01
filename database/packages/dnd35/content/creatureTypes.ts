@@ -77,7 +77,8 @@ const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map((t) =>
 const FAVORED_ENEMY_SPECIALIZATION_UMBRELLA = "Favored Enemy Specialization (Ranger)";
 const favoredEnemySpecializationUmbrella: FeatSeed = {
   name: FAVORED_ENEMY_SPECIALIZATION_UMBRELLA,
-  description: "At 5th level and every 5 levels thereafter, the ranger may increase the bonus against one of their favored enemies by +2.",
+  description:
+    "At 5th level and every 5 levels thereafter, the ranger may increase the bonus against one of their favored enemies by +2.",
   stackable: true,
   selectable: false,
   aptitudes: ["Ranger Class Feature"],
@@ -87,4 +88,8 @@ const favoredEnemySpecializationUmbrella: FeatSeed = {
 };
 
 /** A favored enemy feat per creature type, its specialization per type, and the ranger's pick of one. */
-export const favoredEnemyFeats: FeatSeed[] = [...favoredEnemy, ...favoredEnemySpecializationVariants, favoredEnemySpecializationUmbrella];
+export const favoredEnemyFeats: FeatSeed[] = [
+  ...favoredEnemy,
+  ...favoredEnemySpecializationVariants,
+  favoredEnemySpecializationUmbrella,
+];

@@ -1,15 +1,9 @@
 import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
-
-import {
-  klassLevelsInRules,
-  levelsInCharacter,
-  levelSkillsInCharacter,
-  skillsInRules,
-} from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+
+import { klassLevelsInRules, levelsInCharacter, levelSkillsInCharacter, skillsInRules } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class SkillsRepository extends BaseRepository<typeof skillsInRules, SkillInstance> {
   constructor() {
@@ -28,11 +22,13 @@ class SkillsRepository extends BaseRepository<typeof skillsInRules, SkillInstanc
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
@@ -40,7 +36,10 @@ class SkillsRepository extends BaseRepository<typeof skillsInRules, SkillInstanc
     return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
-  async findOne(db: Db, where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string }) {
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
     return await db.query.skillsInRules.findFirst({
       where: this.where([
         "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
@@ -61,8 +60,23 @@ class SkillsRepository extends BaseRepository<typeof skillsInRules, SkillInstanc
   async findManyByRulesetId(
     db: Db,
     where:
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" }
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; campaignId: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        }
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          campaignId: string;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
@@ -91,16 +105,10 @@ class SkillsRepository extends BaseRepository<typeof skillsInRules, SkillInstanc
       })
       .from(skillsInRules)
       .innerJoin(levelSkillsInCharacter, eq(skillsInRules.id, levelSkillsInCharacter.skillId))
-      .innerJoin(
-        levelsInCharacter,
-        eq(levelSkillsInCharacter.characterLevelId, levelsInCharacter.id),
-      )
+      .innerJoin(levelsInCharacter, eq(levelSkillsInCharacter.characterLevelId, levelsInCharacter.id))
       .innerJoin(klassLevelsInRules, eq(levelsInCharacter.klassLevelId, klassLevelsInRules.id))
       .where(
-        and(
-          inArray(levelSkillsInCharacter.characterLevelId, where.characterLevelIds),
-          isNull(skillsInRules.deletedAt),
-        ),
+        and(inArray(levelSkillsInCharacter.characterLevelId, where.characterLevelIds), isNull(skillsInRules.deletedAt)),
       );
   }
 

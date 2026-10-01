@@ -39,25 +39,17 @@ export default class DetailedCharacterPowerGroupings {
     for (const grouping of powerGroupings) {
       for (const subPath of NAVIGATABLE_POWER_DC_PATHS) {
         if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
-        const prefix = groupLabel
-          ? `${capitalize(grouping)} ${groupLabel}`
-          : capitalize(grouping);
+        const prefix = groupLabel ? `${capitalize(grouping)} ${groupLabel}` : capitalize(grouping);
         paths.push({
           path: `powers.${namespace}${grouping}${wildcardSegment}.${subPath.path}`,
           category: "powers",
           description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
           ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
           valueType: subPath.type,
-          operators: kind === "modifier"
-            ? ["add", "subtract", "multiply", "divide", "set"]
-            : [
-              "equal",
-              "not_equal",
-              "greater_than",
-              "less_than",
-              "greater_than_or_equal",
-              "less_than_or_equal",
-            ],
+          operators:
+            kind === "modifier"
+              ? ["add", "subtract", "multiply", "divide", "set"]
+              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
         });
       }
     }

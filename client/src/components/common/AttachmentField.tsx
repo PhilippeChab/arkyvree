@@ -1,21 +1,15 @@
-import { useRef, useState } from "react";
-import {
-  Avatar,
-  Box,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
+import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { useRef, useState } from "react";
 
-import { DiceSpinner } from "./DiceSpinner.tsx";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
+
+import { DiceSpinner } from "./DiceSpinner.tsx";
 
 interface AttachmentFieldProps {
   recordType: string;
@@ -98,10 +92,7 @@ export function AttachmentField({
   return (
     <Stack spacing={1} sx={{ alignItems: "flex-start", width: "fit-content" }}>
       {label && (
-        <Typography
-          variant="overline"
-          sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.8 }}
-        >
+        <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.8 }}>
           {label}
         </Typography>
       )}
@@ -131,13 +122,7 @@ export function AttachmentField({
             cursor: interactive && !url ? "pointer" : "default",
             bgcolor: url ? "transparent" : "action.hover",
             border: showRing ? "4px solid" : canUpload ? "2px dashed" : "2px solid",
-            borderColor: showRing
-              ? "background.paper"
-              : dragOver
-                ? "primary.main"
-                : url
-                  ? "transparent"
-                  : "divider",
+            borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
             boxShadow: showRing ? "0 6px 24px rgba(0,0,0,0.18)" : "none",
             transition: "border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease",
             transform: dragOver ? "scale(1.02)" : "none",
@@ -158,78 +143,75 @@ export function AttachmentField({
             "&:focus-visible .attachment-overlay": interactive && url ? { opacity: 1 } : {},
           }}
         >
-        {url ? (
-          isAvatar ? (
-            <Avatar
-              src={url}
-              sx={{ width: dimension, height: dimension }}
-            />
-          ) : (
-            <Box
-              component="img"
-              src={url}
-              alt={label ?? name}
-              sx={{ width: dimension, height: dimension, objectFit: "cover", display: "block" }}
-            />
-          )
-        ) : (
-          <Stack
-            spacing={0.5}
-            sx={{
-              width: "100%",
-              height: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "text.secondary",
-              p: 1,
-              textAlign: "center",
-            }}
-          >
-            {canUpload ? (
-              <>
-                <CloudUploadOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
-                <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
-                  {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
-                </Typography>
-              </>
+          {url ? (
+            isAvatar ? (
+              <Avatar src={url} sx={{ width: dimension, height: dimension }} />
             ) : (
-              <>
-                <ImageOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
-                <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
-                  No {label ?? name}
-                </Typography>
-              </>
-            )}
-          </Stack>
-        )}
+              <Box
+                component="img"
+                src={url}
+                alt={label ?? name}
+                sx={{ width: dimension, height: dimension, objectFit: "cover", display: "block" }}
+              />
+            )
+          ) : (
+            <Stack
+              spacing={0.5}
+              sx={{
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "text.secondary",
+                p: 1,
+                textAlign: "center",
+              }}
+            >
+              {canUpload ? (
+                <>
+                  <CloudUploadOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                  <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                    {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <ImageOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                  <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                    No {label ?? name}
+                  </Typography>
+                </>
+              )}
+            </Stack>
+          )}
 
-        {/* Hover overlay over an existing image */}
-        {url && interactive && (
-          <Box
-            className="attachment-overlay"
-            onClick={(e) => {
-              e.stopPropagation();
-              pick();
-            }}
-            sx={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(0,0,0,0.55)",
-              color: "common.white",
-              cursor: "pointer",
-              gap: 0.75,
-              flexDirection: "column",
-            }}
-          >
-            <PhotoCameraOutlinedIcon sx={{ fontSize: dimension * 0.22 }} />
-            <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
-              Change
-            </Typography>
-          </Box>
-        )}
+          {/* Hover overlay over an existing image */}
+          {url && interactive && (
+            <Box
+              className="attachment-overlay"
+              onClick={(e) => {
+                e.stopPropagation();
+                pick();
+              }}
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "rgba(0,0,0,0.55)",
+                color: "common.white",
+                cursor: "pointer",
+                gap: 0.75,
+                flexDirection: "column",
+              }}
+            >
+              <PhotoCameraOutlinedIcon sx={{ fontSize: dimension * 0.22 }} />
+              <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
+                Change
+              </Typography>
+            </Box>
+          )}
 
           {/* Loading spinner — covers everything */}
           {busy && (

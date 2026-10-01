@@ -1,6 +1,6 @@
-import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
+import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
 
 // ---------------------------------------------------------------------------
 // SRD → generator name mapping
@@ -38,13 +38,13 @@ const DEFAULT_WEAPON_NAME_MAP: Record<string, string> = {
 
 // SRD armor table uses short names; generators use full names
 const DEFAULT_ARMOR_NAME_MAP: Record<string, string> = {
-  "Padded": "Padded Armor",
-  "Leather": "Leather Armor",
+  Padded: "Padded Armor",
+  Leather: "Leather Armor",
   "Studded leather": "Studded Leather",
   "Chain shirt": "Chain Shirt",
-  "Hide": "Hide Armor",
+  Hide: "Hide Armor",
   "Scale mail": "Scale Mail",
-  "Chainmail": "Chain Mail",
+  Chainmail: "Chain Mail",
   "Splint mail": "Splint Mail",
   "Banded mail": "Banded Mail",
   "Half-plate": "Half-Plate",
@@ -72,11 +72,7 @@ function isAmmunition(name: string): boolean {
 }
 
 // SRD armor extras that aren't standalone equipment
-const DEFAULT_ARMOR_SKIPS = new Set([
-  "Armor spikes",
-  "Gauntlet, locked",
-  "Shield spikes",
-]);
+const DEFAULT_ARMOR_SKIPS = new Set(["Armor spikes", "Gauntlet, locked", "Shield spikes"]);
 
 // ---------------------------------------------------------------------------
 // Cost / weight parsing
@@ -86,7 +82,10 @@ export function parseCost(cost: string): string {
   if (!cost || cost === "—" || cost === "-") return "0";
 
   // Remove commas, footnote superscripts, parenthetical notes
-  const cleaned = cost.replace(/,/g, "").replace(/\(\d+\)/g, "").trim();
+  const cleaned = cost
+    .replace(/,/g, "")
+    .replace(/\(\d+\)/g, "")
+    .trim();
 
   // Match value + unit: "15 gp", "+50 gp", "5 sp", "1 cp"
   const match = cleaned.match(/^\+?\s*([\d.]+)\s*(gp|sp|cp)/i);
@@ -150,10 +149,17 @@ const TABLE_CATEGORIES: Record<string, string> = {
  * The weapons, armor and shields the generator has no definition of, and leaves out ("weapon: Name"): all of them, or
  * those `skipped` doesn't name.
  */
-export function unresolvedItems({ weapons, armor }: Pick<ItemReference["detected"], "weapons" | "armor">, skipped = (_name: string) => false): string[] {
+export function unresolvedItems(
+  { weapons, armor }: Pick<ItemReference["detected"], "weapons" | "armor">,
+  skipped = (_name: string) => false,
+): string[] {
   return [
-    ...Object.entries(weapons).filter(([name, weapon]) => !weapon.generatorName && !skipped(name)).map(([name]) => `weapon: ${name}`),
-    ...Object.entries(armor).filter(([name, piece]) => !piece.generatorName && !skipped(name)).map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
+    ...Object.entries(weapons)
+      .filter(([name, weapon]) => !weapon.generatorName && !skipped(name))
+      .map(([name]) => `weapon: ${name}`),
+    ...Object.entries(armor)
+      .filter(([name, piece]) => !piece.generatorName && !skipped(name))
+      .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
   ];
 }
 
@@ -186,9 +192,7 @@ export function buildItemDetected(
 
     const isShieldCategory = a.category === "Shields";
     const resolved = resolveArmorName(a.name, overrideNameMap);
-    const def = isShieldCategory
-      ? getShieldDefinition(resolved)
-      : getArmorDefinition(resolved);
+    const def = isShieldCategory ? getShieldDefinition(resolved) : getArmorDefinition(resolved);
     const itemType: "Armor" | "Shield" = isShieldCategory ? "Shield" : "Armor";
 
     armor[a.name] = {

@@ -3,9 +3,11 @@
  * its own transaction, rolled back afterwards, against a fake storage backend.
  */
 import { afterEach, beforeEach } from "bun:test";
+
 import { TransactionRollbackError } from "drizzle-orm/errors";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import type { PoolClient } from "pg";
+
 import { createTestDbFromClient, createTestPool, setTestDb } from "@/server/database/test.ts";
 import { setStorageForTest } from "@/server/storage/s3.ts";
 import { forgetSeededRulesetWrites } from "@/tests/helpers.ts";
@@ -27,17 +29,21 @@ beforeEach(async () => {
   testClient = await testPool.connect();
   const clientDb = createTestDbFromClient(testClient as unknown as NodePgClient);
   await new Promise<void>((started, failed) => {
-    testTransaction = clientDb.transaction(async (tx) => {
-      setTestDb(tx);
-      testStarted = true;
-      started();
-      await new Promise<void>((resolve) => { endTest = resolve; });
-      tx.rollback();
-    }).catch((error: unknown) => {
-      if (error instanceof TransactionRollbackError) return;
-      transactionFailure = error instanceof Error ? error : new Error(String(error));
-      failed(transactionFailure); // before it started, the test can't run; after, afterEach reports it
-    });
+    testTransaction = clientDb
+      .transaction(async (tx) => {
+        setTestDb(tx);
+        testStarted = true;
+        started();
+        await new Promise<void>((resolve) => {
+          endTest = resolve;
+        });
+        tx.rollback();
+      })
+      .catch((error: unknown) => {
+        if (error instanceof TransactionRollbackError) return;
+        transactionFailure = error instanceof Error ? error : new Error(String(error));
+        failed(transactionFailure); // before it started, the test can't run; after, afterEach reports it
+      });
   });
 });
 

@@ -1,5 +1,5 @@
-import type { Task } from "graphile-worker";
 import { pdf } from "@react-pdf/renderer";
+import type { Task } from "graphile-worker";
 
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
@@ -51,22 +51,22 @@ export const generatePdfTask: Task = async (payload, helpers) => {
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
     const kind = characterRecord.kind as CharacterKind;
-    const { detailedCharacter, CharacterSheetComponent } =
-      await rulesetModule.createDetailedCharacterWithSheet(characterRecord, kind);
+    const { detailedCharacter, CharacterSheetComponent } = await rulesetModule.createDetailedCharacterWithSheet(
+      characterRecord,
+      kind,
+    );
 
     const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
 
     const pdfBlob = await pdf(
-      <CharacterSheetComponent
-        detailedCharacter={detailedCharacter}
-        kind={kind}
-        portraitUrl={portraitUrl}
-      />,
+      <CharacterSheetComponent detailedCharacter={detailedCharacter} kind={kind} portraitUrl={portraitUrl} />,
     ).toBlob();
 
     const arrayBuffer = await pdfBlob.arrayBuffer();
     if (arrayBuffer.byteLength > MAX_PDF_SIZE_BYTES) {
-      throw new Error(`PDF too large (${Math.round(arrayBuffer.byteLength / 1024 / 1024)}MB), max ${MAX_PDF_SIZE_BYTES / 1024 / 1024}MB`);
+      throw new Error(
+        `PDF too large (${Math.round(arrayBuffer.byteLength / 1024 / 1024)}MB), max ${MAX_PDF_SIZE_BYTES / 1024 / 1024}MB`,
+      );
     }
     const pdfBuffer = Buffer.from(arrayBuffer);
 

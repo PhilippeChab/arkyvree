@@ -1,14 +1,13 @@
+import { getTableName } from "drizzle-orm";
+
 import { featsInRules } from "@/drizzle/schema.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import {
-  Feats,
-  FeatsAptitudes,
-  PowersAptitudes,
-} from "@/server/repositories/index.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import BaseService from "@/server/services/BaseService.ts";
+import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -16,24 +15,33 @@ import {
   deletePropertiesWithCascade,
   deleteRequirementsWithCascade,
   entityHasCharacterPicks,
-  repointTombstoneSnapshot,
   lockEntityForMutation,
+  repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 
 export const FeatsMethods = {
   async getRulesetFeats(
     rulesetId: string,
-    where: { childOnly?: boolean; aptitudeId?: string; family?: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      aptitudeId?: string;
+      family?: string;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain, siblingIds } = rulesetData.cow;
-      const result = await Feats.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Feats.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
+        pagination,
+      );
       // Filter sibling losers (if any) and replace each row's aptitude links
       // with the compose-step version (sibling-merged + FK-remapped).
       if (sourceChain.length > 0 && !where.childOnly) {
@@ -66,7 +74,11 @@ export const FeatsMethods = {
         }
       }
       const excludeIds = siblingIds.size > 0 ? [...siblingIds] : undefined;
-      return await Feats.findManyGroupedByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, aptitudeIds, excludeIds, ...where }, pagination);
+      return await Feats.findManyGroupedByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, aptitudeIds, excludeIds, ...where },
+        pagination,
+      );
     });
   },
 
@@ -86,16 +98,26 @@ export const FeatsMethods = {
     });
   },
 
-  async createRulesetFeat(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-    aptitudeIds: string[];
-  }) {
+  async createRulesetFeat(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      aptitudeIds: string[];
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "feats", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "feats",
+          body.name,
+        );
 
         if (!body.aptitudeIds || body.aptitudeIds.length === 0) {
           throw new BadRequestError("At least one aptitude must be selected for the feat");
@@ -139,12 +161,17 @@ export const FeatsMethods = {
     return result;
   },
 
-  async updateRulesetFeat(session: Session, rulesetId: string, featId: string, body: {
-    name: string;
-    description?: string | null;
-    aptitudeIds?: string[];
-    updatedAt?: string;
-  }) {
+  async updateRulesetFeat(
+    session: Session,
+    rulesetId: string,
+    featId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      aptitudeIds?: string[];
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -158,7 +185,10 @@ export const FeatsMethods = {
           throw new NotFoundError("Feat not found in this ruleset");
         }
 
-        if (body.name !== feat.name && RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.feats.isGeneratedName(feat.name)) {
+        if (
+          body.name !== feat.name &&
+          RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.feats.isGeneratedName(feat.name)
+        ) {
           throw new BadRequestError("Generated feats cannot be renamed");
         }
 
@@ -169,10 +199,14 @@ export const FeatsMethods = {
           targetId = cowResult.id as string;
         }
 
-        const rows = await Feats.update(tx, {
-          name: body.name,
-          description: body.description,
-        }, { id: targetId, expectedUpdatedAt });
+        const rows = await Feats.update(
+          tx,
+          {
+            name: body.name,
+            description: body.description,
+          },
+          { id: targetId, expectedUpdatedAt },
+        );
         if (expectedUpdatedAt && rows.length === 0) {
           throw new ConflictError(STALE_ENTITY_MESSAGE);
         }
@@ -187,7 +221,8 @@ export const FeatsMethods = {
               throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
             }
 
-            await FeatsAptitudes.createMany(tx,
+            await FeatsAptitudes.createMany(
+              tx,
               body.aptitudeIds.map((aptitudeId) => ({
                 featId: targetId,
                 aptitudeId,
@@ -201,7 +236,10 @@ export const FeatsMethods = {
           targetId,
           targetTable: getTableName(featsInRules),
           type: "updateFeat",
-          data: { entityName: body.name, changedFields: getChangedFields(feat as Record<string, unknown>, body as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(feat as Record<string, unknown>, body as Record<string, unknown>),
+          },
         });
 
         return updatedFeat;

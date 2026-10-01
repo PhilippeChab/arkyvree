@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
@@ -11,14 +12,29 @@ const unequipped = { quantity: 1, equipped: false, location: null, totalCharges:
 async function setup() {
   const ctx = await getSeedCtx();
   const { id: rulesetId } = await createSeededTestRuleset(SEED_USER_ID);
-  const item = await expectOk(api.api.rulesets[":id"].items.$post({ param: { id: rulesetId }, json: { name: "Inventory Item", weight: 5, costGp: 10 } }));
+  const item = await expectOk(
+    api.api.rulesets[":id"].items.$post({
+      param: { id: rulesetId },
+      json: { name: "Inventory Item", weight: 5, costGp: 10 },
+    }),
+  );
   const abilities = Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10]));
-  const character = await expectOk(api.api.characters.$post({
-    json: {
-      rulesetId, raceId: ctx.raceMap.pc["Human"], name: "Inventory Character", xp: 0, alignment: "True Neutral",
-      abilities, age: 25, gender: "Male", height: "180", weight: "80",
-    },
-  }));
+  const character = await expectOk(
+    api.api.characters.$post({
+      json: {
+        rulesetId,
+        raceId: ctx.raceMap.pc["Human"],
+        name: "Inventory Character",
+        xp: 0,
+        alignment: "True Neutral",
+        abilities,
+        age: 25,
+        gender: "Male",
+        height: "180",
+        weight: "80",
+      },
+    }),
+  );
   return { characterId: character.id, itemId: item.id };
 }
 
@@ -31,7 +47,12 @@ describe("character inventory", () => {
     expect(await expectOk(added)).toMatchObject({ quantity: 5, equipped: false });
     expect((await expectOk(inventory.$get({ param: { characterId } }))).map((e) => e.itemId)).toContain(itemId);
 
-    const updated = await expectOk(entry.$put({ param: { characterId, itemId }, json: { ...unequipped, quantity: 10, equipped: true, location: "Trinket" } }));
+    const updated = await expectOk(
+      entry.$put({
+        param: { characterId, itemId },
+        json: { ...unequipped, quantity: 10, equipped: true, location: "Trinket" },
+      }),
+    );
     expect(updated).toMatchObject({ quantity: 10, equipped: true, location: "Trinket" });
 
     expect(await expectOk(entry.$delete({ param: { characterId, itemId } }))).toEqual({ success: true });
@@ -40,11 +61,18 @@ describe("character inventory", () => {
 
   test("adds an equipped item and an item with charges", async () => {
     const { characterId, itemId } = await setup();
-    const equipped = await expectOk(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Trinket" } }));
+    const equipped = await expectOk(
+      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Trinket" } }),
+    );
     expect(equipped).toMatchObject({ equipped: true, location: "Trinket" });
 
     await expectOk(entry.$delete({ param: { characterId, itemId } }));
-    const charged = await expectOk(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, totalCharges: 50, remainingCharges: 50 } }));
+    const charged = await expectOk(
+      inventory.$post({
+        param: { characterId },
+        json: { ...unequipped, itemId, totalCharges: 50, remainingCharges: 50 },
+      }),
+    );
     expect(charged).toMatchObject({ totalCharges: 50, remainingCharges: 50 });
   });
 

@@ -1,5 +1,4 @@
 import type { TargetPath } from "@/shared/customization/target.ts";
-
 /**
  * Universal "bonded" target paths — express that a character has a familiar /
  * animal companion / mount, plus the granting classes' contribution to the
@@ -35,9 +34,7 @@ export type DetailedCharacterComprehensiveBonds = {
 };
 
 export default class DetailedCharacterBonds {
-  static generateTargetPaths(
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
     for (const b of BONDED_KINDS) {
       paths.push({
@@ -52,9 +49,10 @@ export default class DetailedCharacterBonds {
         category: "bonded",
         description: `${b.label} effective level (summed from granting classes)`,
         valueType: "number" as const,
-        operators: kind === "modifier"
-          ? ["add", "subtract", "set"]
-          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+        operators:
+          kind === "modifier"
+            ? ["add", "subtract", "set"]
+            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
       });
     }
     return paths;
@@ -70,11 +68,10 @@ export default class DetailedCharacterBonds {
     return labels;
   }
 
-  protected readonly bonds: DetailedCharacterComprehensiveBonds = BONDED_KINDS
-    .reduce((acc, b) => {
-      acc[b.slug] = { race: "", level: 0 };
-      return acc;
-    }, {} as DetailedCharacterComprehensiveBonds);
+  protected readonly bonds: DetailedCharacterComprehensiveBonds = BONDED_KINDS.reduce((acc, b) => {
+    acc[b.slug] = { race: "", level: 0 };
+    return acc;
+  }, {} as DetailedCharacterComprehensiveBonds);
 
   getBonds(): DetailedCharacterComprehensiveBonds {
     return this.bonds;

@@ -6,22 +6,22 @@ const APP_URL = process.env.APP_URL || "http://localhost:8000";
 function getMimeType(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
   const mimeTypes: Record<string, string> = {
-    "html": "text/html",
-    "css": "text/css",
-    "js": "text/javascript",
-    "json": "application/json",
-    "png": "image/png",
-    "jpg": "image/jpeg",
-    "jpeg": "image/jpeg",
-    "gif": "image/gif",
-    "svg": "image/svg+xml",
-    "ico": "image/x-icon",
-    "webmanifest": "application/manifest+json",
-    "txt": "text/plain",
-    "xml": "application/xml",
-    "gz": "application/gzip",
-    "wasm": "application/wasm",
-    "md": "text/markdown; charset=utf-8",
+    html: "text/html",
+    css: "text/css",
+    js: "text/javascript",
+    json: "application/json",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+    ico: "image/x-icon",
+    webmanifest: "application/manifest+json",
+    txt: "text/plain",
+    xml: "application/xml",
+    gz: "application/gzip",
+    wasm: "application/wasm",
+    md: "text/markdown; charset=utf-8",
   };
 
   return mimeTypes[ext || ""] || "application/octet-stream";
@@ -42,8 +42,7 @@ interface RouteMeta {
 const INDEXABLE_ROUTE_META: Record<string, RouteMeta> = {
   "/sign-up": {
     title: "Sign Up | Arkyvree",
-    description:
-      "Create your Arkyvree account and start building characters and campaigns.",
+    description: "Create your Arkyvree account and start building characters and campaigns.",
   },
   "/legal": {
     title: "Legal | Arkyvree",
@@ -68,53 +67,32 @@ function injectMeta(html: string, path: string): string {
     // self-referential signal pointing at an unindexable URL.
     return html
       .replace('<link rel="canonical" href="" />', "")
-      .replace(
-        "</head>",
-        `    <meta name="robots" content="noindex, nofollow" />\n  </head>`
-      );
+      .replace("</head>", `    <meta name="robots" content="noindex, nofollow" />\n  </head>`);
   }
 
   let result = html;
 
   // Replace <title>
-  result = result.replace(
-    `<title>${DEFAULT_TITLE}</title>`,
-    `<title>${meta.title}</title>`
-  );
+  result = result.replace(`<title>${DEFAULT_TITLE}</title>`, `<title>${meta.title}</title>`);
 
   // Replace meta description
-  result = result.replace(
-    `content="${DEFAULT_DESCRIPTION}"`,
-    `content="${meta.description}"`
-  );
+  result = result.replace(`content="${DEFAULT_DESCRIPTION}"`, `content="${meta.description}"`);
 
   // Replace og:title
   result = result.replace(
     `<meta property="og:title" content="${DEFAULT_OG_TITLE}" />`,
-    `<meta property="og:title" content="${meta.title}" />`
+    `<meta property="og:title" content="${meta.title}" />`,
   );
 
   // Replace og:description with route-specific description
-  result = result.replace(
-    `content="${DEFAULT_OG_DESCRIPTION}"`,
-    `content="${meta.description}"`
-  );
+  result = result.replace(`content="${DEFAULT_OG_DESCRIPTION}"`, `content="${meta.description}"`);
 
   // Make og:image absolute
-  result = result.replace(
-    'content="/og-image.png"',
-    `content="${APP_URL}/og-image.png"`
-  );
+  result = result.replace('content="/og-image.png"', `content="${APP_URL}/og-image.png"`);
 
   // Inject og:url and canonical
-  result = result.replace(
-    '<link rel="canonical" href="" />',
-    `<link rel="canonical" href="${APP_URL}${path}" />`
-  );
-  result = result.replace(
-    "</head>",
-    `    <meta property="og:url" content="${APP_URL}${path}" />\n  </head>`
-  );
+  result = result.replace('<link rel="canonical" href="" />', `<link rel="canonical" href="${APP_URL}${path}" />`);
+  result = result.replace("</head>", `    <meta property="og:url" content="${APP_URL}${path}" />\n  </head>`);
 
   return result;
 }
@@ -150,20 +128,17 @@ async function getTemplate(): Promise<string> {
 
 export default new Hono()
   .get("/robots.txt", (c) => {
-    return c.text(
-      `User-agent: *\nAllow: /\n\nSitemap: ${APP_URL}/sitemap.xml\n`,
-      200,
-      { "Content-Type": "text/plain", "Cache-Control": "no-cache" }
-    );
+    return c.text(`User-agent: *\nAllow: /\n\nSitemap: ${APP_URL}/sitemap.xml\n`, 200, {
+      "Content-Type": "text/plain",
+      "Cache-Control": "no-cache",
+    });
   })
   .get("/sitemap.xml", (c) => {
     // Only list pages Googlebot can actually render. /rulesets and
     // /rulesets/:id sit behind PrivateRoute (auth) and /sign-in duplicates
     // the landing page's title/description, so none belong in the sitemap.
     const staticUrls = ["/", "/sign-up"];
-    const entries = staticUrls
-      .map((path) => `  <url><loc>${APP_URL}${path}</loc></url>`)
-      .join("\n");
+    const entries = staticUrls.map((path) => `  <url><loc>${APP_URL}${path}</loc></url>`).join("\n");
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
     return c.text(xml, 200, { "Content-Type": "application/xml", "Cache-Control": "public, max-age=900" });
@@ -219,9 +194,7 @@ export default new Hono()
         const content = await file.arrayBuffer();
         const fileName = c.req.param("file");
         const noCache = /^(sw|registerSW|workbox-).*\.js$/.test(fileName);
-        const cacheControl = noCache
-          ? "no-cache, no-store, must-revalidate"
-          : "public, max-age=3600";
+        const cacheControl = noCache ? "no-cache, no-store, must-revalidate" : "public, max-age=3600";
         return new Response(content, {
           headers: {
             "Content-Type": getMimeType(filePath),

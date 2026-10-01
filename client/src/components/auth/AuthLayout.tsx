@@ -1,12 +1,13 @@
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { PageTransition, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
+import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+
+import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
 import { useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
-import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 // ── Branding panels (rendered once by the layout route) ──
 
@@ -183,10 +184,7 @@ function MobileBranding() {
         >
           Arkyvree
         </Typography>
-        <Typography
-          variant="body2"
-          sx={{ color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}
-        >
+        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}>
           A programmable engine for tabletop rulesets
         </Typography>
       </Box>
@@ -199,7 +197,19 @@ function AuthFooterLinks() {
   // The demo is for newcomers, so only sign-up offers it.
   const showDemo = useLocation().pathname === "/sign-up";
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: { xs: 1, sm: 2 }, rowGap: 0.5, mt: 2, alignItems: "center", justifyContent: "center", width: "100%", maxWidth: 450 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        columnGap: { xs: 1, sm: 2 },
+        rowGap: 0.5,
+        mt: 2,
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        maxWidth: 450,
+      }}
+    >
       {showDemo && (
         <>
           <MuiLink
@@ -213,7 +223,9 @@ function AuthFooterLinks() {
           >
             {isPending ? "Starting…" : "Try the demo"}
           </MuiLink>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>|</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            |
+          </Typography>
         </>
       )}
       <MuiLink
@@ -255,9 +267,7 @@ export function AuthLayoutRoute() {
   }, [isClearingDemo, signOut, clearSession]);
 
   if (isClearingDemo) {
-    return (
-      <DiceSpinner sx={{ minHeight: "100vh" }} />
-    );
+    return <DiceSpinner sx={{ minHeight: "100vh" }} />;
   }
 
   if (isAuthenticated) {
@@ -281,9 +291,7 @@ export function AuthLayoutRoute() {
   }
 
   return (
-    <Box
-      sx={{ display: "flex", minHeight: "100vh" }}
-    >
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <DesktopBranding />
 
       <Box
@@ -328,12 +336,7 @@ export function AuthPage({ children, title, subtitle, error, notice }: AuthPageP
               [prefersReducedMotion]: { animation: "none" },
             }}
           >
-            <Typography
-              sx={{ typography: { xs: "h5", sm: "h4" } }}
-              component="h1"
-              gutterBottom
-              align="center"
-            >
+            <Typography sx={{ typography: { xs: "h5", sm: "h4" } }} component="h1" gutterBottom align="center">
               {title}
             </Typography>
 
@@ -343,8 +346,16 @@ export function AuthPage({ children, title, subtitle, error, notice }: AuthPageP
               </Typography>
             )}
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-            {notice && <Alert severity="success" sx={{ mb: 2 }}>{notice}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            {notice && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {notice}
+              </Alert>
+            )}
 
             {children}
           </Box>

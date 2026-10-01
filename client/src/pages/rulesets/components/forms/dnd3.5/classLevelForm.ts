@@ -1,6 +1,6 @@
-import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import type { InferRequestType } from "hono/client";
 
+import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type LevelJson = InferRequestType<

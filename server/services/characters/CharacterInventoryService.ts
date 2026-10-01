@@ -1,17 +1,14 @@
+import { getTableName } from "drizzle-orm";
+
 import { inventoryInCharacter, type location } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import {
-  Activities,
-  CharacterInventory,
-  Characters,
-  Items,
-} from "@/server/repositories/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { Activities, CharacterInventory, Characters, Items } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
+
 import { HAND_SLOTS, validateEquipmentSlot, validateItemRequirements } from "./inventory/validation.ts";
 
 type InventoryLocation = (typeof location.enumValues)[number];
@@ -19,10 +16,14 @@ type InventoryLocation = (typeof location.enumValues)[number];
 export const CharacterInventoryMethods = {
   async getInventory(session: Session, characterId: string) {
     // Visibility.All: an archived character's sheet still lists its items, read-only.
-    const characterRecord = await Characters.findOneEditable(db, {
-      id: characterId,
-      userId: session.userId,
-    }, Visibility.All);
+    const characterRecord = await Characters.findOneEditable(
+      db,
+      {
+        id: characterId,
+        userId: session.userId,
+      },
+      Visibility.All,
+    );
     if (!characterRecord) {
       throw new NotFoundError("Character not found");
     }
@@ -40,9 +41,7 @@ export const CharacterInventoryMethods = {
         const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
         const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
         const templateProperties = item.sourceItemId
-          ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter(
-              (p) => !ownPropertyTypes.has(p.type),
-            )
+          ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter((p) => !ownPropertyTypes.has(p.type))
           : [];
         const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
         const templateRequirements = item.sourceItemId
@@ -96,10 +95,7 @@ export const CharacterInventoryMethods = {
 
         // Validate item belongs to character's ruleset or any ancestor in its
         // source chain.
-        const validRulesetIds = new Set([
-          characterRecord.rulesetId,
-          ...rulesetData.cow.sourceChain,
-        ]);
+        const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
         if (!validRulesetIds.has(itemRecord.rulesetId)) {
           throw new BadRequestError("Item does not belong to the character's ruleset");
         }
@@ -124,7 +120,16 @@ export const CharacterInventoryMethods = {
 
         // Validate equipment slot if equipped
         if (equipped && location) {
-          await validateEquipmentSlot(tx, characterId, itemRecord, location, weaponSet, characterRecord.raceId, ruleset, rulesetData);
+          await validateEquipmentSlot(
+            tx,
+            characterId,
+            itemRecord,
+            location,
+            weaponSet,
+            characterRecord.raceId,
+            ruleset,
+            rulesetData,
+          );
           if (!force) {
             await validateItemRequirements(tx, characterRecord, itemRecord, ruleset, rulesetData);
           }
@@ -204,7 +209,16 @@ export const CharacterInventoryMethods = {
           if (!itemRecord) {
             throw new NotFoundError("Item not found");
           }
-          await validateEquipmentSlot(tx, characterId, itemRecord, location, weaponSet, characterRecord.raceId, ruleset, rulesetData);
+          await validateEquipmentSlot(
+            tx,
+            characterId,
+            itemRecord,
+            location,
+            weaponSet,
+            characterRecord.raceId,
+            ruleset,
+            rulesetData,
+          );
           if (!force) {
             await validateItemRequirements(tx, characterRecord, itemRecord, ruleset, rulesetData);
           }

@@ -1,19 +1,11 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { PathCompletion } from "@/shared/customization/target.ts";
-import { formatSegment } from "@/shared/utils.ts";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import Clear from "@mui/icons-material/Clear";
-import Public from "@mui/icons-material/Public";
 import FilterList from "@mui/icons-material/FilterList";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import Public from "@mui/icons-material/Public";
 import {
   Box,
   Chip,
   IconButton,
-
   List,
   ListItemButton,
   ListItemText,
@@ -24,7 +16,15 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { PathCompletion } from "@/shared/customization/target.ts";
+import { formatSegment } from "@/shared/utils.ts";
 
 interface TargetPathBrowserProps {
   rulesetId: string;
@@ -66,22 +66,36 @@ export function TargetPathBrowser({
 
   const queryPrefix = flatMode ? "" : browsePrefix;
 
-  const { data: completionsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.targetCompletions(rulesetId, flatMode ? `flat:${debouncedSearch}` : browsePrefix, kind, debouncedSearch, entityType),
+  const {
+    data: completionsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.rulesets.targetCompletions(
+      rulesetId,
+      flatMode ? `flat:${debouncedSearch}` : browsePrefix,
+      kind,
+      debouncedSearch,
+      entityType,
+    ),
     queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets[":id"].customization["target"].paths.completions.$post({
-        param: { id: rulesetId },
-        json: {
-          partialPath: queryPrefix,
-          position: queryPrefix.length,
-          kind,
-          entityType: entityType || undefined,
-          search: debouncedSearch || undefined,
-          flat: flatMode || undefined,
-          limit: 50,
-          page: pageParam,
-        },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].customization["target"].paths.completions.$post({
+          param: { id: rulesetId },
+          json: {
+            partialPath: queryPrefix,
+            position: queryPrefix.length,
+            kind,
+            entityType: entityType || undefined,
+            search: debouncedSearch || undefined,
+            flat: flatMode || undefined,
+            limit: 50,
+            page: pageParam,
+          },
+        }),
+      );
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -156,9 +170,7 @@ export function TargetPathBrowser({
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5, minHeight: 32 }}>
         {breadcrumbSegments.map((segment, index) => (
           <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-            {index > 0 && (
-              <ChevronRight sx={{ fontSize: 16, color: "text.secondary", mx: 0.25 }} />
-            )}
+            {index > 0 && <ChevronRight sx={{ fontSize: 16, color: "text.secondary", mx: 0.25 }} />}
             <Chip
               label={segmentLabels[segment] || formatSegment(segment)}
               size="small"
@@ -174,9 +186,7 @@ export function TargetPathBrowser({
             <Clear fontSize="small" />
           </IconButton>
         )}
-        {breadcrumbSegments.length === 0 && (
-          <Skeleton variant="rounded" width={100} height={24} />
-        )}
+        {breadcrumbSegments.length === 0 && <Skeleton variant="rounded" width={100} height={24} />}
       </Box>
       {/* Search + List */}
       {!disabled && (
@@ -189,7 +199,14 @@ export function TargetPathBrowser({
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
             />
-            <Tooltip title={searchEverywhere ? "Searching everywhere — click to limit to this level" : "Searching this level only — click to search everywhere"} arrow>
+            <Tooltip
+              title={
+                searchEverywhere
+                  ? "Searching everywhere — click to limit to this level"
+                  : "Searching this level only — click to search everywhere"
+              }
+              arrow
+            >
               <IconButton
                 size="small"
                 onClick={() => setSearchEverywhere((prev) => !prev)}
@@ -200,14 +217,23 @@ export function TargetPathBrowser({
               </IconButton>
             </Tooltip>
             {isLoading && (
-              <Box sx={{ position: "absolute", top: "50%", left: "calc(50% - 24px)", transform: "translate(-50%, -50%)" }}>
+              <Box
+                sx={{ position: "absolute", top: "50%", left: "calc(50% - 24px)", transform: "translate(-50%, -50%)" }}
+              >
                 <DiceSpinner size="small" />
               </Box>
             )}
           </Box>
           <List
             dense
-            sx={{ height: 250, overflowY: "auto", border: 1, borderColor: "divider", borderRadius: 1, overscrollBehavior: "contain" }}
+            sx={{
+              height: 250,
+              overflowY: "auto",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              overscrollBehavior: "contain",
+            }}
             onScroll={handleScroll}
           >
             {completions.map((option) => {
@@ -215,15 +241,23 @@ export function TargetPathBrowser({
               const isSelected = flatMode
                 ? selectedLeaf?.path === option.path
                 : selectedLeaf?.insertText === option.insertText;
-              const flatBreadcrumb = flatMode && option.path
-                ? option.path.split(".").map((seg) => segmentLabels[seg] || formatSegment(seg)).join(" › ")
-                : null;
+              const flatBreadcrumb =
+                flatMode && option.path
+                  ? option.path
+                      .split(".")
+                      .map((seg) => segmentLabels[seg] || formatSegment(seg))
+                      .join(" › ")
+                  : null;
               return (
-                <Tooltip describeChild title={option.detail} placement="right" enterDelay={400} arrow key={option.insertText}>
-                  <ListItemButton
-                    selected={isSelected}
-                    onClick={() => handleNavigate(option)}
-                  >
+                <Tooltip
+                  describeChild
+                  title={option.detail}
+                  placement="right"
+                  enterDelay={400}
+                  arrow
+                  key={option.insertText}
+                >
+                  <ListItemButton selected={isSelected} onClick={() => handleNavigate(option)}>
                     <ListItemText
                       primary={
                         flatBreadcrumb ? (
@@ -235,9 +269,7 @@ export function TargetPathBrowser({
                             <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
                               {segmentLabels[option.label] || formatSegment(option.label)}
                             </Typography>
-                            {isGroup && (
-                              <ChevronRight sx={{ fontSize: 16, color: "text.secondary" }} />
-                            )}
+                            {isGroup && <ChevronRight sx={{ fontSize: 16, color: "text.secondary" }} />}
                           </Box>
                         )
                       }
@@ -247,9 +279,7 @@ export function TargetPathBrowser({
               );
             })}
             {completions.length === 0 && !isLoading && (
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", px: 2, py: 1 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", px: 2, py: 1 }}>
                 No results
               </Typography>
             )}

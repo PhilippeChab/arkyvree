@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "175",
   weight: "68",
-  description: "A disciplined monk from the Monastery of the Falling Leaf. Zen seeks inner perfection through rigorous training and meditation, channeling his ki into devastating strikes.",
+  description:
+    "A disciplined monk from the Monastery of the Falling Leaf. Zen seeks inner perfection through rigorous training and meditation, channeling his ki into devastating strikes.",
   abilities: { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 16, Charisma: 8 },
   languages: ["Common"],
   classes: [{ klass: "Monk", hp: [8, 6, 7] }],
@@ -44,7 +45,5 @@ export default {
     { levelIndex: 1, featName: "Deflect Arrows", aptitude: "Monk Bonus Feat (2nd)" },
     { levelIndex: 2, featName: "Combat Reflexes", aptitude: "General" },
   ],
-  inventory: [
-    { name: "Nunchaku", quantity: 1, equipped: true, location: "Main Hand", weaponSet: 0 },
-  ],
+  inventory: [{ name: "Nunchaku", quantity: 1, equipped: true, location: "Main Hand", weaponSet: 0 }],
 } satisfies CharacterSeed;

@@ -1,24 +1,19 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { Shield as SavesIcon } from "@mui/icons-material";
+import { Typography } from "@mui/material";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
+import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { SaveFormFields, type SaveFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { CreateDialog, SearchBar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetSection, useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Shield as SavesIcon } from "@mui/icons-material";
-import {
-  Typography,
-} from "@mui/material";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
-import { useCallback } from "react";
 import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const SAVES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -34,19 +29,17 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
-  const {
-    createForm,
-    handleCreate,
-    createDialogProps,
-  } = useRulesetSection<Save, SaveFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Save, SaveFormData>({
     rulesetId: ruleset.id,
     sectionName: "saves",
     label: "Save",
     createFn: async (data) => {
-      return parseResponse(rpc.api.rulesets[":id"].saves.$post({
-        param: { id: ruleset.id },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].saves.$post({
+          param: { id: ruleset.id },
+          json: data,
+        }),
+      );
     },
     onCreateSuccess: (created) => openEntity(`saves/${created.id}`),
   });
@@ -65,24 +58,21 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(`saves/${save.id}`);
   };
 
-  const handleRowMouseEnter = useCallback((save: Save) => {
-    void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (save: Save) => {
+      void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (save: Save, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return save.name;
       case "description":
-        return (
-          <DescriptionCell text={save.description} />
-        );
+        return <DescriptionCell text={save.description} />;
       case "ability":
-        return (
-          <Typography variant="body2">
-            {abilityLookup.get(save.abilityId) || "—"}
-          </Typography>
-        );
+        return <Typography variant="body2">{abilityLookup.get(save.abilityId) || "—"}</Typography>;
       default:
         return null;
     }
@@ -124,10 +114,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Save"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Save">
         <SaveFormFields form={createForm} abilities={abilities} />
       </CreateDialog>
     </SectionContent>

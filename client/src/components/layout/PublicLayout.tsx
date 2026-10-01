@@ -1,7 +1,9 @@
 import { Dashboard as DashboardIcon, PersonAdd as SignUpIcon } from "@mui/icons-material";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { AppBar, Button, Toolbar, Typography } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
 import { AppBrand, AppMain } from "./AppShell.tsx";
 
 export function PublicLayout() {
@@ -29,19 +31,11 @@ export function PublicLayout() {
           </Typography>
 
           {isAuthenticated ? (
-            <Button
-              color="inherit"
-              startIcon={<DashboardIcon />}
-              onClick={() => navigate("/dashboard")}
-            >
+            <Button color="inherit" startIcon={<DashboardIcon />} onClick={() => navigate("/dashboard")}>
               Dashboard
             </Button>
           ) : (
-            <Button
-              color="inherit"
-              startIcon={<SignUpIcon />}
-              onClick={() => navigate("/sign-up")}
-            >
+            <Button color="inherit" startIcon={<SignUpIcon />} onClick={() => navigate("/sign-up")}>
               Sign up
             </Button>
           )}

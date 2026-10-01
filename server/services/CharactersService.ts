@@ -1,8 +1,17 @@
-import { eq, sql, getTableName } from "drizzle-orm";
+import { eq, getTableName, sql } from "drizzle-orm";
 
 import { type alignment, charactersInCharacter, type gender, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import type { Db } from "@/server/database/index.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  InternalError,
+  NotFoundError,
+  STALE_ENTITY_MESSAGE,
+} from "@/server/errors/index.ts";
+import { pingWorker } from "@/server/queue.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   Campaigns,
@@ -15,20 +24,17 @@ import {
   PlayerCharacters,
   Races,
 } from "@/server/repositories/index.ts";
-import { CampaignsPolicy, CharactersPolicy } from "@/server/services/policies/index.ts";
-import { purgeAttachmentsForRecords, urlForSlot } from "@/server/services/AttachmentsService.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { pingWorker } from "@/server/queue.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind, DetailedCharacterInterface, Holders } from "@/server/rulesets/types.ts";
-import { BONDED_KINDS, type BondedKind } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
-import type { Character } from "@/shared/relations.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
-import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow.ts";
+import { purgeAttachmentsForRecords, urlForSlot } from "@/server/services/AttachmentsService.ts";
 import BaseService from "@/server/services/BaseService.ts";
+import { BONDED_KINDS, type BondedKind } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
+import { CampaignsPolicy, CharactersPolicy } from "@/server/services/policies/index.ts";
+import { withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow.ts";
+import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
+import type { Character } from "@/shared/relations.ts";
 import type { Requirement, Session } from "@/shared/relations.ts";
-import type { Db } from "@/server/database/index.ts";
 
 /**
  * Replace a character's language set in-place. Validates each id resolves
@@ -50,10 +56,7 @@ async function replaceCharacterLanguages(
     if (languages.length !== languageIds.length) {
       throw new BadRequestError("Some languages were not found");
     }
-    const validRulesetIds = new Set([
-      characterRecord.rulesetId,
-      ...rulesetData.cow.sourceChain,
-    ]);
+    const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
     if (languages.some((l) => !validRulesetIds.has(l.rulesetId))) {
       throw new BadRequestError("Some languages do not belong to the character's ruleset");
     }
@@ -76,10 +79,14 @@ export async function loadBondedByKind(
 ): Promise<Partial<Record<BondedKind, BondedEntry>>> {
   const out: Partial<Record<BondedKind, BondedEntry>> = {};
   for (const kind of BONDED_KINDS) {
-    const record = await Characters.findOne(db, {
-      parentCharacterId: masterId,
-      kind,
-    }, Visibility.All);
+    const record = await Characters.findOne(
+      db,
+      {
+        parentCharacterId: masterId,
+        kind,
+      },
+      Visibility.All,
+    );
     if (!record) continue;
     const detailed = rulesetModule.createDetailedCharacter(record, kind);
     await detailed.build();
@@ -88,11 +95,7 @@ export async function loadBondedByKind(
   return out;
 }
 
-async function findEditableCharacterOrBonded(
-  tx: Db,
-  characterId: string,
-  userId: string,
-) {
+async function findEditableCharacterOrBonded(tx: Db, characterId: string, userId: string) {
   const pc = await Characters.findOneEditable(tx, { id: characterId, userId });
   if (pc) return pc;
   const bonded = await Characters.findOne(tx, { id: characterId });
@@ -113,7 +116,7 @@ async function findEditableCharacterOrBonded(
  */
 export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
   if (campaignId) {
-    if (!await PlayerCharacters.findOne(db, { characterId, campaignId })) return null;
+    if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
     if (await CampaignsPolicy.isGameMaster(userId, campaignId)) {
       return (await Characters.findOne(db, { id: characterId })) ?? null;
     }
@@ -189,58 +192,58 @@ export const CharactersMethods = {
 
       const races = result.items;
 
-    if (races.length === 0) return { items: [], page: result.page, nextPage: result.nextPage };
+      if (races.length === 0) return { items: [], page: result.page, nextPage: result.nextPage };
 
-    // Requirements come from the composed cache — compose pre-merges sibling
-    // requirements into the winner's bucket, so the lookup is already correct
-    // across multi-extension COW forks.
-    const requirementsByRace = new Map<string, Requirement[]>();
-    let anyRequirements = false;
-    for (const race of races) {
-      const reqs = rulesetData.requirementsByEntity.get(race.id);
-      if (reqs && reqs.length > 0) {
-        requirementsByRace.set(race.id, reqs);
-        anyRequirements = true;
+      // Requirements come from the composed cache — compose pre-merges sibling
+      // requirements into the winner's bucket, so the lookup is already correct
+      // across multi-extension COW forks.
+      const requirementsByRace = new Map<string, Requirement[]>();
+      let anyRequirements = false;
+      for (const race of races) {
+        const reqs = rulesetData.requirementsByEntity.get(race.id);
+        if (reqs && reqs.length > 0) {
+          requirementsByRace.set(race.id, reqs);
+          anyRequirements = true;
+        }
       }
-    }
 
-    if (!anyRequirements) {
-      return {
-        items: races.map((race) => ({ ...race, eligible: true })),
-        page: result.page,
-        nextPage: result.nextPage,
+      if (!anyRequirements) {
+        return {
+          items: races.map((race) => ({ ...race, eligible: true })),
+          page: result.page,
+          nextPage: result.nextPage,
+        };
+      }
+
+      // Build a minimal identity holder from form data.
+      // Only include fields that are actually provided — missing fields cause
+      // path traversal to fail gracefully (node not in tree → lenient evaluation).
+      const identityData: Record<string, Record<string, unknown>> = {
+        physiology: {},
+        beliefs: {},
+        background: {},
+        meta: {},
       };
-    }
+      if (formData.alignment) identityData.beliefs.alignment = formData.alignment;
+      if (formData.gender) identityData.physiology.gender = formData.gender;
 
-    // Build a minimal identity holder from form data.
-    // Only include fields that are actually provided — missing fields cause
-    // path traversal to fail gracefully (node not in tree → lenient evaluation).
-    const identityData: Record<string, Record<string, unknown>> = {
-      physiology: {},
-      beliefs: {},
-      background: {},
-      meta: {},
-    };
-    if (formData.alignment) identityData.beliefs.alignment = formData.alignment;
-    if (formData.gender) identityData.physiology.gender = formData.gender;
+      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+      const targetPaths = rulesetModule.createTargetPaths();
+      const holders: Holders = {
+        identity: { getIdentity: () => identityData },
+      };
 
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const targetPaths = rulesetModule.createTargetPaths();
-    const holders: Holders = {
-      identity: { getIdentity: () => identityData },
-    };
+      const annotatedRaces = races.map((race) => {
+        const reqs = requirementsByRace.get(race.id);
+        if (!reqs || reqs.length === 0) return { ...race, eligible: true };
 
-    const annotatedRaces = races.map((race) => {
-      const reqs = requirementsByRace.get(race.id);
-      if (!reqs || reqs.length === 0) return { ...race, eligible: true };
-
-      const tempRequirements = new DetailedCharacterRequirements(targetPaths);
-      tempRequirements.evaluateRequirements(holders, [reqs]);
-      const { unmetRequirementGroups } = tempRequirements.getRequirements();
-      // Only check unmetRequirementGroups — invalidRequirements represent
-      // paths we can't evaluate from partial form data (treated as passing)
-      return { ...race, eligible: unmetRequirementGroups.length === 0 };
-    });
+        const tempRequirements = new DetailedCharacterRequirements(targetPaths);
+        tempRequirements.evaluateRequirements(holders, [reqs]);
+        const { unmetRequirementGroups } = tempRequirements.getRequirements();
+        // Only check unmetRequirementGroups — invalidRequirements represent
+        // paths we can't evaluate from partial form data (treated as passing)
+        return { ...race, eligible: unmetRequirementGroups.length === 0 };
+      });
 
       return { items: annotatedRaces, page: result.page, nextPage: result.nextPage };
     });
@@ -253,10 +256,10 @@ export const CharactersMethods = {
       raceId: string;
       name: string;
       xp: number;
-      alignment: typeof alignment.enumValues[number];
+      alignment: (typeof alignment.enumValues)[number];
       abilities: Record<string, number>;
       age?: number;
-      gender: typeof gender.enumValues[number];
+      gender: (typeof gender.enumValues)[number];
       height?: string;
       weight?: string;
       deity?: string;
@@ -298,7 +301,8 @@ export const CharactersMethods = {
 
         // Create character ability scores from ruleset abilities
         if (rulesetData.abilities.length > 0) {
-          await CharacterAbilities.createMany(tx,
+          await CharacterAbilities.createMany(
+            tx,
             rulesetData.abilities.map((ability) => ({
               characterId: newCharacter.id,
               abilityId: ability.id,
@@ -330,10 +334,14 @@ export const CharactersMethods = {
       if (!record.parentCharacterId) {
         throw new NotFoundError("Character not found");
       }
-      const masterRecord = await Characters.findOneEditable(db, {
-        id: record.parentCharacterId,
-        userId: session.userId,
-      }, Visibility.All);
+      const masterRecord = await Characters.findOneEditable(
+        db,
+        {
+          id: record.parentCharacterId,
+          userId: session.userId,
+        },
+        Visibility.All,
+      );
       if (!masterRecord) {
         throw new NotFoundError("Character not found");
       }
@@ -349,10 +357,14 @@ export const CharactersMethods = {
       };
     }
 
-    const characterRecord = await Characters.findOneEditable(db, {
-      id: characterId,
-      userId: session.userId,
-    }, Visibility.All);
+    const characterRecord = await Characters.findOneEditable(
+      db,
+      {
+        id: characterId,
+        userId: session.userId,
+      },
+      Visibility.All,
+    );
 
     if (!characterRecord) {
       throw new NotFoundError("Character not found");
@@ -377,12 +389,12 @@ export const CharactersMethods = {
     updateData: {
       name?: string;
       age?: number;
-      gender?: typeof gender.enumValues[number];
+      gender?: (typeof gender.enumValues)[number];
       height?: string;
       weight?: string;
       deity?: string;
       xp?: number;
-      alignment?: typeof alignment.enumValues[number];
+      alignment?: (typeof alignment.enumValues)[number];
       description?: string;
       notes?: string;
       languageIds?: string[];
@@ -423,11 +435,7 @@ export const CharactersMethods = {
     });
   },
 
-  async updateAbilities(
-    session: Session,
-    characterId: string,
-    abilities: Record<string, number>,
-  ) {
+  async updateAbilities(session: Session, characterId: string, abilities: Record<string, number>) {
     return await withTransaction(async (tx) => {
       const characterRecord = await Characters.findOneEditable(tx, {
         id: characterId,
@@ -458,11 +466,7 @@ export const CharactersMethods = {
     });
   },
 
-  async updateLanguages(
-    session: Session,
-    characterId: string,
-    languageIds: string[],
-  ) {
+  async updateLanguages(session: Session, characterId: string, languageIds: string[]) {
     return await withTransaction(async (tx) => {
       const characterRecord = await Characters.findOneEditable(tx, {
         id: characterId,
@@ -498,72 +502,71 @@ export const CharactersMethods = {
     pagination: { limit: number; page: number },
   ) {
     // Fetch basic character data with pagination
-    const result = await Characters.findMany(
-      db,
-      { userId: session.userId, ...where },
-      pagination,
-    );
+    const result = await Characters.findMany(db, { userId: session.userId, ...where }, pagination);
 
     const charactersList = result.items;
     const characterIds = charactersList.map((char) => char.id);
 
-    const levels = characterIds.length > 0
-      ? await CharacterLevels.findMany(db, { characterIds })
-      : [];
+    const levels = characterIds.length > 0 ? await CharacterLevels.findMany(db, { characterIds }) : [];
 
     // Resolve race / klass names via each character's composed ruleset cache
     // so COW'd or renamed entities render their post-COW names (the detail
     // page already does this via rulesetData; the list used to hit Races/
     // Klasses.findMany directly and returned stale pre-COW names).
-    return await withRulesetScopes(db, charactersList.map((c) => c.rulesetId), async (rulesetDataByRulesetId) => {
+    return await withRulesetScopes(
+      db,
+      charactersList.map((c) => c.rulesetId),
+      async (rulesetDataByRulesetId) => {
+        // Group levels by character and class
+        const levelsByCharacter = new Map<string, Map<string, number>>();
+        for (const level of levels) {
+          const char = charactersList.find((c) => c.id === level.characterId);
+          if (!char) continue;
+          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
+          if (!rulesetData) continue;
+          // klassLevelsById / klassesById auto-resolve stored pre-COW ids.
+          const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
+          if (!klassLevel) continue;
+          const klass = rulesetData.klassesById.get(klassLevel.klassId);
+          const klassName = klass?.name || "Unknown";
+          let bucket = levelsByCharacter.get(level.characterId);
+          if (!bucket) {
+            bucket = new Map();
+            levelsByCharacter.set(level.characterId, bucket);
+          }
+          const currentLevel = bucket.get(klassName) || 0;
+          if (klassLevel.level > currentLevel) {
+            bucket.set(klassName, klassLevel.level);
+          }
+        }
 
-    // Group levels by character and class
-    const levelsByCharacter = new Map<string, Map<string, number>>();
-    for (const level of levels) {
-      const char = charactersList.find((c) => c.id === level.characterId);
-      if (!char) continue;
-      const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-      if (!rulesetData) continue;
-      // klassLevelsById / klassesById auto-resolve stored pre-COW ids.
-      const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
-      if (!klassLevel) continue;
-      const klass = rulesetData.klassesById.get(klassLevel.klassId);
-      const klassName = klass?.name || "Unknown";
-      let bucket = levelsByCharacter.get(level.characterId);
-      if (!bucket) {
-        bucket = new Map();
-        levelsByCharacter.set(level.characterId, bucket);
-      }
-      const currentLevel = bucket.get(klassName) || 0;
-      if (klassLevel.level > currentLevel) {
-        bucket.set(klassName, klassLevel.level);
-      }
-    }
+        // Map to final format
+        const enrichedCharacters = charactersList.map((char) => {
+          const classLevels = Array.from(levelsByCharacter.get(char.id)?.entries() || []).map(([klass, level]) => ({
+            klass,
+            level,
+          }));
+          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
+          const race = rulesetData?.racesById.get(char.raceId);
 
-    // Map to final format
-    const enrichedCharacters = charactersList.map((char) => {
-      const classLevels = Array.from(levelsByCharacter.get(char.id)?.entries() || [])
-        .map(([klass, level]) => ({ klass, level }));
-      const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-      const race = rulesetData?.racesById.get(char.raceId);
+          return {
+            id: char.id,
+            name: char.name,
+            description: char.description,
+            race: race?.name ?? "Unknown",
+            levels: classLevels,
+            totalLevel: classLevels.reduce((sum, lvl) => sum + lvl.level, 0),
+            accessRole: char.accessRole,
+          };
+        });
 
-      return {
-        id: char.id,
-        name: char.name,
-        description: char.description,
-        race: race?.name ?? "Unknown",
-        levels: classLevels,
-        totalLevel: classLevels.reduce((sum, lvl) => sum + lvl.level, 0),
-        accessRole: char.accessRole,
-      };
-    });
-
-    return {
-      items: enrichedCharacters,
-      page: result.page,
-      nextPage: result.nextPage,
-    };
-    });
+        return {
+          items: enrichedCharacters,
+          page: result.page,
+          nextPage: result.nextPage,
+        };
+      },
+    );
   },
 
   async getUnlinkedCharacters(
@@ -659,10 +662,14 @@ export const CharactersMethods = {
 
   async unarchiveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
-      const existingCharacter = await Characters.findOne(tx, {
-        id: characterId,
-        userId: session.userId,
-      }, Visibility.ArchivedOnly);
+      const existingCharacter = await Characters.findOne(
+        tx,
+        {
+          id: characterId,
+          userId: session.userId,
+        },
+        Visibility.ArchivedOnly,
+      );
 
       if (!existingCharacter || existingCharacter.kind !== "pc") {
         throw new NotFoundError("Character not found");
@@ -774,8 +781,8 @@ export const CharactersMethods = {
     }
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const { detailedCharacter, CharacterSheetComponent } = await rulesetModule
-      .createDetailedCharacterWithSheet(characterRecord);
+    const { detailedCharacter, CharacterSheetComponent } =
+      await rulesetModule.createDetailedCharacterWithSheet(characterRecord);
 
     const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
 
@@ -786,7 +793,6 @@ export const CharactersMethods = {
       kind: characterRecord.kind as CharacterKind,
     };
   },
-
 } as const;
 
 class CharactersService extends BaseService<typeof CharactersMethods> {

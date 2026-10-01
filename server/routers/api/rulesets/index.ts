@@ -1,4 +1,6 @@
-import { respond, errorResponse } from "@/server/routers/respond.ts";
+import { Hono } from "hono";
+import { z } from "zod";
+
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
 import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";
@@ -12,14 +14,13 @@ import feats from "@/server/routers/api/rulesets/feats/index.ts";
 import items from "@/server/routers/api/rulesets/items/index.ts";
 import languages from "@/server/routers/api/rulesets/languages/index.ts";
 import mechanics from "@/server/routers/api/rulesets/mechanics/index.ts";
+import powers from "@/server/routers/api/rulesets/powers/index.ts";
 import races from "@/server/routers/api/rulesets/races/index.ts";
 import saves from "@/server/routers/api/rulesets/saves/index.ts";
 import skills from "@/server/routers/api/rulesets/skills/index.ts";
-import powers from "@/server/routers/api/rulesets/powers/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
 import RulesetsService from "@/server/services/RulesetsService.ts";
-import { Hono } from "hono";
-import { z } from "zod";
 
 const authenticatedRulesets = new Hono()
   .use(sessionMiddleware)
@@ -55,41 +56,28 @@ const authenticatedRulesets = new Hono()
       const body = c.req.valid("json");
 
       const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call(
-        "forkRuleset",
-        c.var.requestSession,
-        id,
-        body,
-      );
+      const result = await rulesetsService.call("forkRuleset", c.var.requestSession, id, body);
       return respond(c, result, 201);
     },
   )
-  .post(
-    "/:id/archive",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .post("/:id/archive", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call("archiveRuleset", c.var.requestSession, id);
-      return respond(c, result, 200);
-    },
-  )
-  .post(
-    "/:id/unarchive",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+    const rulesetsService = RulesetsService.initialize();
+    const result = await rulesetsService.call("archiveRuleset", c.var.requestSession, id);
+    return respond(c, result, 200);
+  })
+  .post("/:id/unarchive", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call("unarchiveRuleset", c.var.requestSession, id);
-      const success = result[0];
+    const rulesetsService = RulesetsService.initialize();
+    const result = await rulesetsService.call("unarchiveRuleset", c.var.requestSession, id);
+    const success = result[0];
 
-      if (!success) return errorResponse(c, result[2]);
+    if (!success) return errorResponse(c, result[2]);
 
-      return c.json({ message: "Ruleset unarchived successfully" }, 200);
-    },
-  )
+    return c.json({ message: "Ruleset unarchived successfully" }, 200);
+  })
   .post(
     "/:id/publish",
     denyDemoUser,
@@ -109,36 +97,28 @@ const authenticatedRulesets = new Hono()
       return respond(c, result, 200);
     },
   )
-  .post(
-    "/:id/star",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .post("/:id/star", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call("starRuleset", c.var.requestSession, id);
-      const success = result[0];
+    const rulesetsService = RulesetsService.initialize();
+    const result = await rulesetsService.call("starRuleset", c.var.requestSession, id);
+    const success = result[0];
 
-      if (!success) return errorResponse(c, result[2]);
+    if (!success) return errorResponse(c, result[2]);
 
-      return c.json({ message: "Ruleset starred" }, 201);
-    },
-  )
-  .delete(
-    "/:id/star",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+    return c.json({ message: "Ruleset starred" }, 201);
+  })
+  .delete("/:id/star", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call("unstarRuleset", c.var.requestSession, id);
-      const success = result[0];
+    const rulesetsService = RulesetsService.initialize();
+    const result = await rulesetsService.call("unstarRuleset", c.var.requestSession, id);
+    const success = result[0];
 
-      if (!success) return errorResponse(c, result[2]);
+    if (!success) return errorResponse(c, result[2]);
 
-      return c.json({ message: "Ruleset unstarred" }, 200);
-    },
-  )
+    return c.json({ message: "Ruleset unstarred" }, 200);
+  })
   .put(
     "/:id",
     zValidator("param", z.object({ id: z.string().uuid() })),
@@ -157,12 +137,7 @@ const authenticatedRulesets = new Hono()
       const body = c.req.valid("json");
 
       const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call(
-        "updateRuleset",
-        c.var.requestSession,
-        id,
-        body,
-      );
+      const result = await rulesetsService.call("updateRuleset", c.var.requestSession, id, body);
       return respond(c, result, 200);
     },
   )
@@ -180,12 +155,7 @@ const authenticatedRulesets = new Hono()
       const body = c.req.valid("json");
 
       const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call(
-        "subscribeExtension",
-        c.var.requestSession,
-        id,
-        body.extensionIds,
-      );
+      const result = await rulesetsService.call("subscribeExtension", c.var.requestSession, id, body.extensionIds);
       return respond(c, result, 200);
     },
   )
@@ -203,72 +173,74 @@ const authenticatedRulesets = new Hono()
       const body = c.req.valid("json");
 
       const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call(
-        "unsubscribeExtension",
-        c.var.requestSession,
-        id,
-        body.extensionId,
-      );
+      const result = await rulesetsService.call("unsubscribeExtension", c.var.requestSession, id, body.extensionId);
       return respond(c, result, 200);
     },
   )
   .post(
     "/:id/entities/:entityType/:entityId/restore",
-    zValidator("param", z.object({
-      id: z.string().uuid(),
-      entityType: z.enum(["saves", "skills", "feats", "powers", "items", "races", "languages", "klasses", "aptitudes", "mechanics"]),
-      entityId: z.string().uuid(),
-    })),
+    zValidator(
+      "param",
+      z.object({
+        id: z.string().uuid(),
+        entityType: z.enum([
+          "saves",
+          "skills",
+          "feats",
+          "powers",
+          "items",
+          "races",
+          "languages",
+          "klasses",
+          "aptitudes",
+          "mechanics",
+        ]),
+        entityId: z.string().uuid(),
+      }),
+    ),
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");
 
       const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call(
-        "revertOverride",
-        c.var.requestSession,
-        id,
-        entityType,
-        entityId,
-      );
+      const result = await rulesetsService.call("revertOverride", c.var.requestSession, id, entityType, entityId);
       return respond(c, result, 200);
     },
   )
-  .get(
-    "/:id/changes",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .get("/:id/changes", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call(
-        "getChanges",
-        c.var.requestSession,
-        id,
-      );
-      return respond(c, result, 200);
-    },
-  )
-  .get(
-    "/:id/extensions",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+    const rulesetsService = RulesetsService.initialize();
+    const result = await rulesetsService.call("getChanges", c.var.requestSession, id);
+    return respond(c, result, 200);
+  })
+  .get("/:id/extensions", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const rulesetsService = RulesetsService.initialize();
-      const result = await rulesetsService.call(
-        "getSubscribedExtensions",
-        c.var.requestSession,
-        id,
-      );
-      return respond(c, result, 200);
-    },
-  )
+    const rulesetsService = RulesetsService.initialize();
+    const result = await rulesetsService.call("getSubscribedExtensions", c.var.requestSession, id);
+    return respond(c, result, 200);
+  })
   .get(
     "/",
     zValidator(
       "query",
       z.object({
-        scope: z.enum(["base", "forked", "community", "createdByMe", "createdByMePrivate", "archived", "published", "starred", "campaignAccessible", "myDrafts", "extensions", "systems", "contributedTo"])
+        scope: z
+          .enum([
+            "base",
+            "forked",
+            "community",
+            "createdByMe",
+            "createdByMePrivate",
+            "archived",
+            "published",
+            "starred",
+            "campaignAccessible",
+            "myDrafts",
+            "extensions",
+            "systems",
+            "contributedTo",
+          ])
           .optional(),
         search: z.string().optional(),
         orderBy: z.enum(["createdAt", "updatedAt"]).optional(),
@@ -293,18 +265,10 @@ const authenticatedRulesets = new Hono()
       return respond(c, result, 200);
     },
   )
-  .get(
-    "/:id",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const result = await RulesetsService.initialize().call(
-        "getRulesetById",
-        c.var.requestSession,
-        id,
-      );
-      return respond(c, result, 200);
-    },
-  );
+  .get("/:id", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
+    const result = await RulesetsService.initialize().call("getRulesetById", c.var.requestSession, id);
+    return respond(c, result, 200);
+  });
 
 export default authenticatedRulesets;

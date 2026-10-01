@@ -1,5 +1,7 @@
 import { afterAll, expect, test } from "bun:test";
+
 import { sql } from "drizzle-orm";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
@@ -27,9 +29,13 @@ test("COW waits for a competing copy transaction and continues after rollback", 
     let waiting = false;
     for (let attempt = 0; attempt < 100; attempt++) {
       const result = await blocker.query<{ waiting: boolean }>(
-        "select pg_backend_pid() = ANY(pg_blocking_pids($1)) as waiting", [writer.rows[0].pid],
+        "select pg_backend_pid() = ANY(pg_blocking_pids($1)) as waiting",
+        [writer.rows[0].pid],
       );
-      if (result.rows[0].waiting) { waiting = true; break; }
+      if (result.rows[0].waiting) {
+        waiting = true;
+        break;
+      }
       await Bun.sleep(10);
     }
     expect(waiting).toBe(true);

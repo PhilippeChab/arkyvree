@@ -4,6 +4,7 @@ import { unionAll } from "drizzle-orm/pg-core";
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { EntitySnapshots } from "@/server/repositories/index.ts";
+
 import { NAME_FALLBACK_TABLES } from "./constants.ts";
 
 /**
@@ -208,17 +209,22 @@ export async function buildOverrideMap(
           rulesetId: table.rulesetId,
         })
         .from(table)
-        .leftJoin(entitySnapshotsInRules, and(
-          eq(entitySnapshotsInRules.forkedEntityId, table.id),
-          eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
-          eq(entitySnapshotsInRules.entityType, entityType),
-        ))
-        .where(and(
-          inArray(table.rulesetId, dedupedChain),
-          isNull(entitySnapshotsInRules.id),
-          isNull(table.deletedAt),
-          isNull(table.campaignId),
-        )),
+        .leftJoin(
+          entitySnapshotsInRules,
+          and(
+            eq(entitySnapshotsInRules.forkedEntityId, table.id),
+            eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
+            eq(entitySnapshotsInRules.entityType, entityType),
+          ),
+        )
+        .where(
+          and(
+            inArray(table.rulesetId, dedupedChain),
+            isNull(entitySnapshotsInRules.id),
+            isNull(table.deletedAt),
+            isNull(table.campaignId),
+          ),
+        ),
     );
 
     const [first, second, ...rest] = subqueries;
@@ -240,9 +246,7 @@ export async function buildOverrideMap(
     // direction — extension overrides base, full stop.
     for (const [, group] of byTypeName) {
       if (group.length <= 1) continue;
-      const sorted = group.sort((a, b) =>
-        (chainIndex.get(a.rulesetId) ?? 999) - (chainIndex.get(b.rulesetId) ?? 999),
-      );
+      const sorted = group.sort((a, b) => (chainIndex.get(a.rulesetId) ?? 999) - (chainIndex.get(b.rulesetId) ?? 999));
       const [winner, ...losers] = sorted;
       for (const loser of losers) {
         if (!idResolveMap.has(loser.id)) idResolveMap.set(loser.id, winner.id);
@@ -255,7 +259,7 @@ export async function buildOverrideMap(
   // A local COW already owns its customizations. Keep sibling IDs resolvable,
   // but suppress their source rows instead of merging them back into the copy.
   // Include tombstones so deleting the local entity cannot revive a sibling.
-  const localIds = new Set((byRuleset.get(rulesetId) ?? []).map(s => s.forkedEntityId));
+  const localIds = new Set((byRuleset.get(rulesetId) ?? []).map((s) => s.forkedEntityId));
   for (const [winnerId, siblingIds] of siblingMap) {
     const resolvedId = idResolveMap.get(winnerId) ?? winnerId;
     if (!localIds.has(resolvedId)) continue;
@@ -274,10 +278,7 @@ export async function buildOverrideMap(
  * Handles saves.abilityId, skills.primaryAbilityId, powers.saveId, items.sourceItemId,
  * races.parentId, klasses.parentId — all generically without per-entity hardcoding.
  */
-export function resolveOverrides<T extends Record<string, unknown>>(
-  rows: T[],
-  overrideMap: IdResolveMap,
-): T[] {
+export function resolveOverrides<T extends Record<string, unknown>>(rows: T[], overrideMap: IdResolveMap): T[] {
   if (overrideMap.size === 0) return rows;
 
   return rows.map((row) => {

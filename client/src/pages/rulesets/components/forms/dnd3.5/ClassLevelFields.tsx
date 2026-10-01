@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
-import { featKey, levelFeatLabel, type LevelFeat, type LevelSave } from "./classLevelForm.ts";
+
+import { featKey, type LevelFeat, levelFeatLabel, type LevelSave } from "./classLevelForm.ts";
 
 interface FeatOption extends LevelFeat {
   label: string;
@@ -20,7 +21,14 @@ interface ClassLevelFieldsProps {
 }
 
 /** Base saves and granted feats of a class level, shared by its create dialog and its customization page. */
-export function ClassLevelFields({ rulesetId, saves, onSavesChange, feats, onFeatsChange, featLabels }: ClassLevelFieldsProps) {
+export function ClassLevelFields({
+  rulesetId,
+  saves,
+  onSavesChange,
+  feats,
+  onFeatsChange,
+  featLabels,
+}: ClassLevelFieldsProps) {
   const { data: rulesetSaves = [] } = useRulesetSaves(rulesetId);
   // The server searches the ruleset's feats and pages them in as the list scrolls.
   const [featSearch, setFeatSearch] = useState("");
@@ -30,42 +38,58 @@ export function ClassLevelFields({ rulesetId, saves, onSavesChange, feats, onFea
   const [pickedLabels, setPickedLabels] = useState<ReadonlyMap<string, string>>(new Map());
 
   // One option per feat and aptitude it can be taken for.
-  const featOptions = useMemo<FeatOption[]>(() => rulesetFeats.flatMap((feat) =>
-    feat.featsAptitudesInRules.map((fa) => ({
-      featId: feat.id,
-      aptitudeId: fa.aptitudeId,
-      label: levelFeatLabel(feat.name, fa.aptitudesInRule?.name),
-    }))), [rulesetFeats]);
+  const featOptions = useMemo<FeatOption[]>(
+    () =>
+      rulesetFeats.flatMap((feat) =>
+        feat.featsAptitudesInRules.map((fa) => ({
+          featId: feat.id,
+          aptitudeId: fa.aptitudeId,
+          label: levelFeatLabel(feat.name, fa.aptitudesInRule?.name),
+        })),
+      ),
+    [rulesetFeats],
+  );
 
   // The freshest label first: the loaded options, then the saved level's, then the one it was picked with.
   const selectedFeats = feats.map((feat): FeatOption => ({
     ...feat,
-    label: featOptions.find((o) => featKey(o) === featKey(feat))?.label
-      ?? featLabels?.get(featKey(feat))
-      ?? pickedLabels.get(featKey(feat))
-      ?? "Unknown",
+    label:
+      featOptions.find((o) => featKey(o) === featKey(feat))?.label ??
+      featLabels?.get(featKey(feat)) ??
+      pickedLabels.get(featKey(feat)) ??
+      "Unknown",
   }));
 
   const baseFor = (saveId: string) => saves.find((s) => s.saveId === saveId)?.base ?? 0;
 
   // Update in place, so changing a value back leaves the form clean.
   const setBase = (saveId: string, base: number) =>
-    onSavesChange(saves.some((s) => s.saveId === saveId)
-      ? saves.map((s) => (s.saveId === saveId ? { saveId, base } : s))
-      : [...saves, { saveId, base }]);
+    onSavesChange(
+      saves.some((s) => s.saveId === saveId)
+        ? saves.map((s) => (s.saveId === saveId ? { saveId, base } : s))
+        : [...saves, { saveId, base }],
+    );
 
   // Kept sorted by label, so the order doesn't depend on picking order.
   const setFeats = (next: FeatOption[]) => {
     setPickedLabels((labels) => new Map([...labels, ...next.map((o) => [featKey(o), o.label] as const)]));
-    onFeatsChange([...next]
-      .sort((a, b) => a.label.localeCompare(b.label))
-      .map(({ featId, aptitudeId }) => ({ featId, aptitudeId })));
+    onFeatsChange(
+      [...next]
+        .sort((a, b) => a.label.localeCompare(b.label))
+        .map(({ featId, aptitudeId }) => ({ featId, aptitudeId })),
+    );
   };
 
   return (
     <>
       {rulesetSaves.length > 0 && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: `repeat(${Math.min(rulesetSaves.length, 3)}, 1fr)` }, gap: 2 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: `repeat(${Math.min(rulesetSaves.length, 3)}, 1fr)` },
+            gap: 2,
+          }}
+        >
           {rulesetSaves.map((save) => (
             <TextField
               key={save.id}
@@ -107,7 +131,8 @@ export function ClassLevelFields({ rulesetId, saves, onSavesChange, feats, onFea
               label={option.label}
               onDelete={() => setFeats(selectedFeats.filter((_, i) => i !== index))}
             />
-          ))}
+          ))
+        }
       />
     </>
   );

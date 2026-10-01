@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
+
 import { eq } from "drizzle-orm";
+
 import { applyPackages } from "@/database/packages/runner.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
@@ -14,14 +16,22 @@ function testPackage(seedsVersion: number, updateVersions: number[], ran: string
     type: "extension",
     seedsVersion,
     seeds: [async () => void ran.push(`${name} seeds`)],
-    updates: Object.fromEntries(updateVersions.map((version) => [version, async () => void ran.push(`${name} v${version}`)])),
+    updates: Object.fromEntries(
+      updateVersions.map((version) => [version, async () => void ran.push(`${name} v${version}`)]),
+    ),
   };
 }
 
 const recordedVersion = async (name: string) =>
-  (await db.select({ version: contentPackagesInRules.version }).from(contentPackagesInRules).where(eq(contentPackagesInRules.name, name)))[0]?.version;
+  (
+    await db
+      .select({ version: contentPackagesInRules.version })
+      .from(contentPackagesInRules)
+      .where(eq(contentPackagesInRules.name, name))
+  )[0]?.version;
 
-const record = (pkg: ContentPackage, version: number) => db.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
+const record = (pkg: ContentPackage, version: number) =>
+  db.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
 
 describe("Applying content packages", () => {
   test("installs a new package: its seeds, then every update, at its last update's version", async () => {
@@ -65,7 +75,12 @@ describe("Applying content packages", () => {
 
   test("applies no package when one's updates don't follow its seeds without a gap, and reports it with the refusals", async () => {
     const ran: string[] = [];
-    const [fresh, gapped, stale, both] = [testPackage(1, [], ran), testPackage(3, [5], ran), testPackage(3, [], ran), testPackage(3, [5], ran)];
+    const [fresh, gapped, stale, both] = [
+      testPackage(1, [], ran),
+      testPackage(3, [5], ran),
+      testPackage(3, [], ran),
+      testPackage(3, [5], ran),
+    ];
     await record(stale, 2);
     await record(both, 2);
     const error = await applyPackages(db, [fresh, gapped, stale, both]).catch((e: Error) => e);

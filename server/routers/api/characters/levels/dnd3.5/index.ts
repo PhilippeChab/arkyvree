@@ -1,9 +1,10 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { CharacterLevelsService } from "@/server/services/characters/index.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { CharacterLevelsService } from "@/server/services/characters/index.ts";
 
 const isUuid = (v: string) => z.string().uuid().safeParse(v).success;
 
@@ -37,15 +38,28 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { limit = 10, page = 1, search, pendingLevelKlassLevelIds, pendingLevelAbilityIds, pendingFeatPicks, pendingSkillAllocations } = c.req.valid("query");
+      const {
+        limit = 10,
+        page = 1,
+        search,
+        pendingLevelKlassLevelIds,
+        pendingLevelAbilityIds,
+        pendingFeatPicks,
+        pendingSkillAllocations,
+      } = c.req.valid("query");
 
       const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds?.split(",").filter(isUuid);
-      const parsedPendingAbilityIds = pendingLevelAbilityIds?.split(",").map((id) => id === "null" || !isUuid(id) ? undefined : id);
+      const parsedPendingAbilityIds = pendingLevelAbilityIds
+        ?.split(",")
+        .map((id) => (id === "null" || !isUuid(id) ? undefined : id));
       const parsedPendingFeatPicks = parseFeatPicks(pendingFeatPicks);
-      const parsedPendingSkillAllocations = pendingSkillAllocations?.split(",").map((pair) => {
-        const [skillId, rank] = pair.split(":");
-        return { skillId, rank: Number(rank) };
-      }).filter((a) => isUuid(a.skillId) && !isNaN(a.rank));
+      const parsedPendingSkillAllocations = pendingSkillAllocations
+        ?.split(",")
+        .map((pair) => {
+          const [skillId, rank] = pair.split(":");
+          return { skillId, rank: Number(rank) };
+        })
+        .filter((a) => isUuid(a.skillId) && !isNaN(a.rank));
 
       const result = await CharacterLevelsService.initialize().call(
         "getAvailableKlasses",
@@ -62,19 +76,11 @@ const levels = new Hono<SessionContext>()
       return respond(c, result, 200);
     },
   )
-  .delete(
-    "/:characterId",
-    zValidator("param", z.object({ characterId: z.string().uuid() })),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
-      const result = await CharacterLevelsService.initialize().call(
-        "removeLevel",
-        c.var.requestSession,
-        characterId,
-      );
-      return respond(c, result, 200);
-    },
-  )
+  .delete("/:characterId", zValidator("param", z.object({ characterId: z.string().uuid() })), async (c) => {
+    const { characterId } = c.req.valid("param");
+    const result = await CharacterLevelsService.initialize().call("removeLevel", c.var.requestSession, characterId);
+    return respond(c, result, 200);
+  })
   .get(
     "/:characterId/attribute-slots",
     zValidator("param", z.object({ characterId: z.string().uuid() })),
@@ -115,8 +121,11 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { klassId, level, characterLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } = c.req.valid("query");
-      const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds?.split(",").filter((id) => z.string().uuid().safeParse(id).success);
+      const { klassId, level, characterLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } =
+        c.req.valid("query");
+      const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds
+        ?.split(",")
+        .filter((id) => z.string().uuid().safeParse(id).success);
       const parsedPendingAbilityIds = pendingLevelAbilityIds?.split(",").map((id) => id || undefined);
       const result = await CharacterLevelsService.initialize().call(
         "getSkillSlots",
@@ -155,10 +164,25 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { aptitudeId, klassId, level, limit = 20, page = 1, search, family, selectedFeatPicks, pendingLevelFeatPicks, pendingLevelKlassLevelIds, pendingLevelAbilityIds, characterLevelId } = c.req.valid("query");
+      const {
+        aptitudeId,
+        klassId,
+        level,
+        limit = 20,
+        page = 1,
+        search,
+        family,
+        selectedFeatPicks,
+        pendingLevelFeatPicks,
+        pendingLevelKlassLevelIds,
+        pendingLevelAbilityIds,
+        characterLevelId,
+      } = c.req.valid("query");
       const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds?.split(",").filter(isUuid);
       const parsedPendingLevelFeatPicks = parseFeatPicks(pendingLevelFeatPicks);
-      const parsedPendingAbilityIds = pendingLevelAbilityIds?.split(",").map((id) => id === "null" || !isUuid(id) ? undefined : id);
+      const parsedPendingAbilityIds = pendingLevelAbilityIds
+        ?.split(",")
+        .map((id) => (id === "null" || !isUuid(id) ? undefined : id));
       const result = await CharacterLevelsService.initialize().call(
         "getAvailableFeats",
         c.var.requestSession,
@@ -166,7 +190,12 @@ const levels = new Hono<SessionContext>()
         aptitudeId,
         klassId,
         level,
-        { search, family, selectedFeatPicks: parseFeatPicks(selectedFeatPicks), pendingLevelFeatPicks: parsedPendingLevelFeatPicks },
+        {
+          search,
+          family,
+          selectedFeatPicks: parseFeatPicks(selectedFeatPicks),
+          pendingLevelFeatPicks: parsedPendingLevelFeatPicks,
+        },
         { limit, page },
         characterLevelId,
         parsedPendingKlassLevelIds,
@@ -197,10 +226,24 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { aptitudeId, klassId, level, limit = 20, page = 1, search, selectedFeatPicks, pendingLevelFeatPicks, pendingLevelKlassLevelIds, pendingLevelAbilityIds, characterLevelId } = c.req.valid("query");
+      const {
+        aptitudeId,
+        klassId,
+        level,
+        limit = 20,
+        page = 1,
+        search,
+        selectedFeatPicks,
+        pendingLevelFeatPicks,
+        pendingLevelKlassLevelIds,
+        pendingLevelAbilityIds,
+        characterLevelId,
+      } = c.req.valid("query");
       const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds?.split(",").filter(isUuid);
       const parsedPendingLevelFeatPicks = parseFeatPicks(pendingLevelFeatPicks);
-      const parsedPendingAbilityIds = pendingLevelAbilityIds?.split(",").map((id) => id === "null" || !isUuid(id) ? undefined : id);
+      const parsedPendingAbilityIds = pendingLevelAbilityIds
+        ?.split(",")
+        .map((id) => (id === "null" || !isUuid(id) ? undefined : id));
       const result = await CharacterLevelsService.initialize().call(
         "getAvailableFeatsGrouped",
         c.var.requestSession,
@@ -208,7 +251,11 @@ const levels = new Hono<SessionContext>()
         aptitudeId,
         klassId,
         level,
-        { search, selectedFeatPicks: parseFeatPicks(selectedFeatPicks), pendingLevelFeatPicks: parsedPendingLevelFeatPicks },
+        {
+          search,
+          selectedFeatPicks: parseFeatPicks(selectedFeatPicks),
+          pendingLevelFeatPicks: parsedPendingLevelFeatPicks,
+        },
         { limit, page },
         characterLevelId,
         parsedPendingKlassLevelIds,
@@ -233,11 +280,20 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { klassId, level, characterLevelId, pendingLevelKlassLevelIds } = c.req.valid("query");
-      const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds?.split(",").filter((id) => z.string().uuid().safeParse(id).success);
+      const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds
+        ?.split(",")
+        .filter((id) => z.string().uuid().safeParse(id).success);
       const service = CharacterLevelsService.initialize();
       const result = characterLevelId
         ? await service.call("getEditFeatSlots", c.var.requestSession, characterId, klassId, level, characterLevelId)
-        : await service.call("getFeatSlots", c.var.requestSession, characterId, klassId, level, parsedPendingKlassLevelIds);
+        : await service.call(
+            "getFeatSlots",
+            c.var.requestSession,
+            characterId,
+            klassId,
+            level,
+            parsedPendingKlassLevelIds,
+          );
 
       return respond(c, result, 200);
     },
@@ -257,11 +313,20 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { klassId, level, characterLevelId, pendingLevelKlassLevelIds } = c.req.valid("query");
-      const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds?.split(",").filter((id) => z.string().uuid().safeParse(id).success);
+      const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds
+        ?.split(",")
+        .filter((id) => z.string().uuid().safeParse(id).success);
       const service = CharacterLevelsService.initialize();
       const result = characterLevelId
         ? await service.call("getEditPowerSlots", c.var.requestSession, characterId, klassId, level, characterLevelId)
-        : await service.call("getPowerSlots", c.var.requestSession, characterId, klassId, level, parsedPendingKlassLevelIds);
+        : await service.call(
+            "getPowerSlots",
+            c.var.requestSession,
+            characterId,
+            klassId,
+            level,
+            parsedPendingKlassLevelIds,
+          );
 
       return respond(c, result, 200);
     },
@@ -288,7 +353,20 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { aptitudeId, klassId, level, powerLevel, limit = 20, page = 1, search, excludeSchools, selectedFeatPicks, pendingLevelFeatPicks, pendingLevelKlassLevelIds, characterLevelId } = c.req.valid("query");
+      const {
+        aptitudeId,
+        klassId,
+        level,
+        powerLevel,
+        limit = 20,
+        page = 1,
+        search,
+        excludeSchools,
+        selectedFeatPicks,
+        pendingLevelFeatPicks,
+        pendingLevelKlassLevelIds,
+        characterLevelId,
+      } = c.req.valid("query");
       const parsedPendingKlassLevelIds = pendingLevelKlassLevelIds?.split(",").filter(isUuid);
       const parsedPendingLevelFeatPicks = parseFeatPicks(pendingLevelFeatPicks);
       const result = await CharacterLevelsService.initialize().call(
@@ -298,7 +376,13 @@ const levels = new Hono<SessionContext>()
         aptitudeId,
         klassId,
         level,
-        { powerLevel, search, excludeSchools: excludeSchools ? excludeSchools.split(",") : undefined, selectedFeatPicks: parseFeatPicks(selectedFeatPicks), pendingLevelFeatPicks: parsedPendingLevelFeatPicks },
+        {
+          powerLevel,
+          search,
+          excludeSchools: excludeSchools ? excludeSchools.split(",") : undefined,
+          selectedFeatPicks: parseFeatPicks(selectedFeatPicks),
+          pendingLevelFeatPicks: parsedPendingLevelFeatPicks,
+        },
         { limit, page },
         characterLevelId,
         parsedPendingKlassLevelIds,
@@ -309,10 +393,13 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/:characterLevelId",
-    zValidator("param", z.object({
-      characterId: z.string().uuid(),
-      characterLevelId: z.string().uuid(),
-    })),
+    zValidator(
+      "param",
+      z.object({
+        characterId: z.string().uuid(),
+        characterLevelId: z.string().uuid(),
+      }),
+    ),
     async (c) => {
       const { characterId, characterLevelId } = c.req.valid("param");
       const result = await CharacterLevelsService.initialize().call(
@@ -327,10 +414,13 @@ const levels = new Hono<SessionContext>()
   )
   .put(
     "/:characterId/:characterLevelId",
-    zValidator("param", z.object({
-      characterId: z.string().uuid(),
-      characterLevelId: z.string().uuid(),
-    })),
+    zValidator(
+      "param",
+      z.object({
+        characterId: z.string().uuid(),
+        characterLevelId: z.string().uuid(),
+      }),
+    ),
     zValidator(
       "json",
       z.object({
@@ -367,10 +457,15 @@ const levels = new Hono<SessionContext>()
     zValidator(
       "json",
       z.object({
-        levels: z.array(z.object({
-          klassId: z.string().uuid(),
-          level: z.number().int().min(1),
-        })).min(1).max(20),
+        levels: z
+          .array(
+            z.object({
+              klassId: z.string().uuid(),
+              level: z.number().int().min(1),
+            }),
+          )
+          .min(1)
+          .max(20),
         abilityIds: z.array(z.string().uuid().nullable()),
       }),
     ),
@@ -394,12 +489,17 @@ const levels = new Hono<SessionContext>()
     zValidator(
       "json",
       z.object({
-        levels: z.array(z.object({
-          klassId: z.string().uuid(),
-          level: z.number().int().min(1),
-          hp: z.number().int().min(1),
-          abilityId: z.string().uuid().nullable(),
-        })).min(1).max(20),
+        levels: z
+          .array(
+            z.object({
+              klassId: z.string().uuid(),
+              level: z.number().int().min(1),
+              hp: z.number().int().min(1),
+              abilityId: z.string().uuid().nullable(),
+            }),
+          )
+          .min(1)
+          .max(20),
         skills: z.record(z.string().uuid(), z.number().int().min(0)),
         feats: z.record(z.string().uuid(), z.array(z.string().uuid())),
         powers: z.record(z.string().uuid(), z.array(z.string().uuid())),

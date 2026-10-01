@@ -1,14 +1,26 @@
-import { and, eq, inArray } from "drizzle-orm";
-import { aptitudesInRules, featsAptitudesInRules, featsInRules, powersInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import { db } from "@/server/database/index.ts";
-import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
-import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
-import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { DND35_COMPLETE_DIVINE_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 import { describe, expect, test } from "bun:test";
+
+import { and, eq, inArray } from "drizzle-orm";
+
+import {
+  DND35_COMPLETE_DIVINE_NAME,
+  DND35_COMPLETE_WARRIOR_NAME,
+  DND35_RULESET_NAME,
+} from "@/database/packages/dnd35/names.ts";
+import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import {
+  aptitudesInRules,
+  featsAptitudesInRules,
+  featsInRules,
+  powersInRules,
+  rulesetsInRules,
+} from "@/drizzle/schema.ts";
+import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
+import { db } from "@/server/database/index.ts";
+import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
+import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
+import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
+import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
 
 /**
  * A seeded fork that uses every extension of its base, so the COW layer sees
@@ -47,9 +59,13 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(winningApt).toBeDefined();
 
     // Find CD's "Visage of the Deity, Lesser" — it's on the Blackguard spell list.
-    const [cdRuleset] = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules)
+    const [cdRuleset] = await db
+      .select({ id: rulesetsInRules.id })
+      .from(rulesetsInRules)
       .where(eq(rulesetsInRules.name, DND35_COMPLETE_DIVINE_NAME));
-    const [spell] = await db.select({ id: powersInRules.id }).from(powersInRules)
+    const [spell] = await db
+      .select({ id: powersInRules.id })
+      .from(powersInRules)
       .where(and(eq(powersInRules.rulesetId, cdRuleset.id), eq(powersInRules.name, "Visage of the Deity, Lesser")));
     expect(spell).toBeDefined();
 
@@ -75,7 +91,8 @@ describe("aptitude deduplication across sibling extensions", () => {
     const { ruleset, cowData, rulesetData } = await setup();
     // Fetch all raw "Assassin Spells" aptitudes across extensions
     const extIds = ruleset.extensionRulesetIds;
-    const allAssassinApts = await db.select({ id: aptitudesInRules.id, rulesetId: aptitudesInRules.rulesetId })
+    const allAssassinApts = await db
+      .select({ id: aptitudesInRules.id, rulesetId: aptitudesInRules.rulesetId })
       .from(aptitudesInRules)
       .where(and(eq(aptitudesInRules.name, "Assassin Spells"), inArray(aptitudesInRules.rulesetId, extIds)));
 
@@ -110,9 +127,13 @@ describe("aptitude deduplication across sibling extensions", () => {
 
   test("PowersService detail returns no duplicate aptitude names", async () => {
     const { ruleset } = await setup();
-    const [cdRuleset] = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules)
+    const [cdRuleset] = await db
+      .select({ id: rulesetsInRules.id })
+      .from(rulesetsInRules)
       .where(eq(rulesetsInRules.name, DND35_COMPLETE_DIVINE_NAME));
-    const [spell] = await db.select({ id: powersInRules.id }).from(powersInRules)
+    const [spell] = await db
+      .select({ id: powersInRules.id })
+      .from(powersInRules)
       .where(and(eq(powersInRules.rulesetId, cdRuleset.id), eq(powersInRules.name, "Visage of the Deity, Lesser")));
 
     const power = await PowersMethods.getRulesetPower(ruleset.id, spell.id);
@@ -167,11 +188,7 @@ describe("aptitude ownership (seed-level invariants)", () => {
     "Wizard Bonus Feat",
   ];
 
-  const SIBLING_SHARED_NAMES = [
-    "Assassin Spells",
-    "Hexblade Spells",
-    "Blackguard Spells",
-  ];
+  const SIBLING_SHARED_NAMES = ["Assassin Spells", "Hexblade Spells", "Blackguard Spells"];
 
   test("base-inherited aptitude names have exactly one row, owned by base", async () => {
     const rows = await db

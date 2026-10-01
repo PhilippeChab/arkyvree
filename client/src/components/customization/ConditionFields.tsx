@@ -1,13 +1,15 @@
-import type { PathInfo as TargetPathInfo } from "./TargetPathInput.tsx";
-import { Crossfade } from "@/client/src/components/common/index.ts";
-import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 import { HelpOutlined } from "@mui/icons-material";
 import { Box, FormControlLabel, Switch, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import type { FieldError } from "react-hook-form";
-import { defaultValueForPath, fitsPath } from "./pathValues.ts";
+
+import { Crossfade } from "@/client/src/components/common/index.ts";
+import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
+
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";
+import { defaultValueForPath, fitsPath } from "./pathValues.ts";
+import type { PathInfo as TargetPathInfo } from "./TargetPathInput.tsx";
 import { TargetPathInput } from "./TargetPathInput.tsx";
 import { TemplateExpressionInput, type TemplateExpressionInputRef } from "./TemplateExpressionInput.tsx";
 import { TemplateExpressionToolbar } from "./TemplateExpressionToolbar.tsx";
@@ -40,11 +42,9 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
   const [pathInfo, setPathInfo] = useState<PathInfo | null>(null);
   const [templateMode, setTemplateMode] = useState(() => isTemplateValue(value));
   const [templateExpression, setTemplateExpression] = useState(() =>
-    isTemplateValue(value) ? extractTemplateExpression(value) ?? "" : "",
+    isTemplateValue(value) ? (extractTemplateExpression(value) ?? "") : "",
   );
-  const [literalValue, setLiteralValue] = useState(() =>
-    isTemplateValue(value) ? "" : value,
-  );
+  const [literalValue, setLiteralValue] = useState(() => (isTemplateValue(value) ? "" : value));
 
   // Distinguishes parent-driven value resets (e.g. form.reset on edit open) from
   // our own internal sync writes — without it the writes would loop back through
@@ -143,14 +143,19 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
         error={!!errors.operator}
         operators={pathInfo?.operators || []}
       />
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: -1, flexWrap: "wrap" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          mb: -1,
+          flexWrap: "wrap",
+        }}
+      >
         <FormControlLabel
           control={
-            <Switch
-              size="small"
-              checked={templateMode}
-              onChange={(_, checked) => handleToggleTemplate(checked)}
-            />
+            <Switch size="small" checked={templateMode} onChange={(_, checked) => handleToggleTemplate(checked)} />
           }
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -164,9 +169,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
             </Box>
           }
         />
-        {templateMode && (
-          <TemplateExpressionToolbar inputRef={expressionInputRef} disabled={!templateMode} />
-        )}
+        {templateMode && <TemplateExpressionToolbar inputRef={expressionInputRef} disabled={!templateMode} />}
       </Box>
       <Crossfade
         showFirst={!templateMode}
@@ -188,7 +191,9 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
                   : pathInfo.valueType === "string"
                     ? "text value"
                     : "numeric value"
-                : kind === "modifier" ? "e.g., 2, -1, 5" : "e.g., 13, 5, true"
+                : kind === "modifier"
+                  ? "e.g., 2, -1, 5"
+                  : "e.g., 13, 5, true"
             }
           />
         }

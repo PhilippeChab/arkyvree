@@ -2,9 +2,10 @@ import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { classSpellsKnownQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
-import type { ClassSectionProps } from "./types.ts";
 import { bySpellLevel, spellLevelLabel } from "./spellLevels.ts";
+import type { ClassSectionProps } from "./types.ts";
 
 export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSectionProps) {
   const { data, isLoading } = useQuery(classSpellsKnownQuery(rulesetId, classId));

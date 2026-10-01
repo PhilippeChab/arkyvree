@@ -27,9 +27,8 @@ export function InfoPill({ icon: Icon, label, color = "default", tooltip }: Info
           bgcolor: alpha(main, theme.palette.mode === "dark" ? 0.25 : 0.1),
           border: "1px solid",
           borderColor: alpha(main, 0.4),
-          color: color === "default"
-            ? "text.secondary"
-            : theme.palette.mode === "dark" ? `${color}.light` : `${color}.dark`,
+          color:
+            color === "default" ? "text.secondary" : theme.palette.mode === "dark" ? `${color}.light` : `${color}.dark`,
           "& .MuiSvgIcon-root": { color: main },
         };
       }}
@@ -41,5 +40,11 @@ export function InfoPill({ icon: Icon, label, color = "default", tooltip }: Info
     </Box>
   );
 
-  return tooltip ? <Tooltip describeChild title={tooltip}>{pill}</Tooltip> : pill;
+  return tooltip ? (
+    <Tooltip describeChild title={tooltip}>
+      {pill}
+    </Tooltip>
+  ) : (
+    pill
+  );
 }

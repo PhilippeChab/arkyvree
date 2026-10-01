@@ -1,9 +1,4 @@
-import { useToggleSet } from "@/client/src/hooks/index.ts";
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import {
-  ChevronRight as ChevronRightIcon,
-  ExpandMore as ExpandMoreIcon,
-} from "@mui/icons-material";
+import { ChevronRight as ChevronRightIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
@@ -22,6 +17,9 @@ import {
   Typography,
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
+
+import { useToggleSet } from "@/client/src/hooks/index.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 interface DiagnosticsSectionProps {
   validation: CharacterDetail["validation"];
@@ -44,7 +42,9 @@ function DiagnosticsGroup({ label, count, children }: { label: string; count: nu
   return (
     <Accordion disableGutters sx={accordionSx}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
-        <Typography variant="subtitle2">{label} ({count})</Typography>
+        <Typography variant="subtitle2">
+          {label} ({count})
+        </Typography>
       </AccordionSummary>
       <AccordionDetails sx={{ px: 0, pt: 1 }}>
         <TableContainer>
@@ -59,7 +59,11 @@ function HeaderRow({ labels }: { labels: string[] }) {
   return (
     <TableHead>
       <TableRow>
-        {labels.map((label) => <TableCell key={label} sx={headerCellSx}>{label}</TableCell>)}
+        {labels.map((label) => (
+          <TableCell key={label} sx={headerCellSx}>
+            {label}
+          </TableCell>
+        ))}
       </TableRow>
     </TableHead>
   );
@@ -73,7 +77,11 @@ function RuleCellsRow({ cells }: { cells: RuleCells }) {
   return (
     <>
       <TableCell sx={tableCellSx}>{target}</TableCell>
-      {rest.map((cell, i) => <TableCell key={i} sx={tableCellSx} align="center">{cell}</TableCell>)}
+      {rest.map((cell, i) => (
+        <TableCell key={i} sx={tableCellSx} align="center">
+          {cell}
+        </TableCell>
+      ))}
     </>
   );
 }
@@ -85,7 +93,17 @@ interface RuleGroup {
 }
 
 /** Rules by source: a source with one rule is a row, one with several expands to list them. */
-function GroupedRuleTable({ label, count, lastColumn, groups }: { label: string; count: number; lastColumn: string; groups: RuleGroup[] }) {
+function GroupedRuleTable({
+  label,
+  count,
+  lastColumn,
+  groups,
+}: {
+  label: string;
+  count: number;
+  lastColumn: string;
+  groups: RuleGroup[];
+}) {
   const [expanded, toggle] = useToggleSet();
 
   return (
@@ -96,7 +114,9 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: { label: string;
           <TableCell sx={headerCellSx}>Source</TableCell>
           <TableCell sx={headerCellSx}>Target</TableCell>
           {["Operator", "Value", lastColumn].map((column) => (
-            <TableCell key={column} sx={headerCellSx} align="center">{column}</TableCell>
+            <TableCell key={column} sx={headerCellSx} align="center">
+              {column}
+            </TableCell>
           ))}
         </TableRow>
       </TableHead>
@@ -239,7 +259,9 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {/* Validation Issues */}
             {validation.issues.length > 0 && (
               <div>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Issues</Typography>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                  Issues
+                </Typography>
                 {validation.issues.map((issue, i) => (
                   <Typography key={i} variant="body2" sx={{ pl: 1, py: 0.25 }}>
                     {issue.message}
@@ -250,16 +272,30 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
 
             {/* Requirements System Status */}
             <div>
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{ alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Requirements</Typography>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Requirements
+                </Typography>
                 <Stack direction="row" spacing={1}>
-                  <Chip label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`} color="success" size="small" variant="outlined" />
-                  <Chip label={`Unmet: ${requirements.unmetRequirementGroups.length}`} color="error" size="small" variant="outlined" />
+                  <Chip
+                    label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`}
+                    color="success"
+                    size="small"
+                    variant="outlined"
+                  />
+                  <Chip
+                    label={`Unmet: ${requirements.unmetRequirementGroups.length}`}
+                    color="error"
+                    size="small"
+                    variant="outlined"
+                  />
                   {requirements.invalidRequirements.length > 0 && (
-                    <Chip label={`Invalid: ${requirements.invalidRequirements.length}`} color="warning" size="small" variant="outlined" />
+                    <Chip
+                      label={`Invalid: ${requirements.invalidRequirements.length}`}
+                      color="warning"
+                      size="small"
+                      variant="outlined"
+                    />
                   )}
                 </Stack>
               </Stack>
@@ -270,21 +306,35 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
 
             {/* Modifier System Status */}
             <div>
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{ alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Modifiers</Typography>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Modifiers
+                </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.5 }}>
-                  <Chip label={`Applied: ${modifiers.appliedModifiers.length}`} color="success" size="small" variant="outlined" />
+                  <Chip
+                    label={`Applied: ${modifiers.appliedModifiers.length}`}
+                    color="success"
+                    size="small"
+                    variant="outlined"
+                  />
                   {modifiers.unappliedModifiers.length > 0 && (
-                    <Chip label={`Unapplied: ${modifiers.unappliedModifiers.length}`} color="error" size="small" variant="outlined" />
+                    <Chip
+                      label={`Unapplied: ${modifiers.unappliedModifiers.length}`}
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                    />
                   )}
                   {modifiers.inactiveModifiers.length > 0 && (
                     <Chip label={`Inactive: ${modifiers.inactiveModifiers.length}`} size="small" variant="outlined" />
                   )}
                   {modifiers.skippedModifiers.length > 0 && (
-                    <Chip label={`Skipped: ${modifiers.skippedModifiers.length}`} color="warning" size="small" variant="outlined" />
+                    <Chip
+                      label={`Skipped: ${modifiers.skippedModifiers.length}`}
+                      color="warning"
+                      size="small"
+                      variant="outlined"
+                    />
                   )}
                 </Stack>
               </Stack>

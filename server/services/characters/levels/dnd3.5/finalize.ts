@@ -6,8 +6,10 @@
  * - finalizeLevelUp — commits one or more levels, distributing pooled selections across them
  */
 
+import { getTableName } from "drizzle-orm";
+
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { withTransaction, type Db } from "@/server/database/index.ts";
+import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -17,13 +19,20 @@ import {
   CharacterLevelSkills,
   Characters,
 } from "@/server/repositories/index.ts";
+import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PreloadedRulesetData } from "@/server/rulesets/types.ts";
-import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-import { getTableName } from "drizzle-orm";
+
+import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
+import {
+  computePerLevelAptitudeSlots,
+  distributePoolSelections,
+  type PerLevelDistributionData,
+} from "./distribution.ts";
 import {
   buildProjectedAutoGrantedFeats,
   buildProjectedCharacterLevel,
@@ -33,9 +42,6 @@ import {
   loadFeatCustomizations,
 } from "./helpers.ts";
 import { validateAndFetchLevelSelections } from "./validation.ts";
-import { computePerLevelAptitudeSlots, distributePoolSelections, type PerLevelDistributionData } from "./distribution.ts";
-import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
-import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 
 /** Inserts skill, feat, and power child records for a character level. */
 async function insertLevelChildren(
@@ -105,22 +111,16 @@ export async function updateLevel(
       // Validate ability increase timing
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const existingLevels = await CharacterLevels.findMany(tx, { characterId });
-      const filteredLevels = existingLevels.filter(
-        (l) => l.id !== characterLevelId,
-      );
+      const filteredLevels = existingLevels.filter((l) => l.id !== characterLevelId);
       // Use the position of the edited level (sorted by creation order) as the totalLevel
       const sortedLevels = [...existingLevels].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
       const levelIndex = sortedLevels.findIndex((l) => l.id === characterLevelId);
-      const isAbilityIncreaseLevel =
-        rulesetModule.hooks.levels.isAbilityIncreaseLevel(levelIndex);
+      const isAbilityIncreaseLevel = rulesetModule.hooks.levels.isAbilityIncreaseLevel(levelIndex);
 
       if (abilityId && !isAbilityIncreaseLevel) {
-        throw new BadRequestError(
-          "Ability increase is not available at this level",
-        );
+        throw new BadRequestError("Ability increase is not available at this level");
       }
       if (!abilityId && isAbilityIncreaseLevel) {
         throw new BadRequestError("Ability increase is required at this level");
@@ -173,9 +173,7 @@ export async function updateLevel(
         givenFeats: autoGrantedFeats,
       };
 
-      const detailedCharacter = rulesetModule.createDetailedCharacter(
-        characterRecord,
-      );
+      const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
       await detailedCharacter.build(tx, projectedData);
       const { valid, issues } = detailedCharacter.validate();
       if (!valid && !force) {
@@ -187,13 +185,9 @@ export async function updateLevel(
         const baselineData: Dnd35ProjectedCharacterData = {
           excludeCharacterLevelIds: onwardIds,
         };
-        const baselineCharacter = rulesetModule.createDetailedCharacter(
-          characterRecord,
-        );
+        const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
         await baselineCharacter.build(tx, baselineData);
-        const baselineApts = baselineCharacter
-          .getDetailedCharacterAptitudes()
-          .getAptitudes();
+        const baselineApts = baselineCharacter.getDetailedCharacterAptitudes().getAptitudes();
         const baselineAllowed = new Map<string, number>();
         for (const apt of Object.values(baselineApts)) {
           baselineAllowed.set(apt.name, apt.allowed);
@@ -212,20 +206,12 @@ export async function updateLevel(
         const withLevelData: Dnd35ProjectedCharacterData = {
           excludeCharacterLevelIds: onwardIds,
           characterLevels: [projectedLevelForFilter],
-          givenFeats: buildProjectedGivenFeats(
-            autoGrantedRecords,
-            projectedLevelForFilter.id,
-            featCustomizations,
-          ),
+          givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevelForFilter.id, featCustomizations),
           ...buildProjectedSelections(klassLevel.id, projectedLevelForFilter.id, skills, validationResult),
         };
-        const withLevelCharacter = rulesetModule.createDetailedCharacter(
-          characterRecord,
-        );
+        const withLevelCharacter = rulesetModule.createDetailedCharacter(characterRecord);
         await withLevelCharacter.build(tx, withLevelData);
-        const withLevelApts = withLevelCharacter
-          .getDetailedCharacterAptitudes()
-          .getAptitudes();
+        const withLevelApts = withLevelCharacter.getDetailedCharacterAptitudes().getAptitudes();
         const ownedPoolNames = new Set<string>();
         for (const apt of Object.values(withLevelApts)) {
           if (apt.allowed > (baselineAllowed.get(apt.name) ?? 0)) {
@@ -236,16 +222,11 @@ export async function updateLevel(
         // Filter: keep all non-aptitude issues, and only aptitude issues for pools this level owns
         const relevantIssues = issues.filter((issue) => {
           if (issue.category !== "aptitudes") return true;
-          return [...ownedPoolNames].some((name) =>
-            issue.message.startsWith(name),
-          );
+          return [...ownedPoolNames].some((name) => issue.message.startsWith(name));
         });
 
         if (relevantIssues.length > 0) {
-          throw new BadRequestError(
-            relevantIssues.map((i) => i.message).join("; "),
-            { issues: relevantIssues },
-          );
+          throw new BadRequestError(relevantIssues.map((i) => i.message).join("; "), { issues: relevantIssues });
         }
       }
 
@@ -309,11 +290,11 @@ export async function removeLevel(session: Session, characterId: string) {
 
     await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const reconcileCharacter = rulesetModule.createDetailedCharacter(
-        characterRecord,
-      ) as Dnd35DetailedCharacter;
+      const reconcileCharacter = rulesetModule.createDetailedCharacter(characterRecord) as Dnd35DetailedCharacter;
       await reconcileCharacter.build(tx, undefined, {
-        ruleset, cowData: rulesetData.cow, rulesetData,
+        ruleset,
+        cowData: rulesetData.cow,
+        rulesetData,
       });
       await reconcileAllBondedKinds(tx, characterRecord, reconcileCharacter, rulesetData);
     });
@@ -368,14 +349,10 @@ export async function finalizeLevelUp(
       const klassLevelEntries = levels.map(({ klassId, level }, i) => {
         const klass = rulesetData.klassesById.get(klassId);
         if (!klass || !rulesetIds.has(klass.rulesetId)) {
-          throw new BadRequestError(
-            `Level ${i + 1}: Class does not belong to the character's ruleset`,
-          );
+          throw new BadRequestError(`Level ${i + 1}: Class does not belong to the character's ruleset`);
         }
         if (klass.kind !== "pc") {
-          throw new BadRequestError(
-            `Level ${i + 1}: Class is not valid for a player character`,
-          );
+          throw new BadRequestError(`Level ${i + 1}: Class is not valid for a player character`);
         }
         const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
         if (!klassLevel) {
@@ -430,13 +407,12 @@ export async function finalizeLevelUp(
       });
 
       // Build projected character levels + auto-granted feats for aptitude pool computation
-      const projectedCharacterLevels = klassLevelEntries.map(
-        ({ klassLevel, abilityId }) =>
-          buildProjectedCharacterLevel(characterId, klassLevel.id, abilityId),
+      const projectedCharacterLevels = klassLevelEntries.map(({ klassLevel, abilityId }) =>
+        buildProjectedCharacterLevel(characterId, klassLevel.id, abilityId),
       );
 
-      const allAutoGrantedFeatRecords = klassLevelEntries.map(({ klassLevel }) =>
-        preloadedRuleset.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
+      const allAutoGrantedFeatRecords = klassLevelEntries.map(
+        ({ klassLevel }) => preloadedRuleset.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
       );
       const flatAutoGrantedFeats = allAutoGrantedFeatRecords.flat();
       const autoGrantedFeatCustomizations = loadFeatCustomizations(
@@ -452,9 +428,7 @@ export async function finalizeLevelUp(
       };
 
       // Build full character with all planned levels to get aptitude pools
-      const fullCharacter = rulesetModule.createDetailedCharacter(
-        characterRecord,
-      );
+      const fullCharacter = rulesetModule.createDetailedCharacter(characterRecord);
       await fullCharacter.build(tx, projectedData);
       const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter) as Dnd35LevelUpProjector;
       const aptitudesInstance = fullCharacter.getDetailedCharacterAptitudes();
@@ -485,32 +459,27 @@ export async function finalizeLevelUp(
 
       // Compute per-level feat/power slots from modifier data directly
       const preloaded = await fullCharacter.preload();
-      const baselineCharacter = rulesetModule.createDetailedCharacter(
-        characterRecord,
-      );
+      const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
       await baselineCharacter.build(tx, undefined, preloaded);
-      const baselineApts = baselineCharacter
-        .getDetailedCharacterAptitudes()
-        .getAptitudes();
+      const baselineApts = baselineCharacter.getDetailedCharacterAptitudes().getAptitudes();
 
-      const klassLevelIds = klassLevelEntries.map(
-        ({ klassLevel }) => klassLevel.id,
+      const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
+
+      const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
+        rulesetData,
+        klassLevelIds,
+        allAutoGrantedFeatRecords,
+        featPoolIds,
+        powerPoolIds,
+        baseExistingLevels.length,
+        baselineApts,
       );
-
-      const { perLevelFeatSlots, perLevelPowerSlots } =
-        computePerLevelAptitudeSlots(
-          rulesetData,
-          klassLevelIds,
-          allAutoGrantedFeatRecords,
-          featPoolIds,
-          powerPoolIds,
-          baseExistingLevels.length,
-          baselineApts,
-        );
 
       // Compute per-level skill points
       const { perLevel: perLevelSkillPoints } = await levelUpProjector.computeSkillPointsPerLevel(
-        klassLevelIds, baseExistingLevels.length, rulesetData,
+        klassLevelIds,
+        baseExistingLevels.length,
+        rulesetData,
       );
 
       // Compute per-level class skill IDs
@@ -523,45 +492,28 @@ export async function finalizeLevelUp(
       const perLevelClassSkillIds: string[][] = [];
       for (const { klass } of klassLevelEntries) {
         const klassSkillRecords =
-          allKlassSkillRecords.find(
-            (records) => records.length > 0 && records[0].klassId === klass.id,
-          ) ?? [];
+          allKlassSkillRecords.find((records) => records.length > 0 && records[0].klassId === klass.id) ?? [];
         const klassSkillIds = new Set(klassSkillRecords.map((ks) => ks.skillId));
-        const klassSkillNames = new Set(
-          klassSkillRecords.map((ks) => ks.skillsInRule.name),
-        );
+        const klassSkillNames = new Set(klassSkillRecords.map((ks) => ks.skillsInRule.name));
         const levelClassSkillIds = allSkills
-          .filter(
-            (s) =>
-              klassSkillIds.has(s.id) ||
-              [...klassSkillNames].some((name) => s.name.startsWith(`${name} (`)),
-          )
+          .filter((s) => klassSkillIds.has(s.id) || [...klassSkillNames].some((name) => s.name.startsWith(`${name} (`)))
           .map((s) => s.id);
         perLevelClassSkillIds.push(levelClassSkillIds);
       }
 
       // Build skill contexts (current rank + class skill status)
       const characterSkills = levelUpProjector.getCharacterSkills();
-      const mergedClassSkillIds = new Set(
-        allKlassSkillRecords.flat().map((ks) => ks.skillId),
-      );
-      const mergedClassSkillNames = new Set(
-        allKlassSkillRecords.flat().map((ks) => ks.skillsInRule.name),
-      );
+      const mergedClassSkillIds = new Set(allKlassSkillRecords.flat().map((ks) => ks.skillId));
+      const mergedClassSkillNames = new Set(allKlassSkillRecords.flat().map((ks) => ks.skillsInRule.name));
       for (const skill of allSkills) {
         if (
           !mergedClassSkillIds.has(skill.id) &&
-          [...mergedClassSkillNames].some((name) =>
-            skill.name.startsWith(`${name} (`),
-          )
+          [...mergedClassSkillNames].some((name) => skill.name.startsWith(`${name} (`))
         ) {
           mergedClassSkillIds.add(skill.id);
         }
       }
-      const skillContexts = new Map<
-        string,
-        { isClassSkill: boolean; currentRank: number }
-      >();
+      const skillContexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
       for (const skill of allSkills) {
         const skillData = characterSkills[stripSeparators(skill.name)] as
           | { innate?: boolean; rank?: number }
@@ -597,9 +549,7 @@ export async function finalizeLevelUp(
         const deferredAptIdSet = new Set(deferredAptitudeIds);
 
         const firstPassFeatIds = Object.entries(feats)
-          .filter(([aptId]) =>
-            (perLevelFeatSlots[aptId] ?? []).some((s) => s > 0),
-          )
+          .filter(([aptId]) => (perLevelFeatSlots[aptId] ?? []).some((s) => s > 0))
           .flatMap(([, ids]) => ids);
 
         for (const featId of firstPassFeatIds) {
@@ -637,9 +587,7 @@ export async function finalizeLevelUp(
 
       // ── Phase 2: Per-level validation and insertion ──
 
-      const createdLevels: Awaited<
-        ReturnType<typeof CharacterLevels.create>
-      >[number][] = [];
+      const createdLevels: Awaited<ReturnType<typeof CharacterLevels.create>>[number][] = [];
 
       // Stagger createdAt by row so multi-level batches retain their order even
       // after the transaction commits. Without this every row in the loop gets
@@ -650,11 +598,7 @@ export async function finalizeLevelUp(
       for (let i = 0; i < levels.length; i++) {
         const { hp, abilityId } = levels[i];
         const { klass, klassLevel } = klassLevelEntries[i];
-        const {
-          skills: levelSkills,
-          feats: levelFeats,
-          powers: levelPowers,
-        } = distributedLevels[i];
+        const { skills: levelSkills, feats: levelFeats, powers: levelPowers } = distributedLevels[i];
 
         // Reject re-finalizing an already-existing level
         const existingLevel = await CharacterLevels.findOne(tx, {
@@ -662,25 +606,18 @@ export async function finalizeLevelUp(
           klassLevelId: klassLevel.id,
         });
         if (existingLevel) {
-          throw new BadRequestError(
-            `Level ${i + 1}: This level has already been finalized`,
-          );
+          throw new BadRequestError(`Level ${i + 1}: This level has already been finalized`);
         }
 
         // Validate ability increase timing using base count + plan offset
         const totalLevelCount = baseExistingLevels.length + i;
-        const isAbilityIncreaseLevel =
-          rulesetModule.hooks.levels.isAbilityIncreaseLevel(totalLevelCount);
+        const isAbilityIncreaseLevel = rulesetModule.hooks.levels.isAbilityIncreaseLevel(totalLevelCount);
 
         if (abilityId && !isAbilityIncreaseLevel) {
-          throw new BadRequestError(
-            `Level ${i + 1}: Ability increase is not available at this level`,
-          );
+          throw new BadRequestError(`Level ${i + 1}: Ability increase is not available at this level`);
         }
         if (!abilityId && isAbilityIncreaseLevel) {
-          throw new BadRequestError(
-            `Level ${i + 1}: Ability increase is required at this level`,
-          );
+          throw new BadRequestError(`Level ${i + 1}: Ability increase is required at this level`);
         }
 
         // baseExistingLevels (from before the loop) + levels we've inserted so
@@ -715,18 +652,13 @@ export async function finalizeLevelUp(
         await insertLevelChildren(tx, characterLevel.id, levelSkills, levelFeats, levelPowers);
       }
 
-      const detailedCharacter = rulesetModule.createDetailedCharacter(
-        characterRecord,
-      ) as Dnd35DetailedCharacter;
+      const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord) as Dnd35DetailedCharacter;
       await detailedCharacter.build(tx, undefined, preloadedRuleset);
 
       if (!force) {
         const { valid, issues } = detailedCharacter.validate();
         if (!valid) {
-          throw new BadRequestError(
-            issues.map((iss) => iss.message).join("; "),
-            { issues },
-          );
+          throw new BadRequestError(issues.map((iss) => iss.message).join("; "), { issues });
         }
       }
 

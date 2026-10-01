@@ -1,32 +1,21 @@
-import { PageError, ActionMenuItem } from "@/client/src/components/common/index.ts";
-import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  CharacterDetailSkeleton,
-  CharacterSheetBody,
-} from "@/client/src/components/characters/index.ts";
 import {
   ArrowBack as ArrowBackIcon,
   Download as DownloadIcon,
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
-import { DURATION } from "@/client/src/lib/animations.ts";
-import {
-  Alert,
-  Container,
-  Fade,
-  IconButton,
-  Menu,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
+import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
+import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
+import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
+import { DURATION } from "@/client/src/lib/animations.ts";
+import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 export default function CampaignCharacterPage() {
   const { id: campaignId = "", characterId = "" } = useParams<{ id: string; characterId: string }>();
   const navigate = useNavigate();
@@ -35,9 +24,11 @@ export default function CampaignCharacterPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.campaigns.characterDetail(campaignId, characterId),
     queryFn: async () => {
-      return parseResponse(rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
-        param: { id: campaignId, characterId },
-      }));
+      return parseResponse(
+        rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
+          param: { id: campaignId, characterId },
+        }),
+      );
     },
     enabled: !!campaignId && !!characterId,
   });
@@ -67,7 +58,9 @@ export default function CampaignCharacterPage() {
   if (isLoading) {
     return (
       <Fade in timeout={DURATION.slow}>
-        <div><CharacterDetailSkeleton /></div>
+        <div>
+          <CharacterDetailSkeleton />
+        </div>
       </Fade>
     );
   }
@@ -88,13 +81,8 @@ export default function CampaignCharacterPage() {
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack
-          direction="row"
-          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: "center", minWidth: 0 }}>
+        <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
             <IconButton aria-label="Back" onClick={() => navigate(`/campaigns/${campaignId}`)}>
               <ArrowBackIcon />
             </IconButton>
@@ -105,12 +93,26 @@ export default function CampaignCharacterPage() {
 
           {data.canDownloadPdf && !data.deletedAt && (
             <Stack direction="row" spacing={1}>
-              <IconButton aria-label="More actions" onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: "text.secondary" }}>
+              <IconButton
+                aria-label="More actions"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                sx={{ color: "text.secondary" }}
+              >
                 <MoreVertIcon />
               </IconButton>
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                {data.canEdit && <ActionMenuItem icon={EditIcon} label="Edit Character" onClick={closeMenuAnd(() => navigate(`/characters/${characterId}`))} />}
-                <ActionMenuItem icon={DownloadIcon} label="Download PDF" onClick={closeMenuAnd(() => pdfExport.mutate())} />
+                {data.canEdit && (
+                  <ActionMenuItem
+                    icon={EditIcon}
+                    label="Edit Character"
+                    onClick={closeMenuAnd(() => navigate(`/characters/${characterId}`))}
+                  />
+                )}
+                <ActionMenuItem
+                  icon={DownloadIcon}
+                  label="Download PDF"
+                  onClick={closeMenuAnd(() => pdfExport.mutate())}
+                />
               </Menu>
             </Stack>
           )}

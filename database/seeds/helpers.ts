@@ -1,4 +1,11 @@
 import { and, eq } from "drizzle-orm";
+
+import {
+  coreRulesetId,
+  idsByName,
+  loadSeedContext,
+  type SeedContext as RulesetSeedContext,
+} from "@/database/packages/dnd35/seed/context.ts";
 import {
   type alignment,
   characterAbilitiesInCharacter,
@@ -7,22 +14,21 @@ import {
   inventoryInCharacter,
   itemsInRules,
   klassesInRules,
-  type location,
   klassLevelsInRules,
   languagesInCharacter,
   languagesInRules,
   levelFeatsInCharacter,
   levelPowersInCharacter,
-  levelSkillsInCharacter,
   levelsInCharacter,
+  levelSkillsInCharacter,
+  type location,
   racesInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { coreRulesetId, idsByName, loadSeedContext, type SeedContext as RulesetSeedContext } from "@/database/packages/dnd35/seed/context.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { reconcileAllBondedKinds } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 
@@ -56,11 +62,29 @@ export async function getSeedContext(db: Db): Promise<SeedContext> {
   const rulesetId = await coreRulesetId(db, "The test data");
   // One after the other: a transaction runs one query at a time.
   const names = await loadSeedContext(db, rulesetId);
-  const langs = await db.select({ id: languagesInRules.id, name: languagesInRules.name }).from(languagesInRules).where(eq(languagesInRules.rulesetId, rulesetId));
-  const races = await db.select({ id: racesInRules.id, name: racesInRules.name, kind: racesInRules.kind }).from(racesInRules).where(eq(racesInRules.rulesetId, rulesetId));
-  const klasses = await db.select({ id: klassesInRules.id, name: klassesInRules.name, kind: klassesInRules.kind }).from(klassesInRules).where(eq(klassesInRules.rulesetId, rulesetId));
-  const items = await db.select({ id: itemsInRules.id, name: itemsInRules.name }).from(itemsInRules).where(eq(itemsInRules.rulesetId, rulesetId));
-  return { ...names, langMap: idsByName(langs), raceMap: buildKindMap(races), klassMap: buildKindMap(klasses), itemMap: idsByName(items) };
+  const langs = await db
+    .select({ id: languagesInRules.id, name: languagesInRules.name })
+    .from(languagesInRules)
+    .where(eq(languagesInRules.rulesetId, rulesetId));
+  const races = await db
+    .select({ id: racesInRules.id, name: racesInRules.name, kind: racesInRules.kind })
+    .from(racesInRules)
+    .where(eq(racesInRules.rulesetId, rulesetId));
+  const klasses = await db
+    .select({ id: klassesInRules.id, name: klassesInRules.name, kind: klassesInRules.kind })
+    .from(klassesInRules)
+    .where(eq(klassesInRules.rulesetId, rulesetId));
+  const items = await db
+    .select({ id: itemsInRules.id, name: itemsInRules.name })
+    .from(itemsInRules)
+    .where(eq(itemsInRules.rulesetId, rulesetId));
+  return {
+    ...names,
+    langMap: idsByName(langs),
+    raceMap: buildKindMap(races),
+    klassMap: buildKindMap(klasses),
+    itemMap: idsByName(items),
+  };
 }
 
 type CharacterData = Parameters<typeof createCharacter>[2];
@@ -77,20 +101,6 @@ export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
   powers?: (Picks<"powerName"> & { aptitude: string })[];
   inventory: Parameters<typeof addInventory>[3];
 };
-
-/** Seeds a character, and the creatures its feats bond it to. */
-export async function seedCharacter(db: Db, ctx: SeedContext, { classes, skills, feats, powers = [], inventory, ...data }: CharacterSeed) {
-  const characterId = await createCharacter(db, ctx, data);
-  const levelIds: string[] = [];
-  for (const { klass, hp } of classes) {
-    levelIds.push(...await addClassLevels(db, ctx, characterId, klass, hp.map((_, i) => i + 1), hp));
-  }
-  await addSkills(db, ctx, levelIds, skills);
-  await addFeats(db, ctx, levelIds, feats);
-  await addPowers(db, ctx, levelIds, powers);
-  await addInventory(db, ctx, characterId, inventory);
-  await reconcileBondedForCharacter(db, characterId);
-}
 
 export async function createCharacter(
   db: Db,
@@ -225,7 +235,13 @@ async function addInventory(
   db: Db,
   ctx: SeedContext,
   characterId: string,
-  items: { name: string; quantity: number; equipped?: boolean; location?: (typeof location.enumValues)[number]; weaponSet?: number }[],
+  items: {
+    name: string;
+    quantity: number;
+    equipped?: boolean;
+    location?: (typeof location.enumValues)[number];
+    weaponSet?: number;
+  }[],
 ) {
   if (items.length === 0) return;
   await db.insert(inventoryInCharacter).values(
@@ -241,10 +257,7 @@ async function addInventory(
 }
 
 /** Builds a seeded master's bonded creatures (familiar, companion, mount) from its levels, as leveling up does. */
-async function reconcileBondedForCharacter(
-  tx: Db,
-  characterId: string,
-): Promise<void> {
+async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise<void> {
   const master = await Characters.findOne(tx, { id: characterId });
   if (!master) throw new NotFoundError(`Character ${characterId} not found`);
   if (master.kind !== "pc") return;
@@ -255,4 +268,31 @@ async function reconcileBondedForCharacter(
     await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
     await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
   });
+}
+
+/** Seeds a character, and the creatures its feats bond it to. */
+export async function seedCharacter(
+  db: Db,
+  ctx: SeedContext,
+  { classes, skills, feats, powers = [], inventory, ...data }: CharacterSeed,
+) {
+  const characterId = await createCharacter(db, ctx, data);
+  const levelIds: string[] = [];
+  for (const { klass, hp } of classes) {
+    levelIds.push(
+      ...(await addClassLevels(
+        db,
+        ctx,
+        characterId,
+        klass,
+        hp.map((_, i) => i + 1),
+        hp,
+      )),
+    );
+  }
+  await addSkills(db, ctx, levelIds, skills);
+  await addFeats(db, ctx, levelIds, feats);
+  await addPowers(db, ctx, levelIds, powers);
+  await addInventory(db, ctx, characterId, inventory);
+  await reconcileBondedForCharacter(db, characterId);
 }

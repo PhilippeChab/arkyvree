@@ -1,14 +1,14 @@
-/**
- * PRODUCTION DATABASE IMPLEMENTATION
- */
-import * as relations from "@/drizzle/relations.ts";
-import * as schema from "@/drizzle/schema.ts";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
 import { Pool } from "pg";
 
+/**
+ * PRODUCTION DATABASE IMPLEMENTATION
+ */
+import * as relations from "@/drizzle/relations.ts";
+import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
 import { instrumentQueries } from "@/server/timing.ts";
 
@@ -46,9 +46,7 @@ pool.on("error", (err) => {
 export { pool };
 export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
 
-export async function withTransaction<T>(
-  callback: (tx: Transaction) => Promise<T>,
-): Promise<T> {
+export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   const result = await db.transaction(callback);
   // Invalidate the request-scoped dedup cache: reads that happened before the
   // mutation may now be stale, so the next `find*` must go back to the DB.

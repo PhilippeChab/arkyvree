@@ -1,11 +1,9 @@
 import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
-import {
-  LanguageFormFields,
-  type LanguageFormData,
-} from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { type LanguageFormData, LanguageFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import { languageQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
@@ -31,9 +29,9 @@ export default function LanguageDetailPage() {
         remove: () => endpoint.$delete({ param }),
         renderFields: (form) => <LanguageFormFields form={form} />,
       }}
-      renderChips={(language) => language.type && (
-        <Chip label={language.type} color="secondary" sx={{ fontWeight: 600 }} />
-      )}
+      renderChips={(language) =>
+        language.type && <Chip label={language.type} color="secondary" sx={{ fontWeight: 600 }} />
+      }
     />
   );
 }

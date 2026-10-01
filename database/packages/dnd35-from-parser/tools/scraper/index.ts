@@ -1,20 +1,53 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+
+import {
+  type ReferenceType,
+  resolveReference,
+  storedOverrides,
+  type StoredReference,
+} from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import {
+  sanitizeJsonValues,
+  sortKeysDeep,
+  stableStringify,
+} from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import {
+  BASE_URL,
+  buildListingUrl,
+  buildRaceListingUrl,
+  getBookSlug,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+import { configureHttp, fetchAllPages, fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
-import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
-import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
+import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
+import {
+  parseArmorHtml,
+  parseGoodsHtml,
+  parseWeaponsHtml,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
+import {
+  parseMagicArmorHtml,
+  parseMagicShieldsHtml,
+  parseMagicWeaponsHtml,
+  parseRingsHtml,
+  parseRodsHtml,
+  parseStaffsHtml,
+  parseWondrousItemsHtml,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
+import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
-import { parseWeaponsHtml, parseArmorHtml, parseGoodsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
-import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, parseWondrousItemsHtml, parseRingsHtml, parseRodsHtml, parseStaffsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
-import { type ReferenceType, resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import type { FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { sanitizeJsonValues, sortKeysDeep, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
+import { REFERENCE_DIR, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type {
+  FeatReference,
+  ItemReference,
+  MagicItemReference,
+  RaceReference,
+  SpellReference,
+} from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { toCamelCase, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { fetchHtml, fetchAllPages, configureHttp } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
-import { buildListingUrl, buildRaceListingUrl, getBookSlug, BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
 // ---------------------------------------------------------------------------
 // Write helper — only updates scrapedAt when content actually changed
@@ -38,10 +71,14 @@ function writeIfChanged(outPath: string, data: StoredReference): void {
 }
 
 /** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
-function scrapedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]): StoredReference<T> {
+function scrapedReference<T extends ReferenceType>(
+  outPath: string,
+  _meta: StoredReference<T>["_meta"] & { type: T },
+  raw: StoredReference<T>["raw"],
+): StoredReference<T> {
   const overrides = storedOverrides(outPath, _meta.type);
   if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  return sanitizeJsonValues({ _meta, raw, ...overrides ? { overrides } : {} });
+  return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
 }
 
 /** Writes a reference to its file, when it changed. */
@@ -51,7 +88,11 @@ function writeReference(outPath: string, reference: StoredReference) {
 }
 
 /** Saves a reference as scraped (its `_meta` and `raw`), keeping the overrides its file had. */
-function saveReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+function saveReference<T extends ReferenceType>(
+  outPath: string,
+  _meta: StoredReference<T>["_meta"] & { type: T },
+  raw: StoredReference<T>["raw"],
+) {
   writeReference(outPath, scrapedReference(outPath, _meta, raw));
 }
 
@@ -59,7 +100,11 @@ function saveReference<T extends ReferenceType>(outPath: string, _meta: StoredRe
  * Saves a reference as scraped (`saveReference`), and returns it with what the generator reads derived from it. A
  * reference that can't be derived isn't written.
  */
-function saveResolvedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+function saveResolvedReference<T extends ReferenceType>(
+  outPath: string,
+  _meta: StoredReference<T>["_meta"] & { type: T },
+  raw: StoredReference<T>["raw"],
+) {
   const reference = scrapedReference(outPath, _meta, raw);
   const resolved = resolveReference(_meta.type, reference);
   writeReference(outPath, reference);
@@ -79,120 +124,8 @@ async function discover(listingUrl: string, section: string, bookSlug?: string) 
 }
 
 // ---------------------------------------------------------------------------
-// CLI
-// ---------------------------------------------------------------------------
-
-async function main() {
-  const args = process.argv.slice(2);
-
-  // Parse global options
-  const noCacheIdx = args.indexOf("--no-cache");
-  const noCache = noCacheIdx >= 0;
-  if (noCache) args.splice(noCacheIdx, 1);
-
-  const delayIdx = args.indexOf("--delay");
-  const delay = delayIdx >= 0 ? parseInt(args[delayIdx + 1], 10) : undefined;
-  if (delayIdx >= 0) args.splice(delayIdx, 2);
-
-  configureHttp({ noCache, ...(delay ? { delay } : {}) });
-
-  if (args.length < 1) {
-    printUsage();
-    process.exit(1);
-  }
-
-  const type = args[0];
-  const urlIdx = args.indexOf("--url");
-  const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
-  const bookIdx = args.indexOf("--book");
-  const book = bookIdx >= 0 ? args[bookIdx + 1] : "srd";
-
-  if (type === "class") {
-    if (url) {
-      await scrapeClass(url, book);
-    } else {
-      await scrapeAllClasses(book);
-    }
-  } else if (type === "feat") {
-    if (url) {
-      await scrapeSingleFeat(url);
-    } else {
-      await scrapeAllFeats(book);
-    }
-  } else if (type === "spell") {
-    if (url) {
-      await scrapeSingleSpell(url);
-    } else {
-      await scrapeAllSpells(book);
-    }
-  } else if (type === "domain") {
-    await scrapeAllDomains();
-  } else if (type === "race") {
-    if (url) {
-      await scrapeSingleRace(url);
-    } else {
-      await scrapeAllRaces(book);
-    }
-  } else if (type === "item") {
-    await scrapeAllItems(book);
-  } else if (type === "magicItem") {
-    await scrapeAllMagicItems(book);
-  } else if (type === "wizardSchool") {
-    console.log(`Skipping wizardSchool — no HTML parser (reference is manually maintained)`);
-  } else {
-    console.error(`Unknown type: ${type}. Supported: class, feat, spell, domain, race, item, magicItem, wizardSchool`);
-    process.exit(1);
-  }
-}
-
-function printUsage() {
-  console.error("Usage: bun scraper/index.ts <type> [options]");
-  console.error("");
-  console.error("  Types:");
-  console.error("    class              Scrape class(es)");
-  console.error("    feat               Scrape feat(s)");
-  console.error("    spell              Scrape spell(s)");
-  console.error("    domain             Scrape domains");
-  console.error("    race               Scrape race(s)");
-  console.error("    item               Scrape items (d20srd.org)");
-  console.error("    magicItem          Scrape magic items (d20srd.org)");
-  console.error("");
-  console.error("  Options:");
-  console.error("    --book <slug>      Source book slug (default: srd)");
-  console.error("    --url <url>        Scrape a single entity by URL");
-  console.error("    --filter <mode>    Domain filter: core|non-core|all (default: core)");
-  console.error("    --no-cache         Disable disk cache");
-  console.error("    --delay <ms>       Delay between requests (default: 200)");
-  console.error("");
-  console.error("  Examples:");
-  console.error("    bun scraper/index.ts class --book srd");
-  console.error("    bun scraper/index.ts class --url https://dndtools.net/classes/.../barbarian/ --book srd");
-  console.error("    bun scraper/index.ts feat --book srd");
-  console.error("    bun scraper/index.ts domain");
-  console.error("    bun scraper/index.ts spell --book srd");
-  console.error("    bun scraper/index.ts race --book srd");
-}
-
-// ---------------------------------------------------------------------------
 // Class scraping
 // ---------------------------------------------------------------------------
-
-async function scrapeAllClasses(book: string) {
-  // dndtools.net doesn't support /classes/{book}/ URLs — use the full listing
-  // and filter by book slug in the class URL path
-  const bookSlug = getBookSlug(book);
-  const listingUrl = `${BASE_URL}/classes/`;
-  console.log(`Discovering classes from ${listingUrl} (filtering for ${bookSlug})...`);
-
-  const classUrls = await discover(listingUrl, "classes", bookSlug);
-
-  console.log(`Found ${classUrls.length} classes`);
-
-  for (const entry of classUrls) {
-    console.log(`\n--- Scraping: ${entry.name} ---`);
-    await scrapeClass(entry.url, book);
-  }
-}
 
 async function scrapeClass(url: string, book: string) {
   console.log(`Fetching ${url}...`);
@@ -231,7 +164,26 @@ async function scrapeClass(url: string, book: string) {
   console.log(`  BAB: ${detected.bab}`);
   console.log(`  Saves: fort=${detected.saves.fortitude} ref=${detected.saves.reflex} will=${detected.saves.will}`);
   if (detected.casterLevelAdvancement) {
-    console.log(`  Caster advancement: ${detected.casterLevelAdvancement.type} at levels ${detected.casterLevelAdvancement.levels.join(", ")}`);
+    console.log(
+      `  Caster advancement: ${detected.casterLevelAdvancement.type} at levels ${detected.casterLevelAdvancement.levels.join(", ")}`,
+    );
+  }
+}
+
+async function scrapeAllClasses(book: string) {
+  // dndtools.net doesn't support /classes/{book}/ URLs — use the full listing
+  // and filter by book slug in the class URL path
+  const bookSlug = getBookSlug(book);
+  const listingUrl = `${BASE_URL}/classes/`;
+  console.log(`Discovering classes from ${listingUrl} (filtering for ${bookSlug})...`);
+
+  const classUrls = await discover(listingUrl, "classes", bookSlug);
+
+  console.log(`Found ${classUrls.length} classes`);
+
+  for (const entry of classUrls) {
+    console.log(`\n--- Scraping: ${entry.name} ---`);
+    await scrapeClass(entry.url, book);
   }
 }
 
@@ -263,12 +215,16 @@ async function scrapeAllFeats(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "feats.json");
 
-  saveReference(outPath, {
-    type: "feat",
-    sourceUrl: listingUrl,
-    book,
-    scrapedAt: new Date().toISOString(),
-  }, raw);
+  saveReference(
+    outPath,
+    {
+      type: "feat",
+      sourceUrl: listingUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+  );
 }
 
 async function scrapeSingleFeat(url: string) {
@@ -320,12 +276,16 @@ async function scrapeAllSpells(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "spells.json");
 
-  saveReference(outPath, {
-    type: "spell",
-    sourceUrl: listingUrl,
-    book,
-    scrapedAt: new Date().toISOString(),
-  }, raw);
+  saveReference(
+    outPath,
+    {
+      type: "spell",
+      sourceUrl: listingUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+  );
 }
 
 async function scrapeSingleSpell(url: string) {
@@ -365,13 +325,17 @@ async function scrapeAllDomains() {
 
   const outPath = join(REFERENCE_DIR, "domains.json");
 
-  saveReference(outPath, {
-    type: "domain",
-    sourceUrl: DOMAIN_SOURCE_URL,
-    book: "all-domains",
-    filter: "all",
-    scrapedAt: new Date().toISOString(),
-  }, result.raw);
+  saveReference(
+    outPath,
+    {
+      type: "domain",
+      sourceUrl: DOMAIN_SOURCE_URL,
+      book: "all-domains",
+      filter: "all",
+      scrapedAt: new Date().toISOString(),
+    },
+    result.raw,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -394,7 +358,8 @@ async function scrapeAllRaces(book: string) {
     const race = parseRaceDetailHtml(html);
     if (race) {
       raw.push(race);
-      const adjStr = race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)";
+      const adjStr =
+        race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)";
       console.log(`    ${race.name}: ${race.size}, speed ${race.baseSpeed}, ${adjStr}`);
     } else {
       console.warn(`    SKIP: Could not parse ${entry.name} at ${entry.url}`);
@@ -405,12 +370,16 @@ async function scrapeAllRaces(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "races.json");
 
-  saveReference(outPath, {
-    type: "race",
-    sourceUrl: listingUrl,
-    book,
-    scrapedAt: new Date().toISOString(),
-  }, raw);
+  saveReference(
+    outPath,
+    {
+      type: "race",
+      sourceUrl: listingUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+  );
 }
 
 async function scrapeSingleRace(url: string) {
@@ -422,7 +391,9 @@ async function scrapeSingleRace(url: string) {
     process.exit(1);
   }
   console.log(`Parsed: ${race.name} (${race.size}, speed ${race.baseSpeed})`);
-  console.log(`  Abilities: ${race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)"}`);
+  console.log(
+    `  Abilities: ${race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)"}`,
+  );
   if (race.favoredClass) console.log(`  Favored class: ${race.favoredClass}`);
   console.log(`  Features: ${race.features.length}`);
   console.log(JSON.stringify(race, null, 2));
@@ -467,7 +438,11 @@ async function scrapeAllItems(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "items.json");
 
-  const { detected } = saveResolvedReference(outPath, { type: "item", sourceUrls: D20SRD_URLS, book, scrapedAt: new Date().toISOString() }, raw);
+  const { detected } = saveResolvedReference(
+    outPath,
+    { type: "item", sourceUrls: D20SRD_URLS, book, scrapedAt: new Date().toISOString() },
+    raw,
+  );
   console.log(`\nDetection results:`);
   const matchedWeapons = Object.values(detected.weapons).filter((w) => w.generatorName).length;
   const matchedArmor = Object.values(detected.armor).filter((a) => a.generatorName).length;
@@ -556,7 +531,106 @@ async function scrapeAllMagicItems(book: string) {
     console.log(`  ${cat}: ${count}`);
   }
 
-  saveReference(outPath, { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book, scrapedAt: new Date().toISOString() }, raw);
+  saveReference(
+    outPath,
+    { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book, scrapedAt: new Date().toISOString() },
+    raw,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CLI
+// ---------------------------------------------------------------------------
+
+function printUsage() {
+  console.error("Usage: bun scraper/index.ts <type> [options]");
+  console.error("");
+  console.error("  Types:");
+  console.error("    class              Scrape class(es)");
+  console.error("    feat               Scrape feat(s)");
+  console.error("    spell              Scrape spell(s)");
+  console.error("    domain             Scrape domains");
+  console.error("    race               Scrape race(s)");
+  console.error("    item               Scrape items (d20srd.org)");
+  console.error("    magicItem          Scrape magic items (d20srd.org)");
+  console.error("");
+  console.error("  Options:");
+  console.error("    --book <slug>      Source book slug (default: srd)");
+  console.error("    --url <url>        Scrape a single entity by URL");
+  console.error("    --filter <mode>    Domain filter: core|non-core|all (default: core)");
+  console.error("    --no-cache         Disable disk cache");
+  console.error("    --delay <ms>       Delay between requests (default: 200)");
+  console.error("");
+  console.error("  Examples:");
+  console.error("    bun scraper/index.ts class --book srd");
+  console.error("    bun scraper/index.ts class --url https://dndtools.net/classes/.../barbarian/ --book srd");
+  console.error("    bun scraper/index.ts feat --book srd");
+  console.error("    bun scraper/index.ts domain");
+  console.error("    bun scraper/index.ts spell --book srd");
+  console.error("    bun scraper/index.ts race --book srd");
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  // Parse global options
+  const noCacheIdx = args.indexOf("--no-cache");
+  const noCache = noCacheIdx >= 0;
+  if (noCache) args.splice(noCacheIdx, 1);
+
+  const delayIdx = args.indexOf("--delay");
+  const delay = delayIdx >= 0 ? parseInt(args[delayIdx + 1], 10) : undefined;
+  if (delayIdx >= 0) args.splice(delayIdx, 2);
+
+  configureHttp({ noCache, ...(delay ? { delay } : {}) });
+
+  if (args.length < 1) {
+    printUsage();
+    process.exit(1);
+  }
+
+  const type = args[0];
+  const urlIdx = args.indexOf("--url");
+  const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
+  const bookIdx = args.indexOf("--book");
+  const book = bookIdx >= 0 ? args[bookIdx + 1] : "srd";
+
+  if (type === "class") {
+    if (url) {
+      await scrapeClass(url, book);
+    } else {
+      await scrapeAllClasses(book);
+    }
+  } else if (type === "feat") {
+    if (url) {
+      await scrapeSingleFeat(url);
+    } else {
+      await scrapeAllFeats(book);
+    }
+  } else if (type === "spell") {
+    if (url) {
+      await scrapeSingleSpell(url);
+    } else {
+      await scrapeAllSpells(book);
+    }
+  } else if (type === "domain") {
+    await scrapeAllDomains();
+  } else if (type === "race") {
+    if (url) {
+      await scrapeSingleRace(url);
+    } else {
+      await scrapeAllRaces(book);
+    }
+  } else if (type === "item") {
+    await scrapeAllItems(book);
+  } else if (type === "magicItem") {
+    await scrapeAllMagicItems(book);
+  } else if (type === "wizardSchool") {
+    console.log(`Skipping wizardSchool — no HTML parser (reference is manually maintained)`);
+  } else {
+    console.error(`Unknown type: ${type}. Supported: class, feat, spell, domain, race, item, magicItem, wizardSchool`);
+    process.exit(1);
+  }
 }
 
 // ---------------------------------------------------------------------------

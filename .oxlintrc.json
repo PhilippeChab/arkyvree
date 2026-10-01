@@ -40,6 +40,14 @@
 
     // General
     "no-console": "error",
+    // A file reads bottom-up: a helper sits above the code that uses it. Classes
+    // are left out: a repository's instance class follows it.
+    "no-use-before-define": [
+      "error",
+      { "functions": true, "classes": false, "variables": true, "enums": false, "typedefs": false, "ignoreTypeReferences": true }
+    ],
+    // The names inside an import, alphabetically. The formatter orders the imports themselves.
+    "sort-imports": ["error", { "ignoreCase": true, "ignoreDeclarationSort": true }],
     // Frontend barrel imports
     "no-restricted-imports": [
       "error",
@@ -106,6 +114,15 @@
       ],
       "rules": {
         "import/no-default-export": "error"
+      }
+    },
+    // Written by tools, which lay them out: drizzle-kit pull (the schema, whose
+    // foreign keys point both ways, and its relations) and the parser's generator
+    {
+      "files": ["drizzle/schema.ts", "drizzle/relations.ts", "database/packages/*/generated/**"],
+      "rules": {
+        "no-use-before-define": "off",
+        "sort-imports": "off"
       }
     },
     // Server/scripts/tests/database: allow console

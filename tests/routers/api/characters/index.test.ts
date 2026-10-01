@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
@@ -8,32 +9,55 @@ const character = characters[":id"];
 async function createCharacter(name = `Test Character ${uniqueId()}`) {
   const ctx = await getSeedCtx();
   const abilities = Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10]));
-  return await expectOk(characters.$post({
-    json: {
-      rulesetId: ctx.rulesetId, raceId: ctx.raceMap.pc["Human"], name, xp: 0, alignment: "True Neutral",
-      abilities, age: 25, gender: "Male", height: "5'10\"", weight: "170 lbs",
-    },
-  }));
+  return await expectOk(
+    characters.$post({
+      json: {
+        rulesetId: ctx.rulesetId,
+        raceId: ctx.raceMap.pc["Human"],
+        name,
+        xp: 0,
+        alignment: "True Neutral",
+        abilities,
+        age: 25,
+        gender: "Male",
+        height: "5'10\"",
+        weight: "170 lbs",
+      },
+    }),
+  );
 }
 
 describe("characters", () => {
   test("creates, reads, lists and updates a character", async () => {
     const ctx = await getSeedCtx();
     const created = await createCharacter("Router Character");
-    expect(created).toMatchObject({ name: "Router Character", rulesetId: ctx.rulesetId, raceId: ctx.raceMap.pc["Human"] });
+    expect(created).toMatchObject({
+      name: "Router Character",
+      rulesetId: ctx.rulesetId,
+      raceId: ctx.raceMap.pc["Human"],
+    });
 
     expect(await expectOk(character.$get({ param: { id: created.id } }))).toMatchObject({ id: created.id });
     const list = await expectOk(characters.$get({ query: { search: "Router Character" } }));
     expect(list.items.map((c) => c.id)).toEqual([created.id]);
     expect((await expectOk(characters.$get({ query: { limit: "1" } }))).items).toHaveLength(1);
 
-    const update = { age: 30, gender: "Female" as const, height: "5'6\"", weight: "130 lbs", xp: 1000, alignment: "Chaotic Good" as const };
+    const update = {
+      age: 30,
+      gender: "Female" as const,
+      height: "5'6\"",
+      weight: "130 lbs",
+      xp: 1000,
+      alignment: "Chaotic Good" as const,
+    };
     expect(await expectOk(character.$put({ param: { id: created.id }, json: update }))).toMatchObject(update);
   });
 
   test("lists the races a new character can pick", async () => {
     const ctx = await getSeedCtx();
-    const races = await expectOk(characters["available-races"].$get({ query: { rulesetId: ctx.rulesetId, search: "Human" } }));
+    const races = await expectOk(
+      characters["available-races"].$get({ query: { rulesetId: ctx.rulesetId, search: "Human" } }),
+    );
     expect(races.items.map((r) => r.id)).toContain(ctx.raceMap.pc["Human"]);
   });
 
@@ -41,18 +65,28 @@ describe("characters", () => {
     const { rulesetId } = await getSeedCtx();
     const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Unlinked Campaign", rulesetId } }));
     const created = await createCharacter();
-    const unlinked = await expectOk(characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }));
+    const unlinked = await expectOk(
+      characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),
+    );
     expect(unlinked.items.map((c) => c.id)).toContain(created.id);
 
-    await expectOk(api.api.campaigns[":id"].characters.$post({ param: { id: campaign.id }, json: { characterId: created.id } }));
-    const after = await expectOk(characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }));
+    await expectOk(
+      api.api.campaigns[":id"].characters.$post({ param: { id: campaign.id }, json: { characterId: created.id } }),
+    );
+    const after = await expectOk(
+      characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),
+    );
     expect(after.items.map((c) => c.id)).not.toContain(created.id);
   });
 
   test("archives, unarchives and permanently deletes a character", async () => {
     const { id } = await createCharacter();
-    expect(await expectOk(character.$delete({ param: { id } }))).toEqual({ message: "Character archived successfully" });
-    expect(await expectOk(character.unarchive.$post({ param: { id } }))).toEqual({ message: "Character unarchived successfully" });
+    expect(await expectOk(character.$delete({ param: { id } }))).toEqual({
+      message: "Character archived successfully",
+    });
+    expect(await expectOk(character.unarchive.$post({ param: { id } }))).toEqual({
+      message: "Character unarchived successfully",
+    });
 
     await expectOk(character.$delete({ param: { id } }));
     await expectOk(character.permanent.$delete({ param: { id } }));
@@ -76,7 +110,9 @@ describe("characters", () => {
 
     const tags = [...new Set(Object.values(detail.spellTags).flat())].sort();
     expect(tags).toEqual(["Healing Domain", "Sun Domain"]);
-    const classPowerIds = new Set(Object.values(detail.classes).flatMap((klass) => klass.levels.flatMap((level) => level.powers.map((p) => p.id))));
+    const classPowerIds = new Set(
+      Object.values(detail.classes).flatMap((klass) => klass.levels.flatMap((level) => level.powers.map((p) => p.id))),
+    );
     expect(Object.keys(detail.spellTags).some((id) => classPowerIds.has(id))).toBe(true);
   });
 
@@ -105,7 +141,9 @@ describe("characters", () => {
       const { langMap } = await getSeedCtx();
       const { id } = await createCharacter();
 
-      await expectOk(character.languages.$put({ param: { id }, json: { languageIds: [langMap["Common"], langMap["Draconic"]] } }));
+      await expectOk(
+        character.languages.$put({ param: { id }, json: { languageIds: [langMap["Common"], langMap["Draconic"]] } }),
+      );
       expect(await languageNames(id)).toEqual(["Common", "Draconic"]);
       await expectOk(character.languages.$put({ param: { id }, json: { languageIds: [langMap["Elven"]] } }));
       expect(await languageNames(id)).toEqual(["Elven"]);
@@ -140,11 +178,15 @@ describe("characters", () => {
       const { id } = await createCharacter();
       const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
       expect(await expectOk(character.share.$delete({ param: { id } }))).toMatchObject({ shareToken: null });
-      expect((await guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: shareToken! } })).status).toBe(404);
+      expect(
+        (await guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: shareToken! } })).status,
+      ).toBe(404);
     });
 
     test("returns 404 for an unknown token", async () => {
-      expect((await guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: NIL_UUID } })).status).toBe(404);
+      expect(
+        (await guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: NIL_UUID } })).status,
+      ).toBe(404);
     });
   });
 
@@ -158,10 +200,22 @@ describe("characters", () => {
   test("rejects a character without a name, or with an unknown alignment or gender", async () => {
     const ctx = await getSeedCtx();
     const valid = {
-      rulesetId: ctx.rulesetId, raceId: ctx.raceMap.pc["Human"], name: "Test", xp: 0, alignment: "True Neutral",
-      abilities: {}, age: 25, gender: "Male", height: "5'10\"", weight: "170 lbs",
+      rulesetId: ctx.rulesetId,
+      raceId: ctx.raceMap.pc["Human"],
+      name: "Test",
+      xp: 0,
+      alignment: "True Neutral",
+      abilities: {},
+      age: 25,
+      gender: "Male",
+      height: "5'10\"",
+      weight: "170 lbs",
     };
-    for (const json of [{ xp: 0 }, { ...valid, alignment: "Invalid Alignment" }, { ...valid, gender: "InvalidGender" }]) {
+    for (const json of [
+      { xp: 0 },
+      { ...valid, alignment: "Invalid Alignment" },
+      { ...valid, gender: "InvalidGender" },
+    ]) {
       expect((await characters.$post({ json: json as never })).status).toBe(400);
     }
   });

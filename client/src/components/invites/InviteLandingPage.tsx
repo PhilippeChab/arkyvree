@@ -1,16 +1,5 @@
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { Check } from "@mui/icons-material";
-import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  Typography,
-} from "@mui/material";
+import { Alert, Avatar, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,8 +7,10 @@ import { useNavigate } from "react-router-dom";
 import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/rpc.ts";
+
 import { InviteActionButtons } from "./InviteActionButtons.tsx";
 
 /** What the landing page needs to know about an invite, whatever its kind. */
@@ -54,7 +45,12 @@ interface InviteLandingPageProps {
   invalidateOnAccept: readonly unknown[];
 }
 
-function InviteStateCard({ icon, title, children, action }: {
+function InviteStateCard({
+  icon,
+  title,
+  children,
+  action,
+}: {
   icon: ReactNode;
   title: string;
   children: ReactNode;
@@ -65,8 +61,12 @@ function InviteStateCard({ icon, title, children, action }: {
       <Card>
         <CardContent sx={{ textAlign: "center", py: { xs: 3, sm: 6 } }}>
           {icon}
-          <Typography variant="h5" gutterBottom>{title}</Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>{children}</Typography>
+          <Typography variant="h5" gutterBottom>
+            {title}
+          </Typography>
+          <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>
+            {children}
+          </Typography>
           {action}
         </CardContent>
       </Card>
@@ -120,10 +120,14 @@ export function InviteLandingPage({
 
   // Once answered, the page is on its way out: don't refetch the invite and
   // flash its new status before the navigation lands.
-  const isAnswering = acceptMutation.isPending || rejectMutation.isPending
-    || acceptMutation.isSuccess || rejectMutation.isSuccess;
+  const isAnswering =
+    acceptMutation.isPending || rejectMutation.isPending || acceptMutation.isSuccess || rejectMutation.isSuccess;
 
-  const { data: invite, isLoading, error } = useQuery({
+  const {
+    data: invite,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: async () => {
       try {
@@ -179,11 +183,13 @@ export function InviteLandingPage({
       <InviteStateCard
         icon={<Check sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main", mb: 2 }} />}
         title="Already Accepted"
-        action={entityId && (
-          <Button variant="contained" onClick={() => navigate(entityPath(entityId))}>
-            Go to {entityLabel}
-          </Button>
-        )}
+        action={
+          entityId && (
+            <Button variant="contained" onClick={() => navigate(entityPath(entityId))}>
+              Go to {entityLabel}
+            </Button>
+          )
+        }
       >
         You've already accepted the invitation to {joinVerb} <strong>{name}</strong>.
       </InviteStateCard>
@@ -201,14 +207,14 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status !== "Pending") {
     return (
       <InviteStateCard
-        icon={(
+        icon={
           <Chip
             label={invite.status}
             color={invite.status === "Rejected" ? "error" : "default"}
             size="medium"
             sx={{ mb: 2 }}
           />
-        )}
+        }
         title={`Invitation ${invite.status}`}
         action={goToDashboard}
       >
@@ -250,9 +256,11 @@ export function InviteLandingPage({
 
             <InviteActionButtons
               prominent
-              onAccept={() => acceptMutation.mutate(undefined, {
-                onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
-              })}
+              onAccept={() =>
+                acceptMutation.mutate(undefined, {
+                  onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
+                })
+              }
               onReject={() => rejectMutation.mutate()}
               disabled={isAnswering}
             />

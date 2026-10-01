@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { FeatsService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { FeatsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -25,7 +26,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, aptitudeId } = c.req.valid("query");
 
       const featsService = FeatsService.initialize();
-      const result = await featsService.call("getRulesetFeatsGrouped", id, { search, childOnly, aptitudeId }, { limit, page });
+      const result = await featsService.call(
+        "getRulesetFeatsGrouped",
+        id,
+        { search, childOnly, aptitudeId },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )
@@ -50,7 +56,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, aptitudeId, family, orderBy, orderDir } = c.req.valid("query");
 
       const featsService = FeatsService.initialize();
-      const result = await featsService.call("getRulesetFeats", id, { search, childOnly, aptitudeId, family, orderBy, orderDir }, { limit, page });
+      const result = await featsService.call(
+        "getRulesetFeats",
+        id,
+        { search, childOnly, aptitudeId, family, orderBy, orderDir },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )
@@ -72,7 +83,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
         aptitudeIds: z.array(z.string().uuid()).min(1, "At least one aptitude must be selected"),
       }),
     ),
@@ -92,7 +106,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
         aptitudeIds: z.array(z.string().uuid()).optional(),
         updatedAt: z.string().optional(),
       }),
@@ -102,13 +119,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const featsService = FeatsService.initialize();
-      const result = await featsService.call(
-        "updateRulesetFeat",
-        c.var.requestSession,
-        id,
-        featId,
-        body,
-      );
+      const result = await featsService.call("updateRulesetFeat", c.var.requestSession, id, featId, body);
       return respond(c, result, 200);
     },
   )

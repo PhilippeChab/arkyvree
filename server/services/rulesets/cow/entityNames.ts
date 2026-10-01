@@ -3,8 +3,38 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { EntitySnapshots } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import type { EntityType } from "@/server/services/rulesets/hashing.ts";
+
 import { ENTITY_REPOS } from "./constants.ts";
 import type { CowData } from "./cowData.ts";
+
+/**
+ * Shared by the single and batched pre-create name checks. Throws a
+ * ConflictError if any same-name ancestor is visible in the composed view.
+ * Returns the hidden ones whose local copy was deleted, leaving a tombstone
+ * snapshot for a new entity to take over. A live local copy keeps its snapshot
+ * even after a rename, so inherited references keep resolving to it.
+ */
+export async function assertAncestorNamesHidden(
+  tx: Db,
+  rulesetId: string,
+  cow: CowData,
+  entityType: EntityType,
+  ancestorIds: string[],
+): Promise<Set<string>> {
+  if (ancestorIds.some((id) => !cow.overrideMap.has(id) && !cow.siblingIds.has(id))) {
+    throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
+  }
+  const repo = ENTITY_REPOS[entityType];
+  const snapshots = await EntitySnapshots.findManyBySourcesAndRuleset(tx, { sourceEntityIds: ancestorIds, rulesetId });
+  const tombstoned = new Set<string>();
+  for (const snapshot of snapshots) {
+    // Stored id of the local copy — check it as written, without COW remapping.
+    if (!(await withCowContext(undefined, () => repo.exists(tx, { id: snapshot.forkedEntityId })))) {
+      tombstoned.add(snapshot.sourceEntityId);
+    }
+  }
+  return tombstoned;
+}
 
 /**
  * Pre-create check for entity name uniqueness in the ruleset's composed view.
@@ -33,35 +63,6 @@ export async function assertEntityNameAvailable(
   }
   const tombstoned = await assertAncestorNamesHidden(tx, rulesetId, cow, entityType, ancestorIds);
   return { tombstoneAncestorId: ancestorIds.find((id) => tombstoned.has(id)) ?? null };
-}
-
-/**
- * Shared by the single and batched pre-create name checks. Throws a
- * ConflictError if any same-name ancestor is visible in the composed view.
- * Returns the hidden ones whose local copy was deleted, leaving a tombstone
- * snapshot for a new entity to take over. A live local copy keeps its snapshot
- * even after a rename, so inherited references keep resolving to it.
- */
-export async function assertAncestorNamesHidden(
-  tx: Db,
-  rulesetId: string,
-  cow: CowData,
-  entityType: EntityType,
-  ancestorIds: string[],
-): Promise<Set<string>> {
-  if (ancestorIds.some((id) => !cow.overrideMap.has(id) && !cow.siblingIds.has(id))) {
-    throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
-  }
-  const repo = ENTITY_REPOS[entityType];
-  const snapshots = await EntitySnapshots.findManyBySourcesAndRuleset(tx, { sourceEntityIds: ancestorIds, rulesetId });
-  const tombstoned = new Set<string>();
-  for (const snapshot of snapshots) {
-    // Stored id of the local copy — check it as written, without COW remapping.
-    if (!await withCowContext(undefined, () => repo.exists(tx, { id: snapshot.forkedEntityId }))) {
-      tombstoned.add(snapshot.sourceEntityId);
-    }
-  }
-  return tombstoned;
 }
 
 /**

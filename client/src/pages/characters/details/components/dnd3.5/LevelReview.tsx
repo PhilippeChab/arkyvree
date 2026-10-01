@@ -1,6 +1,8 @@
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { Box, Typography } from "@mui/material";
 import type { ReactNode } from "react";
+
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+
 import type { LevelReviewState } from "./levelUpFactory.ts";
 
 /** A titled group of a level review ("Class Advancement", "New Feats"). */

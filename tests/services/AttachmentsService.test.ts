@@ -1,24 +1,19 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { createHmac } from "node:crypto";
+
 import { db } from "@/server/database/index.ts";
-import {
-  BadRequestError,
-  ForbiddenError,
-  NotFoundError,
-} from "@/server/errors/index.ts";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { AttachmentsMethods } from "@/server/services/AttachmentsService.ts";
 import { setStorageForTest } from "@/server/storage/s3.ts";
-import { beforeEach, describe, expect, test } from "bun:test";
+import { createTestCharacter, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
 import { fakeStorage } from "@/tests/storage.ts";
-import { createTestUser, NIL_UUID, createTestCharacter } from "@/tests/helpers.ts";
 
 // Replicates the service's HMAC signing so tests can craft tokens with
 // arbitrary `iat` values (e.g. expired) without exposing internals.
 function signTestToken(payload: Record<string, unknown>): string {
   const data = Buffer.from(JSON.stringify(payload, Object.keys(payload).sort())).toString("base64url");
-  const sig = createHmac("sha256", process.env.SIGNING_SECRET!)
-    .update(data)
-    .digest("base64url");
+  const sig = createHmac("sha256", process.env.SIGNING_SECRET!).update(data).digest("base64url");
   return `${data}.${sig}`;
 }
 
@@ -33,27 +28,29 @@ describe("AttachmentsService", () => {
     stats = new Map();
     deletedKeys = [];
     deleteShouldFail = false;
-    setStorageForTest(fakeStorage({
-      presignPut(key, opts) {
-        presignCalls.push({ key, ...opts });
-        return `https://fake.example.com/test-bucket/${key}?sig=fake`;
-      },
-      publicUrl(key) {
-        return `https://fake.example.com/test-bucket/${key}`;
-      },
-      async deleteObject(key) {
-        if (deleteShouldFail) throw new Error("simulated S3 failure");
-        deletedKeys.push(key);
-      },
-      async objectStats(key) {
-        if (stats.has(key)) return stats.get(key)!;
-        // Default: simulate a successful upload by reporting the blob's recorded byteSize.
-        const blob = await db.query.blobsInStorage.findFirst({
-          where: (t, { eq }) => eq(t.key, key),
-        });
-        return blob ? { size: blob.byteSize, etag: "fake-etag" } : null;
-      },
-    }));
+    setStorageForTest(
+      fakeStorage({
+        presignPut(key, opts) {
+          presignCalls.push({ key, ...opts });
+          return `https://fake.example.com/test-bucket/${key}?sig=fake`;
+        },
+        publicUrl(key) {
+          return `https://fake.example.com/test-bucket/${key}`;
+        },
+        async deleteObject(key) {
+          if (deleteShouldFail) throw new Error("simulated S3 failure");
+          deletedKeys.push(key);
+        },
+        async objectStats(key) {
+          if (stats.has(key)) return stats.get(key)!;
+          // Default: simulate a successful upload by reporting the blob's recorded byteSize.
+          const blob = await db.query.blobsInStorage.findFirst({
+            where: (t, { eq }) => eq(t.key, key),
+          });
+          return blob ? { size: blob.byteSize, etag: "fake-etag" } : null;
+        },
+      }),
+    );
   });
 
   function uploadParams(
@@ -74,7 +71,10 @@ describe("AttachmentsService", () => {
     test("creates a pending blob (attached_at null) and returns a presigned URL + signed id", async () => {
       const { session } = await createTestUser();
 
-      const { signedId, presignedUrl, headers } = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
+      const { signedId, presignedUrl, headers } = await AttachmentsMethods.createDirectUpload(
+        session,
+        uploadParams(session.userId),
+      );
 
       expect(signedId).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
       expect(presignedUrl).toContain("https://fake.example.com/test-bucket/blobs/");
@@ -94,12 +94,9 @@ describe("AttachmentsService", () => {
       const { session: owner } = await createTestUser();
       const { session: other } = await createTestUser();
 
-      await expect(
-        AttachmentsMethods.createDirectUpload(
-          other,
-          uploadParams(owner.userId),
-        ),
-      ).rejects.toThrow(ForbiddenError);
+      await expect(AttachmentsMethods.createDirectUpload(other, uploadParams(owner.userId))).rejects.toThrow(
+        ForbiddenError,
+      );
     });
 
     test("rejects unknown record types", async () => {
@@ -182,10 +179,7 @@ describe("AttachmentsService", () => {
   describe("attach", () => {
     test("creates an attachment, sets attached_at, returns blob + attachment", async () => {
       const { session } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        session,
-        uploadParams(session.userId),
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
 
       const result = await AttachmentsMethods.attach(session, direct.signedId);
 
@@ -208,19 +202,13 @@ describe("AttachmentsService", () => {
         session,
         uploadParams(session.userId, { filename: "old.png" }),
       );
-      const firstAttach = await AttachmentsMethods.attach(
-        session,
-        first.signedId,
-      );
+      const firstAttach = await AttachmentsMethods.attach(session, first.signedId);
 
       const second = await AttachmentsMethods.createDirectUpload(
         session,
         uploadParams(session.userId, { filename: "new.png" }),
       );
-      const replaced = await AttachmentsMethods.attach(
-        session,
-        second.signedId,
-      );
+      const replaced = await AttachmentsMethods.attach(session, second.signedId);
 
       expect(replaced.attachment.id).not.toBe(firstAttach.attachment.id);
       expect(replaced.blob.filename).toBe("new.png");
@@ -236,17 +224,12 @@ describe("AttachmentsService", () => {
 
     test("rejects attach when no object exists at the expected key", async () => {
       const { session } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        session,
-        uploadParams(session.userId),
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
 
       const key = presignCalls[0].key;
       stats.set(key, null);
 
-      await expect(
-        AttachmentsMethods.attach(session, direct.signedId),
-      ).rejects.toThrow(/Upload not found/);
+      await expect(AttachmentsMethods.attach(session, direct.signedId)).rejects.toThrow(/Upload not found/);
     });
 
     test("rejects attach when uploaded size does not match declared byteSize", async () => {
@@ -259,44 +242,31 @@ describe("AttachmentsService", () => {
       const key = presignCalls[0].key;
       stats.set(key, { size: 9999, etag: "wrong" });
 
-      await expect(
-        AttachmentsMethods.attach(session, direct.signedId),
-      ).rejects.toThrow(/does not match declared byteSize/);
+      await expect(AttachmentsMethods.attach(session, direct.signedId)).rejects.toThrow(
+        /does not match declared byteSize/,
+      );
     });
 
     test("rejects a tampered signed id", async () => {
       const { session } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        session,
-        uploadParams(session.userId),
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
       const [data] = direct.signedId.split(".");
       const tampered = `${data}.AAAA`;
 
-      await expect(
-        AttachmentsMethods.attach(session, tampered),
-      ).rejects.toThrow(BadRequestError);
+      await expect(AttachmentsMethods.attach(session, tampered)).rejects.toThrow(BadRequestError);
     });
 
     test("rejects when caller no longer owns the target", async () => {
       const { session: owner } = await createTestUser();
       const { session: other } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        owner,
-        uploadParams(owner.userId),
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(owner, uploadParams(owner.userId));
 
-      await expect(
-        AttachmentsMethods.attach(other, direct.signedId),
-      ).rejects.toThrow(ForbiddenError);
+      await expect(AttachmentsMethods.attach(other, direct.signedId)).rejects.toThrow(ForbiddenError);
     });
 
     test("rejects an expired signed id", async () => {
       const { session } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        session,
-        uploadParams(session.userId),
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
       const blob = await Blobs.findOne(db, { key: presignCalls[0].key });
       const expired = signTestToken({
         blobId: blob!.id,
@@ -306,15 +276,10 @@ describe("AttachmentsService", () => {
         iat: Date.now() - 25 * 60 * 60 * 1000, // 25h ago
       });
 
-      await expect(
-        AttachmentsMethods.attach(session, expired),
-      ).rejects.toThrow(/expired/);
+      await expect(AttachmentsMethods.attach(session, expired)).rejects.toThrow(/expired/);
 
       // The direct-upload's own (fresh) signedId still works.
-      const fresh = await AttachmentsMethods.attach(
-        session,
-        direct.signedId,
-      );
+      const fresh = await AttachmentsMethods.attach(session, direct.signedId);
       expect(fresh.attachment).toBeDefined();
     });
   });
@@ -332,10 +297,7 @@ describe("AttachmentsService", () => {
 
     test("returns attachment + blob + url when one exists", async () => {
       const { session } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        session,
-        uploadParams(session.userId),
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
       await AttachmentsMethods.attach(session, direct.signedId);
 
       const result = await AttachmentsMethods.findOne(session, {
@@ -352,14 +314,8 @@ describe("AttachmentsService", () => {
   describe("detach", () => {
     test("removes attachment + blob row + S3 object when no other attachment references it", async () => {
       const { session } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        session,
-        uploadParams(session.userId),
-      );
-      const { attachment, blob } = await AttachmentsMethods.attach(
-        session,
-        direct.signedId,
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
+      const { attachment, blob } = await AttachmentsMethods.attach(session, direct.signedId);
 
       await AttachmentsMethods.detach(session, attachment.id);
 
@@ -372,14 +328,8 @@ describe("AttachmentsService", () => {
 
     test("leaves blob row in place when S3 delete fails — sweep retries via no-live-refs", async () => {
       const { session } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        session,
-        uploadParams(session.userId),
-      );
-      const { attachment, blob } = await AttachmentsMethods.attach(
-        session,
-        direct.signedId,
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(session, uploadParams(session.userId));
+      const { attachment, blob } = await AttachmentsMethods.attach(session, direct.signedId);
 
       deleteShouldFail = true;
       await AttachmentsMethods.detach(session, attachment.id);
@@ -402,29 +352,16 @@ describe("AttachmentsService", () => {
 
     test("throws NotFoundError for an unknown attachment id", async () => {
       const { session } = await createTestUser();
-      await expect(
-        AttachmentsMethods.detach(
-          session,
-          NIL_UUID,
-        ),
-      ).rejects.toThrow(NotFoundError);
+      await expect(AttachmentsMethods.detach(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
 
     test("rejects detach when caller does not own the target", async () => {
       const { session: owner } = await createTestUser();
       const { session: other } = await createTestUser();
-      const direct = await AttachmentsMethods.createDirectUpload(
-        owner,
-        uploadParams(owner.userId),
-      );
-      const { attachment } = await AttachmentsMethods.attach(
-        owner,
-        direct.signedId,
-      );
+      const direct = await AttachmentsMethods.createDirectUpload(owner, uploadParams(owner.userId));
+      const { attachment } = await AttachmentsMethods.attach(owner, direct.signedId);
 
-      await expect(
-        AttachmentsMethods.detach(other, attachment.id),
-      ).rejects.toThrow(ForbiddenError);
+      await expect(AttachmentsMethods.detach(other, attachment.id)).rejects.toThrow(ForbiddenError);
     });
   });
 });

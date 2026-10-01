@@ -1,21 +1,12 @@
-import { logs } from "@opentelemetry/api-logs";
 import { metrics } from "@opentelemetry/api";
+import { logs } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { HostMetrics } from "@opentelemetry/host-metrics";
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import {
-  BatchLogRecordProcessor,
-  LoggerProvider,
-} from "@opentelemetry/sdk-logs";
-import {
-  MeterProvider,
-  PeriodicExportingMetricReader,
-} from "@opentelemetry/sdk-metrics";
-import {
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-} from "@opentelemetry/semantic-conventions";
+import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
+import { MeterProvider, PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 
 let initialized = false;
 let meterProvider: MeterProvider | null = null;
@@ -60,9 +51,7 @@ export function initOtel(component: "web" | "worker") {
 
   loggerProvider = new LoggerProvider({
     resource,
-    processors: [
-      new BatchLogRecordProcessor({ exporter: new OTLPLogExporter({ headers }) }),
-    ],
+    processors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter({ headers }) })],
   });
   logs.setGlobalLoggerProvider(loggerProvider);
 
@@ -71,8 +60,5 @@ export function initOtel(component: "web" | "worker") {
 
 // Drains in-flight metric/log batches before process exit.
 export async function shutdownOtel(): Promise<void> {
-  await Promise.allSettled([
-    meterProvider?.shutdown(),
-    loggerProvider?.shutdown(),
-  ]);
+  await Promise.allSettled([meterProvider?.shutdown(), loggerProvider?.shutdown()]);
 }
